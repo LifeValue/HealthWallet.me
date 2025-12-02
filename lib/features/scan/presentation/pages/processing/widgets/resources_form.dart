@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -7,6 +8,8 @@ import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapp
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/text_field_descriptor.dart';
+import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class ResourcesForm extends StatelessWidget {
@@ -52,18 +55,49 @@ class ResourcesForm extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(resource.label, style: AppTextStyle.bodyLarge),
-                      if (resource is! MappingEncounter &&
-                          resource is! MappingPatient)
-                        Padding(
-                          padding: const EdgeInsetsGeometry.all(6),
-                          child: GestureDetector(
-                            onTap: () => onResourceRemoved.call(index),
-                            child: Assets.icons.trashCan.svg(
-                                width: 20,
-                                color: context.theme.iconTheme.color ??
-                                    context.colorScheme.onSurface),
+                      Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsetsGeometry.all(6),
+                            child: GestureDetector(
+                              onTap: () async {
+                                final result =
+                                    await showDialog<AttachToEncounterResult>(
+                                  context: context,
+                                  builder: (context) =>
+                                      const AttachToEncounterWidget(),
+                                );
+                                if (result == null || !context.mounted) return;
+
+                                final (patient, encounter) = result;
+
+                                context
+                                    .read<ScanBloc>()
+                                    .add(ScanEncounterAttached(
+                                      patient: patient,
+                                      encounter: encounter,
+                                    ));
+                              },
+                              child: Assets.icons.attachment.svg(
+                                  width: 20,
+                                  color: context.theme.iconTheme.color ??
+                                      context.colorScheme.onSurface),
+                            ),
                           ),
-                        ),
+                          if (resource is! MappingEncounter &&
+                              resource is! MappingPatient)
+                            Padding(
+                              padding: const EdgeInsetsGeometry.all(6),
+                              child: GestureDetector(
+                                onTap: () => onResourceRemoved.call(index),
+                                child: Assets.icons.trashCan.svg(
+                                    width: 20,
+                                    color: context.theme.iconTheme.color ??
+                                        context.colorScheme.onSurface),
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),

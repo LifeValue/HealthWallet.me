@@ -27,5 +27,7 @@ class ScanState with _$ScanState {
     @Default([]) List<PatientGroup> currentPatients,
     PatientGroup? selectedPatient,
     WalletNotification? notification,
+    Patient? attachedPatient,
+    Encounter? attachedEncounter,
   }) = _ScanState;
 }

@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
@@ -58,14 +59,16 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       context.read<ScanBloc>().add(ScanSessionCleared(session: session));
 
       if (result == false) {
-        final encounterId = await showDialog<String>(
+        final result = await showDialog<AttachToEncounterResult>(
           context: context,
           builder: (context) => const AttachToEncounterWidget(),
         );
 
-        if (encounterId == null || !context.mounted) return;
+        if (result == null || !context.mounted) return;
 
-        await attachToEncounter(context, session.filePaths, encounterId);
+        final (patient, encounter) = result;
+
+        await attachToEncounter(context, session.filePaths, encounter);
       }
     }
   }
@@ -74,7 +77,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
   Future<void> attachToEncounter(
     BuildContext context,
     List<String> filePaths,
-    String encounterId,
+    Encounter encounter,
   ) async {
     DialogHelper.showLoadingDialog(
       context,
@@ -115,7 +118,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: filePaths,
         patientId: patientId,
-        encounterId: encounterId,
+        encounter: encounter,
         sourceId: walletSource.id,
         title: 'Attached Documents',
       );
@@ -133,7 +136,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         DialogHelper.showAttachmentSuccessDialog(
           context,
           totalDocuments,
-          encounterId,
+          encounter,
           bloc,
         );
       }

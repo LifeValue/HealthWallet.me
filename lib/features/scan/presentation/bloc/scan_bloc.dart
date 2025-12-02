@@ -70,6 +70,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanMappingCancelled>(_onScanMappingCancelled);
     on<ScanResourceAdded>(_onScanResourceAdded);
     on<ResourcesAdded>(_onResourcesAdded);
+    on<ScanEncounterAttached>(_onScanEncounterAttached);
   }
 
   Future<void> _onScanInitialised(
@@ -598,7 +599,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       await _documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: activeSession.filePaths,
         patientId: subjectId,
-        encounterId: encounterId,
+        encounter: fhirResources.firstWhere((resource) => resource is Encounter)
+            as Encounter,
         sourceId: sourceId,
         title: activeSession.resources
             .whereType<MappingEncounter>()
@@ -734,5 +736,15 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       resources: updatedResources,
       updateDb: true,
     );
+  }
+
+  void _onScanEncounterAttached(
+    ScanEncounterAttached event,
+    Emitter<ScanState> emit,
+  ) {
+    emit(state.copyWith(
+      attachedPatient: event.patient,
+      attachedEncounter: event.encounter,
+    ));
   }
 }

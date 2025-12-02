@@ -59,7 +59,7 @@ class PatientSelector extends StatelessWidget {
 
   Widget _buildPatientSelector(
       BuildContext context, AttachToEncounterState state) {
-    final selectedPatientId = state.selectedPatientId;
+    final selectedPatient = state.selectedPatient;
 
     if (state.patients.isEmpty) {
       return Text(
@@ -89,8 +89,8 @@ class PatientSelector extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: selectedPatientId,
+            child: DropdownButton<Patient>(
+              value: selectedPatient,
               isExpanded: true,
               icon: Icon(
                 Icons.arrow_drop_down,
@@ -98,8 +98,8 @@ class PatientSelector extends StatelessWidget {
                 size: 20,
               ),
               items: state.patients.map((Patient patient) {
-                return DropdownMenuItem<String>(
-                  value: patient.id,
+                return DropdownMenuItem<Patient>(
+                  value: patient,
                   child: Text(
                     patient.displayTitle,
                     style: AppTextStyle.bodyMedium.copyWith(
@@ -109,7 +109,7 @@ class PatientSelector extends StatelessWidget {
                   ),
                 );
               }).toList(),
-              onChanged: (String? newValue) {
+              onChanged: (Patient? newValue) {
                 if (newValue != null) {
                   context.read<AttachToEncounterBloc>().add(
                         AttachToEncounterPatientChanged(newValue),

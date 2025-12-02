@@ -7,19 +7,33 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/patient_selector.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:intl/intl.dart';
 
+typedef AttachToEncounterResult = (Patient, Encounter);
+
 class AttachToEncounterWidget extends StatelessWidget {
-  const AttachToEncounterWidget({super.key});
+  const AttachToEncounterWidget({
+    this.newPatient,
+    this.newEncounter,
+    super.key,
+  });
+
+  final MappingPatient? newPatient;
+  final MappingEncounter? newEncounter;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          getIt<AttachToEncounterBloc>()..add(const AttachToEncounterStarted()),
+      create: (context) => getIt<AttachToEncounterBloc>()
+        ..add(AttachToEncounterStarted(
+          newPatient: newPatient,
+          newEncounter: newEncounter,
+        )),
       child: const _AttachToEncounterView(),
     );
   }
@@ -51,10 +65,13 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
         );
   }
 
-  void _handleDone(BuildContext context, Encounter? selectedEncounter) {
-    if (selectedEncounter != null) {
-      Navigator.of(context).pop(selectedEncounter.resourceId);
-    }
+  void _handleDone(
+    BuildContext context,
+    Patient selectedPatient,
+    Encounter selectedEncounter,
+  ) {
+    Navigator.of(context)
+        .pop<AttachToEncounterResult>((selectedPatient, selectedEncounter));
   }
 
   @override
@@ -367,8 +384,11 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: state.selectedEncounter != null
-                              ? () =>
-                                  _handleDone(context, state.selectedEncounter)
+                              ? () => _handleDone(
+                                    context,
+                                    state.selectedPatient!,
+                                    state.selectedEncounter!,
+                                  )
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: state.selectedEncounter != null

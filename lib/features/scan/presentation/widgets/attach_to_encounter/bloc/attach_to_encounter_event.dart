@@ -7,13 +7,16 @@ abstract class AttachToEncounterEvent {
 @freezed
 class AttachToEncounterStarted extends AttachToEncounterEvent
     with _$AttachToEncounterStarted {
-  const factory AttachToEncounterStarted() = _AttachToEncounterStarted;
+  const factory AttachToEncounterStarted({
+    MappingPatient? newPatient, 
+    MappingEncounter? newEncounter,
+  }) = _AttachToEncounterStarted;
 }
 
 @freezed
 class AttachToEncounterPatientChanged extends AttachToEncounterEvent
     with _$AttachToEncounterPatientChanged {
-  const factory AttachToEncounterPatientChanged(String patientId) =
+  const factory AttachToEncounterPatientChanged(Patient patient) =
       _AttachToEncounterPatientChanged;
 }
 

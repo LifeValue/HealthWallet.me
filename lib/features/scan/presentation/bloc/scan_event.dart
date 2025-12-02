@@ -116,3 +116,11 @@ class ResourcesAdded extends ScanEvent with _$ResourcesAdded {
     required List<String> resourceTypes,
   }) = _ResourcesAdded;
 }
+
+@freezed
+class ScanEncounterAttached extends ScanEvent with _$ScanEncounterAttached {
+  const factory ScanEncounterAttached({
+    required Patient patient,
+    required Encounter encounter,
+  }) = _ScanEncounterAttached;
+}

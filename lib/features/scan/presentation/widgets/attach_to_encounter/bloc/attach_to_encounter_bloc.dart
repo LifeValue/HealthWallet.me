@@ -3,6 +3,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 
@@ -39,10 +41,10 @@ class AttachToEncounterBloc
       );
 
       final allPatients = allPatientsResources.whereType<Patient>().toList();
-      final uniquePatients =
+      List<Patient> uniquePatients =
           _deduplicationService.getUniquePatients(allPatients);
 
-      if (uniquePatients.isEmpty) {
+      if (uniquePatients.isEmpty && event.newPatient == null) {
         emit(state.copyWith(
           status: AttachToEncounterStatus.success,
           patients: [],
@@ -50,14 +52,23 @@ class AttachToEncounterBloc
         return;
       }
 
-      final selectedPatientId = uniquePatients.first.id;
+      if (event.newPatient != null) {
+        uniquePatients = [
+          event.newPatient!.toFhirResource() as Patient,
+          ...uniquePatients
+        ];
+      }
+
+      final selectedPatient = uniquePatients.first;
 
       emit(state.copyWith(
         patients: uniquePatients,
-        selectedPatientId: selectedPatientId,
+        selectedPatient: selectedPatient,
+        newPatient: event.newPatient,
+        newEncounter: event.newEncounter,
       ));
 
-      await _loadEncounters(emit, selectedPatientId);
+      await _loadEncounters(emit, selectedPatient);
     } catch (e) {
       logger.e('Error loading patients in AttachToEncounterBloc: $e');
       emit(state.copyWith(
@@ -72,18 +83,17 @@ class AttachToEncounterBloc
     Emitter<AttachToEncounterState> emit,
   ) async {
     emit(state.copyWith(
-      selectedPatientId: event.patientId,
+      selectedPatient: event.patient,
       status: AttachToEncounterStatus.loading,
     ));
-    await _loadEncounters(emit, event.patientId);
+    await _loadEncounters(emit, event.patient);
   }
 
   Future<void> _loadEncounters(
     Emitter<AttachToEncounterState> emit,
-    String patientId,
+    Patient patient,
   ) async {
     try {
-      final patient = state.patients.firstWhere((p) => p.id == patientId);
       final sourceId = patient.sourceId;
 
       final resources = await _recordsRepository.getResources(
@@ -92,7 +102,14 @@ class AttachToEncounterBloc
         limit: 100,
       );
 
-      final encounters = resources.whereType<Encounter>().toList();
+      List<Encounter> encounters = resources.whereType<Encounter>().toList();
+
+      if (state.newEncounter != null) {
+        encounters = [
+          state.newEncounter!.toFhirResource() as Encounter,
+          ...encounters
+        ];
+      }
 
       emit(state.copyWith(
         status: AttachToEncounterStatus.success,

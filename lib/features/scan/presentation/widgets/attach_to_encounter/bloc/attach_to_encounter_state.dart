@@ -7,11 +7,13 @@ class AttachToEncounterState with _$AttachToEncounterState {
   const factory AttachToEncounterState({
     @Default(AttachToEncounterStatus.initial) AttachToEncounterStatus status,
     @Default([]) List<Patient> patients,
-    String? selectedPatientId,
+    Patient? selectedPatient,
     @Default([]) List<Encounter> encounters,
     @Default([]) List<Encounter> filteredEncounters,
     Encounter? selectedEncounter,
     @Default('') String searchQuery,
+    MappingPatient? newPatient,
+    MappingEncounter? newEncounter,
     String? errorMessage,
   }) = _AttachToEncounterState;
 }
