@@ -10,7 +10,7 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/home/domain/entities/wallet_notification.dart';
-import 'package:health_wallet/features/home/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/scan_page.dart';
@@ -240,7 +240,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 Expanded(
                                   child: _buildNavItem(
                                     context: context,
-                                    icon: Assets.icons.documentFile.svg(
+                                    icon: Assets.icons.scan.svg(
                                       width: 24,
                                       height: 24,
                                       colorFilter: ColorFilter.mode(

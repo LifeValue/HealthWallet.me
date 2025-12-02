@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:ui';
 
 import 'package:drift/drift.dart' as drift;
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 
 part 'processing_session.freezed.dart';
@@ -96,6 +99,18 @@ enum ProcessingStatus {
         return "Draft";
     }
   }
+
+  Color getColor(BuildContext context) {
+    switch (this) {
+      case ProcessingStatus.pending:
+        return context.colorScheme.secondary;
+      case ProcessingStatus.processing:
+        return context.colorScheme.primary;
+      case ProcessingStatus.draft:
+        return context.colorScheme.primary;
+    }
+  }
+
 }
 
 enum ProcessingOrigin {

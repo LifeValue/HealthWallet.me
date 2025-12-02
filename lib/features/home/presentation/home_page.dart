@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/features/home/notifications/notification_widget.dart';
+import 'package:health_wallet/features/notifications/notification_widget.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_dialog_controller.dart';
 import 'package:onboarding_overlay/onboarding_overlay.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';

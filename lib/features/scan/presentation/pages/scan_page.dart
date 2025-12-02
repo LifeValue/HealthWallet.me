@@ -10,6 +10,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/session_list.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
@@ -204,40 +205,76 @@ class _ScanViewState extends State<ScanView>
   }
 
   Widget _buildMainView(BuildContext context, ScanState state) {
-    List<ProcessingSession> scanSessions = state.sessions
-        .where((element) => element.origin == ProcessingOrigin.scan)
-        .toList();
+  List<ProcessingSession> scanSessions = state.sessions
+      .where((element) => element.origin == ProcessingOrigin.scan)
+      .toList();
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (scanSessions.isNotEmpty)
-            SizedBox(
-              height: MediaQuery.sizeOf(context).height / 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Active scan sessions:",
-                    style: AppTextStyle.buttonLarge,
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        if (scanSessions.isNotEmpty)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Active scan sessions:",
+                  style: AppTextStyle.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Only one processing session can run at a time!",
+                  style: AppTextStyle.bodySmall,
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: SessionList(sessions: scanSessions),
+                ),
+                const SizedBox(height: 16),
+               Padding(
+                  padding: const EdgeInsets.only(bottom: 80.0),
+                  child: AppButton(
+                    label: 'Scan Document',
+                    icon: Assets.icons.scan.svg(),
+                    variant: AppButtonVariant.primary,
+                    onPressed: () => _handleDirectScan(context),
                   ),
-                  const SizedBox(height: 24),
-                  SessionList(sessions: scanSessions),
-                ],
-              ),
+                ),
+              ],
             ),
-          AppButton(
-            label: 'Scan Document',
-            icon: const Icon(Icons.document_scanner_outlined),
-            variant: AppButtonVariant.primary,
-            onPressed: () => _handleDirectScan(context),
           ),
-        ],
-      ),
-    );
-  }
+        if (scanSessions.isEmpty)
+          Column(
+            children: [
+              const SizedBox(height: 16),
+              Assets.images.emptyScan.svg(),
+              const SizedBox(height: 36),
+              const Text(
+                "No scans yet",
+                style: AppTextStyle.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Scan or import documents to get started",
+                style: AppTextStyle.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              AppButton(
+                label: 'Scan Document',
+                icon: Assets.icons.scan.svg(),
+                variant: AppButtonVariant.primary,
+                onPressed: () => _handleDirectScan(context),
+              ),
+            ],
+          ),
+      ],
+    ),
+  );
+}
 
   Future<void> _handleDirectScan(BuildContext context) async {
     final cameraStatus = await Permission.camera.request();

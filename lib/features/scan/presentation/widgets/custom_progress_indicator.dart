@@ -44,7 +44,7 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 32),
+        const SizedBox(height: 14),
         LinearProgressIndicator(
           value: widget.progress,
           minHeight: 8,
@@ -52,7 +52,6 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
           backgroundColor: context.colorScheme.primary.withValues(alpha: 0.1),
           color: context.colorScheme.primary,
         ),
-        const SizedBox(height: 8),
         if (widget.text != null)
           AnimatedBuilder(
             animation: _shimmerController,
