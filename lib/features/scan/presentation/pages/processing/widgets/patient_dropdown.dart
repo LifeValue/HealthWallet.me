@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 
 class PatientDropdown extends StatelessWidget {
@@ -44,14 +44,29 @@ class PatientDropdown extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
       ),
-      style: AppTextStyle.labelLarge.copyWith(color: Colors.black),
-      hint: const Text('Please select an option'),
+      style: AppTextStyle.labelLarge.copyWith(
+        color: context.colorScheme.onSurface,
+      ),
+      hint: Text(
+        'Please select an option',
+        style: AppTextStyle.labelLarge.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+      ),
       value: selectedPatient,
       isExpanded: true,
+      dropdownColor: context.colorScheme.surface,
+      iconEnabledColor: context.colorScheme.onSurface,
+      iconDisabledColor: context.colorScheme.onSurfaceVariant,
       items: options.map((PatientGroup patient) {
         return DropdownMenuItem<PatientGroup>(
           value: patient,
-          child: Text(patient.representativePatient.title),
+          child: Text(
+            patient.representativePatient.title,
+            style: AppTextStyle.labelLarge.copyWith(
+              color: context.colorScheme.onSurface,
+            ),
+          ),
         );
       }).toList(),
       onChanged: onChanged,

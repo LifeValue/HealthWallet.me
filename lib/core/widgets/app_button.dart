@@ -7,6 +7,7 @@ enum AppButtonVariant {
   primary,
   secondary,
   transparent,
+  outlined,
 }
 
 class AppButton extends StatelessWidget {
@@ -62,6 +63,39 @@ class AppButton extends StatelessWidget {
                 horizontal: Insets.medium,
                 vertical: Insets.smallNormal,
               ),
+        ),
+      );
+    } else if (variant == AppButtonVariant.outlined) {
+      // Outlined button variant
+      final borderColor = backgroundColor ?? colorScheme.primary;
+      final textColor = backgroundColor ?? colorScheme.primary;
+      final iconColor = backgroundColor ?? colorScheme.primary;
+
+      button = OutlinedButton.icon(
+        onPressed: enabled ? onPressed : null,
+        icon: icon != null
+            ? _buildIconWithColorFilter(icon!, iconColor)
+            : const SizedBox.shrink(),
+        label: Text(
+          label,
+          style: AppTextStyle.buttonMedium.copyWith(
+            color: textColor,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: textColor,
+          side: BorderSide(color: borderColor, width: 1),
+          disabledForegroundColor: textColor.withOpacity(0.5),
+          disabledBackgroundColor: Colors.transparent,
+          padding: padding ??
+              const EdgeInsets.symmetric(
+                horizontal: Insets.medium,
+                vertical: Insets.smallNormal,
+              ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Insets.small),
+          ),
         ),
       );
     } else {

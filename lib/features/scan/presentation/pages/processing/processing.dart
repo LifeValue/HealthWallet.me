@@ -157,7 +157,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           const SizedBox(height: Insets.normal),
           AppButton(
             label: 'Cancel',
-            variant: AppButtonVariant.secondary,
+            variant: AppButtonVariant.outlined,
             onPressed: () => context
                 .read<ScanBloc>()
                 .add(ScanMappingCancelled(sessionId: widget.sessionId)),
@@ -212,7 +212,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           const SizedBox(height: Insets.normal),
           AppButton(
             label: 'Retry',
-            variant: AppButtonVariant.primary,
+            variant: AppButtonVariant.outlined,
             onPressed: () => context
                 .read<ScanBloc>()
                 .add(ScanMappingInitiated(sessionId: widget.sessionId)),
@@ -255,7 +255,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           const SizedBox(height: Insets.normal),
           AppButton(
             label: 'Retry',
-            variant: AppButtonVariant.primary,
+            variant: AppButtonVariant.outlined,
             onPressed: () => context
                 .read<ScanBloc>()
                 .add(ScanMappingInitiated(sessionId: widget.sessionId)),
@@ -278,7 +278,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
       children: [
         if (!activeSession.resources
             .any((resource) => resource is MappingPatient)) ...[
-          const Text("Select the patient", style: AppTextStyle.bodyLarge),
+          Text(
+            "Select the patient",
+            style: AppTextStyle.bodyLarge.copyWith(
+              color: context.colorScheme.onSurface,
+            ),
+          ),
           const SizedBox(height: 8),
           PatientDropdown(
             options: state.currentPatients,
