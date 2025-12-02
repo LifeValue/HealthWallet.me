@@ -32,7 +32,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       if (!context.mounted) return;
 
       if (isModelLoaded) {
-        context.router.push(FhirMapperRoute(sessionId: session.id));
+        context.router.push(ProcessingRoute(sessionId: session.id));
         return;
       }
 
@@ -53,7 +53,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     if (!context.mounted) return;
 
     if (result == true) {
-      context.router.push(FhirMapperRoute(sessionId: session.id));
+      context.router.push(ProcessingRoute(sessionId: session.id));
     } else {
       context.read<ScanBloc>().add(ScanSessionCleared(session: session));
 

@@ -10,8 +10,16 @@ import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/entities/wallet_notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_allergy_intolerance.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_condition.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_medication_statement.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_observation.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_organization.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_practitioner.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_procedure.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
@@ -59,6 +67,9 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanPatientSelected>(_onScanPatientSelected);
     on<ScanResourceCreationInitiated>(_onScanResourceCreationInitiated);
     on<ScanNotificationAcknowledged>(_onScanNotificationAcknowledged);
+    on<ScanMappingCancelled>(_onScanMappingCancelled);
+    on<ScanResourceAdded>(_onScanResourceAdded);
+    on<ResourcesAdded>(_onResourcesAdded);
   }
 
   Future<void> _onScanInitialised(
@@ -167,22 +178,33 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     DocumentImported event,
     Emitter<ScanState> emit,
   ) async {
+    logger.d('_onDocumentImported - START: ${event.filePath}');
     emit(state.copyWith(status: const ScanStatus.loading()));
     try {
       final file = File(event.filePath);
       final exists = await file.exists();
+      logger.d('_onDocumentImported - File exists: $exists');
 
       if (!exists) {
+        logger.d('_onDocumentImported - File does not exist, returning error');
         emit(state.copyWith(
           status: const ScanStatus.failure(error: 'File does not exist'),
         ));
         return;
       }
 
+      final fileSize = await file.length();
+      logger.d('_onDocumentImported - File size: $fileSize bytes');
+
+      logger.d('_onDocumentImported - Creating session...');
       await _createSession(emit,
           filePaths: [event.filePath], origin: ProcessingOrigin.import);
-    } catch (e) {
-      logger.e('Error importing document: ${event.filePath}', e);
+      logger.d('_onDocumentImported - Session created successfully');
+    } catch (e, stackTrace) {
+      logger.e(
+          '_onDocumentImported - Error importing document: ${event.filePath}',
+          e,
+          stackTrace);
       emit(state.copyWith(
         status: ScanStatus.failure(error: 'Failed to import document: $e'),
       ));
@@ -210,7 +232,16 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     try {
       final newSessions = [...state.sessions]
         ..removeWhere((session) => session.id == event.session.id);
-      emit(state.copyWith(sessions: newSessions));
+      final updatedImageMap =
+          Map<String, List<String>>.from(state.sessionImagePaths)
+            ..remove(event.session.id);
+      emit(state.copyWith(
+        sessions: newSessions,
+        sessionImagePaths: updatedImageMap,
+        allImagePathsForOCR: state.activeSessionId == event.session.id
+            ? []
+            : state.allImagePathsForOCR,
+      ));
 
       await _repository.deleteProcessingSession(event.session);
     } on Exception catch (e) {
@@ -266,28 +297,77 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     ScanSessionActivated event,
     Emitter<ScanState> emit,
   ) async {
-    try {
-      emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
-      final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
-      final allImages = await _ocrProcessingHelper.prepareAllImages(
-        filePaths: session.filePaths,
-      );
-      emit(state.copyWith(allImagePathsForOCR: allImages));
+    final isSameSession = state.activeSessionId == event.sessionId;
+    final alreadyProcessing = state.status == const ScanStatus.mapping() ||
+        state.status == const ScanStatus.editingResources();
 
-      if (session.status == ProcessingStatus.pending) {
-        emit(state.copyWith(status: const ScanStatus.mappingReady()));
-      } else if (session.status == ProcessingStatus.processing) {
-        emit(state.copyWith(status: const ScanStatus.mapping()));
-      } else if (session.status == ProcessingStatus.draft) {
-        emit(state.copyWith(status: const ScanStatus.editingResources()));
+    if (isSameSession && alreadyProcessing) {
+      logger.d(
+          '_onScanSessionActivated - Skipping re-activation: session already processing/editing');
+      return;
+    }
+
+    logger.d('_onScanSessionActivated - START: sessionId=${event.sessionId}');
+    try {
+      logger.d('_onScanSessionActivated - Emitting convertingPdfs status');
+      emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
+
+      logger.d('_onScanSessionActivated - Finding session...');
+      final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
+      logger.d(
+          '_onScanSessionActivated - Session found: filePaths=${session.filePaths}');
+
+      final cachedImages = state.sessionImagePaths[event.sessionId];
+      List<String> allImages;
+      if (cachedImages != null && cachedImages.isNotEmpty) {
+        logger.d(
+            '_onScanSessionActivated - Using cached images for session ${event.sessionId}');
+        allImages = cachedImages;
+      } else {
+        logger.d('_onScanSessionActivated - Preparing images...');
+        allImages = await _ocrProcessingHelper.prepareAllImages(
+          filePaths: session.filePaths,
+        );
+        logger.d(
+            '_onScanSessionActivated - Images prepared: count=${allImages.length}');
       }
+
+      final updatedImageMap = Map<String, List<String>>.from(
+        state.sessionImagePaths,
+      )..[event.sessionId] = allImages;
+
+      emit(state.copyWith(
+        allImagePathsForOCR: allImages,
+        sessionImagePaths: updatedImageMap,
+      ));
+      logger.d(
+          '_onScanSessionActivated - allImagePathsForOCR updated, sessionImagePaths stored');
 
       emit(state.copyWith(
         activeSessionId: event.sessionId,
         currentPatients: event.currentPatients,
         selectedPatient: event.currentPatients.first,
       ));
-    } catch (e) {
+      logger.d('_onScanSessionActivated - State updated with session info');
+
+      logger.d('_onScanSessionActivated - Session status: ${session.status}');
+      if (session.status == ProcessingStatus.pending) {
+        logger.d('_onScanSessionActivated - Auto-starting processing...');
+        emit(state.copyWith(status: const ScanStatus.mapping()));
+        await Future.delayed(const Duration(seconds: 1));
+        if (!emit.isDone) {
+          logger
+              .d('_onScanSessionActivated - Adding ScanMappingInitiated event');
+          add(ScanMappingInitiated(sessionId: event.sessionId));
+        }
+      } else if (session.status == ProcessingStatus.processing) {
+        emit(state.copyWith(status: const ScanStatus.mapping()));
+      } else if (session.status == ProcessingStatus.draft) {
+        emit(state.copyWith(status: const ScanStatus.editingResources()));
+      }
+      logger.d('_onScanSessionActivated - COMPLETE');
+    } catch (e, stackTrace) {
+      logger.e('_onScanSessionActivated - ERROR: $e', e, stackTrace);
       emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
     }
   }
@@ -328,12 +408,18 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) async {
     try {
-      _updateSession(emit,
-          sessionId: event.sessionId, status: ProcessingStatus.processing);
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.processing,
+        updateDb: true,
+      );
       emit(state.copyWith(status: const ScanStatus.mapping()));
 
-      final medicalText = await _ocrProcessingHelper
-          .processOcrForImages(state.allImagePathsForOCR);
+      final sessionImages =
+          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final medicalText =
+          await _ocrProcessingHelper.processOcrForImages(sessionImages);
 
       final stream = _repository.mapResources(medicalText);
 
@@ -373,11 +459,12 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         sessionId: event.sessionId,
         resources: updatedResources,
         status: ProcessingStatus.draft,
+        updateDb: true,
       );
 
       final notification = WalletNotification(
         text: "${finalSession.origin} processing finished",
-        route: FhirMapperRoute(sessionId: event.sessionId),
+        route: ProcessingRoute(sessionId: event.sessionId),
         time: DateTime.now(),
       );
 
@@ -386,8 +473,12 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         notification: notification,
       ));
     } on Exception catch (e) {
-      _updateSession(emit,
-          sessionId: event.sessionId, status: ProcessingStatus.pending);
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.pending,
+        updateDb: true,
+      );
       if (!emit.isDone) {
         emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
       }
@@ -527,5 +618,121 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) {
     emit(state.copyWith(notification: null));
+  }
+
+  void _onScanMappingCancelled(
+    ScanMappingCancelled event,
+    Emitter<ScanState> emit,
+  ) {
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      status: ProcessingStatus.pending,
+      progress: 0.0,
+      updateDb: true,
+    );
+    emit(state.copyWith(status: const ScanStatus.cancelled()));
+  }
+
+  void _onScanResourceAdded(
+    ScanResourceAdded event,
+    Emitter<ScanState> emit,
+  ) {
+    final activeSession =
+        state.sessions.firstWhere((s) => s.id == event.sessionId);
+
+    MappingResource newResource;
+    final newId = const Uuid().v4();
+
+    switch (event.resourceType) {
+      case 'AllergyIntolerance':
+        newResource = MappingAllergyIntolerance(id: newId);
+        break;
+      case 'Condition':
+        newResource = MappingCondition(id: newId);
+        break;
+      case 'DiagnosticReport':
+        newResource = MappingDiagnosticReport(id: newId);
+        break;
+      case 'MedicationStatement':
+        newResource = MappingMedicationStatement(id: newId);
+        break;
+      case 'Observation':
+        newResource = MappingObservation(id: newId);
+        break;
+      case 'Organization':
+        newResource = MappingOrganization(id: newId);
+        break;
+      case 'Practitioner':
+        newResource = MappingPractitioner(id: newId);
+        break;
+      case 'Procedure':
+        newResource = MappingProcedure(id: newId);
+        break;
+      default:
+        return;
+    }
+
+    final newResources = [...activeSession.resources, newResource];
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      resources: newResources,
+      updateDb: true,
+    );
+  }
+
+  void _onResourcesAdded(
+    ResourcesAdded event,
+    Emitter<ScanState> emit,
+  ) {
+    final activeSession =
+        state.sessions.firstWhere((s) => s.id == event.sessionId);
+
+    final List<MappingResource> newResources = [];
+
+    for (final resourceType in event.resourceTypes) {
+      MappingResource? newResource;
+      final newId = const Uuid().v4();
+
+      switch (resourceType) {
+        case 'AllergyIntolerance':
+          newResource = MappingAllergyIntolerance(id: newId);
+          break;
+        case 'Condition':
+          newResource = MappingCondition(id: newId);
+          break;
+        case 'DiagnosticReport':
+          newResource = MappingDiagnosticReport(id: newId);
+          break;
+        case 'MedicationStatement':
+          newResource = MappingMedicationStatement(id: newId);
+          break;
+        case 'Observation':
+          newResource = MappingObservation(id: newId);
+          break;
+        case 'Organization':
+          newResource = MappingOrganization(id: newId);
+          break;
+        case 'Practitioner':
+          newResource = MappingPractitioner(id: newId);
+          break;
+        case 'Procedure':
+          newResource = MappingProcedure(id: newId);
+          break;
+        default:
+          continue;
+      }
+
+      newResources.add(newResource);
+    }
+
+    final updatedResources = [...activeSession.resources, ...newResources];
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      resources: updatedResources,
+      updateDb: true,
+    );
   }
 }

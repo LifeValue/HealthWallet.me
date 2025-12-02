@@ -94,3 +94,25 @@ class ScanNotificationAcknowledged extends ScanEvent
     with _$ScanNotificationAcknowledged {
   const factory ScanNotificationAcknowledged() = _ScanNotificationAcknowledged;
 }
+
+@freezed
+class ScanMappingCancelled extends ScanEvent with _$ScanMappingCancelled {
+  const factory ScanMappingCancelled({required String sessionId}) =
+      _ScanMappingCancelled;
+}
+
+@freezed
+class ScanResourceAdded extends ScanEvent with _$ScanResourceAdded {
+  const factory ScanResourceAdded({
+    required String sessionId,
+    required String resourceType,
+  }) = _ScanResourceAdded;
+}
+
+@freezed
+class ResourcesAdded extends ScanEvent with _$ResourcesAdded {
+  const factory ResourcesAdded({
+    required String sessionId,
+    required List<String> resourceTypes,
+  }) = _ResourcesAdded;
+}

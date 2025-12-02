@@ -28,7 +28,8 @@ class SessionList extends StatelessWidget {
           final isInProgress = session.status == ProcessingStatus.processing;
 
           return InkWell(
-            onTap: () => context.router.push(FhirMapperRoute(sessionId: session.id)),
+            onTap: () =>
+                context.router.push(ProcessingRoute(sessionId: session.id)),
             child: Padding(
               padding: EdgeInsets.only(
                   bottom: (index < sessions.length - 1) ? 16 : 0),

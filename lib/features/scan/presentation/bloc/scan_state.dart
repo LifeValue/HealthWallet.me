@@ -7,6 +7,7 @@ class ScanStatus with _$ScanStatus {
   const factory ScanStatus.sessionCreated(
       {required ProcessingSession session}) = SessionCreated;
   const factory ScanStatus.failure({required String error}) = Failure;
+  const factory ScanStatus.cancelled() = Cancelled;
   const factory ScanStatus.convertingPdfs() = ConvertingPdfs;
   const factory ScanStatus.mappingReady() = MappingReady;
   const factory ScanStatus.mapping() = Mapping;
@@ -22,6 +23,7 @@ class ScanState with _$ScanState {
     @Default([]) List<ProcessingSession> sessions,
     String? activeSessionId,
     @Default([]) List<String> allImagePathsForOCR,
+    @Default({}) Map<String, List<String>> sessionImagePaths,
     @Default([]) List<PatientGroup> currentPatients,
     PatientGroup? selectedPatient,
     WalletNotification? notification,

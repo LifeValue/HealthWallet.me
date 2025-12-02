@@ -8,7 +8,7 @@ import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/theme_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometric_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
-import 'package:health_wallet/core/widgets/confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
 
 class SettingsSection extends StatelessWidget {
   const SettingsSection({super.key});

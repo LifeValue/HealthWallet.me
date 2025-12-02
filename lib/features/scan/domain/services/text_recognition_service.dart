@@ -1,10 +1,14 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:image/image.dart' as img;
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:crypto/crypto.dart';
 
 @injectable
 class TextRecognitionService {
@@ -69,6 +73,181 @@ class TextRecognitionService {
       }
       return imagePaths;
     } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Directory> _getCacheDirectory() async {
+    final cacheDir = await getTemporaryDirectory();
+    final pdfCacheDir = Directory(path.join(cacheDir.path, 'pdf_preview_cache'));
+    if (!await pdfCacheDir.exists()) {
+      await pdfCacheDir.create(recursive: true);
+    }
+    return pdfCacheDir;
+  }
+
+  String _generateCacheKey(String pdfPath, int fileSize, DateTime modified, double dpi) {
+    final keyString = '$pdfPath|$fileSize|${modified.millisecondsSinceEpoch}|$dpi';
+    final bytes = utf8.encode(keyString);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  Future<List<String>?> _getCachedImages(String cacheKey) async {
+    try {
+      final cacheDir = await _getCacheDirectory();
+      final cacheMetadataFile = File(path.join(cacheDir.path, '$cacheKey.json'));
+      
+      if (!await cacheMetadataFile.exists()) {
+        return null;
+      }
+
+      final metadataJson = await cacheMetadataFile.readAsString();
+      final metadata = jsonDecode(metadataJson) as Map<String, dynamic>;
+      final cachedImagePaths = (metadata['imagePaths'] as List)
+          .map((p) => p as String)
+          .toList();
+
+      bool allExist = true;
+      for (final imagePath in cachedImagePaths) {
+        final imageFile = File(imagePath);
+        if (!await imageFile.exists()) {
+          allExist = false;
+          break;
+        }
+      }
+
+      if (allExist && cachedImagePaths.isNotEmpty) {
+        return cachedImagePaths;
+      } else {
+        await cacheMetadataFile.delete();
+        for (final imagePath in cachedImagePaths) {
+          try {
+            await File(imagePath).delete();
+          } catch (e) {
+            // ignore
+          }
+        }
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _saveToCache(String cacheKey, List<String> imagePaths) async {
+    try {
+      final cacheDir = await _getCacheDirectory();
+      final cacheMetadataFile = File(path.join(cacheDir.path, '$cacheKey.json'));
+      
+      final metadata = {
+        'imagePaths': imagePaths,
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+      
+      await cacheMetadataFile.writeAsString(jsonEncode(metadata));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  Future<List<String>> convertPdfToImagesForPreview(
+    String pdfPath, {
+    double dpi = 72,
+  }) async {
+    logger.d('convertPdfToImagesForPreview - START: $pdfPath (dpi=$dpi)');
+    try {
+      final file = File(pdfPath);
+      final exists = await file.exists();
+      logger.d('convertPdfToImagesForPreview - File exists: $exists');
+      
+      if (!exists) {
+        logger.d('convertPdfToImagesForPreview - File not found, returning empty');
+        return [];
+      }
+
+      logger.d('convertPdfToImagesForPreview - Getting file stats...');
+      final fileStat = await file.stat();
+      final fileSize = fileStat.size;
+      final modified = fileStat.modified;
+      logger.d('convertPdfToImagesForPreview - File size: $fileSize bytes, modified: $modified');
+      
+      final cacheKey = _generateCacheKey(pdfPath, fileSize, modified, dpi);
+      logger.d('convertPdfToImagesForPreview - Cache key: $cacheKey');
+      
+      logger.d('convertPdfToImagesForPreview - Checking cache...');
+      final cachedImages = await _getCachedImages(cacheKey);
+      if (cachedImages != null) {
+        logger.d('convertPdfToImagesForPreview - Cache hit! ${cachedImages.length} images');
+        return cachedImages;
+      }
+      logger.d('convertPdfToImagesForPreview - Cache miss, converting PDF...');
+      
+      final List<String> imagePaths = [];
+      final cacheDir = await _getCacheDirectory();
+      logger.d('convertPdfToImagesForPreview - Cache dir: ${cacheDir.path}');
+      
+      logger.d('convertPdfToImagesForPreview - Reading PDF bytes...');
+      final bytes = await file.readAsBytes();
+      logger.d('convertPdfToImagesForPreview - PDF bytes read: ${bytes.length}');
+      
+      int index = 1;
+      int totalPages = 0;
+      
+      logger.d('convertPdfToImagesForPreview - Starting rasterization...');
+      await for (final page in Printing.raster(bytes, dpi: dpi)) {
+        totalPages++;
+        logger.d('convertPdfToImagesForPreview - Processing page $index...');
+        try {
+          logger.d('convertPdfToImagesForPreview - Converting page $index to PNG...');
+          final pngBytes = await page.toPng();
+          logger.d('convertPdfToImagesForPreview - Page $index PNG: ${pngBytes.length} bytes');
+          
+          logger.d('convertPdfToImagesForPreview - Decoding PNG for page $index...');
+          final decoded = img.decodePng(pngBytes);
+          
+          if (decoded == null) {
+            logger.d('convertPdfToImagesForPreview - Failed to decode page $index');
+            index++;
+            continue;
+          }
+          logger.d('convertPdfToImagesForPreview - Page $index decoded: ${decoded.width}x${decoded.height}');
+          
+          logger.d('convertPdfToImagesForPreview - Creating white background for page $index...');
+          final whiteBg = img.Image(width: decoded.width, height: decoded.height);
+          img.fill(whiteBg, color: img.ColorRgba8(255, 255, 255, 255));
+          img.compositeImage(whiteBg, decoded);
+          
+          logger.d('convertPdfToImagesForPreview - Encoding JPEG for page $index...');
+          final jpegBytes = img.encodeJpg(whiteBg, quality: 75);
+          logger.d('convertPdfToImagesForPreview - Page $index JPEG: ${jpegBytes.length} bytes');
+          
+          final cachedImageFile = File(
+            path.join(cacheDir.path, '${cacheKey}_page_$index.jpg'),
+          );
+          logger.d('convertPdfToImagesForPreview - Saving page $index to: ${cachedImageFile.path}');
+          await cachedImageFile.writeAsBytes(jpegBytes);
+          
+          imagePaths.add(cachedImageFile.path);
+          logger.d('convertPdfToImagesForPreview - Page $index saved successfully');
+        } catch (e, stackTrace) {
+          logger.e('convertPdfToImagesForPreview - Error processing page $index: $e', e, stackTrace);
+        }
+        index++;
+      }
+      
+      logger.d('convertPdfToImagesForPreview - Total pages processed: $totalPages, images created: ${imagePaths.length}');
+      
+      if (imagePaths.isNotEmpty) {
+        logger.d('convertPdfToImagesForPreview - Saving to cache...');
+        await _saveToCache(cacheKey, imagePaths);
+        logger.d('convertPdfToImagesForPreview - Cache saved');
+      }
+      
+      logger.d('convertPdfToImagesForPreview - COMPLETE: ${imagePaths.length} images');
+      return imagePaths;
+    } catch (e, stackTrace) {
+      logger.e('convertPdfToImagesForPreview - Conversion failed: $e', e, stackTrace);
       return [];
     }
   }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/delete_confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -52,7 +52,8 @@ class ResourcesForm extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(resource.label, style: AppTextStyle.bodyLarge),
-                      if (resource is! MappingEncounter && resource is! MappingPatient)
+                      if (resource is! MappingEncounter &&
+                          resource is! MappingPatient)
                         Padding(
                           padding: const EdgeInsetsGeometry.all(6),
                           child: GestureDetector(
