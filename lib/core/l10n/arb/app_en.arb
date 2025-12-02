@@ -231,7 +231,7 @@
     "aiModelUnlockDescription": "To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.",
     "aiModelDownloadInfo": "To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.",
     
-    "setUpMyHealthWallet": "Set Up my Health Wallet",
+    "setup": "Setup",
     "patientSetupTitle": "Set Up Your Profile",
     "patientSetupSubtitle": "Personalize your health wallet with your information",
     

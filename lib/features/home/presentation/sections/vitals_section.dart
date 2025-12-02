@@ -80,18 +80,23 @@ class VitalsSection extends StatelessWidget {
           shrinkWrap: true,
           padding: EdgeInsets.zero,
           itemBuilder: (context, vital, index) {
-            final cardWidget =
-                (index == 0 && firstCardFocusNode != null && !editMode)
-                    ? Focus(
-                        focusNode: firstCardFocusNode!,
-                        child: _buildVitalSignCard(
-                          context,
-                          vital,
-                          screenWidth,
-                          key: firstCardKey,
-                        ),
-                      )
-                    : _buildVitalSignCard(context, vital, screenWidth);
+            final isFirstCard = index == 0 && !editMode;
+            final cardContent = _buildVitalSignCard(
+              context,
+              vital,
+              screenWidth,
+              key: isFirstCard ? firstCardKey : null,
+            );
+
+            Widget cardWidget;
+            if (isFirstCard && firstCardFocusNode != null) {
+              cardWidget = Focus(
+                focusNode: firstCardFocusNode!,
+                child: cardContent,
+              );
+            } else {
+              cardWidget = cardContent;
+            }
 
             return editMode
                 ? cardWidget

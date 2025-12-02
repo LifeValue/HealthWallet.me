@@ -662,7 +662,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.';
 
   @override
-  String get setUpMyHealthWallet => 'Meine Gesundheits-Brieftasche einrichten';
+  String get setup => 'Einrichten';
 
   @override
   String get patientSetupTitle => 'Profil einrichten';

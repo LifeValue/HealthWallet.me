@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/features/notifications/notification_widget.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_dialog_controller.dart';
-import 'package:onboarding_overlay/onboarding_overlay.dart';
+import 'package:health_wallet/features/home/presentation/widgets/multi_highlight_overlay.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -23,8 +23,8 @@ import 'package:health_wallet/features/home/presentation/sections/vitals_section
 import 'package:health_wallet/features/home/presentation/sections/medical_records_section.dart';
 import 'package:health_wallet/features/home/presentation/sections/recent_records_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/preference_modal.dart';
-import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/home/core/constants/home_constants.dart';
+import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
@@ -89,35 +89,45 @@ class HomeView extends StatefulWidget {
 }
 
 class HomeViewState extends State<HomeView> {
-  late final HomeFocusController _focusController;
-  final GlobalKey<OnboardingState> _onboardingKey =
-      GlobalKey<OnboardingState>();
-
-  final GlobalKey _firstVitalCardKey = GlobalKey();
-  final GlobalKey _firstOverviewCardKey = GlobalKey();
+  late final HomeHighlightController _highlightController;
+  late final MultiHighlightOverlayController _overlayController;
 
   bool _hasShownOnboarding = false;
 
   @override
   void initState() {
     super.initState();
-    _focusController = HomeFocusController();
+    _highlightController = HomeHighlightController();
+    _overlayController = MultiHighlightOverlayController();
   }
 
   @override
   void dispose() {
-    _focusController.dispose();
+    _overlayController.hide();
     super.dispose();
   }
 
   void showOnboardingDirectly() {
     _hasShownOnboarding = false;
+    _showOnboardingOverlay();
+  }
 
-    if (_onboardingKey.currentState != null) {
-      try {
-        _onboardingKey.currentState!.show();
-      } catch (e) {}
-    }
+  void _showOnboardingOverlay() {
+    if (!mounted) return;
+
+    _overlayController.show(
+      context: context,
+      targetKeys: _highlightController.highlightTargetKeys,
+      message: HomeOnboardingConstants.reorderMessage,
+      onDismiss: () async {
+        context.read<SyncBloc>().add(const ResetTutorial());
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('onboarding_shown', true);
+
+        _hasShownOnboarding = false;
+      },
+    );
   }
 
   Future<void> _onRefresh() async {
@@ -129,25 +139,20 @@ class HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     return BlocListener<SyncBloc, SyncState>(
       listenWhen: (previous, current) {
-        return (previous.shouldShowTutorial != current.shouldShowTutorial &&
-                current.shouldShowTutorial) ||
-            (previous.shouldShowTutorial && !current.shouldShowTutorial);
+        return previous.shouldShowTutorial != current.shouldShowTutorial;
       },
       listener: (context, syncState) {
         if (!syncState.shouldShowTutorial) {
           _hasShownOnboarding = false;
+          return;
         }
 
         if (syncState.shouldShowTutorial && !_hasShownOnboarding) {
           _hasShownOnboarding = true;
-
-          context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
-
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (context.mounted && _onboardingKey.currentState != null) {
-              try {
-                _onboardingKey.currentState!.show();
-              } catch (e) {}
+          // Show overlay directly - data is already loaded by this point
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showOnboardingOverlay();
             }
           });
         }
@@ -166,80 +171,62 @@ class HomeViewState extends State<HomeView> {
             );
           }
 
-          return Onboarding(
-            key: _onboardingKey,
-            steps: HomeOnboardingSteps.createSteps(
-              firstVitalCardFocusNode: _focusController.firstVitalCardFocusNode,
-              firstOverviewCardFocusNode:
-                  _focusController.firstOverviewCardFocusNode,
-              context: context,
-            ),
-            onChanged: (index) {},
-            onEnd: (index) async {
-              context.read<SyncBloc>().add(const ResetTutorial());
-
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('onboarding_shown', true);
-
-              _hasShownOnboarding = false;
-            },
-            child: Scaffold(
-              backgroundColor: context.colorScheme.surface,
-              extendBody: true,
-              appBar: CustomAppBar(
-                automaticallyImplyLeading: false,
-                titleWidget: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          BlocBuilder<UserBloc, UserState>(
-                            builder: (context, userState) {
-                              return BlocBuilder<SyncBloc, SyncState>(
-                                builder: (context, syncState) {
-                                  final displayName =
-                                      userState.user.name.isNotEmpty
-                                          ? userState.user.name
-                                          : (syncState.syncQrData?.tokenMeta
-                                                      .fullName.isNotEmpty ==
-                                                  true
-                                              ? syncState.syncQrData!.tokenMeta
-                                                  .fullName
-                                              : 'User');
-                                  return RichText(
-                                    text: TextSpan(
-                                      style: AppTextStyle.titleMedium.copyWith(
-                                        color: context.colorScheme.onSurface,
-                                      ),
-                                      children: [
-                                        TextSpan(text: context.l10n.homeHi),
-                                        TextSpan(
-                                            text: displayName,
-                                            style: TextStyle(
-                                                color: context
-                                                    .colorScheme.primary)),
-                                      ],
+          return Scaffold(
+            backgroundColor: context.colorScheme.surface,
+            extendBody: true,
+            appBar: CustomAppBar(
+              automaticallyImplyLeading: false,
+              titleWidget: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        BlocBuilder<UserBloc, UserState>(
+                          builder: (context, userState) {
+                            return BlocBuilder<SyncBloc, SyncState>(
+                              builder: (context, syncState) {
+                                final displayName =
+                                    userState.user.name.isNotEmpty
+                                        ? userState.user.name
+                                        : (syncState.syncQrData?.tokenMeta
+                                                    .fullName.isNotEmpty ==
+                                                true
+                                            ? syncState
+                                                .syncQrData!.tokenMeta.fullName
+                                            : 'User');
+                                return RichText(
+                                  text: TextSpan(
+                                    style: AppTextStyle.titleMedium.copyWith(
+                                      color: context.colorScheme.onSurface,
                                     ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                                    children: [
+                                      TextSpan(text: context.l10n.homeHi),
+                                      TextSpan(
+                                          text: displayName,
+                                          style: TextStyle(
+                                              color:
+                                                  context.colorScheme.primary)),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    _buildActions(state),
-                  ],
-                ),
-                actions: const [],
+                  ),
+                  _buildActions(state),
+                ],
               ),
-              body: RefreshIndicator(
-                onRefresh: _onRefresh,
-                color: context.colorScheme.primary,
-                child: _buildHomeContent(context, state),
-              ),
+              actions: const [],
+            ),
+            body: RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: context.colorScheme.primary,
+              child: _buildHomeContent(context, state),
             ),
           );
         },
@@ -395,9 +382,8 @@ class HomeViewState extends State<HomeView> {
                             allAvailableVitals: state.allAvailableVitals,
                             editMode: editMode,
                             vitalsExpanded: state.vitalsExpanded,
-                            firstCardKey: _firstVitalCardKey,
-                            firstCardFocusNode:
-                                _focusController.firstVitalCardFocusNode,
+                            firstCardKey:
+                                _highlightController.firstVitalCardKey,
                             selectedVitals: Map.fromEntries(
                               state.selectedVitals.entries.map(
                                 (e) => MapEntry(e.key.title, e.value),
@@ -503,9 +489,8 @@ class HomeViewState extends State<HomeView> {
                           MedicalRecordsSection(
                             overviewCards: filteredCards,
                             editMode: editMode,
-                            firstCardKey: _firstOverviewCardKey,
-                            firstCardFocusNode:
-                                _focusController.firstOverviewCardFocusNode,
+                            firstCardKey:
+                                _highlightController.firstOverviewCardKey,
                             onLongPressCard: () => context
                                 .read<HomeBloc>()
                                 .add(const HomeEditModeChanged(true)),

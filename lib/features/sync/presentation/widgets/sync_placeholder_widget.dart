@@ -129,7 +129,7 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
                       const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                 ),
                 label: Text(
-                  context.l10n.setUpMyHealthWallet,
+                  context.l10n.setup,
                   style: AppTextStyle.buttonMedium.copyWith(
                     color: Colors.white,
                   ),
@@ -256,19 +256,10 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     return context.l10n.loadDemoDataMessage;
   }
 
-  void _handleLoadDemoData(BuildContext context) async {
-    try {
-      _hasInitiatedDemoDataLoading = true;
-      context.read<SyncBloc>().add(const LoadDemoData());
-
-      await Future.delayed(const Duration(milliseconds: 1000));
-
-      if (mounted && context.mounted) {
-        _handleDemoDataCompletion(context);
-      }
-    } catch (e) {
-      logger.e('Error loading demo data: $e');
-    }
+  void _handleLoadDemoData(BuildContext context) {
+    _hasInitiatedDemoDataLoading = true;
+    context.read<SyncBloc>().add(const LoadDemoData());
+    // BlocListener will handle completion when hasDemoData becomes true
   }
 
   void _handleDemoDataCompletion(BuildContext context) async {
@@ -283,45 +274,36 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
       title: context.l10n.success,
       message: context.l10n.demoDataLoadedSuccessfully,
       onOkPressed: () async {
-        if (_syncBloc != null) {
-          try {
-            _syncBloc!.add(const DemoDataConfirmed());
-          } catch (e) {}
-        }
+        _syncBloc?.add(const DemoDataConfirmed());
 
+        // Initialize and select demo patient
         patientBloc.add(const PatientInitialised());
-
-        await Future.delayed(const Duration(milliseconds: 600));
+        await Future.delayed(const Duration(milliseconds: 300));
 
         final patientState = patientBloc.state;
-
         final demoPatients = patientState.patients
             .where((p) => p.sourceId == 'demo_data')
             .toList();
 
         if (demoPatients.isNotEmpty) {
           final demoPatient = demoPatients.first;
-
           if (patientState.selectedPatientId != demoPatient.id) {
             patientBloc.add(PatientSelectionChanged(patientId: demoPatient.id));
-            await Future.delayed(const Duration(milliseconds: 300));
           }
-
-          await Future.delayed(const Duration(milliseconds: 200));
-
           homeBloc.add(
             const HomeSourceChanged('demo_data',
                 patientSourceIds: ['demo_data']),
           );
-
-          await Future.delayed(const Duration(milliseconds: 300));
         }
 
-        // Close dialog AFTER all setup is complete
+        await Future.delayed(const Duration(milliseconds: 200));
+
+        // Close dialog
         if (context.mounted) {
           Navigator.of(context).pop();
         }
 
+        // Navigate to home
         final pageControllerRef = widget.pageController;
         if (pageControllerRef != null) {
           pageControllerRef.animateToPage(0,
@@ -330,12 +312,9 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
           context.router.pop();
         }
 
-        Future.delayed(const Duration(milliseconds: 400), () {
-          try {
-            syncBloc.add(const TriggerTutorial());
-          } catch (e) {
-            logger.e('Failed to trigger tutorial: $e');
-          }
+        // Trigger tutorial after navigation completes
+        Future.delayed(const Duration(milliseconds: 350), () {
+          syncBloc.add(const TriggerTutorial());
         });
       },
     );

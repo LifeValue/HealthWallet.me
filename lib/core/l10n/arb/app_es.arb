@@ -216,7 +216,7 @@
     "aiModelUnlockDescription": "Para leer y organizar automáticamente tus documentos médicos, esta función utiliza un modelo de IA seguro y local en tu dispositivo. Tus datos permanecen completamente privados.",
     "aiModelDownloadInfo": "Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única.",
     
-    "setUpMyHealthWallet": "Configurar mi Cartera de Salud",
+    "setup": "Configurar",
     "patientSetupTitle": "Configura tu Perfil",
     "patientSetupSubtitle": "Personaliza tu cartera de salud con tu información",
     

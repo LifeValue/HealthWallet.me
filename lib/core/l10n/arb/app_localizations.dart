@@ -1294,11 +1294,11 @@ abstract class AppLocalizations {
   /// **'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.'**
   String get aiModelDownloadInfo;
 
-  /// No description provided for @setUpMyHealthWallet.
+  /// No description provided for @setup.
   ///
   /// In en, this message translates to:
-  /// **'Set Up my Health Wallet'**
-  String get setUpMyHealthWallet;
+  /// **'Setup'**
+  String get setup;
 
   /// No description provided for @patientSetupTitle.
   ///

@@ -645,7 +645,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.';
 
   @override
-  String get setUpMyHealthWallet => 'Set Up my Health Wallet';
+  String get setup => 'Setup';
 
   @override
   String get patientSetupTitle => 'Set Up Your Profile';

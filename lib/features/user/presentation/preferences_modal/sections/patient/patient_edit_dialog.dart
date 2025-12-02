@@ -448,14 +448,14 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
 
     // Dynamic labels based on mode
     final headerTitle = widget.isSetupMode
-        ? context.l10n.setUpMyHealthWallet
+        ? 'Setup'
         : context.l10n.editDetails;
     final headerSubtitle =
         widget.isSetupMode ? context.l10n.patientSetupSubtitle : null;
     final cancelLabel =
         widget.isSetupMode ? context.l10n.useDefaults : context.l10n.cancel;
     final saveLabel = widget.isSetupMode
-        ? context.l10n.setUpProfile
+        ? context.l10n.done
         : context.l10n.saveDetails;
 
     return Dialog(

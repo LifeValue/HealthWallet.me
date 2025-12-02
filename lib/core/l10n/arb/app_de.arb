@@ -212,7 +212,7 @@
     "aiModelUnlockDescription": "Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell. Ihre Daten bleiben vollständig privat.",
     "aiModelDownloadInfo": "Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.",
     
-    "setUpMyHealthWallet": "Meine Gesundheits-Brieftasche einrichten",
+    "setup": "Einrichten",
     "patientSetupTitle": "Profil einrichten",
     "patientSetupSubtitle": "Personalisieren Sie Ihre Gesundheits-Brieftasche mit Ihren Informationen",
     

@@ -655,7 +655,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única.';
 
   @override
-  String get setUpMyHealthWallet => 'Configurar mi Cartera de Salud';
+  String get setup => 'Configurar';
 
   @override
   String get patientSetupTitle => 'Configura tu Perfil';
