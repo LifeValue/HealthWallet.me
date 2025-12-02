@@ -1377,6 +1377,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Default'**
   String get useDefaults;
+
+  /// No description provided for @syncPlaceholderTutorialStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \'Setup\' to create your health wallet profile'**
+  String get syncPlaceholderTutorialStep1;
+
+  /// No description provided for @syncPlaceholderTutorialStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \'Load Demo Data\' to explore the app with sample records'**
+  String get syncPlaceholderTutorialStep2;
+
+  /// No description provided for @syncPlaceholderTutorialStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \'Sync Data\' to connect and import your real medical records'**
+  String get syncPlaceholderTutorialStep3;
+
+  /// No description provided for @syncPlaceholderTutorialSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to continue'**
+  String get syncPlaceholderTutorialSubtitle;
 }
 
 class _AppLocalizationsDelegate

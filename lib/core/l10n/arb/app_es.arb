@@ -234,5 +234,10 @@
     "setUpProfile": "Configurar",
     "useDefaults": "Predeterminado",
     "editDetails": "Editar detalles",
-    "saveDetails": "Guardar detalles"
+    "saveDetails": "Guardar detalles",
+    
+    "syncPlaceholderTutorialStep1": "Toca 'Configurar' para crear tu perfil de cartera de salud",
+    "syncPlaceholderTutorialStep2": "Toca 'Cargar Datos de Demostración' para explorar la app con registros de ejemplo",
+    "syncPlaceholderTutorialStep3": "Toca 'Sincronizar Datos' para conectar e importar tus registros médicos reales",
+    "syncPlaceholderTutorialSubtitle": "Toca para continuar"
 }

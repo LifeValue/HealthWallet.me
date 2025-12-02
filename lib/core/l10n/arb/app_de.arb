@@ -230,5 +230,10 @@
     "setUpProfile": "Einrichten",
     "useDefaults": "Standard",
     "editDetails": "Details bearbeiten",
-    "saveDetails": "Details speichern"
+    "saveDetails": "Details speichern",
+    
+    "syncPlaceholderTutorialStep1": "Tippen Sie auf 'Einrichten', um Ihr Gesundheits-Brieftasche-Profil zu erstellen",
+    "syncPlaceholderTutorialStep2": "Tippen Sie auf 'Demo-Daten laden', um die App mit Beispielaufzeichnungen zu erkunden",
+    "syncPlaceholderTutorialStep3": "Tippen Sie auf 'Daten synchronisieren', um Ihre echten medizinischen Aufzeichnungen zu verbinden und zu importieren",
+    "syncPlaceholderTutorialSubtitle": "Tippen Sie, um fortzufahren"
 }

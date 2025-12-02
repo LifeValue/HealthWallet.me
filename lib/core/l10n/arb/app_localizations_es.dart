@@ -699,4 +699,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get useDefaults => 'Predeterminado';
+
+  @override
+  String get syncPlaceholderTutorialStep1 =>
+      'Toca \'Configurar\' para crear tu perfil de cartera de salud';
+
+  @override
+  String get syncPlaceholderTutorialStep2 =>
+      'Toca \'Cargar Datos de Demostración\' para explorar la app con registros de ejemplo';
+
+  @override
+  String get syncPlaceholderTutorialStep3 =>
+      'Toca \'Sincronizar Datos\' para conectar e importar tus registros médicos reales';
+
+  @override
+  String get syncPlaceholderTutorialSubtitle => 'Toca para continuar';
 }

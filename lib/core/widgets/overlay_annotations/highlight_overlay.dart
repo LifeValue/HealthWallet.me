@@ -1,30 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/widgets/overlay_annotations/tooltip_position.dart';
 
 /// A custom overlay widget that highlights multiple widgets simultaneously
 /// with a dark semi-transparent background and cut-outs around the target widgets.
 class MultiHighlightOverlay extends StatefulWidget {
-  /// GlobalKeys of the widgets to highlight
+  /// GlobalKeys of the widgets to highlight.
   final List<GlobalKey> targetKeys;
 
-  /// Message to display in the tooltip
+  /// Message to display in the tooltip.
   final String message;
 
-  /// Callback when the overlay is dismissed
+  /// Subtitle to display below the message.
+  final String? subtitle;
+
+  /// Callback when the overlay is dismissed.
   final VoidCallback onDismiss;
 
-  /// Padding around highlighted areas
+  /// Padding around highlighted areas.
   final double highlightPadding;
 
-  /// Border radius for the highlight cut-outs
+  /// Border radius for the highlight cut-outs.
   final double highlightBorderRadius;
+
+  /// Position of the tooltip (auto, top, or bottom).
+  final TooltipPosition tooltipPosition;
 
   const MultiHighlightOverlay({
     super.key,
     required this.targetKeys,
     required this.message,
+    this.subtitle,
     required this.onDismiss,
     this.highlightPadding = 8.0,
     this.highlightBorderRadius = 12.0,
+    this.tooltipPosition = TooltipPosition.auto,
   });
 
   @override
@@ -144,7 +154,7 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
                   painter: _HighlightPainter(
                     rects: _highlightRects,
                     borderRadius: widget.highlightBorderRadius,
-                    overlayColor: Colors.black.withOpacity(0.75),
+                    overlayColor: Colors.black.withOpacity(0.9),
                   ),
                 ),
               ),
@@ -152,8 +162,8 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
 
             // Always show tooltip - position it based on available rects
             Positioned(
-              left: 24,
-              right: 24,
+              left: Insets.small,
+              right: Insets.small,
               top: _calculateTooltipPosition(screenSize),
               child: _buildTooltip(context),
             ),
@@ -164,9 +174,24 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
   }
 
   double _calculateTooltipPosition(Size screenSize) {
+    // Handle fixed positions first
+    switch (widget.tooltipPosition) {
+      case TooltipPosition.top:
+        // Position at the top with safe area margin
+        final topPadding = MediaQuery.of(context).padding.top;
+        return topPadding + Insets.large;
+      case TooltipPosition.bottom:
+        // Position at the bottom with safe area margin
+        return screenSize.height - 200;
+      case TooltipPosition.auto:
+        // Fall through to auto-calculation
+        break;
+    }
+
+    // Auto-calculation logic
     // If no rects, position in upper-middle area
     if (_highlightRects.isEmpty) {
-      return screenSize.height * 0.3;
+      return screenSize.height * 0.1;
     }
 
     // Position tooltip between the two highlighted areas if possible
@@ -180,7 +205,7 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
 
       if (secondTop > firstBottom + 100) {
         // There's enough space between them, center the tooltip there
-        return firstBottom + (secondTop - firstBottom) / 2 - 50;
+        return firstBottom + (secondTop - firstBottom) / 2 - 60;
       }
     }
 
@@ -196,62 +221,55 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
   }
 
   Widget _buildTooltip(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.message,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              height: 1.4,
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.all(Insets.small),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: _dismiss,
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.2),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Got it',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.message,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+                height: 1.4,
               ),
             ),
-          ),
-        ],
+            if (widget.subtitle != null && widget.subtitle!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  widget.subtitle!,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.9),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Custom painter that draws a dark overlay with rounded rectangle cut-outs
+/// Custom painter that draws a dark overlay with rounded rectangle cut-outs.
 class _HighlightPainter extends CustomPainter {
   final List<Rect> rects;
   final double borderRadius;
@@ -298,7 +316,7 @@ class _HighlightPainter extends CustomPainter {
 
     // Draw highlight borders around the cut-outs
     final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
+      ..color = Colors.transparent
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
@@ -316,42 +334,4 @@ class _HighlightPainter extends CustomPainter {
         oldDelegate.borderRadius != borderRadius ||
         oldDelegate.overlayColor != overlayColor;
   }
-}
-
-/// Helper widget to show the overlay using an Overlay entry
-class MultiHighlightOverlayController {
-  OverlayEntry? _overlayEntry;
-
-  /// Shows the multi-highlight overlay
-  void show({
-    required BuildContext context,
-    required List<GlobalKey> targetKeys,
-    required String message,
-    required VoidCallback onDismiss,
-  }) {
-    // Remove existing overlay if any
-    hide();
-
-    _overlayEntry = OverlayEntry(
-      builder: (overlayContext) => MultiHighlightOverlay(
-        targetKeys: targetKeys,
-        message: message,
-        onDismiss: () {
-          hide();
-          onDismiss();
-        },
-      ),
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  /// Hides the overlay
-  void hide() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
-  /// Whether the overlay is currently visible
-  bool get isVisible => _overlayEntry != null;
 }

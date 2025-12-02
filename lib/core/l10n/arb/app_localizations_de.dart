@@ -706,4 +706,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get useDefaults => 'Standard';
+
+  @override
+  String get syncPlaceholderTutorialStep1 =>
+      'Tippen Sie auf \'Einrichten\', um Ihr Gesundheits-Brieftasche-Profil zu erstellen';
+
+  @override
+  String get syncPlaceholderTutorialStep2 =>
+      'Tippen Sie auf \'Demo-Daten laden\', um die App mit Beispielaufzeichnungen zu erkunden';
+
+  @override
+  String get syncPlaceholderTutorialStep3 =>
+      'Tippen Sie auf \'Daten synchronisieren\', um Ihre echten medizinischen Aufzeichnungen zu verbinden und zu importieren';
+
+  @override
+  String get syncPlaceholderTutorialSubtitle => 'Tippen Sie, um fortzufahren';
 }

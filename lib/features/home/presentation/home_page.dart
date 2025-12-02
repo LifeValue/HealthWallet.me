@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/features/notifications/notification_widget.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_dialog_controller.dart';
-import 'package:health_wallet/features/home/presentation/widgets/multi_highlight_overlay.dart';
+import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -15,7 +15,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
-import 'package:health_wallet/features/home/presentation/widgets/home_onboarding_steps.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_section_header.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source_selector_widget.dart';
 import 'package:health_wallet/features/home/presentation/widgets/section_info_modal.dart';
@@ -119,6 +118,7 @@ class HomeViewState extends State<HomeView> {
       context: context,
       targetKeys: _highlightController.highlightTargetKeys,
       message: HomeOnboardingConstants.reorderMessage,
+      subtitle: HomeOnboardingConstants.subtitle,
       onDismiss: () async {
         context.read<SyncBloc>().add(const ResetTutorial());
 

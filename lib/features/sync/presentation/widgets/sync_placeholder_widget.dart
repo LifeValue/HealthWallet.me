@@ -16,6 +16,8 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/patient_edit_dialog.dart';
+import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SyncPlaceholderWidget extends StatefulWidget {
   final PageController? pageController;
@@ -30,12 +32,117 @@ class SyncPlaceholderWidget extends StatefulWidget {
   });
 
   @override
-  State<SyncPlaceholderWidget> createState() => _SyncPlaceholderWidgetState();
+  State<SyncPlaceholderWidget> createState() => SyncPlaceholderWidgetState();
 }
 
-class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
+class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
   bool _hasInitiatedDemoDataLoading = false;
   SyncBloc? _syncBloc;
+  late final SyncPlaceholderHighlightController _highlightController;
+  late final StepByStepOverlayController _overlayController;
+  bool _hasShownTutorial = false;
+
+  static const String _tutorialShownKey = 'sync_placeholder_tutorial_shown';
+
+  @override
+  void initState() {
+    super.initState();
+    _highlightController = SyncPlaceholderHighlightController();
+    _overlayController = StepByStepOverlayController();
+
+    // Auto-trigger tutorial after widget is built if onboarding has been completed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoTriggerTutorialIfNeeded();
+    });
+  }
+
+  /// Automatically triggers the tutorial if onboarding has been completed
+  /// and the tutorial hasn't been shown yet
+  Future<void> _autoTriggerTutorialIfNeeded() async {
+    if (!mounted || _hasShownTutorial) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    final tutorialShown = prefs.getBool(_tutorialShownKey) ?? false;
+
+    // Only show tutorial if:
+    // 1. User has completed the initial app onboarding
+    // 2. This tutorial hasn't been shown before
+    if (hasSeenOnboarding && !tutorialShown && mounted) {
+      // Add a small delay to ensure the UI is fully rendered
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        _hasShownTutorial = true;
+        _showTutorialSequence();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _overlayController.hide();
+    super.dispose();
+  }
+
+  /// Returns the highlight controller for external access (e.g., for tutorial overlay)
+  SyncPlaceholderHighlightController get highlightController =>
+      _highlightController;
+
+  /// Public method to trigger the tutorial overlay from external sources
+  void showTutorial() {
+    if (_hasShownTutorial) return;
+
+    // Check if tutorial has already been shown using SharedPreferences
+    _checkAndShowTutorialIfNeeded();
+  }
+
+  Future<void> _checkAndShowTutorialIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    final tutorialShown = prefs.getBool(_tutorialShownKey) ?? false;
+
+    // Only show tutorial if it hasn't been shown before
+    if (!tutorialShown && mounted) {
+      _hasShownTutorial = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _showTutorialSequence();
+        }
+      });
+    }
+  }
+
+  void _showTutorialSequence() {
+    if (!mounted) return;
+
+    final steps = [
+      OverlayStep(
+        targetKey: _highlightController.setupButtonKey,
+        message: context.l10n.syncPlaceholderTutorialStep1,
+        subtitle: context.l10n.syncPlaceholderTutorialSubtitle,
+      ),
+      OverlayStep(
+        targetKey: _highlightController.loadDemoDataButtonKey,
+        message: context.l10n.syncPlaceholderTutorialStep2,
+        subtitle: context.l10n.syncPlaceholderTutorialSubtitle,
+      ),
+      OverlayStep(
+        targetKey: _highlightController.syncDataButtonKey,
+        message: context.l10n.syncPlaceholderTutorialStep3,
+        subtitle: context.l10n.syncPlaceholderTutorialSubtitle,
+      ),
+    ];
+
+    _overlayController.showSequence(
+      context: context,
+      steps: steps,
+      onComplete: () async {
+        // Save that tutorial has been shown
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(_tutorialShownKey, true);
+        _hasShownTutorial = false;
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +226,7 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
           if (!hasAnyMeaningfulData) ...[
             // Set Up my Health Wallet button
             SizedBox(
+              key: _highlightController.setupButtonKey,
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () => _handleSetUpWallet(context),
@@ -151,6 +259,7 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
             const SizedBox(height: Insets.small),
             // Load Demo Data button
             SizedBox(
+              key: _highlightController.loadDemoDataButtonKey,
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () => _handleLoadDemoData(context),
@@ -184,6 +293,7 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
           ],
           // Sync Data button
           SizedBox(
+            key: _highlightController.syncDataButtonKey,
             width: double.infinity,
             child: hasAnyMeaningfulData
                 ? ElevatedButton.icon(

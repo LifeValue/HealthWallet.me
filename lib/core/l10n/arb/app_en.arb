@@ -249,5 +249,10 @@
     "setUpProfile": "Set Up",
     "useDefaults": "Default",
     "editDetails": "Edit details",
-    "saveDetails": "Save details"
+    "saveDetails": "Save details",
+    
+    "syncPlaceholderTutorialStep1": "Tap 'Setup' to create your health wallet profile",
+    "syncPlaceholderTutorialStep2": "Tap 'Load Demo Data' to explore the app with sample records",
+    "syncPlaceholderTutorialStep3": "Tap 'Sync Data' to connect and import your real medical records",
+    "syncPlaceholderTutorialSubtitle": "Tap to continue"
 }

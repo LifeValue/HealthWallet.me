@@ -689,4 +689,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get useDefaults => 'Default';
+
+  @override
+  String get syncPlaceholderTutorialStep1 =>
+      'Tap \'Setup\' to create your health wallet profile';
+
+  @override
+  String get syncPlaceholderTutorialStep2 =>
+      'Tap \'Load Demo Data\' to explore the app with sample records';
+
+  @override
+  String get syncPlaceholderTutorialStep3 =>
+      'Tap \'Sync Data\' to connect and import your real medical records';
+
+  @override
+  String get syncPlaceholderTutorialSubtitle => 'Tap to continue';
 }
