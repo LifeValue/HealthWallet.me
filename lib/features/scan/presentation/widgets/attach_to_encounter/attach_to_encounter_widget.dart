@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -10,6 +9,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/create_encounter_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/patient_selector.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:intl/intl.dart';
@@ -72,6 +72,15 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
   ) {
     Navigator.of(context)
         .pop<AttachToEncounterResult>((selectedPatient, selectedEncounter));
+  }
+
+  Future<void> _handleCreateEncounter(BuildContext context) async {
+    final newEncounter = await CreateEncounterDialog.show(context);
+    if (newEncounter != null && context.mounted) {
+      context.read<AttachToEncounterBloc>().add(
+            AttachToEncounterNewEncounterCreated(newEncounter),
+          );
+    }
   }
 
   @override
@@ -239,41 +248,53 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                                   ),
                                 )
                               : state.filteredEncounters.isEmpty
-                                  ? Center(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.inbox_outlined,
-                                            size: 48,
+                                  ? Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.inbox_outlined,
+                                          size: 48,
+                                          color: iconColor,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'No encounters found',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: textColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Create a new encounter first or select a different patient.',
+                                          style: TextStyle(
+                                            fontSize: 12,
                                             color: iconColor,
                                           ),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            'No encounters found',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: textColor,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Create a new encounter first or select a different patient.',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: iconColor,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        _buildCreateEncounterButton(
+                                            context, borderColor),
+                                      ],
                                     )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       itemCount:
-                                          state.filteredEncounters.length,
+                                          state.filteredEncounters.length + 1,
                                       itemBuilder: (context, index) {
+                                        // Last item is the create button
+                                        if (index ==
+                                            state.filteredEncounters.length) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 8),
+                                            child: _buildCreateEncounterButton(
+                                                context, borderColor),
+                                          );
+                                        }
+
                                         final encounter =
                                             state.filteredEncounters[index];
                                         final isSelected =
@@ -337,6 +358,14 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                                                     ),
                                                   )
                                                 : null,
+                                            trailing: Radio<bool>(
+                                              value: true,
+                                              groupValue: isSelected,
+                                              onChanged: (_) => _handleSelect(
+                                                  context, encounter),
+                                              activeColor:
+                                                  context.colorScheme.primary,
+                                            ),
                                             onTap: () => _handleSelect(
                                                 context, encounter),
                                             hoverColor: context
@@ -404,7 +433,7 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
-                          child: Text('Done', style: AppTextStyle.buttonSmall),
+                          child: Text('Attach', style: AppTextStyle.buttonSmall),
                         ),
                       ),
                     ],
@@ -417,4 +446,89 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
       ),
     );
   }
+
+  Widget _buildCreateEncounterButton(BuildContext context, Color borderColor) {
+    return GestureDetector(
+      onTap: () => _handleCreateEncounter(context),
+      child: CustomPaint(
+        painter: _DashedBorderPainter(
+          color: borderColor,
+          strokeWidth: 1,
+          dashWidth: 6,
+          dashSpace: 4,
+          borderRadius: 8,
+        ),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: Insets.small),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add,
+                color: context.colorScheme.onSurface.withOpacity(0.6),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Create Encounter',
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: context.colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashWidth;
+  final double dashSpace;
+  final double borderRadius;
+
+  _DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.dashWidth,
+    required this.dashSpace,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Radius.circular(borderRadius),
+      ));
+
+    final dashPath = Path();
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final start = distance;
+        final end = (distance + dashWidth).clamp(0, metric.length);
+        dashPath.addPath(
+          metric.extractPath(start, end.toDouble()),
+          Offset.zero,
+        );
+        distance += dashWidth + dashSpace;
+      }
+    }
+
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

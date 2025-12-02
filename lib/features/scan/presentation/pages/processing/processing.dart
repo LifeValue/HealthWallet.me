@@ -6,6 +6,7 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
@@ -151,29 +152,15 @@ class _ProcessingPageState extends State<ProcessingPage> {
           CustomProgressIndicator(
             progress: activeSession.progress,
             text: "Processing pages to FHIR resources...",
+            secondaryText: "It might take a while. Please wait.",
           ),
           const SizedBox(height: Insets.normal),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () => context
-                  .read<ScanBloc>()
-                  .add(ScanMappingCancelled(sessionId: widget.sessionId)),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                side: BorderSide(color: context.colorScheme.outline),
-              ),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-            ),
+          AppButton(
+            label: 'Cancel',
+            variant: AppButtonVariant.secondary,
+            onPressed: () => context
+                .read<ScanBloc>()
+                .add(ScanMappingCancelled(sessionId: widget.sessionId)),
           ),
         ],
       );
@@ -223,25 +210,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
             ),
           ),
           const SizedBox(height: Insets.normal),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context
-                  .read<ScanBloc>()
-                  .add(ScanMappingInitiated(sessionId: widget.sessionId)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.colorScheme.primary,
-                foregroundColor: context.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Retry',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
+          AppButton(
+            label: 'Retry',
+            variant: AppButtonVariant.primary,
+            onPressed: () => context
+                .read<ScanBloc>()
+                .add(ScanMappingInitiated(sessionId: widget.sessionId)),
           ),
         ],
       );
@@ -279,25 +253,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
             ),
           ),
           const SizedBox(height: Insets.normal),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context
-                  .read<ScanBloc>()
-                  .add(ScanMappingInitiated(sessionId: widget.sessionId)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.colorScheme.primary,
-                foregroundColor: context.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Retry',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
+          AppButton(
+            label: 'Retry',
+            variant: AppButtonVariant.primary,
+            onPressed: () => context
+                .read<ScanBloc>()
+                .add(ScanMappingInitiated(sessionId: widget.sessionId)),
           ),
         ],
       );

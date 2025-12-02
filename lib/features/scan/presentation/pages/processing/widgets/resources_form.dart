@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -28,23 +27,34 @@ class ResourcesForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Filter out MappingEncounter from display (it's managed separately via AttachToEncounter)
+    final displayedResources = <(int, MappingResource)>[];
+    for (int i = 0; i < resources.length; i++) {
+      if (resources[i] is! MappingEncounter) {
+        displayedResources.add((i, resources[i]));
+      }
+    }
+
     return Form(
       key: formKey,
       child: ListView.builder(
-        itemCount: resources.length,
+        itemCount: displayedResources.length,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (context, index) {
-          MappingResource resource = resources[index];
+        itemBuilder: (context, displayIndex) {
+          final (originalIndex, resource) = displayedResources[displayIndex];
           Map<String, TextFieldDescriptor> textFields =
               resource.getFieldDescriptors();
+
+          final containerBorderColor = context.isDarkMode
+              ? AppColors.primary.withValues(alpha: 0.8)
+              : AppColors.primary.withValues(alpha: 0.6);
 
           return Container(
             key: ValueKey(resource.id),
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.6))),
+                border: Border.all(color: containerBorderColor)),
             margin: const EdgeInsets.only(bottom: 24),
             child: Padding(
               padding: const EdgeInsetsGeometry.all(16),
@@ -57,39 +67,42 @@ class ResourcesForm extends StatelessWidget {
                       Text(resource.label, style: AppTextStyle.bodyLarge),
                       Row(
                         children: [
-                          Padding(
-                            padding: const EdgeInsetsGeometry.all(6),
-                            child: GestureDetector(
-                              onTap: () async {
-                                final result =
-                                    await showDialog<AttachToEncounterResult>(
-                                  context: context,
-                                  builder: (context) =>
-                                      const AttachToEncounterWidget(),
-                                );
-                                if (result == null || !context.mounted) return;
+                          if (resource is MappingPatient)
+                            Padding(
+                              padding: const EdgeInsetsGeometry.all(6),
+                              child: GestureDetector(
+                                onTap: () async {
+                                  final result =
+                                      await showDialog<AttachToEncounterResult>(
+                                    context: context,
+                                    builder: (context) =>
+                                        const AttachToEncounterWidget(),
+                                  );
+                                  if (result == null || !context.mounted)
+                                    return;
 
-                                final (patient, encounter) = result;
+                                  final (patient, encounter) = result;
 
-                                context
-                                    .read<ScanBloc>()
-                                    .add(ScanEncounterAttached(
-                                      patient: patient,
-                                      encounter: encounter,
-                                    ));
-                              },
-                              child: Assets.icons.attachment.svg(
-                                  width: 20,
-                                  color: context.theme.iconTheme.color ??
-                                      context.colorScheme.onSurface),
+                                  context
+                                      .read<ScanBloc>()
+                                      .add(ScanEncounterAttached(
+                                        patient: patient,
+                                        encounter: encounter,
+                                      ));
+                                },
+                                child: Assets.icons.attachment.svg(
+                                    width: 20,
+                                    color: context.theme.iconTheme.color ??
+                                        context.colorScheme.onSurface),
+                              ),
                             ),
-                          ),
                           if (resource is! MappingEncounter &&
                               resource is! MappingPatient)
                             Padding(
                               padding: const EdgeInsetsGeometry.all(6),
                               child: GestureDetector(
-                                onTap: () => onResourceRemoved.call(index),
+                                onTap: () =>
+                                    onResourceRemoved.call(originalIndex),
                                 child: Assets.icons.trashCan.svg(
                                     width: 20,
                                     color: context.theme.iconTheme.color ??
@@ -107,7 +120,9 @@ class ResourcesForm extends StatelessWidget {
                     final borderColor = switch (descriptor.confidenceLevel) {
                       < 0.6 => Colors.red,
                       >= 0.6 && < 0.8 => Colors.yellow,
-                      _ => AppColors.border,
+                      _ => context.isDarkMode
+                          ? AppColors.borderDark
+                          : AppColors.border,
                     };
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,8 +136,8 @@ class ResourcesForm extends StatelessWidget {
                           keyboardType: descriptor.keyboardType,
                           autovalidateMode: AutovalidateMode.onUserInteraction,
                           style: AppTextStyle.labelLarge,
-                          onChanged: (value) =>
-                              onPropertyChanged.call(index, propertyKey, value),
+                          onChanged: (value) => onPropertyChanged.call(
+                              originalIndex, propertyKey, value),
                           decoration: InputDecoration(
                             isDense: true,
                             helperText: ' ',

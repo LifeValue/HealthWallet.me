@@ -26,6 +26,7 @@ class AttachToEncounterBloc
     on<AttachToEncounterPatientChanged>(_onPatientChanged);
     on<AttachToEncounterSearchQueryChanged>(_onSearchQueryChanged);
     on<AttachToEncounterSelected>(_onEncounterSelected);
+    on<AttachToEncounterNewEncounterCreated>(_onNewEncounterCreated);
   }
 
   Future<void> _onStarted(
@@ -141,6 +142,23 @@ class AttachToEncounterBloc
     Emitter<AttachToEncounterState> emit,
   ) async {
     emit(state.copyWith(selectedEncounter: event.encounter));
+  }
+
+  Future<void> _onNewEncounterCreated(
+    AttachToEncounterNewEncounterCreated event,
+    Emitter<AttachToEncounterState> emit,
+  ) async {
+    final newEncounter = event.newEncounter.toFhirResource() as Encounter;
+    final updatedEncounters = [newEncounter, ...state.encounters];
+    final filteredEncounters =
+        _filterEncounters(updatedEncounters, state.searchQuery);
+
+    emit(state.copyWith(
+      newEncounter: event.newEncounter,
+      encounters: updatedEncounters,
+      filteredEncounters: filteredEncounters,
+      selectedEncounter: newEncounter,
+    ));
   }
 
   List<Encounter> _filterEncounters(List<Encounter> encounters, String query) {

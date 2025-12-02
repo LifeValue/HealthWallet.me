@@ -6,11 +6,13 @@ class CustomProgressIndicator extends StatefulWidget {
   const CustomProgressIndicator({
     required this.progress,
     this.text,
+    this.secondaryText,
     super.key,
   });
 
   final double progress;
   final String? text;
+  final String? secondaryText;
 
   @override
   State<CustomProgressIndicator> createState() =>
@@ -44,14 +46,6 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 14),
-        LinearProgressIndicator(
-          value: widget.progress,
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(4),
-          backgroundColor: context.colorScheme.primary.withValues(alpha: 0.1),
-          color: context.colorScheme.primary,
-        ),
         if (widget.text != null)
           AnimatedBuilder(
             animation: _shimmerController,
@@ -69,20 +63,35 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
                   begin: Alignment(gradientStart, 0.0),
                   end: Alignment(gradientEnd, 0.0),
                 ).createShader(bounds),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      widget.text!,
-                      style: AppTextStyle.bodySmall.copyWith(
-                          color: context.colorScheme.onSurface
-                              .withValues(alpha: 0.7)),
-                    ),
-                  ],
+                child: Text(
+                  widget.text!,
+                  style: AppTextStyle.bodyMedium.copyWith(
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               );
             },
           ),
+        if (widget.secondaryText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            widget.secondaryText!,
+            style: AppTextStyle.bodySmall.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: 14),
+        LinearProgressIndicator(
+          value: widget.progress,
+          minHeight: 8,
+          borderRadius: BorderRadius.circular(4),
+          backgroundColor: context.colorScheme.primary.withValues(alpha: 0.1),
+          color: context.colorScheme.primary,
+        ),
       ],
     );
   }

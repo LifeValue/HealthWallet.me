@@ -33,3 +33,9 @@ class AttachToEncounterSelected extends AttachToEncounterEvent
   const factory AttachToEncounterSelected(Encounter encounter) =
       _AttachToEncounterSelected;
 }
+
+class AttachToEncounterNewEncounterCreated extends AttachToEncounterEvent {
+  final MappingEncounter newEncounter;
+
+  const AttachToEncounterNewEncounterCreated(this.newEncounter);
+}
