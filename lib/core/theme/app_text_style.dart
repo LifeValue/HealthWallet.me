@@ -102,4 +102,20 @@ class AppTextStyle {
     letterSpacing: -0.39,
     height: 1.2,
   );
+
+  static const TextStyle regular = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    letterSpacing: -0.14,
+    height: 1.2857,
+  );
+
+  static const TextStyle semiBold = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0,
+    height: 18 / 13,
+  );
 }

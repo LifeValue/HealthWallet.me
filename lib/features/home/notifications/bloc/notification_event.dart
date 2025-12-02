@@ -5,8 +5,7 @@ abstract class NotificationEvent {
 }
 
 @freezed
-class NotificationAdded extends NotificationEvent
-    with _$NotificationAdded {
+class NotificationAdded extends NotificationEvent with _$NotificationAdded {
   const factory NotificationAdded({
     required WalletNotification notification,
   }) = _NotificationAdded;
@@ -25,7 +24,26 @@ class NotificationPopupClosed extends NotificationEvent
 }
 
 @freezed
-class NotificationCleared extends NotificationEvent
-    with _$NotificationCleared {
+class NotificationCleared extends NotificationEvent with _$NotificationCleared {
   const factory NotificationCleared() = _NotificationCleared;
+}
+
+@freezed
+class NotificationRemoved extends NotificationEvent with _$NotificationRemoved {
+  const factory NotificationRemoved({
+    required WalletNotification notification,
+  }) = _NotificationRemoved;
+}
+
+@freezed
+class NotificationMarkedAsRead extends NotificationEvent
+    with _$NotificationMarkedAsRead {
+  const factory NotificationMarkedAsRead({
+    required WalletNotification notification,
+  }) = _NotificationMarkedAsRead;
+}
+
+class NotificationsLoaded extends NotificationEvent {
+  final List<WalletNotification> notifications;
+  const NotificationsLoaded({required this.notifications});
 }
