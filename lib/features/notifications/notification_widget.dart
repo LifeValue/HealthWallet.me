@@ -6,7 +6,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/home/domain/entities/wallet_notification.dart';
-import 'package:health_wallet/features/home/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class NotificationWidget extends StatefulWidget {
@@ -49,7 +49,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                   height: 368,
                   decoration: BoxDecoration(
                     color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Insets.smallNormal),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
