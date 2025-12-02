@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +15,7 @@ import 'package:health_wallet/features/user/domain/services/default_patient_serv
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/patient_edit_dialog.dart';
 
 class SyncPlaceholderWidget extends StatefulWidget {
   final PageController? pageController;
@@ -114,10 +117,11 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
       child: Column(
         children: [
           if (!hasAnyMeaningfulData) ...[
+            // Set Up my Health Wallet button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _handleGetStarted(context),
+                onPressed: () => _handleSetUpWallet(context),
                 icon: Assets.icons.user.svg(
                   width: 16,
                   height: 16,
@@ -125,7 +129,7 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
                       const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                 ),
                 label: Text(
-                  context.l10n.getStarted,
+                  context.l10n.setUpMyHealthWallet,
                   style: AppTextStyle.buttonMedium.copyWith(
                     color: Colors.white,
                   ),
@@ -145,6 +149,7 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
               ),
             ),
             const SizedBox(height: Insets.small),
+            // Load Demo Data button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -177,6 +182,7 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
             ),
             const SizedBox(height: Insets.small),
           ],
+          // Sync Data button
           SizedBox(
             width: double.infinity,
             child: hasAnyMeaningfulData
@@ -341,56 +347,114 @@ class _SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     }
   }
 
-  void _handleGetStarted(BuildContext context) async {
+  void _handleSetUpWallet(BuildContext context) async {
+    // Capture blocs before async operations to avoid context issues
+    final syncBloc = context.read<SyncBloc>();
+    final homeBloc = context.read<HomeBloc>();
+    final patientBloc = context.read<PatientBloc>();
+    final pageController = widget.pageController;
+
     try {
-      final syncBloc = context.read<SyncBloc>();
+      // Create wallet source and default patient first
+      syncBloc.add(const CreateWalletSource());
+      await Future.delayed(const Duration(milliseconds: 100));
 
-      await _createWalletSourceAndDefaultPatient();
-      context.read<HomeBloc>().add(const HomeSourceChanged('wallet'));
+      final defaultPatientService = getIt<DefaultPatientService>();
+      await defaultPatientService.createAndSetAsMain();
 
-      try {
-        context.read<PatientBloc>().add(const PatientInitialised());
-      } catch (e) {}
+      homeBloc.add(const HomeSourceChanged('wallet'));
+      patientBloc.add(const PatientInitialised());
 
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Wait for PatientBloc to load patients with a stream listener
+      final walletPatient = await _waitForWalletPatient(patientBloc);
 
-      final pageController = widget.pageController;
-      if (pageController != null) {
-        pageController.animateToPage(0,
-            duration: const Duration(milliseconds: 300), curve: Curves.ease);
-      } else {
-        if (context.mounted) {
-          context.router.pop();
+      if (!mounted) return;
+
+      if (walletPatient != null) {
+        // Show the PatientEditDialog in setup mode
+        if (mounted) {
+          PatientEditDialog.showSetupMode(
+            context,
+            walletPatient,
+            onDismiss: () {
+              // Navigate to home page after dialog is dismissed
+              if (pageController != null) {
+                pageController.animateToPage(0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.ease);
+              }
+
+              // Trigger tutorial after a delay (home page will handle displaying it)
+              Future.delayed(const Duration(milliseconds: 400), () {
+                try {
+                  syncBloc.add(const TriggerTutorial());
+                } catch (e) {
+                  logger.e('Failed to trigger tutorial: $e');
+                }
+              });
+            },
+          );
         }
+      } else {
+        // Fallback: navigate without showing dialog
+        logger.w('No wallet patient found, navigating without dialog');
+        if (pageController != null) {
+          pageController.animateToPage(0,
+              duration: const Duration(milliseconds: 300), curve: Curves.ease);
+        }
+
+        Future.delayed(const Duration(milliseconds: 400), () {
+          try {
+            syncBloc.add(const TriggerTutorial());
+          } catch (e) {
+            logger.e('Failed to trigger tutorial: $e');
+          }
+        });
       }
-
-      Future.delayed(const Duration(milliseconds: 400), () {
-        try {
-          syncBloc.add(const TriggerTutorial());
-        } catch (e) {
-          logger.e('Failed to trigger tutorial: $e');
-        }
-      });
     } catch (e) {
-      final pageController = widget.pageController;
+      logger.e('Error in _handleSetUpWallet: $e');
       if (pageController != null) {
         pageController.animateToPage(0,
             duration: const Duration(milliseconds: 300), curve: Curves.ease);
-      } else {
-        if (context.mounted) {
-          context.router.pop();
-        }
       }
     }
   }
 
-  Future<void> _createWalletSourceAndDefaultPatient() async {
-    if (!mounted) {
-      return;
+  /// Waits for the PatientBloc to load wallet patients with a timeout
+  Future<dynamic> _waitForWalletPatient(PatientBloc patientBloc) async {
+    // First check if already available
+    final currentState = patientBloc.state;
+    final existingWalletPatients = currentState.patients
+        .where((p) => p.sourceId.startsWith('wallet'))
+        .toList();
+    if (existingWalletPatients.isNotEmpty) {
+      return existingWalletPatients.first;
     }
-    context.read<SyncBloc>().add(const CreateWalletSource());
-    await Future.delayed(const Duration(milliseconds: 100));
-    final defaultPatientService = getIt<DefaultPatientService>();
-    await defaultPatientService.createAndSetAsMain();
+
+    // Wait for the bloc to emit a state with wallet patients
+    try {
+      final stateWithPatient = await patientBloc.stream
+          .where((state) =>
+              state.patients.any((p) => p.sourceId.startsWith('wallet')))
+          .first
+          .timeout(const Duration(seconds: 3));
+
+      final walletPatients = stateWithPatient.patients
+          .where((p) => p.sourceId.startsWith('wallet'))
+          .toList();
+
+      return walletPatients.isNotEmpty ? walletPatients.first : null;
+    } on TimeoutException {
+      logger.w('Timeout waiting for wallet patient');
+      // Try one more time from current state
+      final finalState = patientBloc.state;
+      final finalWalletPatients = finalState.patients
+          .where((p) => p.sourceId.startsWith('wallet'))
+          .toList();
+      return finalWalletPatients.isNotEmpty ? finalWalletPatients.first : null;
+    } catch (e) {
+      logger.e('Error waiting for wallet patient: $e');
+      return null;
+    }
   }
 }

@@ -22,24 +22,65 @@ import 'utils/gender_mapper.dart';
 class PatientEditDialog extends StatefulWidget {
   final Patient patient;
   final VoidCallback? onBloodTypeUpdated;
+  final VoidCallback? onDismiss;
+  final bool isSetupMode;
 
   const PatientEditDialog({
     super.key,
     required this.patient,
     this.onBloodTypeUpdated,
+    this.onDismiss,
+    this.isSetupMode = false,
   });
 
-  static void show(BuildContext context, Patient patient,
-      {VoidCallback? onBloodTypeUpdated}) {
+  /// Shows the dialog in edit mode (default)
+  static void show(
+    BuildContext context,
+    Patient patient, {
+    VoidCallback? onBloodTypeUpdated,
+    VoidCallback? onDismiss,
+  }) {
+    _showDialog(
+      context,
+      patient,
+      isSetupMode: false,
+      onBloodTypeUpdated: onBloodTypeUpdated,
+      onDismiss: onDismiss,
+    );
+  }
+
+  /// Shows the dialog in setup mode (for onboarding)
+  static void showSetupMode(
+    BuildContext context,
+    Patient patient, {
+    VoidCallback? onDismiss,
+  }) {
+    _showDialog(
+      context,
+      patient,
+      isSetupMode: true,
+      onDismiss: onDismiss,
+    );
+  }
+
+  static void _showDialog(
+    BuildContext context,
+    Patient patient, {
+    required bool isSetupMode,
+    VoidCallback? onBloodTypeUpdated,
+    VoidCallback? onDismiss,
+  }) {
     final patientBloc = BlocProvider.of<PatientBloc>(context);
     final homeBloc = BlocProvider.of<HomeBloc>(context);
+    final userBloc = BlocProvider.of<UserBloc>(context);
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
         return MultiBlocProvider(
           providers: [
-            BlocProvider.value(value: BlocProvider.of<UserBloc>(context)),
+            BlocProvider.value(value: userBloc),
             BlocProvider.value(value: patientBloc),
             BlocProvider.value(value: homeBloc),
           ],
@@ -48,6 +89,8 @@ class PatientEditDialog extends StatefulWidget {
             child: PatientEditDialog(
               patient: patient,
               onBloodTypeUpdated: onBloodTypeUpdated,
+              onDismiss: onDismiss,
+              isSetupMode: isSetupMode,
             ),
           ),
         );
@@ -64,12 +107,12 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   String _selectedFamily = '';
   DateTime? _selectedBirthDate;
   String _selectedGender = 'Prefer not to say';
-  String _selectedBloodType = 'O+';
+  String _selectedBloodType = 'N/A';
   String _selectedMRN = '';
   late PatientEditService _patientEditService;
   bool _isLoading = false;
   Patient? _currentPatient;
-  
+
   late TextEditingController _givenController;
   late TextEditingController _familyController;
   late TextEditingController _mrnController;
@@ -85,25 +128,43 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   void initState() {
     super.initState();
     _patientEditService = getIt<PatientEditService>();
-    _givenController = TextEditingController(text: _extractGiven(widget.patient));
-    _familyController = TextEditingController(text: _extractFamily(widget.patient));
-    _mrnController = TextEditingController(text: FhirFieldExtractor.extractPatientMRN(widget.patient));
-    _initializeControllers();
+
+    // In setup mode, start with empty fields
+    if (widget.isSetupMode) {
+      _givenController = TextEditingController();
+      _familyController = TextEditingController();
+      _mrnController = TextEditingController();
+      _selectedBloodType = 'N/A';
+    } else {
+      _givenController =
+          TextEditingController(text: _extractGiven(widget.patient));
+      _familyController =
+          TextEditingController(text: _extractFamily(widget.patient));
+      _mrnController = TextEditingController(
+          text: FhirFieldExtractor.extractPatientMRN(widget.patient));
+      _initializeControllers();
+    }
     _initializeCurrentPatient();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final extractedGender =
-        FhirFieldExtractor.extractPatientGender(widget.patient);
-    _selectedGender = GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
+    if (widget.isSetupMode) {
+      _selectedGender = context.l10n.preferNotToSay;
+    } else {
+      final extractedGender =
+          FhirFieldExtractor.extractPatientGender(widget.patient);
+      _selectedGender =
+          GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
+    }
   }
 
   void _initializeControllers() {
     final extractedGender =
         FhirFieldExtractor.extractPatientGender(widget.patient);
-    _selectedGender = GenderMapper.mapFhirGenderToDisplayFallback(extractedGender);
+    _selectedGender =
+        GenderMapper.mapFhirGenderToDisplayFallback(extractedGender);
     _selectedGiven = _extractGiven(widget.patient);
     _selectedFamily = _extractFamily(widget.patient);
 
@@ -128,22 +189,29 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
         _currentPatient = patientGroup?.representativePatient ?? widget.patient;
       }
 
-      _selectedGiven = _extractGiven(_currentPatient!);
-      _selectedFamily = _extractFamily(_currentPatient!);
-      _selectedBirthDate =
-          FhirFieldExtractor.extractPatientBirthDate(_currentPatient!);
+      // In setup mode, don't pre-fill the text fields
+      if (!widget.isSetupMode) {
+        _selectedGiven = _extractGiven(_currentPatient!);
+        _selectedFamily = _extractFamily(_currentPatient!);
+        _selectedBirthDate =
+            FhirFieldExtractor.extractPatientBirthDate(_currentPatient!);
 
-      final extractedGender =
-          FhirFieldExtractor.extractPatientGender(_currentPatient!);
-      _selectedGender = GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
+        final extractedGender =
+            FhirFieldExtractor.extractPatientGender(_currentPatient!);
+        _selectedGender =
+            GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
 
-      _selectedMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
-      
-      _givenController.text = _selectedGiven;
-      _familyController.text = _selectedFamily;
-      _mrnController.text = _selectedMRN;
+        _selectedMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
 
-      _initializeBloodType();
+        _givenController.text = _selectedGiven;
+        _familyController.text = _selectedFamily;
+        _mrnController.text = _selectedMRN;
+
+        _initializeBloodType();
+      } else {
+        // In setup mode, just set _currentPatient and use default values
+        setState(() {});
+      }
     });
   }
 
@@ -167,7 +235,6 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     return '';
   }
 
-
   Future<void> _initializeBloodType() async {
     if (_currentPatient == null) return;
 
@@ -180,7 +247,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
           if (extractedBloodType != null && extractedBloodType.isNotEmpty) {
             _selectedBloodType = _bloodTypeOptions.contains(extractedBloodType)
                 ? extractedBloodType
-                : 'O+';
+                : 'N/A';
           } else {
             _selectedBloodType = 'N/A';
           }
@@ -192,7 +259,6 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
       }
     }
   }
-
 
   @override
   void dispose() {
@@ -208,51 +274,74 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final hasChanges = await _patientEditService.hasPatientChanges(
-        currentPatient: _currentPatient!,
-        newBirthDate: _selectedBirthDate,
-        newGender: _selectedGender,
-        newBloodType: _selectedBloodType,
-        newMRN: _selectedMRN,
-        l10n: context.l10n,
-      );
+      // In setup mode, always save the data (no "no changes" check)
+      if (!widget.isSetupMode) {
+        final hasChanges = await _patientEditService.hasPatientChanges(
+          currentPatient: _currentPatient!,
+          newBirthDate: _selectedBirthDate,
+          newGender: _selectedGender,
+          newBloodType: _selectedBloodType,
+          newMRN: _selectedMRN,
+          l10n: context.l10n,
+        );
 
-      if (!hasChanges) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.noChangesDetected),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
-            ),
-          );
-          context.popDialog();
+        if (!hasChanges) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(context.l10n.noChangesDetected),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 2),
+              ),
+            );
+            context.popDialog();
+            widget.onDismiss?.call();
+          }
+          return;
         }
-        return;
       }
 
-      final currentBloodType =
-          await _patientEditService.getCurrentBloodType(_currentPatient!);
-      final currentBirthDate =
-          FhirFieldExtractor.extractPatientBirthDate(_currentPatient!);
-      final currentGender =
-          FhirFieldExtractor.extractPatientGender(_currentPatient!);
+      final currentBloodType = widget.isSetupMode
+          ? null
+          : await _patientEditService.getCurrentBloodType(_currentPatient!);
+      final currentBirthDate = widget.isSetupMode
+          ? null
+          : FhirFieldExtractor.extractPatientBirthDate(_currentPatient!);
+      final currentGender = widget.isSetupMode
+          ? null
+          : FhirFieldExtractor.extractPatientGender(_currentPatient!);
       final currentGivenValue = _givenController.text;
       final currentFamilyValue = _familyController.text;
       final currentMRNValue = _mrnController.text;
-      
-      final currentGiven = _extractGiven(_currentPatient!);
-      final currentFamily = _extractFamily(_currentPatient!);
-      final currentMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
 
-      final givenChanged = currentGiven != currentGivenValue;
-      final familyChanged = currentFamily != currentFamilyValue;
+      final currentGiven =
+          widget.isSetupMode ? '' : _extractGiven(_currentPatient!);
+      final currentFamily =
+          widget.isSetupMode ? '' : _extractFamily(_currentPatient!);
+      final currentMRN = widget.isSetupMode
+          ? ''
+          : FhirFieldExtractor.extractPatientMRN(_currentPatient!);
+
+      final givenChanged = widget.isSetupMode
+          ? currentGivenValue.isNotEmpty
+          : (currentGiven != currentGivenValue);
+      final familyChanged = widget.isSetupMode
+          ? currentFamilyValue.isNotEmpty
+          : (currentFamily != currentFamilyValue);
       final nameChanged = givenChanged || familyChanged;
-      final birthDateChanged = currentBirthDate != _selectedBirthDate;
-      final genderChanged =
-          GenderMapper.mapFhirGenderToDisplay(currentGender, context.l10n) != _selectedGender;
-      final bloodTypeChanged = currentBloodType != _selectedBloodType;
-      final mrnChanged = currentMRN != currentMRNValue;
+      final birthDateChanged = widget.isSetupMode
+          ? _selectedBirthDate != null
+          : (currentBirthDate != _selectedBirthDate);
+      final genderChanged = widget.isSetupMode
+          ? _selectedGender != context.l10n.preferNotToSay
+          : GenderMapper.mapFhirGenderToDisplay(currentGender, context.l10n) !=
+              _selectedGender;
+      final bloodTypeChanged = widget.isSetupMode
+          ? _selectedBloodType != 'N/A'
+          : currentBloodType != _selectedBloodType;
+      final mrnChanged = widget.isSetupMode
+          ? currentMRNValue.isNotEmpty
+          : (currentMRN != currentMRNValue);
 
       final onlyBloodTypeChanged = bloodTypeChanged &&
           !nameChanged &&
@@ -260,7 +349,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
           !genderChanged &&
           !mrnChanged;
 
-      if (onlyBloodTypeChanged) {
+      if (onlyBloodTypeChanged && !widget.isSetupMode) {
         await _patientEditService.updateBloodTypeObservation(
           _currentPatient!,
           _selectedBloodType,
@@ -274,26 +363,19 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
 
         if (mounted) {
           context.popDialog();
+          widget.onDismiss?.call();
         }
         return;
       }
 
       if (mounted) {
-        final patientFieldsChanged =
-            nameChanged || birthDateChanged || genderChanged || mrnChanged;
+        final patientFieldsChanged = nameChanged ||
+            birthDateChanged ||
+            genderChanged ||
+            mrnChanged ||
+            bloodTypeChanged;
 
         if (patientFieldsChanged) {
-          if (birthDateChanged && _selectedBirthDate == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(context.l10n.pleaseSelectBirthDate),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 2),
-              ),
-            );
-            return;
-          }
-
           final homeState = context.read<HomeBloc>().state;
 
           final givenList = currentGivenValue.isNotEmpty
@@ -304,16 +386,23 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
                 PatientEditSaved(
                   patientId: _currentPatient!.id,
                   sourceId: _currentPatient!.sourceId,
-                  given: givenChanged ? givenList : null,
-                  family: familyChanged
-                      ? (currentFamilyValue.isNotEmpty ? currentFamilyValue : null)
+                  given: givenChanged || widget.isSetupMode ? givenList : null,
+                  family: familyChanged || widget.isSetupMode
+                      ? (currentFamilyValue.isNotEmpty
+                          ? currentFamilyValue
+                          : null)
                       : null,
-                  birthDate: birthDateChanged ? _selectedBirthDate : null,
-                  gender: genderChanged ? _selectedGender : null,
-                  bloodType: bloodTypeChanged
+                  birthDate: birthDateChanged || widget.isSetupMode
+                      ? _selectedBirthDate
+                      : null,
+                  gender: genderChanged || widget.isSetupMode
+                      ? _selectedGender
+                      : null,
+                  bloodType: bloodTypeChanged || widget.isSetupMode
                       ? _selectedBloodType
                       : currentBloodType ?? 'N/A',
-                  mrn: mrnChanged ? currentMRNValue : null,
+                  mrn:
+                      mrnChanged || widget.isSetupMode ? currentMRNValue : null,
                   availableSources: homeState.sources,
                 ),
               );
@@ -324,6 +413,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
         }
 
         context.popDialog();
+        widget.onDismiss?.call();
       }
     } catch (e) {
       if (mounted) {
@@ -344,6 +434,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   void _handleCancel() {
     context.read<PatientBloc>().add(const PatientEditCancelled());
     context.popDialog();
+    widget.onDismiss?.call();
   }
 
   @override
@@ -354,6 +445,18 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     final iconColor = context.isDarkMode
         ? AppColors.textSecondaryDark
         : AppColors.textSecondary;
+
+    // Dynamic labels based on mode
+    final headerTitle = widget.isSetupMode
+        ? context.l10n.setUpMyHealthWallet
+        : context.l10n.editDetails;
+    final headerSubtitle =
+        widget.isSetupMode ? context.l10n.patientSetupSubtitle : null;
+    final cancelLabel =
+        widget.isSetupMode ? context.l10n.useDefaults : context.l10n.cancel;
+    final saveLabel = widget.isSetupMode
+        ? context.l10n.setUpProfile
+        : context.l10n.saveDetails;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -371,19 +474,21 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             DialogHeader(
               textColor: textColor,
               onCancel: _handleCancel,
+              title: headerTitle,
+              subtitle: headerSubtitle,
             ),
             Container(height: 1, color: borderColor),
-
             Flexible(
               child: _buildPatientForm(iconColor),
             ),
-
             Padding(
               padding: const EdgeInsets.all(Insets.normal),
               child: FormFields.buildActionButtons(
                 onCancel: _handleCancel,
                 onSave: () => _handleSave(),
                 isLoading: _isLoading,
+                cancelLabel: cancelLabel,
+                saveLabel: saveLabel,
               ),
             ),
           ],
@@ -404,9 +509,10 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
           DialogContent(
             patient: _currentPatient!,
             showNameField: true,
-            selectedGiven: _selectedGiven,
-            selectedFamily: _selectedFamily,
-            selectedMRN: _selectedMRN,
+            isSetupMode: widget.isSetupMode,
+            selectedGiven: widget.isSetupMode ? '' : _selectedGiven,
+            selectedFamily: widget.isSetupMode ? '' : _selectedFamily,
+            selectedMRN: widget.isSetupMode ? '' : _selectedMRN,
             selectedBirthDate: _selectedBirthDate,
             selectedGender: _selectedGender,
             selectedBloodType: _selectedBloodType,

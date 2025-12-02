@@ -1293,6 +1293,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.'**
   String get aiModelDownloadInfo;
+
+  /// No description provided for @setUpMyHealthWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up my Health Wallet'**
+  String get setUpMyHealthWallet;
+
+  /// No description provided for @patientSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up Your Profile'**
+  String get patientSetupTitle;
+
+  /// No description provided for @patientSetupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Personalize your health wallet with your information'**
+  String get patientSetupSubtitle;
+
+  /// No description provided for @onboardingSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up my Health Wallet'**
+  String get onboardingSetupTitle;
+
+  /// No description provided for @onboardingSetupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your personal health profile to get started with HealthWallet'**
+  String get onboardingSetupBody;
+
+  /// No description provided for @onboardingDemoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Demo Data'**
+  String get onboardingDemoTitle;
+
+  /// No description provided for @onboardingDemoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore the app with sample medical records to see how it works'**
+  String get onboardingDemoBody;
+
+  /// No description provided for @onboardingSyncTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Your Records'**
+  String get onboardingSyncTitle2;
+
+  /// No description provided for @onboardingSyncBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to your healthcare providers to import your real medical records'**
+  String get onboardingSyncBody;
+
+  /// No description provided for @givenName.
+  ///
+  /// In en, this message translates to:
+  /// **'Given Name'**
+  String get givenName;
+
+  /// No description provided for @familyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Family Name'**
+  String get familyName;
+
+  /// No description provided for @skipForNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get skipForNow;
+
+  /// No description provided for @setUpProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up'**
+  String get setUpProfile;
+
+  /// No description provided for @useDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get useDefaults;
 }
 
 class _AppLocalizationsDelegate

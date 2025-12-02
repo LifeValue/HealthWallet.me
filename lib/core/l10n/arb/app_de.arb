@@ -210,5 +210,25 @@
     "aiModelTitle": "KI-Modell laden",
     "aiModelUnlockTitle": "KI-gestütztes Scannen freischalten",
     "aiModelUnlockDescription": "Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell. Ihre Daten bleiben vollständig privat.",
-    "aiModelDownloadInfo": "Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung."
+    "aiModelDownloadInfo": "Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.",
+    
+    "setUpMyHealthWallet": "Meine Gesundheits-Brieftasche einrichten",
+    "patientSetupTitle": "Profil einrichten",
+    "patientSetupSubtitle": "Personalisieren Sie Ihre Gesundheits-Brieftasche mit Ihren Informationen",
+    
+    "onboardingSetupTitle": "Meine Gesundheits-Brieftasche einrichten",
+    "onboardingSetupBody": "Erstellen Sie Ihr persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen",
+    "onboardingDemoTitle": "Demo-Daten ausprobieren",
+    "onboardingDemoBody": "Erkunden Sie die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert",
+    "onboardingSyncTitle2": "Ihre Aufzeichnungen synchronisieren",
+    "onboardingSyncBody": "Verbinden Sie sich mit Ihren Gesundheitsdienstleistern, um Ihre echten medizinischen Aufzeichnungen zu importieren",
+    
+    "givenName": "Vorname",
+    "familyName": "Nachname",
+    "skipForNow": "Vorerst überspringen",
+    
+    "setUpProfile": "Einrichten",
+    "useDefaults": "Standard",
+    "editDetails": "Details bearbeiten",
+    "saveDetails": "Details speichern"
 }

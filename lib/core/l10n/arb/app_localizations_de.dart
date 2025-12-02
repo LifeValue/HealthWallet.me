@@ -660,4 +660,50 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get aiModelDownloadInfo =>
       'Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.';
+
+  @override
+  String get setUpMyHealthWallet => 'Meine Gesundheits-Brieftasche einrichten';
+
+  @override
+  String get patientSetupTitle => 'Profil einrichten';
+
+  @override
+  String get patientSetupSubtitle =>
+      'Personalisieren Sie Ihre Gesundheits-Brieftasche mit Ihren Informationen';
+
+  @override
+  String get onboardingSetupTitle => 'Meine Gesundheits-Brieftasche einrichten';
+
+  @override
+  String get onboardingSetupBody =>
+      'Erstellen Sie Ihr persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen';
+
+  @override
+  String get onboardingDemoTitle => 'Demo-Daten ausprobieren';
+
+  @override
+  String get onboardingDemoBody =>
+      'Erkunden Sie die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert';
+
+  @override
+  String get onboardingSyncTitle2 => 'Ihre Aufzeichnungen synchronisieren';
+
+  @override
+  String get onboardingSyncBody =>
+      'Verbinden Sie sich mit Ihren Gesundheitsdienstleistern, um Ihre echten medizinischen Aufzeichnungen zu importieren';
+
+  @override
+  String get givenName => 'Vorname';
+
+  @override
+  String get familyName => 'Nachname';
+
+  @override
+  String get skipForNow => 'Vorerst überspringen';
+
+  @override
+  String get setUpProfile => 'Einrichten';
+
+  @override
+  String get useDefaults => 'Standard';
 }
