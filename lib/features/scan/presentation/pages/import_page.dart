@@ -9,6 +9,7 @@ import 'package:health_wallet/core/services/external_files_service.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/session_list.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
@@ -82,28 +83,63 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 if (importSessions.isNotEmpty)
-                  SizedBox(
-                    height: MediaQuery.sizeOf(context).height / 2,
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
                           "Active import sessions:",
-                          style: AppTextStyle.buttonLarge,
+                          style: AppTextStyle.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Only one processing session can run at a time!",
+                          style: AppTextStyle.bodySmall,
                         ),
                         const SizedBox(height: 24),
-                        SessionList(sessions: importSessions),
+                        Expanded(
+                          child: SessionList(sessions: importSessions),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 80.0),
+                          child: ImportActions(
+                            onImportDocument: () => _handleImportDocument(context),
+                            onPickImage: () => _handlePickImage(context),
+                            onScanDocument: () => _navigateToScanTab(context),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ImportActions(
-                  onImportDocument: () => _handleImportDocument(context),
-                  onPickImage: () => _handlePickImage(context),
-                  onScanDocument: () => _navigateToScanTab(context),
-                ),
+                if (importSessions.isEmpty)
+                  Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      Assets.images.emptyScan.svg(),
+                      const SizedBox(height: 36),
+                      const Text(
+                        "No imports yet",
+                        style: AppTextStyle.titleMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Import or scan documents to get started",
+                        style: AppTextStyle.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ImportActions(
+                        onImportDocument: () => _handleImportDocument(context),
+                        onPickImage: () => _handlePickImage(context),
+                        onScanDocument: () => _navigateToScanTab(context),
+                      ),
+                    ],
+                  ),
               ],
             ),
           );

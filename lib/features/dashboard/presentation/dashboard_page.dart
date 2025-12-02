@@ -240,7 +240,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 Expanded(
                                   child: _buildNavItem(
                                     context: context,
-                                    icon: Assets.icons.documentFile.svg(
+                                    icon: Assets.icons.scan.svg(
                                       width: 24,
                                       height: 24,
                                       colorFilter: ColorFilter.mode(

@@ -49,18 +49,14 @@ class SessionList extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(session.status.toString()),
-                              Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Container(
-                                    color: context.theme.dividerColor,
-                                    width: 1.8,
-                                    height: 16,
-                                  )),
+                              Text(session.status.toString(),style: TextStyle(
+                                color: session.status.getColor(context),
+                                fontWeight: FontWeight.w600,
+                              ),),
+                              const SizedBox(height: 6,),
                               Text(DateFormat('MMMM d, HH:mm:ss')
                                   .format(session.createdAt!)),
                             ],
