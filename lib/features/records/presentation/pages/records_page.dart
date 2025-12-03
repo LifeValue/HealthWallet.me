@@ -424,15 +424,44 @@ class _RecordsViewState extends State<RecordsView> {
                           ),
                         );
                       } else {
-                        return SyncPlaceholderWidget(
-                          pageController: widget.pageController,
-                          recordTypeName: state.activeFilters.isNotEmpty
-                              ? state.activeFilters.length == 1
-                                  ? state.activeFilters.first.display
-                                  : state.activeFilters
-                                      .map((f) => f.display)
-                                      .join(', ')
-                              : null,
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final double bottomSafeInset =
+                                MediaQuery.of(context).padding.bottom;
+                            const double bottomBarHeight = Insets.extraLarge;
+                            const double bottomBarOffset = Insets.medium;
+                            const double extraSpacing = Insets.large;
+                            
+                            return SingleChildScrollView(
+                              controller: _scrollController,
+                              physics: const ClampingScrollPhysics(),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: bottomSafeInset +
+                                        bottomBarHeight +
+                                        bottomBarOffset +
+                                        extraSpacing,
+                                  ),
+                                  child: IntrinsicHeight(
+                                    child: SyncPlaceholderWidget(
+                                      pageController: widget.pageController,
+                                      recordTypeName: state.activeFilters.isNotEmpty
+                                          ? state.activeFilters.length == 1
+                                              ? state.activeFilters.first.display
+                                              : state.activeFilters
+                                                  .map((f) => f.display)
+                                                  .join(', ')
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         );
                       }
                     }
