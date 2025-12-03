@@ -18,6 +18,7 @@ class DialogContent extends StatelessWidget {
   final List<String> bloodTypeOptions;
   final Color iconColor;
   final bool showNameField;
+  final bool isSetupMode;
   final ValueChanged<String>? onGivenChanged;
   final ValueChanged<String>? onFamilyChanged;
   final ValueChanged<String>? onMRNChanged;
@@ -41,6 +42,7 @@ class DialogContent extends StatelessWidget {
     required this.bloodTypeOptions,
     required this.iconColor,
     this.showNameField = false,
+    this.isSetupMode = false,
     this.onGivenChanged,
     this.onFamilyChanged,
     this.onMRNChanged,
@@ -70,20 +72,22 @@ class DialogContent extends StatelessWidget {
                 Expanded(
                   child: FormFields.buildTextField(
                     context,
-                    'Given',
-                    selectedGiven ?? '',
+                    context.l10n.givenName,
+                    isSetupMode ? '' : (selectedGiven ?? ''),
                     onGivenChanged,
                     controller: givenController,
+                    hintText: isSetupMode ? context.l10n.givenName : null,
                   ),
                 ),
                 const SizedBox(width: Insets.small),
                 Expanded(
                   child: FormFields.buildTextField(
                     context,
-                    'Family',
-                    selectedFamily ?? '',
+                    context.l10n.familyName,
+                    isSetupMode ? '' : (selectedFamily ?? ''),
                     onFamilyChanged,
                     controller: familyController,
+                    hintText: isSetupMode ? context.l10n.familyName : null,
                   ),
                 ),
               ],
@@ -92,9 +96,10 @@ class DialogContent extends StatelessWidget {
             FormFields.buildTextField(
               context,
               'MRN',
-              selectedMRN ?? '',
+              isSetupMode ? '' : (selectedMRN ?? ''),
               onMRNChanged,
               controller: mrnController,
+              hintText: isSetupMode ? 'MRN (optional)' : null,
             ),
             const SizedBox(height: Insets.normal),
           ],
