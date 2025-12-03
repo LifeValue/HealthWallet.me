@@ -1,11 +1,17 @@
 {
   "de": [
+    "onboardingRecordsContent",
+    "onboardingRecordsBottom",
+    "onboardingRequestIntegration",
     "walletHolder",
     "walletHolderDescription",
     "documentScanTitle"
   ],
 
   "es": [
+    "onboardingRecordsContent",
+    "onboardingRecordsBottom",
+    "onboardingRequestIntegration",
     "walletHolder",
     "walletHolderDescription",
     "documentScanTitle"

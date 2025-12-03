@@ -55,6 +55,17 @@ class AppLocalizationsDe extends AppLocalizations {
       '<link>HealthWallet.me</link> stellt sicher, dass Ihre vollständige Gesundheitsgeschichte immer aktuell ist. Es synchronisiert automatisch neue Aufzeichnungen von verbundenen Anbietern und ermöglicht es Ihnen, physische Dokumente sofort mit einem schnellen Scan hinzuzufügen.';
 
   @override
+  String get onboardingRecordsContent =>
+      '• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of <link>Fasten Health OnPrem</link> and get all your US healthcare systems records to your wallet.';
+
+  @override
+  String get onboardingRecordsBottom =>
+      'Everything is organized securely on your device.';
+
+  @override
+  String get onboardingRequestIntegration => 'Request an integration';
+
+  @override
   String get onboardingScanButton => 'Scannen';
 
   @override

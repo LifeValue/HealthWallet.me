@@ -25,8 +25,8 @@ class ScanPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => GetIt.instance.get<LoadModelBloc>(),
+    return BlocProvider.value(
+      value: GetIt.instance.get<LoadModelBloc>(),
       child: const ScanView(),
     );
   }
@@ -125,9 +125,38 @@ class _ScanViewState extends State<ScanView>
         actions: [
           BlocBuilder<LoadModelBloc, LoadModelState>(
             builder: (context, state) {
-              // Hide the button entirely if model is loaded
               if (state.status == LoadModelStatus.modelLoaded) {
                 return const SizedBox.shrink();
+              }
+
+              if (state.status == LoadModelStatus.loading) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          value: state.downloadProgress != null
+                              ? state.downloadProgress! / 100
+                              : null,
+                          color: context.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${state.downloadProgress?.toStringAsFixed(0) ?? 0}%',
+                        style: TextStyle(
+                          color: context.colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               }
 
               return TextButton.icon(
@@ -205,76 +234,76 @@ class _ScanViewState extends State<ScanView>
   }
 
   Widget _buildMainView(BuildContext context, ScanState state) {
-  List<ProcessingSession> scanSessions = state.sessions
-      .where((element) => element.origin == ProcessingOrigin.scan)
-      .toList();
+    List<ProcessingSession> scanSessions = state.sessions
+        .where((element) => element.origin == ProcessingOrigin.scan)
+        .toList();
 
-  return Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        if (scanSessions.isNotEmpty)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          if (scanSessions.isNotEmpty)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Active scan sessions:",
+                    style: AppTextStyle.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Only one processing session can run at a time!",
+                    style: AppTextStyle.bodySmall,
+                  ),
+                  const SizedBox(height: 24),
+                  Expanded(
+                    child: SessionList(sessions: scanSessions),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 80.0),
+                    child: AppButton(
+                      label: 'Scan Document',
+                      icon: Assets.icons.scan.svg(),
+                      variant: AppButtonVariant.primary,
+                      onPressed: () => _handleDirectScan(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (scanSessions.isEmpty)
+            Column(
               children: [
+                const SizedBox(height: 16),
+                Assets.images.emptyScan.svg(),
+                const SizedBox(height: 36),
                 const Text(
-                  "Active scan sessions:",
+                  "No scans yet",
                   style: AppTextStyle.titleMedium,
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  "Only one processing session can run at a time!",
-                  style: AppTextStyle.bodySmall,
+                  "Scan or import documents to get started",
+                  style: AppTextStyle.bodyMedium,
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                Expanded(
-                  child: SessionList(sessions: scanSessions),
-                ),
-                const SizedBox(height: 16),
-               Padding(
-                  padding: const EdgeInsets.only(bottom: 80.0),
-                  child: AppButton(
-                    label: 'Scan Document',
-                    icon: Assets.icons.scan.svg(),
-                    variant: AppButtonVariant.primary,
-                    onPressed: () => _handleDirectScan(context),
-                  ),
+                AppButton(
+                  label: 'Scan Document',
+                  icon: Assets.icons.scan.svg(),
+                  variant: AppButtonVariant.primary,
+                  onPressed: () => _handleDirectScan(context),
                 ),
               ],
             ),
-          ),
-        if (scanSessions.isEmpty)
-          Column(
-            children: [
-              const SizedBox(height: 16),
-              Assets.images.emptyScan.svg(),
-              const SizedBox(height: 36),
-              const Text(
-                "No scans yet",
-                style: AppTextStyle.titleMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                "Scan or import documents to get started",
-                style: AppTextStyle.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              AppButton(
-                label: 'Scan Document',
-                icon: Assets.icons.scan.svg(),
-                variant: AppButtonVariant.primary,
-                onPressed: () => _handleDirectScan(context),
-              ),
-            ],
-          ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   Future<void> _handleDirectScan(BuildContext context) async {
     final cameraStatus = await Permission.camera.request();

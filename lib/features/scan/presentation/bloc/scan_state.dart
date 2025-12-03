@@ -24,6 +24,6 @@ class ScanState with _$ScanState {
     @Default([]) List<String> allImagePathsForOCR,
     @Default([]) List<PatientGroup> currentPatients,
     PatientGroup? selectedPatient,
-    WalletNotification? notification,
+    Notification? notification,
   }) = _ScanState;
 }
