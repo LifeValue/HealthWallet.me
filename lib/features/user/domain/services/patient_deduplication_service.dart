@@ -128,7 +128,7 @@ class PatientDeduplicationService {
       final enhancedGroups = Map<String, PatientGroup>.from(patientGroups);
 
       for (final patient in allPatients) {
-        final sourcesForPatient = await _getSourceIdsForPatient(patient.id);
+        final sourcesForPatient = await getSourceIdsForPatient(patient.id);
 
         final allSourceIds = {
           ...sourcesForPatient,
@@ -160,7 +160,7 @@ class PatientDeduplicationService {
     }
   }
 
-  Future<List<String>> _getSourceIdsForPatient(String patientId) async {
+  Future<List<String>> getSourceIdsForPatient(String patientId) async {
     try {
       final allResources = await _recordsRepository.getResources(
         resourceTypes: [],

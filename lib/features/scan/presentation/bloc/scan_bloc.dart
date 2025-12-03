@@ -46,6 +46,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final WalletPatientService _walletPatientService;
   final SyncRepository _syncRepository;
   final DocumentReferenceService _documentReferenceService;
+  final PatientDeduplicationService _deduplicationService;
 
   ScanBloc(
     this._pdfStorageService,
@@ -54,6 +55,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     this._walletPatientService,
     this._syncRepository,
     this._documentReferenceService,
+    this._deduplicationService,
   ) : super(const ScanState()) {
     on<ScanInitialised>(_onScanInitialised);
     on<ScanButtonPressed>(_onScanButtonPressed);
@@ -65,7 +67,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         transformer: restartable());
     on<ScanResourceChanged>(_onScanResourceChanged);
     on<ScanResourceRemoved>(_onScanResourceRemoved);
-    on<ScanPatientSelected>(_onScanPatientSelected);
     on<ScanResourceCreationInitiated>(_onScanResourceCreationInitiated);
     on<ScanNotificationAcknowledged>(_onScanNotificationAcknowledged);
     on<ScanMappingCancelled>(_onScanMappingCancelled);
@@ -333,8 +334,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       emit(state.copyWith(
         activeSessionId: event.sessionId,
-        currentPatients: event.currentPatients,
-        selectedPatient: event.currentPatients.first,
       ));
 
       if (session.status == ProcessingStatus.pending) {
@@ -447,8 +446,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         sessionId: event.sessionId,
         resources: updatedResources,
         status: ProcessingStatus.draft,
-        patient:StagedPatient(draft: patient as MappingPatient?),
-        encounter:  StagedEncounter(draft: encounter as MappingEncounter?),
+        patient: StagedPatient(draft: patient as MappingPatient?),
+        encounter: StagedEncounter(draft: encounter as MappingEncounter?),
         updateDb: true,
       );
 
@@ -494,6 +493,36 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   ) {
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
+
+    if (event.isDraftPatient == true) {
+      MappingPatient draftPatient =
+          activeSession.patient.draft ?? const MappingPatient();
+
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        patient: activeSession.patient.copyWith(
+            draft: draftPatient.copyWithMap({event.propertyKey: event.newValue})
+                as MappingPatient),
+      );
+      return;
+    }
+
+    if (event.isDraftEncounter == true) {
+      MappingEncounter draftEncounter =
+          activeSession.encounter.draft ?? const MappingEncounter();
+
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        encounter: activeSession.encounter.copyWith(
+            draft:
+                draftEncounter.copyWithMap({event.propertyKey: event.newValue})
+                    as MappingEncounter),
+      );
+      return;
+    }
+
     MappingResource updatedResource =
         activeSession.resources[event.index].copyWithMap({
       event.propertyKey: event.newValue,
@@ -504,13 +533,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
     _updateSession(emit,
         sessionId: event.sessionId, resources: newResources, updateDb: true);
-  }
-
-  void _onScanPatientSelected(
-    ScanPatientSelected event,
-    Emitter<ScanState> emit,
-  ) {
-    emit(state.copyWith(selectedPatient: event.patientGroup));
   }
 
   void _onScanResourceCreationInitiated(
@@ -524,33 +546,21 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     String sourceId;
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final draftResources = [...activeSession.resources];
 
     try {
-      MappingPatient? mappingPatient =
-          activeSession.resources.whereType<MappingPatient>().firstOrNull;
+      // If the patient / encounter is not an existing one, it will always be a draft
+      // because of the guard we set when adding this event
 
-      MappingEncounter mappingEncounter =
-          activeSession.resources.whereType<MappingEncounter>().first;
-      encounterId = mappingEncounter.id;
-
-      if (mappingPatient != null) {
-        subjectId = mappingPatient.id;
-        final walletSource =
-            await _walletPatientService.createWalletSourceForPatient(
-          subjectId,
-          "${mappingPatient.givenName.value} ${mappingPatient.familyName.value}",
-        );
-
-        await _syncRepository.cacheSources([walletSource]);
-
-        sourceId = walletSource.id;
-      } else {
-        PatientGroup selectedPatientGroup = state.selectedPatient!;
+      if (activeSession.patient.existing != null) {
+        Patient existingPatient = activeSession.patient.existing!;
+        List<String> patientSourceIds = await _deduplicationService
+            .getSourceIdsForPatient(existingPatient.id);
 
         List<Source> sources = await _syncRepository.getSources();
 
         String? writableSourceId =
-            selectedPatientGroup.sourceIds.firstWhereOrNull((sourceId) {
+            patientSourceIds.firstWhereOrNull((sourceId) {
           final source = sources.firstWhere(
             (s) => s.id == sourceId,
             orElse: () => const Source(
@@ -562,8 +572,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         if (writableSourceId == null) {
           final walletSource =
               await _walletPatientService.createWalletSourceForPatient(
-            selectedPatientGroup.patientId,
-            selectedPatientGroup.representativePatient.title,
+            existingPatient.id,
+            existingPatient.displayTitle,
           );
 
           await _syncRepository.cacheSources([walletSource]);
@@ -571,11 +581,33 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           writableSourceId = walletSource.id;
         }
 
+        subjectId = existingPatient.id;
         sourceId = writableSourceId;
-        subjectId = selectedPatientGroup.patientId;
+      } else {
+        MappingPatient draftPatient = activeSession.patient.draft!;
+
+        final walletSource =
+            await _walletPatientService.createWalletSourceForPatient(
+          draftPatient.id,
+          "${draftPatient.givenName.value} ${draftPatient.familyName.value}",
+        );
+
+        await _syncRepository.cacheSources([walletSource]);
+
+        draftResources.add(draftPatient);
+
+        subjectId = draftPatient.id;
+        sourceId = walletSource.id;
       }
 
-      List<IFhirResource> fhirResources = activeSession.resources
+      if (activeSession.encounter.existing != null) {
+        encounterId = activeSession.encounter.existing!.id;
+      } else {
+        draftResources.add(activeSession.encounter.draft!);
+        encounterId = activeSession.encounter.draft!.id;
+      }
+
+      List<IFhirResource> fhirResources = draftResources
           .map((resource) => resource.toFhirResource(
                 sourceId: sourceId,
                 subjectId: (resource is MappingPatient) ? '' : subjectId,
@@ -585,17 +617,15 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       await _syncRepository.saveResources(fhirResources);
 
+      Encounter finalEncounter = activeSession.encounter.existing ??
+          fhirResources.firstWhere((resource) => resource is Encounter)
+              as Encounter;
       await _documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: activeSession.filePaths,
         patientId: subjectId,
-        encounter: fhirResources.firstWhere((resource) => resource is Encounter)
-            as Encounter,
+        encounter: finalEncounter,
         sourceId: sourceId,
-        title: activeSession.resources
-            .whereType<MappingEncounter>()
-            .first
-            .encounterType
-            .value,
+        title: finalEncounter.displayTitle,
       );
 
       emit(state.copyWith(status: const ScanStatus.success()));
@@ -730,5 +760,13 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   void _onScanEncounterAttached(
     ScanEncounterAttached event,
     Emitter<ScanState> emit,
-  ) {}
+  ) {
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      patient: event.patient,
+      encounter: event.encounter,
+      updateDb: true,
+    );
+  }
 }

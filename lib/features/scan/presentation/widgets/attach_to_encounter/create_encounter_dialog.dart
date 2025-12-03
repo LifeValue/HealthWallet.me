@@ -13,7 +13,10 @@ import 'package:uuid/uuid.dart';
 class CreateEncounterDialog extends StatefulWidget {
   const CreateEncounterDialog({super.key});
 
-  static Future<MappingEncounter?> show(BuildContext context) {
+  static Future<MappingEncounter?> show(
+    BuildContext context, {
+    MappingEncounter? initEncounter,
+  }) {
     return showDialog<MappingEncounter>(
       context: context,
       builder: (context) => const CreateEncounterDialog(),
@@ -173,7 +176,8 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppColors.primary),
+                          borderSide:
+                              const BorderSide(color: AppColors.primary),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -263,4 +267,3 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
     );
   }
 }
-

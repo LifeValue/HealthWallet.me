@@ -5,6 +5,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 
@@ -33,8 +34,6 @@ class AttachToEncounterBloc
     AttachToEncounterStarted event,
     Emitter<AttachToEncounterState> emit,
   ) async {
-    emit(state.copyWith(status: AttachToEncounterStatus.loading));
-
     try {
       final allPatientsResources = await _recordsRepository.getResources(
         resourceTypes: [FhirType.Patient],
@@ -45,31 +44,36 @@ class AttachToEncounterBloc
       List<Patient> uniquePatients =
           _deduplicationService.getUniquePatients(allPatients);
 
-      if (uniquePatients.isEmpty && event.newPatient == null) {
+      if (uniquePatients.isEmpty) {
         emit(state.copyWith(
           status: AttachToEncounterStatus.success,
-          patients: [],
+          existingPatients: [],
         ));
         return;
       }
 
-      if (event.newPatient != null) {
-        uniquePatients = [
-          event.newPatient!.toFhirResource() as Patient,
-          ...uniquePatients
-        ];
+      dynamic selectedPatient = event.patient.draft ?? uniquePatients.first;
+
+      if (event.patient.existing != null) {
+        selectedPatient = uniquePatients
+            .firstWhere((patient) => patient.id == event.patient.existing!.id);
       }
 
-      final selectedPatient = uniquePatients.first;
-
       emit(state.copyWith(
-        patients: uniquePatients,
+        existingPatients: uniquePatients,
         selectedPatient: selectedPatient,
-        newPatient: event.newPatient,
-        newEncounter: event.newEncounter,
+        patient: event.patient.copyWith(
+            mode: (selectedPatient is MappingPatient)
+                ? ImportMode.createNew
+                : ImportMode.linkExisting),
+        encounter: event.encounter,
       ));
 
-      await _loadEncounters(emit, selectedPatient);
+      if (selectedPatient is Patient) {
+        await _loadEncounters(emit, selectedPatient);
+      }
+
+      emit(state.copyWith(status: AttachToEncounterStatus.success));
     } catch (e) {
       logger.e('Error loading patients in AttachToEncounterBloc: $e');
       emit(state.copyWith(
@@ -83,11 +87,30 @@ class AttachToEncounterBloc
     AttachToEncounterPatientChanged event,
     Emitter<AttachToEncounterState> emit,
   ) async {
-    emit(state.copyWith(
-      selectedPatient: event.patient,
-      status: AttachToEncounterStatus.loading,
-    ));
-    await _loadEncounters(emit, event.patient);
+    if (event.patient is MappingPatient) {
+      emit(state.copyWith(
+        patient: state.patient.copyWith(
+          mode: ImportMode.createNew,
+          existing: null,
+        ),
+        encounter: state.encounter.copyWith(existing: null),
+        existingEncounters: [],
+        selectedPatient: event.patient,
+      ));
+    }
+
+    if (event.patient is Patient) {
+      emit(state.copyWith(
+        selectedPatient: event.patient,
+        patient: state.patient.copyWith(
+          existing: event.patient,
+          mode: ImportMode.linkExisting,
+        ),
+        encounter: state.encounter.copyWith(existing: null),
+        status: AttachToEncounterStatus.loading,
+      ));
+      await _loadEncounters(emit, event.patient);
+    }
   }
 
   Future<void> _loadEncounters(
@@ -105,16 +128,9 @@ class AttachToEncounterBloc
 
       List<Encounter> encounters = resources.whereType<Encounter>().toList();
 
-      if (state.newEncounter != null) {
-        encounters = [
-          state.newEncounter!.toFhirResource() as Encounter,
-          ...encounters
-        ];
-      }
-
       emit(state.copyWith(
         status: AttachToEncounterStatus.success,
-        encounters: encounters,
+        existingEncounters: encounters,
         filteredEncounters: _filterEncounters(encounters, state.searchQuery),
       ));
     } catch (e) {
@@ -130,7 +146,7 @@ class AttachToEncounterBloc
     AttachToEncounterSearchQueryChanged event,
     Emitter<AttachToEncounterState> emit,
   ) async {
-    final filtered = _filterEncounters(state.encounters, event.query);
+    final filtered = _filterEncounters(state.existingEncounters, event.query);
     emit(state.copyWith(
       searchQuery: event.query,
       filteredEncounters: filtered,
@@ -141,23 +157,33 @@ class AttachToEncounterBloc
     AttachToEncounterSelected event,
     Emitter<AttachToEncounterState> emit,
   ) async {
-    emit(state.copyWith(selectedEncounter: event.encounter));
+    if (event.encounter is MappingEncounter) {
+      emit(state.copyWith(
+        encounter: state.encounter.copyWith(
+          existing: null,
+          mode: ImportMode.createNew,
+        ),
+      ));
+    }
+    if (event.encounter is Encounter) {
+      emit(state.copyWith(
+        encounter: state.encounter.copyWith(
+          existing: event.encounter,
+          mode: ImportMode.linkExisting,
+        ),
+      ));
+    }
   }
 
   Future<void> _onNewEncounterCreated(
     AttachToEncounterNewEncounterCreated event,
     Emitter<AttachToEncounterState> emit,
   ) async {
-    final newEncounter = event.newEncounter.toFhirResource() as Encounter;
-    final updatedEncounters = [newEncounter, ...state.encounters];
-    final filteredEncounters =
-        _filterEncounters(updatedEncounters, state.searchQuery);
-
     emit(state.copyWith(
-      newEncounter: event.newEncounter,
-      encounters: updatedEncounters,
-      filteredEncounters: filteredEncounters,
-      selectedEncounter: newEncounter,
+      encounter: state.encounter.copyWith(
+        draft: event.encounter,
+        mode: ImportMode.createNew,
+      ),
     ));
   }
 

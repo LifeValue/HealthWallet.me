@@ -38,9 +38,10 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
         confidenceLevel: 1,
       ),
       periodStart: MappedProperty(
-        value: DateFormat('Y-MM-dd').format(
+        value: DateFormat('yyyy-MM-dd').format(
           encounter.date ?? DateTime.now(),
         ),
+        confidenceLevel: 1,
       ),
     );
   }

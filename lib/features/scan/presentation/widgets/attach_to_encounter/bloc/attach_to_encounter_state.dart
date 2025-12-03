@@ -1,19 +1,18 @@
 part of 'attach_to_encounter_bloc.dart';
 
-enum AttachToEncounterStatus { initial, loading, success, failure }
+enum AttachToEncounterStatus { loading, success, failure }
 
 @freezed
 class AttachToEncounterState with _$AttachToEncounterState {
   const factory AttachToEncounterState({
-    @Default(AttachToEncounterStatus.initial) AttachToEncounterStatus status,
-    @Default([]) List<Patient> patients,
-    Patient? selectedPatient,
-    @Default([]) List<Encounter> encounters,
+    @Default(AttachToEncounterStatus.loading) AttachToEncounterStatus status,
+    @Default([]) List<Patient> existingPatients,
+    @Default([]) List<Encounter> existingEncounters,
     @Default([]) List<Encounter> filteredEncounters,
-    Encounter? selectedEncounter,
     @Default('') String searchQuery,
-    MappingPatient? newPatient,
-    MappingEncounter? newEncounter,
+    @Default(StagedPatient()) StagedPatient patient,
+    @Default(StagedEncounter()) StagedEncounter encounter,
+    dynamic selectedPatient,
     String? errorMessage,
   }) = _AttachToEncounterState;
 }

@@ -5,12 +5,14 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:auto_route/auto_route.dart';
@@ -68,7 +70,23 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
 
         final (patient, encounter) = result;
 
-        await attachToEncounter(context, session.filePaths, encounter);
+        // The patient will always be an existing one here
+        final existingPatient = patient.existing!;
+
+        // The encounter can either be an existing one or a draft
+        Encounter finalEncounter;
+        if (encounter.draft != null) {
+          finalEncounter = encounter.draft!.toFhirResource(
+            sourceId: existingPatient.sourceId,
+            subjectId: existingPatient.subjectId,
+          ) as Encounter;
+
+          getIt<SyncRepository>().saveResources([finalEncounter]);
+        } else {
+          finalEncounter = encounter.existing!;
+        }
+
+        await attachToEncounter(context, session.filePaths, finalEncounter);
       }
     }
   }

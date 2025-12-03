@@ -48,7 +48,6 @@ enum ScanMode {
 class ScanSessionActivated extends ScanEvent with _$ScanSessionActivated {
   const factory ScanSessionActivated({
     required String sessionId,
-    required List<PatientGroup> currentPatients,
   }) = _ScanSessionActivated;
 }
 
@@ -65,6 +64,8 @@ class ScanResourceChanged extends ScanEvent with _$ScanResourceChanged {
     required int index,
     required String propertyKey,
     required String newValue,
+    bool? isDraftPatient,
+    bool? isDraftEncounter,
   }) = _ScanResourceChanged;
 }
 
@@ -79,14 +80,6 @@ class ScanResourceCreationInitiated extends ScanEvent
     with _$ScanResourceCreationInitiated {
   const factory ScanResourceCreationInitiated({required String sessionId}) =
       _ScanResourceCreationInitiated;
-}
-
-@freezed
-class ScanPatientSelected extends ScanEvent with _$ScanPatientSelected {
-  const factory ScanPatientSelected({
-    required String sessionId,
-    required PatientGroup patientGroup,
-  }) = _ScanPatientSelected;
 }
 
 @freezed
@@ -120,7 +113,8 @@ class ResourcesAdded extends ScanEvent with _$ResourcesAdded {
 @freezed
 class ScanEncounterAttached extends ScanEvent with _$ScanEncounterAttached {
   const factory ScanEncounterAttached({
-    required Patient patient,
-    required Encounter encounter,
+    required String sessionId,
+    required StagedPatient patient,
+    required StagedEncounter encounter,
   }) = _ScanEncounterAttached;
 }

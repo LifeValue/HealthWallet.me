@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 
 part 'staged_resource.freezed.dart';
 
@@ -67,20 +67,21 @@ Map<String, dynamic> stagedEncounterToJson(StagedEncounter encounter) => {
     };
 
 StagedPatient stagedPatientFromJson(Map<String, dynamic> json) => StagedPatient(
-      draft: MappingPatient.fromJson(json['draft'] ?? {}),
+      draft:
+          json['draft'] != null ? MappingPatient.fromJson(json['draft']) : null,
       existing: json['existing'] != null
-          ? Patient.fromLocalData(
-              FhirResourceLocalDto.fromJson(json['existing']))
+          ? Patient.fromDto(FhirResourceDto.fromJson(json['existing']))
           : null,
       mode: ImportMode.fromString(json['mode']),
     );
 
 StagedEncounter stagedEncounterFromJson(Map<String, dynamic> json) =>
     StagedEncounter(
-      draft: MappingEncounter.fromJson(json['draft'] ?? {}),
+      draft: json['draft'] != null
+          ? MappingEncounter.fromJson(json['draft'] ?? {})
+          : null,
       existing: json['existing'] != null
-          ? Encounter.fromLocalData(
-              FhirResourceLocalDto.fromJson(json['existing'] ?? {}))
+          ? Encounter.fromDto(FhirResourceDto.fromJson(json['existing']))
           : null,
       mode: ImportMode.fromString(json['mode']),
     );

@@ -8,15 +8,15 @@ abstract class AttachToEncounterEvent {
 class AttachToEncounterStarted extends AttachToEncounterEvent
     with _$AttachToEncounterStarted {
   const factory AttachToEncounterStarted({
-    MappingPatient? newPatient, 
-    MappingEncounter? newEncounter,
+    @Default(StagedPatient()) StagedPatient patient,
+    @Default(StagedEncounter()) StagedEncounter encounter,
   }) = _AttachToEncounterStarted;
 }
 
 @freezed
 class AttachToEncounterPatientChanged extends AttachToEncounterEvent
     with _$AttachToEncounterPatientChanged {
-  const factory AttachToEncounterPatientChanged(Patient patient) =
+  const factory AttachToEncounterPatientChanged(dynamic patient) =
       _AttachToEncounterPatientChanged;
 }
 
@@ -30,12 +30,13 @@ class AttachToEncounterSearchQueryChanged extends AttachToEncounterEvent
 @freezed
 class AttachToEncounterSelected extends AttachToEncounterEvent
     with _$AttachToEncounterSelected {
-  const factory AttachToEncounterSelected(Encounter encounter) =
+  const factory AttachToEncounterSelected(dynamic encounter) =
       _AttachToEncounterSelected;
 }
 
-class AttachToEncounterNewEncounterCreated extends AttachToEncounterEvent {
-  final MappingEncounter newEncounter;
-
-  const AttachToEncounterNewEncounterCreated(this.newEncounter);
+@freezed
+class AttachToEncounterNewEncounterCreated extends AttachToEncounterEvent
+    with _$AttachToEncounterNewEncounterCreated {
+  const factory AttachToEncounterNewEncounterCreated(
+      MappingEncounter encounter) = _AttachToEncounterNewEncounterCreated;
 }

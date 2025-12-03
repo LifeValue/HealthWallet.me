@@ -4,6 +4,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
 
 class PatientSelector extends StatelessWidget {
@@ -59,9 +60,9 @@ class PatientSelector extends StatelessWidget {
 
   Widget _buildPatientSelector(
       BuildContext context, AttachToEncounterState state) {
-    final selectedPatient = state.selectedPatient;
+    final patient = state.patient;
 
-    if (state.patients.isEmpty) {
+    if (state.existingPatients.isEmpty && patient.draft == null) {
       return Text(
         'No patients available',
         style: AppTextStyle.bodyMedium.copyWith(
@@ -89,29 +90,40 @@ class PatientSelector extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<Patient>(
-              value: selectedPatient,
+            child: DropdownButton<dynamic>(
+              value: state.selectedPatient,
               isExpanded: true,
               icon: Icon(
                 Icons.arrow_drop_down,
                 color: context.colorScheme.onSurfaceVariant,
                 size: 20,
               ),
-              items: state.patients.map((Patient patient) {
-                final showNewLabel =
-                    state.newPatient != null && patient == state.patients.first;
-                return DropdownMenuItem<Patient>(
-                  value: patient,
-                  child: Text(
-                    (showNewLabel ? "New patient: " : "") + patient.displayTitle,
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
+              items: [
+                if (patient.draft != null)
+                  DropdownMenuItem<MappingPatient>(
+                    value: patient.draft,
+                    child: Text(
+                      "New Patient: ${patient.draft!.givenName.value} ${patient.draft!.familyName.value}",
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                );
-              }).toList(),
-              onChanged: (Patient? newValue) {
+                ...state.existingPatients.map((Patient patient) {
+                  return DropdownMenuItem<Patient>(
+                    value: patient,
+                    child: Text(
+                      patient.displayTitle,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                })
+              ],
+              onChanged: (dynamic newValue) {
                 if (newValue != null) {
                   context.read<AttachToEncounterBloc>().add(
                         AttachToEncounterPatientChanged(newValue),

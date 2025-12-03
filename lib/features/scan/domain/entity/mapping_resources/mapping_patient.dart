@@ -47,7 +47,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         confidenceLevel: 1,
       ),
       dateOfBirth: MappedProperty(
-        value: DateFormat('Y-MM-dd').format(
+        value: DateFormat('yyyy-MM-dd').format(
           FhirFieldExtractor.extractPatientBirthDate(patient) ?? DateTime.now(),
         ),
         confidenceLevel: 1,

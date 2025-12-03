@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -9,16 +7,14 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/resources_form.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/summary_card.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
 @RoutePage()
 class ProcessingPage extends StatefulWidget {
@@ -40,16 +36,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   @override
   void initState() {
-    context.read<ScanBloc>().add(
-          ScanSessionActivated(
-              sessionId: widget.sessionId,
-              currentPatients: context
-                  .read<PatientBloc>()
-                  .state
-                  .patientGroups
-                  .values
-                  .toList()),
-        );
+    context
+        .read<ScanBloc>()
+        .add(ScanSessionActivated(sessionId: widget.sessionId));
     super.initState();
   }
 
@@ -60,8 +49,39 @@ class _ProcessingPageState extends State<ProcessingPage> {
     super.dispose();
   }
 
-  void _saveResources() {
+  void _saveResources(ScanState state) async {
     if (!_formKey.currentState!.validate()) return;
+
+    final activeSession =
+        state.sessions.firstWhere((session) => session.id == widget.sessionId);
+
+    if (activeSession.patient.hasSelection &&
+        activeSession.encounter.hasSelection) {
+      context
+          .read<ScanBloc>()
+          .add(ScanResourceCreationInitiated(sessionId: widget.sessionId));
+      return;
+    }
+
+    final result = await showDialog<AttachToEncounterResult>(
+      context: context,
+      builder: (context) =>  AttachToEncounterWidget(
+        patient: activeSession.patient,
+        encounter: activeSession.encounter,
+      ),
+    );
+
+    if (result == null || !context.mounted) return;
+
+    final (patient, encounter) = result;
+
+    context.read<ScanBloc>().add(
+          ScanEncounterAttached(
+            sessionId: widget.sessionId,
+            patient: patient,
+            encounter: encounter,
+          ),
+        );
 
     context
         .read<ScanBloc>()
@@ -81,7 +101,6 @@ class _ProcessingPageState extends State<ProcessingPage> {
       ),
       body: BlocConsumer<ScanBloc, ScanState>(
         listener: (context, state) {
-          log("listener: ${state.status}");
           final activeSession =
               state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
           if (activeSession == null) return;
@@ -153,7 +172,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
         children: [
           CustomProgressIndicator(
             progress: activeSession.progress,
-            text: "Processing pages to FHIR resources...",
+            text: "Processing pages...",
             secondaryText: "It might take a while. Please wait.",
           ),
           const SizedBox(height: Insets.normal),
@@ -281,16 +300,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
         ResourcesForm(
           formKey: _formKey,
           resources: activeSession.resources,
-          onPropertyChanged: (index, propertyKey, newValue) =>
-              context.read<ScanBloc>().add(
-                    ScanResourceChanged(
-                      sessionId: widget.sessionId,
-                      index: index,
-                      propertyKey: propertyKey,
-                      newValue: newValue,
-                    ),
-                  ),
-          onResourceRemoved: _showDeleteConfirmationDialog,
+          sessionId: widget.sessionId,
           patient: activeSession.patient,
           encounter: activeSession.encounter,
         ),
@@ -310,7 +320,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
             ),
             onPressed: state.status == const ScanStatus.savingResources()
                 ? null
-                : _saveResources,
+                : () => _saveResources(state),
             child: const Text("Done"),
           ),
         ),
@@ -382,17 +392,6 @@ class _ProcessingPageState extends State<ProcessingPage> {
             resourceTypes: selectedResourceIds,
           ));
     }
-  }
-
-  void _showDeleteConfirmationDialog(int index) {
-    DeleteConfirmationDialog.show(
-      context: context,
-      title: 'Delete Resources',
-      onConfirm: () {
-        context.read<ScanBloc>().add(
-            ScanResourceRemoved(sessionId: widget.sessionId, index: index));
-      },
-    );
   }
 }
 
