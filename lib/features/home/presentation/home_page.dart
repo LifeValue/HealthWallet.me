@@ -117,8 +117,8 @@ class HomeViewState extends State<HomeView> {
     _overlayController.show(
       context: context,
       targetKeys: _highlightController.highlightTargetKeys,
-      message: HomeOnboardingConstants.reorderMessage,
-      subtitle: HomeOnboardingConstants.subtitle,
+      message: context.l10n.homeOnboardingReorderMessage,
+      subtitle: context.l10n.tapToContinue,
       onDismiss: () async {
         context.read<SyncBloc>().add(const ResetTutorial());
 

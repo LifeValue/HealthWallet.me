@@ -692,16 +692,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncPlaceholderTutorialStep1 =>
-      'Tap \'Setup\' to create your health wallet profile';
+      'Complete your profile to unlock full features.';
 
   @override
   String get syncPlaceholderTutorialStep2 =>
-      'Tap \'Load Demo Data\' to explore the app with sample records';
+      'Not ready to import? Load demo data to see how the app looks in action.';
 
   @override
   String get syncPlaceholderTutorialStep3 =>
-      'Tap \'Sync Data\' to connect and import your real medical records';
+      'Keep your desktop and mobile wallet up to date.';
 
   @override
-  String get syncPlaceholderTutorialSubtitle => 'Tap to continue';
+  String get tapToContinue => 'Tap to continue';
+
+  @override
+  String get homeOnboardingReorderMessage =>
+      'Long press to reorder them according to your preference.';
 }

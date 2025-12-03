@@ -1381,26 +1381,32 @@ abstract class AppLocalizations {
   /// No description provided for @syncPlaceholderTutorialStep1.
   ///
   /// In en, this message translates to:
-  /// **'Tap \'Setup\' to create your health wallet profile'**
+  /// **'Complete your profile to unlock full features.'**
   String get syncPlaceholderTutorialStep1;
 
   /// No description provided for @syncPlaceholderTutorialStep2.
   ///
   /// In en, this message translates to:
-  /// **'Tap \'Load Demo Data\' to explore the app with sample records'**
+  /// **'Not ready to import? Load demo data to see how the app looks in action.'**
   String get syncPlaceholderTutorialStep2;
 
   /// No description provided for @syncPlaceholderTutorialStep3.
   ///
   /// In en, this message translates to:
-  /// **'Tap \'Sync Data\' to connect and import your real medical records'**
+  /// **'Keep your desktop and mobile wallet up to date.'**
   String get syncPlaceholderTutorialStep3;
 
-  /// No description provided for @syncPlaceholderTutorialSubtitle.
+  /// No description provided for @tapToContinue.
   ///
   /// In en, this message translates to:
   /// **'Tap to continue'**
-  String get syncPlaceholderTutorialSubtitle;
+  String get tapToContinue;
+
+  /// No description provided for @homeOnboardingReorderMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press to reorder them according to your preference.'**
+  String get homeOnboardingReorderMessage;
 }
 
 class _AppLocalizationsDelegate

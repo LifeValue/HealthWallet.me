@@ -232,8 +232,10 @@
     "editDetails": "Details bearbeiten",
     "saveDetails": "Details speichern",
     
-    "syncPlaceholderTutorialStep1": "Tippen Sie auf 'Einrichten', um Ihr Gesundheits-Brieftasche-Profil zu erstellen",
-    "syncPlaceholderTutorialStep2": "Tippen Sie auf 'Demo-Daten laden', um die App mit Beispielaufzeichnungen zu erkunden",
-    "syncPlaceholderTutorialStep3": "Tippen Sie auf 'Daten synchronisieren', um Ihre echten medizinischen Aufzeichnungen zu verbinden und zu importieren",
-    "syncPlaceholderTutorialSubtitle": "Tippen Sie, um fortzufahren"
+    "syncPlaceholderTutorialStep1": "Vervollständigen Sie Ihr Profil, um alle Funktionen freizuschalten.",
+    "syncPlaceholderTutorialStep2": "Noch nicht bereit zum Importieren? Laden Sie Demo-Daten, um zu sehen, wie die App in Aktion aussieht.",
+    "syncPlaceholderTutorialStep3": "Halten Sie Ihre Desktop- und Mobile-Wallet auf dem neuesten Stand.",
+    "tapToContinue": "Tippen Sie, um fortzufahren",
+    
+    "homeOnboardingReorderMessage": "Lange drücken, um sie nach Ihren Wünschen neu anzuordnen."
 }

@@ -709,16 +709,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncPlaceholderTutorialStep1 =>
-      'Tippen Sie auf \'Einrichten\', um Ihr Gesundheits-Brieftasche-Profil zu erstellen';
+      'Vervollständigen Sie Ihr Profil, um alle Funktionen freizuschalten.';
 
   @override
   String get syncPlaceholderTutorialStep2 =>
-      'Tippen Sie auf \'Demo-Daten laden\', um die App mit Beispielaufzeichnungen zu erkunden';
+      'Noch nicht bereit zum Importieren? Laden Sie Demo-Daten, um zu sehen, wie die App in Aktion aussieht.';
 
   @override
   String get syncPlaceholderTutorialStep3 =>
-      'Tippen Sie auf \'Daten synchronisieren\', um Ihre echten medizinischen Aufzeichnungen zu verbinden und zu importieren';
+      'Halten Sie Ihre Desktop- und Mobile-Wallet auf dem neuesten Stand.';
 
   @override
-  String get syncPlaceholderTutorialSubtitle => 'Tippen Sie, um fortzufahren';
+  String get tapToContinue => 'Tippen Sie, um fortzufahren';
+
+  @override
+  String get homeOnboardingReorderMessage =>
+      'Lange drücken, um sie nach Ihren Wünschen neu anzuordnen.';
 }

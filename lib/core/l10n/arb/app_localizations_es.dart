@@ -702,16 +702,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get syncPlaceholderTutorialStep1 =>
-      'Toca \'Configurar\' para crear tu perfil de cartera de salud';
+      'Completa tu perfil para desbloquear todas las funciones.';
 
   @override
   String get syncPlaceholderTutorialStep2 =>
-      'Toca \'Cargar Datos de Demostración\' para explorar la app con registros de ejemplo';
+      '¿No estás listo para importar? Carga datos de demostración para ver cómo se ve la aplicación en acción.';
 
   @override
   String get syncPlaceholderTutorialStep3 =>
-      'Toca \'Sincronizar Datos\' para conectar e importar tus registros médicos reales';
+      'Mantén tu cartera de escritorio y móvil actualizada.';
 
   @override
-  String get syncPlaceholderTutorialSubtitle => 'Toca para continuar';
+  String get tapToContinue => 'Toca para continuar';
+
+  @override
+  String get homeOnboardingReorderMessage =>
+      'Mantén presionado para reordenarlos según tu preferencia.';
 }

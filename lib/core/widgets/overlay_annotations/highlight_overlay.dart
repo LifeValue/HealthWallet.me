@@ -1,29 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/tooltip_position.dart';
 
-/// A custom overlay widget that highlights multiple widgets simultaneously
-/// with a dark semi-transparent background and cut-outs around the target widgets.
 class MultiHighlightOverlay extends StatefulWidget {
-  /// GlobalKeys of the widgets to highlight.
   final List<GlobalKey> targetKeys;
 
-  /// Message to display in the tooltip.
   final String message;
 
-  /// Subtitle to display below the message.
   final String? subtitle;
 
-  /// Callback when the overlay is dismissed.
   final VoidCallback onDismiss;
 
-  /// Padding around highlighted areas.
   final double highlightPadding;
 
-  /// Border radius for the highlight cut-outs.
   final double highlightBorderRadius;
 
-  /// Position of the tooltip (auto, top, or bottom).
   final TooltipPosition tooltipPosition;
 
   const MultiHighlightOverlay({
@@ -61,7 +53,6 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
       curve: Curves.easeOut,
     );
 
-    // Try to calculate rects after frame is built
     _scheduleRectCalculation();
   }
 
@@ -70,7 +61,6 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
       if (!mounted) return;
       _calculateHighlightRects();
 
-      // If no rects found and we haven't retried too many times, try again
       if (_highlightRects.isEmpty && _retryCount < _maxRetries) {
         _retryCount++;
         Future.delayed(const Duration(milliseconds: 100), () {
@@ -79,7 +69,6 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
           }
         });
       } else {
-        // Start animation once we have rects or exhausted retries
         _animationController.forward();
       }
     });
@@ -108,7 +97,6 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
         final position = renderBox.localToGlobal(Offset.zero);
         final size = renderBox.size;
 
-        // Validate the rect is reasonable
         if (size.width > 0 && size.height > 0 && position.dy >= 0) {
           rects.add(Rect.fromLTWH(
             position.dx - widget.highlightPadding,
@@ -118,7 +106,6 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
           ));
         }
       } catch (e) {
-        // Silently continue if we can't get rect for this key
         continue;
       }
     }
@@ -145,7 +132,6 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
         color: Colors.transparent,
         child: Stack(
           children: [
-            // Dark overlay with cut-outs
             Positioned.fill(
               child: GestureDetector(
                 onTap: _dismiss,
@@ -159,8 +145,6 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
                 ),
               ),
             ),
-
-            // Always show tooltip - position it based on available rects
             Positioned(
               left: Insets.small,
               right: Insets.small,
@@ -174,45 +158,34 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
   }
 
   double _calculateTooltipPosition(Size screenSize) {
-    // Handle fixed positions first
     switch (widget.tooltipPosition) {
       case TooltipPosition.top:
-        // Position at the top with safe area margin
         final topPadding = MediaQuery.of(context).padding.top;
         return topPadding + Insets.large;
       case TooltipPosition.bottom:
-        // Position at the bottom with safe area margin
         return screenSize.height - 200;
       case TooltipPosition.auto:
-        // Fall through to auto-calculation
         break;
     }
 
-    // Auto-calculation logic
-    // If no rects, position in upper-middle area
     if (_highlightRects.isEmpty) {
       return screenSize.height * 0.1;
     }
 
-    // Position tooltip between the two highlighted areas if possible
     if (_highlightRects.length >= 2) {
       final firstRect = _highlightRects[0];
       final secondRect = _highlightRects[1];
 
-      // Calculate space between the two rects
       final firstBottom = firstRect.bottom;
       final secondTop = secondRect.top;
 
       if (secondTop > firstBottom + 100) {
-        // There's enough space between them, center the tooltip there
         return firstBottom + (secondTop - firstBottom) / 2 - 60;
       }
     }
 
-    // Default: position below the first rect with some margin
     if (_highlightRects.isNotEmpty) {
       final bottomOfFirst = _highlightRects[0].bottom;
-      // Make sure tooltip doesn't go off screen
       final maxTop = screenSize.height - 200;
       return (bottomOfFirst + 20).clamp(100.0, maxTop);
     }
@@ -243,21 +216,18 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
           children: [
             Text(
               widget.message,
-              style: const TextStyle(
-                fontSize: 16,
+              style: AppTextStyle.bodyLarge.copyWith(
                 color: Colors.white,
-                height: 1.4,
               ),
+              textAlign: TextAlign.center,
             ),
             if (widget.subtitle != null && widget.subtitle!.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Insets.smallNormal),
               Center(
                 child: Text(
                   widget.subtitle!,
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: AppTextStyle.bodySmall.copyWith(
                     color: Colors.white.withOpacity(0.9),
-                    height: 1.4,
                   ),
                 ),
               ),
@@ -269,7 +239,6 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
   }
 }
 
-/// Custom painter that draws a dark overlay with rounded rectangle cut-outs.
 class _HighlightPainter extends CustomPainter {
   final List<Rect> rects;
   final double borderRadius;
@@ -285,17 +254,14 @@ class _HighlightPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = overlayColor;
 
-    // Create full screen path
     final fullScreenPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // If no rects, just draw the full overlay
     if (rects.isEmpty) {
       canvas.drawPath(fullScreenPath, paint);
       return;
     }
 
-    // Combine with holes for each highlighted rect
     Path finalPath = fullScreenPath;
 
     for (final rect in rects) {
@@ -314,7 +280,6 @@ class _HighlightPainter extends CustomPainter {
 
     canvas.drawPath(finalPath, paint);
 
-    // Draw highlight borders around the cut-outs
     final borderPaint = Paint()
       ..color = Colors.transparent
       ..style = PaintingStyle.stroke

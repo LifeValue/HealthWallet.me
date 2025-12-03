@@ -15,7 +15,7 @@ import 'package:health_wallet/features/user/domain/services/default_patient_serv
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/patient_edit_dialog.dart';
+import 'package:health_wallet/core/widgets/patient_setup_dialog.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -118,17 +118,17 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
       OverlayStep(
         targetKey: _highlightController.setupButtonKey,
         message: context.l10n.syncPlaceholderTutorialStep1,
-        subtitle: context.l10n.syncPlaceholderTutorialSubtitle,
+        subtitle: context.l10n.tapToContinue,
       ),
       OverlayStep(
         targetKey: _highlightController.loadDemoDataButtonKey,
         message: context.l10n.syncPlaceholderTutorialStep2,
-        subtitle: context.l10n.syncPlaceholderTutorialSubtitle,
+        subtitle: context.l10n.tapToContinue,
       ),
       OverlayStep(
         targetKey: _highlightController.syncDataButtonKey,
         message: context.l10n.syncPlaceholderTutorialStep3,
-        subtitle: context.l10n.syncPlaceholderTutorialSubtitle,
+        subtitle: context.l10n.tapToContinue,
       ),
     ];
 
@@ -306,7 +306,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
                           const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                     ),
                     label: Text(
-                      context.l10n.syncData,
+                      context.l10n.syncTitle,
                       style: AppTextStyle.buttonMedium.copyWith(
                         color: Colors.white,
                       ),
@@ -338,7 +338,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
                       ),
                     ),
                     label: Text(
-                      context.l10n.syncData,
+                      context.l10n.syncTitle,
                       style: AppTextStyle.buttonMedium.copyWith(
                         color: context.isDarkMode
                             ? Colors.white
@@ -462,7 +462,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
       if (walletPatient != null) {
         // Show the PatientEditDialog in setup mode
         if (mounted) {
-          PatientEditDialog.showSetupMode(
+          PatientSetupDialog.show(
             context,
             walletPatient,
             onDismiss: () {

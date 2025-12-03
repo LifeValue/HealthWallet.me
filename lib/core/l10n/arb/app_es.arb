@@ -236,8 +236,10 @@
     "editDetails": "Editar detalles",
     "saveDetails": "Guardar detalles",
     
-    "syncPlaceholderTutorialStep1": "Toca 'Configurar' para crear tu perfil de cartera de salud",
-    "syncPlaceholderTutorialStep2": "Toca 'Cargar Datos de Demostración' para explorar la app con registros de ejemplo",
-    "syncPlaceholderTutorialStep3": "Toca 'Sincronizar Datos' para conectar e importar tus registros médicos reales",
-    "syncPlaceholderTutorialSubtitle": "Toca para continuar"
+    "syncPlaceholderTutorialStep1": "Completa tu perfil para desbloquear todas las funciones.",
+    "syncPlaceholderTutorialStep2": "¿No estás listo para importar? Carga datos de demostración para ver cómo se ve la aplicación en acción.",
+    "syncPlaceholderTutorialStep3": "Mantén tu cartera de escritorio y móvil actualizada.",
+    "tapToContinue": "Toca para continuar",
+    
+    "homeOnboardingReorderMessage": "Mantén presionado para reordenarlos según tu preferencia."
 }
