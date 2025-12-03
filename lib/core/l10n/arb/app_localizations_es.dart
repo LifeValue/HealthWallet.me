@@ -664,4 +664,69 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get aiModelDownloadInfo =>
       'Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única.';
+
+  @override
+  String get setup => 'Configurar';
+
+  @override
+  String get patientSetupTitle => 'Configura tu Perfil';
+
+  @override
+  String get patientSetupSubtitle =>
+      'Personaliza tu cartera de salud con tu información';
+
+  @override
+  String get onboardingSetupTitle => 'Configurar mi Cartera de Salud';
+
+  @override
+  String get onboardingSetupBody =>
+      'Crea tu perfil de salud personal para comenzar con HealthWallet';
+
+  @override
+  String get onboardingDemoTitle => 'Probar Datos de Demostración';
+
+  @override
+  String get onboardingDemoBody =>
+      'Explora la aplicación con registros médicos de ejemplo para ver cómo funciona';
+
+  @override
+  String get onboardingSyncTitle2 => 'Sincronizar tus Registros';
+
+  @override
+  String get onboardingSyncBody =>
+      'Conéctate a tus proveedores de salud para importar tus registros médicos reales';
+
+  @override
+  String get givenName => 'Nombre';
+
+  @override
+  String get familyName => 'Apellido';
+
+  @override
+  String get skipForNow => 'Omitir por ahora';
+
+  @override
+  String get setUpProfile => 'Configurar';
+
+  @override
+  String get useDefaults => 'Predeterminado';
+
+  @override
+  String get syncPlaceholderTutorialStep1 =>
+      'Completa tu perfil para desbloquear todas las funciones.';
+
+  @override
+  String get syncPlaceholderTutorialStep2 =>
+      '¿No estás listo para importar? Carga datos de demostración para ver cómo se ve la aplicación en acción.';
+
+  @override
+  String get syncPlaceholderTutorialStep3 =>
+      'Mantén tu cartera de escritorio y móvil actualizada.';
+
+  @override
+  String get tapToContinue => 'Toca para continuar';
+
+  @override
+  String get homeOnboardingReorderMessage =>
+      'Mantén presionado para reordenarlos según tu preferencia.';
 }

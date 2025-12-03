@@ -214,5 +214,32 @@
     "aiModelTitle": "Cargar modelo de IA",
     "aiModelUnlockTitle": "Desbloquea el escaneo con IA",
     "aiModelUnlockDescription": "Para leer y organizar automáticamente tus documentos médicos, esta función utiliza un modelo de IA seguro y local en tu dispositivo. Tus datos permanecen completamente privados.",
-    "aiModelDownloadInfo": "Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única."
+    "aiModelDownloadInfo": "Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única.",
+    
+    "setup": "Configurar",
+    "patientSetupTitle": "Configura tu Perfil",
+    "patientSetupSubtitle": "Personaliza tu cartera de salud con tu información",
+    
+    "onboardingSetupTitle": "Configurar mi Cartera de Salud",
+    "onboardingSetupBody": "Crea tu perfil de salud personal para comenzar con HealthWallet",
+    "onboardingDemoTitle": "Probar Datos de Demostración",
+    "onboardingDemoBody": "Explora la aplicación con registros médicos de ejemplo para ver cómo funciona",
+    "onboardingSyncTitle2": "Sincronizar tus Registros",
+    "onboardingSyncBody": "Conéctate a tus proveedores de salud para importar tus registros médicos reales",
+    
+    "givenName": "Nombre",
+    "familyName": "Apellido",
+    "skipForNow": "Omitir por ahora",
+    
+    "setUpProfile": "Configurar",
+    "useDefaults": "Predeterminado",
+    "editDetails": "Editar detalles",
+    "saveDetails": "Guardar detalles",
+    
+    "syncPlaceholderTutorialStep1": "Completa tu perfil para desbloquear todas las funciones.",
+    "syncPlaceholderTutorialStep2": "¿No estás listo para importar? Carga datos de demostración para ver cómo se ve la aplicación en acción.",
+    "syncPlaceholderTutorialStep3": "Mantén tu cartera de escritorio y móvil actualizada.",
+    "tapToContinue": "Toca para continuar",
+    
+    "homeOnboardingReorderMessage": "Mantén presionado para reordenarlos según tu preferencia."
 }

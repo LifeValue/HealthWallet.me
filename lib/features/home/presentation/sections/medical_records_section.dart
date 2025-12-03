@@ -53,18 +53,23 @@ class MedicalRecordsSection extends StatelessWidget {
       mainAxisSpacing: _getCrossAxisSpacing(screenWidth),
       childAspectRatio: _getChildAspectRatio(screenWidth),
       itemBuilder: (context, card, index) {
-        final cardWidget =
-            (index == 0 && firstCardFocusNode != null && !editMode)
-                ? Focus(
-                    focusNode: firstCardFocusNode!,
-                    child: _buildOverviewCard(
-                      context,
-                      card,
-                      screenWidth,
-                      key: firstCardKey,
-                    ),
-                  )
-                : _buildOverviewCard(context, card, screenWidth);
+        final isFirstCard = index == 0 && !editMode;
+        final cardContent = _buildOverviewCard(
+          context,
+          card,
+          screenWidth,
+          key: isFirstCard ? firstCardKey : null,
+        );
+
+        Widget cardWidget;
+        if (isFirstCard && firstCardFocusNode != null) {
+          cardWidget = Focus(
+            focusNode: firstCardFocusNode!,
+            child: cardContent,
+          );
+        } else {
+          cardWidget = cardContent;
+        }
 
         return editMode
             ? ShakingCard(

@@ -24,9 +24,10 @@ class FormFields {
     String value,
     ValueChanged<String>? onChanged, {
     TextEditingController? controller,
+    String? hintText,
   }) {
     final textController = controller ?? TextEditingController(text: value);
-    
+
     if (controller == null && textController.text != value) {
       final selection = textController.selection;
       textController.text = value;
@@ -36,7 +37,7 @@ class FormFields {
         );
       }
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -67,6 +68,12 @@ class FormFields {
               ),
               border: InputBorder.none,
               isDense: true,
+              hintText: hintText,
+              hintStyle: AppTextStyle.labelLarge.copyWith(
+                color: context.isDarkMode
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
+              ),
             ),
           ),
         ),
@@ -99,6 +106,8 @@ class FormFields {
     required VoidCallback onCancel,
     required VoidCallback? onSave,
     required bool isLoading,
+    String cancelLabel = 'Cancel',
+    String saveLabel = 'Save details',
   }) {
     return Row(
       children: [
@@ -113,7 +122,7 @@ class FormFields {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6)),
             ),
-            child: Text('Cancel', style: AppTextStyle.buttonSmall),
+            child: Text(cancelLabel, style: AppTextStyle.buttonSmall),
           ),
         ),
         const SizedBox(width: Insets.small),
@@ -137,7 +146,7 @@ class FormFields {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : Text('Save details', style: AppTextStyle.buttonSmall),
+                : Text(saveLabel, style: AppTextStyle.buttonSmall),
           ),
         ),
       ],

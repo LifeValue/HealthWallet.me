@@ -232,5 +232,32 @@
     "aiModelTitle": "Load AI Model",
     "aiModelUnlockTitle": "Unlock AI-Powered Scanning",
     "aiModelUnlockDescription": "To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.",
-    "aiModelDownloadInfo": "To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup."
+    "aiModelDownloadInfo": "To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.",
+    
+    "setup": "Setup",
+    "patientSetupTitle": "Set Up Your Profile",
+    "patientSetupSubtitle": "Personalize your health wallet with your information",
+    
+    "onboardingSetupTitle": "Set Up my Health Wallet",
+    "onboardingSetupBody": "Create your personal health profile to get started with HealthWallet",
+    "onboardingDemoTitle": "Try Demo Data",
+    "onboardingDemoBody": "Explore the app with sample medical records to see how it works",
+    "onboardingSyncTitle2": "Sync Your Records",
+    "onboardingSyncBody": "Connect to your healthcare providers to import your real medical records",
+    
+    "givenName": "Given Name",
+    "familyName": "Family Name",
+    "skipForNow": "Skip for now",
+    
+    "setUpProfile": "Set Up",
+    "useDefaults": "Default",
+    "editDetails": "Edit details",
+    "saveDetails": "Save details",
+    
+    "syncPlaceholderTutorialStep1": "Complete your profile to unlock full features.",
+    "syncPlaceholderTutorialStep2": "Not ready to import? Load demo data to see how the app looks in action.",
+    "syncPlaceholderTutorialStep3": "Keep your desktop and mobile wallet up to date.",
+    "tapToContinue": "Tap to continue",
+    
+    "homeOnboardingReorderMessage": "Long press to reorder them according to your preference."
 }
