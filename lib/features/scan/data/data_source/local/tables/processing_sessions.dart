@@ -8,6 +8,8 @@ class ProcessingSessions extends Table {
   TextColumn get status => text().nullable()();
   TextColumn get origin => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get patient => text().nullable()();
+  TextColumn get encounter => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

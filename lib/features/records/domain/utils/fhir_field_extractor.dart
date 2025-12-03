@@ -427,6 +427,26 @@ class FhirFieldExtractor {
     return d.abs() >= 100 ? d.round().toString() : d.toStringAsFixed(1);
   }
 
+  static String extractPatientGiven(Patient patient) {
+    if (patient.name?.isNotEmpty == true) {
+      final given = patient.name!.first.given;
+      if (given != null && given.isNotEmpty) {
+        return given.map((g) => g.toString()).join(' ');
+      }
+    }
+    return '';
+  }
+
+  static String extractPatientFamily(Patient patient) {
+    if (patient.name?.isNotEmpty == true) {
+      final family = patient.name!.first.family;
+      if (family != null) {
+        return family.toString();
+      }
+    }
+    return '';
+  }
+
   static String extractPatientId(Patient patient) {
     if (patient.identifier?.isNotEmpty == true) {
       for (final identifier in patient.identifier!) {

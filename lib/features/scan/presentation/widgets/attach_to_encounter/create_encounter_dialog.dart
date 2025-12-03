@@ -48,10 +48,6 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
         value: _nameController.text,
         confidenceLevel: 1.0,
       ),
-      location: const MappedProperty(
-        value: '',
-        confidenceLevel: 1.0,
-      ),
       periodStart: MappedProperty(
         value: _selectedDate.toIso8601String().split('T').first,
         confidenceLevel: 1.0,

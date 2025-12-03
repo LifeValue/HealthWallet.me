@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +14,6 @@ import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/patient_dropdown.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/resources_form.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';
@@ -80,6 +81,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
       ),
       body: BlocConsumer<ScanBloc, ScanState>(
         listener: (context, state) {
+          log("listener: ${state.status}");
           final activeSession =
               state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
           if (activeSession == null) return;
@@ -276,27 +278,6 @@ class _ProcessingPageState extends State<ProcessingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!activeSession.resources
-            .any((resource) => resource is MappingPatient)) ...[
-          Text(
-            "Select the patient",
-            style: AppTextStyle.bodyLarge.copyWith(
-              color: context.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 8),
-          PatientDropdown(
-            options: state.currentPatients,
-            selectedPatient: state.selectedPatient!,
-            onChanged: (patientGroup) {
-              if (patientGroup != null) {
-                context.read<ScanBloc>().add(ScanPatientSelected(
-                    sessionId: widget.sessionId, patientGroup: patientGroup));
-              }
-            },
-          ),
-          const SizedBox(height: 24),
-        ],
         ResourcesForm(
           formKey: _formKey,
           resources: activeSession.resources,
@@ -310,6 +291,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
                     ),
                   ),
           onResourceRemoved: _showDeleteConfirmationDialog,
+          patient: activeSession.patient,
+          encounter: activeSession.encounter,
         ),
         _buildAddResourceButton(),
         const SizedBox(height: Insets.normal),

@@ -98,10 +98,12 @@ class PatientSelector extends StatelessWidget {
                 size: 20,
               ),
               items: state.patients.map((Patient patient) {
+                final showNewLabel =
+                    state.newPatient != null && patient == state.patients.first;
                 return DropdownMenuItem<Patient>(
                   value: patient,
                   child: Text(
-                    patient.displayTitle,
+                    (showNewLabel ? "New patient: " : "") + patient.displayTitle,
                     style: AppTextStyle.bodyMedium.copyWith(
                       color: context.colorScheme.onSurface,
                     ),
