@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -142,29 +143,99 @@ class MedicationRequest with _$MedicationRequest implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final statusDisplay = status?.display?.valueString;
-    if (statusDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Status: $statusDisplay",
-      ));
-    }
-
+    // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
         medicationX?.isAs<CodeableConcept>());
-    if (medicationDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.medication,
-        info: medicationDisplay,
-      ));
-    }
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createMedicationLine(medicationDisplay),
+    );
 
+    // Status
+    final statusDisplay = status?.display?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusDisplay, prefix: 'Status'),
+    );
+
+    // Intent
+    final intentDisplay = FhirFieldExtractor.extractIntent(intent);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(intentDisplay, prefix: 'Intent'),
+    );
+
+    // Priority
+    final priorityDisplay = FhirFieldExtractor.extractPriority(priority);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(priorityDisplay, prefix: 'Priority'),
+    );
+
+    // Category
+    final categoryDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Requester
+    final requesterDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(requester);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(requesterDisplay, prefix: 'Requester'),
+    );
+
+    // Performer
+    final performerDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(performer);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
+    );
+
+    // Dosage Instructions
+    final dosageDisplay =
+        FhirFieldExtractor.extractDosageInstructions(dosageInstruction);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
+    );
+
+    // Reason Code
+    final reasonCodeDisplay =
+        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+    );
+
+    // Course of Therapy Type
+    final courseDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(courseOfTherapyType);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createTimelineLine(courseDisplay,
+          prefix: 'Course of Therapy'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }

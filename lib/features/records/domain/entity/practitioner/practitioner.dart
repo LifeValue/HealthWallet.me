@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -98,23 +99,75 @@ class Practitioner with _$Practitioner implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final genderDisplay = gender?.display?.valueString;
-    if (genderDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: genderDisplay,
-      ));
+    // Active Status
+    final activeStatus = active?.valueBoolean;
+    if (activeStatus != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            activeStatus ? 'Active' : 'Inactive',
+            prefix: 'Status'),
+      );
     }
 
+    // Gender
+    final genderDisplay = gender?.display?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(genderDisplay, prefix: 'Gender'),
+    );
+
+    // Qualification
+    if (qualification != null && qualification!.isNotEmpty) {
+      final qualificationDisplay = qualification!
+          .map((q) => FhirFieldExtractor.extractCodeableConceptText(q.code))
+          .where((q) => q != null && q.isNotEmpty)
+          .take(2)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            qualificationDisplay.isNotEmpty ? qualificationDisplay : null,
+            prefix: 'Qualification'),
+      );
+    }
+
+    // Communication/Languages
+    if (communication != null && communication!.isNotEmpty) {
+      final languages = communication!
+          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .where((l) => l != null && l.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            languages.isNotEmpty ? languages : null,
+            prefix: 'Languages'),
+      );
+    }
+
+    // Address
     final addressDisplay =
         FhirFieldExtractor.formatAddress(address?.firstOrNull);
-    if (addressDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.identification,
-        info: addressDisplay,
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+    );
+
+    // Telecom (phone/email)
+    if (telecom != null && telecom!.isNotEmpty) {
+      final phone = telecom!
+          .where((t) => t.system?.valueString == 'phone')
+          .firstOrNull
+          ?.value
+          ?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+      );
     }
 
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

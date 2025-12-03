@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -93,22 +94,70 @@ class Medication with _$Medication implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final statusDisplay = status?.valueString;
-    if (statusDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Status: $statusDisplay",
-      ));
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    // Form
+    final formDisplay = FhirFieldExtractor.extractCodeableConceptText(form);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createMedicationLine(formDisplay, prefix: 'Form'),
+    );
+
+    // Manufacturer
+    final manufacturerDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(manufacturer);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(manufacturerDisplay,
+          prefix: 'Manufacturer'),
+    );
+
+    // Amount
+    if (amount != null) {
+      final numerator = amount!.numerator?.value?.valueDouble?.toStringAsFixed(2);
+      final denominator = amount!.denominator?.value?.valueDouble?.toStringAsFixed(2);
+      final unit = amount!.numerator?.unit ?? '';
+      if (numerator != null && denominator != null) {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createValueLine('$numerator/$denominator $unit',
+              prefix: 'Amount'),
+        );
+      }
     }
 
-    final manufacturerDisplay = manufacturer?.display?.valueString;
-    if (manufacturerDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: manufacturerDisplay,
-      ));
+    // Batch
+    if (batch != null) {
+      final lotNumber = batch!.lotNumber?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createIdentificationLine(lotNumber,
+            prefix: 'Lot Number'),
+      );
+      final expirationDate = batch!.expirationDate?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createDateLine(expirationDate,
+            prefix: 'Expiration'),
+      );
     }
 
+    // Ingredients count
+    if (ingredient != null && ingredient!.isNotEmpty) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createMedicationLine(
+            '${ingredient!.length} ingredient(s)',
+            prefix: 'Ingredients'),
+      );
+    }
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

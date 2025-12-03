@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -103,20 +104,94 @@ class Specimen with _$Specimen implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final statusDisplay = status?.valueString;
-    if (statusDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: statusDisplay,
-      ));
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    // Type
+    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLabLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Accession Identifier
+    final accessionId = accessionIdentifier?.value?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createIdentificationLine(accessionId,
+          prefix: 'Accession ID'),
+    );
+
+    // Received Time
+    final receivedTimeDisplay = receivedTime?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(receivedTimeDisplay,
+          prefix: 'Received'),
+    );
+
+    // Collection
+    if (collection != null) {
+      final collectedTime = collection!.collectedX?.isAs<fhir_r4.FhirDateTime>();
+      if (collectedTime != null) {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createDateLine(collectedTime.valueString,
+              prefix: 'Collected'),
+        );
+      }
+
+      final collector =
+          FhirFieldExtractor.extractReferenceDisplay(collection!.collector);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createUserLine(collector, prefix: 'Collector'),
+      );
+
+      final bodySite =
+          FhirFieldExtractor.extractCodeableConceptText(collection!.bodySite);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createBodySiteLine(bodySite, prefix: 'Body Site'),
+      );
     }
 
+    // Condition
+    final conditionDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(condition);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(conditionDisplay,
+          prefix: 'Condition'),
+    );
+
+    // Container count
+    if (container != null && container!.isNotEmpty) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createLabLine('${container!.length} container(s)',
+            prefix: 'Containers'),
+      );
+    }
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }

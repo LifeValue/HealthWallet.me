@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/core/utils/performance_monitor.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -115,23 +115,90 @@ class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    // Category
     final categoryDisplay =
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
-    if (categoryDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: categoryDisplay,
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Performer
+    final performerDisplay =
+        FhirFieldExtractor.extractMultipleReferenceDisplays(performer);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
+    );
+
+    // Results Interpreter
+    final interpreterDisplay =
+        FhirFieldExtractor.extractMultipleReferenceDisplays(resultsInterpreter);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(interpreterDisplay,
+          prefix: 'Interpreter'),
+    );
+
+    // Effective Date
+    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(effectiveX);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(effectiveDisplay, prefix: 'Effective'),
+    );
+
+    // Conclusion
+    final conclusionText = conclusion?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLabLine(conclusionText, prefix: 'Conclusion'),
+    );
+
+    // Conclusion Code
+    final conclusionCodeDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(conclusionCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLabLine(conclusionCodeDisplay,
+          prefix: 'Conclusion Code'),
+    );
+
+    // Number of Results
+    if (result != null && result!.isNotEmpty) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createLabLine('${result!.length} result(s)',
+            prefix: 'Results'),
+      );
     }
 
-    final performerDisplay = performer?.firstOrNull?.display?.valueString;
-    if (performerDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.user,
-        info: performerDisplay,
-      ));
+    // Number of Specimens
+    if (specimen != null && specimen!.isNotEmpty) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createLabLine('${specimen!.length} specimen(s)',
+            prefix: 'Specimens'),
+      );
     }
 
+    // Has Media/Images
+    if (media != null && media!.isNotEmpty) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createImageLine('${media!.length} image(s)',
+            prefix: 'Media'),
+      );
+    }
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

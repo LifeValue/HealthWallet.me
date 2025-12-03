@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -104,19 +105,128 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final relationDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(relationship);
-    if (relationDisplay != null) {
+    // Active Status
+    final activeStatus = active?.valueBoolean;
+    if (activeStatus != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            activeStatus ? 'Active' : 'Inactive',
+            prefix: 'Status'),
+      );
+    }
+
+    // Relationship
+    if (relationship != null && relationship!.isNotEmpty) {
+      final relationDisplay = relationship!
+          .map((r) => FhirFieldExtractor.extractCodeableConceptText(r))
+          .where((r) => r != null && r.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            relationDisplay.isNotEmpty ? relationDisplay : null,
+            prefix: 'Relationship'),
+      );
+    }
+
+    // Patient Reference
+    final patientDisplay = patient?.display?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(patientDisplay, prefix: 'Patient'),
+    );
+
+    // Gender
+    final genderDisplay = gender?.display?.valueString;
+    if (genderDisplay != null) {
       infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: relationDisplay,
+        icon: genderDisplay.toLowerCase() == 'male'
+            ? Assets.icons.genderMale
+            : genderDisplay.toLowerCase() == 'female'
+                ? Assets.icons.genderFemale
+                : Assets.icons.user,
+        info: 'Gender: $genderDisplay',
       ));
     }
 
+    // Birth Date
     if (birthDate != null) {
+      final birthDateValue = birthDate?.valueString;
+      if (birthDateValue != null) {
+        try {
+          final parsedDate = DateTime.parse(birthDateValue);
+          infoLines.add(RecordInfoLine(
+            icon: Assets.icons.calendar,
+            info: 'Birth Date: ${DateFormat.yMMMMd().format(parsedDate)}',
+          ));
+        } catch (_) {
+          // Use raw string if parsing fails
+          infoLines.add(RecordInfoLine(
+            icon: Assets.icons.calendar,
+            info: 'Birth Date: $birthDateValue',
+          ));
+        }
+      }
+    }
+
+    // Address
+    final addressDisplay =
+        FhirFieldExtractor.formatAddress(address?.firstOrNull);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+    );
+
+    // Telecom (phone/email)
+    if (telecom != null && telecom!.isNotEmpty) {
+      final phone = telecom!
+          .where((t) => t.system?.valueString == 'phone')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+      );
+
+      final email = telecom!
+          .where((t) => t.system?.valueString == 'email')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+      );
+    }
+
+    // Communication/Languages
+    if (communication != null && communication!.isNotEmpty) {
+      final languages = communication!
+          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c.language))
+          .where((l) => l != null && l.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            languages.isNotEmpty ? languages : null,
+            prefix: 'Languages'),
+      );
+    }
+
+    // Period
+    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(periodDisplay, prefix: 'Period'),
+    );
+
+    // Date (last updated)
+    if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(DateTime.parse(birthDate!.valueString!)),
+        info: 'Last Updated: ${DateFormat.yMMMMd().format(date!)}',
       ));
     }
 

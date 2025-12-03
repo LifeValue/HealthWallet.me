@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -111,21 +112,86 @@ class Coverage with _$Coverage implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    if (status != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Status: $status",
-      ));
-    }
+    // Status
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(status, prefix: 'Status'),
+    );
 
-    final payorDisplay = payor?.firstOrNull?.display?.valueString;
-    if (payorDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: "Payor: $payorDisplay",
-      ));
-    }
+    // Type
+    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+    );
 
+    // Payor
+    final payorDisplay =
+        FhirFieldExtractor.extractMultipleReferenceDisplays(payor);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(payorDisplay, prefix: 'Payor'),
+    );
+
+    // Policy Holder
+    final policyHolderDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(policyHolder);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(policyHolderDisplay,
+          prefix: 'Policy Holder'),
+    );
+
+    // Subscriber
+    final subscriberDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(subscriber);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(subscriberDisplay,
+          prefix: 'Subscriber'),
+    );
+
+    // Subscriber ID
+    final subscriberIdText = subscriberId?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createIdentificationLine(subscriberIdText,
+          prefix: 'Subscriber ID'),
+    );
+
+    // Beneficiary
+    final beneficiaryDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(beneficiary);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(beneficiaryDisplay,
+          prefix: 'Beneficiary'),
+    );
+
+    // Relationship
+    final relationshipDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(relationship);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(relationshipDisplay,
+          prefix: 'Relationship'),
+    );
+
+    // Period
+    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Period'),
+    );
+
+    // Network
+    final networkText = network?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(networkText, prefix: 'Network'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

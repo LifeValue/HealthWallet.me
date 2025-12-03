@@ -6,6 +6,7 @@ import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -138,23 +139,107 @@ class Encounter with _$Encounter implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final participantDisplay =
-        participant?.firstOrNull?.individual?.display?.valueString;
-    if (participantDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.user,
-        info: participantDisplay,
-      ));
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    // Class (e.g., ambulatory, emergency, inpatient)
+    final classDisplay = FhirFieldExtractor.extractCodingDisplay(class_);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(classDisplay, prefix: 'Class'),
+    );
+
+    // Type
+    final typeDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Service Type
+    final serviceTypeDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(serviceType);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createActivityLine(serviceTypeDisplay,
+          prefix: 'Service'),
+    );
+
+    // Priority
+    final priorityDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(priority);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(priorityDisplay, prefix: 'Priority'),
+    );
+
+    // Participants
+    final participantsDisplay =
+        FhirFieldExtractor.extractParticipants(participant);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(participantsDisplay,
+          prefix: 'Participants'),
+    );
+
+    // Service Provider
+    final serviceProviderDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(serviceProvider);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(serviceProviderDisplay,
+          prefix: 'Provider'),
+    );
+
+    // Location
+    final locationDisplay = FhirFieldExtractor.extractLocations(location);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(locationDisplay,
+          prefix: 'Location'),
+    );
+
+    // Period
+    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Period'),
+    );
+
+    // Length
+    if (length != null) {
+      final lengthValue = length!.value?.valueDouble?.toStringAsFixed(1);
+      final lengthUnit = length!.unit?.toString() ?? 'minutes';
+      if (lengthValue != null) {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createTimeLine('$lengthValue $lengthUnit',
+              prefix: 'Duration'),
+        );
+      }
     }
 
-    final serviceProviderDisplay = serviceProvider?.display?.valueString;
-    if (serviceProviderDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: serviceProviderDisplay,
-      ));
-    }
+    // Reason Code
+    final reasonCodeDisplay =
+        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+    );
 
+    // Diagnosis
+    final diagnosisDisplay = FhirFieldExtractor.extractDiagnoses(diagnosis);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(diagnosisDisplay, prefix: 'Diagnosis'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

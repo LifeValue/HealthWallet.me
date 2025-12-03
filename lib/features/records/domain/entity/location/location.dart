@@ -4,6 +4,8 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -110,22 +112,78 @@ class Location with _$Location implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final statusDisplay = status?.valueString;
-    if (statusDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Status: $statusDisplay",
-      ));
-    }
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
 
-    final organizationDisplay = managingOrganization?.display?.valueString;
-    if (organizationDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: organizationDisplay,
-      ));
-    }
+    // Operational Status
+    final operationalStatusDisplay =
+        FhirFieldExtractor.extractCodingDisplay(operationalStatus);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(operationalStatusDisplay,
+          prefix: 'Operational Status'),
+    );
 
+    // Mode
+    final modeDisplay = mode?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(modeDisplay, prefix: 'Mode'),
+    );
+
+    // Type
+    final typeDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Physical Type
+    final physicalTypeDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(physicalType);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(physicalTypeDisplay,
+          prefix: 'Physical Type'),
+    );
+
+    // Managing Organization
+    final organizationDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(managingOrganization);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(organizationDisplay,
+          prefix: 'Organization'),
+    );
+
+    // Address
+    final addressDisplay = FhirFieldExtractor.formatAddress(address);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+    );
+
+    // Description
+    final descriptionText = description?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(descriptionText,
+          prefix: 'Description'),
+    );
+
+    // Part Of (parent location)
+    final partOfDisplay = FhirFieldExtractor.extractReferenceDisplay(partOf);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(partOfDisplay, prefix: 'Part Of'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

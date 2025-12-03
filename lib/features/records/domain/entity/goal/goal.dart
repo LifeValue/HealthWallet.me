@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -110,21 +111,89 @@ class Goal with _$Goal implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
+    // Lifecycle Status
+    final lifecycleDisplay = lifecycleStatus?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(lifecycleDisplay, prefix: 'Status'),
+    );
+
+    // Achievement Status
     final achievementDisplay =
         FhirFieldExtractor.extractCodeableConceptText(achievementStatus);
-    if (achievementDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: achievementDisplay,
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(achievementDisplay,
+          prefix: 'Achievement'),
+    );
+
+    // Priority
+    final priorityDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(priority);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(priorityDisplay, prefix: 'Priority'),
+    );
+
+    // Category
+    final categoryDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Target
+    if (target != null && target!.isNotEmpty) {
+      final targetMeasure = FhirFieldExtractor.extractCodeableConceptText(
+          target!.first.measure);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createActivityLine(targetMeasure, prefix: 'Target'),
+      );
     }
 
+    // Expressed By
+    final expressedByDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(expressedBy);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(expressedByDisplay,
+          prefix: 'Expressed By'),
+    );
+
+    // Status Reason
+    final statusReasonText = statusReason?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(statusReasonText,
+          prefix: 'Status Reason'),
+    );
+
+    // Outcome Code
+    final outcomeCodeDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(outcomeCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(outcomeCodeDisplay,
+          prefix: 'Outcome'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }

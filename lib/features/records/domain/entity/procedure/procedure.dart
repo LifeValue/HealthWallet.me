@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -133,20 +134,103 @@ class Procedure with _$Procedure implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final performerDisplay = performer?.firstOrNull?.actor.display?.valueString;
-    if (performerDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.user,
-        info: performerDisplay,
-      ));
-    }
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
 
+    // Category
+    final categoryDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(category);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Performer
+    final performerDisplay = FhirFieldExtractor.extractPerformers(performer);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
+    );
+
+    // Location
+    final locationDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(location);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(locationDisplay,
+          prefix: 'Location'),
+    );
+
+    // Body Site
+    final bodySiteDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(bodySite);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
+          prefix: 'Body Site'),
+    );
+
+    // Performed Date/Period
+    final performedDisplay = FhirFieldExtractor.extractPerformedX(performedX);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(performedDisplay,
+          prefix: 'Performed'),
+    );
+
+    // Reason Code
+    final reasonCodeDisplay =
+        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+    );
+
+    // Outcome
+    final outcomeDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(outcome);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(outcomeDisplay, prefix: 'Outcome'),
+    );
+
+    // Complication
+    final complicationDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(complication);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(complicationDisplay,
+          prefix: 'Complication'),
+    );
+
+    // Follow-up
+    final followUpDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(followUp);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createTimelineLine(followUpDisplay,
+          prefix: 'Follow-up'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }

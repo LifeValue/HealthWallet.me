@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -99,15 +100,74 @@ class Organization with _$Organization implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final addressDisplay =
-        FhirFieldExtractor.formatAddress(address?.firstOrNull);
-    if (addressDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.identification,
-        info: addressDisplay,
-      ));
+    // Active Status
+    final activeStatus = active?.valueBoolean;
+    if (activeStatus != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            activeStatus ? 'Active' : 'Inactive',
+            prefix: 'Status'),
+      );
     }
 
+    // Type
+    final typeDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Address
+    final addressDisplay =
+        FhirFieldExtractor.formatAddress(address?.firstOrNull);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+    );
+
+    // Part Of (parent organization)
+    final partOfDisplay = FhirFieldExtractor.extractReferenceDisplay(partOf);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(partOfDisplay,
+          prefix: 'Part Of'),
+    );
+
+    // Telecom (phone/email)
+    if (telecom != null && telecom!.isNotEmpty) {
+      final phone = telecom!
+          .where((t) => t.system?.valueString == 'phone')
+          .firstOrNull
+          ?.value
+          ?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+      );
+
+      final email = telecom!
+          .where((t) => t.system?.valueString == 'email')
+          .firstOrNull
+          ?.value
+          ?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+      );
+    }
+
+    // Alias
+    if (alias != null && alias!.isNotEmpty) {
+      final aliasText = alias!.map((a) => a.toString()).join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(aliasText, prefix: 'Alias'),
+      );
+    }
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -108,7 +109,6 @@ class MedicationDispense with _$MedicationDispense implements IFhirResource {
         subjectId: subjectId,
       );
 
-
   @override
   String get displayTitle {
     if (title.isNotEmpty) {
@@ -125,30 +125,106 @@ class MedicationDispense with _$MedicationDispense implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final categoryDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(category);
-    if (categoryDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: categoryDisplay,
-      ));
-    }
-
+    // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
         medicationX?.isAs<CodeableConcept>());
-    if (medicationDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.medication,
-        info: medicationDisplay,
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createMedicationLine(medicationDisplay),
+    );
+
+    // Category
+    final categoryDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(category);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Type
+    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Quantity
+    final quantityDisplay = FhirFieldExtractor.extractQuantity(quantity);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createValueLine(quantityDisplay, prefix: 'Quantity'),
+    );
+
+    // Days Supply
+    final daysSupplyDisplay = FhirFieldExtractor.extractQuantity(daysSupply);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createValueLine(daysSupplyDisplay,
+          prefix: 'Days Supply'),
+    );
+
+    // Performer
+    if (performer != null && performer!.isNotEmpty) {
+      final performerDisplay = performer!
+          .map((p) => FhirFieldExtractor.extractReferenceDisplay(p.actor))
+          .where((d) => d != null && d.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createUserLine(
+            performerDisplay.isNotEmpty ? performerDisplay : null,
+            prefix: 'Performer'),
+      );
     }
 
+    // Location
+    final locationDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(location);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(locationDisplay,
+          prefix: 'Location'),
+    );
+
+    // When Prepared
+    final whenPreparedDisplay = whenPrepared?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(whenPreparedDisplay,
+          prefix: 'Prepared'),
+    );
+
+    // When Handed Over
+    final whenHandedOverDisplay = whenHandedOver?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(whenHandedOverDisplay,
+          prefix: 'Handed Over'),
+    );
+
+    // Dosage Instructions
+    final dosageDisplay =
+        FhirFieldExtractor.extractDosageInstructions(dosageInstruction);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }

@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -117,24 +118,73 @@ class AdverseEvent with _$AdverseEvent implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
+    // Actuality
+    final actualityDisplay = actuality?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(actualityDisplay,
+          prefix: 'Actuality'),
+    );
+
+    // Category
     final categoryDisplay =
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
-    if (categoryDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.timeline,
-        info: categoryDisplay,
-      ));
-    }
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
 
+    // Seriousness
+    final seriousnessDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(seriousness);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(seriousnessDisplay,
+          prefix: 'Seriousness'),
+    );
+
+    // Severity
     final severityDisplay =
         FhirFieldExtractor.extractCodeableConceptText(severity);
-    if (severityDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.warning,
-        info: "Severity: $severityDisplay",
-      ));
-    }
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(severityDisplay, prefix: 'Severity'),
+    );
 
+    // Outcome
+    final outcomeDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(outcome);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(outcomeDisplay, prefix: 'Outcome'),
+    );
+
+    // Location
+    final locationDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(location);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(locationDisplay,
+          prefix: 'Location'),
+    );
+
+    // Recorder
+    final recorderDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(recorder);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
+    );
+
+    // Detected Date
+    final detectedDisplay = detected?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(detectedDisplay, prefix: 'Detected'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

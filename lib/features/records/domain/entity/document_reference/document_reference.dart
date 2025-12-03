@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -110,23 +111,82 @@ class DocumentReference with _$DocumentReference implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    // Document Status
+    final docStatusText = docStatus?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(docStatusText,
+          prefix: 'Document Status'),
+    );
+
+    // Type
+    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDocumentLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Category
     final categoryDisplay =
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
-    if (categoryDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: categoryDisplay,
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Author
+    final authorDisplay =
+        FhirFieldExtractor.extractMultipleReferenceDisplays(author);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(authorDisplay, prefix: 'Author'),
+    );
+
+    // Authenticator
+    final authenticatorDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(authenticator);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(authenticatorDisplay,
+          prefix: 'Authenticator'),
+    );
+
+    // Custodian
+    final custodianDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(custodian);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(custodianDisplay,
+          prefix: 'Custodian'),
+    );
+
+    // Description
+    final descriptionText = description?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(descriptionText,
+          prefix: 'Description'),
+    );
+
+    // Content Format
+    if (content != null && content!.isNotEmpty) {
+      final contentType = content!.first.attachment.contentType?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createAttachmentLine(contentType,
+            prefix: 'Format'),
+      );
     }
 
-    final authorDisplay = author?.firstOrNull?.display?.valueString;
-    if (authorDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.user,
-        info: authorDisplay,
-      ));
-    }
-
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
