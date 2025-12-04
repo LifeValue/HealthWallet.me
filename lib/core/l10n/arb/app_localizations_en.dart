@@ -643,4 +643,69 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiModelDownloadInfo =>
       'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.';
+
+  @override
+  String get setup => 'Setup';
+
+  @override
+  String get patientSetupTitle => 'Set Up Your Profile';
+
+  @override
+  String get patientSetupSubtitle =>
+      'Personalize your health wallet with your information';
+
+  @override
+  String get onboardingSetupTitle => 'Set Up my Health Wallet';
+
+  @override
+  String get onboardingSetupBody =>
+      'Create your personal health profile to get started with HealthWallet';
+
+  @override
+  String get onboardingDemoTitle => 'Try Demo Data';
+
+  @override
+  String get onboardingDemoBody =>
+      'Explore the app with sample medical records to see how it works';
+
+  @override
+  String get onboardingSyncTitle2 => 'Sync Your Records';
+
+  @override
+  String get onboardingSyncBody =>
+      'Connect to your healthcare providers to import your real medical records';
+
+  @override
+  String get givenName => 'Given Name';
+
+  @override
+  String get familyName => 'Family Name';
+
+  @override
+  String get skipForNow => 'Skip for now';
+
+  @override
+  String get setUpProfile => 'Set Up';
+
+  @override
+  String get useDefaults => 'Default';
+
+  @override
+  String get syncPlaceholderTutorialStep1 =>
+      'Complete your profile to unlock full features.';
+
+  @override
+  String get syncPlaceholderTutorialStep2 =>
+      'Not ready to import? Load demo data to see how the app looks in action.';
+
+  @override
+  String get syncPlaceholderTutorialStep3 =>
+      'Keep your desktop and mobile wallet up to date.';
+
+  @override
+  String get tapToContinue => 'Tap to continue';
+
+  @override
+  String get homeOnboardingReorderMessage =>
+      'Long press to reorder them according to your preference.';
 }

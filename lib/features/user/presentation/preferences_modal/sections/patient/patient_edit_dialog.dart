@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
@@ -12,34 +13,41 @@ import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'utils/dialog_header.dart';
 import 'utils/dialog_content.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
-import 'utils/form_fields.dart';
 import 'services/patient_edit_service.dart';
 import 'utils/gender_mapper.dart';
 
 class PatientEditDialog extends StatefulWidget {
   final Patient patient;
   final VoidCallback? onBloodTypeUpdated;
+  final VoidCallback? onDismiss;
 
   const PatientEditDialog({
     super.key,
     required this.patient,
     this.onBloodTypeUpdated,
+    this.onDismiss,
   });
 
-  static void show(BuildContext context, Patient patient,
-      {VoidCallback? onBloodTypeUpdated}) {
+  /// Shows the dialog in edit mode
+  static void show(
+    BuildContext context,
+    Patient patient, {
+    VoidCallback? onBloodTypeUpdated,
+    VoidCallback? onDismiss,
+  }) {
     final patientBloc = BlocProvider.of<PatientBloc>(context);
     final homeBloc = BlocProvider.of<HomeBloc>(context);
+    final userBloc = BlocProvider.of<UserBloc>(context);
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
         return MultiBlocProvider(
           providers: [
-            BlocProvider.value(value: BlocProvider.of<UserBloc>(context)),
+            BlocProvider.value(value: userBloc),
             BlocProvider.value(value: patientBloc),
             BlocProvider.value(value: homeBloc),
           ],
@@ -48,6 +56,7 @@ class PatientEditDialog extends StatefulWidget {
             child: PatientEditDialog(
               patient: patient,
               onBloodTypeUpdated: onBloodTypeUpdated,
+              onDismiss: onDismiss,
             ),
           ),
         );
@@ -64,12 +73,12 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   String _selectedFamily = '';
   DateTime? _selectedBirthDate;
   String _selectedGender = 'Prefer not to say';
-  String _selectedBloodType = 'O+';
+  String _selectedBloodType = 'N/A';
   String _selectedMRN = '';
   late PatientEditService _patientEditService;
   bool _isLoading = false;
   Patient? _currentPatient;
-  
+
   late TextEditingController _givenController;
   late TextEditingController _familyController;
   late TextEditingController _mrnController;
@@ -85,9 +94,13 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   void initState() {
     super.initState();
     _patientEditService = getIt<PatientEditService>();
-    _givenController = TextEditingController(text: _extractGiven(widget.patient));
-    _familyController = TextEditingController(text: _extractFamily(widget.patient));
-    _mrnController = TextEditingController(text: FhirFieldExtractor.extractPatientMRN(widget.patient));
+
+    _givenController =
+        TextEditingController(text: _extractGiven(widget.patient));
+    _familyController =
+        TextEditingController(text: _extractFamily(widget.patient));
+    _mrnController = TextEditingController(
+        text: FhirFieldExtractor.extractPatientMRN(widget.patient));
     _initializeControllers();
     _initializeCurrentPatient();
   }
@@ -97,13 +110,15 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     super.didChangeDependencies();
     final extractedGender =
         FhirFieldExtractor.extractPatientGender(widget.patient);
-    _selectedGender = GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
+    _selectedGender =
+        GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
   }
 
   void _initializeControllers() {
     final extractedGender =
         FhirFieldExtractor.extractPatientGender(widget.patient);
-    _selectedGender = GenderMapper.mapFhirGenderToDisplayFallback(extractedGender);
+    _selectedGender =
+        GenderMapper.mapFhirGenderToDisplayFallback(extractedGender);
     _selectedGiven = _extractGiven(widget.patient);
     _selectedFamily = _extractFamily(widget.patient);
 
@@ -135,10 +150,11 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
 
       final extractedGender =
           FhirFieldExtractor.extractPatientGender(_currentPatient!);
-      _selectedGender = GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
+      _selectedGender =
+          GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
 
       _selectedMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
-      
+
       _givenController.text = _selectedGiven;
       _familyController.text = _selectedFamily;
       _mrnController.text = _selectedMRN;
@@ -167,7 +183,6 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     return '';
   }
 
-
   Future<void> _initializeBloodType() async {
     if (_currentPatient == null) return;
 
@@ -180,7 +195,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
           if (extractedBloodType != null && extractedBloodType.isNotEmpty) {
             _selectedBloodType = _bloodTypeOptions.contains(extractedBloodType)
                 ? extractedBloodType
-                : 'O+';
+                : 'N/A';
           } else {
             _selectedBloodType = 'N/A';
           }
@@ -192,7 +207,6 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
       }
     }
   }
-
 
   @override
   void dispose() {
@@ -219,14 +233,8 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
 
       if (!hasChanges) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.noChangesDetected),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
-            ),
-          );
           context.popDialog();
+          widget.onDismiss?.call();
         }
         return;
       }
@@ -240,7 +248,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
       final currentGivenValue = _givenController.text;
       final currentFamilyValue = _familyController.text;
       final currentMRNValue = _mrnController.text;
-      
+
       final currentGiven = _extractGiven(_currentPatient!);
       final currentFamily = _extractFamily(_currentPatient!);
       final currentMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
@@ -250,7 +258,8 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
       final nameChanged = givenChanged || familyChanged;
       final birthDateChanged = currentBirthDate != _selectedBirthDate;
       final genderChanged =
-          GenderMapper.mapFhirGenderToDisplay(currentGender, context.l10n) != _selectedGender;
+          GenderMapper.mapFhirGenderToDisplay(currentGender, context.l10n) !=
+              _selectedGender;
       final bloodTypeChanged = currentBloodType != _selectedBloodType;
       final mrnChanged = currentMRN != currentMRNValue;
 
@@ -274,26 +283,19 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
 
         if (mounted) {
           context.popDialog();
+          widget.onDismiss?.call();
         }
         return;
       }
 
       if (mounted) {
-        final patientFieldsChanged =
-            nameChanged || birthDateChanged || genderChanged || mrnChanged;
+        final patientFieldsChanged = nameChanged ||
+            birthDateChanged ||
+            genderChanged ||
+            mrnChanged ||
+            bloodTypeChanged;
 
         if (patientFieldsChanged) {
-          if (birthDateChanged && _selectedBirthDate == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(context.l10n.pleaseSelectBirthDate),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 2),
-              ),
-            );
-            return;
-          }
-
           final homeState = context.read<HomeBloc>().state;
 
           final givenList = currentGivenValue.isNotEmpty
@@ -306,7 +308,9 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
                   sourceId: _currentPatient!.sourceId,
                   given: givenChanged ? givenList : null,
                   family: familyChanged
-                      ? (currentFamilyValue.isNotEmpty ? currentFamilyValue : null)
+                      ? (currentFamilyValue.isNotEmpty
+                          ? currentFamilyValue
+                          : null)
                       : null,
                   birthDate: birthDateChanged ? _selectedBirthDate : null,
                   gender: genderChanged ? _selectedGender : null,
@@ -324,16 +328,10 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
         }
 
         context.popDialog();
+        widget.onDismiss?.call();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${context.l10n.errorSavingPatientData}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Error handling - dialog will remain open for user to retry
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -344,13 +342,11 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   void _handleCancel() {
     context.read<PatientBloc>().add(const PatientEditCancelled());
     context.popDialog();
+    widget.onDismiss?.call();
   }
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = context.theme.dividerColor;
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
     final iconColor = context.isDarkMode
         ? AppColors.textSecondaryDark
         : AppColors.textSecondary;
@@ -358,36 +354,14 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(Insets.medium),
-      child: Container(
-        width: 350,
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, width: 1),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DialogHeader(
-              textColor: textColor,
-              onCancel: _handleCancel,
-            ),
-            Container(height: 1, color: borderColor),
-
-            Flexible(
-              child: _buildPatientForm(iconColor),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(Insets.normal),
-              child: FormFields.buildActionButtons(
-                onCancel: _handleCancel,
-                onSave: () => _handleSave(),
-                isLoading: _isLoading,
-              ),
-            ),
-          ],
-        ),
+      child: PatientDialogCard(
+        title: context.l10n.editDetails,
+        content: _buildPatientForm(iconColor),
+        isLoading: _isLoading,
+        cancelLabel: context.l10n.cancel,
+        saveLabel: context.l10n.save,
+        onCancel: _handleCancel,
+        onSave: _handleSave,
       ),
     );
   }
@@ -404,6 +378,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
           DialogContent(
             patient: _currentPatient!,
             showNameField: true,
+            isSetupMode: false,
             selectedGiven: _selectedGiven,
             selectedFamily: _selectedFamily,
             selectedMRN: _selectedMRN,

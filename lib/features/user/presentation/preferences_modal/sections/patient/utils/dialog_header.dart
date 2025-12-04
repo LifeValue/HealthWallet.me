@@ -7,11 +7,15 @@ import 'form_fields.dart';
 class DialogHeader extends StatelessWidget {
   final Color textColor;
   final VoidCallback onCancel;
+  final String title;
+  final String? subtitle;
 
   const DialogHeader({
     super.key,
     required this.textColor,
     required this.onCancel,
+    required this.title,
+    this.subtitle,
   });
 
   @override
@@ -22,15 +26,36 @@ class DialogHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              FormFields.buildIconButton(
-                  Assets.icons.user, textColor, onCancel),
-              const SizedBox(width: Insets.small),
-              Text('Edit details',
-                  style: AppTextStyle.bodySmall
-                      .copyWith(fontWeight: FontWeight.w500)),
-            ],
+          Expanded(
+            child: Row(
+              children: [
+                FormFields.buildIconButton(Assets.icons.user, textColor, () {}),
+                const SizedBox(width: Insets.small),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyle.bodySmall
+                            .copyWith(fontWeight: FontWeight.w500),
+                      ),
+                      if (subtitle != null)
+                        Text(
+                          subtitle!,
+                          style: AppTextStyle.bodySmall.copyWith(
+                            color: textColor.withValues(alpha: 0.6),
+                            fontSize: 10,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           FormFields.buildIconButton(Assets.icons.close, textColor, onCancel),
         ],
