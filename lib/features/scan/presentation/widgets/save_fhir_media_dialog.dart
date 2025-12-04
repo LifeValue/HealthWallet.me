@@ -59,14 +59,14 @@ class _SaveFhirMediaDialogState extends State<SaveFhirMediaDialog> {
                 TextFormField(
                   controller: _patientIdController,
                   decoration: const InputDecoration(
-                    labelText: 'Patient ID *',
-                    hintText: 'e.g., patient-123',
+                    labelText: 'Patient MRN *',
+                    hintText: 'e.g., MRN-12345',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.person),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Patient ID is required';
+                      return 'MRN is required';
                     }
                     return null;
                   },

@@ -110,3 +110,9 @@ class ScanEncounterAttached extends ScanEvent with _$ScanEncounterAttached {
     required StagedEncounter encounter,
   }) = _ScanEncounterAttached;
 }
+
+class ScanProcessingRestartRequested extends ScanEvent {
+  const ScanProcessingRestartRequested({required this.sessionId});
+
+  final String sessionId;
+}

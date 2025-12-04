@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
@@ -12,9 +11,7 @@ import 'package:health_wallet/features/scan/presentation/widgets/session_list.da
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/import_actions.dart';
@@ -70,7 +67,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
         listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
           if (state.status case SessionCreated(:final session)) {
-            if (_navigationController.currentPage == 3) {
+            if (session.origin == ProcessingOrigin.import) {
               navigateToFhirMapper(context, session);
             }
           }
@@ -101,7 +98,10 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                         ),
                         const SizedBox(height: 24),
                         Expanded(
-                          child: SessionList(sessions: importSessions),
+                          child: SessionList(
+                            sessions: importSessions,
+                            activeSessionId: state.activeSessionId,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Padding(

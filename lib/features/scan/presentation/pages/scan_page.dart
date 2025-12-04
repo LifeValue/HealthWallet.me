@@ -198,7 +198,8 @@ class _ScanViewState extends State<ScanView>
                 previous.status != current.status,
             listener: (context, state) {
               if (state.status case SessionCreated(:final session)) {
-                if (_navigationController.currentPage == 2) {
+                // Check if the session is from scan origin before navigating
+                if (session.origin == ProcessingOrigin.scan) {
                   navigateToFhirMapper(context, session);
                 }
               }
@@ -259,7 +260,10 @@ class _ScanViewState extends State<ScanView>
                   ),
                   const SizedBox(height: 24),
                   Expanded(
-                    child: SessionList(sessions: scanSessions),
+                    child: SessionList(
+                      sessions: scanSessions,
+                      activeSessionId: state.activeSessionId,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Padding(

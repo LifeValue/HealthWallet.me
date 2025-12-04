@@ -176,7 +176,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsFor => 'Details for ';
 
   @override
-  String get patientId => 'Patient ID: ';
+  String get patientId => 'MRN: ';
 
   @override
   String get age => 'Age';

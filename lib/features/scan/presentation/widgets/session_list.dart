@@ -13,10 +13,12 @@ import 'package:intl/intl.dart';
 class SessionList extends StatelessWidget {
   const SessionList({
     required this.sessions,
+    this.activeSessionId,
     super.key,
   });
 
   final List<ProcessingSession> sessions;
+  final String? activeSessionId;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,16 @@ class SessionList extends StatelessWidget {
         itemCount: sessions.length,
         itemBuilder: (context, index) {
           final session = sessions[index];
-          final isInProgress = session.status == ProcessingStatus.processing;
+          final isProcessing = session.status == ProcessingStatus.processing;
+          final isInterrupted = isProcessing && activeSessionId != session.id;
+          final statusLabel =
+              isInterrupted ? 'Interrupted' : session.status.toString();
+          final statusColor = isInterrupted
+              ? context.colorScheme.error
+              : session.status.getColor(context);
+          final borderColor = isInterrupted
+              ? context.colorScheme.error
+              : context.colorScheme.primary;
 
           return InkWell(
             onTap: () =>
@@ -38,10 +49,9 @@ class SessionList extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: isInProgress
-                        ? context.colorScheme.primary
-                        : context.theme.dividerColor,
-                    width: isInProgress ? 2.0 : 1.0,
+                    color:
+                        isProcessing ? borderColor : context.theme.dividerColor,
+                    width: isProcessing ? 2.0 : 1.0,
                   ),
                 ),
                 child: Padding(
@@ -55,9 +65,9 @@ class SessionList extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                session.status.toString(),
+                                statusLabel,
                                 style: TextStyle(
-                                  color: session.status.getColor(context),
+                                  color: statusColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -82,7 +92,7 @@ class SessionList extends StatelessWidget {
                           )
                         ],
                       ),
-                      if (isInProgress)
+                      if (isProcessing)
                         CustomProgressIndicator(progress: session.progress),
                     ],
                   ),
