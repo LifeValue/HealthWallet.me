@@ -216,7 +216,7 @@ class RelatedPerson with _$RelatedPerson implements IFhirResource {
     }
 
     // Period
-    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(periodDisplay, prefix: 'Period'),

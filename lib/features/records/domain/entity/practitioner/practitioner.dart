@@ -116,7 +116,7 @@ class Practitioner with _$Practitioner implements IFhirResource {
       for (final qual in qualification!) {
         final qualCode = FhirFieldExtractor.extractCodeableConceptText(qual.code);
         final issuer = FhirFieldExtractor.extractReferenceDisplay(qual.issuer);
-        final period = FhirFieldExtractor.extractPeriod(qual.period);
+        final period = FhirFieldExtractor.extractPeriodFormatted(qual.period);
         
         String? qualDisplay = qualCode;
         if (issuer != null && qualCode != null) {

@@ -156,7 +156,7 @@ class Encounter with _$Encounter implements IFhirResource {
     );
 
     // Period (Start and End times - CRITICAL)
-    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Time Period'),
@@ -354,7 +354,7 @@ class Encounter with _$Encounter implements IFhirResource {
       final statusChanges = statusHistory!
           .map((h) {
             final status = h.status?.valueString;
-            final period = FhirFieldExtractor.extractPeriod(h.period);
+            final period = FhirFieldExtractor.extractPeriodFormatted(h.period);
             return status != null && period != null
                 ? '$status: $period'
                 : status ?? period;

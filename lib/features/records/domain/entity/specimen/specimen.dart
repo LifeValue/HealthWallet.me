@@ -156,7 +156,7 @@ class Specimen with _$Specimen implements IFhirResource {
               prefix: 'Collection Date'),
         );
       } else if (collectedPeriod != null) {
-        final periodDisplay = FhirFieldExtractor.extractPeriod(collectedPeriod);
+        final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(collectedPeriod);
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createTimelineLine(periodDisplay,
@@ -264,7 +264,7 @@ class Specimen with _$Specimen implements IFhirResource {
                 .join(', ')
             : null;
 
-        final processingTime = FhirFieldExtractor.extractPeriod(proc.timeX?.isAs<fhir_r4.Period>()) ??
+        final processingTime = FhirFieldExtractor.extractPeriodFormatted(proc.timeX?.isAs<fhir_r4.Period>()) ??
             proc.timeX?.isAs<fhir_r4.FhirDateTime>()?.valueString;
 
         final processingDisplay = [

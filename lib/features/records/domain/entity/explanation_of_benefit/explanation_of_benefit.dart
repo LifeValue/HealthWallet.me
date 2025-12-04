@@ -160,7 +160,7 @@ class ExplanationOfBenefit
 
     // Billable Period
     final billablePeriodDisplay =
-        FhirFieldExtractor.extractPeriod(billablePeriod);
+        FhirFieldExtractor.extractPeriodFormatted(billablePeriod);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createTimelineLine(billablePeriodDisplay,

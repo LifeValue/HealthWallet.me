@@ -3,6 +3,7 @@ import 'package:health_wallet/features/records/domain/entity/patient/patient.dar
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:intl/intl.dart';
 
 class FhirFieldExtractor {
   static String? extractStatus(dynamic status) {
@@ -1263,5 +1264,124 @@ class FhirFieldExtractor {
     }
 
     return parts.isEmpty ? null : parts.join(', ');
+  }
+
+  /// Example output: "Jan 10, 2024, 10:00 AM - Jan 15, 2024, 10:00 AM"
+  /// Or same day: "Jan 10, 2024, 10:00 AM - 2:00 PM"
+  static String? extractPeriodFormatted(fhir_r4.Period? period) {
+    if (period == null) return null;
+
+    try {
+      final start = period.start?.toString();
+      final end = period.end?.toString();
+
+      DateTime? startDate;
+      DateTime? endDate;
+
+      if (start != null) {
+        startDate = DateTime.tryParse(start);
+      }
+      if (end != null) {
+        endDate = DateTime.tryParse(end);
+      }
+
+      if (startDate != null && endDate != null) {
+        final formatter = DateFormat('MMM d, yyyy h:mm a');
+        final startFormatted = formatter.format(startDate);
+        final endFormatted = formatter.format(endDate);
+        
+        if (startDate.year == endDate.year &&
+            startDate.month == endDate.month &&
+            startDate.day == endDate.day) {
+          final dateFormatter = DateFormat('MMM d, yyyy');
+          final timeFormatter = DateFormat('h:mm a');
+          return '${dateFormatter.format(startDate)}, ${timeFormatter.format(startDate)} - ${timeFormatter.format(endDate)}';
+        }
+        
+        return '$startFormatted - $endFormatted';
+      } else if (startDate != null) {
+        final formatter = DateFormat('MMM d, yyyy h:mm a');
+        return 'From ${formatter.format(startDate)}';
+      } else if (endDate != null) {
+        final formatter = DateFormat('MMM d, yyyy h:mm a');
+        return 'Until ${formatter.format(endDate)}';
+      }
+    } catch (e) {
+      return extractPeriod(period);
+    }
+
+    return null;
+  }
+
+  /// Example: "Jan 10, 2024, 10:00 AM"
+  static String? formatFhirDateTime(fhir_r4.FhirDateTime? fhirDateTime) {
+    if (fhirDateTime == null) return null;
+    
+    final dateTimeString = fhirDateTime.valueString;
+    if (dateTimeString == null) return null;
+    
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      final formatter = DateFormat('MMM d, yyyy, h:mm a');
+      return formatter.format(dateTime);
+    } catch (e) {
+      return dateTimeString;
+    }
+  }
+
+  /// Example: "Jan 10, 2024"
+  static String? formatFhirDate(fhir_r4.FhirDate? fhirDate) {
+    if (fhirDate == null) return null;
+    
+    final dateString = fhirDate.valueString;
+    if (dateString == null) return null;
+    
+    try {
+      final date = DateTime.parse(dateString);
+      final formatter = DateFormat('MMM d, yyyy');
+      return formatter.format(date);
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  /// Example: "Jan 10, 2024, 10:00:30 AM"
+  static String? formatFhirInstant(fhir_r4.FhirInstant? fhirInstant) {
+    if (fhirInstant == null) return null;
+    
+    final instantString = fhirInstant.valueString;
+    if (instantString == null) return null;
+    
+    try {
+      final dateTime = DateTime.parse(instantString);
+      final formatter = DateFormat('MMM d, yyyy, h:mm:ss a');
+      return formatter.format(dateTime);
+    } catch (e) {
+      return instantString;
+    }
+  }
+
+  /// Automatically detects if it's a date or datetime
+  /// Example: "2024-01-10T10:00:00-06:00" -> "Jan 10, 2024, 10:00 AM"
+  /// Example: "2024-01-10" -> "Jan 10, 2024"
+  static String? formatDateTimeString(String? dateTimeString) {
+    if (dateTimeString == null || dateTimeString.isEmpty) return null;
+    
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      
+      final hasTime = dateTimeString.contains('T') || 
+                     dateTimeString.contains(':');
+      
+      if (hasTime) {
+        final formatter = DateFormat('MMM d, yyyy, h:mm a');
+        return formatter.format(dateTime);
+      } else {
+        final formatter = DateFormat('MMM d, yyyy');
+        return formatter.format(dateTime);
+      }
+    } catch (e) {
+      return dateTimeString;
+    }
   }
 }

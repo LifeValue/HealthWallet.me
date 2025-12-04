@@ -212,7 +212,7 @@ class PractitionerRole with _$PractitionerRole implements IFhirResource {
     }
 
     // Period
-    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(periodDisplay, prefix: 'Period'),

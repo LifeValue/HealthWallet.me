@@ -153,7 +153,7 @@ class Coverage with _$Coverage implements IFhirResource {
     );
 
     // Effective Dates / Period
-    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Effective Dates'),

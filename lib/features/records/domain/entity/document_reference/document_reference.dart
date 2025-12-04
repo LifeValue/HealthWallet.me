@@ -219,7 +219,7 @@ class DocumentReference with _$DocumentReference implements IFhirResource {
 
       // Period (Time period documented)
       if (context!.period != null) {
-        final periodDisplay = FhirFieldExtractor.extractPeriod(context!.period);
+        final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(context!.period);
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createTimelineLine(periodDisplay,

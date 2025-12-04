@@ -216,7 +216,7 @@ class MedicationRequest with _$MedicationRequest implements IFhirResource {
     );
 
     // Prescribed Date (Authored On)
-    final authoredOnDisplay = authoredOn?.valueString;
+    final authoredOnDisplay = FhirFieldExtractor.formatFhirDateTime(authoredOn);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(authoredOnDisplay, prefix: 'Prescribed'),
