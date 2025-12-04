@@ -90,14 +90,12 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
               children: [
                 // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Insets.normal,
-                    vertical: Insets.small,
-                  ),
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: Text('Attach to encounter'),
+                      const Expanded(
+                        child: Text('Attach to encounter',
+                            style: AppTextStyle.bodyMedium),
                       ),
                       IconButton(
                         onPressed: _handleCancel,
@@ -116,17 +114,14 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                 // Content
                 const Expanded(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: Insets.normal),
+                    padding: EdgeInsets.all(16),
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        Padding(
-                          padding:
-                              EdgeInsets.symmetric(vertical: Insets.normal),
-                          child: PatientSelector(
-                            title: 'Current Patient & Source',
-                          ),
+                        PatientSelector(
+                          title: 'Current Patient & Source',
                         ),
+                        SizedBox(height: 24),
                         Expanded(child: EncounterSelector()),
                       ],
                     ),

@@ -70,8 +70,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanResourceCreationInitiated>(_onScanResourceCreationInitiated);
     on<ScanNotificationAcknowledged>(_onScanNotificationAcknowledged);
     on<ScanMappingCancelled>(_onScanMappingCancelled);
-    on<ScanResourceAdded>(_onScanResourceAdded);
-    on<ResourcesAdded>(_onResourcesAdded);
+    on<ScanResourcesAdded>(_onScanResourcesAdded);
     on<ScanEncounterAttached>(_onScanEncounterAttached);
   }
 
@@ -655,56 +654,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     emit(state.copyWith(status: const ScanStatus.cancelled()));
   }
 
-  void _onScanResourceAdded(
-    ScanResourceAdded event,
-    Emitter<ScanState> emit,
-  ) {
-    final activeSession =
-        state.sessions.firstWhere((s) => s.id == event.sessionId);
-
-    MappingResource newResource;
-    final newId = const Uuid().v4();
-
-    switch (event.resourceType) {
-      case 'AllergyIntolerance':
-        newResource = MappingAllergyIntolerance(id: newId);
-        break;
-      case 'Condition':
-        newResource = MappingCondition(id: newId);
-        break;
-      case 'DiagnosticReport':
-        newResource = MappingDiagnosticReport(id: newId);
-        break;
-      case 'MedicationStatement':
-        newResource = MappingMedicationStatement(id: newId);
-        break;
-      case 'Observation':
-        newResource = MappingObservation(id: newId);
-        break;
-      case 'Organization':
-        newResource = MappingOrganization(id: newId);
-        break;
-      case 'Practitioner':
-        newResource = MappingPractitioner(id: newId);
-        break;
-      case 'Procedure':
-        newResource = MappingProcedure(id: newId);
-        break;
-      default:
-        return;
-    }
-
-    final newResources = [...activeSession.resources, newResource];
-    _updateSession(
-      emit,
-      sessionId: event.sessionId,
-      resources: newResources,
-      updateDb: true,
-    );
-  }
-
-  void _onResourcesAdded(
-    ResourcesAdded event,
+  void _onScanResourcesAdded(
+    ScanResourcesAdded event,
     Emitter<ScanState> emit,
   ) {
     final activeSession =

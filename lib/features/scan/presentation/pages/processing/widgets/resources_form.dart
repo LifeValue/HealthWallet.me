@@ -1,9 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -33,76 +36,75 @@ class ResourcesForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return Form(
       key: formKey,
-      child: ListView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            if (patient?.hasSelection == true)
-              _buildResourceForm(
-                context,
-                resource: patient!.mode == ImportMode.createNew
-                    ? patient!.draft!
-                    : MappingPatient.fromFhirResource(patient!.existing!),
-                canRemove: false,
-                isStagedResource: true,
-                isReadOnly: patient!.mode == ImportMode.linkExisting,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: 0,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
-                            isDraftPatient: true,
-                          ),
+      child: Column(
+        children: [
+          if (patient?.hasSelection == true)
+            _buildResourceForm(
+              context,
+              resource: patient!.mode == ImportMode.createNew
+                  ? patient!.draft!
+                  : MappingPatient.fromFhirResource(patient!.existing!),
+              canRemove: false,
+              isStagedResource: true,
+              isReadOnly: patient!.mode == ImportMode.linkExisting,
+              onPropertyChanged: (propertyKey, newValue) =>
+                  context.read<ScanBloc>().add(
+                        ScanResourceChanged(
+                          sessionId: sessionId,
+                          index: 0,
+                          propertyKey: propertyKey,
+                          newValue: newValue,
+                          isDraftPatient: true,
                         ),
-              ),
-            if (encounter?.hasSelection == true)
-              _buildResourceForm(
-                context,
-                canRemove: false,
-                resource: encounter!.mode == ImportMode.createNew
-                    ? encounter!.draft!
-                    : MappingEncounter.fromFhirResource(encounter!.existing!),
-                isStagedResource: true,
-                isReadOnly: encounter!.mode == ImportMode.linkExisting,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: 0,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
-                            isDraftEncounter: true,
-                          ),
+                      ),
+            ),
+          if (encounter?.hasSelection == true)
+            _buildResourceForm(
+              context,
+              canRemove: false,
+              resource: encounter!.mode == ImportMode.createNew
+                  ? encounter!.draft!
+                  : MappingEncounter.fromFhirResource(encounter!.existing!),
+              isStagedResource: true,
+              isReadOnly: encounter!.mode == ImportMode.linkExisting,
+              onPropertyChanged: (propertyKey, newValue) =>
+                  context.read<ScanBloc>().add(
+                        ScanResourceChanged(
+                          sessionId: sessionId,
+                          index: 0,
+                          propertyKey: propertyKey,
+                          newValue: newValue,
+                          isDraftEncounter: true,
                         ),
-              ),
-            ...resources.map((resource) {
-              final index = resources.indexOf(resource);
+                      ),
+            ),
+          ...resources.map((resource) {
+            final index = resources.indexOf(resource);
 
-              return _buildResourceForm(
-                context,
-                resource: resource,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: index,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
-                          ),
+            return _buildResourceForm(
+              context,
+              resource: resource,
+              onPropertyChanged: (propertyKey, newValue) =>
+                  context.read<ScanBloc>().add(
+                        ScanResourceChanged(
+                          sessionId: sessionId,
+                          index: index,
+                          propertyKey: propertyKey,
+                          newValue: newValue,
                         ),
-                onResourceRemoved: () => DeleteConfirmationDialog.show(
-                  context: context,
-                  title: 'Delete Resources',
-                  onConfirm: () {
-                    context.read<ScanBloc>().add(ScanResourceRemoved(
-                        sessionId: sessionId, index: index));
-                  },
-                ),
-              );
-            })
-          ]),
+                      ),
+              onResourceRemoved: () => DeleteConfirmationDialog.show(
+                context: context,
+                title: 'Delete Resources',
+                onConfirm: () {
+                  context.read<ScanBloc>().add(
+                      ScanResourceRemoved(sessionId: sessionId, index: index));
+                },
+              ),
+            );
+          })
+        ],
+      ),
     );
   }
 
@@ -185,24 +187,37 @@ class ResourcesForm extends StatelessWidget {
             ...textFields.entries.map((entry) {
               final propertyKey = entry.key;
               final descriptor = entry.value;
-              final borderColor = switch (descriptor.confidenceLevel) {
-                < 0.6 => Colors.red,
-                >= 0.6 && < 0.8 => Colors.yellow,
-                _ =>
-                  context.isDarkMode ? AppColors.borderDark : AppColors.border,
-              };
+
+              final confidenceLevel =
+                  ConfidenceLevel.fromDouble(descriptor.confidenceLevel);
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(descriptor.label, style: AppTextStyle.bodySmall),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(descriptor.label, style: AppTextStyle.bodySmall),
+                      if (confidenceLevel != ConfidenceLevel.high)
+                        Text(
+                          "(${confidenceLevel.getString()})",
+                          style: AppTextStyle.labelSmall.copyWith(
+                              color: confidenceLevel.getColor(context),
+                              fontStyle: FontStyle.italic),
+                        )
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   if (isReadOnly)
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        border: Border.all(color: borderColor),
+                        border: Border.all(
+                            color: confidenceLevel.getColor(context)),
                         borderRadius: BorderRadius.circular(8),
-                        color: borderColor.withValues(alpha: 0.08),
+                        color: confidenceLevel
+                            .getColor(context)
+                            .withValues(alpha: 0.08),
                       ),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
@@ -226,15 +241,18 @@ class ResourcesForm extends StatelessWidget {
                         helperText: ' ',
                         helperStyle: const TextStyle(height: 0, fontSize: 0),
                         disabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: borderColor),
+                          borderSide: BorderSide(
+                              color: confidenceLevel.getColor(context)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: borderColor),
+                          borderSide: BorderSide(
+                              color: confidenceLevel.getColor(context)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: borderColor),
+                          borderSide: BorderSide(
+                              color: confidenceLevel.getColor(context)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         errorBorder: OutlineInputBorder(

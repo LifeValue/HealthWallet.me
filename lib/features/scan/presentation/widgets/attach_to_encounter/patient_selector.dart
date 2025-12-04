@@ -6,6 +6,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 class PatientSelector extends StatelessWidget {
   final String? title;
@@ -21,33 +22,22 @@ class PatientSelector extends StatelessWidget {
       builder: (context, state) {
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(Insets.normal),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: context.colorScheme.surfaceVariant.withOpacity(0.5),
             border: Border.all(
-              color: context.colorScheme.outline.withOpacity(0.3),
+              color: context.colorScheme.outline.withOpacity(0.1),
             ),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.person_outline,
-                    color: context.colorScheme.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    title ?? 'Patient & Source Information',
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: context.colorScheme.onSurface,
-                    ),
-                  ),
-                ],
+              Text(
+                title ?? 'Patient & Source Information',
+                style: AppTextStyle.bodyLarge.copyWith(
+                  color: context.colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               _buildPatientSelector(context, state),
@@ -65,7 +55,7 @@ class PatientSelector extends StatelessWidget {
     if (state.existingPatients.isEmpty && patient.draft == null) {
       return Text(
         'No patients available',
-        style: AppTextStyle.bodyMedium.copyWith(
+        style: AppTextStyle.bodySmall.copyWith(
           color: context.colorScheme.onSurfaceVariant,
         ),
       );
@@ -77,7 +67,6 @@ class PatientSelector extends StatelessWidget {
         Text(
           'Patient',
           style: AppTextStyle.bodySmall.copyWith(
-            fontWeight: FontWeight.w500,
             color: context.colorScheme.onSurfaceVariant,
           ),
         ),
@@ -86,25 +75,22 @@ class PatientSelector extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             border:
-                Border.all(color: context.colorScheme.outline.withOpacity(0.3)),
-            borderRadius: BorderRadius.circular(4),
+                Border.all(color: context.colorScheme.outline.withOpacity(0.1)),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<dynamic>(
               value: state.selectedPatient,
               isExpanded: true,
-              icon: Icon(
-                Icons.arrow_drop_down,
-                color: context.colorScheme.onSurfaceVariant,
-                size: 20,
-              ),
+              icon: Assets.icons.chevronDown.svg(),
+              borderRadius: BorderRadius.circular(8),
               items: [
                 if (patient.draft != null)
                   DropdownMenuItem<MappingPatient>(
                     value: patient.draft,
                     child: Text(
                       "New Patient: ${patient.draft!.givenName.value} ${patient.draft!.familyName.value}",
-                      style: AppTextStyle.bodyMedium.copyWith(
+                      style: AppTextStyle.labelLarge.copyWith(
                         color: context.colorScheme.onSurface,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -115,7 +101,7 @@ class PatientSelector extends StatelessWidget {
                     value: patient,
                     child: Text(
                       patient.displayTitle,
-                      style: AppTextStyle.bodyMedium.copyWith(
+                      style: AppTextStyle.labelLarge.copyWith(
                         color: context.colorScheme.onSurface,
                       ),
                       overflow: TextOverflow.ellipsis,

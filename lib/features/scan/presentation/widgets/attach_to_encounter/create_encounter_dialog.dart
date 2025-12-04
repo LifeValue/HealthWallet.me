@@ -111,16 +111,13 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.normal,
-                  vertical: Insets.small,
-                ),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
                     const Expanded(
                       child: Text(
                         'Create Encounter',
-                        style: AppTextStyle.titleSmall,
+                        style: AppTextStyle.bodyLarge,
                       ),
                     ),
                     IconButton(
@@ -132,6 +129,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
+                    const SizedBox(width: 6)
                   ],
                 ),
               ),
@@ -153,7 +151,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                     const SizedBox(height: Insets.small),
                     TextFormField(
                       controller: _nameController,
-                      style: AppTextStyle.bodyMedium,
+                      style: AppTextStyle.labelLarge,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter an encounter name';
@@ -163,7 +161,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                       decoration: InputDecoration(
                         isDense: true,
                         hintText: 'Enter encounter name',
-                        hintStyle: AppTextStyle.bodyMedium.copyWith(
+                        hintStyle: AppTextStyle.labelLarge.copyWith(
                           color: context.colorScheme.onSurface.withOpacity(0.5),
                         ),
                         border: OutlineInputBorder(
@@ -216,14 +214,14 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                             Expanded(
                               child: Text(
                                 DateFormat('dd.MM.yyyy').format(_selectedDate),
-                                style: AppTextStyle.bodyMedium,
+                                style: AppTextStyle.labelLarge,
                               ),
                             ),
                             Assets.icons.calendar.svg(
                               width: 20,
                               height: 20,
                               colorFilter: ColorFilter.mode(
-                                context.colorScheme.onSurface.withOpacity(0.6),
+                                context.colorScheme.onSurface,
                                 BlendMode.srcIn,
                               ),
                             ),

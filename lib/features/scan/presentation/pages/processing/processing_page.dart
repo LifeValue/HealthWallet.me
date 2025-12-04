@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
@@ -65,7 +66,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
     final result = await showDialog<AttachToEncounterResult>(
       context: context,
-      builder: (context) =>  AttachToEncounterWidget(
+      builder: (context) => AttachToEncounterWidget(
         patient: activeSession.patient,
         encounter: activeSession.encounter,
       ),
@@ -329,16 +330,14 @@ class _ProcessingPageState extends State<ProcessingPage> {
   }
 
   Widget _buildAddResourceButton() {
-    return GestureDetector(
-      onTap: _showAddResourceDialog,
-      child: CustomPaint(
-        painter: _DashedBorderPainter(
-          color: context.colorScheme.outline.withOpacity(0.5),
-          strokeWidth: 1,
-          dashWidth: 6,
-          dashSpace: 4,
-          borderRadius: 8,
-        ),
+    return DottedBorder(
+      options: RoundedRectDottedBorderOptions(
+        radius: const Radius.circular(8),
+        dashPattern: [6, 6],
+        color: context.colorScheme.outline.withOpacity(0.2),
+      ),
+      child: GestureDetector(
+        onTap: _showAddResourceDialog,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: Insets.normal),
@@ -347,14 +346,14 @@ class _ProcessingPageState extends State<ProcessingPage> {
             children: [
               Icon(
                 Icons.add,
-                color: context.colorScheme.onSurface.withOpacity(0.6),
+                color: context.colorScheme.onSurface,
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
                 'Add resources',
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.6),
+                style: AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -387,59 +386,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
     if (selectedResourceIds != null &&
         selectedResourceIds.isNotEmpty &&
         mounted) {
-      context.read<ScanBloc>().add(ResourcesAdded(
+      context.read<ScanBloc>().add(ScanResourcesAdded(
             sessionId: widget.sessionId,
             resourceTypes: selectedResourceIds,
           ));
     }
   }
-}
-
-class _DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double dashWidth;
-  final double dashSpace;
-  final double borderRadius;
-
-  _DashedBorderPainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.dashWidth,
-    required this.dashSpace,
-    required this.borderRadius,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(borderRadius),
-      ));
-
-    final dashPath = Path();
-    for (final metric in path.computeMetrics()) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final start = distance;
-        final end = (distance + dashWidth).clamp(0, metric.length);
-        dashPath.addPath(
-          metric.extractPath(start, end.toDouble()),
-          Offset.zero,
-        );
-        distance += dashWidth + dashSpace;
-      }
-    }
-
-    canvas.drawPath(dashPath, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
