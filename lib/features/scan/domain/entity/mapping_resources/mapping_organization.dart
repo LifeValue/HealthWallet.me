@@ -31,6 +31,15 @@ class MappingOrganization
     );
   }
 
+  factory MappingOrganization.empty() {
+    return MappingOrganization(
+      id: const Uuid().v4(),
+      organizationName: MappedProperty.empty(),
+      address: MappedProperty.empty(),
+      phone: MappedProperty.empty(),
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

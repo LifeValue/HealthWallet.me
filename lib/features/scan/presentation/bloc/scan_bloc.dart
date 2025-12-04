@@ -664,37 +664,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     final List<MappingResource> newResources = [];
 
     for (final resourceType in event.resourceTypes) {
-      MappingResource? newResource;
-      final newId = const Uuid().v4();
-
-      switch (resourceType) {
-        case 'AllergyIntolerance':
-          newResource = MappingAllergyIntolerance(id: newId);
-          break;
-        case 'Condition':
-          newResource = MappingCondition(id: newId);
-          break;
-        case 'DiagnosticReport':
-          newResource = MappingDiagnosticReport(id: newId);
-          break;
-        case 'MedicationStatement':
-          newResource = MappingMedicationStatement(id: newId);
-          break;
-        case 'Observation':
-          newResource = MappingObservation(id: newId);
-          break;
-        case 'Organization':
-          newResource = MappingOrganization(id: newId);
-          break;
-        case 'Practitioner':
-          newResource = MappingPractitioner(id: newId);
-          break;
-        case 'Procedure':
-          newResource = MappingProcedure(id: newId);
-          break;
-        default:
-          continue;
-      }
+      MappingResource newResource = MappingResource.empty(resourceType);
 
       newResources.add(newResource);
     }

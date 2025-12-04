@@ -28,6 +28,15 @@ class MappingObservation with _$MappingObservation implements MappingResource {
     );
   }
 
+  factory MappingObservation.empty() {
+    return MappingObservation(
+      id: const Uuid().v4(),
+      observationName: MappedProperty.empty(),
+      value: MappedProperty.empty(),
+      unit: MappedProperty.empty(),
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

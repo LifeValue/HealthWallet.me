@@ -63,6 +63,12 @@ class AttachToEncounterBloc
         existingPatients: uniquePatients,
         selectedPatient: selectedPatient,
         patient: event.patient.copyWith(
+            draft: (selectedPatient is MappingPatient)
+                ? selectedPatient
+                : event.patient.draft,
+            existing: (selectedPatient is Patient)
+                ? selectedPatient
+                : event.patient.existing,
             mode: (selectedPatient is MappingPatient)
                 ? ImportMode.createNew
                 : ImportMode.linkExisting),

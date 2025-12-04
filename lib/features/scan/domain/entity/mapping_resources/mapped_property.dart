@@ -28,6 +28,10 @@ class MappedProperty with _$MappedProperty {
     );
   }
 
+  factory MappedProperty.empty() {
+    return const MappedProperty(confidenceLevel: 1);
+  }
+
   Map<String, dynamic> toJson() => {
         'value': value,
         'confidenceLevel': confidenceLevel,

@@ -29,6 +29,15 @@ class MappingCondition with _$MappingCondition implements MappingResource {
     );
   }
 
+  factory MappingCondition.empty() {
+    return MappingCondition(
+      id: const Uuid().v4(),
+      conditionName: MappedProperty.empty(),
+      onsetDateTime: MappedProperty.empty(),
+      clinicalStatus: MappedProperty.empty(),
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

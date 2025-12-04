@@ -35,6 +35,17 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     );
   }
 
+  factory MappingPatient.empty() {
+    return MappingPatient(
+      id: const Uuid().v4(),
+      familyName: MappedProperty.empty(),
+      givenName: MappedProperty.empty(),
+      dateOfBirth: MappedProperty.empty(),
+      gender: MappedProperty.empty(),
+      patientId: MappedProperty.empty(),
+    );
+  }
+
   factory MappingPatient.fromFhirResource(Patient patient) {
     return MappingPatient(
       id: patient.id,

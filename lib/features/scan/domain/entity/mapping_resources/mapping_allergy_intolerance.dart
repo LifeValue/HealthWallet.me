@@ -30,6 +30,15 @@ class MappingAllergyIntolerance
     );
   }
 
+  factory MappingAllergyIntolerance.empty() {
+    return MappingAllergyIntolerance(
+      id: const Uuid().v4(),
+      substance: MappedProperty.empty(),
+      manifestation: MappedProperty.empty(),
+      category: MappedProperty.empty(),
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

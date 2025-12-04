@@ -30,6 +30,14 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
     );
   }
 
+  factory MappingEncounter.empty() {
+    return MappingEncounter(
+      id: const Uuid().v4(),
+      encounterType: MappedProperty.empty(),
+      periodStart: MappedProperty.empty(),
+    );
+  }
+
   factory MappingEncounter.fromFhirResource(Encounter encounter) {
     return MappingEncounter(
       id: encounter.id,

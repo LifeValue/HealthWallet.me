@@ -97,11 +97,6 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     List<String> filePaths,
     Encounter encounter,
   ) async {
-    DialogHelper.showLoadingDialog(
-      context,
-      'Attaching documents to encounter...',
-    );
-
     try {
       final homeState = context.read<HomeBloc>().state;
       final patientState = context.read<PatientBloc>().state;
@@ -145,18 +140,8 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
       }
 
-      if (context.mounted) Navigator.of(context).pop();
-
       if (context.mounted) {
-        final bloc = context.read<ScanBloc>();
-        final totalDocuments = filePaths.length;
-
-        DialogHelper.showAttachmentSuccessDialog(
-          context,
-          totalDocuments,
-          encounter,
-          bloc,
-        );
+        context.router.replaceAll([RecordsRoute()]);
       }
     } catch (e) {
       if (context.mounted) Navigator.of(context).pop();
