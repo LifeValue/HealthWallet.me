@@ -198,28 +198,20 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     DocumentImported event,
     Emitter<ScanState> emit,
   ) async {
-    logger.d('_onDocumentImported - START: ${event.filePath}');
     emit(state.copyWith(status: const ScanStatus.loading()));
     try {
       final file = File(event.filePath);
       final exists = await file.exists();
-      logger.d('_onDocumentImported - File exists: $exists');
 
       if (!exists) {
-        logger.d('_onDocumentImported - File does not exist, returning error');
         emit(state.copyWith(
           status: const ScanStatus.failure(error: 'File does not exist'),
         ));
         return;
       }
 
-      final fileSize = await file.length();
-      logger.d('_onDocumentImported - File size: $fileSize bytes');
-
-      logger.d('_onDocumentImported - Creating session...');
       await _createSession(emit,
           filePaths: [event.filePath], origin: ProcessingOrigin.import);
-      logger.d('_onDocumentImported - Session created successfully');
     } catch (e, stackTrace) {
       logger.e(
           '_onDocumentImported - Error importing document: ${event.filePath}',
@@ -250,17 +242,21 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) async {
     try {
+      final wasActiveSession = state.activeSessionId == event.session.id;
       final newSessions = [...state.sessions]
         ..removeWhere((session) => session.id == event.session.id);
       final updatedImageMap =
           Map<String, List<String>>.from(state.sessionImagePaths)
             ..remove(event.session.id);
+
+      // Only reset status if deleting the active session
+      // This prevents blank screens when deleting non-active sessions
       emit(state.copyWith(
         sessions: newSessions,
         sessionImagePaths: updatedImageMap,
-        allImagePathsForOCR: state.activeSessionId == event.session.id
-            ? []
-            : state.allImagePathsForOCR,
+        allImagePathsForOCR: wasActiveSession ? [] : state.allImagePathsForOCR,
+        activeSessionId: wasActiveSession ? null : state.activeSessionId,
+        status: wasActiveSession ? const ScanStatus.initial() : state.status,
       ));
 
       await _repository.deleteProcessingSession(event.session);
@@ -345,8 +341,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         sessionImagePaths: updatedImageMap,
       ));
 
-      // If another session is processing, don't start mapping - just show preview with queued message
-      if (anotherSessionProcessing) {
+      if (anotherSessionProcessing &&
+          session.status != ProcessingStatus.draft) {
         return;
       }
 
@@ -354,16 +350,40 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         activeSessionId: event.sessionId,
       ));
 
-      if (session.status == ProcessingStatus.pending) {
+      final currentSession =
+          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+      if (currentSession == null) {
+        logger.e(
+            '_onScanSessionActivated - Session not found in state after image preparation');
+        emit(state.copyWith(
+            status: ScanStatus.failure(error: 'Session not found')));
+        return;
+      }
+
+      if (currentSession.status == ProcessingStatus.pending) {
         emit(state.copyWith(status: const ScanStatus.mapping()));
         await Future.delayed(const Duration(seconds: 1));
         if (!emit.isDone) {
+          // Double-check session status hasn't changed during the delay
+          final sessionAfterDelay =
+              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+          if (sessionAfterDelay == null) {
+            logger.w(
+                '_onScanSessionActivated - Session not found after delay, not triggering ScanMappingInitiated');
+            return;
+          }
+          if (sessionAfterDelay.status != ProcessingStatus.pending) {
+            return;
+          }
           add(ScanMappingInitiated(sessionId: event.sessionId));
         }
       } else if (session.status == ProcessingStatus.processing) {
         emit(state.copyWith(status: const ScanStatus.mapping()));
       } else if (session.status == ProcessingStatus.draft) {
         emit(state.copyWith(status: const ScanStatus.editingResources()));
+      } else {
+        logger.w(
+            '_onScanSessionActivated - Unexpected session status: ${session.status}');
       }
     } catch (e, stackTrace) {
       logger.e('_onScanSessionActivated - ERROR: $e', e, stackTrace);
@@ -410,6 +430,29 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     ScanMappingInitiated event,
     Emitter<ScanState> emit,
   ) async {
+    // Check if session exists and is in a valid state
+    final session =
+        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    if (session == null) {
+      logger
+          .e('_onScanMappingInitiated - Session not found: ${event.sessionId}');
+      return;
+    }
+
+    // If session is already processing or draft, don't restart
+    if (session.status == ProcessingStatus.processing) {
+      logger.w(
+          '_onScanMappingInitiated - Session is already processing, skipping');
+      return;
+    }
+
+    if (session.status == ProcessingStatus.draft) {
+      logger.w(
+          '_onScanMappingInitiated - Session is already in draft state, skipping');
+      emit(state.copyWith(status: const ScanStatus.editingResources()));
+      return;
+    }
+
     try {
       _updateSession(
         emit,
@@ -424,18 +467,53 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       final medicalText =
           await _ocrProcessingHelper.processOcrForImages(sessionImages);
 
-      final stream = _repository.mapResources(medicalText);
-
-      await for (final (resources, progress) in stream) {
-        if (emit.isDone) return;
-        final currentSession =
-            state.sessions.firstWhere((s) => s.id == event.sessionId);
+      if (medicalText.isEmpty || medicalText.trim().isEmpty) {
+        logger.w(
+            '_onScanMappingInitiated - Medical text is empty, cannot proceed with mapping');
         _updateSession(
           emit,
           sessionId: event.sessionId,
-          resources: [...currentSession.resources, ...resources],
-          progress: progress,
+          status: ProcessingStatus.draft,
+          updateDb: true,
         );
+        emit(state.copyWith(status: const ScanStatus.editingResources()));
+        return;
+      }
+
+      Stream<MappingResourcesWithProgress> stream;
+      try {
+        stream = _repository.mapResources(medicalText);
+      } catch (e, stackTrace) {
+        logger.e(
+            '_onScanMappingInitiated - ERROR creating mapResources stream: $e',
+            e,
+            stackTrace);
+        rethrow;
+      }
+
+      try {
+        await for (final (resources, progress) in stream) {
+          if (emit.isDone) {
+            return;
+          }
+          final currentSession =
+              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+          if (currentSession == null) {
+            logger.e(
+                '_onScanMappingInitiated - Session not found during stream processing');
+            return;
+          }
+          _updateSession(
+            emit,
+            sessionId: event.sessionId,
+            resources: [...currentSession.resources, ...resources],
+            progress: progress,
+          );
+        }
+      } catch (e, stackTrace) {
+        logger.e('_onScanMappingInitiated - ERROR during stream processing: $e',
+            e, stackTrace);
+        rethrow;
       }
 
       // All resources are now in the state. Get the final session object.
@@ -457,7 +535,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         updatedResources
             .removeWhere((resource) => resource is MappingEncounter);
       }
-
       // Update the session a final time with the cleaned resources and new status
       _updateSession(
         emit,
@@ -481,7 +558,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       ));
 
       _startNextPendingSession();
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
+      logger.e('_onScanMappingInitiated - ERROR: $e', e, stackTrace);
       _updateSession(
         emit,
         sessionId: event.sessionId,
