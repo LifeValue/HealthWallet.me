@@ -98,7 +98,7 @@ class _ResourceCardState extends State<ResourceCard> {
           ),
           const SizedBox(height: 8),
 
-          ...widget.resource.additionalInfo.take(2).map((infoLine) => Row(
+          ...widget.resource.additionalInfo.where((infoLine) => !infoLine.isSection).take(2).map((infoLine) => Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   infoLine.icon.svg(

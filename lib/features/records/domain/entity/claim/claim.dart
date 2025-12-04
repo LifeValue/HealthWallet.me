@@ -1,12 +1,11 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
-import 'package:health_wallet/features/records/domain/utils/fhir_date_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -129,23 +128,92 @@ class Claim with _$Claim implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final providerDisplay = provider?.display?.valueString;
-    if (providerDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: providerDisplay,
-      ));
-    }
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
 
+    // Type
+    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Use
+    final useDisplay = use?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(useDisplay, prefix: 'Use'),
+    );
+
+    // Provider
+    final providerDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(provider);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(providerDisplay,
+          prefix: 'Provider'),
+    );
+
+    // Insurer
+    final insurerDisplay = FhirFieldExtractor.extractReferenceDisplay(insurer);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(insurerDisplay,
+          prefix: 'Insurer'),
+    );
+
+    // Insurance/Coverage
     final coverageDisplay =
         insurance?.firstOrNull?.coverage.display?.valueString;
-    if (coverageDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: coverageDisplay,
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(coverageDisplay, prefix: 'Coverage'),
+    );
+
+    // Priority
+    final priorityDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(priority);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(priorityDisplay, prefix: 'Priority'),
+    );
+
+    // Billable Period
+    final billablePeriodDisplay =
+        FhirFieldExtractor.extractPeriodFormatted(billablePeriod);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createTimelineLine(billablePeriodDisplay,
+          prefix: 'Billable Period'),
+    );
+
+    // Total
+    if (total != null) {
+      final totalValue = total!.value?.valueDouble?.toStringAsFixed(2);
+      final currency = total!.currency?.toString() ?? '';
+      if (totalValue != null) {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createValueLine('$currency $totalValue',
+              prefix: 'Total'),
+        );
+      }
     }
 
+    // Facility
+    final facilityDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(facility);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(facilityDisplay,
+          prefix: 'Facility'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

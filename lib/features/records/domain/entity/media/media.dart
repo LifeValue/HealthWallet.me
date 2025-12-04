@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -121,27 +122,109 @@ class Media with _$Media implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final statusDisplay = status?.valueString;
-    if (statusDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Status: $statusDisplay",
-      ));
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    // Type
+    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Modality
+    final modalityDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(modality);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(modalityDisplay, prefix: 'Modality'),
+    );
+
+    // View
+    final viewDisplay = FhirFieldExtractor.extractCodeableConceptText(view);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(viewDisplay, prefix: 'View'),
+    );
+
+    // Device Name
+    final deviceNameText = deviceName?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(deviceNameText, prefix: 'Device'),
+    );
+
+    // Operator
+    final operatorDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(operator_);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(operatorDisplay, prefix: 'Operator'),
+    );
+
+    // Body Site
+    final bodySiteDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(bodySite);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
+          prefix: 'Body Site'),
+    );
+
+    // Dimensions
+    if (width != null && height != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createImageLine(
+            '${width?.valueString} x ${height?.valueString}',
+            prefix: 'Dimensions'),
+      );
     }
 
-    if (deviceName?.valueString != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: deviceName!.valueString!,
-      ));
+    // Duration
+    if (duration != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createTimeLine('${duration?.valueString} seconds',
+            prefix: 'Duration'),
+      );
     }
 
+    // Content Type
+    if (content?.contentType != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createAttachmentLine(content!.contentType.toString(),
+            prefix: 'Content Type'),
+      );
+    }
+
+    // Reason Code
+    final reasonCodeDisplay =
+        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }

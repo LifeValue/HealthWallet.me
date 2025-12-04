@@ -4,6 +4,8 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -102,36 +104,69 @@ class CareTeam with _$CareTeam implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    // Category
+    final categoryDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Managing Organization
     final organizationDisplay =
-        managingOrganization?.firstOrNull?.display?.valueString;
-    if (organizationDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: organizationDisplay,
-      ));
-    }
+        FhirFieldExtractor.extractMultipleReferenceDisplays(managingOrganization);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(organizationDisplay,
+          prefix: 'Organization'),
+    );
 
-    final members =
-        participant?.map((participant) => participant.member).toList();
-    if (members != null) {
-      final doctor = members.firstWhere(
-          (member) => member?.display?.startsWith("Dr.") ?? false,
-          orElse: () => null);
+    // Participants/Members
+    final participantsDisplay =
+        FhirFieldExtractor.extractParticipants(participant);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createTeamLine(participantsDisplay,
+          prefix: 'Members'),
+    );
 
-      if (doctor?.display?.valueString != null) {
-        infoLines.add(RecordInfoLine(
-          icon: Assets.icons.user,
-          info: doctor!.display!.valueString!,
-        ));
-      }
-    }
+    // Period
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Period'),
+    );
 
+    // Reason Code
+    final reasonCodeDisplay =
+        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }

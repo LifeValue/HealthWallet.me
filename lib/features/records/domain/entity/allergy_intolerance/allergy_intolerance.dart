@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -107,29 +108,135 @@ class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    final keyInfoStartIndex = infoLines.length;
 
-    final categoryDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
-    if (categoryDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: categoryDisplay,
-      ));
-    }
-
+    // Criticality (MOST CRITICAL - safety concern)
     final criticalityDisplay = criticality?.valueString;
-    if (criticalityDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.warning,
-        info: "Criticality: $criticalityDisplay",
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(criticalityDisplay,
+          prefix: 'Criticality'),
+    );
+
+    // Reactions
+    if (reaction != null && reaction!.isNotEmpty) {
+      final reactionManifestations = reaction!
+          .expand((r) => r.manifestation)
+          .map((m) => FhirFieldExtractor.extractCodeableConceptText(m))
+          .where((m) => m != null && m.isNotEmpty)
+          .take(3)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine(
+            reactionManifestations.isNotEmpty ? reactionManifestations : null,
+            prefix: 'Reactions'),
+      );
     }
 
+    // Category (food, medication, environment, biologic)
+    if (category != null && category!.isNotEmpty) {
+      final categoryDisplay =
+          category!.map((c) => c.valueString).where((c) => c != null).join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createCategoryLine(
+            categoryDisplay.isNotEmpty ? categoryDisplay : null,
+            prefix: 'Category'),
+      );
+    }
+
+    // Type (allergy or intolerance)
+    final typeDisplay = type?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Add section header only if we added content
+    if (infoLines.length > keyInfoStartIndex) {
+      infoLines.insert(keyInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Allergy Details'));
+    }
+
+    final basicInfoStartIndex = infoLines.length;
+
+    // Clinical Status
+    final statusDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(clinicalStatus);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusDisplay,
+          prefix: 'Clinical Status'),
+    );
+
+    // Verification Status
+    final verificationDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(verificationStatus);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(verificationDisplay,
+          prefix: 'Verification'),
+    );
+
+    // Onset
+    final onsetDisplay = FhirFieldExtractor.extractOnsetXFormatted(onsetX);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(onsetDisplay, prefix: 'Onset'),
+    );
+
+    // Last Occurrence
+    final lastOccurrenceDisplay = lastOccurrence?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(lastOccurrenceDisplay,
+          prefix: 'Last Occurrence'),
+    );
+
+    // Add section header only if we added content
+    if (infoLines.length > basicInfoStartIndex) {
+      infoLines.insert(basicInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Basic Information'));
+    }
+
+    final additionalInfoStartIndex = infoLines.length;
+
+    // Recorder
+    final recorderDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(recorder);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
+    );
+
+    // Asserter
+    final asserterDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(asserter);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(asserterDisplay, prefix: 'Asserter'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
+    }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
+
+    // Add section header only if we added content
+    if (infoLines.length > additionalInfoStartIndex) {
+      infoLines.insert(additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'));
     }
 
     return infoLines;

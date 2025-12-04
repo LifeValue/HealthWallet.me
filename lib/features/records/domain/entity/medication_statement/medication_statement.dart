@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -112,29 +113,85 @@ class MedicationStatement with _$MedicationStatement implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    final statusDisplay = status?.display?.valueString;
-    if (statusDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Status: $statusDisplay",
-      ));
-    }
-
+    // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
         medicationX?.isAs<CodeableConcept>());
-    if (medicationDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.medication,
-        info: medicationDisplay,
-      ));
-    }
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createMedicationLine(medicationDisplay),
+    );
 
+    // Status
+    final statusDisplay = status?.display?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusDisplay, prefix: 'Status'),
+    );
+
+    // Status Reason
+    final statusReasonDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(statusReason);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusReasonDisplay,
+          prefix: 'Status Reason'),
+    );
+
+    // Category
+    final categoryDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(category);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Effective Period
+    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(effectiveX);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(effectiveDisplay, prefix: 'Effective'),
+    );
+
+    // Information Source
+    final informationSourceDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(informationSource);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(informationSourceDisplay,
+          prefix: 'Information Source'),
+    );
+
+    // Dosage Instructions
+    final dosageDisplay =
+        FhirFieldExtractor.extractDosageInstructions(dosage);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
+    );
+
+    // Reason Code
+    final reasonCodeDisplay =
+        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }

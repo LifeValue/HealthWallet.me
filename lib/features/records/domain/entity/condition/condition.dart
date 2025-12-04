@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -111,21 +112,105 @@ class Condition with _$Condition implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
+    // Clinical Status
     final statusDisplay =
         FhirFieldExtractor.extractCodeableConceptText(clinicalStatus);
-    if (statusDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Status: $statusDisplay",
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusDisplay,
+          prefix: 'Clinical Status'),
+    );
+
+    // Verification Status
+    final verificationDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(verificationStatus);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(verificationDisplay,
+          prefix: 'Verification'),
+    );
+
+    // Severity
+    final severityDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(severity);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(severityDisplay,
+          prefix: 'Severity'),
+    );
+
+    // Category
+    final categoryDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    // Body Site
+    final bodySiteDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(bodySite);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
+          prefix: 'Body Site'),
+    );
+
+    // Onset Date
+    final onsetDisplay = FhirFieldExtractor.extractOnsetX(onsetX);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(onsetDisplay, prefix: 'Onset'),
+    );
+
+    // Abatement Date
+    final abatementDisplay = FhirFieldExtractor.extractAbatementX(abatementX);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(abatementDisplay, prefix: 'Resolved'),
+    );
+
+    // Stage
+    if (stage != null && stage!.isNotEmpty) {
+      final stageDisplay = FhirFieldExtractor.extractCodeableConceptText(
+          stage!.first.summary);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createActivityLine(stageDisplay, prefix: 'Stage'),
+      );
     }
 
+    // Recorder
+    final recorderDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(recorder);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
+    );
+
+    // Asserter
+    final asserterDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(asserter);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(asserterDisplay, prefix: 'Asserter'),
+    );
+
+    // Recorded Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
     }
+
+    // Notes
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+    );
 
     return infoLines;
   }
