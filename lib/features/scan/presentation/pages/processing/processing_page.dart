@@ -178,15 +178,19 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   Widget _buildMappingSection(
       ScanState state, ProcessingSession activeSession) {
-    // Check if this session is pending while another session is processing
     if (activeSession.status == ProcessingStatus.pending) {
-      final otherSessionProcessing = state.sessions.any(
-        (s) =>
-            s.id != activeSession.id && s.status == ProcessingStatus.processing,
-      );
-      if (otherSessionProcessing ||
-          state.status == const ScanStatus.mapping()) {
-        return _buildQueuedMessage();
+      final isThisSessionActive = state.activeSessionId == activeSession.id;
+      if (isThisSessionActive && state.status == const ScanStatus.mapping()) {
+      } else {
+        final otherSessionProcessing = state.sessions.any(
+          (s) =>
+              s.id != activeSession.id &&
+              s.status == ProcessingStatus.processing,
+        );
+        if (otherSessionProcessing ||
+            state.status == const ScanStatus.mapping()) {
+          return _buildQueuedMessage();
+        }
       }
     }
 

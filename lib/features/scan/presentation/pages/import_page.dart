@@ -107,7 +107,8 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 80.0),
                           child: ImportActions(
-                            onImportDocument: () => _handleImportDocument(context),
+                            onImportDocument: () =>
+                                _handleImportDocument(context),
                             onPickImage: () => _handlePickImage(context),
                             onScanDocument: () => _navigateToScanTab(context),
                           ),

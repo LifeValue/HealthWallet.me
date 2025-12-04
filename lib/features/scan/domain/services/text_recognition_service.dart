@@ -155,96 +155,65 @@ class TextRecognitionService {
     String pdfPath, {
     double dpi = 72,
   }) async {
-    logger.d('convertPdfToImagesForPreview - START: $pdfPath (dpi=$dpi)');
     try {
       final file = File(pdfPath);
       final exists = await file.exists();
-      logger.d('convertPdfToImagesForPreview - File exists: $exists');
       
       if (!exists) {
-        logger.d('convertPdfToImagesForPreview - File not found, returning empty');
         return [];
       }
 
-      logger.d('convertPdfToImagesForPreview - Getting file stats...');
       final fileStat = await file.stat();
       final fileSize = fileStat.size;
       final modified = fileStat.modified;
-      logger.d('convertPdfToImagesForPreview - File size: $fileSize bytes, modified: $modified');
       
       final cacheKey = _generateCacheKey(pdfPath, fileSize, modified, dpi);
-      logger.d('convertPdfToImagesForPreview - Cache key: $cacheKey');
       
-      logger.d('convertPdfToImagesForPreview - Checking cache...');
       final cachedImages = await _getCachedImages(cacheKey);
       if (cachedImages != null) {
-        logger.d('convertPdfToImagesForPreview - Cache hit! ${cachedImages.length} images');
         return cachedImages;
       }
-      logger.d('convertPdfToImagesForPreview - Cache miss, converting PDF...');
       
       final List<String> imagePaths = [];
       final cacheDir = await _getCacheDirectory();
-      logger.d('convertPdfToImagesForPreview - Cache dir: ${cacheDir.path}');
       
-      logger.d('convertPdfToImagesForPreview - Reading PDF bytes...');
       final bytes = await file.readAsBytes();
-      logger.d('convertPdfToImagesForPreview - PDF bytes read: ${bytes.length}');
       
       int index = 1;
-      int totalPages = 0;
       
-      logger.d('convertPdfToImagesForPreview - Starting rasterization...');
       await for (final page in Printing.raster(bytes, dpi: dpi)) {
-        totalPages++;
-        logger.d('convertPdfToImagesForPreview - Processing page $index...');
         try {
-          logger.d('convertPdfToImagesForPreview - Converting page $index to PNG...');
           final pngBytes = await page.toPng();
-          logger.d('convertPdfToImagesForPreview - Page $index PNG: ${pngBytes.length} bytes');
           
-          logger.d('convertPdfToImagesForPreview - Decoding PNG for page $index...');
           final decoded = img.decodePng(pngBytes);
           
           if (decoded == null) {
-            logger.d('convertPdfToImagesForPreview - Failed to decode page $index');
             index++;
             continue;
           }
-          logger.d('convertPdfToImagesForPreview - Page $index decoded: ${decoded.width}x${decoded.height}');
           
-          logger.d('convertPdfToImagesForPreview - Creating white background for page $index...');
           final whiteBg = img.Image(width: decoded.width, height: decoded.height);
           img.fill(whiteBg, color: img.ColorRgba8(255, 255, 255, 255));
           img.compositeImage(whiteBg, decoded);
           
-          logger.d('convertPdfToImagesForPreview - Encoding JPEG for page $index...');
           final jpegBytes = img.encodeJpg(whiteBg, quality: 75);
-          logger.d('convertPdfToImagesForPreview - Page $index JPEG: ${jpegBytes.length} bytes');
           
           final cachedImageFile = File(
             path.join(cacheDir.path, '${cacheKey}_page_$index.jpg'),
           );
-          logger.d('convertPdfToImagesForPreview - Saving page $index to: ${cachedImageFile.path}');
           await cachedImageFile.writeAsBytes(jpegBytes);
           
           imagePaths.add(cachedImageFile.path);
-          logger.d('convertPdfToImagesForPreview - Page $index saved successfully');
         } catch (e, stackTrace) {
           logger.e('convertPdfToImagesForPreview - Error processing page $index: $e', e, stackTrace);
         }
         index++;
       }
       
-      logger.d('convertPdfToImagesForPreview - Total pages processed: $totalPages, images created: ${imagePaths.length}');
-      
       if (imagePaths.isNotEmpty) {
-        logger.d('convertPdfToImagesForPreview - Saving to cache...');
         await _saveToCache(cacheKey, imagePaths);
-        logger.d('convertPdfToImagesForPreview - Cache saved');
       }
       
-      logger.d('convertPdfToImagesForPreview - COMPLETE: ${imagePaths.length} images');
       return imagePaths;
     } catch (e, stackTrace) {
       logger.e('convertPdfToImagesForPreview - Conversion failed: $e', e, stackTrace);
