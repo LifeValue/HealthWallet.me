@@ -551,11 +551,134 @@ final class Schema6 extends i0.VersionedSchema {
       'resourceId', 'CREATE INDEX resourceId ON fhir_resource (resource_id)');
 }
 
+final class Schema7 extends i0.VersionedSchema {
+  Schema7({required super.database}) : super(version: 7);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    fhirResource,
+    sources,
+    recordNotes,
+    processingSessions,
+    resourceType,
+    resourceId,
+  ];
+  late final Shape0 fhirResource = Shape0(
+      source: i0.VersionedTable(
+        entityName: 'fhir_resource',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_1,
+          _column_2,
+          _column_3,
+          _column_4,
+          _column_5,
+          _column_6,
+          _column_7,
+          _column_8,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape4 sources = Shape4(
+      source: i0.VersionedTable(
+        entityName: 'sources',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_16,
+          _column_10,
+          _column_17,
+          _column_18,
+          _column_19,
+          _column_20,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape5 recordNotes = Shape5(
+      source: i0.VersionedTable(
+        entityName: 'record_notes',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [],
+        columns: [
+          _column_11,
+          _column_21,
+          _column_22,
+          _column_15,
+          _column_14,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape7 processingSessions = Shape7(
+      source: i0.VersionedTable(
+        entityName: 'processing_sessions',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_23,
+          _column_24,
+          _column_25,
+          _column_26,
+          _column_27,
+          _column_28,
+          _column_29,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  final i1.Index resourceType = i1.Index('resourceType',
+      'CREATE INDEX resourceType ON fhir_resource (resource_type)');
+  final i1.Index resourceId = i1.Index(
+      'resourceId', 'CREATE INDEX resourceId ON fhir_resource (resource_id)');
+}
+
+class Shape7 extends i0.VersionedTable {
+  Shape7({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get filePaths =>
+      columnsByName['file_paths']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get resources =>
+      columnsByName['resources']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get status =>
+      columnsByName['status']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get origin =>
+      columnsByName['origin']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<DateTime> get createdAt =>
+      columnsByName['created_at']! as i1.GeneratedColumn<DateTime>;
+  i1.GeneratedColumn<String> get patient =>
+      columnsByName['patient']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get encounter =>
+      columnsByName['encounter']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_28(String aliasedName) =>
+    i1.GeneratedColumn<String>('patient', aliasedName, true,
+        type: i1.DriftSqlType.string);
+i1.GeneratedColumn<String> _column_29(String aliasedName) =>
+    i1.GeneratedColumn<String>('encounter', aliasedName, true,
+        type: i1.DriftSqlType.string);
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
   required Future<void> Function(i1.Migrator m, Schema5 schema) from3To5,
   required Future<void> Function(i1.Migrator m, Schema6 schema) from5To6,
+  required Future<void> Function(i1.Migrator m, Schema7 schema) from6To7,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -579,6 +702,11 @@ i0.MigrationStepWithVersion migrationSteps({
         final migrator = i1.Migrator(database, schema);
         await from5To6(migrator, schema);
         return 6;
+      case 6:
+        final schema = Schema7(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from6To7(migrator, schema);
+        return 7;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -590,6 +718,7 @@ i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
   required Future<void> Function(i1.Migrator m, Schema5 schema) from3To5,
   required Future<void> Function(i1.Migrator m, Schema6 schema) from5To6,
+  required Future<void> Function(i1.Migrator m, Schema7 schema) from6To7,
 }) =>
     i0.VersionedSchema.stepByStepHelper(
         step: migrationSteps(
@@ -597,4 +726,5 @@ i1.OnUpgrade stepByStep({
       from2To3: from2To3,
       from3To5: from3To5,
       from5To6: from5To6,
+      from6To7: from6To7,
     ));

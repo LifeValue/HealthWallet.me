@@ -1,10 +1,14 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:image/image.dart' as img;
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:crypto/crypto.dart';
 
 @injectable
 class TextRecognitionService {
@@ -69,6 +73,150 @@ class TextRecognitionService {
       }
       return imagePaths;
     } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Directory> _getCacheDirectory() async {
+    final cacheDir = await getTemporaryDirectory();
+    final pdfCacheDir = Directory(path.join(cacheDir.path, 'pdf_preview_cache'));
+    if (!await pdfCacheDir.exists()) {
+      await pdfCacheDir.create(recursive: true);
+    }
+    return pdfCacheDir;
+  }
+
+  String _generateCacheKey(String pdfPath, int fileSize, DateTime modified, double dpi) {
+    final keyString = '$pdfPath|$fileSize|${modified.millisecondsSinceEpoch}|$dpi';
+    final bytes = utf8.encode(keyString);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  Future<List<String>?> _getCachedImages(String cacheKey) async {
+    try {
+      final cacheDir = await _getCacheDirectory();
+      final cacheMetadataFile = File(path.join(cacheDir.path, '$cacheKey.json'));
+      
+      if (!await cacheMetadataFile.exists()) {
+        return null;
+      }
+
+      final metadataJson = await cacheMetadataFile.readAsString();
+      final metadata = jsonDecode(metadataJson) as Map<String, dynamic>;
+      final cachedImagePaths = (metadata['imagePaths'] as List)
+          .map((p) => p as String)
+          .toList();
+
+      bool allExist = true;
+      for (final imagePath in cachedImagePaths) {
+        final imageFile = File(imagePath);
+        if (!await imageFile.exists()) {
+          allExist = false;
+          break;
+        }
+      }
+
+      if (allExist && cachedImagePaths.isNotEmpty) {
+        return cachedImagePaths;
+      } else {
+        await cacheMetadataFile.delete();
+        for (final imagePath in cachedImagePaths) {
+          try {
+            await File(imagePath).delete();
+          } catch (e) {
+            // ignore
+          }
+        }
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _saveToCache(String cacheKey, List<String> imagePaths) async {
+    try {
+      final cacheDir = await _getCacheDirectory();
+      final cacheMetadataFile = File(path.join(cacheDir.path, '$cacheKey.json'));
+      
+      final metadata = {
+        'imagePaths': imagePaths,
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+      
+      await cacheMetadataFile.writeAsString(jsonEncode(metadata));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  Future<List<String>> convertPdfToImagesForPreview(
+    String pdfPath, {
+    double dpi = 72,
+  }) async {
+    try {
+      final file = File(pdfPath);
+      final exists = await file.exists();
+      
+      if (!exists) {
+        return [];
+      }
+
+      final fileStat = await file.stat();
+      final fileSize = fileStat.size;
+      final modified = fileStat.modified;
+      
+      final cacheKey = _generateCacheKey(pdfPath, fileSize, modified, dpi);
+      
+      final cachedImages = await _getCachedImages(cacheKey);
+      if (cachedImages != null) {
+        return cachedImages;
+      }
+      
+      final List<String> imagePaths = [];
+      final cacheDir = await _getCacheDirectory();
+      
+      final bytes = await file.readAsBytes();
+      
+      int index = 1;
+      
+      await for (final page in Printing.raster(bytes, dpi: dpi)) {
+        try {
+          final pngBytes = await page.toPng();
+          
+          final decoded = img.decodePng(pngBytes);
+          
+          if (decoded == null) {
+            index++;
+            continue;
+          }
+          
+          final whiteBg = img.Image(width: decoded.width, height: decoded.height);
+          img.fill(whiteBg, color: img.ColorRgba8(255, 255, 255, 255));
+          img.compositeImage(whiteBg, decoded);
+          
+          final jpegBytes = img.encodeJpg(whiteBg, quality: 75);
+          
+          final cachedImageFile = File(
+            path.join(cacheDir.path, '${cacheKey}_page_$index.jpg'),
+          );
+          await cachedImageFile.writeAsBytes(jpegBytes);
+          
+          imagePaths.add(cachedImageFile.path);
+        } catch (e, stackTrace) {
+          logger.e('convertPdfToImagesForPreview - Error processing page $index: $e', e, stackTrace);
+        }
+        index++;
+      }
+      
+      if (imagePaths.isNotEmpty) {
+        await _saveToCache(cacheKey, imagePaths);
+      }
+      
+      return imagePaths;
+    } catch (e, stackTrace) {
+      logger.e('convertPdfToImagesForPreview - Conversion failed: $e', e, stackTrace);
       return [];
     }
   }

@@ -109,6 +109,59 @@ class Encounter with _$Encounter implements IFhirResource {
     }
   }
 
+  factory Encounter.fromDto(FhirResourceDto dto) {
+    try {
+      final resourceJson = dto.resourceRaw ?? {};
+      final fhirEncounter = fhir_r4.Encounter.fromJson(resourceJson);
+
+      return Encounter(
+        id: dto.id ?? '',
+        sourceId: dto.sourceId ?? '',
+        resourceId: dto.resourceId ?? '',
+        title: dto.title ?? '',
+        date: dto.date,
+        rawResource: resourceJson,
+        encounterId: dto.encounterId ?? '',
+        subjectId: dto.subjectId ?? '',
+        text: fhirEncounter.text,
+        identifier: fhirEncounter.identifier,
+        status: fhirEncounter.status,
+        statusHistory: fhirEncounter.statusHistory,
+        class_: fhirEncounter.class_,
+        classHistory: fhirEncounter.classHistory,
+        type: fhirEncounter.type,
+        serviceType: fhirEncounter.serviceType,
+        priority: fhirEncounter.priority,
+        subject: fhirEncounter.subject,
+        episodeOfCare: fhirEncounter.episodeOfCare,
+        basedOn: fhirEncounter.basedOn,
+        participant: fhirEncounter.participant,
+        appointment: fhirEncounter.appointment,
+        period: fhirEncounter.period,
+        length: fhirEncounter.length,
+        reasonCode: fhirEncounter.reasonCode,
+        reasonReference: fhirEncounter.reasonReference,
+        diagnosis: fhirEncounter.diagnosis,
+        account: fhirEncounter.account,
+        hospitalization: fhirEncounter.hospitalization,
+        location: fhirEncounter.location,
+        serviceProvider: fhirEncounter.serviceProvider,
+        partOf: fhirEncounter.partOf,
+      );
+    } catch (e) {
+      logger.e(
+          'Failed to parse Encounter ${dto.id}, creating minimal entity: $e');
+      return Encounter(
+        id: dto.id ?? '',
+        sourceId: dto.sourceId ?? '',
+        resourceId: dto.resourceId ?? '',
+        title: dto.title ?? 'Encounter',
+        date: dto.date,
+        rawResource: dto.resourceRaw ?? {},
+      );
+    }
+  }
+
   @override
   FhirResourceDto toDto() => FhirResourceDto(
         id: id,

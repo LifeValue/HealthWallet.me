@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:auto_route/auto_route.dart';
@@ -62,7 +63,7 @@ class DialogHelper {
   }
 
   static Widget buildAttachmentSuccessDialog(
-      BuildContext context, int count, String encounterId, ScanBloc bloc) {
+      BuildContext context, int count, Encounter encounter, ScanBloc bloc) {
     return AlertDialog(
       title: const Row(
         children: [
@@ -80,7 +81,7 @@ class DialogHelper {
           ),
           const SizedBox(height: 8),
           Text(
-            'Encounter: $encounterId',
+            'Encounter: ${encounter.id}',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
@@ -104,11 +105,11 @@ class DialogHelper {
   }
 
   static void showAttachmentSuccessDialog(
-      BuildContext context, int count, String encounterId, ScanBloc bloc) {
+      BuildContext context, int count, Encounter encounter, ScanBloc bloc) {
     showDialog(
       context: context,
       builder: (context) =>
-          buildAttachmentSuccessDialog(context, count, encounterId, bloc),
+          buildAttachmentSuccessDialog(context, count, encounter, bloc),
     );
   }
 

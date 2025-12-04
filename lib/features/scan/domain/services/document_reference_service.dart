@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/scan/presentation/services/pdf_generation_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
@@ -18,7 +19,7 @@ class DocumentReferenceService {
   Future<List<String>> saveGroupedDocumentsAsFhirRecords({
     required List<String> filePaths,
     required String patientId,
-    String? encounterId,
+    Encounter? encounter,
     required String sourceId,
     String? title,
   }) async {
@@ -35,7 +36,7 @@ class DocumentReferenceService {
             await _createFhirR4DocumentReferenceFromPdf(
           pdfPath: group.pdfPath,
           patientId: patientId,
-          encounterId: encounterId,
+          encounter: encounter,
           title: group.title,
         );
 
@@ -59,7 +60,7 @@ class DocumentReferenceService {
   Future<fhir_r4.DocumentReference> _createFhirR4DocumentReferenceFromPdf({
     required String pdfPath,
     required String patientId,
-    String? encounterId,
+    Encounter? encounter,
     required String title,
   }) async {
     final file = File(pdfPath);
@@ -69,11 +70,11 @@ class DocumentReferenceService {
     final documentReferenceId = _generateId();
 
     // Create encounter reference if provided
-    final List<fhir_r4.Reference>? encounterReferences = encounterId != null
+    final List<fhir_r4.Reference>? encounterReferences = encounter != null
         ? [
             fhir_r4.Reference(
-              reference: fhir_r4.FhirString('Encounter/$encounterId'),
-              display: fhir_r4.FhirString('Encounter $encounterId'),
+              reference: fhir_r4.FhirString('Encounter/${encounter.id}'),
+              display: fhir_r4.FhirString('Encounter ${encounter.id}'),
             )
           ]
         : null;

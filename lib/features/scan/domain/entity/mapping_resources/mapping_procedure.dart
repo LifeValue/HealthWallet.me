@@ -30,6 +30,15 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
     );
   }
 
+  factory MappingProcedure.empty() {
+    return MappingProcedure(
+      id: const Uuid().v4(),
+      procedureName: MappedProperty.empty(),
+      performedDateTime: MappedProperty.empty(),
+      reason: MappedProperty.empty(),
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

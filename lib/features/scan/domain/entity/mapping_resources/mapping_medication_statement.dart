@@ -31,6 +31,15 @@ class MappingMedicationStatement
     );
   }
 
+  factory MappingMedicationStatement.empty() {
+    return MappingMedicationStatement(
+      id: const Uuid().v4(),
+      medicationName: MappedProperty.empty(),
+      dosage: MappedProperty.empty(),
+      reason: MappedProperty.empty(),
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

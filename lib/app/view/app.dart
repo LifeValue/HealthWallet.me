@@ -36,8 +36,7 @@ class App extends StatelessWidget {
         BlocProvider(
             create: (_) => getIt<SyncBloc>()..add(const SyncInitialised())),
         BlocProvider(create: (_) => getIt<RecordsBloc>()),
-        BlocProvider.value(
-            value: getIt<ScanBloc>()..add(const ScanInitialised())),
+        BlocProvider.value(value: getIt<ScanBloc>()),
         BlocProvider(
           create: (_) => HomeBloc(
             getIt<GetSourcesUseCase>(),

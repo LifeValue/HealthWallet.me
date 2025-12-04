@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/scan/presentation/pages/image_preview_page.dart';
+import 'package:health_wallet/features/scan/presentation/pages/preview/image_preview_page.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';

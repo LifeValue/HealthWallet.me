@@ -38,4 +38,6 @@ class AppColors {
   static const Color borderDark = Color.fromRGBO(255, 255, 255, 0.1);
   static const Color textPrimaryDark = Color(0xFFFFFFFF);
   static const Color textSecondaryDark = Color.fromRGBO(255, 255, 255, 0.6);
+
+  static const Color warningDraft = Color(0xFFE0B209);
 }

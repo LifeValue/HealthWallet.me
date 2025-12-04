@@ -31,6 +31,15 @@ class MappingPractitioner
     );
   }
 
+  factory MappingPractitioner.empty() {
+    return MappingPractitioner(
+      id: const Uuid().v4(),
+      practitionerName: MappedProperty.empty(),
+      specialty: MappedProperty.empty(),
+      identifier: MappedProperty.empty(),
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

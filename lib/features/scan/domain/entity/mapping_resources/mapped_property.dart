@@ -1,4 +1,9 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:string_similarity/string_similarity.dart';
 
 part 'mapped_property.freezed.dart';
@@ -21,6 +26,10 @@ class MappedProperty with _$MappedProperty {
       value: json["value"] ?? '',
       confidenceLevel: json["confidenceLevel"] ?? 0.0,
     );
+  }
+
+  factory MappedProperty.empty() {
+    return const MappedProperty(confidenceLevel: 1);
   }
 
   Map<String, dynamic> toJson() => {
@@ -63,4 +72,35 @@ class MappedProperty with _$MappedProperty {
   }
 
   bool get isValid => confidenceLevel > 0.6;
+}
+
+enum ConfidenceLevel {
+  high,
+  medium,
+  low;
+
+  factory ConfidenceLevel.fromDouble(double value) => switch (value) {
+        < 0.6 => ConfidenceLevel.low,
+        >= 0.6 && < 0.8 => ConfidenceLevel.medium,
+        _ => ConfidenceLevel.high
+      };
+
+  Color getColor(BuildContext context) => switch (this) {
+        ConfidenceLevel.high =>
+          context.isDarkMode ? AppColors.borderDark : AppColors.border,
+        ConfidenceLevel.medium => AppColors.warningDraft,
+        ConfidenceLevel.low => AppColors.error
+      };
+
+  String getString() => switch (this) {
+        ConfidenceLevel.high => "",
+        ConfidenceLevel.medium => "Medium confidence",
+        ConfidenceLevel.low => "Low confidence",
+      };
+
+  SvgGenImage? getIcon() => switch (this) {
+        ConfidenceLevel.high => null,
+        ConfidenceLevel.medium => Assets.icons.warningTriangle,
+        ConfidenceLevel.low => Assets.icons.warning,
+      };
 }

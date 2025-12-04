@@ -1,10 +1,12 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/validator.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 part 'mapping_patient.freezed.dart';
@@ -30,6 +32,45 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       dateOfBirth: MappedProperty.fromJson(json['dateOfBirth']),
       gender: MappedProperty.fromJson(json['gender']),
       patientId: MappedProperty.fromJson(json['patientId']),
+    );
+  }
+
+  factory MappingPatient.empty() {
+    return MappingPatient(
+      id: const Uuid().v4(),
+      familyName: MappedProperty.empty(),
+      givenName: MappedProperty.empty(),
+      dateOfBirth: MappedProperty.empty(),
+      gender: MappedProperty.empty(),
+      patientId: MappedProperty.empty(),
+    );
+  }
+
+  factory MappingPatient.fromFhirResource(Patient patient) {
+    return MappingPatient(
+      id: patient.id,
+      familyName: MappedProperty(
+        value: FhirFieldExtractor.extractPatientFamily(patient),
+        confidenceLevel: 1,
+      ),
+      givenName: MappedProperty(
+        value: FhirFieldExtractor.extractPatientGiven(patient),
+        confidenceLevel: 1,
+      ),
+      dateOfBirth: MappedProperty(
+        value: DateFormat('yyyy-MM-dd').format(
+          FhirFieldExtractor.extractPatientBirthDate(patient) ?? DateTime.now(),
+        ),
+        confidenceLevel: 1,
+      ),
+      gender: MappedProperty(
+        value: FhirFieldExtractor.extractPatientGender(patient),
+        confidenceLevel: 1,
+      ),
+      patientId: MappedProperty(
+        value: FhirFieldExtractor.extractPatientId(patient),
+        confidenceLevel: 1,
+      ),
     );
   }
 

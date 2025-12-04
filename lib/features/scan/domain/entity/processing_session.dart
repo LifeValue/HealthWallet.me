@@ -7,7 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 
 part 'processing_session.freezed.dart';
 
@@ -24,6 +29,8 @@ class ProcessingSession
     @Default([]) List<MappingResource> resources,
     @Default(ProcessingStatus.pending) ProcessingStatus status,
     @Default(ProcessingOrigin.scan) ProcessingOrigin origin,
+    @Default(StagedPatient()) StagedPatient patient,
+    @Default(StagedEncounter()) StagedEncounter encounter,
     DateTime? createdAt,
   }) = _ProcessingSession;
 
@@ -36,6 +43,9 @@ class ProcessingSession
         .map((json) => MappingResource.fromJson(json))
         .toList();
 
+    final patient = stagedPatientFromJson(jsonDecode(dto.patient ?? ''));
+    final encounter = stagedEncounterFromJson(jsonDecode(dto.encounter ?? ''));
+
     return ProcessingSession(
       id: dto.id,
       filePaths: filePaths,
@@ -43,6 +53,8 @@ class ProcessingSession
       status: ProcessingStatus.fromString(dto.status ?? ''),
       origin: ProcessingOrigin.fromString(dto.origin ?? ''),
       createdAt: dto.createdAt,
+      patient: patient,
+      encounter: encounter,
     );
   }
 
@@ -54,6 +66,8 @@ class ProcessingSession
         resources: drift.Value(jsonEncode(
             resources.map((resource) => resource.toJson()).toList())),
         createdAt: drift.Value(createdAt!),
+        patient: drift.Value(jsonEncode(stagedPatientToJson(patient))),
+        encounter: drift.Value(jsonEncode(stagedEncounterToJson(encounter))),
       );
 
   @override
@@ -110,7 +124,6 @@ enum ProcessingStatus {
         return context.colorScheme.primary;
     }
   }
-
 }
 
 enum ProcessingOrigin {

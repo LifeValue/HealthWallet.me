@@ -4,11 +4,15 @@ import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/dialog_helper.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:auto_route/auto_route.dart';
@@ -31,7 +35,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       if (!context.mounted) return;
 
       if (isModelLoaded) {
-        context.router.push(FhirMapperRoute(sessionId: session.id));
+        context.router.push(ProcessingRoute(sessionId: session.id));
         return;
       }
 
@@ -52,17 +56,37 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     if (!context.mounted) return;
 
     if (result == true) {
-      context.router.push(FhirMapperRoute(sessionId: session.id));
+      context.router.push(ProcessingRoute(sessionId: session.id));
     } else {
       context.read<ScanBloc>().add(ScanSessionCleared(session: session));
 
       if (result == false) {
-        final encounterId =
-            await context.router.push<String>(const AttachToEncounterRoute());
+        final result = await showDialog<AttachToEncounterResult>(
+          context: context,
+          builder: (context) => const AttachToEncounterWidget(),
+        );
 
-        if (encounterId == null || !context.mounted) return;
+        if (result == null || !context.mounted) return;
 
-        await attachToEncounter(context, session.filePaths, encounterId);
+        final (patient, encounter) = result;
+
+        // The patient will always be an existing one here
+        final existingPatient = patient.existing!;
+
+        // The encounter can either be an existing one or a draft
+        Encounter finalEncounter;
+        if (encounter.draft != null) {
+          finalEncounter = encounter.draft!.toFhirResource(
+            sourceId: existingPatient.sourceId,
+            subjectId: existingPatient.subjectId,
+          ) as Encounter;
+
+          getIt<SyncRepository>().saveResources([finalEncounter]);
+        } else {
+          finalEncounter = encounter.existing!;
+        }
+
+        await attachToEncounter(context, session.filePaths, finalEncounter);
       }
     }
   }
@@ -71,13 +95,8 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
   Future<void> attachToEncounter(
     BuildContext context,
     List<String> filePaths,
-    String encounterId,
+    Encounter encounter,
   ) async {
-    DialogHelper.showLoadingDialog(
-      context,
-      'Attaching documents to encounter...',
-    );
-
     try {
       final homeState = context.read<HomeBloc>().state;
       final patientState = context.read<PatientBloc>().state;
@@ -112,7 +131,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: filePaths,
         patientId: patientId,
-        encounterId: encounterId,
+        encounter: encounter,
         sourceId: walletSource.id,
         title: 'Attached Documents',
       );
@@ -121,18 +140,8 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
       }
 
-      if (context.mounted) Navigator.of(context).pop();
-
       if (context.mounted) {
-        final bloc = context.read<ScanBloc>();
-        final totalDocuments = filePaths.length;
-
-        DialogHelper.showAttachmentSuccessDialog(
-          context,
-          totalDocuments,
-          encounterId,
-          bloc,
-        );
+        context.router.replaceAll([RecordsRoute()]);
       }
     } catch (e) {
       if (context.mounted) Navigator.of(context).pop();

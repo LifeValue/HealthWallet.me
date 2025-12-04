@@ -85,6 +85,43 @@ class Patient with _$Patient implements IFhirResource {
     );
   }
 
+  factory Patient.fromDto(FhirResourceDto dto) {
+    final resourceJson = dto.resourceRaw ?? {};
+
+    // Clean up problematic Epic-specific fields that cause parsing errors
+    _cleanEpicExtensions(resourceJson);
+
+    final fhirPatient = fhir_r4.Patient.fromJson(resourceJson);
+
+    return Patient(
+      id: dto.id ?? '',
+      sourceId: dto.sourceId ?? '',
+      resourceId: dto.resourceId ?? '',
+      title: dto.title ?? '',
+      date: dto.date,
+      rawResource: resourceJson,
+      encounterId: dto.encounterId ?? '',
+      subjectId: dto.subjectId ?? '',
+      text: fhirPatient.text,
+      identifier: fhirPatient.identifier,
+      active: fhirPatient.active,
+      name: fhirPatient.name,
+      telecom: fhirPatient.telecom,
+      gender: fhirPatient.gender,
+      birthDate: fhirPatient.birthDate,
+      deceasedX: fhirPatient.deceasedX,
+      address: fhirPatient.address,
+      maritalStatus: fhirPatient.maritalStatus,
+      multipleBirthX: fhirPatient.multipleBirthX,
+      photo: fhirPatient.photo,
+      contact: fhirPatient.contact,
+      communication: fhirPatient.communication,
+      generalPractitioner: fhirPatient.generalPractitioner,
+      managingOrganization: fhirPatient.managingOrganization,
+      link: fhirPatient.link,
+    );
+  }
+
   @override
   FhirResourceDto toDto() => FhirResourceDto(
         id: id,

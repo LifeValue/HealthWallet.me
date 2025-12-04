@@ -31,6 +31,15 @@ class MappingDiagnosticReport
     );
   }
 
+  factory MappingDiagnosticReport.empty() {
+    return MappingDiagnosticReport(
+      id: const Uuid().v4(),
+      reportName: MappedProperty.empty(),
+      conclusion: MappedProperty.empty(),
+      issuedDate: MappedProperty.empty(),
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() => {
         'id': id,

@@ -10,7 +10,7 @@ import 'package:health_wallet/features/records/presentation/widgets/record_notes
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/delete_confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
 
 class RecordNotesWidget extends StatefulWidget {
   const RecordNotesWidget({required this.resource, super.key});

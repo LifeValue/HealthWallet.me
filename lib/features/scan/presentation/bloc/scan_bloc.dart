@@ -10,10 +10,19 @@ import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_allergy_intolerance.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_condition.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_medication_statement.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_observation.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_organization.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_practitioner.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_procedure.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/scan/presentation/helpers/ocr_processing_helper.dart';
@@ -37,6 +46,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final WalletPatientService _walletPatientService;
   final SyncRepository _syncRepository;
   final DocumentReferenceService _documentReferenceService;
+  final PatientDeduplicationService _deduplicationService;
 
   ScanBloc(
     this._pdfStorageService,
@@ -45,6 +55,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     this._walletPatientService,
     this._syncRepository,
     this._documentReferenceService,
+    this._deduplicationService,
   ) : super(const ScanState()) {
     on<ScanInitialised>(_onScanInitialised);
     on<ScanButtonPressed>(_onScanButtonPressed);
@@ -56,9 +67,25 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         transformer: restartable());
     on<ScanResourceChanged>(_onScanResourceChanged);
     on<ScanResourceRemoved>(_onScanResourceRemoved);
-    on<ScanPatientSelected>(_onScanPatientSelected);
     on<ScanResourceCreationInitiated>(_onScanResourceCreationInitiated);
     on<ScanNotificationAcknowledged>(_onScanNotificationAcknowledged);
+    on<ScanMappingCancelled>(_onScanMappingCancelled);
+    on<ScanResourcesAdded>(_onScanResourcesAdded);
+    on<ScanEncounterAttached>(_onScanEncounterAttached);
+  }
+
+  bool get _isCurrentlyProcessing =>
+      state.status == const ScanStatus.convertingPdfs() ||
+      state.status == const ScanStatus.mapping() ||
+      state.sessions.any((s) => s.status == ProcessingStatus.processing);
+
+  void _startNextPendingSession() {
+    final pendingSession = state.sessions.firstWhereOrNull(
+      (s) => s.status == ProcessingStatus.pending,
+    );
+    if (pendingSession != null) {
+      add(ScanSessionActivated(sessionId: pendingSession.id));
+    }
   }
 
   Future<void> _onScanInitialised(
@@ -116,6 +143,10 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       status: ScanStatus.sessionCreated(session: session),
       sessions: [session, ...state.sessions],
     ));
+
+    if (!_isCurrentlyProcessing) {
+      add(ScanSessionActivated(sessionId: session.id));
+    }
   }
 
   Future<void> _handlePdfScan(Emitter<ScanState> emit) async {
@@ -181,8 +212,11 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       await _createSession(emit,
           filePaths: [event.filePath], origin: ProcessingOrigin.import);
-    } catch (e) {
-      logger.e('Error importing document: ${event.filePath}', e);
+    } catch (e, stackTrace) {
+      logger.e(
+          '_onDocumentImported - Error importing document: ${event.filePath}',
+          e,
+          stackTrace);
       emit(state.copyWith(
         status: ScanStatus.failure(error: 'Failed to import document: $e'),
       ));
@@ -208,9 +242,22 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) async {
     try {
+      final wasActiveSession = state.activeSessionId == event.session.id;
       final newSessions = [...state.sessions]
         ..removeWhere((session) => session.id == event.session.id);
-      emit(state.copyWith(sessions: newSessions));
+      final updatedImageMap =
+          Map<String, List<String>>.from(state.sessionImagePaths)
+            ..remove(event.session.id);
+
+      // Only reset status if deleting the active session
+      // This prevents blank screens when deleting non-active sessions
+      emit(state.copyWith(
+        sessions: newSessions,
+        sessionImagePaths: updatedImageMap,
+        allImagePathsForOCR: wasActiveSession ? [] : state.allImagePathsForOCR,
+        activeSessionId: wasActiveSession ? null : state.activeSessionId,
+        status: wasActiveSession ? const ScanStatus.initial() : state.status,
+      ));
 
       await _repository.deleteProcessingSession(event.session);
     } on Exception catch (e) {
@@ -266,28 +313,80 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     ScanSessionActivated event,
     Emitter<ScanState> emit,
   ) async {
-    try {
-      emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
-      final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
-      final allImages = await _ocrProcessingHelper.prepareAllImages(
-        filePaths: session.filePaths,
-      );
-      emit(state.copyWith(allImagePathsForOCR: allImages));
+    final isSameSession = state.activeSessionId == event.sessionId;
+    final anotherSessionProcessing = _isCurrentlyProcessing && !isSameSession;
 
-      if (session.status == ProcessingStatus.pending) {
-        emit(state.copyWith(status: const ScanStatus.mappingReady()));
-      } else if (session.status == ProcessingStatus.processing) {
-        emit(state.copyWith(status: const ScanStatus.mapping()));
-      } else if (session.status == ProcessingStatus.draft) {
-        emit(state.copyWith(status: const ScanStatus.editingResources()));
+    try {
+      final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
+      final cachedImages = state.sessionImagePaths[event.sessionId];
+
+      List<String> allImages;
+      if (cachedImages != null && cachedImages.isNotEmpty) {
+        allImages = cachedImages;
+      } else {
+        if (!anotherSessionProcessing) {
+          emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
+        }
+        allImages = await _ocrProcessingHelper.prepareAllImages(
+          filePaths: session.filePaths,
+        );
+      }
+
+      final updatedImageMap = Map<String, List<String>>.from(
+        state.sessionImagePaths,
+      )..[event.sessionId] = allImages;
+
+      emit(state.copyWith(
+        allImagePathsForOCR: allImages,
+        sessionImagePaths: updatedImageMap,
+      ));
+
+      if (anotherSessionProcessing &&
+          session.status != ProcessingStatus.draft) {
+        return;
       }
 
       emit(state.copyWith(
         activeSessionId: event.sessionId,
-        currentPatients: event.currentPatients,
-        selectedPatient: event.currentPatients.first,
       ));
-    } catch (e) {
+
+      final currentSession =
+          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+      if (currentSession == null) {
+        logger.e(
+            '_onScanSessionActivated - Session not found in state after image preparation');
+        emit(state.copyWith(
+            status: ScanStatus.failure(error: 'Session not found')));
+        return;
+      }
+
+      if (currentSession.status == ProcessingStatus.pending) {
+        emit(state.copyWith(status: const ScanStatus.mapping()));
+        await Future.delayed(const Duration(seconds: 1));
+        if (!emit.isDone) {
+          // Double-check session status hasn't changed during the delay
+          final sessionAfterDelay =
+              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+          if (sessionAfterDelay == null) {
+            logger.w(
+                '_onScanSessionActivated - Session not found after delay, not triggering ScanMappingInitiated');
+            return;
+          }
+          if (sessionAfterDelay.status != ProcessingStatus.pending) {
+            return;
+          }
+          add(ScanMappingInitiated(sessionId: event.sessionId));
+        }
+      } else if (session.status == ProcessingStatus.processing) {
+        emit(state.copyWith(status: const ScanStatus.mapping()));
+      } else if (session.status == ProcessingStatus.draft) {
+        emit(state.copyWith(status: const ScanStatus.editingResources()));
+      } else {
+        logger.w(
+            '_onScanSessionActivated - Unexpected session status: ${session.status}');
+      }
+    } catch (e, stackTrace) {
+      logger.e('_onScanSessionActivated - ERROR: $e', e, stackTrace);
       emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
     }
   }
@@ -298,6 +397,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     double? progress,
     ProcessingStatus? status,
     List<MappingResource>? resources,
+    StagedPatient? patient,
+    StagedEncounter? encounter,
     bool updateDb = false,
   }) {
     final sessionIndex = state.sessions.indexWhere((s) => s.id == sessionId);
@@ -309,6 +410,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       progress: progress ?? activeSession.progress,
       status: status ?? activeSession.status,
       resources: resources ?? activeSession.resources,
+      patient: patient ?? activeSession.patient,
+      encounter: encounter ?? activeSession.encounter,
     );
 
     if (updateDb) {
@@ -327,26 +430,90 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     ScanMappingInitiated event,
     Emitter<ScanState> emit,
   ) async {
+    // Check if session exists and is in a valid state
+    final session =
+        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    if (session == null) {
+      logger
+          .e('_onScanMappingInitiated - Session not found: ${event.sessionId}');
+      return;
+    }
+
+    // If session is already processing or draft, don't restart
+    if (session.status == ProcessingStatus.processing) {
+      logger.w(
+          '_onScanMappingInitiated - Session is already processing, skipping');
+      return;
+    }
+
+    if (session.status == ProcessingStatus.draft) {
+      logger.w(
+          '_onScanMappingInitiated - Session is already in draft state, skipping');
+      emit(state.copyWith(status: const ScanStatus.editingResources()));
+      return;
+    }
+
     try {
-      _updateSession(emit,
-          sessionId: event.sessionId, status: ProcessingStatus.processing);
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.processing,
+        updateDb: true,
+      );
       emit(state.copyWith(status: const ScanStatus.mapping()));
 
-      final medicalText = await _ocrProcessingHelper
-          .processOcrForImages(state.allImagePathsForOCR);
+      final sessionImages =
+          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final medicalText =
+          await _ocrProcessingHelper.processOcrForImages(sessionImages);
 
-      final stream = _repository.mapResources(medicalText);
-
-      await for (final (resources, progress) in stream) {
-        if (emit.isDone) return;
-        final currentSession =
-            state.sessions.firstWhere((s) => s.id == event.sessionId);
+      if (medicalText.isEmpty || medicalText.trim().isEmpty) {
+        logger.w(
+            '_onScanMappingInitiated - Medical text is empty, cannot proceed with mapping');
         _updateSession(
           emit,
           sessionId: event.sessionId,
-          resources: [...currentSession.resources, ...resources],
-          progress: progress,
+          status: ProcessingStatus.draft,
+          updateDb: true,
         );
+        emit(state.copyWith(status: const ScanStatus.editingResources()));
+        return;
+      }
+
+      Stream<MappingResourcesWithProgress> stream;
+      try {
+        stream = _repository.mapResources(medicalText);
+      } catch (e, stackTrace) {
+        logger.e(
+            '_onScanMappingInitiated - ERROR creating mapResources stream: $e',
+            e,
+            stackTrace);
+        rethrow;
+      }
+
+      try {
+        await for (final (resources, progress) in stream) {
+          if (emit.isDone) {
+            return;
+          }
+          final currentSession =
+              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+          if (currentSession == null) {
+            logger.e(
+                '_onScanMappingInitiated - Session not found during stream processing');
+            return;
+          }
+          _updateSession(
+            emit,
+            sessionId: event.sessionId,
+            resources: [...currentSession.resources, ...resources],
+            progress: progress,
+          );
+        }
+      } catch (e, stackTrace) {
+        logger.e('_onScanMappingInitiated - ERROR during stream processing: $e',
+            e, stackTrace);
+        rethrow;
       }
 
       // All resources are now in the state. Get the final session object.
@@ -355,29 +522,33 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       List<MappingResource> updatedResources =
           List.from(finalSession.resources);
 
-      // De-duplicate patients if necessary
-      final patients = updatedResources.whereType<MappingPatient>().toList();
-      if (patients.length > 1) {
+      // Stage patient and encounter
+      final patient = updatedResources
+          .firstWhereOrNull((resource) => resource is MappingPatient);
+      if (patient != null) {
         updatedResources.removeWhere((resource) => resource is MappingPatient);
-        updatedResources.insert(0, patients.first);
       }
 
-      // Ensure an encounter exists
-      if (!updatedResources.any((resource) => resource is MappingEncounter)) {
-        updatedResources.add(MappingEncounter(id: const Uuid().v4()));
+      final encounter = updatedResources
+          .firstWhereOrNull((resource) => resource is MappingEncounter);
+      if (encounter != null) {
+        updatedResources
+            .removeWhere((resource) => resource is MappingEncounter);
       }
-
       // Update the session a final time with the cleaned resources and new status
       _updateSession(
         emit,
         sessionId: event.sessionId,
         resources: updatedResources,
         status: ProcessingStatus.draft,
+        patient: StagedPatient(draft: patient as MappingPatient?),
+        encounter: StagedEncounter(draft: encounter as MappingEncounter?),
+        updateDb: true,
       );
 
       final notification = Notification(
         text: "${finalSession.origin} processing finished",
-        route: FhirMapperRoute(sessionId: event.sessionId),
+        route: ProcessingRoute(sessionId: event.sessionId),
         time: DateTime.now(),
       );
 
@@ -385,9 +556,16 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         status: const ScanStatus.editingResources(),
         notification: notification,
       ));
-    } on Exception catch (e) {
-      _updateSession(emit,
-          sessionId: event.sessionId, status: ProcessingStatus.pending);
+
+      _startNextPendingSession();
+    } on Exception catch (e, stackTrace) {
+      logger.e('_onScanMappingInitiated - ERROR: $e', e, stackTrace);
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.pending,
+        updateDb: true,
+      );
       if (!emit.isDone) {
         emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
       }
@@ -413,6 +591,36 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   ) {
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
+
+    if (event.isDraftPatient == true) {
+      MappingPatient draftPatient =
+          activeSession.patient.draft ?? const MappingPatient();
+
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        patient: activeSession.patient.copyWith(
+            draft: draftPatient.copyWithMap({event.propertyKey: event.newValue})
+                as MappingPatient),
+      );
+      return;
+    }
+
+    if (event.isDraftEncounter == true) {
+      MappingEncounter draftEncounter =
+          activeSession.encounter.draft ?? const MappingEncounter();
+
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        encounter: activeSession.encounter.copyWith(
+            draft:
+                draftEncounter.copyWithMap({event.propertyKey: event.newValue})
+                    as MappingEncounter),
+      );
+      return;
+    }
+
     MappingResource updatedResource =
         activeSession.resources[event.index].copyWithMap({
       event.propertyKey: event.newValue,
@@ -423,13 +631,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
     _updateSession(emit,
         sessionId: event.sessionId, resources: newResources, updateDb: true);
-  }
-
-  void _onScanPatientSelected(
-    ScanPatientSelected event,
-    Emitter<ScanState> emit,
-  ) {
-    emit(state.copyWith(selectedPatient: event.patientGroup));
   }
 
   void _onScanResourceCreationInitiated(
@@ -443,33 +644,21 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     String sourceId;
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final draftResources = [...activeSession.resources];
 
     try {
-      MappingPatient? mappingPatient =
-          activeSession.resources.whereType<MappingPatient>().firstOrNull;
+      // If the patient / encounter is not an existing one, it will always be a draft
+      // because of the guard we set when adding this event
 
-      MappingEncounter mappingEncounter =
-          activeSession.resources.whereType<MappingEncounter>().first;
-      encounterId = mappingEncounter.id;
-
-      if (mappingPatient != null) {
-        subjectId = mappingPatient.id;
-        final walletSource =
-            await _walletPatientService.createWalletSourceForPatient(
-          subjectId,
-          "${mappingPatient.givenName.value} ${mappingPatient.familyName.value}",
-        );
-
-        await _syncRepository.cacheSources([walletSource]);
-
-        sourceId = walletSource.id;
-      } else {
-        PatientGroup selectedPatientGroup = state.selectedPatient!;
+      if (activeSession.patient.existing != null) {
+        Patient existingPatient = activeSession.patient.existing!;
+        List<String> patientSourceIds = await _deduplicationService
+            .getSourceIdsForPatient(existingPatient.id);
 
         List<Source> sources = await _syncRepository.getSources();
 
         String? writableSourceId =
-            selectedPatientGroup.sourceIds.firstWhereOrNull((sourceId) {
+            patientSourceIds.firstWhereOrNull((sourceId) {
           final source = sources.firstWhere(
             (s) => s.id == sourceId,
             orElse: () => const Source(
@@ -481,8 +670,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         if (writableSourceId == null) {
           final walletSource =
               await _walletPatientService.createWalletSourceForPatient(
-            selectedPatientGroup.patientId,
-            selectedPatientGroup.representativePatient.title,
+            existingPatient.id,
+            existingPatient.displayTitle,
           );
 
           await _syncRepository.cacheSources([walletSource]);
@@ -490,11 +679,33 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           writableSourceId = walletSource.id;
         }
 
+        subjectId = existingPatient.id;
         sourceId = writableSourceId;
-        subjectId = selectedPatientGroup.patientId;
+      } else {
+        MappingPatient draftPatient = activeSession.patient.draft!;
+
+        final walletSource =
+            await _walletPatientService.createWalletSourceForPatient(
+          draftPatient.id,
+          "${draftPatient.givenName.value} ${draftPatient.familyName.value}",
+        );
+
+        await _syncRepository.cacheSources([walletSource]);
+
+        draftResources.add(draftPatient);
+
+        subjectId = draftPatient.id;
+        sourceId = walletSource.id;
       }
 
-      List<IFhirResource> fhirResources = activeSession.resources
+      if (activeSession.encounter.existing != null) {
+        encounterId = activeSession.encounter.existing!.id;
+      } else {
+        draftResources.add(activeSession.encounter.draft!);
+        encounterId = activeSession.encounter.draft!.id;
+      }
+
+      List<IFhirResource> fhirResources = draftResources
           .map((resource) => resource.toFhirResource(
                 sourceId: sourceId,
                 subjectId: (resource is MappingPatient) ? '' : subjectId,
@@ -504,16 +715,15 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       await _syncRepository.saveResources(fhirResources);
 
+      Encounter finalEncounter = activeSession.encounter.existing ??
+          fhirResources.firstWhere((resource) => resource is Encounter)
+              as Encounter;
       await _documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: activeSession.filePaths,
         patientId: subjectId,
-        encounterId: encounterId,
+        encounter: finalEncounter,
         sourceId: sourceId,
-        title: activeSession.resources
-            .whereType<MappingEncounter>()
-            .first
-            .encounterType
-            .value,
+        title: finalEncounter.displayTitle,
       );
 
       emit(state.copyWith(status: const ScanStatus.success()));
@@ -527,5 +737,56 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) {
     emit(state.copyWith(notification: null));
+  }
+
+  void _onScanMappingCancelled(
+    ScanMappingCancelled event,
+    Emitter<ScanState> emit,
+  ) {
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      status: ProcessingStatus.pending,
+      progress: 0.0,
+      updateDb: true,
+    );
+    emit(state.copyWith(status: const ScanStatus.cancelled()));
+  }
+
+  void _onScanResourcesAdded(
+    ScanResourcesAdded event,
+    Emitter<ScanState> emit,
+  ) {
+    final activeSession =
+        state.sessions.firstWhere((s) => s.id == event.sessionId);
+
+    final List<MappingResource> newResources = [];
+
+    for (final resourceType in event.resourceTypes) {
+      MappingResource newResource = MappingResource.empty(resourceType);
+
+      newResources.add(newResource);
+    }
+
+    final updatedResources = [...activeSession.resources, ...newResources];
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      resources: updatedResources,
+      updateDb: true,
+    );
+  }
+
+  void _onScanEncounterAttached(
+    ScanEncounterAttached event,
+    Emitter<ScanState> emit,
+  ) {
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      patient: event.patient,
+      encounter: event.encounter,
+      updateDb: true,
+    );
   }
 }
