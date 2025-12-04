@@ -209,7 +209,7 @@ class Observation with _$Observation implements IFhirResource {
     );
 
     // Effective Date (Test/Observation Date)
-    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(effectiveX);
+    final effectiveDisplay = FhirFieldExtractor.extractEffectiveXFormatted(effectiveX);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(effectiveDisplay,
@@ -217,7 +217,7 @@ class Observation with _$Observation implements IFhirResource {
     );
 
     // Issued Date (Result Date - when result was released)
-    final issuedDisplay = issued?.valueString;
+    final issuedDisplay = FhirFieldExtractor.formatFhirInstant(issued);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(issuedDisplay,

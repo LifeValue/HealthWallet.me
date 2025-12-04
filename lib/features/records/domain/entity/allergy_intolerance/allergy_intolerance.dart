@@ -180,7 +180,7 @@ class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
     );
 
     // Onset
-    final onsetDisplay = FhirFieldExtractor.extractOnsetX(onsetX);
+    final onsetDisplay = FhirFieldExtractor.extractOnsetXFormatted(onsetX);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(onsetDisplay, prefix: 'Onset'),

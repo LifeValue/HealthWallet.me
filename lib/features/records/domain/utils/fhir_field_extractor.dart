@@ -1384,4 +1384,178 @@ class FhirFieldExtractor {
       return dateTimeString;
     }
   }
+
+    static String? extractOnsetXFormatted(dynamic onsetX) {
+    if (onsetX == null) return null;
+
+    // Check for DateTime - FORMAT IT
+    final onsetDateTime = onsetX.isAs<fhir_r4.FhirDateTime>();
+    if (onsetDateTime != null) {
+      return formatFhirDateTime(onsetDateTime);
+    }
+
+    // Check for Age
+    final onsetAge = onsetX.isAs<fhir_r4.Age>();
+    if (onsetAge != null) {
+      final value = onsetAge.value?.valueString;
+      final unit = onsetAge.unit ?? 'years';
+      return value != null ? '$value $unit' : null;
+    }
+
+    // Check for Period - FORMAT IT
+    final onsetPeriod = onsetX.isAs<fhir_r4.Period>();
+    if (onsetPeriod != null) {
+      return extractPeriodFormatted(onsetPeriod);
+    }
+
+    // Check for Range
+    final onsetRange = onsetX.isAs<fhir_r4.Range>();
+    if (onsetRange != null) {
+      final low = extractQuantity(onsetRange.low);
+      final high = extractQuantity(onsetRange.high);
+      if (low != null && high != null) {
+        return '$low - $high';
+      }
+      return low ?? high;
+    }
+
+    // Check for String
+    final onsetString = onsetX.isAs<fhir_r4.FhirString>();
+    if (onsetString != null) return onsetString.valueString;
+
+    return null;
+  }
+
+  static String? extractAbatementXFormatted(dynamic abatementX) {
+    if (abatementX == null) return null;
+
+    // Check for DateTime - FORMAT IT
+    final abatementDateTime = abatementX.isAs<fhir_r4.FhirDateTime>();
+    if (abatementDateTime != null) {
+      return formatFhirDateTime(abatementDateTime);
+    }
+
+    // Check for Age
+    final abatementAge = abatementX.isAs<fhir_r4.Age>();
+    if (abatementAge != null) {
+      final value = abatementAge.value?.valueString;
+      final unit = abatementAge.unit ?? 'years';
+      return value != null ? '$value $unit' : null;
+    }
+
+    // Check for Period - FORMAT IT
+    final abatementPeriod = abatementX.isAs<fhir_r4.Period>();
+    if (abatementPeriod != null) {
+      return extractPeriodFormatted(abatementPeriod);
+    }
+
+    // Check for Range
+    final abatementRange = abatementX.isAs<fhir_r4.Range>();
+    if (abatementRange != null) {
+      final low = extractQuantity(abatementRange.low);
+      final high = extractQuantity(abatementRange.high);
+      if (low != null && high != null) {
+        return '$low - $high';
+      }
+      return low ?? high;
+    }
+
+    // Check for String
+    final abatementString = abatementX.isAs<fhir_r4.FhirString>();
+    if (abatementString != null) return abatementString.valueString;
+
+    // Check for Boolean
+    final abatementBoolean = abatementX.isAs<fhir_r4.FhirBoolean>();
+    if (abatementBoolean != null) {
+      return abatementBoolean.valueBoolean == true ? 'Yes' : 'No';
+    }
+
+    return null;
+  }
+
+  static String? extractPerformedXFormatted(dynamic performedX) {
+    if (performedX == null) return null;
+
+    final performedDateTime = performedX.isAs<fhir_r4.FhirDateTime>();
+    if (performedDateTime != null) {
+      return formatFhirDateTime(performedDateTime);
+    }
+
+    final performedPeriod = performedX.isAs<fhir_r4.Period>();
+    if (performedPeriod != null) {
+      return extractPeriodFormatted(performedPeriod);
+    }
+
+    final performedString = performedX.isAs<fhir_r4.FhirString>();
+    if (performedString != null) return performedString.valueString;
+
+    final performedAge = performedX.isAs<fhir_r4.Age>();
+    if (performedAge != null) {
+      final value = performedAge.value?.valueString;
+      final unit = performedAge.unit ?? 'years';
+      return value != null ? '$value $unit' : null;
+    }
+
+    final performedRange = performedX.isAs<fhir_r4.Range>();
+    if (performedRange != null) {
+      final low = extractQuantity(performedRange.low);
+      final high = extractQuantity(performedRange.high);
+      if (low != null && high != null) {
+        return '$low - $high';
+      }
+      return low ?? high;
+    }
+
+    return null;
+  }
+
+  static String? extractEffectiveXFormatted(dynamic effectiveX) {
+    if (effectiveX == null) return null;
+
+    final effectiveDateTime = effectiveX.isAs<fhir_r4.FhirDateTime>();
+    if (effectiveDateTime != null) {
+      return formatFhirDateTime(effectiveDateTime);
+    }
+
+    final effectivePeriod = effectiveX.isAs<fhir_r4.Period>();
+    if (effectivePeriod != null) {
+      return extractPeriodFormatted(effectivePeriod);
+    }
+
+    final effectiveInstant = effectiveX.isAs<fhir_r4.FhirInstant>();
+    if (effectiveInstant != null) {
+      return formatFhirInstant(effectiveInstant);
+    }
+
+    final effectiveTiming = effectiveX.isAs<fhir_r4.Timing>();
+    if (effectiveTiming != null && effectiveTiming.code != null) {
+      return extractCodeableConceptText(effectiveTiming.code);
+    }
+
+    return null;
+  }
+
+  static String? extractOccurrenceXFormatted(dynamic occurrenceX) {
+    if (occurrenceX == null) return null;
+
+    final occurrenceDateTime = occurrenceX.isAs<fhir_r4.FhirDateTime>();
+    if (occurrenceDateTime != null) {
+      return formatFhirDateTime(occurrenceDateTime);
+    }
+
+    final occurrencePeriod = occurrenceX.isAs<fhir_r4.Period>();
+    if (occurrencePeriod != null) {
+      return extractPeriodFormatted(occurrencePeriod);
+    }
+
+    final occurrenceString = occurrenceX.isAs<fhir_r4.FhirString>();
+    if (occurrenceString != null) return occurrenceString.valueString;
+
+    final occurrenceTiming = occurrenceX.isAs<fhir_r4.Timing>();
+    if (occurrenceTiming != null && occurrenceTiming.code != null) {
+      return extractCodeableConceptText(occurrenceTiming.code);
+    }
+
+    return null;
+  }
 }

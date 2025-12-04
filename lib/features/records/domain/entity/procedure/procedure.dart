@@ -136,7 +136,7 @@ class Procedure with _$Procedure implements IFhirResource {
     infoLines.add(ResourceFieldMapper.createSectionHeader('Procedure Details'));
 
     // Performed Date/Period (CRITICAL - When it happened)
-    final performedDisplay = FhirFieldExtractor.extractPerformedX(performedX);
+    final performedDisplay = FhirFieldExtractor.extractPerformedXFormatted(performedX);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(performedDisplay,

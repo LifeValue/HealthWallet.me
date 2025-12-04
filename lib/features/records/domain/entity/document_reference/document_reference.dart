@@ -134,7 +134,7 @@ class DocumentReference with _$DocumentReference implements IFhirResource {
     }
 
     // Date (When document was created)
-    final fhirDateDisplay = fhirDate?.valueString;
+    final fhirDateDisplay = FhirFieldExtractor.formatFhirInstant(fhirDate);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(fhirDateDisplay, prefix: 'Created'),
