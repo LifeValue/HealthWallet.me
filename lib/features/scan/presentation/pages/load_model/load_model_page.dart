@@ -73,7 +73,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
     return Column(
       children: [
         const SizedBox(height: 20),
-        Assets.images.placeholder.svg(height: 250),
+        Assets.onboarding.onboarding3.svg(height: 250),
         Text(
           context.l10n.aiModelUnlockTitle,
           textAlign: TextAlign.center,
