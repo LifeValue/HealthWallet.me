@@ -193,6 +193,8 @@
     "changesToPolicy": "Änderungen an dieser Datenschutzrichtlinie",
     "contactUs": "Kontaktieren Sie uns",
     "builtWithLove": "Mit Liebe von Life Value gebaut!",
+
+    "noRecords": "keine Aufzeichnungen",
     
     "sourceName": "Quellenname",
     "provideCustomLabel": "Geben Sie ein benutzerdefiniertes Label an für:",

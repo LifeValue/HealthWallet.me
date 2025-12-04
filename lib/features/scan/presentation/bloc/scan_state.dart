@@ -24,6 +24,6 @@ class ScanState with _$ScanState {
     String? activeSessionId,
     @Default([]) List<String> allImagePathsForOCR,
     @Default({}) Map<String, List<String>> sessionImagePaths,
-    WalletNotification? notification,
+    Notification? notification,
   }) = _ScanState;
 }

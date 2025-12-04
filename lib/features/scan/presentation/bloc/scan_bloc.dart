@@ -8,7 +8,7 @@ import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/features/home/domain/entities/wallet_notification.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_allergy_intolerance.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_condition.dart';
@@ -546,7 +546,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         updateDb: true,
       );
 
-      final notification = WalletNotification(
+      final notification = Notification(
         text: "${finalSession.origin} processing finished",
         route: ProcessingRoute(sessionId: event.sessionId),
         time: DateTime.now(),

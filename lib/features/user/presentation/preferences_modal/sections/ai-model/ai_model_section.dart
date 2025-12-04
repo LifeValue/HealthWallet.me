@@ -10,15 +10,29 @@ import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/l
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
-class AiModelSection extends StatelessWidget {
+class AiModelSection extends StatefulWidget {
   const AiModelSection({super.key});
+
+  @override
+  State<AiModelSection> createState() => _AiModelSectionState();
+}
+
+class _AiModelSectionState extends State<AiModelSection> {
+  late final LoadModelBloc _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = getIt.get<LoadModelBloc>();
+    _bloc.add(const LoadModelInitialized());
+  }
 
   @override
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
 
-    return BlocProvider(
-      create: (_) => getIt<LoadModelBloc>()..add(const LoadModelInitialized()),
+    return BlocProvider.value(
+      value: _bloc,
       child: BlocConsumer<LoadModelBloc, LoadModelState>(
         listener: (context, state) {
           if (state.status == LoadModelStatus.error &&
@@ -54,25 +68,19 @@ class AiModelSection extends StatelessWidget {
                               vertical: Insets.extraSmall,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.08),
+                              color: _getStatusColor(state.status)
+                                  .withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Assets.icons.download.svg(
-                                  width: 14,
-                                  height: 14,
-                                  colorFilter: const ColorFilter.mode(
-                                    AppColors.primary,
-                                    BlendMode.srcIn,
-                                  ),
-                                ),
+                                _getStatusIcon(state.status),
                                 const SizedBox(width: Insets.extraSmall),
                                 Text(
-                                  _getModelStatusText(context, state.status),
+                                  _getModelStatusText(context, state),
                                   style: AppTextStyle.labelSmall.copyWith(
-                                    color: AppColors.primary,
+                                    color: _getStatusColor(state.status),
                                   ),
                                 ),
                               ],
@@ -81,7 +89,7 @@ class AiModelSection extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: Insets.normal),
-                      Assets.images.placeholder.svg(
+                      Assets.onboarding.onboarding3.svg(
                         width: 140,
                         height: 140,
                       ),
@@ -92,27 +100,47 @@ class AiModelSection extends StatelessWidget {
                         style: AppTextStyle.labelLarge,
                       ),
                       const SizedBox(height: Insets.normal),
-                      if (state.status == LoadModelStatus.modelAbsent)
+                      if (state.status == LoadModelStatus.modelAbsent ||
+                          state.status == LoadModelStatus.error)
                         AppButton(
                           label: context.l10n.aiModelEnableDownload,
                           icon: const Icon(Icons.download),
                           variant: AppButtonVariant.primary,
-                          onPressed: () => context
-                              .read<LoadModelBloc>()
-                              .add(const LoadModelDownloadInitiated()),
+                          onPressed: () =>
+                              _bloc.add(const LoadModelDownloadInitiated()),
                         )
-                      else if (state.status == LoadModelStatus.loading)
+                      else if (state.status == LoadModelStatus.loading) ...[
                         CustomProgressIndicator(
                           progress: (state.downloadProgress ?? 0) / 100,
                           text: context.l10n.aiModelDownloading,
-                        )
-                      else if (state.status == LoadModelStatus.modelLoaded)
+                        ),
+                        const SizedBox(height: 8),
                         Text(
-                          context.l10n.aiModelReady,
+                          'Download continues in background',
                           textAlign: TextAlign.center,
-                          style: AppTextStyle.labelLarge.copyWith(
-                            color: AppColors.primary,
+                          style: AppTextStyle.labelSmall.copyWith(
+                            color: context.colorScheme.onSurface.withOpacity(0.6),
+                            fontStyle: FontStyle.italic,
                           ),
+                        ),
+                      ] else if (state.status == LoadModelStatus.modelLoaded)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 20,
+                              color: AppColors.success,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              context.l10n.aiModelReady,
+                              textAlign: TextAlign.center,
+                              style: AppTextStyle.labelLarge.copyWith(
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ],
                         ),
                     ],
                   ),
@@ -125,14 +153,63 @@ class AiModelSection extends StatelessWidget {
     );
   }
 
-  String _getModelStatusText(BuildContext context, LoadModelStatus status) {
+  Color _getStatusColor(LoadModelStatus status) {
     switch (status) {
+      case LoadModelStatus.modelLoaded:
+        return AppColors.success;
+      case LoadModelStatus.modelAbsent:
+        return AppColors.primary;
+      case LoadModelStatus.loading:
+        return AppColors.primary;
+      case LoadModelStatus.error:
+        return AppColors.error;
+    }
+  }
+
+  Widget _getStatusIcon(LoadModelStatus status) {
+    switch (status) {
+      case LoadModelStatus.modelLoaded:
+        return Icon(
+          Icons.check_circle,
+          size: 14,
+          color: AppColors.success,
+        );
+      case LoadModelStatus.modelAbsent:
+        return Assets.icons.download.svg(
+          width: 14,
+          height: 14,
+          colorFilter: const ColorFilter.mode(
+            AppColors.primary,
+            BlendMode.srcIn,
+          ),
+        );
+      case LoadModelStatus.loading:
+        return SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
+        );
+      case LoadModelStatus.error:
+        return Icon(
+          Icons.error_outline,
+          size: 14,
+          color: AppColors.error,
+        );
+    }
+  }
+
+  String _getModelStatusText(BuildContext context, LoadModelState state) {
+    switch (state.status) {
       case LoadModelStatus.modelLoaded:
         return context.l10n.aiModelReady;
       case LoadModelStatus.modelAbsent:
         return context.l10n.aiModelMissing;
       case LoadModelStatus.loading:
-        return context.l10n.aiModelDownloading;
+        final progress = state.downloadProgress?.toStringAsFixed(0) ?? '0';
+        return '${context.l10n.aiModelDownloading} $progress%';
       case LoadModelStatus.error:
         return context.l10n.aiModelError;
     }

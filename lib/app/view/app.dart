@@ -50,7 +50,7 @@ class App extends StatelessWidget {
         BlocProvider(
           create: (_) => getIt<PatientBloc>()..add(const PatientInitialised()),
         ),
-        BlocProvider(create: (_) => getIt<NotificationBloc>()),
+        BlocProvider.value(value: getIt<NotificationBloc>()),
       ],
       child: MultiBlocListener(
         listeners: [

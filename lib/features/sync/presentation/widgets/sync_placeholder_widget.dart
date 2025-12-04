@@ -354,7 +354,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   String _getTitle(BuildContext context, bool hasAnyMeaningfulData) {
     if (hasAnyMeaningfulData && widget.recordTypeName != null) {
-      return 'No ${widget.recordTypeName} yet';
+      return context.l10n.noRecords;
     }
     return context.l10n.noMedicalRecordsYet;
   }

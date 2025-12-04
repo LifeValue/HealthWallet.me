@@ -16,3 +16,17 @@ class LoadModelDownloadInitiated extends LoadModelEvent
   const factory LoadModelDownloadInitiated() =
       _LoadModelDownloadInitiated;
 }
+
+@freezed
+class LoadModelServiceStateChanged extends LoadModelEvent
+    with _$LoadModelServiceStateChanged {
+  const factory LoadModelServiceStateChanged({
+    required AiModelDownloadState serviceState,
+  }) = _LoadModelServiceStateChanged;
+}
+
+@freezed
+class LoadModelDownloadCancelled extends LoadModelEvent
+    with _$LoadModelDownloadCancelled {
+  const factory LoadModelDownloadCancelled() = _LoadModelDownloadCancelled;
+}
