@@ -120,14 +120,24 @@ class _ProcessingPageState extends State<ProcessingPage> {
             return const Center(child: Text("Session not found!"));
           }
 
-          if (state.status == const ScanStatus.convertingPdfs()) {
-            return _buildLoadingIndicator('Converting PDFs for preview...');
-          }
-
           final sessionImages = state.sessionImagePaths[widget.sessionId] ??
               (state.activeSessionId == widget.sessionId
                   ? state.allImagePathsForOCR
                   : const <String>[]);
+
+          final isThisSessionConverting =
+              state.status == const ScanStatus.convertingPdfs() &&
+                  state.activeSessionId == widget.sessionId &&
+                  sessionImages.isEmpty;
+
+          final isQueuedAndPreparing =
+              activeSession.status == ProcessingStatus.pending &&
+                  state.activeSessionId != widget.sessionId &&
+                  sessionImages.isEmpty;
+
+          if (isThisSessionConverting || isQueuedAndPreparing) {
+            return _buildLoadingIndicator('Preparing preview...');
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(Insets.normal),
@@ -168,6 +178,18 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   Widget _buildMappingSection(
       ScanState state, ProcessingSession activeSession) {
+    // Check if this session is pending while another session is processing
+    if (activeSession.status == ProcessingStatus.pending) {
+      final otherSessionProcessing = state.sessions.any(
+        (s) =>
+            s.id != activeSession.id && s.status == ProcessingStatus.processing,
+      );
+      if (otherSessionProcessing ||
+          state.status == const ScanStatus.mapping()) {
+        return _buildQueuedMessage();
+      }
+    }
+
     if (state.status == const ScanStatus.mapping()) {
       return Column(
         children: [
@@ -287,6 +309,23 @@ class _ProcessingPageState extends State<ProcessingPage> {
     }
 
     return const SizedBox.shrink();
+  }
+
+  Widget _buildQueuedMessage() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.hourglass_empty,
+            color: context.colorScheme.primary, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          'Only one processing session can run at a time',
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: context.colorScheme.primary,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildResourcesSection(

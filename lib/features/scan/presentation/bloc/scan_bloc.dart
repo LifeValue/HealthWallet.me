@@ -74,6 +74,20 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanEncounterAttached>(_onScanEncounterAttached);
   }
 
+  bool get _isCurrentlyProcessing =>
+      state.status == const ScanStatus.convertingPdfs() ||
+      state.status == const ScanStatus.mapping() ||
+      state.sessions.any((s) => s.status == ProcessingStatus.processing);
+
+  void _startNextPendingSession() {
+    final pendingSession = state.sessions.firstWhereOrNull(
+      (s) => s.status == ProcessingStatus.pending,
+    );
+    if (pendingSession != null) {
+      add(ScanSessionActivated(sessionId: pendingSession.id));
+    }
+  }
+
   Future<void> _onScanInitialised(
     ScanInitialised event,
     Emitter<ScanState> emit,
@@ -129,6 +143,10 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       status: ScanStatus.sessionCreated(session: session),
       sessions: [session, ...state.sessions],
     ));
+
+    if (!_isCurrentlyProcessing) {
+      add(ScanSessionActivated(sessionId: session.id));
+    }
   }
 
   Future<void> _handlePdfScan(Emitter<ScanState> emit) async {
@@ -300,23 +318,19 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) async {
     final isSameSession = state.activeSessionId == event.sessionId;
-    final alreadyProcessing = state.status == const ScanStatus.mapping() ||
-        state.status == const ScanStatus.editingResources();
-
-    if (isSameSession && alreadyProcessing) {
-      return;
-    }
+    final anotherSessionProcessing = _isCurrentlyProcessing && !isSameSession;
 
     try {
-      emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
-
       final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
-
       final cachedImages = state.sessionImagePaths[event.sessionId];
+
       List<String> allImages;
       if (cachedImages != null && cachedImages.isNotEmpty) {
         allImages = cachedImages;
       } else {
+        if (!anotherSessionProcessing) {
+          emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
+        }
         allImages = await _ocrProcessingHelper.prepareAllImages(
           filePaths: session.filePaths,
         );
@@ -330,6 +344,11 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         allImagePathsForOCR: allImages,
         sessionImagePaths: updatedImageMap,
       ));
+
+      // If another session is processing, don't start mapping - just show preview with queued message
+      if (anotherSessionProcessing) {
+        return;
+      }
 
       emit(state.copyWith(
         activeSessionId: event.sessionId,
@@ -460,6 +479,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         status: const ScanStatus.editingResources(),
         notification: notification,
       ));
+
+      _startNextPendingSession();
     } on Exception catch (e) {
       _updateSession(
         emit,
