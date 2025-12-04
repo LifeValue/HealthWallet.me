@@ -10,29 +10,21 @@ import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_allergy_intolerance.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_condition.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_medication_statement.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_observation.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_organization.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_practitioner.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_procedure.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/scan/presentation/helpers/ocr_processing_helper.dart';
+import 'package:health_wallet/features/scan/presentation/helpers/scan_path_helper.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 part 'scan_state.dart';
 part 'scan_event.dart';
@@ -72,6 +64,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanMappingCancelled>(_onScanMappingCancelled);
     on<ScanResourcesAdded>(_onScanResourcesAdded);
     on<ScanEncounterAttached>(_onScanEncounterAttached);
+    on<ScanProcessingRestartRequested>(_onScanProcessingRestartRequested);
   }
 
   bool get _isCurrentlyProcessing =>
@@ -152,12 +145,19 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   Future<void> _handlePdfScan(Emitter<ScanState> emit) async {
     final scannedPdf = await FlutterDocScanner().getScannedDocumentAsPdf();
 
-    if (scannedPdf == null || !_isValidScanResult(scannedPdf)) {
+    if (scannedPdf == null) {
+      emit(state.copyWith(status: const ScanStatus.initial()));
+      return;
+    }
+
+    final pdfPath = ScanPathHelper.extractPdfPath(scannedPdf);
+
+    if (pdfPath == null || !_isValidScanResult(pdfPath)) {
       emit(state.copyWith(status: const ScanStatus.initial()));
       return;
     }
     final savedPath = await _pdfStorageService.savePdfToStorage(
-      sourcePdfPath: scannedPdf,
+      sourcePdfPath: pdfPath,
       customFileName:
           'health_scan_${DateTime.now().millisecondsSinceEpoch}.pdf',
     );
@@ -183,15 +183,22 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       return;
     }
 
-    final imagePaths = _normalizeImagePaths(scannedDocuments);
+    final imagePaths = ScanPathHelper.normalizePaths(scannedDocuments);
 
     if (imagePaths.isEmpty || !_isValidScanResult(imagePaths.first)) {
       emit(state.copyWith(status: const ScanStatus.initial()));
       return;
     }
 
+    final persistedPaths = await ScanPathHelper.persistScanFiles(
+      sourcePaths: imagePaths,
+      repository: _repository,
+    );
+    final sessionPaths =
+        persistedPaths.isNotEmpty ? persistedPaths : imagePaths;
+
     await _createSession(emit,
-        filePaths: imagePaths, origin: ProcessingOrigin.scan);
+        filePaths: sessionPaths, origin: ProcessingOrigin.scan);
   }
 
   Future<void> _onDocumentImported(
@@ -265,16 +272,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     }
   }
 
-  List<String> _normalizeImagePaths(dynamic scannedDocuments) {
-    if (scannedDocuments is List) {
-      return scannedDocuments.cast<String>();
-    } else if (scannedDocuments is String) {
-      return [scannedDocuments];
-    } else {
-      return [scannedDocuments.toString()];
-    }
-  }
-
   bool _isValidScanResult(String path) {
     return !path.contains('Failed') && !path.contains('Unknown');
   }
@@ -313,8 +310,15 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     ScanSessionActivated event,
     Emitter<ScanState> emit,
   ) async {
-    final isSameSession = state.activeSessionId == event.sessionId;
-    final anotherSessionProcessing = _isCurrentlyProcessing && !isSameSession;
+    final anotherSessionProcessing = state.sessions.any(
+      (s) => s.id != event.sessionId && s.status == ProcessingStatus.processing,
+    );
+    final anotherSessionConverting =
+        state.status == const ScanStatus.convertingPdfs() &&
+            state.activeSessionId != null &&
+            state.activeSessionId != event.sessionId;
+    final anotherSessionBusy =
+        anotherSessionProcessing || anotherSessionConverting;
 
     try {
       final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
@@ -324,7 +328,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       if (cachedImages != null && cachedImages.isNotEmpty) {
         allImages = cachedImages;
       } else {
-        if (!anotherSessionProcessing) {
+        if (!anotherSessionBusy) {
           emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
         }
         allImages = await _ocrProcessingHelper.prepareAllImages(
@@ -341,8 +345,16 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         sessionImagePaths: updatedImageMap,
       ));
 
-      if (anotherSessionProcessing &&
-          session.status != ProcessingStatus.draft) {
+      if (anotherSessionBusy && session.status != ProcessingStatus.draft) {
+        return;
+      }
+
+      // If session is in processing status but not currently active,
+      // it's interrupted - don't activate it, just prepare images
+      if (session.status == ProcessingStatus.processing &&
+          state.activeSessionId != event.sessionId) {
+        logger.i(
+            '_onScanSessionActivated - Session is interrupted, not activating automatically');
         return;
       }
 
@@ -389,6 +401,38 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       logger.e('_onScanSessionActivated - ERROR: $e', e, stackTrace);
       emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
     }
+  }
+
+  void _onScanProcessingRestartRequested(
+    ScanProcessingRestartRequested event,
+    Emitter<ScanState> emit,
+  ) {
+    final session =
+        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    if (session == null) {
+      logger.e(
+        '_onScanProcessingRestartRequested - Session not found: ${event.sessionId}',
+      );
+      return;
+    }
+
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      status: ProcessingStatus.pending,
+      progress: 0.0,
+      updateDb: true,
+    );
+
+    final cachedImages =
+        state.sessionImagePaths[event.sessionId] ?? const <String>[];
+
+    if (cachedImages.isEmpty) {
+      add(ScanSessionActivated(sessionId: event.sessionId));
+      return;
+    }
+
+    add(ScanMappingInitiated(sessionId: event.sessionId));
   }
 
   void _updateSession(
@@ -464,6 +508,24 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       final sessionImages =
           state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+
+      if (sessionImages.isEmpty) {
+        _updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.pending,
+          progress: 0.0,
+          updateDb: true,
+        );
+        emit(state.copyWith(
+          status: ScanStatus.failure(
+            error:
+                'No images were generated from the scan. Please try scanning again.',
+          ),
+        ));
+        return;
+      }
+
       final medicalText =
           await _ocrProcessingHelper.processOcrForImages(sessionImages);
 

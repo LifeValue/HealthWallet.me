@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:health_wallet/core/utils/logger.dart';
+
 import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
 import 'package:injectable/injectable.dart';
 
@@ -13,6 +15,10 @@ class OcrProcessingHelper {
 
     for (int i = 0; i < imagePaths.length; i++) {
       final imagePath = imagePaths[i];
+      final imageFile = File(imagePath);
+      if (!await imageFile.exists()) {
+        continue;
+      }
 
       final text =
           await _textRecognitionService.recognizeTextFromImage(imagePath);

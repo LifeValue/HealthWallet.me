@@ -21,7 +21,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     @Default(MappedProperty()) MappedProperty givenName,
     @Default(MappedProperty()) MappedProperty dateOfBirth,
     @Default(MappedProperty()) MappedProperty gender,
-    @Default(MappedProperty()) MappedProperty patientId,
+    @Default(MappedProperty()) MappedProperty patientMRN,
   }) = _MappingPatient;
 
   factory MappingPatient.fromJson(Map<String, dynamic> json) {
@@ -31,7 +31,8 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       givenName: MappedProperty.fromJson(json['givenName']),
       dateOfBirth: MappedProperty.fromJson(json['dateOfBirth']),
       gender: MappedProperty.fromJson(json['gender']),
-      patientId: MappedProperty.fromJson(json['patientId']),
+      patientMRN:
+          MappedProperty.fromJson(json['patientMRN'] ?? json['patientId']),
     );
   }
 
@@ -42,7 +43,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       givenName: MappedProperty.empty(),
       dateOfBirth: MappedProperty.empty(),
       gender: MappedProperty.empty(),
-      patientId: MappedProperty.empty(),
+      patientMRN: MappedProperty.empty(),
     );
   }
 
@@ -67,8 +68,8 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         value: FhirFieldExtractor.extractPatientGender(patient),
         confidenceLevel: 1,
       ),
-      patientId: MappedProperty(
-        value: FhirFieldExtractor.extractPatientId(patient),
+      patientMRN: MappedProperty(
+        value: FhirFieldExtractor.extractPatientMRN(patient),
         confidenceLevel: 1,
       ),
     );
@@ -82,7 +83,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         'givenName': givenName.toJson(),
         'dateOfBirth': dateOfBirth.toJson(),
         'gender': gender.toJson(),
-        'patientId': patientId.toJson(),
+        'patientMRN': patientMRN.toJson(),
       };
 
   @override
@@ -100,7 +101,9 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       ],
       birthDate: fhir_r4.FhirDate.fromString(dateOfBirth.value),
       gender: fhir_r4.AdministrativeGender(gender.value),
-      identifier: [fhir_r4.Identifier(id: fhir_r4.FhirString(patientId.value))],
+      identifier: [
+        fhir_r4.Identifier(id: fhir_r4.FhirString(patientMRN.value))
+      ],
     );
 
     final rawResource = patient.toJson();
@@ -143,10 +146,10 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           value: gender.value,
           confidenceLevel: gender.confidenceLevel,
         ),
-        'patientId': TextFieldDescriptor(
-          label: 'ID',
-          value: patientId.value,
-          confidenceLevel: patientId.confidenceLevel,
+        'patientMRN': TextFieldDescriptor(
+          label: 'MRN',
+          value: patientMRN.value,
+          confidenceLevel: patientMRN.confidenceLevel,
         ),
       };
 
@@ -174,10 +177,10 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           confidenceLevel:
               newValues['gender'] != null ? 1 : gender.confidenceLevel,
         ),
-        patientId: MappedProperty(
-          value: newValues['patientId'] ?? patientId.value,
+        patientMRN: MappedProperty(
+          value: newValues['patientMRN'] ?? patientMRN.value,
           confidenceLevel:
-              newValues['patientId'] != null ? 1 : patientId.confidenceLevel,
+              newValues['patientMRN'] != null ? 1 : patientMRN.confidenceLevel,
         ),
       );
 
@@ -190,7 +193,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         givenName: givenName.calculateConfidence(inputText),
         dateOfBirth: dateOfBirth.calculateConfidence(inputText),
         gender: gender.calculateConfidence(inputText),
-        patientId: patientId.calculateConfidence(inputText),
+        patientMRN: patientMRN.calculateConfidence(inputText),
       );
 
   @override
@@ -199,5 +202,5 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       givenName.isValid ||
       dateOfBirth.isValid ||
       gender.isValid ||
-      patientId.isValid;
+      patientMRN.isValid;
 }

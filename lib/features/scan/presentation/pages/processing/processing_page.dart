@@ -147,11 +147,13 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 totalPagesForOcr: sessionImages.length,
               ),
               const SizedBox(height: Insets.normal),
-              if (sessionImages.isNotEmpty)
+              if (sessionImages.isNotEmpty) ...[
                 PreviewCard(
                   imagePaths: sessionImages,
                   pageController: _pageController,
                 ),
+                const SizedBox(height: Insets.small),
+              ],
               const SizedBox(height: Insets.large),
               _buildMappingSection(state, activeSession),
               _buildResourcesSection(state, activeSession),
@@ -178,42 +180,6 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   Widget _buildMappingSection(
       ScanState state, ProcessingSession activeSession) {
-    if (activeSession.status == ProcessingStatus.pending) {
-      final isThisSessionActive = state.activeSessionId == activeSession.id;
-      if (isThisSessionActive && state.status == const ScanStatus.mapping()) {
-      } else {
-        final otherSessionProcessing = state.sessions.any(
-          (s) =>
-              s.id != activeSession.id &&
-              s.status == ProcessingStatus.processing,
-        );
-        if (otherSessionProcessing ||
-            state.status == const ScanStatus.mapping()) {
-          return _buildQueuedMessage();
-        }
-      }
-    }
-
-    if (state.status == const ScanStatus.mapping()) {
-      return Column(
-        children: [
-          CustomProgressIndicator(
-            progress: activeSession.progress,
-            text: "Processing pages...",
-            secondaryText: "It might take a while. Please wait.",
-          ),
-          const SizedBox(height: Insets.normal),
-          AppButton(
-            label: 'Cancel',
-            variant: AppButtonVariant.outlined,
-            onPressed: () => context
-                .read<ScanBloc>()
-                .add(ScanMappingCancelled(sessionId: widget.sessionId)),
-          ),
-        ],
-      );
-    }
-
     if (state.status is Failure) {
       final error = (state.status as Failure).error;
       return Column(
@@ -310,6 +276,108 @@ class _ProcessingPageState extends State<ProcessingPage> {
           ),
         ],
       );
+    }
+
+    final isThisSessionActive = state.activeSessionId == activeSession.id;
+    final isSessionProcessing =
+        activeSession.status == ProcessingStatus.processing;
+    final isSessionPending = activeSession.status == ProcessingStatus.pending;
+
+    if (isThisSessionActive && (isSessionProcessing || isSessionPending)) {
+      final isQueued = isSessionPending &&
+          state.sessions.any(
+            (s) =>
+                s.id != activeSession.id &&
+                s.status == ProcessingStatus.processing,
+          );
+
+      final primaryText = isQueued
+          ? 'Waiting for another session to finish...'
+          : 'Processing pages...';
+      final secondaryText = isQueued
+          ? 'Your documents will start processing automatically.'
+          : 'It might take a while. Please wait.';
+
+      return Column(
+        children: [
+          CustomProgressIndicator(
+            progress: activeSession.progress,
+            text: primaryText,
+            secondaryText: secondaryText,
+          ),
+          const SizedBox(height: Insets.normal),
+          AppButton(
+            label: 'Cancel',
+            variant: AppButtonVariant.outlined,
+            onPressed: () => context
+                .read<ScanBloc>()
+                .add(ScanMappingCancelled(sessionId: widget.sessionId)),
+          ),
+        ],
+      );
+    }
+
+    if (!isThisSessionActive && isSessionProcessing) {
+      return Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(Insets.normal),
+            decoration: BoxDecoration(
+              color:
+                  context.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: context.colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.refresh,
+                  color: context.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Processing Error',
+                        style: AppTextStyle.bodyMedium.copyWith(
+                          color: context.colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'This session is no longer active. Tap retry to start over.',
+                        style: AppTextStyle.bodySmall.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Insets.normal),
+          AppButton(
+            label: 'Retry',
+            variant: AppButtonVariant.outlined,
+            onPressed: () => context.read<ScanBloc>().add(
+                  ScanProcessingRestartRequested(sessionId: widget.sessionId),
+                ),
+          ),
+        ],
+      );
+    }
+
+    if (isSessionPending) {
+      return _buildQueuedMessage();
     }
 
     return const SizedBox.shrink();

@@ -12,7 +12,7 @@ class PatientPrompt extends PromptTemplate {
       "givenName": "string",
       "dateOfBirth": "string in YYYY-MM-DD format",
       "gender": "string, one of: male, female, other",
-      "patientId": "string"
+      "patientMRN": "string"
     }
   ''';
 

@@ -415,7 +415,7 @@ abstract class AppLocalizations {
   /// No description provided for @patientId.
   ///
   /// In en, this message translates to:
-  /// **'Patient ID: '**
+  /// **'MRN: '**
   String get patientId;
 
   /// No description provided for @age.
