@@ -426,11 +426,7 @@ class _RecordsViewState extends State<RecordsView> {
                       } else {
                         return LayoutBuilder(
                           builder: (context, constraints) {
-                            final double bottomSafeInset =
-                                MediaQuery.of(context).padding.bottom;
-                            const double bottomBarHeight = Insets.extraLarge;
-                            const double bottomBarOffset = Insets.medium;
-                            const double extraSpacing = Insets.large;
+                            const double bottomNavBarSpacing = 100.0;
                             
                             return SingleChildScrollView(
                               controller: _scrollController,
@@ -440,11 +436,8 @@ class _RecordsViewState extends State<RecordsView> {
                                   minHeight: constraints.maxHeight,
                                 ),
                                 child: Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: bottomSafeInset +
-                                        bottomBarHeight +
-                                        bottomBarOffset +
-                                        extraSpacing,
+                                  padding: const EdgeInsets.only(
+                                    bottom: bottomNavBarSpacing,
                                   ),
                                   child: IntrinsicHeight(
                                     child: SyncPlaceholderWidget(

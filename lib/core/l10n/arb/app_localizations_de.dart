@@ -527,6 +527,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noRecordsFound => 'Keine Aufzeichnungen gefunden';
 
   @override
+  String get noRecords => 'keine Aufzeichnungen';
+
+  @override
   String get tryDifferentKeywords =>
       'Versuchen Sie es mit anderen Suchbegriffen';
 

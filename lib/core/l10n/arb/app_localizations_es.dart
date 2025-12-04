@@ -521,6 +521,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noRecordsFound => 'No se encontraron registros';
 
   @override
+  String get noRecords => 'Sin registros';
+
+  @override
   String get tryDifferentKeywords =>
       'Intenta buscar con palabras clave diferentes';
 

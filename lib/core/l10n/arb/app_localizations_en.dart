@@ -516,6 +516,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noRecordsFound => 'No records found';
 
   @override
+  String get noRecords => 'No records';
+
+  @override
   String get tryDifferentKeywords => 'Try searching with different keywords';
 
   @override
