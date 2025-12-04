@@ -9,7 +9,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/home/domain/entities/wallet_notification.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';

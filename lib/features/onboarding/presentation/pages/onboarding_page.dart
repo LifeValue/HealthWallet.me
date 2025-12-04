@@ -7,7 +7,7 @@ import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_b
 import 'package:health_wallet/features/onboarding/presentation/models/onboarding_screen_data.dart';
 import 'package:health_wallet/features/onboarding/presentation/widgets/onboarding_navigation.dart';
 import 'package:health_wallet/features/onboarding/presentation/widgets/onboarding_screen.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/load_model_embedded.dart';
+import 'package:health_wallet/features/onboarding/presentation/widgets/country_flags_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 @RoutePage()
@@ -27,39 +27,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
           subtitle: context.l10n.onboardingWelcomeSubtitle,
           description: context.l10n.onboardingWelcomeDescription,
           image: Assets.onboarding.onboarding1,
+          customWidget: const CountryFlagsWidget(),
         ),
         OnboardingScreenData(
           title: context.l10n.onboardingRecordsTitle,
           subtitle: context.l10n.onboardingRecordsSubtitle,
           description: context.l10n.onboardingRecordsDescription,
+          content: context.l10n.onboardingRecordsContent,
+          bottom: context.l10n.onboardingRecordsBottom,
           image: Assets.onboarding.onboarding2,
         ),
         OnboardingScreenData(
           title: context.l10n.onboardingAiModelTitle,
           subtitle: context.l10n.onboardingAiModelSubtitle,
           description: context.l10n.onboardingAiModelDescription,
-          image: Assets.images.placeholder,
-          customWidget: LoadModelEmbedded(
-            onModelReady: () {
-              // Automatically move to next onboarding page
-              final nextPage = _pageController.page!.toInt() + 1;
-              if (nextPage < _screens.length) {
-                _pageController.animateToPage(
-                  nextPage,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
-              } else {
-                context.router.maybePop();
-              }
-            },
-          ),
+          image: Assets.onboarding.onboarding3,
         ),
         OnboardingScreenData(
           title: context.l10n.onboardingSyncTitle,
           subtitle: context.l10n.onboardingSyncSubtitle,
           description: context.l10n.onboardingSyncDescription,
-          image: Assets.onboarding.onboarding3,
+          image: Assets.onboarding.onboarding4,
           showBiometricToggle: true,
         ),
       ];
@@ -99,6 +87,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   title: screenData.title,
                                   subtitle: screenData.subtitle,
                                   description: screenData.description,
+                                  content: screenData.content,
+                                  bottom: screenData.bottom,
                                   image: screenData.image,
                                   showBiometricToggle:
                                       screenData.showBiometricToggle,
@@ -114,7 +104,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ),
                     SizedBox(
                         height: MediaQuery.of(context).padding.bottom +
-                            Insets.small),
+                            Insets.extraSmall),
                   ],
                 ),
               ),

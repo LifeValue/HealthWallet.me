@@ -157,13 +157,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingWelcomeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Securely access your complete medical history with <link>HealthWallet.me</link>. Connect to over 100,000 US healthcare institutions or add records by sharing directly with the app or scan documents. Your health data is private, compliant, and stored only on your device.'**
+  /// **'<link>HealthWallet.me</link> already connects to 100,000+ US healthcare providers, and we\'re expanding to new countries.'**
   String get onboardingWelcomeSubtitle;
 
   /// No description provided for @onboardingWelcomeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Sync your healthcare data through <link>FastenHealth OnPrem</link> with the healthcare providers and see your complete medical history in one place. Secured, compliant and always on your device. Enjoy!'**
+  /// **'Add records from any provider, import documents manually, or request support for your country.'**
   String get onboardingWelcomeDescription;
 
   /// No description provided for @onboardingRecordsTitle.
@@ -175,14 +175,32 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingRecordsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'**Keep your medical history effortlessly up-to-date with both automatic and manual options.**'**
+  /// **'<link>HealthWallet.me</link> gives you flexible ways to bring all your medical history together:'**
   String get onboardingRecordsSubtitle;
 
   /// No description provided for @onboardingRecordsDescription.
   ///
   /// In en, this message translates to:
-  /// **'<link>HealthWallet.me</link> ensures your complete health history is always up-to-date. It automatically syncs new records from connected providers and lets you instantly add physical documents with a quick scan.'**
+  /// **'• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of Fasten Health OnPrem and get all your US healthcare systems records to your wallet.'**
   String get onboardingRecordsDescription;
+
+  /// No description provided for @onboardingRecordsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of <link>Fasten Health OnPrem</link> and get all your US healthcare systems records to your wallet.'**
+  String get onboardingRecordsContent;
+
+  /// No description provided for @onboardingRecordsBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is organized securely on your device.'**
+  String get onboardingRecordsBottom;
+
+  /// No description provided for @onboardingRequestIntegration.
+  ///
+  /// In en, this message translates to:
+  /// **'Request an integration'**
+  String get onboardingRequestIntegration;
 
   /// No description provided for @onboardingScanButton.
   ///
@@ -193,19 +211,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSyncTitle.
   ///
   /// In en, this message translates to:
-  /// **'Private by Design'**
+  /// **'Security & Privacy'**
   String get onboardingSyncTitle;
 
   /// No description provided for @onboardingSyncSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your health data belongs only to you.'**
+  /// **'<link>HealthWallet.me</link> is built with privacy at its core. Your medical data is encrypted and stored only on your phone, never on cloud servers.'**
   String get onboardingSyncSubtitle;
 
   /// No description provided for @onboardingSyncDescription.
   ///
   /// In en, this message translates to:
-  /// **'We believe your sensitive health information should never sit on a company server. Your data is encrypted and stored exclusively on your device, meaning you are the only one with access.'**
+  /// **'View your health history in airplane mode, abroad, or without internet, your records stay with you wherever you go. Add an extra layer of security by enabling biometric authentication.'**
   String get onboardingSyncDescription;
 
   /// No description provided for @onboardingBiometricText.
@@ -1237,7 +1255,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingAiModelDescription.
   ///
   /// In en, this message translates to:
-  /// **'Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records — your data stays private on your device. This is a one-time setup.'**
+  /// **'Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.'**
   String get onboardingAiModelDescription;
 
   /// No description provided for @onboardingAiModelSubtitle.

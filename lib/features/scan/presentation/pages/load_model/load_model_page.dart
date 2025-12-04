@@ -20,19 +20,19 @@ class LoadModelPage extends StatefulWidget {
 }
 
 class _LoadModelPageState extends State<LoadModelPage> {
-  final _bloc = getIt.get<LoadModelBloc>();
+  late final LoadModelBloc _bloc;
 
   @override
   void initState() {
     super.initState();
-
+    _bloc = getIt.get<LoadModelBloc>();
     _bloc.add(const LoadModelInitialized());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => _bloc,
+    return BlocProvider.value(
+      value: _bloc,
       child: BlocConsumer<LoadModelBloc, LoadModelState>(
         listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
@@ -51,8 +51,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
                 context.l10n.aiModelTitle,
                 style: AppTextStyle.titleMedium,
               ),
-              automaticallyImplyLeading:
-                  state.status != LoadModelStatus.loading,
+              automaticallyImplyLeading: true,
             ),
             body: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -66,14 +65,15 @@ class _LoadModelPageState extends State<LoadModelPage> {
 
   Widget _buildView(BuildContext context, LoadModelState state) {
     if (state.status == LoadModelStatus.loading &&
-        state.downloadProgress == null) {
+        state.downloadProgress == null &&
+        !state.isBackgroundDownload) {
       return const Center(child: CircularProgressIndicator());
     }
 
     return Column(
       children: [
         const SizedBox(height: 20),
-        Assets.images.placeholder.svg(height: 250),
+        Assets.onboarding.onboarding3.svg(height: 250),
         Text(
           context.l10n.aiModelUnlockTitle,
           textAlign: TextAlign.center,
@@ -96,13 +96,39 @@ class _LoadModelPageState extends State<LoadModelPage> {
           context.l10n.aiModelDownloadInfo,
           textAlign: TextAlign.center,
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface..withValues(alpha: 0.7),
+            color: context.colorScheme.onSurface.withOpacity(0.7),
             height: 1.5,
             letterSpacing: -0.2,
           ),
         ),
         const SizedBox(height: 24),
-        if (state.status != LoadModelStatus.loading) ...[
+        if (state.status == LoadModelStatus.loading) ...[
+          CustomProgressIndicator(
+            progress: (state.downloadProgress ?? 0) / 100,
+            text: context.l10n.aiModelDownloading,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'You can navigate away - download will continue in background.\nCheck notifications for progress.',
+            textAlign: TextAlign.center,
+            style: AppTextStyle.bodySmall.copyWith(
+              color: context.colorScheme.primary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () => context.router.maybePop(false),
+              child: Text(
+                widget.canAttachToEncounter
+                    ? 'Continue without AI (download in background)'
+                    : 'Continue using app',
+              ),
+            ),
+          ),
+        ] else ...[
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -128,11 +154,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
                   : context.l10n.cancel),
             ),
           ),
-        ] else
-          CustomProgressIndicator(
-            progress: state.downloadProgress! / 100,
-            text: context.l10n.aiModelDownloading,
-          ),
+        ],
       ],
     );
   }

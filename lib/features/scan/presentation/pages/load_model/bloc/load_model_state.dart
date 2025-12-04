@@ -6,6 +6,7 @@ class LoadModelState with _$LoadModelState {
     @Default(LoadModelStatus.loading) LoadModelStatus status,
     double? downloadProgress,
     String? errorMessage,
+    @Default(false) bool isBackgroundDownload,
   }) = _LoadModelState;
 }
 
@@ -15,4 +16,3 @@ enum LoadModelStatus {
   modelLoaded,
   error,
 }
-
