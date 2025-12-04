@@ -133,62 +133,102 @@ class Immunization with _$Immunization implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Vaccination Details'));
 
-    // Status
-    final statusText = status?.valueString;
+    // Vaccine Name (already in title via vaccineCode)
+    final vaccineDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(vaccineCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createImmunizationLine(vaccineDisplay, prefix: 'Vaccine'),
     );
 
-    // Status Reason
-    final statusReasonDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(statusReason);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(statusReasonDisplay,
-          prefix: 'Status Reason'),
-    );
+    // Dose/Series Information (from protocolApplied)
+    if (protocolApplied != null && protocolApplied!.isNotEmpty) {
+      final protocol = protocolApplied!.first;
+      
+      // Parse doseNumber from either PositiveInt or String
+      final doseNumberInt = protocol.doseNumberPositiveInt?.valueString != null
+          ? int.tryParse(protocol.doseNumberPositiveInt!.valueString!)
+          : null;
+      final doseNumberStr = protocol.doseNumberString?.valueString;
+      final doseNumber = doseNumberInt?.toString() ?? doseNumberStr;
+      
+      // Parse seriesDoses from either PositiveInt or String
+      final seriesDosesInt = protocol.seriesDosesPositiveInt?.valueString != null
+          ? int.tryParse(protocol.seriesDosesPositiveInt!.valueString!)
+          : null;
+      final seriesDosesStr = protocol.seriesDosesString?.valueString;
+      final seriesDoses = seriesDosesInt?.toString() ?? seriesDosesStr;
+      
+      if (doseNumber != null && seriesDoses != null) {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createImmunizationLine(
+              'Dose $doseNumber of $seriesDoses',
+              prefix: 'Dose'),
+        );
+      } else if (doseNumber != null) {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createImmunizationLine(
+              'Dose $doseNumber',
+              prefix: 'Dose'),
+        );
+      }
 
-    // Occurrence
+      // Series (e.g., "Primary Series", "Booster")
+      final series = FhirFieldExtractor.extractCodeableConceptText(protocol.series);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createTimelineLine(series, prefix: 'Series'),
+      );
+    }
+
+    // Date Given (Occurrence)
     final occurrenceDisplay =
         FhirFieldExtractor.extractOccurrenceX(occurrenceX);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(occurrenceDisplay,
-          prefix: 'Occurrence'),
+          prefix: 'Date Given'),
     );
 
-    // Performer
+    // Administered By (Performer)
     if (performer != null && performer!.isNotEmpty) {
       final performerDisplay = performer!
-          .map((p) => p.actor.display?.toString())
+          .map((p) => FhirFieldExtractor.extractReferenceDisplay(p.actor))
           .where((d) => d != null && d.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createUserLine(
             performerDisplay.isNotEmpty ? performerDisplay : null,
-            prefix: 'Performer'),
+            prefix: 'Administered By'),
       );
     }
 
-    // Location
-    final locationDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(location);
+    // Site (Body Location - e.g., "Left deltoid muscle")
+    final siteDisplay = FhirFieldExtractor.extractCodeableConceptText(site);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(locationDisplay,
-          prefix: 'Location'),
+      ResourceFieldMapper.createBodySiteLine(siteDisplay, prefix: 'Site'),
     );
 
-    // Manufacturer
-    final manufacturerDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(manufacturer);
+    // Route (Administration Method - e.g., "Intramuscular injection")
+    final routeDisplay = FhirFieldExtractor.extractCodeableConceptText(route);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(manufacturerDisplay,
-          prefix: 'Manufacturer'),
+      ResourceFieldMapper.createActivityLine(routeDisplay, prefix: 'Route'),
+    );
+
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
     );
 
     // Lot Number
@@ -204,36 +244,206 @@ class Immunization with _$Immunization implements IFhirResource {
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(expirationDisplay,
-          prefix: 'Expiration'),
+          prefix: 'Expiration Date'),
     );
 
-    // Site
-    final siteDisplay = FhirFieldExtractor.extractCodeableConceptText(site);
+    // Manufacturer
+    final manufacturerDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(manufacturer);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createBodySiteLine(siteDisplay, prefix: 'Site'),
-    );
-
-    // Route
-    final routeDisplay = FhirFieldExtractor.extractCodeableConceptText(route);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createActivityLine(routeDisplay, prefix: 'Route'),
+      ResourceFieldMapper.createOrganizationLine(manufacturerDisplay,
+          prefix: 'Manufacturer'),
     );
 
     // Dose Quantity
     final doseDisplay = FhirFieldExtractor.extractQuantity(doseQuantity);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createValueLine(doseDisplay, prefix: 'Dose'),
+      ResourceFieldMapper.createValueLine(doseDisplay, prefix: 'Dose Quantity'),
     );
 
-    // Reason Code
+    // Location (Where given)
+    final locationDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(location);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(locationDisplay,
+          prefix: 'Location'),
+    );
+
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+
+    // Reason
     final reasonCodeDisplay =
         FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+    );
+
+    // Funding Source
+    final fundingDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(fundingSource);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(fundingDisplay,
+          prefix: 'Funding Source'),
+    );
+
+    // Primary Source (directly administered vs reported)
+    final primarySourceValue = primarySource?.valueBoolean;
+    if (primarySourceValue != null) {
+      final primarySourceDisplay = primarySourceValue
+          ? 'Yes (directly administered)'
+          : 'No (reported by patient or other source)';
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(primarySourceDisplay,
+            prefix: 'Primary Source'),
+      );
+    }
+
+    // Report Origin (if not primary source)
+    if (primarySourceValue == false) {
+      final reportOriginDisplay =
+          FhirFieldExtractor.extractCodeableConceptText(reportOrigin);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(reportOriginDisplay,
+            prefix: 'Reported By'),
+      );
+    }
+
+    // Reaction (Adverse reactions)
+    if (reaction != null && reaction!.isNotEmpty) {
+      final hasReaction = reaction!.any((r) => r.detail != null || r.reported?.valueBoolean == true);
+      if (hasReaction) {
+        final reactionDetails = reaction!
+            .map((r) {
+              final detail = FhirFieldExtractor.extractReferenceDisplay(r.detail);
+              return detail;
+            })
+            .where((d) => d != null && d.isNotEmpty)
+            .join(', ');
+        
+        if (reactionDetails.isNotEmpty) {
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createWarningLine(reactionDetails,
+                prefix: 'Reaction'),
+          );
+        } else {
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createStatusLine('Reaction reported',
+                prefix: 'Reaction'),
+          );
+        }
+      } else {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createStatusLine('No adverse reactions reported',
+              prefix: 'Reaction'),
+        );
+      }
+    }
+
+    // Next Dose (from protocolApplied)
+    if (protocolApplied != null && protocolApplied!.isNotEmpty) {
+      final protocol = protocolApplied!.first;
+      
+      // Parse integers from valueString
+      final doseNumberInt = protocol.doseNumberPositiveInt?.valueString != null
+          ? int.tryParse(protocol.doseNumberPositiveInt!.valueString!)
+          : null;
+      final seriesDosesInt = protocol.seriesDosesPositiveInt?.valueString != null
+          ? int.tryParse(protocol.seriesDosesPositiveInt!.valueString!)
+          : null;
+      
+      if (doseNumberInt != null && seriesDosesInt != null) {
+        if (doseNumberInt >= seriesDosesInt) {
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createStatusLine('Not scheduled (series complete)',
+                prefix: 'Next Dose'),
+          );
+        } else {
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createTimelineLine('Dose ${doseNumberInt + 1} of $seriesDosesInt',
+                prefix: 'Next Dose'),
+          );
+        }
+      }
+    }
+
+    // Program Eligibility
+    if (programEligibility != null && programEligibility!.isNotEmpty) {
+      final eligibilityDisplay = programEligibility!
+          .map((e) => FhirFieldExtractor.extractCodeableConceptText(e))
+          .where((e) => e != null && e.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            eligibilityDisplay.isNotEmpty ? eligibilityDisplay : null,
+            prefix: 'Program Eligibility'),
+      );
+    }
+
+    // Education Provided
+    if (education != null && education!.isNotEmpty) {
+      final educationDisplay = education!
+          .map((e) {
+            final docType = e.documentType?.valueString;
+            final pubDate = e.publicationDate?.valueString;
+            return docType != null && pubDate != null
+                ? '$docType (published $pubDate)'
+                : docType ?? pubDate;
+          })
+          .where((e) => e != null && e.isNotEmpty)
+          .join('; ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createNotesLine(
+            educationDisplay.isNotEmpty ? educationDisplay : null,
+            prefix: 'Education Provided'),
+      );
+    }
+
+    // Is Subpotent (reduced efficacy)
+    final isSubpotentValue = isSubpotent?.valueBoolean;
+    if (isSubpotentValue == true) {
+      final subpotentReasonDisplay = subpotentReason != null
+          ? subpotentReason!
+              .map((r) => FhirFieldExtractor.extractCodeableConceptText(r))
+              .where((r) => r != null && r.isNotEmpty)
+              .join(', ')
+          : null;
+      
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine(
+            subpotentReasonDisplay ?? 'Vaccine is subpotent',
+            prefix: 'Subpotent'),
+      );
+    }
+
+    // Status Reason (why not completed, etc.)
+    final statusReasonDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(statusReason);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusReasonDisplay,
+          prefix: 'Status Reason'),
+    );
+
+    // Recorded Date
+    final recordedDisplay = recorded?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(recordedDisplay, prefix: 'Recorded'),
     );
 
     // Date

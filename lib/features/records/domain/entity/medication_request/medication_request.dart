@@ -142,14 +142,71 @@ class MedicationRequest with _$MedicationRequest implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    infoLines.add(ResourceFieldMapper.createSectionHeader('How to Take'));
 
-    // Medication
+    // Medication Name
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
         medicationX?.isAs<CodeableConcept>());
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createMedicationLine(medicationDisplay),
+      ResourceFieldMapper.createMedicationLine(medicationDisplay, prefix: 'Medication'),
     );
+
+    // Dosage Instructions (CRITICAL - How to Take)
+    final dosageDisplay =
+        FhirFieldExtractor.extractDosageInstructions(dosageInstruction);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
+    );
+
+    // Dispense Request Details (Refills, Quantity, Days Supply)
+    if (dispenseRequest != null) {
+      // Refills
+      final numberOfRepeatsAllowed = dispenseRequest!.numberOfRepeatsAllowed?.element;
+      if (numberOfRepeatsAllowed != null) {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createValueLine(
+              '$numberOfRepeatsAllowed refills remaining',
+              prefix: 'Refills'),
+        );
+      }
+
+      // Quantity
+      final quantity = FhirFieldExtractor.extractQuantity(dispenseRequest!.quantity);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createValueLine(quantity, prefix: 'Quantity'),
+      );
+
+      // Days Supply
+      final expectedSupplyDuration = FhirFieldExtractor.extractQuantity(
+          dispenseRequest!.expectedSupplyDuration);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createValueLine(expectedSupplyDuration,
+            prefix: 'Days Supply'),
+      );
+
+      // Validity Period (Duration)
+      if (dispenseRequest!.validityPeriod != null) {
+        final validityStart = dispenseRequest!.validityPeriod!.start?.valueString;
+        final validityEnd = dispenseRequest!.validityPeriod!.end?.valueString;
+        if (validityStart != null || validityEnd != null) {
+          final validityDisplay = validityEnd != null
+              ? 'Valid until $validityEnd'
+              : 'Valid from $validityStart';
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createTimelineLine(validityDisplay,
+                prefix: 'Duration'),
+          );
+        }
+      }
+    }
+
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
 
     // Status
     final statusDisplay = status?.display?.valueString;
@@ -158,11 +215,27 @@ class MedicationRequest with _$MedicationRequest implements IFhirResource {
       ResourceFieldMapper.createStatusLine(statusDisplay, prefix: 'Status'),
     );
 
-    // Intent
-    final intentDisplay = FhirFieldExtractor.extractIntent(intent);
+    // Prescribed Date (Authored On)
+    final authoredOnDisplay = authoredOn?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(intentDisplay, prefix: 'Intent'),
+      ResourceFieldMapper.createDateLine(authoredOnDisplay, prefix: 'Prescribed'),
+    );
+
+    // Prescribed By (Requester)
+    final requesterDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(requester);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(requesterDisplay, prefix: 'Prescribed By'),
+    );
+
+    // Reason
+    final reasonCodeDisplay =
+        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
     );
 
     // Priority
@@ -181,15 +254,16 @@ class MedicationRequest with _$MedicationRequest implements IFhirResource {
           prefix: 'Category'),
     );
 
-    // Requester
-    final requesterDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(requester);
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+
+    // Intent
+    final intentDisplay = FhirFieldExtractor.extractIntent(intent);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(requesterDisplay, prefix: 'Requester'),
+      ResourceFieldMapper.createStatusLine(intentDisplay, prefix: 'Intent'),
     );
 
-    // Performer
+    // Performer (Intended Dispenser)
     final performerDisplay =
         FhirFieldExtractor.extractReferenceDisplay(performer);
     ResourceFieldMapper.addIfNotNull(
@@ -197,21 +271,30 @@ class MedicationRequest with _$MedicationRequest implements IFhirResource {
       ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
     );
 
-    // Dosage Instructions
-    final dosageDisplay =
-        FhirFieldExtractor.extractDosageInstructions(dosageInstruction);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
-    );
-
-    // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
-    );
+    // Substitution (Generic Allowed?)
+    if (substitution != null) {
+      final substitutionAllowed = substitution!.allowedBoolean?.valueBoolean;
+      if (substitutionAllowed != null) {
+        final substitutionDisplay = substitutionAllowed
+            ? 'Generic substitution allowed'
+            : 'Brand name required - no substitution';
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createStatusLine(substitutionDisplay,
+              prefix: 'Substitution'),
+        );
+      } else {
+        // Check CodeableConcept
+        final substitutionCodeDisplay =
+            FhirFieldExtractor.extractCodeableConceptText(
+                substitution!.allowedCodeableConcept);
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createStatusLine(substitutionCodeDisplay,
+              prefix: 'Substitution'),
+        );
+      }
+    }
 
     // Course of Therapy Type
     final courseDisplay =
@@ -220,6 +303,24 @@ class MedicationRequest with _$MedicationRequest implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createTimelineLine(courseDisplay,
           prefix: 'Course of Therapy'),
+    );
+
+    // Do Not Perform
+    final doNotPerformValue = doNotPerform?.valueBoolean;
+    if (doNotPerformValue == true) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine('Do NOT perform this request',
+            prefix: '⚠️ Alert'),
+      );
+    }
+
+    // Recorder
+    final recorderDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(recorder);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
     );
 
     // Date

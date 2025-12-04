@@ -108,6 +108,58 @@ class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    final keyInfoStartIndex = infoLines.length;
+
+    // Criticality (MOST CRITICAL - safety concern)
+    final criticalityDisplay = criticality?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(criticalityDisplay,
+          prefix: 'Criticality'),
+    );
+
+    // Reactions
+    if (reaction != null && reaction!.isNotEmpty) {
+      final reactionManifestations = reaction!
+          .expand((r) => r.manifestation)
+          .map((m) => FhirFieldExtractor.extractCodeableConceptText(m))
+          .where((m) => m != null && m.isNotEmpty)
+          .take(3)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine(
+            reactionManifestations.isNotEmpty ? reactionManifestations : null,
+            prefix: 'Reactions'),
+      );
+    }
+
+    // Category (food, medication, environment, biologic)
+    if (category != null && category!.isNotEmpty) {
+      final categoryDisplay =
+          category!.map((c) => c.valueString).where((c) => c != null).join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createCategoryLine(
+            categoryDisplay.isNotEmpty ? categoryDisplay : null,
+            prefix: 'Category'),
+      );
+    }
+
+    // Type (allergy or intolerance)
+    final typeDisplay = type?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Add section header only if we added content
+    if (infoLines.length > keyInfoStartIndex) {
+      infoLines.insert(keyInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Allergy Details'));
+    }
+
+    final basicInfoStartIndex = infoLines.length;
 
     // Clinical Status
     final statusDisplay =
@@ -127,33 +179,6 @@ class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
           prefix: 'Verification'),
     );
 
-    // Type (allergy or intolerance)
-    final typeDisplay = type?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(typeDisplay, prefix: 'Type'),
-    );
-
-    // Category (food, medication, environment, biologic)
-    if (category != null && category!.isNotEmpty) {
-      final categoryDisplay =
-          category!.map((c) => c.valueString).where((c) => c != null).join(', ');
-      ResourceFieldMapper.addIfNotNull(
-        infoLines,
-        ResourceFieldMapper.createCategoryLine(
-            categoryDisplay.isNotEmpty ? categoryDisplay : null,
-            prefix: 'Category'),
-      );
-    }
-
-    // Criticality
-    final criticalityDisplay = criticality?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createWarningLine(criticalityDisplay,
-          prefix: 'Criticality'),
-    );
-
     // Onset
     final onsetDisplay = FhirFieldExtractor.extractOnsetX(onsetX);
     ResourceFieldMapper.addIfNotNull(
@@ -168,6 +193,14 @@ class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
       ResourceFieldMapper.createDateLine(lastOccurrenceDisplay,
           prefix: 'Last Occurrence'),
     );
+
+    // Add section header only if we added content
+    if (infoLines.length > basicInfoStartIndex) {
+      infoLines.insert(basicInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Basic Information'));
+    }
+
+    final additionalInfoStartIndex = infoLines.length;
 
     // Recorder
     final recorderDisplay =
@@ -185,22 +218,6 @@ class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
       ResourceFieldMapper.createUserLine(asserterDisplay, prefix: 'Asserter'),
     );
 
-    // Reactions
-    if (reaction != null && reaction!.isNotEmpty) {
-      final reactionManifestations = reaction!
-          .expand((r) => r.manifestation)
-          .map((m) => FhirFieldExtractor.extractCodeableConceptText(m))
-          .where((m) => m != null && m.isNotEmpty)
-          .take(3)
-          .join(', ');
-      ResourceFieldMapper.addIfNotNull(
-        infoLines,
-        ResourceFieldMapper.createWarningLine(
-            reactionManifestations.isNotEmpty ? reactionManifestations : null,
-            prefix: 'Reactions'),
-      );
-    }
-
     // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
@@ -215,6 +232,12 @@ class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
     );
+
+    // Add section header only if we added content
+    if (infoLines.length > additionalInfoStartIndex) {
+      infoLines.insert(additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'));
+    }
 
     return infoLines;
   }

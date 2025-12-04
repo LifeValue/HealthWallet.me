@@ -111,6 +111,40 @@ class Coverage with _$Coverage implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    final coverageDetailsStartIndex = infoLines.length;
+
+    // Subscriber ID / Member ID (MOST CRITICAL)
+    final subscriberIdText = subscriberId?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createIdentificationLine(subscriberIdText,
+          prefix: 'Member ID'),
+    );
+
+    // Group Number (from class)
+    if (class_ != null && class_!.isNotEmpty) {
+      for (final coverageClass in class_!) {
+        final classType = FhirFieldExtractor.extractCodeableConceptText(
+            coverageClass.type);
+        final classValue = coverageClass.value?.valueString;
+        final className = coverageClass.name?.valueString;
+        
+        if (classType == 'group' || classType?.toLowerCase() == 'group') {
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createIdentificationLine(classValue,
+                prefix: 'Group Number'),
+          );
+        }
+      }
+    }
+
+    // Plan Type
+    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Plan Type'),
+    );
 
     // Status
     ResourceFieldMapper.addIfNotNull(
@@ -118,29 +152,51 @@ class Coverage with _$Coverage implements IFhirResource {
       ResourceFieldMapper.createStatusLine(status, prefix: 'Status'),
     );
 
-    // Type
-    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    // Effective Dates / Period
+    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+      ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Effective Dates'),
     );
 
-    // Payor
-    final payorDisplay =
-        FhirFieldExtractor.extractMultipleReferenceDisplays(payor);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createOrganizationLine(payorDisplay, prefix: 'Payor'),
-    );
+    // Add section header only if we added content
+    if (infoLines.length > coverageDetailsStartIndex) {
+      infoLines.insert(coverageDetailsStartIndex,
+        ResourceFieldMapper.createSectionHeader('Coverage Details'));
+    }
 
-    // Policy Holder
-    final policyHolderDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(policyHolder);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createUserLine(policyHolderDisplay,
-          prefix: 'Policy Holder'),
-    );
+    final basicInfoStartIndex = infoLines.length;
+
+    // Insurance Company / Payor
+    if (payor != null && payor!.isNotEmpty) {
+      final payorDisplay = payor!
+          .map((p) => FhirFieldExtractor.extractReferenceDisplay(p))
+          .where((p) => p != null && p.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createOrganizationLine(
+            payorDisplay.isNotEmpty ? payorDisplay : null,
+            prefix: 'Insurance Company'),
+      );
+    }
+
+    // Plan Name (from class)
+    if (class_ != null && class_!.isNotEmpty) {
+      for (final coverageClass in class_!) {
+        final classType = FhirFieldExtractor.extractCodeableConceptText(
+            coverageClass.type);
+        final className = coverageClass.name?.valueString;
+        
+        if ((classType == 'plan' || classType?.toLowerCase() == 'plan') && 
+            className != null) {
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createStatusLine(className, prefix: 'Plan Name'),
+          );
+        }
+      }
+    }
 
     // Subscriber
     final subscriberDisplay =
@@ -151,12 +207,13 @@ class Coverage with _$Coverage implements IFhirResource {
           prefix: 'Subscriber'),
     );
 
-    // Subscriber ID
-    final subscriberIdText = subscriberId?.valueString;
+    // Relationship to Subscriber
+    final relationshipDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(relationship);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createIdentificationLine(subscriberIdText,
-          prefix: 'Subscriber ID'),
+      ResourceFieldMapper.createStatusLine(relationshipDisplay,
+          prefix: 'Relationship to Subscriber'),
     );
 
     // Beneficiary
@@ -168,28 +225,156 @@ class Coverage with _$Coverage implements IFhirResource {
           prefix: 'Beneficiary'),
     );
 
-    // Relationship
-    final relationshipDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(relationship);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(relationshipDisplay,
-          prefix: 'Relationship'),
-    );
-
-    // Period
-    final periodDisplay = FhirFieldExtractor.extractPeriod(period);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createTimelineLine(periodDisplay, prefix: 'Period'),
-    );
-
     // Network
     final networkText = network?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(networkText, prefix: 'Network'),
     );
+
+    // Add section header only if we added content
+    if (infoLines.length > basicInfoStartIndex) {
+      infoLines.insert(basicInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Basic Information'));
+    }
+
+    final additionalInfoStartIndex = infoLines.length;
+
+    // Policy Holder (if different from subscriber)
+    final policyHolderDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(policyHolder);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(policyHolderDisplay,
+          prefix: 'Policy Holder'),
+    );
+
+    // Dependent (sequence number)
+    final dependentText = dependent?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(dependentText, prefix: 'Dependent'),
+    );
+
+    // Order (Primary, Secondary, etc.)
+    if (order != null) {
+      final orderValue = int.tryParse(order!.valueString ?? '');
+      String? orderDisplay;
+      if (orderValue != null) {
+        switch (orderValue) {
+          case 1:
+            orderDisplay = 'Primary (1)';
+            break;
+          case 2:
+            orderDisplay = 'Secondary (2)';
+            break;
+          case 3:
+            orderDisplay = 'Tertiary (3)';
+            break;
+          default:
+            orderDisplay = 'Order $orderValue';
+        }
+      }
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(orderDisplay, prefix: 'Order'),
+      );
+    }
+
+    // Cost to Beneficiary (Copays, Deductibles, etc.)
+    if (costToBeneficiary != null && costToBeneficiary!.isNotEmpty) {
+      for (final cost in costToBeneficiary!) {
+        final costType = FhirFieldExtractor.extractCodeableConceptText(
+            cost.type);
+        
+        // Get value from valueMoney or valueQuantity
+        String? costValue;
+        if (cost.valueX != null) {
+          final valueMoney = cost.valueX!.isAs<fhir_r4.Money>();
+          if (valueMoney != null) {
+            final amount = valueMoney.value?.valueString;
+            final currency = valueMoney.currency?.toString() ?? 'USD';
+            if (amount != null) {
+              costValue = '\$$amount $currency';
+            }
+          } else {
+            final valueQuantity = cost.valueX!.isAs<fhir_r4.Quantity>();
+            if (valueQuantity != null) {
+              costValue = FhirFieldExtractor.extractQuantity(valueQuantity);
+            }
+          }
+        }
+        
+        final costDisplay = costType != null && costValue != null
+            ? '$costType: $costValue'
+            : costValue ?? costType;
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createStatusLine(costDisplay,
+              prefix: 'Cost Sharing'),
+        );
+      }
+    }
+
+    // Additional Class Information (employer, subgroup, etc.)
+    if (class_ != null && class_!.isNotEmpty) {
+      for (final coverageClass in class_!) {
+        final classType = FhirFieldExtractor.extractCodeableConceptText(
+            coverageClass.type);
+        final classValue = coverageClass.value?.valueString;
+        final className = coverageClass.name?.valueString;
+        
+        // Skip if already displayed (group, plan)
+        if (classType == 'group' || classType == 'plan') continue;
+        
+        String? classDisplay = className ?? classValue;
+        if (classType != null && classDisplay != null) {
+          classDisplay = '$classType: $classDisplay';
+        }
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createStatusLine(classDisplay,
+              prefix: 'Coverage Class'),
+        );
+      }
+    }
+
+    // Subrogation
+    final subrogationValue = subrogation?.valueBoolean;
+    if (subrogationValue != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            subrogationValue ? 'Yes' : 'No',
+            prefix: 'Subrogation'),
+      );
+    }
+
+    // Contract References
+    if (contract != null && contract!.isNotEmpty) {
+      final contractDisplay = contract!
+          .map((c) => FhirFieldExtractor.extractReferenceDisplay(c))
+          .where((c) => c != null && c.isNotEmpty)
+          .take(3)
+          .join(', ');
+      
+      if (contractDisplay.isNotEmpty) {
+        final suffix = contract!.length > 3 ? ' (${contract!.length - 3} more)' : '';
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createDocumentLine(contractDisplay + suffix,
+              prefix: 'Contract'),
+        );
+      }
+    }
+
+    // Add section header only if we added content
+    if (infoLines.length > additionalInfoStartIndex) {
+      infoLines.insert(additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'));
+    }
 
     // Date
     if (date != null) {
@@ -201,7 +386,6 @@ class Coverage with _$Coverage implements IFhirResource {
 
     return infoLines;
   }
-
   @override
   List<String?> get resourceReferences {
     return {

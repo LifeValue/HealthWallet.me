@@ -93,19 +93,49 @@ class Medication with _$Medication implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Medication Details'));
+
+    // Medication Code (already in title, but could show NDC or other codes here)
+    final codeDisplay = FhirFieldExtractor.extractCodeableConceptText(code);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createMedicationLine(codeDisplay, prefix: 'Medication'),
+    );
+
+    // Form (Tablet, Capsule, Liquid, etc.) - CRITICAL for patients
+    final formDisplay = FhirFieldExtractor.extractCodeableConceptText(form);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createMedicationLine(formDisplay, prefix: 'Form'),
+    );
+
+    // Amount/Strength
+    if (amount != null) {
+      final numerator = amount!.numerator?.value?.valueDouble;
+      final numeratorUnit = amount!.numerator?.unit ?? amount!.numerator?.code ?? '';
+      final denominator = amount!.denominator?.value?.valueDouble;
+      final denominatorUnit = amount!.denominator?.unit ?? amount!.denominator?.code ?? '';
+      
+      String? amountDisplay;
+      if (numerator != null && denominator != null) {
+        amountDisplay = '$numerator$numeratorUnit / $denominator$denominatorUnit';
+      } else if (numerator != null) {
+        amountDisplay = '$numerator $numeratorUnit';
+      }
+      
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createValueLine(amountDisplay, prefix: 'Strength'),
+      );
+    }
+
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
-    );
-
-    // Form
-    final formDisplay = FhirFieldExtractor.extractCodeableConceptText(form);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createMedicationLine(formDisplay, prefix: 'Form'),
     );
 
     // Manufacturer
@@ -117,21 +147,20 @@ class Medication with _$Medication implements IFhirResource {
           prefix: 'Manufacturer'),
     );
 
-    // Amount
-    if (amount != null) {
-      final numerator = amount!.numerator?.value?.valueDouble?.toStringAsFixed(2);
-      final denominator = amount!.denominator?.value?.valueDouble?.toStringAsFixed(2);
-      final unit = amount!.numerator?.unit ?? '';
-      if (numerator != null && denominator != null) {
-        ResourceFieldMapper.addIfNotNull(
-          infoLines,
-          ResourceFieldMapper.createValueLine('$numerator/$denominator $unit',
-              prefix: 'Amount'),
-        );
-      }
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+
+    // Ingredients
+    if (ingredient != null && ingredient!.isNotEmpty) {
+      // Show ingredient count
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createMedicationLine(
+            '${ingredient!.length} ingredient(s)',
+            prefix: 'Ingredients'),
+      );
     }
 
-    // Batch
+    // Batch Information
     if (batch != null) {
       final lotNumber = batch!.lotNumber?.valueString;
       ResourceFieldMapper.addIfNotNull(
@@ -139,21 +168,12 @@ class Medication with _$Medication implements IFhirResource {
         ResourceFieldMapper.createIdentificationLine(lotNumber,
             prefix: 'Lot Number'),
       );
+
       final expirationDate = batch!.expirationDate?.valueString;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createDateLine(expirationDate,
             prefix: 'Expiration'),
-      );
-    }
-
-    // Ingredients count
-    if (ingredient != null && ingredient!.isNotEmpty) {
-      ResourceFieldMapper.addIfNotNull(
-        infoLines,
-        ResourceFieldMapper.createMedicationLine(
-            '${ingredient!.length} ingredient(s)',
-            prefix: 'Ingredients'),
       );
     }
 

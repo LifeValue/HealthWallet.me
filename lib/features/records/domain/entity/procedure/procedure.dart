@@ -133,6 +133,56 @@ class Procedure with _$Procedure implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Procedure Details'));
+
+    // Performed Date/Period (CRITICAL - When it happened)
+    final performedDisplay = FhirFieldExtractor.extractPerformedX(performedX);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(performedDisplay,
+          prefix: 'Date Performed'),
+    );
+
+    // Performer (Who performed it - CRITICAL)
+    if (performer != null && performer!.isNotEmpty) {
+      for (final perf in performer!) {
+        final performerName = FhirFieldExtractor.extractReferenceDisplay(perf.actor);
+        final performerFunction = FhirFieldExtractor.extractCodeableConceptText(perf.function_);
+        
+        final performerDisplay = performerFunction != null && performerName != null
+            ? '$performerName ($performerFunction)'
+            : performerName ?? performerFunction;
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performed By'),
+        );
+      }
+    }
+
+    // Outcome (Result - CRITICAL)
+    final outcomeDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(outcome);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(outcomeDisplay, prefix: 'Outcome'),
+    );
+
+    // Body Site (Where on body - IMPORTANT)
+    if (bodySite != null && bodySite!.isNotEmpty) {
+      final bodySiteDisplay = bodySite!
+          .map((b) => FhirFieldExtractor.extractCodeableConceptText(b))
+          .where((b) => b != null && b.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createBodySiteLine(
+            bodySiteDisplay.isNotEmpty ? bodySiteDisplay : null,
+            prefix: 'Body Site'),
+      );
+    }
+
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
 
     // Status
     final statusText = status?.valueString;
@@ -141,7 +191,16 @@ class Procedure with _$Procedure implements IFhirResource {
       ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
     );
 
-    // Category
+    // Status Reason (if not completed)
+    final statusReasonDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(statusReason);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusReasonDisplay,
+          prefix: 'Status Reason'),
+    );
+
+    // Category (Type of procedure)
     final categoryDisplay =
         FhirFieldExtractor.extractCodeableConceptText(category);
     ResourceFieldMapper.addIfNotNull(
@@ -150,14 +209,15 @@ class Procedure with _$Procedure implements IFhirResource {
           prefix: 'Category'),
     );
 
-    // Performer
-    final performerDisplay = FhirFieldExtractor.extractPerformers(performer);
+    // Procedure Code (CPT/ICD-10-PCS)
+    final codeDisplay = FhirFieldExtractor.extractCodeableConceptText(code);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
+      ResourceFieldMapper.createProcedureLine(codeDisplay,
+          prefix: 'Procedure Code'),
     );
 
-    // Location
+    // Location (Facility/Room where performed)
     final locationDisplay =
         FhirFieldExtractor.extractReferenceDisplay(location);
     ResourceFieldMapper.addIfNotNull(
@@ -166,24 +226,7 @@ class Procedure with _$Procedure implements IFhirResource {
           prefix: 'Location'),
     );
 
-    // Body Site
-    final bodySiteDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(bodySite);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
-          prefix: 'Body Site'),
-    );
-
-    // Performed Date/Period
-    final performedDisplay = FhirFieldExtractor.extractPerformedX(performedX);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createDateLine(performedDisplay,
-          prefix: 'Performed'),
-    );
-
-    // Reason Code
+    // Reason Code (Why procedure was done)
     final reasonCodeDisplay =
         FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
@@ -191,31 +234,174 @@ class Procedure with _$Procedure implements IFhirResource {
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
     );
 
-    // Outcome
-    final outcomeDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(outcome);
+    // Reason Reference (Link to condition/observation)
+    if (reasonReference != null && reasonReference!.isNotEmpty) {
+      final reasonRefDisplay = reasonReference!
+          .map((r) => FhirFieldExtractor.extractReferenceDisplay(r))
+          .where((r) => r != null && r.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createNotesLine(
+            reasonRefDisplay.isNotEmpty ? reasonRefDisplay : null,
+            prefix: 'Related Condition'),
+      );
+    }
+
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+
+    // Recorder (Who documented the procedure)
+    final recorderDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(recorder);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(outcomeDisplay, prefix: 'Outcome'),
+      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
     );
 
-    // Complication
-    final complicationDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(complication);
+    // Asserter (Who verified/confirmed)
+    final asserterDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(asserter);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(complicationDisplay,
-          prefix: 'Complication'),
+      ResourceFieldMapper.createUserLine(asserterDisplay, prefix: 'Verified By'),
     );
 
-    // Follow-up
-    final followUpDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(followUp);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createTimelineLine(followUpDisplay,
-          prefix: 'Follow-up'),
-    );
+    // Complications (Problems during/after - WARNING)
+    if (complication != null && complication!.isNotEmpty) {
+      final complicationDisplay = complication!
+          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .where((c) => c != null && c.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine(
+            complicationDisplay.isNotEmpty ? complicationDisplay : null,
+            prefix: 'Complications'),
+      );
+    } else {
+      // Explicitly show "None" if no complications
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine('None', prefix: 'Complications'),
+      );
+    }
+
+    // Complication Details (Link to detailed conditions)
+    if (complicationDetail != null && complicationDetail!.isNotEmpty) {
+      final complicationDetailDisplay = complicationDetail!
+          .map((c) => FhirFieldExtractor.extractReferenceDisplay(c))
+          .where((c) => c != null && c.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine(
+            complicationDetailDisplay.isNotEmpty ? complicationDetailDisplay : null,
+            prefix: 'Complication Details'),
+      );
+    }
+
+    // Follow-up Required
+    if (followUp != null && followUp!.isNotEmpty) {
+      final followUpDisplay = followUp!
+          .map((f) => FhirFieldExtractor.extractCodeableConceptText(f))
+          .where((f) => f != null && f.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createTimelineLine(
+            followUpDisplay.isNotEmpty ? followUpDisplay : null,
+            prefix: 'Follow-up'),
+      );
+    }
+
+    // Focal Device (Equipment/implants used)
+    if (focalDevice != null && focalDevice!.isNotEmpty) {
+      for (final device in focalDevice!) {
+        final deviceDisplay = FhirFieldExtractor.extractReferenceDisplay(device.manipulated);
+        final actionDisplay = FhirFieldExtractor.extractCodeableConceptText(device.action);
+        
+        final focalDeviceDisplay = actionDisplay != null && deviceDisplay != null
+            ? '$deviceDisplay ($actionDisplay)'
+            : deviceDisplay ?? actionDisplay;
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createProcedureLine(focalDeviceDisplay,
+              prefix: 'Focal Device'),
+        );
+      }
+    }
+
+    // Items Used (Supplies/medications)
+    if (usedReference != null && usedReference!.isNotEmpty) {
+      final usedDisplay = usedReference!
+          .map((u) => FhirFieldExtractor.extractReferenceDisplay(u))
+          .where((u) => u != null && u.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createProcedureLine(
+            usedDisplay.isNotEmpty ? usedDisplay : null,
+            prefix: 'Items Used'),
+      );
+    }
+
+    // Used Code (Coded items/supplies)
+    if (usedCode != null && usedCode!.isNotEmpty) {
+      final usedCodeDisplay = usedCode!
+          .map((u) => FhirFieldExtractor.extractCodeableConceptText(u))
+          .where((u) => u != null && u.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createProcedureLine(
+            usedCodeDisplay.isNotEmpty ? usedCodeDisplay : null,
+            prefix: 'Supplies'),
+      );
+    }
+
+    // Report (Links to procedure reports)
+    if (report != null && report!.isNotEmpty) {
+      final reportDisplay = report!
+          .map((r) => FhirFieldExtractor.extractReferenceDisplay(r))
+          .where((r) => r != null && r.isNotEmpty)
+          .take(3)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createDocumentLine(
+            reportDisplay.isNotEmpty ? reportDisplay : null,
+            prefix: 'Report'),
+      );
+    }
+
+    // Part Of (Parent procedure if this is a sub-procedure)
+    if (partOf != null && partOf!.isNotEmpty) {
+      final partOfDisplay = partOf!
+          .map((p) => FhirFieldExtractor.extractReferenceDisplay(p))
+          .where((p) => p != null && p.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createProcedureLine(
+            partOfDisplay.isNotEmpty ? partOfDisplay : null,
+            prefix: 'Part Of'),
+      );
+    }
+
+    // Based On (Order/Request that led to this procedure)
+    if (basedOn != null && basedOn!.isNotEmpty) {
+      final basedOnDisplay = basedOn!
+          .map((b) => FhirFieldExtractor.extractReferenceDisplay(b))
+          .where((b) => b != null && b.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createDocumentLine(
+            basedOnDisplay.isNotEmpty ? basedOnDisplay : null,
+            prefix: 'Based On'),
+      );
+    }
 
     // Date
     if (date != null) {
@@ -225,7 +411,7 @@ class Procedure with _$Procedure implements IFhirResource {
       ));
     }
 
-    // Notes
+    // Notes (Procedure report/findings)
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,

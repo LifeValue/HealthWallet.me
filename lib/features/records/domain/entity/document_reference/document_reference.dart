@@ -110,23 +110,9 @@ class DocumentReference with _$DocumentReference implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    final documentDetailsStartIndex = infoLines.length;
 
-    // Status
-    final statusText = status?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
-    );
-
-    // Document Status
-    final docStatusText = docStatus?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(docStatusText,
-          prefix: 'Document Status'),
-    );
-
-    // Type
+    // Type (What kind of document - CRITICAL)
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -134,32 +120,216 @@ class DocumentReference with _$DocumentReference implements IFhirResource {
     );
 
     // Category
-    final categoryDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
+    if (category != null && category!.isNotEmpty) {
+      final categoryDisplay = category!
+          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .where((c) => c != null && c.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createCategoryLine(
+            categoryDisplay.isNotEmpty ? categoryDisplay : null,
+            prefix: 'Category'),
+      );
+    }
+
+    // Date (When document was created)
+    final fhirDateDisplay = fhirDate?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createDateLine(fhirDateDisplay, prefix: 'Created'),
     );
 
     // Author
-    final authorDisplay =
-        FhirFieldExtractor.extractMultipleReferenceDisplays(author);
+    if (author != null && author!.isNotEmpty) {
+      final authorDisplay = author!
+          .map((a) => FhirFieldExtractor.extractReferenceDisplay(a))
+          .where((a) => a != null && a.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createUserLine(
+            authorDisplay.isNotEmpty ? authorDisplay : null,
+            prefix: 'Author'),
+      );
+    }
+
+    // Status (Current/Superseded/Entered in Error)
+    final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(authorDisplay, prefix: 'Author'),
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
     );
 
-    // Authenticator
+    // Add section header only if we added content
+    if (infoLines.length > documentDetailsStartIndex) {
+      infoLines.insert(documentDetailsStartIndex,
+        ResourceFieldMapper.createSectionHeader('Document Details'));
+    }
+
+    final basicInfoStartIndex = infoLines.length;
+
+    // Description (Summary of document content)
+    final descriptionText = description?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(descriptionText,
+          prefix: 'Description'),
+    );
+
+    // Document Status (Preliminary/Final/Amended)
+    final docStatusText = docStatus?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(docStatusText,
+          prefix: 'Document Status'),
+    );
+
+    // Authenticated By (Who verified/signed)
     final authenticatorDisplay =
         FhirFieldExtractor.extractReferenceDisplay(authenticator);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(authenticatorDisplay,
-          prefix: 'Authenticator'),
+          prefix: 'Authenticated By'),
     );
 
-    // Custodian
+    // Facility (from context)
+    if (context != null) {
+      if (context!.facilityType != null) {
+        final facilityType = FhirFieldExtractor.extractCodeableConceptText(
+            context!.facilityType);
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createLocationLine(facilityType,
+              prefix: 'Facility Type'),
+        );
+      }
+
+      // Practice Setting
+      if (context!.practiceSetting != null) {
+        final practiceSetting = FhirFieldExtractor.extractCodeableConceptText(
+            context!.practiceSetting);
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createLocationLine(practiceSetting,
+              prefix: 'Practice Setting'),
+        );
+      }
+
+      // Period (Time period documented)
+      if (context!.period != null) {
+        final periodDisplay = FhirFieldExtractor.extractPeriod(context!.period);
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createTimelineLine(periodDisplay,
+              prefix: 'Service Period'),
+        );
+      }
+    }
+
+    // Add section header only if we added content
+    if (infoLines.length > basicInfoStartIndex) {
+      infoLines.insert(basicInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Basic Information'));
+    }
+
+    final additionalInfoStartIndex = infoLines.length;
+
+    // Context Event (Encounter/Episode codes)
+    if (context != null && context!.event != null && context!.event!.isNotEmpty) {
+      final eventDisplay = context!.event!
+          .map((e) => FhirFieldExtractor.extractCodeableConceptText(e))
+          .where((e) => e != null && e.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createNotesLine(
+            eventDisplay.isNotEmpty ? eventDisplay : null,
+            prefix: 'Context'),
+      );
+    }
+
+    // Related Documents
+    if (relatesTo != null && relatesTo!.isNotEmpty) {
+      for (final relation in relatesTo!) {
+        final relationCode = relation.code?.valueString;
+        final targetDisplay = FhirFieldExtractor.extractReferenceDisplay(
+            relation.target);
+        
+        final relationDisplay = relationCode != null && targetDisplay != null
+            ? '$relationCode: $targetDisplay'
+            : targetDisplay ?? relationCode;
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createDocumentLine(relationDisplay,
+              prefix: 'Related Document'),
+        );
+      }
+    }
+
+    // Security Label
+    if (securityLabel != null && securityLabel!.isNotEmpty) {
+      final securityDisplay = securityLabel!
+          .map((s) => FhirFieldExtractor.extractCodeableConceptText(s))
+          .where((s) => s != null && s.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine(
+            securityDisplay.isNotEmpty ? securityDisplay : null,
+            prefix: 'Security Classification'),
+      );
+    }
+
+    // Content/Format Details
+    if (content != null && content!.isNotEmpty) {
+      final firstContent = content!.first;
+      
+      // Format
+      final formatDisplay = FhirFieldExtractor.extractCodeableConceptText(firstContent.format);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createDocumentLine(formatDisplay, prefix: 'Format'),
+      );
+
+      // Content Type (MIME type)
+      final contentType = firstContent.attachment.contentType?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createAttachmentLine(contentType,
+            prefix: 'Content Type'),
+      );
+
+      // Size
+      if (firstContent.attachment.size != null) {
+        final sizeValue = firstContent.attachment.size!.valueString;
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createAttachmentLine(
+              sizeValue != null ? '$sizeValue bytes' : null,
+              prefix: 'Size'),
+        );
+      }
+
+      // Language
+      final language = firstContent.attachment.language?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(language, prefix: 'Language'),
+      );
+
+      // Title
+      final attachmentTitle = firstContent.attachment.title?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createDocumentLine(attachmentTitle,
+            prefix: 'Attachment Title'),
+      );
+    }
+
+    // Custodian (Who maintains the document)
     final custodianDisplay =
         FhirFieldExtractor.extractReferenceDisplay(custodian);
     ResourceFieldMapper.addIfNotNull(
@@ -168,26 +338,22 @@ class DocumentReference with _$DocumentReference implements IFhirResource {
           prefix: 'Custodian'),
     );
 
-    // Description
-    final descriptionText = description?.valueString;
+    // Master Identifier (Unique document ID)
+    final masterIdDisplay = masterIdentifier?.value?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(descriptionText,
-          prefix: 'Description'),
+      ResourceFieldMapper.createIdentificationLine(masterIdDisplay,
+          prefix: 'Document ID'),
     );
 
-    // Content Format
-    if (content != null && content!.isNotEmpty) {
-      final contentType = content!.first.attachment.contentType?.toString();
-      ResourceFieldMapper.addIfNotNull(
-        infoLines,
-        ResourceFieldMapper.createAttachmentLine(contentType,
-            prefix: 'Format'),
-      );
+    // Add section header only if we added content
+    if (infoLines.length > additionalInfoStartIndex) {
+      infoLines.insert(additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'));
     }
 
-    // Date
-    if (date != null) {
+    // Date (fallback if not shown above)
+    if (date != null && fhirDate == null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
@@ -196,7 +362,6 @@ class DocumentReference with _$DocumentReference implements IFhirResource {
 
     return infoLines;
   }
-
   @override
   List<String?> get resourceReferences {
     return {

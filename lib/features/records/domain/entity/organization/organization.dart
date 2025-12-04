@@ -99,6 +99,21 @@ class Organization with _$Organization implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    final orgDetailsStartIndex = infoLines.length;
+
+    // Type (Hospital, Insurance Company, Government, etc.)
+    if (type != null && type!.isNotEmpty) {
+      final typeDisplay = type!
+          .map((t) => FhirFieldExtractor.extractCodeableConceptText(t))
+          .where((t) => t != null && t.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createCategoryLine(
+            typeDisplay.isNotEmpty ? typeDisplay : null,
+            prefix: 'Type'),
+      );
+    }
 
     // Active Status
     final activeStatus = active?.valueBoolean;
@@ -111,21 +126,141 @@ class Organization with _$Organization implements IFhirResource {
       );
     }
 
-    // Type
-    final typeDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(type);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
-    );
+    // Add section header only if we added content
+    if (infoLines.length > orgDetailsStartIndex) {
+      infoLines.insert(orgDetailsStartIndex,
+        ResourceFieldMapper.createSectionHeader('Organization Details'));
+    }
+
+    final contactInfoStartIndex = infoLines.length;
 
     // Address
     final addressDisplay =
-        FhirFieldExtractor.formatAddress(address?.firstOrNull);
+        FhirFieldExtractor.formatFullAddress(address?.firstOrNull);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
     );
+
+    // Telecom (phone/email/fax/url)
+    if (telecom != null && telecom!.isNotEmpty) {
+      // Phone
+      final phone = telecom!
+          .where((t) => t.system?.valueString == 'phone')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+      );
+
+      // Email
+      final email = telecom!
+          .where((t) => t.system?.valueString == 'email')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+      );
+
+      // Fax
+      final fax = telecom!
+          .where((t) => t.system?.valueString == 'fax')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(fax, prefix: 'Fax'),
+      );
+
+      // Website
+      final url = telecom!
+          .where((t) => t.system?.valueString == 'url')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(url, prefix: 'Website'),
+      );
+    }
+
+    // Organization Contact Persons
+    if (contact != null && contact!.isNotEmpty) {
+      for (final contactPerson in contact!) {
+        final name = FhirFieldExtractor.extractHumanName(contactPerson.name);
+        final purpose = FhirFieldExtractor.extractCodeableConceptText(
+            contactPerson.purpose);
+        
+        String? contactDisplay = name;
+        if (purpose != null && name != null) {
+          contactDisplay = '$name ($purpose)';
+        } else {
+          contactDisplay = name ?? purpose;
+        }
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createUserLine(contactDisplay,
+              prefix: 'Contact Person'),
+        );
+
+        // Contact person's telecom
+        if (contactPerson.telecom != null && contactPerson.telecom!.isNotEmpty) {
+          final contactPhone = contactPerson.telecom!
+              .where((t) => t.system?.valueString == 'phone')
+              .firstOrNull
+              ?.value
+              ?.valueString;
+          if (contactPhone != null) {
+            ResourceFieldMapper.addIfNotNull(
+              infoLines,
+              ResourceFieldMapper.createStatusLine(contactPhone,
+                  prefix: '  Contact Phone'),
+            );
+          }
+
+          final contactEmail = contactPerson.telecom!
+              .where((t) => t.system?.valueString == 'email')
+              .firstOrNull
+              ?.value
+              ?.valueString;
+          if (contactEmail != null) {
+            ResourceFieldMapper.addIfNotNull(
+              infoLines,
+              ResourceFieldMapper.createStatusLine(contactEmail,
+                  prefix: '  Contact Email'),
+            );
+          }
+        }
+      }
+    }
+
+    // Add section header only if we added content
+    if (infoLines.length > contactInfoStartIndex) {
+      infoLines.insert(contactInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Contact Information'));
+    }
+
+    final additionalInfoStartIndex = infoLines.length;
+
+    // Alias (Also Known As)
+    if (alias != null && alias!.isNotEmpty) {
+      final aliasText = alias!
+          .map((a) => a.valueString)
+          .where((a) => a != null && a.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            aliasText.isNotEmpty ? aliasText : null,
+            prefix: 'Also Known As'),
+      );
+    }
 
     // Part Of (parent organization)
     final partOfDisplay = FhirFieldExtractor.extractReferenceDisplay(partOf);
@@ -135,36 +270,28 @@ class Organization with _$Organization implements IFhirResource {
           prefix: 'Part Of'),
     );
 
-    // Telecom (phone/email)
-    if (telecom != null && telecom!.isNotEmpty) {
-      final phone = telecom!
-          .where((t) => t.system?.valueString == 'phone')
-          .firstOrNull
-          ?.value
-          ?.toString();
-      ResourceFieldMapper.addIfNotNull(
-        infoLines,
-        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
-      );
-
-      final email = telecom!
-          .where((t) => t.system?.valueString == 'email')
-          .firstOrNull
-          ?.value
-          ?.toString();
-      ResourceFieldMapper.addIfNotNull(
-        infoLines,
-        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
-      );
+    // Endpoints (technical connections)
+    if (endpoint != null && endpoint!.isNotEmpty) {
+      final endpointDisplay = endpoint!
+          .map((e) => FhirFieldExtractor.extractReferenceDisplay(e))
+          .where((e) => e != null && e.isNotEmpty)
+          .take(3)
+          .join(', ');
+      
+      if (endpointDisplay.isNotEmpty) {
+        final suffix = endpoint!.length > 3 ? ' (${endpoint!.length - 3} more)' : '';
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createStatusLine(endpointDisplay + suffix,
+              prefix: 'Endpoints'),
+        );
+      }
     }
 
-    // Alias
-    if (alias != null && alias!.isNotEmpty) {
-      final aliasText = alias!.map((a) => a.toString()).join(', ');
-      ResourceFieldMapper.addIfNotNull(
-        infoLines,
-        ResourceFieldMapper.createStatusLine(aliasText, prefix: 'Alias'),
-      );
+    // Add section header only if we added content
+    if (infoLines.length > additionalInfoStartIndex) {
+      infoLines.insert(additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'));
     }
 
     // Date
@@ -177,7 +304,6 @@ class Organization with _$Organization implements IFhirResource {
 
     return infoLines;
   }
-
   @override
   List<String?> get resourceReferences {
     return {

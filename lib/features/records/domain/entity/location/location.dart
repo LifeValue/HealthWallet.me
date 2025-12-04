@@ -111,15 +111,72 @@ class Location with _$Location implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    final facilityDetailsStartIndex = infoLines.length;
 
-    // Status
+    // Type (Hospital, Clinic, etc. - CRITICAL)
+    if (type != null && type!.isNotEmpty) {
+      final typeDisplay = type!
+          .map((t) => FhirFieldExtractor.extractCodeableConceptText(t))
+          .where((t) => t != null && t.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createCategoryLine(
+            typeDisplay.isNotEmpty ? typeDisplay : null,
+            prefix: 'Type'),
+      );
+    }
+
+    // Status (Active, Suspended, Inactive)
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
     );
 
-    // Operational Status
+    // Address (CRITICAL for patients)
+    final addressDisplay = FhirFieldExtractor.formatFullAddress(address);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+    );
+
+    // Telecom - Phone (Main)
+    if (telecom != null && telecom!.isNotEmpty) {
+      // Main Phone
+      final mainPhone = telecom!
+          .where((t) => t.system?.valueString == 'phone' && 
+                       (t.use == null || t.use?.valueString != 'fax'))
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(mainPhone, prefix: 'Phone'),
+      );
+
+      // Emergency Phone
+      final emergencyPhone = telecom!
+          .where((t) => t.system?.valueString == 'phone' && 
+                       t.use?.valueString == 'emergency')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine(emergencyPhone, prefix: 'Emergency'),
+      );
+    }
+
+    // Add section header only if we added content
+    if (infoLines.length > facilityDetailsStartIndex) {
+      infoLines.insert(facilityDetailsStartIndex,
+        ResourceFieldMapper.createSectionHeader('Facility Details'));
+    }
+
+    final basicInfoStartIndex = infoLines.length;
+
+    // Operational Status (Operational, Closed, etc.)
     final operationalStatusDisplay =
         FhirFieldExtractor.extractCodingDisplay(operationalStatus);
     ResourceFieldMapper.addIfNotNull(
@@ -128,22 +185,14 @@ class Location with _$Location implements IFhirResource {
           prefix: 'Operational Status'),
     );
 
-    // Mode
+    // Mode (Instance, Kind)
     final modeDisplay = mode?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(modeDisplay, prefix: 'Mode'),
     );
 
-    // Type
-    final typeDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(type);
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
-    );
-
-    // Physical Type
+    // Physical Type (Building, Wing, Room, Bed, etc.)
     final physicalTypeDisplay =
         FhirFieldExtractor.extractCodeableConceptText(physicalType);
     ResourceFieldMapper.addIfNotNull(
@@ -158,15 +207,37 @@ class Location with _$Location implements IFhirResource {
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createOrganizationLine(organizationDisplay,
-          prefix: 'Organization'),
+          prefix: 'Managing Organization'),
     );
 
-    // Address
-    final addressDisplay = FhirFieldExtractor.formatAddress(address);
+    // Part Of (parent location)
+    final partOfDisplay = FhirFieldExtractor.extractReferenceDisplay(partOf);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+      ResourceFieldMapper.createLocationLine(partOfDisplay, prefix: 'Part Of'),
     );
+
+    // Add section header only if we added content
+    if (infoLines.length > basicInfoStartIndex) {
+      infoLines.insert(basicInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Basic Information'));
+    }
+
+    final additionalInfoStartIndex = infoLines.length;
+
+    // Also Known As (Aliases)
+    if (alias != null && alias!.isNotEmpty) {
+      final aliasText = alias!
+          .map((a) => a.valueString)
+          .where((a) => a != null && a.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            aliasText.isNotEmpty ? aliasText : null,
+            prefix: 'Also Known As'),
+      );
+    }
 
     // Description
     final descriptionText = description?.valueString;
@@ -176,12 +247,109 @@ class Location with _$Location implements IFhirResource {
           prefix: 'Description'),
     );
 
-    // Part Of (parent location)
-    final partOfDisplay = FhirFieldExtractor.extractReferenceDisplay(partOf);
+    // Hours of Operation
+    if (hoursOfOperation != null && hoursOfOperation!.isNotEmpty) {
+      for (final hours in hoursOfOperation!) {
+        final daysOfWeek = hours.daysOfWeek
+            ?.map((d) => d.valueString)
+            .where((d) => d != null)
+            .join(', ');
+        
+        final allDay = hours.allDay?.valueBoolean;
+        String? hoursDisplay;
+        
+        if (allDay == true) {
+          hoursDisplay = '24/7';
+        } else {
+          final openingTime = hours.openingTime?.valueString;
+          final closingTime = hours.closingTime?.valueString;
+          if (openingTime != null && closingTime != null) {
+            hoursDisplay = '$openingTime - $closingTime';
+          }
+        }
+        
+        final fullDisplay = daysOfWeek != null && hoursDisplay != null
+            ? '$daysOfWeek: $hoursDisplay'
+            : hoursDisplay ?? daysOfWeek;
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createTimeLine(fullDisplay,
+              prefix: 'Hours'),
+        );
+      }
+    }
+
+    // GPS Coordinates
+    if (position != null) {
+      final latitude = position!.latitude?.valueString;
+      final longitude = position!.longitude?.valueString;
+      
+      if (latitude != null && longitude != null) {
+        // Parse to format as needed
+        final latDouble = double.tryParse(latitude);
+        final lonDouble = double.tryParse(longitude);
+        
+        final latDisplay = latDouble != null ? latDouble.toStringAsFixed(4) : latitude;
+        final lonDisplay = lonDouble != null ? lonDouble.toStringAsFixed(4) : longitude;
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createLocationLine('$latDisplay° N, $lonDisplay° W',
+              prefix: 'GPS Coordinates'),
+        );
+      }
+    }
+
+    // Additional Telecom
+    if (telecom != null && telecom!.isNotEmpty) {
+      // Email
+      final email = telecom!
+          .where((t) => t.system?.valueString == 'email')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+      );
+
+      // Fax
+      final fax = telecom!
+          .where((t) => t.system?.valueString == 'fax')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(fax, prefix: 'Fax'),
+      );
+
+      // Website
+      final url = telecom!
+          .where((t) => t.system?.valueString == 'url')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(url, prefix: 'Website'),
+      );
+    }
+
+    // Availability Exceptions (e.g., holiday hours)
+    final availabilityExceptionsText = availabilityExceptions?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(partOfDisplay, prefix: 'Part Of'),
+      ResourceFieldMapper.createNotesLine(availabilityExceptionsText,
+          prefix: 'Availability Exceptions'),
     );
+
+    // Add section header only if we added content
+    if (infoLines.length > additionalInfoStartIndex) {
+      infoLines.insert(additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'));
+    }
 
     // Date
     if (date != null) {
@@ -193,7 +361,7 @@ class Location with _$Location implements IFhirResource {
 
     return infoLines;
   }
-
+  
   @override
   List<String?> get resourceReferences {
     return {
