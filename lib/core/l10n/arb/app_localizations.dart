@@ -1054,6 +1054,12 @@ abstract class AppLocalizations {
   /// **'No records found'**
   String get noRecordsFound;
 
+  /// No description provided for @noRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No records'**
+  String get noRecords;
+
   /// No description provided for @tryDifferentKeywords.
   ///
   /// In en, this message translates to:

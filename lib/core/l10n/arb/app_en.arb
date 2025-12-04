@@ -186,6 +186,7 @@
     "clearAll": "Clear all",
     "save": "Save",
     "noRecordsFound": "No records found",
+    "noRecords": "No records",
     "tryDifferentKeywords": "Try searching with different keywords",
     "clearAllFilters": "Clear all",
     "syncingData": "Syncing data",
