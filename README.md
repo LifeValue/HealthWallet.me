@@ -165,7 +165,6 @@ lib/
 ```
 </details>
 
-
 <details>
   <summary><strong>GIT Branches</strong></summary>
 
@@ -189,12 +188,13 @@ lib/
 
 ### In Progress 🚧
 - Document scanning & OCR
+- File import & in-app viewing
 
 ### Future Plans 📋
 - QR code sharing (SMART Health Cards)
 - Proximity-based communication (Airdrop)
-- File import & in-app viewing
-- Responsive UI & CRDT backup system
+- Desktop app backup system(CRDT) and FHIR processing
+- Responsive UI
 - Wearable & health provider integration
 - AI health insights
 - AI Note taking prescription
