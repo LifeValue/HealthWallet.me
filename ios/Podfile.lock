@@ -40,7 +40,7 @@ PODS:
   - Flutter (1.0.0)
   - flutter_doc_scanner (0.0.1):
     - Flutter
-  - flutter_gemma (0.11.3):
+  - flutter_gemma (0.11.13):
     - Flutter
     - MediaPipeTasksGenAI (= 0.10.24)
     - MediaPipeTasksGenAIC (= 0.10.24)
@@ -297,7 +297,7 @@ SPEC CHECKSUMS:
   file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_doc_scanner: d930bcd7db6f69805d882330fc9b6f74a9db5c9e
-  flutter_gemma: f084bbbeca08bc288a5a9afe5a4a1b37aa804119
+  flutter_gemma: 8ed32b19abae2e069095437401f0a2d5ec46c0cb
   flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
   flutter_pdfview: 32bf27bda6fd85b9dd2c09628a824df5081246cf
   google_mlkit_commons: 2abe6a70e1824e431d16a51085cb475b672c8aab
@@ -341,4 +341,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: ce76ecff7e08d9f989bc856f3d026898667d5688
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

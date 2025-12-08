@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:health_wallet/app/view/app.dart';
 import 'package:health_wallet/bootstrap.dart';
@@ -19,6 +20,8 @@ void main() async {
   getIt<ScanBloc>().add(const ScanInitialised());
 
   FlutterNativeSplash.remove();
+
+  await FlutterGemma.initialize();
 
   await bootstrap(() => const App());
 }
