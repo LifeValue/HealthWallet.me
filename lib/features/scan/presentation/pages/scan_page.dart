@@ -42,6 +42,7 @@ class ScanView extends StatefulWidget {
 class _ScanViewState extends State<ScanView>
     with DocumentHandler, NavigationSettledCallbackMixin {
   bool _hasAutoScanned = false;
+  bool _isAttachingDocuments = false;
   late final PageViewNavigationController _navigationController;
 
   @override
@@ -75,7 +76,7 @@ class _ScanViewState extends State<ScanView>
   }
 
   Future<void> _autoStartScanning() async {
-    if (_hasAutoScanned) {
+    if (_hasAutoScanned || _isAttachingDocuments) {
       return;
     }
 
@@ -113,6 +114,26 @@ class _ScanViewState extends State<ScanView>
         context,
         () => _handleScanButtonPressed(context),
       );
+    }
+  }
+
+  @override
+  Future<void> navigateToLoadModel(
+    BuildContext context,
+    ProcessingSession session,
+  ) async {
+    setState(() {
+      _isAttachingDocuments = true;
+    });
+
+    try {
+      await super.navigateToLoadModel(context, session);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAttachingDocuments = false;
+        });
+      }
     }
   }
 
@@ -184,7 +205,9 @@ class _ScanViewState extends State<ScanView>
               return previous.sessions.isNotEmpty && current.sessions.isEmpty;
             },
             listener: (context, state) {
-              if (state.sessions.isEmpty && _hasAutoScanned) {
+              if (state.sessions.isEmpty &&
+                  _hasAutoScanned &&
+                  !_isAttachingDocuments) {
                 _resetAutoScanFlag();
 
                 if (_navigationController.currentPage == 2) {
