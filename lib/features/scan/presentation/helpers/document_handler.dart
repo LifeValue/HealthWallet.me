@@ -57,6 +57,10 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
 
     if (result == true) {
       context.router.push(ProcessingRoute(sessionId: session.id));
+
+      if (context.mounted) {
+        context.read<ScanBloc>().add(ScanMappingInitiated(sessionId: session.id));
+      }
     } else {
       context.read<ScanBloc>().add(ScanSessionCleared(session: session));
 

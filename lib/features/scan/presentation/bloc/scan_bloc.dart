@@ -387,7 +387,24 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           if (sessionAfterDelay.status != ProcessingStatus.pending) {
             return;
           }
-          add(ScanMappingInitiated(sessionId: event.sessionId));
+
+          try {
+            final isModelLoaded = await _repository.checkModelExistence();
+
+            if (isModelLoaded) {
+              logger.i(
+                  '_onScanSessionActivated - Model is loaded, triggering ScanMappingInitiated');
+              add(ScanMappingInitiated(sessionId: event.sessionId));
+            } else {
+              logger.i(
+                  '_onScanSessionActivated - Model not loaded, session will wait for manual trigger after model download');
+              emit(state.copyWith(status: const ScanStatus.initial()));
+            }
+          } catch (e) {
+            logger.e(
+                '_onScanSessionActivated - Error checking model existence: $e');
+            emit(state.copyWith(status: const ScanStatus.initial()));
+          }
         }
       } else if (session.status == ProcessingStatus.processing) {
         emit(state.copyWith(status: const ScanStatus.mapping()));
