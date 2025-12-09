@@ -37,35 +37,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingWelcomeSubtitle =>
-      'Securely access your complete medical history with <link>HealthWallet.me</link>. Connect to over 100,000 US healthcare institutions or add records by sharing directly with the app or scan documents. Your health data is private, compliant, and stored only on your device.';
+      '<link>HealthWallet.me</link> already connects to 100,000+ US healthcare providers, and we\'re expanding to new countries.';
 
   @override
   String get onboardingWelcomeDescription =>
-      'Sync your healthcare data through <link>FastenHealth OnPrem</link> with the healthcare providers and see your complete medical history in one place. Secured, compliant and always on your device. Enjoy!';
+      'Add records from any provider, import documents manually, or request support for your country.';
 
   @override
   String get onboardingRecordsTitle => 'Your Health, Always in Sync';
 
   @override
   String get onboardingRecordsSubtitle =>
-      '**Keep your medical history effortlessly up-to-date with both automatic and manual options.**';
+      '<link>HealthWallet.me</link> gives you flexible ways to bring all your medical history together:';
 
   @override
   String get onboardingRecordsDescription =>
-      '<link>HealthWallet.me</link> ensures your complete health history is always up-to-date. It automatically syncs new records from connected providers and lets you instantly add physical documents with a quick scan.';
+      '• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of Fasten Health OnPrem and get all your US healthcare systems records to your wallet.';
+
+  @override
+  String get onboardingRecordsContent =>
+      '• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of <link>Fasten Health OnPrem</link> and get all your US healthcare systems records to your wallet.';
+
+  @override
+  String get onboardingRecordsBottom =>
+      'Everything is organized securely on your device.';
+
+  @override
+  String get onboardingRequestIntegration => 'Request an integration';
 
   @override
   String get onboardingScanButton => 'Scan';
 
   @override
-  String get onboardingSyncTitle => 'Private by Design';
+  String get onboardingSyncTitle => 'Security & Privacy';
 
   @override
-  String get onboardingSyncSubtitle => 'Your health data belongs only to you.';
+  String get onboardingSyncSubtitle =>
+      '<link>HealthWallet.me</link> is built with privacy at its core. Your medical data is encrypted and stored only on your phone, never on cloud servers.';
 
   @override
   String get onboardingSyncDescription =>
-      'We believe your sensitive health information should never sit on a company server. Your data is encrypted and stored exclusively on your device, meaning you are the only one with access.';
+      'View your health history in airplane mode, abroad, or without internet, your records stay with you wherever you go. Add an extra layer of security by enabling biometric authentication.';
 
   @override
   String get onboardingBiometricText =>
@@ -164,7 +176,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailsFor => 'Details for ';
 
   @override
-  String get patientId => 'Patient ID: ';
+  String get patientId => 'MRN: ';
 
   @override
   String get age => 'Age';
@@ -516,6 +528,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noRecordsFound => 'No records found';
 
   @override
+  String get noRecords => 'No records';
+
+  @override
   String get tryDifferentKeywords => 'Try searching with different keywords';
 
   @override
@@ -604,4 +619,108 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentScanTitle => 'Scan';
+
+  @override
+  String get onboardingAiModelTitle => 'Enable AI Model';
+
+  @override
+  String get onboardingAiModelDescription =>
+      'Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.';
+
+  @override
+  String get onboardingAiModelSubtitle => 'Unlock AI-powered scanning';
+
+  @override
+  String get aiModelReady => 'AI model ready! You can start scanning.';
+
+  @override
+  String get aiModelDownloading => 'Downloading AI model...';
+
+  @override
+  String get aiModelEnableDownload => 'Enable & Download';
+
+  @override
+  String get aiModelError => 'Couldn’t verify model. Try again.';
+
+  @override
+  String get aiModelMissing => 'Not downloaded.';
+
+  @override
+  String get aiModelTitle => 'Load AI Model';
+
+  @override
+  String get aiModelUnlockTitle => 'Unlock AI-Powered Scanning';
+
+  @override
+  String get aiModelUnlockDescription =>
+      'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.';
+
+  @override
+  String get aiModelDownloadInfo =>
+      'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.';
+
+  @override
+  String get setup => 'Setup';
+
+  @override
+  String get patientSetupTitle => 'Set Up Your Profile';
+
+  @override
+  String get patientSetupSubtitle =>
+      'Personalize your health wallet with your information';
+
+  @override
+  String get onboardingSetupTitle => 'Set Up my Health Wallet';
+
+  @override
+  String get onboardingSetupBody =>
+      'Create your personal health profile to get started with HealthWallet';
+
+  @override
+  String get onboardingDemoTitle => 'Try Demo Data';
+
+  @override
+  String get onboardingDemoBody =>
+      'Explore the app with sample medical records to see how it works';
+
+  @override
+  String get onboardingSyncTitle2 => 'Sync Your Records';
+
+  @override
+  String get onboardingSyncBody =>
+      'Connect to your healthcare providers to import your real medical records';
+
+  @override
+  String get givenName => 'Given Name';
+
+  @override
+  String get familyName => 'Family Name';
+
+  @override
+  String get skipForNow => 'Skip for now';
+
+  @override
+  String get setUpProfile => 'Set Up';
+
+  @override
+  String get useDefaults => 'Default';
+
+  @override
+  String get syncPlaceholderTutorialStep1 =>
+      'Complete your profile to unlock full features.';
+
+  @override
+  String get syncPlaceholderTutorialStep2 =>
+      'Not ready to import? Load demo data to see how the app looks in action.';
+
+  @override
+  String get syncPlaceholderTutorialStep3 =>
+      'Keep your desktop and mobile wallet up to date.';
+
+  @override
+  String get tapToContinue => 'Tap to continue';
+
+  @override
+  String get homeOnboardingReorderMessage =>
+      'Long press to reorder them according to your preference.';
 }

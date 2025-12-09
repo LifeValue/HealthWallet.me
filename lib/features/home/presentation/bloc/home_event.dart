@@ -67,7 +67,10 @@ class HomeSourceLabelUpdated extends HomeEvent with _$HomeSourceLabelUpdated {
       _HomeSourceLabelUpdated;
 }
 
-class HomeSourceDeleted extends HomeEvent {
-  final String sourceId;
-  const HomeSourceDeleted(this.sourceId);
+@freezed
+class HomeSourceDeleted extends HomeEvent with _$HomeSourceDeleted {
+  const factory HomeSourceDeleted(
+    String sourceId, {
+    List<String>? patientSourceIds,
+  }) = _HomeSourceDeleted;
 }

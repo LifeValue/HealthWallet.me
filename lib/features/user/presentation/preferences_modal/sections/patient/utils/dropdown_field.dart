@@ -7,14 +7,14 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 class DropdownField extends StatefulWidget {
   final String value;
   final List<String> items;
-  final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onChanged;
   final bool isSelected;
 
   const DropdownField({
     super.key,
     required this.value,
     required this.items,
-    required this.onChanged,
+    this.onChanged,
     this.isSelected = false,
   });
 
@@ -107,10 +107,10 @@ class _DropdownFieldState extends State<DropdownField> {
   Widget _buildMenuItem(String item) {
     final isSelected = item == widget.value;
     return InkWell(
-      onTap: () {
-        widget.onChanged(item);
+      onTap: widget.onChanged != null ? () {
+        widget.onChanged!(item);
         _hideMenu();
-      },
+      } : null,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.only(
@@ -149,7 +149,7 @@ class _DropdownFieldState extends State<DropdownField> {
     return CompositedTransformTarget(
       link: _layerLink,
       child: InkWell(
-        onTap: _toggleMenu,
+        onTap: widget.onChanged != null ? _toggleMenu : null,
         borderRadius: BorderRadius.circular(8),
         child: Container(
           width: double.infinity,

@@ -1,9 +1,28 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_storage_service.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
+import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/scan/presentation/helpers/ocr_processing_helper.dart';
+import 'package:health_wallet/features/scan/presentation/helpers/scan_path_helper.dart';
+import 'package:health_wallet/features/sync/domain/entities/source.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
+import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -11,28 +30,73 @@ part 'scan_state.dart';
 part 'scan_event.dart';
 part 'scan_bloc.freezed.dart';
 
-@Injectable()
+@LazySingleton()
 class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final PdfStorageService _pdfStorageService;
+  final ScanRepository _repository;
+  final OcrProcessingHelper _ocrProcessingHelper;
+  final WalletPatientService _walletPatientService;
+  final SyncRepository _syncRepository;
+  final DocumentReferenceService _documentReferenceService;
+  final PatientDeduplicationService _deduplicationService;
 
   ScanBloc(
     this._pdfStorageService,
+    this._repository,
+    this._ocrProcessingHelper,
+    this._walletPatientService,
+    this._syncRepository,
+    this._documentReferenceService,
+    this._deduplicationService,
   ) : super(const ScanState()) {
     on<ScanInitialised>(_onScanInitialised);
     on<ScanButtonPressed>(_onScanButtonPressed);
-    on<DeleteDocument>(_onDeleteDocument);
-    on<ClearAllDocuments>(_onClearAllDocuments);
-    on<DeletePdf>(_onDeletePdf);
-    on<LoadSavedPdfs>(_onLoadSavedPdfs);
     on<DocumentImported>(_onDocumentImported);
+    on<ScanSessionChangedProgress>(_onScanSessionChangedProgress);
+    on<ScanSessionCleared>(_onScanSessionCleared);
+    on<ScanSessionActivated>(_onScanSessionActivated);
+    on<ScanMappingInitiated>(_onScanMappingInitiated,
+        transformer: restartable());
+    on<ScanResourceChanged>(_onScanResourceChanged);
+    on<ScanResourceRemoved>(_onScanResourceRemoved);
+    on<ScanResourceCreationInitiated>(_onScanResourceCreationInitiated);
+    on<ScanNotificationAcknowledged>(_onScanNotificationAcknowledged);
+    on<ScanMappingCancelled>(_onScanMappingCancelled);
+    on<ScanResourcesAdded>(_onScanResourcesAdded);
+    on<ScanEncounterAttached>(_onScanEncounterAttached);
+    on<ScanProcessingRestartRequested>(_onScanProcessingRestartRequested);
+  }
+
+  bool get _isCurrentlyProcessing =>
+      state.status == const ScanStatus.convertingPdfs() ||
+      state.status == const ScanStatus.mapping() ||
+      state.sessions.any((s) => s.status == ProcessingStatus.processing);
+
+  void _startNextPendingSession() {
+    final pendingSession = state.sessions.firstWhereOrNull(
+      (s) => s.status == ProcessingStatus.pending,
+    );
+    if (pendingSession != null) {
+      add(ScanSessionActivated(sessionId: pendingSession.id));
+    }
   }
 
   Future<void> _onScanInitialised(
     ScanInitialised event,
     Emitter<ScanState> emit,
   ) async {
-    emit(state.copyWith(status: const ScanStatus.initial()));
-    add(const ScanEvent.loadSavedPdfs());
+    emit(state.copyWith(status: const ScanStatus.loading()));
+
+    try {
+      final sessions = await _repository.getProcessingSessions();
+
+      emit(state.copyWith(
+        sessions: sessions,
+        status: const ScanStatus.initial(),
+      ));
+    } on Exception catch (e) {
+      emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+    }
   }
 
   Future<void> _onScanButtonPressed(
@@ -43,209 +107,173 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
     try {
       if (event.mode == ScanMode.pdf) {
-        final scannedPdf = await FlutterDocScanner().getScannedDocumentAsPdf();
-
-        if (scannedPdf != null &&
-            !scannedPdf.contains('Failed') &&
-            !scannedPdf.contains('Unknown')) {
-          final savedPath = await _pdfStorageService.savePdfToStorage(
-            sourcePdfPath: scannedPdf,
-            customFileName:
-                'health_scan_${DateTime.now().millisecondsSinceEpoch}.pdf',
-          );
-
-          if (savedPath != null) {
-            final updatedPdfs = [...state.savedPdfPaths, savedPath];
-
-            emit(state.copyWith(
-              status: const ScanStatus.success(),
-              savedPdfPaths: updatedPdfs,
-              lastCreatedPdfPath: savedPath,
-            ));
-          } else {
-            emit(state.copyWith(
-              status: const ScanStatus.failure(error: 'Failed to save PDF'),
-            ));
-          }
-        } else {
-          emit(state.copyWith(status: const ScanStatus.initial()));
-        }
+        await _handlePdfScan(emit);
       } else {
-        final scannedDocuments =
-            await FlutterDocScanner().getScannedDocumentAsImages(
-          page: event.maxPages,
-        );
-
-        if (scannedDocuments != null) {
-          List<String> imagePaths = [];
-
-          if (scannedDocuments is List) {
-            imagePaths = scannedDocuments.cast<String>();
-          } else if (scannedDocuments is String) {
-            imagePaths = [scannedDocuments];
-          } else {
-            imagePaths = [scannedDocuments.toString()];
-          }
-
-          if (imagePaths.isNotEmpty &&
-              !imagePaths.first.contains('Failed') &&
-              !imagePaths.first.contains('Unknown')) {
-            final updatedPaths = [...state.scannedImagePaths, ...imagePaths];
-
-            emit(state.copyWith(
-              status: const ScanStatus.success(),
-              scannedImagePaths: updatedPaths,
-            ));
-          } else {
-            emit(state.copyWith(status: const ScanStatus.initial()));
-          }
-        } else {
-          emit(state.copyWith(status: const ScanStatus.initial()));
-        }
+        await _handleImageScan(event.maxPages, emit);
       }
     } on PlatformException catch (e) {
-      String errorMessage = _parsePlatformError(e);
+      final errorMessage = _parsePlatformError(e);
       emit(state.copyWith(
         status: ScanStatus.failure(error: errorMessage),
       ));
     } catch (e) {
-      String errorMessage = _parseGeneralError(e);
+      final errorMessage = _parseGeneralError(e);
       emit(state.copyWith(
         status: ScanStatus.failure(error: errorMessage),
       ));
     }
   }
 
-  Future<void> _onDeletePdf(
-    DeletePdf event,
-    Emitter<ScanState> emit,
-  ) async {
-    try {
-      final success = await _pdfStorageService.deletePdf(event.pdfPath);
+  Future _createSession(
+    Emitter<ScanState> emit, {
+    required List<String> filePaths,
+    required ProcessingOrigin origin,
+  }) async {
+    final session = await _repository.createProcessingSession(
+        filePaths: filePaths, origin: origin);
 
-      if (success) {
-        final updatedPdfs =
-            state.savedPdfPaths.where((path) => path != event.pdfPath).toList();
+    emit(state.copyWith(
+      status: ScanStatus.sessionCreated(session: session),
+      sessions: [session, ...state.sessions],
+    ));
 
-        emit(state.copyWith(savedPdfPaths: updatedPdfs));
-      }
-    } catch (e) {}
+    if (!_isCurrentlyProcessing) {
+      add(ScanSessionActivated(sessionId: session.id));
+    }
   }
 
-  Future<void> _onLoadSavedPdfs(
-    LoadSavedPdfs event,
-    Emitter<ScanState> emit,
-  ) async {
-    try {
-      final savedPdfs = await _pdfStorageService.getSavedPdfs();
-      emit(state.copyWith(savedPdfPaths: savedPdfs));
-    } catch (e) {}
+  Future<void> _handlePdfScan(Emitter<ScanState> emit) async {
+    final scannedPdf = await FlutterDocScanner().getScannedDocumentAsPdf();
+
+    if (scannedPdf == null) {
+      emit(state.copyWith(status: const ScanStatus.initial()));
+      return;
+    }
+
+    final pdfPath = ScanPathHelper.extractPdfPath(scannedPdf);
+
+    if (pdfPath == null || !_isValidScanResult(pdfPath)) {
+      emit(state.copyWith(status: const ScanStatus.initial()));
+      return;
+    }
+    final savedPath = await _pdfStorageService.savePdfToStorage(
+      sourcePdfPath: pdfPath,
+      customFileName:
+          'health_scan_${DateTime.now().millisecondsSinceEpoch}.pdf',
+    );
+
+    if (savedPath != null) {
+      await _createSession(emit,
+          filePaths: [savedPath], origin: ProcessingOrigin.scan);
+    } else {
+      emit(state.copyWith(
+        status: const ScanStatus.failure(error: 'Failed to save PDF'),
+      ));
+    }
+  }
+
+  Future<void> _handleImageScan(int maxPages, Emitter<ScanState> emit) async {
+    final scannedDocuments =
+        await FlutterDocScanner().getScannedDocumentAsImages(
+      page: maxPages,
+    );
+
+    if (scannedDocuments == null) {
+      emit(state.copyWith(status: const ScanStatus.initial()));
+      return;
+    }
+
+    final imagePaths = ScanPathHelper.normalizePaths(scannedDocuments);
+
+    if (imagePaths.isEmpty || !_isValidScanResult(imagePaths.first)) {
+      emit(state.copyWith(status: const ScanStatus.initial()));
+      return;
+    }
+
+    final persistedPaths = await ScanPathHelper.persistScanFiles(
+      sourcePaths: imagePaths,
+      repository: _repository,
+    );
+    final sessionPaths =
+        persistedPaths.isNotEmpty ? persistedPaths : imagePaths;
+
+    await _createSession(emit,
+        filePaths: sessionPaths, origin: ProcessingOrigin.scan);
   }
 
   Future<void> _onDocumentImported(
     DocumentImported event,
     Emitter<ScanState> emit,
   ) async {
+    emit(state.copyWith(status: const ScanStatus.loading()));
     try {
       final file = File(event.filePath);
-      if (await file.exists()) {
-        final lowerPath = event.filePath.toLowerCase();
-        if (lowerPath.endsWith('.pdf')) {
-          final updatedPdfs = [...state.savedPdfPaths, event.filePath];
-          emit(state.copyWith(
-            status: const ScanStatus.success(),
-            savedPdfPaths: updatedPdfs,
-          ));
-        } else {
-          final updatedImportedImages = [
-            ...state.importedImagePaths,
-            event.filePath
-          ];
-          emit(state.copyWith(
-            status: const ScanStatus.success(),
-            importedImagePaths: updatedImportedImages,
-          ));
-        }
-      } else {
+      final exists = await file.exists();
+
+      if (!exists) {
         emit(state.copyWith(
-          status: ScanStatus.failure(error: 'File does not exist'),
+          status: const ScanStatus.failure(error: 'File does not exist'),
         ));
+        return;
       }
-    } catch (e) {
+
+      await _createSession(emit,
+          filePaths: [event.filePath], origin: ProcessingOrigin.import);
+    } catch (e, stackTrace) {
+      logger.e(
+          '_onDocumentImported - Error importing document: ${event.filePath}',
+          e,
+          stackTrace);
       emit(state.copyWith(
         status: ScanStatus.failure(error: 'Failed to import document: $e'),
       ));
     }
   }
 
-  Future<void> _onDeleteDocument(
-    DeleteDocument event,
+  void _onScanSessionChangedProgress(
+    ScanSessionChangedProgress event,
     Emitter<ScanState> emit,
-  ) async {
-    try {
-      final file = File(event.imagePath);
-      if (await file.exists()) {
-        await file.delete();
-      }
+  ) {
+    final newSessions = [...state.sessions]
+      ..removeWhere((session) => session.id == event.session.id);
 
-      final updatedPaths = state.scannedImagePaths
-          .where((path) => path != event.imagePath)
-          .toList();
+    emit(state.copyWith(sessions: [event.session, ...newSessions]));
 
-      emit(state.copyWith(scannedImagePaths: updatedPaths));
-    } catch (e) {
-      final updatedPaths = state.scannedImagePaths
-          .where((path) => path != event.imagePath)
-          .toList();
-
-      emit(state.copyWith(scannedImagePaths: updatedPaths));
+    if (event.session.status == ProcessingStatus.draft) {
+      _repository.editProcessingSession(event.session);
     }
   }
 
-  Future<void> _onClearAllDocuments(
-    ClearAllDocuments event,
+  void _onScanSessionCleared(
+    ScanSessionCleared event,
     Emitter<ScanState> emit,
   ) async {
     try {
-      for (final imagePath in state.scannedImagePaths) {
-        try {
-          final file = File(imagePath);
-          if (await file.exists()) {
-            await file.delete();
-          }
-        } catch (e) {}
-      }
+      final wasActiveSession = state.activeSessionId == event.session.id;
+      final newSessions = [...state.sessions]
+        ..removeWhere((session) => session.id == event.session.id);
+      final updatedImageMap =
+          Map<String, List<String>>.from(state.sessionImagePaths)
+            ..remove(event.session.id);
 
-      for (final imagePath in state.importedImagePaths) {
-        try {
-          final file = File(imagePath);
-          if (await file.exists()) {
-            await file.delete();
-          }
-        } catch (e) {}
-      }
-
-      for (final pdfPath in state.savedPdfPaths) {
-        try {
-          final file = File(pdfPath);
-          if (await file.exists()) {
-            await file.delete();
-          }
-        } catch (e) {}
-      }
-
+      // Only reset status if deleting the active session
+      // This prevents blank screens when deleting non-active sessions
       emit(state.copyWith(
-        scannedImagePaths: [],
-        importedImagePaths: [],
-        savedPdfPaths: [],
+        sessions: newSessions,
+        sessionImagePaths: updatedImageMap,
+        allImagePathsForOCR: wasActiveSession ? [] : state.allImagePathsForOCR,
+        activeSessionId: wasActiveSession ? null : state.activeSessionId,
+        status: wasActiveSession ? const ScanStatus.initial() : state.status,
       ));
-    } catch (e) {
-      emit(state.copyWith(
-        scannedImagePaths: [],
-        importedImagePaths: [],
-        savedPdfPaths: [],
-      ));
+
+      await _repository.deleteProcessingSession(event.session);
+    } on Exception catch (e) {
+      emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
     }
+  }
+
+  bool _isValidScanResult(String path) {
+    return !path.contains('Failed') && !path.contains('Unknown');
   }
 
   String _parsePlatformError(PlatformException error) {
@@ -276,5 +304,551 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     } else {
       return 'Failed to scan. Please try again.';
     }
+  }
+
+  Future<void> _onScanSessionActivated(
+    ScanSessionActivated event,
+    Emitter<ScanState> emit,
+  ) async {
+    final anotherSessionProcessing = state.sessions.any(
+      (s) => s.id != event.sessionId && s.status == ProcessingStatus.processing,
+    );
+    final anotherSessionConverting =
+        state.status == const ScanStatus.convertingPdfs() &&
+            state.activeSessionId != null &&
+            state.activeSessionId != event.sessionId;
+    final anotherSessionBusy =
+        anotherSessionProcessing || anotherSessionConverting;
+
+    try {
+      final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
+      final cachedImages = state.sessionImagePaths[event.sessionId];
+
+      List<String> allImages;
+      if (cachedImages != null && cachedImages.isNotEmpty) {
+        allImages = cachedImages;
+      } else {
+        if (!anotherSessionBusy) {
+          emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
+        }
+        allImages = await _ocrProcessingHelper.prepareAllImages(
+          filePaths: session.filePaths,
+        );
+      }
+
+      final updatedImageMap = Map<String, List<String>>.from(
+        state.sessionImagePaths,
+      )..[event.sessionId] = allImages;
+
+      emit(state.copyWith(
+        allImagePathsForOCR: allImages,
+        sessionImagePaths: updatedImageMap,
+      ));
+
+      if (anotherSessionBusy && session.status != ProcessingStatus.draft) {
+        return;
+      }
+
+      // If session is in processing status but not currently active,
+      // it's interrupted - don't activate it, just prepare images
+      if (session.status == ProcessingStatus.processing &&
+          state.activeSessionId != event.sessionId) {
+        logger.i(
+            '_onScanSessionActivated - Session is interrupted, not activating automatically');
+        return;
+      }
+
+      emit(state.copyWith(
+        activeSessionId: event.sessionId,
+      ));
+
+      final currentSession =
+          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+      if (currentSession == null) {
+        logger.e(
+            '_onScanSessionActivated - Session not found in state after image preparation');
+        emit(state.copyWith(
+            status: ScanStatus.failure(error: 'Session not found')));
+        return;
+      }
+
+      if (currentSession.status == ProcessingStatus.pending) {
+        emit(state.copyWith(status: const ScanStatus.mapping()));
+        await Future.delayed(const Duration(seconds: 1));
+        if (!emit.isDone) {
+          // Double-check session status hasn't changed during the delay
+          final sessionAfterDelay =
+              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+          if (sessionAfterDelay == null) {
+            logger.w(
+                '_onScanSessionActivated - Session not found after delay, not triggering ScanMappingInitiated');
+            return;
+          }
+          if (sessionAfterDelay.status != ProcessingStatus.pending) {
+            return;
+          }
+          add(ScanMappingInitiated(sessionId: event.sessionId));
+        }
+      } else if (session.status == ProcessingStatus.processing) {
+        emit(state.copyWith(status: const ScanStatus.mapping()));
+      } else if (session.status == ProcessingStatus.draft) {
+        emit(state.copyWith(status: const ScanStatus.editingResources()));
+      } else {
+        logger.w(
+            '_onScanSessionActivated - Unexpected session status: ${session.status}');
+      }
+    } catch (e, stackTrace) {
+      logger.e('_onScanSessionActivated - ERROR: $e', e, stackTrace);
+      emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+    }
+  }
+
+  void _onScanProcessingRestartRequested(
+    ScanProcessingRestartRequested event,
+    Emitter<ScanState> emit,
+  ) {
+    final session =
+        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    if (session == null) {
+      logger.e(
+        '_onScanProcessingRestartRequested - Session not found: ${event.sessionId}',
+      );
+      return;
+    }
+
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      status: ProcessingStatus.pending,
+      progress: 0.0,
+      updateDb: true,
+    );
+
+    final cachedImages =
+        state.sessionImagePaths[event.sessionId] ?? const <String>[];
+
+    if (cachedImages.isEmpty) {
+      add(ScanSessionActivated(sessionId: event.sessionId));
+      return;
+    }
+
+    add(ScanMappingInitiated(sessionId: event.sessionId));
+  }
+
+  void _updateSession(
+    Emitter<ScanState> emit, {
+    required String sessionId,
+    double? progress,
+    ProcessingStatus? status,
+    List<MappingResource>? resources,
+    StagedPatient? patient,
+    StagedEncounter? encounter,
+    bool updateDb = false,
+  }) {
+    final sessionIndex = state.sessions.indexWhere((s) => s.id == sessionId);
+    if (sessionIndex == -1) return;
+
+    final activeSession = state.sessions[sessionIndex];
+
+    final updatedSession = activeSession.copyWith(
+      progress: progress ?? activeSession.progress,
+      status: status ?? activeSession.status,
+      resources: resources ?? activeSession.resources,
+      patient: patient ?? activeSession.patient,
+      encounter: encounter ?? activeSession.encounter,
+    );
+
+    if (updateDb) {
+      _repository.editProcessingSession(updatedSession);
+    }
+
+    final newSessions = List<ProcessingSession>.from(state.sessions);
+    newSessions[sessionIndex] = updatedSession;
+
+    emit(state.copyWith(
+      sessions: newSessions,
+    ));
+  }
+
+  void _onScanMappingInitiated(
+    ScanMappingInitiated event,
+    Emitter<ScanState> emit,
+  ) async {
+    // Check if session exists and is in a valid state
+    final session =
+        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    if (session == null) {
+      logger
+          .e('_onScanMappingInitiated - Session not found: ${event.sessionId}');
+      return;
+    }
+
+    // If session is already processing or draft, don't restart
+    if (session.status == ProcessingStatus.processing) {
+      logger.w(
+          '_onScanMappingInitiated - Session is already processing, skipping');
+      return;
+    }
+
+    if (session.status == ProcessingStatus.draft) {
+      logger.w(
+          '_onScanMappingInitiated - Session is already in draft state, skipping');
+      emit(state.copyWith(status: const ScanStatus.editingResources()));
+      return;
+    }
+
+    try {
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.processing,
+        updateDb: true,
+      );
+      emit(state.copyWith(status: const ScanStatus.mapping()));
+
+      final sessionImages =
+          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+
+      if (sessionImages.isEmpty) {
+        _updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.pending,
+          progress: 0.0,
+          updateDb: true,
+        );
+        emit(state.copyWith(
+          status: ScanStatus.failure(
+            error:
+                'No images were generated from the scan. Please try scanning again.',
+          ),
+        ));
+        return;
+      }
+
+      final medicalText =
+          await _ocrProcessingHelper.processOcrForImages(sessionImages);
+
+      if (medicalText.isEmpty || medicalText.trim().isEmpty) {
+        logger.w(
+            '_onScanMappingInitiated - Medical text is empty, cannot proceed with mapping');
+        _updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.draft,
+          updateDb: true,
+        );
+        emit(state.copyWith(status: const ScanStatus.editingResources()));
+        return;
+      }
+
+      Stream<MappingResourcesWithProgress> stream;
+      try {
+        stream = _repository.mapResources(medicalText);
+      } catch (e, stackTrace) {
+        logger.e(
+            '_onScanMappingInitiated - ERROR creating mapResources stream: $e',
+            e,
+            stackTrace);
+        rethrow;
+      }
+
+      try {
+        await for (final (resources, progress) in stream) {
+          if (emit.isDone) {
+            return;
+          }
+          final currentSession =
+              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+          if (currentSession == null) {
+            logger.e(
+                '_onScanMappingInitiated - Session not found during stream processing');
+            return;
+          }
+          _updateSession(
+            emit,
+            sessionId: event.sessionId,
+            resources: [...currentSession.resources, ...resources],
+            progress: progress,
+          );
+        }
+      } catch (e, stackTrace) {
+        logger.e('_onScanMappingInitiated - ERROR during stream processing: $e',
+            e, stackTrace);
+        rethrow;
+      }
+
+      // All resources are now in the state. Get the final session object.
+      final finalSession =
+          state.sessions.firstWhere((s) => s.id == event.sessionId);
+      List<MappingResource> updatedResources =
+          List.from(finalSession.resources);
+
+      // Stage patient and encounter
+      final patient = updatedResources
+          .firstWhereOrNull((resource) => resource is MappingPatient);
+      if (patient != null) {
+        updatedResources.removeWhere((resource) => resource is MappingPatient);
+      }
+
+      final encounter = updatedResources
+          .firstWhereOrNull((resource) => resource is MappingEncounter);
+      if (encounter != null) {
+        updatedResources
+            .removeWhere((resource) => resource is MappingEncounter);
+      }
+      // Update the session a final time with the cleaned resources and new status
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        resources: updatedResources,
+        status: ProcessingStatus.draft,
+        patient: StagedPatient(draft: patient as MappingPatient?),
+        encounter: StagedEncounter(draft: encounter as MappingEncounter?),
+        updateDb: true,
+      );
+
+      final notification = Notification(
+        text: "${finalSession.origin} processing finished",
+        route: ProcessingRoute(sessionId: event.sessionId),
+        time: DateTime.now(),
+      );
+
+      emit(state.copyWith(
+        status: const ScanStatus.editingResources(),
+        notification: notification,
+      ));
+
+      _startNextPendingSession();
+    } on Exception catch (e, stackTrace) {
+      logger.e('_onScanMappingInitiated - ERROR: $e', e, stackTrace);
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.pending,
+        updateDb: true,
+      );
+      if (!emit.isDone) {
+        emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+      }
+    }
+  }
+
+  void _onScanResourceRemoved(
+    ScanResourceRemoved event,
+    Emitter<ScanState> emit,
+  ) {
+    final activeSession =
+        state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final newResources = [...activeSession.resources];
+    newResources.removeAt(event.index);
+
+    _updateSession(emit,
+        sessionId: event.sessionId, resources: newResources, updateDb: true);
+  }
+
+  void _onScanResourceChanged(
+    ScanResourceChanged event,
+    Emitter<ScanState> emit,
+  ) {
+    final activeSession =
+        state.sessions.firstWhere((s) => s.id == event.sessionId);
+
+    if (event.isDraftPatient == true) {
+      MappingPatient draftPatient =
+          activeSession.patient.draft ?? const MappingPatient();
+
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        patient: activeSession.patient.copyWith(
+            draft: draftPatient.copyWithMap({event.propertyKey: event.newValue})
+                as MappingPatient),
+      );
+      return;
+    }
+
+    if (event.isDraftEncounter == true) {
+      MappingEncounter draftEncounter =
+          activeSession.encounter.draft ?? const MappingEncounter();
+
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        encounter: activeSession.encounter.copyWith(
+            draft:
+                draftEncounter.copyWithMap({event.propertyKey: event.newValue})
+                    as MappingEncounter),
+      );
+      return;
+    }
+
+    MappingResource updatedResource =
+        activeSession.resources[event.index].copyWithMap({
+      event.propertyKey: event.newValue,
+    });
+
+    final newResources = [...activeSession.resources];
+    newResources[event.index] = updatedResource;
+
+    _updateSession(emit,
+        sessionId: event.sessionId, resources: newResources, updateDb: true);
+  }
+
+  void _onScanResourceCreationInitiated(
+    ScanResourceCreationInitiated event,
+    Emitter<ScanState> emit,
+  ) async {
+    emit(state.copyWith(status: const ScanStatus.savingResources()));
+
+    String encounterId;
+    String subjectId;
+    String sourceId;
+    final activeSession =
+        state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final draftResources = [...activeSession.resources];
+
+    try {
+      // If the patient / encounter is not an existing one, it will always be a draft
+      // because of the guard we set when adding this event
+
+      if (activeSession.patient.existing != null) {
+        Patient existingPatient = activeSession.patient.existing!;
+        List<String> patientSourceIds = await _deduplicationService
+            .getSourceIdsForPatient(existingPatient.id);
+
+        List<Source> sources = await _syncRepository.getSources();
+
+        String? writableSourceId =
+            patientSourceIds.firstWhereOrNull((sourceId) {
+          final source = sources.firstWhere(
+            (s) => s.id == sourceId,
+            orElse: () => const Source(
+                id: '', platformName: null, logo: null, labelSource: null),
+          );
+          return source.platformType == 'wallet';
+        });
+
+        if (writableSourceId == null) {
+          final walletSource =
+              await _walletPatientService.createWalletSourceForPatient(
+            existingPatient.id,
+            existingPatient.displayTitle,
+          );
+
+          await _syncRepository.cacheSources([walletSource]);
+
+          writableSourceId = walletSource.id;
+        }
+
+        subjectId = existingPatient.id;
+        sourceId = writableSourceId;
+      } else {
+        MappingPatient draftPatient = activeSession.patient.draft!;
+
+        final walletSource =
+            await _walletPatientService.createWalletSourceForPatient(
+          draftPatient.id,
+          "${draftPatient.givenName.value} ${draftPatient.familyName.value}",
+        );
+
+        await _syncRepository.cacheSources([walletSource]);
+
+        draftResources.add(draftPatient);
+
+        subjectId = draftPatient.id;
+        sourceId = walletSource.id;
+      }
+
+      if (activeSession.encounter.existing != null) {
+        encounterId = activeSession.encounter.existing!.id;
+      } else {
+        draftResources.add(activeSession.encounter.draft!);
+        encounterId = activeSession.encounter.draft!.id;
+      }
+
+      List<IFhirResource> fhirResources = draftResources
+          .map((resource) => resource.toFhirResource(
+                sourceId: sourceId,
+                subjectId: (resource is MappingPatient) ? '' : subjectId,
+                encounterId: (resource is MappingEncounter) ? '' : encounterId,
+              ))
+          .toList();
+
+      await _syncRepository.saveResources(fhirResources);
+
+      Encounter finalEncounter = activeSession.encounter.existing ??
+          fhirResources.firstWhere((resource) => resource is Encounter)
+              as Encounter;
+      await _documentReferenceService.saveGroupedDocumentsAsFhirRecords(
+        filePaths: activeSession.filePaths,
+        patientId: subjectId,
+        encounter: finalEncounter,
+        sourceId: sourceId,
+        title: finalEncounter.displayTitle,
+      );
+
+      emit(state.copyWith(status: const ScanStatus.success()));
+    } catch (e) {
+      emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+    }
+  }
+
+  void _onScanNotificationAcknowledged(
+    ScanNotificationAcknowledged event,
+    Emitter<ScanState> emit,
+  ) {
+    emit(state.copyWith(notification: null));
+  }
+
+  void _onScanMappingCancelled(
+    ScanMappingCancelled event,
+    Emitter<ScanState> emit,
+  ) {
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      status: ProcessingStatus.pending,
+      progress: 0.0,
+      updateDb: true,
+    );
+    emit(state.copyWith(status: const ScanStatus.cancelled()));
+  }
+
+  void _onScanResourcesAdded(
+    ScanResourcesAdded event,
+    Emitter<ScanState> emit,
+  ) {
+    final activeSession =
+        state.sessions.firstWhere((s) => s.id == event.sessionId);
+
+    final List<MappingResource> newResources = [];
+
+    for (final resourceType in event.resourceTypes) {
+      MappingResource newResource = MappingResource.empty(resourceType);
+
+      newResources.add(newResource);
+    }
+
+    final updatedResources = [...activeSession.resources, ...newResources];
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      resources: updatedResources,
+      updateDb: true,
+    );
+  }
+
+  void _onScanEncounterAttached(
+    ScanEncounterAttached event,
+    Emitter<ScanState> emit,
+  ) {
+    _updateSession(
+      emit,
+      sessionId: event.sessionId,
+      patient: event.patient,
+      encounter: event.encounter,
+      updateDb: true,
+    );
   }
 }

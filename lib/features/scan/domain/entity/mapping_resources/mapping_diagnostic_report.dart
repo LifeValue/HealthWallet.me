@@ -24,12 +24,30 @@ class MappingDiagnosticReport
 
   factory MappingDiagnosticReport.fromJson(Map<String, dynamic> json) {
     return MappingDiagnosticReport(
-      id: const Uuid().v4(),
-      reportName: MappedProperty(value: json['reportName'] ?? ''),
-      conclusion: MappedProperty(value: json['conclusion'] ?? ''),
-      issuedDate: MappedProperty(value: json['issuedDate'] ?? ''),
+      id: json["id"] ?? const Uuid().v4(),
+      reportName: MappedProperty.fromJson(json['reportName']),
+      conclusion: MappedProperty.fromJson(json['conclusion']),
+      issuedDate: MappedProperty.fromJson(json['issuedDate']),
     );
   }
+
+  factory MappingDiagnosticReport.empty() {
+    return MappingDiagnosticReport(
+      id: const Uuid().v4(),
+      reportName: MappedProperty.empty(),
+      conclusion: MappedProperty.empty(),
+      issuedDate: MappedProperty.empty(),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'resourceType': 'DiagnosticReport',
+        'reportName': reportName.toJson(),
+        'conclusion': conclusion.toJson(),
+        'issuedDate': issuedDate.toJson(),
+      };
 
   @override
   IFhirResource toFhirResource({

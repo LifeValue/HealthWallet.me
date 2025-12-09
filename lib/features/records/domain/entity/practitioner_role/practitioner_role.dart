@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -107,27 +108,129 @@ class PractitionerRole with _$PractitionerRole implements IFhirResource {
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
+    // Active Status
+    final activeStatus = active?.valueBoolean;
+    if (activeStatus != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            activeStatus ? 'Active' : 'Inactive',
+            prefix: 'Status'),
+      );
+    }
+
+    // Practitioner
     final practitionerDisplay = practitioner?.display?.valueString;
-    if (practitionerDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.user,
-        info: practitionerDisplay,
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(practitionerDisplay,
+          prefix: 'Practitioner'),
+    );
+
+    // Organization
+    final organizationDisplay = organization?.display?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(organizationDisplay,
+          prefix: 'Organization'),
+    );
+
+    // Role/Code
+    final roleDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(code);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(roleDisplay, prefix: 'Role'),
+    );
+
+    // Specialty
+    if (specialty != null && specialty!.isNotEmpty) {
+      final specialtyDisplay = specialty!
+          .map((s) => FhirFieldExtractor.extractCodeableConceptText(s))
+          .where((s) => s != null && s.isNotEmpty)
+          .take(3)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            specialtyDisplay.isNotEmpty ? specialtyDisplay : null,
+            prefix: 'Specialty'),
+      );
     }
 
-    final specialtyDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(specialty);
-    if (specialtyDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: specialtyDisplay,
-      ));
+    // Location
+    if (location != null && location!.isNotEmpty) {
+      final locationDisplay = location!
+          .map((l) => l.display?.valueString)
+          .where((l) => l != null && l.isNotEmpty)
+          .take(2)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createLocationLine(
+            locationDisplay.isNotEmpty ? locationDisplay : null,
+            prefix: 'Location'),
+      );
     }
 
+    // Healthcare Service
+    if (healthcareService != null && healthcareService!.isNotEmpty) {
+      final serviceDisplay = healthcareService!
+          .map((s) => s.display?.valueString)
+          .where((s) => s != null && s.isNotEmpty)
+          .take(2)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            serviceDisplay.isNotEmpty ? serviceDisplay : null,
+            prefix: 'Healthcare Service'),
+      );
+    }
+
+    // Telecom (phone/email)
+    if (telecom != null && telecom!.isNotEmpty) {
+      final phone = telecom!
+          .where((t) => t.system?.valueString == 'phone')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+      );
+
+      final email = telecom!
+          .where((t) => t.system?.valueString == 'email')
+          .firstOrNull
+          ?.value
+          ?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+      );
+    }
+
+    // Period
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(periodDisplay, prefix: 'Period'),
+    );
+
+    // Availability Exceptions
+    final exceptionsDisplay = availabilityExceptions?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(exceptionsDisplay,
+          prefix: 'Availability Notes'),
+    );
+
+    // Date (last updated)
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
+        info: 'Last Updated: ${DateFormat.yMMMMd().format(date!)}',
       ));
     }
 

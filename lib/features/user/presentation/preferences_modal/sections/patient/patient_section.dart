@@ -14,6 +14,8 @@ import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/patient_edit_dialog.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 
 class PatientSection extends StatefulWidget {
   const PatientSection({super.key});
@@ -31,7 +33,15 @@ class _PatientSectionState extends State<PatientSection> {
     if (!_hasInitialized) {
       _hasInitialized = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<PatientBloc>().add(const PatientPatientsLoaded());
+        final patientBloc = context.read<PatientBloc>();
+        final currentSelectedPatientId = patientBloc.state.selectedPatientId;
+
+        context.read<PatientBloc>().add(
+              PatientPatientsLoaded(
+                preserveOrder: true,
+                preservePatientId: currentSelectedPatientId,
+              ),
+            );
       });
     }
   }
@@ -189,11 +199,13 @@ class _UnifiedPatientCard extends StatefulWidget {
 class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
   String _bloodTypeDisplay = 'Loading...';
   late RecordsRepository _recordsRepository;
+  late PatientSelectionService _patientSelectionService;
 
   @override
   void initState() {
     super.initState();
     _recordsRepository = getIt<RecordsRepository>();
+    _patientSelectionService = getIt<PatientSelectionService>();
     _loadBloodType();
   }
 
@@ -201,17 +213,21 @@ class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
     try {
       final patientState = context.read<PatientBloc>().state;
 
-      final currentPatient = patientState.patients.firstWhere(
-        (p) => p.id == widget.patient.id,
-        orElse: () {
-          return widget.patient;
-        },
-      );
+      final selectedSource = context.read<HomeBloc>().state.selectedSource;
+
+      final patientGroup = patientState.patientGroups[widget.patient.id];
+      final displayPatient = patientGroup != null
+          ? _patientSelectionService.getPatientFromGroup(
+              patientGroup: patientGroup,
+              selectedSource: selectedSource,
+              fallbackPatient: widget.patient,
+            )
+          : widget.patient;
 
       final observations = await _recordsRepository.getBloodTypeObservations(
-        patientId: currentPatient.id,
+        patientId: displayPatient.id,
         sourceId:
-            currentPatient.sourceId.isNotEmpty ? currentPatient.sourceId : null,
+            displayPatient.sourceId.isNotEmpty ? displayPatient.sourceId : null,
       );
 
       final extractedBloodType =
@@ -235,222 +251,257 @@ class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PatientBloc, PatientState>(
-      builder: (context, blocState) {
-        final currentPatient = blocState.patients.firstWhere(
-          (p) => p.id == widget.patient.id,
-          orElse: () => widget.patient,
-        );
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, homeState) {
+        return BlocBuilder<PatientBloc, PatientState>(
+          builder: (context, blocState) {
+            final selectedSource = homeState.selectedSource;
 
-        final isExpanded =
-            blocState.expandedPatientIds.contains(currentPatient.id);
+            final patientGroup = blocState.patientGroups[widget.patient.id];
+            final displayPatient = patientGroup != null
+                ? _patientSelectionService.getPatientFromGroup(
+                    patientGroup: patientGroup,
+                    selectedSource: selectedSource,
+                    fallbackPatient: widget.patient,
+                  )
+                : widget.patient;
 
-        return BlocListener<PatientBloc, PatientState>(
-            listenWhen: (previous, current) =>
-                previous.patients != current.patients ||
-                previous.status != current.status ||
-                previous.isEditingPatient != current.isEditingPatient,
-            listener: (context, state) {
-              if (state.status.toString().contains('Success') ||
-                  state.isEditingPatient == false) {
-                _loadBloodType();
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeInOutCubic,
-              padding: const EdgeInsets.all(Insets.small),
-              margin: const EdgeInsets.only(bottom: Insets.small),
-              transform: Matrix4.identity()
-                ..scale(widget.isExpanding ? 1.02 : 1.0),
-              decoration: BoxDecoration(
-                color: _getCardColor(context, currentPatient),
-                border:
-                    Border.all(color: _getBorderColor(context, currentPatient)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            final currentPatient = blocState.patients.firstWhere(
+              (p) => p.id == widget.patient.id,
+              orElse: () => widget.patient,
+            );
+
+            final isExpanded =
+                blocState.expandedPatientIds.contains(currentPatient.id);
+
+            return MultiBlocListener(
+                listeners: [
+                  BlocListener<PatientBloc, PatientState>(
+                    listenWhen: (previous, current) =>
+                        previous.patients != current.patients ||
+                        previous.status != current.status ||
+                        previous.isEditingPatient != current.isEditingPatient,
+                    listener: (context, state) {
+                      if (state.status.toString().contains('Success') ||
+                          state.isEditingPatient == false) {
+                        _loadBloodType();
+                      }
+                    },
+                  ),
+                  BlocListener<HomeBloc, HomeState>(
+                    listenWhen: (previous, current) =>
+                        previous.selectedSource != current.selectedSource,
+                    listener: (context, state) {
+                      _loadBloodType();
+                    },
+                  ),
+                ],
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeInOutCubic,
+                  padding: const EdgeInsets.all(Insets.small),
+                  margin: const EdgeInsets.only(bottom: Insets.small),
+                  transform: Matrix4.identity()
+                    ..scale(widget.isExpanding ? 1.02 : 1.0),
+                  decoration: BoxDecoration(
+                    color: _getCardColor(context, currentPatient),
+                    border: Border.all(
+                        color: _getBorderColor(context, currentPatient)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: widget.borderColor,
-                            child: Assets.icons.user.svg(
-                              width: 16,
-                              height: 16,
-                              colorFilter: ColorFilter.mode(
-                                widget.iconColor,
-                                BlendMode.srcIn,
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: widget.borderColor,
+                                child: Assets.icons.user.svg(
+                                  width: 16,
+                                  height: 16,
+                                  colorFilter: ColorFilter.mode(
+                                    widget.iconColor,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: Insets.small),
+                              Text(
+                                FhirFieldExtractor.extractHumanNameFamilyFirst(
+                                        displayPatient.name?.first) ??
+                                    displayPatient.displayTitle,
+                                style: AppTextStyle.bodySmall.copyWith(
+                                  color: widget.textColor,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: Insets.small),
-                          Text(
-                            currentPatient.displayTitle,
-                            style: AppTextStyle.bodySmall.copyWith(
+                          AnimatedRotation(
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeInOut,
+                            turns: _getRotationTurns(context, currentPatient),
+                            child: Icon(
+                              Icons.keyboard_arrow_down,
+                              size: 20,
                               color: widget.textColor,
                             ),
                           ),
                         ],
                       ),
-                      AnimatedRotation(
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeInOut,
-                        turns: _getRotationTurns(context, currentPatient),
-                        child: Icon(
-                          Icons.keyboard_arrow_down,
-                          size: 20,
-                          color: widget.textColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  AnimatedSize(
-                    duration:
-                        Duration(milliseconds: widget.isExpanding ? 1200 : 800),
-                    curve: Curves.easeInOutCubic,
-                    child: (isExpanded || widget.isExpanding)
-                        ? Column(
-                            children: [
-                              const SizedBox(height: Insets.small),
-                              Container(
-                                height: 1,
-                                color: widget.textColor.withValues(alpha: 0.1),
-                              ),
-                              const SizedBox(height: Insets.small),
-                              AnimatedOpacity(
-                                duration: Duration(
-                                    milliseconds: widget.isExpanding
-                                        ? 400
-                                        : (widget.isCollapsing ? 600 : 200)),
-                                opacity:
-                                    (widget.isExpanding || widget.isCollapsing)
+                      AnimatedSize(
+                        duration: Duration(
+                            milliseconds: widget.isExpanding ? 1200 : 800),
+                        curve: Curves.easeInOutCubic,
+                        child: (isExpanded || widget.isExpanding)
+                            ? Column(
+                                children: [
+                                  const SizedBox(height: Insets.small),
+                                  Container(
+                                    height: 1,
+                                    color:
+                                        widget.textColor.withValues(alpha: 0.1),
+                                  ),
+                                  const SizedBox(height: Insets.small),
+                                  AnimatedOpacity(
+                                    duration: Duration(
+                                        milliseconds: widget.isExpanding
+                                            ? 400
+                                            : (widget.isCollapsing
+                                                ? 600
+                                                : 200)),
+                                    opacity: (widget.isExpanding ||
+                                            widget.isCollapsing)
                                         ? 0.0
                                         : 1.0,
-                                child: Column(
-                                  children: [
-                                    _buildPatientInfoRow(
-                                      context,
-                                      Assets.icons.identification.svg(
-                                        width: 16,
-                                        height: 16,
-                                        colorFilter: ColorFilter.mode(
-                                          widget.iconColor,
-                                          BlendMode.srcIn,
+                                    child: Column(
+                                      children: [
+                                        _buildPatientInfoRow(
+                                          context,
+                                          Assets.icons.identification.svg(
+                                            width: 16,
+                                            height: 16,
+                                            colorFilter: ColorFilter.mode(
+                                              widget.iconColor,
+                                              BlendMode.srcIn,
+                                            ),
+                                          ),
+                                          'MRN: ${FhirFieldExtractor.extractPatientMRN(displayPatient)}',
                                         ),
-                                      ),
-                                      '${context.l10n.id}: ${currentPatient.id}',
-                                    ),
-                                    _buildPatientInfoRow(
-                                      context,
-                                      Assets.icons.calendar.svg(
-                                        width: 16,
-                                        height: 16,
-                                        colorFilter: ColorFilter.mode(
-                                          widget.iconColor,
-                                          BlendMode.srcIn,
+                                        _buildPatientInfoRow(
+                                          context,
+                                          Assets.icons.calendar.svg(
+                                            width: 16,
+                                            height: 16,
+                                            colorFilter: ColorFilter.mode(
+                                              widget.iconColor,
+                                              BlendMode.srcIn,
+                                            ),
+                                          ),
+                                          '${context.l10n.age}: ${FhirFieldExtractor.extractPatientAge(displayPatient)} (${displayPatient.birthDate})',
                                         ),
-                                      ),
-                                      '${context.l10n.age}: ${FhirFieldExtractor.extractPatientAge(currentPatient)} (${currentPatient.birthDate})',
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                              AnimatedOpacity(
-                                duration: Duration(
-                                    milliseconds: widget.isExpanding
-                                        ? 600
-                                        : (widget.isCollapsing ? 400 : 300)),
-                                opacity:
-                                    (widget.isExpanding || widget.isCollapsing)
+                                  ),
+                                  AnimatedOpacity(
+                                    duration: Duration(
+                                        milliseconds: widget.isExpanding
+                                            ? 600
+                                            : (widget.isCollapsing
+                                                ? 400
+                                                : 300)),
+                                    opacity: (widget.isExpanding ||
+                                            widget.isCollapsing)
                                         ? 0.0
                                         : 1.0,
-                                child: Column(
-                                  children: [
-                                    _buildPatientInfoRow(
-                                      context,
-                                      _getGenderIcon(currentPatient),
-                                      '${context.l10n.gender}: ${_formatGenderDisplay(FhirFieldExtractor.extractPatientGender(currentPatient))}',
-                                    ),
-                                    _buildPatientInfoRow(
-                                      context,
-                                      Assets.icons.drop.svg(
-                                        width: 16,
-                                        height: 16,
-                                        colorFilter: ColorFilter.mode(
-                                          widget.iconColor,
-                                          BlendMode.srcIn,
+                                    child: Column(
+                                      children: [
+                                        _buildPatientInfoRow(
+                                          context,
+                                          _getGenderIcon(displayPatient),
+                                          '${context.l10n.gender}: ${_formatGenderDisplay(FhirFieldExtractor.extractPatientGender(displayPatient))}',
                                         ),
-                                      ),
-                                      '${context.l10n.bloodType}: $_bloodTypeDisplay',
+                                        _buildPatientInfoRow(
+                                          context,
+                                          Assets.icons.drop.svg(
+                                            width: 16,
+                                            height: 16,
+                                            colorFilter: ColorFilter.mode(
+                                              widget.iconColor,
+                                              BlendMode.srcIn,
+                                            ),
+                                          ),
+                                          '${context.l10n.bloodType}: $_bloodTypeDisplay',
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: Insets.small),
-                              AnimatedOpacity(
-                                duration: Duration(
-                                    milliseconds: widget.isExpanding
-                                        ? 800
-                                        : (widget.isCollapsing ? 200 : 400)),
-                                opacity:
-                                    (widget.isExpanding || widget.isCollapsing)
+                                  ),
+                                  const SizedBox(height: Insets.small),
+                                  AnimatedOpacity(
+                                    duration: Duration(
+                                        milliseconds: widget.isExpanding
+                                            ? 800
+                                            : (widget.isCollapsing
+                                                ? 200
+                                                : 400)),
+                                    opacity: (widget.isExpanding ||
+                                            widget.isCollapsing)
                                         ? 0.0
                                         : 1.0,
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      context.read<PatientBloc>().add(
-                                            PatientEditStarted(
-                                                currentPatient.id),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          context.read<PatientBloc>().add(
+                                                PatientEditStarted(
+                                                    currentPatient.id),
+                                              );
+                                          PatientEditDialog.show(
+                                            context,
+                                            currentPatient,
+                                            onBloodTypeUpdated: () {
+                                              _loadBloodType();
+                                            },
                                           );
-                                      PatientEditDialog.show(
-                                        context,
-                                        currentPatient,
-                                        onBloodTypeUpdated: () {
-                                          // Reload blood type immediately when dialog is closed
-                                          _loadBloodType();
                                         },
-                                      );
-                                    },
-                                    icon: Assets.icons.edit.svg(
-                                      width: 16,
-                                      height: 16,
-                                      colorFilter: const ColorFilter.mode(
-                                        Colors.white,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                    label: Text(
-                                      context.l10n.editDetails,
-                                      style: AppTextStyle.buttonSmall,
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: Insets.small,
-                                        vertical: Insets.small,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
+                                        icon: Assets.icons.edit.svg(
+                                          width: 16,
+                                          height: 16,
+                                          colorFilter: const ColorFilter.mode(
+                                            Colors.white,
+                                            BlendMode.srcIn,
+                                          ),
+                                        ),
+                                        label: Text(
+                                          context.l10n.editDetails,
+                                          style: AppTextStyle.buttonSmall,
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: Insets.small,
+                                            vertical: Insets.small,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ));
+                ));
+          },
+        );
       },
     );
   }
@@ -497,7 +548,7 @@ class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
   Widget _getGenderIcon(Patient patient) {
     final gender = FhirFieldExtractor.extractPatientGender(patient);
 
-    if (gender?.toLowerCase() == 'female') {
+    if (gender.toLowerCase() == 'female') {
       return Assets.icons.genderFemale.svg(
         width: 16,
         height: 16,

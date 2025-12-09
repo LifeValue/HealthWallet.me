@@ -11,7 +11,10 @@ class PatientInitialised extends PatientEvent with _$PatientInitialised {
 
 @freezed
 class PatientPatientsLoaded extends PatientEvent with _$PatientPatientsLoaded {
-  const factory PatientPatientsLoaded() = _PatientPatientsLoaded;
+  const factory PatientPatientsLoaded({
+    @Default(false) bool preserveOrder,
+    String? preservePatientId,
+  }) = _PatientPatientsLoaded;
 }
 
 @freezed
@@ -40,9 +43,13 @@ class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
   const factory PatientEditSaved({
     required String patientId,
     required String sourceId,
-    required DateTime birthDate,
-    required String gender,
+    List<String>? given,
+    String? family,
+    DateTime? birthDate,
+    String? gender,
     required String bloodType,
+    String? mrn,
+    required List<dynamic> availableSources,
   }) = _PatientEditSaved;
 }
 

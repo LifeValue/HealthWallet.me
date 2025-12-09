@@ -255,14 +255,30 @@ final class Schema3 extends i0.VersionedSchema {
       'resourceId', 'CREATE INDEX resourceId ON fhir_resource (resource_id)');
 }
 
-final class Schema4 extends i0.VersionedSchema {
-  Schema4({required super.database}) : super(version: 4);
+class Shape3 extends i0.VersionedTable {
+  Shape3({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<int> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get resourceId =>
+      columnsByName['resource_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get content =>
+      columnsByName['content']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<DateTime> get timestamp =>
+      columnsByName['timestamp']! as i1.GeneratedColumn<DateTime>;
+}
+
+i1.GeneratedColumn<String> _column_15(String aliasedName) =>
+    i1.GeneratedColumn<String>('content', aliasedName, false,
+        type: i1.DriftSqlType.string);
+
+final class Schema5 extends i0.VersionedSchema {
+  Schema5({required super.database}) : super(version: 5);
   @override
   late final List<i1.DatabaseSchemaEntity> entities = [
     fhirResource,
     sources,
-    recordAttachments,
     recordNotes,
+    processingSessions,
     resourceType,
     resourceId,
   ];
@@ -298,29 +314,17 @@ final class Schema4 extends i0.VersionedSchema {
         ],
         columns: [
           _column_0,
-          _column_9,
-          _column_10,
           _column_16,
+          _column_10,
+          _column_17,
+          _column_18,
+          _column_19,
+          _column_20,
         ],
         attachedDatabase: database,
       ),
       alias: null);
-  late final Shape2 recordAttachments = Shape2(
-      source: i0.VersionedTable(
-        entityName: 'record_attachments',
-        withoutRowId: false,
-        isStrict: false,
-        tableConstraints: [],
-        columns: [
-          _column_11,
-          _column_12,
-          _column_13,
-          _column_14,
-        ],
-        attachedDatabase: database,
-      ),
-      alias: null);
-  late final Shape3 recordNotes = Shape3(
+  late final Shape5 recordNotes = Shape5(
       source: i0.VersionedTable(
         entityName: 'record_notes',
         withoutRowId: false,
@@ -328,9 +332,29 @@ final class Schema4 extends i0.VersionedSchema {
         tableConstraints: [],
         columns: [
           _column_11,
-          _column_12,
+          _column_21,
+          _column_22,
           _column_15,
           _column_14,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape6 processingSessions = Shape6(
+      source: i0.VersionedTable(
+        entityName: 'processing_sessions',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_23,
+          _column_24,
+          _column_25,
+          _column_26,
+          _column_27,
         ],
         attachedDatabase: database,
       ),
@@ -341,42 +365,320 @@ final class Schema4 extends i0.VersionedSchema {
       'resourceId', 'CREATE INDEX resourceId ON fhir_resource (resource_id)');
 }
 
-class Shape3 extends i0.VersionedTable {
-  Shape3({required super.source, required super.alias}) : super.aliased();
+class Shape4 extends i0.VersionedTable {
+  Shape4({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get platformName =>
+      columnsByName['platform_name']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get logo =>
+      columnsByName['logo']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get labelSource =>
+      columnsByName['label_source']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get platformType =>
+      columnsByName['platform_type']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<DateTime> get createdAt =>
+      columnsByName['created_at']! as i1.GeneratedColumn<DateTime>;
+  i1.GeneratedColumn<DateTime> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<DateTime>;
+}
+
+i1.GeneratedColumn<String> _column_16(String aliasedName) =>
+    i1.GeneratedColumn<String>('platform_name', aliasedName, true,
+        type: i1.DriftSqlType.string);
+i1.GeneratedColumn<String> _column_17(String aliasedName) =>
+    i1.GeneratedColumn<String>('label_source', aliasedName, true,
+        type: i1.DriftSqlType.string);
+i1.GeneratedColumn<String> _column_18(String aliasedName) =>
+    i1.GeneratedColumn<String>('platform_type', aliasedName, false,
+        type: i1.DriftSqlType.string,
+        defaultValue: const CustomExpression('\'wallet\''));
+i1.GeneratedColumn<DateTime> _column_19(String aliasedName) =>
+    i1.GeneratedColumn<DateTime>('created_at', aliasedName, true,
+        type: i1.DriftSqlType.dateTime);
+i1.GeneratedColumn<DateTime> _column_20(String aliasedName) =>
+    i1.GeneratedColumn<DateTime>('updated_at', aliasedName, true,
+        type: i1.DriftSqlType.dateTime);
+
+class Shape5 extends i0.VersionedTable {
+  Shape5({required super.source, required super.alias}) : super.aliased();
   i1.GeneratedColumn<int> get id =>
       columnsByName['id']! as i1.GeneratedColumn<int>;
   i1.GeneratedColumn<String> get resourceId =>
       columnsByName['resource_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get sourceId =>
+      columnsByName['source_id']! as i1.GeneratedColumn<String>;
   i1.GeneratedColumn<String> get content =>
       columnsByName['content']! as i1.GeneratedColumn<String>;
   i1.GeneratedColumn<DateTime> get timestamp =>
       columnsByName['timestamp']! as i1.GeneratedColumn<DateTime>;
 }
 
-i1.GeneratedColumn<String> _column_15(String aliasedName) =>
-    i1.GeneratedColumn<String>('content', aliasedName, false,
+i1.GeneratedColumn<String> _column_21(String aliasedName) =>
+    i1.GeneratedColumn<String>('resource_id', aliasedName, false,
         type: i1.DriftSqlType.string);
+i1.GeneratedColumn<String> _column_22(String aliasedName) =>
+    i1.GeneratedColumn<String>('source_id', aliasedName, true,
+        type: i1.DriftSqlType.string,
+        defaultConstraints:
+            i1.GeneratedColumn.constraintIsAlways('REFERENCES sources (id)'));
 
-i1.GeneratedColumn<String> _column_16(String aliasedName) =>
-    i1.GeneratedColumn<String>('label_source', aliasedName, true,
-        type: i1.DriftSqlType.string);
-
-class Shape4 extends i0.VersionedTable {
-  Shape4({required super.source, required super.alias}) : super.aliased();
+class Shape6 extends i0.VersionedTable {
+  Shape6({required super.source, required super.alias}) : super.aliased();
   i1.GeneratedColumn<String> get id =>
       columnsByName['id']! as i1.GeneratedColumn<String>;
-  i1.GeneratedColumn<String> get name =>
-      columnsByName['name']! as i1.GeneratedColumn<String>;
-  i1.GeneratedColumn<String> get logo =>
-      columnsByName['logo']! as i1.GeneratedColumn<String>;
-  i1.GeneratedColumn<String> get labelSource =>
-      columnsByName['label_source']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get filePaths =>
+      columnsByName['file_paths']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get resources =>
+      columnsByName['resources']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get status =>
+      columnsByName['status']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get origin =>
+      columnsByName['origin']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<DateTime> get createdAt =>
+      columnsByName['created_at']! as i1.GeneratedColumn<DateTime>;
 }
 
+i1.GeneratedColumn<String> _column_23(String aliasedName) =>
+    i1.GeneratedColumn<String>('file_paths', aliasedName, true,
+        type: i1.DriftSqlType.string);
+i1.GeneratedColumn<String> _column_24(String aliasedName) =>
+    i1.GeneratedColumn<String>('resources', aliasedName, true,
+        type: i1.DriftSqlType.string);
+i1.GeneratedColumn<String> _column_25(String aliasedName) =>
+    i1.GeneratedColumn<String>('status', aliasedName, true,
+        type: i1.DriftSqlType.string);
+i1.GeneratedColumn<String> _column_26(String aliasedName) =>
+    i1.GeneratedColumn<String>('origin', aliasedName, true,
+        type: i1.DriftSqlType.string);
+i1.GeneratedColumn<DateTime> _column_27(String aliasedName) =>
+    i1.GeneratedColumn<DateTime>('created_at', aliasedName, false,
+        type: i1.DriftSqlType.dateTime,
+        defaultValue: const CustomExpression(
+            'CAST(strftime(\'%s\', CURRENT_TIMESTAMP) AS INTEGER)'));
+
+final class Schema6 extends i0.VersionedSchema {
+  Schema6({required super.database}) : super(version: 6);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    fhirResource,
+    sources,
+    recordNotes,
+    processingSessions,
+    resourceType,
+    resourceId,
+  ];
+  late final Shape0 fhirResource = Shape0(
+      source: i0.VersionedTable(
+        entityName: 'fhir_resource',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_1,
+          _column_2,
+          _column_3,
+          _column_4,
+          _column_5,
+          _column_6,
+          _column_7,
+          _column_8,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape4 sources = Shape4(
+      source: i0.VersionedTable(
+        entityName: 'sources',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_16,
+          _column_10,
+          _column_17,
+          _column_18,
+          _column_19,
+          _column_20,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape5 recordNotes = Shape5(
+      source: i0.VersionedTable(
+        entityName: 'record_notes',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [],
+        columns: [
+          _column_11,
+          _column_21,
+          _column_22,
+          _column_15,
+          _column_14,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape6 processingSessions = Shape6(
+      source: i0.VersionedTable(
+        entityName: 'processing_sessions',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_23,
+          _column_24,
+          _column_25,
+          _column_26,
+          _column_27,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  final i1.Index resourceType = i1.Index('resourceType',
+      'CREATE INDEX resourceType ON fhir_resource (resource_type)');
+  final i1.Index resourceId = i1.Index(
+      'resourceId', 'CREATE INDEX resourceId ON fhir_resource (resource_id)');
+}
+
+final class Schema7 extends i0.VersionedSchema {
+  Schema7({required super.database}) : super(version: 7);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    fhirResource,
+    sources,
+    recordNotes,
+    processingSessions,
+    resourceType,
+    resourceId,
+  ];
+  late final Shape0 fhirResource = Shape0(
+      source: i0.VersionedTable(
+        entityName: 'fhir_resource',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_1,
+          _column_2,
+          _column_3,
+          _column_4,
+          _column_5,
+          _column_6,
+          _column_7,
+          _column_8,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape4 sources = Shape4(
+      source: i0.VersionedTable(
+        entityName: 'sources',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_16,
+          _column_10,
+          _column_17,
+          _column_18,
+          _column_19,
+          _column_20,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape5 recordNotes = Shape5(
+      source: i0.VersionedTable(
+        entityName: 'record_notes',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [],
+        columns: [
+          _column_11,
+          _column_21,
+          _column_22,
+          _column_15,
+          _column_14,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  late final Shape7 processingSessions = Shape7(
+      source: i0.VersionedTable(
+        entityName: 'processing_sessions',
+        withoutRowId: false,
+        isStrict: false,
+        tableConstraints: [
+          'PRIMARY KEY(id)',
+        ],
+        columns: [
+          _column_0,
+          _column_23,
+          _column_24,
+          _column_25,
+          _column_26,
+          _column_27,
+          _column_28,
+          _column_29,
+        ],
+        attachedDatabase: database,
+      ),
+      alias: null);
+  final i1.Index resourceType = i1.Index('resourceType',
+      'CREATE INDEX resourceType ON fhir_resource (resource_type)');
+  final i1.Index resourceId = i1.Index(
+      'resourceId', 'CREATE INDEX resourceId ON fhir_resource (resource_id)');
+}
+
+class Shape7 extends i0.VersionedTable {
+  Shape7({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get filePaths =>
+      columnsByName['file_paths']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get resources =>
+      columnsByName['resources']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get status =>
+      columnsByName['status']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get origin =>
+      columnsByName['origin']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<DateTime> get createdAt =>
+      columnsByName['created_at']! as i1.GeneratedColumn<DateTime>;
+  i1.GeneratedColumn<String> get patient =>
+      columnsByName['patient']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get encounter =>
+      columnsByName['encounter']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_28(String aliasedName) =>
+    i1.GeneratedColumn<String>('patient', aliasedName, true,
+        type: i1.DriftSqlType.string);
+i1.GeneratedColumn<String> _column_29(String aliasedName) =>
+    i1.GeneratedColumn<String>('encounter', aliasedName, true,
+        type: i1.DriftSqlType.string);
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
-  required Future<void> Function(i1.Migrator m, Schema4 schema) from3To4,
+  required Future<void> Function(i1.Migrator m, Schema5 schema) from3To5,
+  required Future<void> Function(i1.Migrator m, Schema6 schema) from5To6,
+  required Future<void> Function(i1.Migrator m, Schema7 schema) from6To7,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -391,10 +693,20 @@ i0.MigrationStepWithVersion migrationSteps({
         await from2To3(migrator, schema);
         return 3;
       case 3:
-        final schema = Schema4(database: database);
+        final schema = Schema5(database: database);
         final migrator = i1.Migrator(database, schema);
-        await from3To4(migrator, schema);
-        return 4;
+        await from3To5(migrator, schema);
+        return 5;
+      case 5:
+        final schema = Schema6(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from5To6(migrator, schema);
+        return 6;
+      case 6:
+        final schema = Schema7(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from6To7(migrator, schema);
+        return 7;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -404,11 +716,15 @@ i0.MigrationStepWithVersion migrationSteps({
 i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
-  required Future<void> Function(i1.Migrator m, Schema4 schema) from3To4,
+  required Future<void> Function(i1.Migrator m, Schema5 schema) from3To5,
+  required Future<void> Function(i1.Migrator m, Schema6 schema) from5To6,
+  required Future<void> Function(i1.Migrator m, Schema7 schema) from6To7,
 }) =>
     i0.VersionedSchema.stepByStepHelper(
         step: migrationSteps(
       from1To2: from1To2,
       from2To3: from2To3,
-      from3To4: from3To4,
+      from3To5: from3To5,
+      from5To6: from5To6,
+      from6To7: from6To7,
     ));

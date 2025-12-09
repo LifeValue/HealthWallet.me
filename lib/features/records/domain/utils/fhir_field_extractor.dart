@@ -3,6 +3,7 @@ import 'package:health_wallet/features/records/domain/entity/patient/patient.dar
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:intl/intl.dart';
 
 class FhirFieldExtractor {
   static String? extractStatus(dynamic status) {
@@ -63,11 +64,50 @@ class FhirFieldExtractor {
     final title = prefix.isNotEmpty ? '$prefix ' : '';
 
     if (given.isNotEmpty && family.isNotEmpty) {
+      return '$title$given, $family';
+    } else if (given.isNotEmpty) {
+      return '$title$given';
+    } else if (family.isNotEmpty) {
+      return '$title$family';
+    }
+
+    return null;
+  }
+
+  static String? extractHumanNameForHome(dynamic name) {
+    if (name == null) return null;
+
+    final given = name.given?.map((g) => g.toString()).join(' ') ?? '';
+    final family = name.family?.toString() ?? '';
+    final prefix = name.prefix?.map((p) => p.toString()).join(' ') ?? '';
+
+    final title = prefix.isNotEmpty ? '$prefix ' : '';
+
+    if (given.isNotEmpty && family.isNotEmpty) {
       return '$title$given $family';
     } else if (given.isNotEmpty) {
       return '$title$given';
     } else if (family.isNotEmpty) {
       return '$title$family';
+    }
+
+    return null;
+  }
+
+  static String? extractHumanNameFamilyFirst(dynamic name) {
+    if (name == null) return null;
+
+    final family = name.family?.toString() ?? '';
+    final given = name.given?.isNotEmpty == true
+        ? name.given!.map((g) => g.toString()).join(' ')
+        : '';
+
+    if (family.isNotEmpty && given.isNotEmpty) {
+      return '$family, $given';
+    } else if (family.isNotEmpty) {
+      return family;
+    } else if (given.isNotEmpty) {
+      return given;
     }
 
     return null;
@@ -161,7 +201,6 @@ class FhirFieldExtractor {
     return null;
   }
 
-  // Vital sign specific methods
   static bool isVitalSign(Observation observation) {
     final primaryCoding = observation.code?.coding;
     if (primaryCoding != null && primaryCoding.isNotEmpty) {
@@ -260,8 +299,6 @@ class FhirFieldExtractor {
 
     return null;
   }
-
-  // ===== PRIVATE HELPER METHODS =====
 
   static String _mapLoincCodeToTitle(String code) {
     switch (code) {
@@ -391,7 +428,26 @@ class FhirFieldExtractor {
     return d.abs() >= 100 ? d.round().toString() : d.toStringAsFixed(1);
   }
 
-  /// Extract patient ID from identifiers or fallback to resource ID
+  static String extractPatientGiven(Patient patient) {
+    if (patient.name?.isNotEmpty == true) {
+      final given = patient.name!.first.given;
+      if (given != null && given.isNotEmpty) {
+        return given.map((g) => g.toString()).join(' ');
+      }
+    }
+    return '';
+  }
+
+  static String extractPatientFamily(Patient patient) {
+    if (patient.name?.isNotEmpty == true) {
+      final family = patient.name!.first.family;
+      if (family != null) {
+        return family.toString();
+      }
+    }
+    return '';
+  }
+
   static String extractPatientId(Patient patient) {
     if (patient.identifier?.isNotEmpty == true) {
       for (final identifier in patient.identifier!) {
@@ -403,7 +459,6 @@ class FhirFieldExtractor {
     return patient.id;
   }
 
-  /// Calculate patient age from birth date
   static String extractPatientAge(Patient patient) {
     if (patient.birthDate == null) return 'N/A';
 
@@ -442,6 +497,28 @@ class FhirFieldExtractor {
   static String extractPatientGender(Patient patient) {
     final gender = FhirFieldExtractor.extractStatus(patient.gender);
     return gender ?? 'Unknown';
+  }
+
+  static String extractPatientMRN(Patient patient) {
+    if (patient.identifier == null || patient.identifier!.isEmpty) {
+      return '';
+    }
+
+    try {
+      final mrnIdentifier = patient.identifier!.firstWhere(
+        (id) =>
+            id.type?.coding?.any(
+              (coding) => coding.code?.toString() == 'MR',
+            ) ??
+            false,
+      );
+
+      if (mrnIdentifier.value != null) {
+        return mrnIdentifier.value!.toString();
+      }
+    } catch (e) {}
+
+    return '';
   }
 
   static String? extractBloodTypeFromObservations(List<dynamic> observations) {
@@ -496,5 +573,1009 @@ class FhirFieldExtractor {
 
   static bool _isValidBloodType(String bloodType) {
     return BloodTypes.isValidBloodType(bloodType);
+  }
+
+  // ============================================
+  // Extended Field Extraction Methods
+  // ============================================
+
+  /// Extracts text from a list of Annotation objects
+  static String? extractAnnotations(List<dynamic>? annotations) {
+    if (annotations == null || annotations.isEmpty) return null;
+
+    final texts = annotations
+        .whereType<fhir_r4.Annotation>()
+        .map((a) => a.text.toString())
+        .where((text) => text.isNotEmpty)
+        .toList();
+
+    return texts.isEmpty ? null : texts.join('; ');
+  }
+
+  /// Extracts first annotation text
+  static String? extractFirstAnnotation(List<dynamic>? annotations) {
+    if (annotations == null || annotations.isEmpty) return null;
+
+    for (final annotation in annotations) {
+      if (annotation is fhir_r4.Annotation) {
+        final text = annotation.text.toString();
+        if (text.isNotEmpty) return text;
+      }
+    }
+    return null;
+  }
+
+  /// Extracts a Period as a formatted string
+  static String? extractPeriod(fhir_r4.Period? period) {
+    if (period == null) return null;
+
+    final start = period.start?.toString();
+    final end = period.end?.toString();
+
+    if (start != null && end != null) {
+      return '$start - $end';
+    } else if (start != null) {
+      return 'From $start';
+    } else if (end != null) {
+      return 'Until $end';
+    }
+    return null;
+  }
+
+  /// Extracts period start date only
+  static String? extractPeriodStart(fhir_r4.Period? period) {
+    return period?.start?.toString();
+  }
+
+  /// Extracts period end date only
+  static String? extractPeriodEnd(fhir_r4.Period? period) {
+    return period?.end?.toString();
+  }
+
+  /// Extracts dosage instructions as a formatted string
+  static String? extractDosageInstructions(List<dynamic>? dosages) {
+    if (dosages == null || dosages.isEmpty) return null;
+
+    final instructions = <String>[];
+    for (final dosage in dosages) {
+      if (dosage is fhir_r4.Dosage) {
+        // Try to get text first
+        if (dosage.text != null) {
+          instructions.add(dosage.text.toString());
+          continue;
+        }
+
+        // Build dosage from components
+        final parts = <String>[];
+
+        // Route
+        final route = extractCodeableConceptText(dosage.route);
+        if (route != null) parts.add(route);
+
+        // Timing
+        if (dosage.timing?.code != null) {
+          final timingCode = extractCodeableConceptText(dosage.timing!.code);
+          if (timingCode != null) parts.add(timingCode);
+        }
+
+        // Dose quantity
+        if (dosage.doseAndRate != null && dosage.doseAndRate!.isNotEmpty) {
+          final doseAndRate = dosage.doseAndRate!.first;
+          final doseQuantity = doseAndRate.doseX?.isAs<fhir_r4.Quantity>();
+          if (doseQuantity != null) {
+            parts.add('${doseQuantity.value} ${doseQuantity.unit ?? ''}');
+          }
+        }
+
+        if (parts.isNotEmpty) {
+          instructions.add(parts.join(', '));
+        }
+      }
+    }
+
+    return instructions.isEmpty ? null : instructions.join('; ');
+  }
+
+  /// Extracts all CodeableConcepts from an array and joins them
+  static String? extractAllCodeableConceptsFromArray(
+      List<dynamic>? codeableConceptArray) {
+    if (codeableConceptArray == null || codeableConceptArray.isEmpty) {
+      return null;
+    }
+
+    final texts = codeableConceptArray
+        .map((concept) => extractCodeableConceptText(concept))
+        .where((text) => text != null && text.isNotEmpty)
+        .toList();
+
+    return texts.isEmpty ? null : texts.join(', ');
+  }
+
+  /// Extracts interpretation codes from observations
+  static String? extractInterpretation(List<dynamic>? interpretations) {
+    if (interpretations == null || interpretations.isEmpty) return null;
+
+    final texts = <String>[];
+    for (final interp in interpretations) {
+      if (interp is fhir_r4.CodeableConcept) {
+        final text = extractCodeableConceptText(interp);
+        if (text != null) texts.add(text);
+      }
+    }
+
+    return texts.isEmpty ? null : texts.join(', ');
+  }
+
+  /// Extracts onset[x] value (can be DateTime, Age, Period, Range, or String)
+  static String? extractOnsetX(dynamic onsetX) {
+    if (onsetX == null) return null;
+
+    // Check for DateTime
+    final onsetDateTime = onsetX.isAs<fhir_r4.FhirDateTime>();
+    if (onsetDateTime != null) return onsetDateTime.valueString;
+
+    // Check for Age
+    final onsetAge = onsetX.isAs<fhir_r4.Age>();
+    if (onsetAge != null) {
+      return '${onsetAge.value} ${onsetAge.unit ?? 'years'}';
+    }
+
+    // Check for Period
+    final onsetPeriod = onsetX.isAs<fhir_r4.Period>();
+    if (onsetPeriod != null) return extractPeriod(onsetPeriod);
+
+    // Check for Range
+    final onsetRange = onsetX.isAs<fhir_r4.Range>();
+    if (onsetRange != null) {
+      return '${onsetRange.low?.value} - ${onsetRange.high?.value}';
+    }
+
+    // Check for String
+    final onsetString = onsetX.isAs<fhir_r4.FhirString>();
+    if (onsetString != null) return onsetString.valueString;
+
+    return null;
+  }
+
+  /// Extracts abatement[x] value (similar to onset)
+  static String? extractAbatementX(dynamic abatementX) {
+    if (abatementX == null) return null;
+
+    // Check for DateTime
+    final abatementDateTime = abatementX.isAs<fhir_r4.FhirDateTime>();
+    if (abatementDateTime != null) return abatementDateTime.valueString;
+
+    // Check for Age
+    final abatementAge = abatementX.isAs<fhir_r4.Age>();
+    if (abatementAge != null) {
+      return '${abatementAge.value} ${abatementAge.unit ?? 'years'}';
+    }
+
+    // Check for Period
+    final abatementPeriod = abatementX.isAs<fhir_r4.Period>();
+    if (abatementPeriod != null) return extractPeriod(abatementPeriod);
+
+    // Check for Range
+    final abatementRange = abatementX.isAs<fhir_r4.Range>();
+    if (abatementRange != null) {
+      return '${abatementRange.low?.value} - ${abatementRange.high?.value}';
+    }
+
+    // Check for String
+    final abatementString = abatementX.isAs<fhir_r4.FhirString>();
+    if (abatementString != null) return abatementString.valueString;
+
+    return null;
+  }
+
+  /// Extracts performed[x] value (DateTime or Period)
+  static String? extractPerformedX(dynamic performedX) {
+    if (performedX == null) return null;
+
+    // Check for DateTime
+    final performedDateTime = performedX.isAs<fhir_r4.FhirDateTime>();
+    if (performedDateTime != null) return performedDateTime.valueString;
+
+    // Check for Period
+    final performedPeriod = performedX.isAs<fhir_r4.Period>();
+    if (performedPeriod != null) return extractPeriod(performedPeriod);
+
+    return null;
+  }
+
+  /// Extracts effective[x] value (DateTime, Period, Timing, or Instant)
+  static String? extractEffectiveX(dynamic effectiveX) {
+    if (effectiveX == null) return null;
+
+    // Check for DateTime
+    final effectiveDateTime = effectiveX.isAs<fhir_r4.FhirDateTime>();
+    if (effectiveDateTime != null) return effectiveDateTime.valueString;
+
+    // Check for Period
+    final effectivePeriod = effectiveX.isAs<fhir_r4.Period>();
+    if (effectivePeriod != null) return extractPeriod(effectivePeriod);
+
+    // Check for Instant
+    final effectiveInstant = effectiveX.isAs<fhir_r4.FhirInstant>();
+    if (effectiveInstant != null) return effectiveInstant.valueString;
+
+    return null;
+  }
+
+  /// Extracts occurrence[x] value (DateTime, Period, or String)
+  static String? extractOccurrenceX(dynamic occurrenceX) {
+    if (occurrenceX == null) return null;
+
+    // Check for DateTime
+    final occurrenceDateTime = occurrenceX.isAs<fhir_r4.FhirDateTime>();
+    if (occurrenceDateTime != null) return occurrenceDateTime.valueString;
+
+    // Check for Period
+    final occurrencePeriod = occurrenceX.isAs<fhir_r4.Period>();
+    if (occurrencePeriod != null) return extractPeriod(occurrencePeriod);
+
+    // Check for String
+    final occurrenceString = occurrenceX.isAs<fhir_r4.FhirString>();
+    if (occurrenceString != null) return occurrenceString.valueString;
+
+    return null;
+  }
+
+  /// Extracts a Quantity value as formatted string
+  static String? extractQuantity(fhir_r4.Quantity? quantity) {
+    if (quantity == null) return null;
+    if (quantity.value == null) return null;
+
+    final value = quantity.value?.valueDouble?.toStringAsFixed(2);
+    final unit = quantity.unit?.toString() ?? '';
+
+    return '$value $unit'.trim();
+  }
+
+  /// Extracts performer references (usually practitioner names)
+  static String? extractPerformers(List<dynamic>? performers) {
+    if (performers == null || performers.isEmpty) return null;
+
+    final names = <String>[];
+    for (final performer in performers) {
+      // Handle Reference directly
+      if (performer is fhir_r4.Reference) {
+        final display = performer.display?.toString();
+        if (display != null && display.isNotEmpty) {
+          names.add(display);
+        }
+      }
+      // Handle ProcedurePerformer which has actor Reference
+      else if (performer is fhir_r4.ProcedurePerformer) {
+        final display = performer.actor.display?.toString();
+        if (display != null && display.isNotEmpty) {
+          names.add(display);
+        }
+      }
+      // Handle DiagnosticReportPerformer
+      else {
+        try {
+          // Try to access actor property
+          final actor = (performer as dynamic).actor;
+          if (actor is fhir_r4.Reference) {
+            final display = actor.display?.toString();
+            if (display != null && display.isNotEmpty) {
+              names.add(display);
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    return names.isEmpty ? null : names.join(', ');
+  }
+
+  /// Extracts participant references (for encounters, care teams, etc.)
+  static String? extractParticipants(List<dynamic>? participants) {
+    if (participants == null || participants.isEmpty) return null;
+
+    final names = <String>[];
+    for (final participant in participants) {
+      try {
+        // Try to access individual property (for EncounterParticipant)
+        final individual = (participant as dynamic).individual;
+        if (individual is fhir_r4.Reference) {
+          final display = individual.display?.toString();
+          if (display != null && display.isNotEmpty) {
+            names.add(display);
+          }
+        }
+      } catch (_) {}
+
+      try {
+        // Try to access member property (for CareTeamParticipant)
+        final member = (participant as dynamic).member;
+        if (member is fhir_r4.Reference) {
+          final display = member.display?.toString();
+          if (display != null && display.isNotEmpty) {
+            names.add(display);
+          }
+        }
+      } catch (_) {}
+    }
+
+    return names.isEmpty ? null : names.join(', ');
+  }
+
+  /// Extracts location references
+  static String? extractLocations(List<dynamic>? locations) {
+    if (locations == null || locations.isEmpty) return null;
+
+    final names = <String>[];
+    for (final location in locations) {
+      try {
+        // Try to access location property (for EncounterLocation)
+        final loc = (location as dynamic).location;
+        if (loc is fhir_r4.Reference) {
+          final display = loc.display?.toString();
+          if (display != null && display.isNotEmpty) {
+            names.add(display);
+          }
+        }
+      } catch (_) {}
+
+      // Handle direct Reference
+      if (location is fhir_r4.Reference) {
+        final display = location.display?.toString();
+        if (display != null && display.isNotEmpty) {
+          names.add(display);
+        }
+      }
+    }
+
+    return names.isEmpty ? null : names.join(', ');
+  }
+
+  /// Extracts diagnosis references (for encounters)
+  static String? extractDiagnoses(List<dynamic>? diagnoses) {
+    if (diagnoses == null || diagnoses.isEmpty) return null;
+
+    final names = <String>[];
+    for (final diagnosis in diagnoses) {
+      try {
+        // Try to access condition property (for EncounterDiagnosis)
+        final condition = (diagnosis as dynamic).condition;
+        if (condition is fhir_r4.Reference) {
+          final display = condition.display?.toString();
+          if (display != null && display.isNotEmpty) {
+            names.add(display);
+          }
+        }
+      } catch (_) {}
+    }
+
+    return names.isEmpty ? null : names.join(', ');
+  }
+
+  /// Extracts coding class display (for Encounter.class)
+  static String? extractCodingDisplay(dynamic coding) {
+    if (coding == null) return null;
+
+    if (coding is fhir_r4.Coding) {
+      return coding.display?.toString() ?? coding.code?.toString();
+    }
+
+    return null;
+  }
+
+  /// Extracts reason codes from a list of CodeableConcepts
+  static String? extractReasonCodes(List<dynamic>? reasonCodes) {
+    return extractAllCodeableConceptsFromArray(reasonCodes);
+  }
+
+  /// Extracts reason references
+  static String? extractReasonReferences(List<dynamic>? reasonReferences) {
+    return extractMultipleReferenceDisplays(reasonReferences);
+  }
+
+  /// Extracts identifier value (first identifier)
+  static String? extractFirstIdentifier(List<fhir_r4.Identifier>? identifiers) {
+    if (identifiers == null || identifiers.isEmpty) return null;
+
+    for (final identifier in identifiers) {
+      if (identifier.value != null) {
+        return identifier.value.toString();
+      }
+    }
+    return null;
+  }
+
+  /// Extracts service type from ServiceRequest or similar
+  static String? extractServiceType(List<dynamic>? serviceTypes) {
+    return extractFirstCodeableConceptFromArray(serviceTypes);
+  }
+
+  /// Extracts priority as readable string
+  static String? extractPriority(dynamic priority) {
+    if (priority == null) return null;
+    return priority.toString().split('.').last;
+  }
+
+  /// Extracts intent as readable string
+  static String? extractIntent(dynamic intent) {
+    if (intent == null) return null;
+    return intent.toString().split('.').last;
+  }
+
+  // ============================================
+  // Patient Extension Extraction Methods
+  // ============================================
+
+  /// Extracts a simple extension value from raw resource
+  static String? extractExtensionValue(
+      Map<String, dynamic> rawResource, String extensionUrl) {
+    final extensions = rawResource['extension'] as List<dynamic>?;
+    if (extensions == null) return null;
+
+    for (final ext in extensions) {
+      if (ext is Map<String, dynamic> && ext['url'] == extensionUrl) {
+        return ext['valueCode']?.toString() ??
+            ext['valueString']?.toString() ??
+            ext['valueCodeableConcept']?['text']?.toString() ??
+            ext['valueCodeableConcept']?['coding']?[0]?['display']?.toString();
+      }
+    }
+    return null;
+  }
+
+  /// Extracts US Core race or ethnicity from complex extension
+  static String? extractRaceOrEthnicity(
+      Map<String, dynamic> rawResource, String extensionUrl) {
+    final extensions = rawResource['extension'] as List<dynamic>?;
+    if (extensions == null) return null;
+
+    for (final ext in extensions) {
+      if (ext is Map<String, dynamic> && ext['url'] == extensionUrl) {
+        final nestedExtensions = ext['extension'] as List<dynamic>?;
+        if (nestedExtensions != null) {
+          // Look for 'text' extension first
+          for (final nested in nestedExtensions) {
+            if (nested is Map<String, dynamic> && nested['url'] == 'text') {
+              return nested['valueString']?.toString();
+            }
+          }
+          // Fallback to ombCategory display
+          for (final nested in nestedExtensions) {
+            if (nested is Map<String, dynamic> &&
+                nested['url'] == 'ombCategory') {
+              return nested['valueCoding']?['display']?.toString();
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Extracts birth place from patient extension
+  static String? extractBirthPlace(Map<String, dynamic> rawResource) {
+    final extensions = rawResource['extension'] as List<dynamic>?;
+    if (extensions == null) return null;
+
+    for (final ext in extensions) {
+      if (ext is Map<String, dynamic> &&
+          ext['url'] ==
+              'http://hl7.org/fhir/StructureDefinition/patient-birthPlace') {
+        final address = ext['valueAddress'] as Map<String, dynamic>?;
+        if (address != null) {
+          final parts = <String>[];
+          if (address['city'] != null) parts.add(address['city'].toString());
+          if (address['state'] != null) parts.add(address['state'].toString());
+          if (address['country'] != null) {
+            parts.add(address['country'].toString());
+          }
+          return parts.isNotEmpty ? parts.join(', ') : null;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Extracts identifier by type code
+  static String? extractIdentifierByType(
+      List<fhir_r4.Identifier>? identifiers, String typeCode) {
+    if (identifiers == null) return null;
+
+    for (final id in identifiers) {
+      final code = id.type?.coding?.firstOrNull?.code?.valueString;
+      if (code == typeCode) {
+        return id.value?.valueString;
+      }
+    }
+    return null;
+  }
+
+  /// Extracts telecom value by system and optionally use
+  static String? extractTelecomBySystem(
+      List<fhir_r4.ContactPoint>? telecom, String system,
+      {String? use}) {
+    if (telecom == null) return null;
+
+    for (final contact in telecom) {
+      if (contact.system?.valueString == system) {
+        if (use == null || contact.use?.valueString == use) {
+          return contact.value?.valueString;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Extracts all telecom entries for a system with their use type
+  static List<Map<String, String>> extractAllTelecomBySystem(
+      List<fhir_r4.ContactPoint>? telecom, String system) {
+    if (telecom == null) return [];
+
+    final results = <Map<String, String>>[];
+    for (final contact in telecom) {
+      if (contact.system?.valueString == system) {
+        final value = contact.value?.valueString;
+        if (value != null) {
+          results.add({
+            'value': value,
+            'use': contact.use?.valueString ?? '',
+          });
+        }
+      }
+    }
+    return results;
+  }
+
+  /// Extracts full formatted address with all lines
+  static String? formatFullAddress(fhir_r4.Address? address) {
+    if (address == null) return null;
+
+    final parts = <String>[];
+
+    // Add address lines
+    if (address.line != null) {
+      for (final line in address.line!) {
+        final lineStr = line.valueString;
+        if (lineStr != null && lineStr.isNotEmpty) {
+          parts.add(lineStr);
+        }
+      }
+    }
+
+    // Add city, state, postal code on one line
+    final cityStateZip = <String>[];
+    if (address.city?.valueString != null) {
+      cityStateZip.add(address.city!.valueString!);
+    }
+    if (address.state?.valueString != null) {
+      cityStateZip.add(address.state!.valueString!);
+    }
+    if (address.postalCode?.valueString != null) {
+      cityStateZip.add(address.postalCode!.valueString!);
+    }
+    if (cityStateZip.isNotEmpty) {
+      parts.add(cityStateZip.join(', '));
+    }
+
+    // Add country
+    if (address.country?.valueString != null) {
+      parts.add(address.country!.valueString!);
+    }
+
+    return parts.isNotEmpty ? parts.join('\n') : null;
+  }
+
+  /// Extracts communication languages
+  static String? extractCommunicationLanguages(
+      List<fhir_r4.PatientCommunication>? communication) {
+    if (communication == null || communication.isEmpty) return null;
+
+    final languages = communication
+        .map((c) => extractCodeableConceptText(c.language))
+        .where((l) => l != null && l.isNotEmpty)
+        .toList();
+
+    return languages.isEmpty ? null : languages.join(', ');
+  }
+
+  /// Calculate age from birth date
+  static int? calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return null;
+
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  /// Extracts multiple birth information
+  static String? extractMultipleBirth(dynamic multipleBirthX) {
+    if (multipleBirthX == null) return null;
+
+    final boolValue = multipleBirthX.isAs<fhir_r4.FhirBoolean>();
+    if (boolValue != null) {
+      return boolValue.valueBoolean == true ? 'Yes' : 'No';
+    }
+
+    final intValue = multipleBirthX.isAs<fhir_r4.FhirInteger>();
+    if (intValue != null) {
+      return 'Yes (Birth order: $intValue)';
+    }
+
+    return null;
+  }
+
+  /// Extracts telecom display with use type
+  static String? extractTelecom(List<fhir_r4.ContactPoint>? telecom) {
+    if (telecom == null || telecom.isEmpty) return null;
+
+    for (final contact in telecom) {
+      if (contact.value?.valueString != null) {
+        final useType = contact.use?.valueString;
+        final system = contact.system?.valueString;
+        final value = contact.value!.valueString!;
+
+        if (useType != null) {
+          return '$value ($useType)';
+        }
+        if (system != null) {
+          return '$system: $value';
+        }
+        return value;
+      }
+    }
+    return null;
+  }
+
+  /// Extracts DateTime from various date types
+  static String? extractDateTime(dynamic dateX) {
+    if (dateX == null) return null;
+
+    final dateTime = dateX.isAs<fhir_r4.FhirDateTime>();
+    if (dateTime != null) return dateTime.valueString;
+
+    final date = dateX.isAs<fhir_r4.FhirDate>();
+    if (date != null) return date.valueString;
+
+    final instant = dateX.isAs<fhir_r4.FhirInstant>();
+    if (instant != null) return instant.valueString;
+
+    final period = dateX.isAs<fhir_r4.Period>();
+    if (period != null) return extractPeriod(period);
+
+    return dateX.toString();
+  }
+
+  /// Extracts Dosage information
+  static String? extractDosage(List<fhir_r4.Dosage>? dosages) {
+    if (dosages == null || dosages.isEmpty) return null;
+
+    final dosage = dosages.first;
+
+    // Try text first
+    if (dosage.text?.valueString != null) {
+      return dosage.text!.valueString;
+    }
+
+    // Build from components
+    final parts = <String>[];
+
+    if (dosage.doseAndRate != null && dosage.doseAndRate!.isNotEmpty) {
+      final doseAndRate = dosage.doseAndRate!.first;
+      final doseQuantity = doseAndRate.doseX?.isAs<fhir_r4.Quantity>();
+      if (doseQuantity != null) {
+        final value = doseQuantity.value?.valueDouble?.toStringAsFixed(0);
+        final unit = doseQuantity.unit?.valueString;
+        if (value != null) {
+          parts.add('$value${unit != null ? ' $unit' : ''}');
+        }
+      }
+    }
+
+    final route = extractCodeableConceptText(dosage.route);
+    if (route != null) parts.add(route);
+
+    if (dosage.timing?.code != null) {
+      final timing = extractCodeableConceptText(dosage.timing!.code);
+      if (timing != null) parts.add(timing);
+    }
+
+    return parts.isEmpty ? null : parts.join(', ');
+  }
+
+  /// Example output: "Jan 10, 2024, 10:00 AM - Jan 15, 2024, 10:00 AM"
+  /// Or same day: "Jan 10, 2024, 10:00 AM - 2:00 PM"
+  static String? extractPeriodFormatted(fhir_r4.Period? period) {
+    if (period == null) return null;
+
+    try {
+      final start = period.start?.toString();
+      final end = period.end?.toString();
+
+      DateTime? startDate;
+      DateTime? endDate;
+
+      if (start != null) {
+        startDate = DateTime.tryParse(start);
+      }
+      if (end != null) {
+        endDate = DateTime.tryParse(end);
+      }
+
+      if (startDate != null && endDate != null) {
+        final formatter = DateFormat('MMM d, yyyy h:mm a');
+        final startFormatted = formatter.format(startDate);
+        final endFormatted = formatter.format(endDate);
+        
+        if (startDate.year == endDate.year &&
+            startDate.month == endDate.month &&
+            startDate.day == endDate.day) {
+          final dateFormatter = DateFormat('MMM d, yyyy');
+          final timeFormatter = DateFormat('h:mm a');
+          return '${dateFormatter.format(startDate)}, ${timeFormatter.format(startDate)} - ${timeFormatter.format(endDate)}';
+        }
+        
+        return '$startFormatted - $endFormatted';
+      } else if (startDate != null) {
+        final formatter = DateFormat('MMM d, yyyy h:mm a');
+        return 'From ${formatter.format(startDate)}';
+      } else if (endDate != null) {
+        final formatter = DateFormat('MMM d, yyyy h:mm a');
+        return 'Until ${formatter.format(endDate)}';
+      }
+    } catch (e) {
+      return extractPeriod(period);
+    }
+
+    return null;
+  }
+
+  /// Example: "Jan 10, 2024, 10:00 AM"
+  static String? formatFhirDateTime(fhir_r4.FhirDateTime? fhirDateTime) {
+    if (fhirDateTime == null) return null;
+    
+    final dateTimeString = fhirDateTime.valueString;
+    if (dateTimeString == null) return null;
+    
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      final formatter = DateFormat('MMM d, yyyy, h:mm a');
+      return formatter.format(dateTime);
+    } catch (e) {
+      return dateTimeString;
+    }
+  }
+
+  /// Example: "Jan 10, 2024"
+  static String? formatFhirDate(fhir_r4.FhirDate? fhirDate) {
+    if (fhirDate == null) return null;
+    
+    final dateString = fhirDate.valueString;
+    if (dateString == null) return null;
+    
+    try {
+      final date = DateTime.parse(dateString);
+      final formatter = DateFormat('MMM d, yyyy');
+      return formatter.format(date);
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  /// Example: "Jan 10, 2024, 10:00:30 AM"
+  static String? formatFhirInstant(fhir_r4.FhirInstant? fhirInstant) {
+    if (fhirInstant == null) return null;
+    
+    final instantString = fhirInstant.valueString;
+    if (instantString == null) return null;
+    
+    try {
+      final dateTime = DateTime.parse(instantString);
+      final formatter = DateFormat('MMM d, yyyy, h:mm:ss a');
+      return formatter.format(dateTime);
+    } catch (e) {
+      return instantString;
+    }
+  }
+
+  /// Automatically detects if it's a date or datetime
+  /// Example: "2024-01-10T10:00:00-06:00" -> "Jan 10, 2024, 10:00 AM"
+  /// Example: "2024-01-10" -> "Jan 10, 2024"
+  static String? formatDateTimeString(String? dateTimeString) {
+    if (dateTimeString == null || dateTimeString.isEmpty) return null;
+    
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      
+      final hasTime = dateTimeString.contains('T') || 
+                     dateTimeString.contains(':');
+      
+      if (hasTime) {
+        final formatter = DateFormat('MMM d, yyyy, h:mm a');
+        return formatter.format(dateTime);
+      } else {
+        final formatter = DateFormat('MMM d, yyyy');
+        return formatter.format(dateTime);
+      }
+    } catch (e) {
+      return dateTimeString;
+    }
+  }
+
+    static String? extractOnsetXFormatted(dynamic onsetX) {
+    if (onsetX == null) return null;
+
+    // Check for DateTime - FORMAT IT
+    final onsetDateTime = onsetX.isAs<fhir_r4.FhirDateTime>();
+    if (onsetDateTime != null) {
+      return formatFhirDateTime(onsetDateTime);
+    }
+
+    // Check for Age
+    final onsetAge = onsetX.isAs<fhir_r4.Age>();
+    if (onsetAge != null) {
+      final value = onsetAge.value?.valueString;
+      final unit = onsetAge.unit ?? 'years';
+      return value != null ? '$value $unit' : null;
+    }
+
+    // Check for Period - FORMAT IT
+    final onsetPeriod = onsetX.isAs<fhir_r4.Period>();
+    if (onsetPeriod != null) {
+      return extractPeriodFormatted(onsetPeriod);
+    }
+
+    // Check for Range
+    final onsetRange = onsetX.isAs<fhir_r4.Range>();
+    if (onsetRange != null) {
+      final low = extractQuantity(onsetRange.low);
+      final high = extractQuantity(onsetRange.high);
+      if (low != null && high != null) {
+        return '$low - $high';
+      }
+      return low ?? high;
+    }
+
+    // Check for String
+    final onsetString = onsetX.isAs<fhir_r4.FhirString>();
+    if (onsetString != null) return onsetString.valueString;
+
+    return null;
+  }
+
+  static String? extractAbatementXFormatted(dynamic abatementX) {
+    if (abatementX == null) return null;
+
+    // Check for DateTime - FORMAT IT
+    final abatementDateTime = abatementX.isAs<fhir_r4.FhirDateTime>();
+    if (abatementDateTime != null) {
+      return formatFhirDateTime(abatementDateTime);
+    }
+
+    // Check for Age
+    final abatementAge = abatementX.isAs<fhir_r4.Age>();
+    if (abatementAge != null) {
+      final value = abatementAge.value?.valueString;
+      final unit = abatementAge.unit ?? 'years';
+      return value != null ? '$value $unit' : null;
+    }
+
+    // Check for Period - FORMAT IT
+    final abatementPeriod = abatementX.isAs<fhir_r4.Period>();
+    if (abatementPeriod != null) {
+      return extractPeriodFormatted(abatementPeriod);
+    }
+
+    // Check for Range
+    final abatementRange = abatementX.isAs<fhir_r4.Range>();
+    if (abatementRange != null) {
+      final low = extractQuantity(abatementRange.low);
+      final high = extractQuantity(abatementRange.high);
+      if (low != null && high != null) {
+        return '$low - $high';
+      }
+      return low ?? high;
+    }
+
+    // Check for String
+    final abatementString = abatementX.isAs<fhir_r4.FhirString>();
+    if (abatementString != null) return abatementString.valueString;
+
+    // Check for Boolean
+    final abatementBoolean = abatementX.isAs<fhir_r4.FhirBoolean>();
+    if (abatementBoolean != null) {
+      return abatementBoolean.valueBoolean == true ? 'Yes' : 'No';
+    }
+
+    return null;
+  }
+
+  static String? extractPerformedXFormatted(dynamic performedX) {
+    if (performedX == null) return null;
+
+    final performedDateTime = performedX.isAs<fhir_r4.FhirDateTime>();
+    if (performedDateTime != null) {
+      return formatFhirDateTime(performedDateTime);
+    }
+
+    final performedPeriod = performedX.isAs<fhir_r4.Period>();
+    if (performedPeriod != null) {
+      return extractPeriodFormatted(performedPeriod);
+    }
+
+    final performedString = performedX.isAs<fhir_r4.FhirString>();
+    if (performedString != null) return performedString.valueString;
+
+    final performedAge = performedX.isAs<fhir_r4.Age>();
+    if (performedAge != null) {
+      final value = performedAge.value?.valueString;
+      final unit = performedAge.unit ?? 'years';
+      return value != null ? '$value $unit' : null;
+    }
+
+    final performedRange = performedX.isAs<fhir_r4.Range>();
+    if (performedRange != null) {
+      final low = extractQuantity(performedRange.low);
+      final high = extractQuantity(performedRange.high);
+      if (low != null && high != null) {
+        return '$low - $high';
+      }
+      return low ?? high;
+    }
+
+    return null;
+  }
+
+  static String? extractEffectiveXFormatted(dynamic effectiveX) {
+    if (effectiveX == null) return null;
+
+    final effectiveDateTime = effectiveX.isAs<fhir_r4.FhirDateTime>();
+    if (effectiveDateTime != null) {
+      return formatFhirDateTime(effectiveDateTime);
+    }
+
+    final effectivePeriod = effectiveX.isAs<fhir_r4.Period>();
+    if (effectivePeriod != null) {
+      return extractPeriodFormatted(effectivePeriod);
+    }
+
+    final effectiveInstant = effectiveX.isAs<fhir_r4.FhirInstant>();
+    if (effectiveInstant != null) {
+      return formatFhirInstant(effectiveInstant);
+    }
+
+    final effectiveTiming = effectiveX.isAs<fhir_r4.Timing>();
+    if (effectiveTiming != null && effectiveTiming.code != null) {
+      return extractCodeableConceptText(effectiveTiming.code);
+    }
+
+    return null;
+  }
+
+  static String? extractOccurrenceXFormatted(dynamic occurrenceX) {
+    if (occurrenceX == null) return null;
+
+    final occurrenceDateTime = occurrenceX.isAs<fhir_r4.FhirDateTime>();
+    if (occurrenceDateTime != null) {
+      return formatFhirDateTime(occurrenceDateTime);
+    }
+
+    final occurrencePeriod = occurrenceX.isAs<fhir_r4.Period>();
+    if (occurrencePeriod != null) {
+      return extractPeriodFormatted(occurrencePeriod);
+    }
+
+    final occurrenceString = occurrenceX.isAs<fhir_r4.FhirString>();
+    if (occurrenceString != null) return occurrenceString.valueString;
+
+    final occurrenceTiming = occurrenceX.isAs<fhir_r4.Timing>();
+    if (occurrenceTiming != null && occurrenceTiming.code != null) {
+      return extractCodeableConceptText(occurrenceTiming.code);
+    }
+
+    return null;
   }
 }

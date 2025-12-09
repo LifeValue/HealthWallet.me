@@ -64,7 +64,7 @@ import 'app_localizations_es.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -87,17 +87,17 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('es'),
-    Locale('de'),
+    Locale('de')
   ];
 
   /// The title of the application
@@ -157,13 +157,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingWelcomeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Securely access your complete medical history with <link>HealthWallet.me</link>. Connect to over 100,000 US healthcare institutions or add records by sharing directly with the app or scan documents. Your health data is private, compliant, and stored only on your device.'**
+  /// **'<link>HealthWallet.me</link> already connects to 100,000+ US healthcare providers, and we\'re expanding to new countries.'**
   String get onboardingWelcomeSubtitle;
 
   /// No description provided for @onboardingWelcomeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Sync your healthcare data through <link>FastenHealth OnPrem</link> with the healthcare providers and see your complete medical history in one place. Secured, compliant and always on your device. Enjoy!'**
+  /// **'Add records from any provider, import documents manually, or request support for your country.'**
   String get onboardingWelcomeDescription;
 
   /// No description provided for @onboardingRecordsTitle.
@@ -175,14 +175,32 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingRecordsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'**Keep your medical history effortlessly up-to-date with both automatic and manual options.**'**
+  /// **'<link>HealthWallet.me</link> gives you flexible ways to bring all your medical history together:'**
   String get onboardingRecordsSubtitle;
 
   /// No description provided for @onboardingRecordsDescription.
   ///
   /// In en, this message translates to:
-  /// **'<link>HealthWallet.me</link> ensures your complete health history is always up-to-date. It automatically syncs new records from connected providers and lets you instantly add physical documents with a quick scan.'**
+  /// **'• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of Fasten Health OnPrem and get all your US healthcare systems records to your wallet.'**
   String get onboardingRecordsDescription;
+
+  /// No description provided for @onboardingRecordsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of <link>Fasten Health OnPrem</link> and get all your US healthcare systems records to your wallet.'**
+  String get onboardingRecordsContent;
+
+  /// No description provided for @onboardingRecordsBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is organized securely on your device.'**
+  String get onboardingRecordsBottom;
+
+  /// No description provided for @onboardingRequestIntegration.
+  ///
+  /// In en, this message translates to:
+  /// **'Request an integration'**
+  String get onboardingRequestIntegration;
 
   /// No description provided for @onboardingScanButton.
   ///
@@ -193,19 +211,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSyncTitle.
   ///
   /// In en, this message translates to:
-  /// **'Private by Design'**
+  /// **'Security & Privacy'**
   String get onboardingSyncTitle;
 
   /// No description provided for @onboardingSyncSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your health data belongs only to you.'**
+  /// **'<link>HealthWallet.me</link> is built with privacy at its core. Your medical data is encrypted and stored only on your phone, never on cloud servers.'**
   String get onboardingSyncSubtitle;
 
   /// No description provided for @onboardingSyncDescription.
   ///
   /// In en, this message translates to:
-  /// **'We believe your sensitive health information should never sit on a company server. Your data is encrypted and stored exclusively on your device, meaning you are the only one with access.'**
+  /// **'View your health history in airplane mode, abroad, or without internet, your records stay with you wherever you go. Add an extra layer of security by enabling biometric authentication.'**
   String get onboardingSyncDescription;
 
   /// No description provided for @onboardingBiometricText.
@@ -397,7 +415,7 @@ abstract class AppLocalizations {
   /// No description provided for @patientId.
   ///
   /// In en, this message translates to:
-  /// **'Patient ID: '**
+  /// **'MRN: '**
   String get patientId;
 
   /// No description provided for @age.
@@ -1054,6 +1072,12 @@ abstract class AppLocalizations {
   /// **'No records found'**
   String get noRecordsFound;
 
+  /// No description provided for @noRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No records'**
+  String get noRecords;
+
   /// No description provided for @tryDifferentKeywords.
   ///
   /// In en, this message translates to:
@@ -1221,6 +1245,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scan'**
   String get documentScanTitle;
+
+  /// No description provided for @onboardingAiModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable AI Model'**
+  String get onboardingAiModelTitle;
+
+  /// No description provided for @onboardingAiModelDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.'**
+  String get onboardingAiModelDescription;
+
+  /// No description provided for @onboardingAiModelSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock AI-powered scanning'**
+  String get onboardingAiModelSubtitle;
+
+  /// No description provided for @aiModelReady.
+  ///
+  /// In en, this message translates to:
+  /// **'AI model ready! You can start scanning.'**
+  String get aiModelReady;
+
+  /// No description provided for @aiModelDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading AI model...'**
+  String get aiModelDownloading;
+
+  /// No description provided for @aiModelEnableDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable & Download'**
+  String get aiModelEnableDownload;
+
+  /// No description provided for @aiModelError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t verify model. Try again.'**
+  String get aiModelError;
+
+  /// No description provided for @aiModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded.'**
+  String get aiModelMissing;
+
+  /// No description provided for @aiModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Load AI Model'**
+  String get aiModelTitle;
+
+  /// No description provided for @aiModelUnlockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock AI-Powered Scanning'**
+  String get aiModelUnlockTitle;
+
+  /// No description provided for @aiModelUnlockDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.'**
+  String get aiModelUnlockDescription;
+
+  /// No description provided for @aiModelDownloadInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.'**
+  String get aiModelDownloadInfo;
+
+  /// No description provided for @setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup'**
+  String get setup;
+
+  /// No description provided for @patientSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up Your Profile'**
+  String get patientSetupTitle;
+
+  /// No description provided for @patientSetupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Personalize your health wallet with your information'**
+  String get patientSetupSubtitle;
+
+  /// No description provided for @onboardingSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up my Health Wallet'**
+  String get onboardingSetupTitle;
+
+  /// No description provided for @onboardingSetupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your personal health profile to get started with HealthWallet'**
+  String get onboardingSetupBody;
+
+  /// No description provided for @onboardingDemoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Demo Data'**
+  String get onboardingDemoTitle;
+
+  /// No description provided for @onboardingDemoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore the app with sample medical records to see how it works'**
+  String get onboardingDemoBody;
+
+  /// No description provided for @onboardingSyncTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Your Records'**
+  String get onboardingSyncTitle2;
+
+  /// No description provided for @onboardingSyncBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to your healthcare providers to import your real medical records'**
+  String get onboardingSyncBody;
+
+  /// No description provided for @givenName.
+  ///
+  /// In en, this message translates to:
+  /// **'Given Name'**
+  String get givenName;
+
+  /// No description provided for @familyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Family Name'**
+  String get familyName;
+
+  /// No description provided for @skipForNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get skipForNow;
+
+  /// No description provided for @setUpProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up'**
+  String get setUpProfile;
+
+  /// No description provided for @useDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get useDefaults;
+
+  /// No description provided for @syncPlaceholderTutorialStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your profile to unlock full features.'**
+  String get syncPlaceholderTutorialStep1;
+
+  /// No description provided for @syncPlaceholderTutorialStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Not ready to import? Load demo data to see how the app looks in action.'**
+  String get syncPlaceholderTutorialStep2;
+
+  /// No description provided for @syncPlaceholderTutorialStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your desktop and mobile wallet up to date.'**
+  String get syncPlaceholderTutorialStep3;
+
+  /// No description provided for @tapToContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to continue'**
+  String get tapToContinue;
+
+  /// No description provided for @homeOnboardingReorderMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press to reorder them according to your preference.'**
+  String get homeOnboardingReorderMessage;
 }
 
 class _AppLocalizationsDelegate
@@ -1252,9 +1462,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
-  );
+      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }

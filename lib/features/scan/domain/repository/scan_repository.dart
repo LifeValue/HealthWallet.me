@@ -1,4 +1,5 @@
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 
 abstract class ScanRepository {
   // Document management
@@ -15,6 +16,17 @@ abstract class ScanRepository {
   Future<void> deleteDocument(String imagePath);
 
   Future<void> clearAllDocuments();
+
+  Future<ProcessingSession> createProcessingSession({
+    required List<String> filePaths,
+    required ProcessingOrigin origin,
+  });
+
+  Future<List<ProcessingSession>> getProcessingSessions();
+
+  Future<int> editProcessingSession(ProcessingSession session);
+
+  Future<int> deleteProcessingSession(ProcessingSession session);
 
   // Fhir Mapping
   Stream<double> downloadModel();

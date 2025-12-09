@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:health_wallet/core/data/local/app_database.steps.dart';
 import 'package:health_wallet/features/records/data/datasource/tables/record_notes.dart';
+import 'package:health_wallet/features/scan/data/data_source/local/tables/processing_sessions.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/fhir_resource_table.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/source_table.dart';
 import 'package:path/path.dart' as p;
@@ -15,12 +16,13 @@ part 'app_database.g.dart';
   FhirResource,
   Sources,
   RecordNotes,
+  ProcessingSessions,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -37,8 +39,17 @@ class AppDatabase extends _$AppDatabase {
           from2To3: (m, schema) async {
             await m.createTable(schema.recordNotes);
           },
-          from3To4: (m, schema) async {
+          from3To5: (m, schema) async {
             await m.addColumn(schema.sources, schema.sources.labelSource);
+          },
+          from5To6: (m, schema) async {
+            await m.createTable(schema.processingSessions);
+          },
+          from6To7: (m, schema) async {
+            await m.addColumn(
+                schema.processingSessions, schema.processingSessions.patient);
+            await m.addColumn(
+                schema.processingSessions, schema.processingSessions.encounter);
           },
         ),
       );

@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -97,29 +98,141 @@ class Practitioner with _$Practitioner implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    final professionalInfoStartIndex = infoLines.length;
 
-    final genderDisplay = gender?.display?.valueString;
-    if (genderDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: genderDisplay,
-      ));
+    // Active Status
+    final activeStatus = active?.valueBoolean;
+    if (activeStatus != null) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            activeStatus ? 'Active' : 'Inactive',
+            prefix: 'Status'),
+      );
     }
 
+    // Qualification
+    if (qualification != null && qualification!.isNotEmpty) {
+      for (final qual in qualification!) {
+        final qualCode = FhirFieldExtractor.extractCodeableConceptText(qual.code);
+        final issuer = FhirFieldExtractor.extractReferenceDisplay(qual.issuer);
+        final period = FhirFieldExtractor.extractPeriodFormatted(qual.period);
+        
+        String? qualDisplay = qualCode;
+        if (issuer != null && qualCode != null) {
+          qualDisplay = '$qualCode (issued by $issuer)';
+        }
+        if (period != null && qualDisplay != null) {
+          qualDisplay = '$qualDisplay - Valid: $period';
+        }
+        
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createStatusLine(qualDisplay, prefix: 'Qualification'),
+        );
+      }
+    }
+
+    // Gender
+    final genderDisplay = gender?.display?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(genderDisplay, prefix: 'Gender'),
+    );
+
+    // Communication/Languages
+    if (communication != null && communication!.isNotEmpty) {
+      final languages = communication!
+          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .where((l) => l != null && l.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(
+            languages.isNotEmpty ? languages : null,
+            prefix: 'Languages'),
+      );
+    }
+
+    // Add section header only if we added content
+    if (infoLines.length > professionalInfoStartIndex) {
+      infoLines.insert(professionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Professional Information'));
+    }
+
+    final contactInfoStartIndex = infoLines.length;
+
+    // Address
     final addressDisplay =
         FhirFieldExtractor.formatAddress(address?.firstOrNull);
-    if (addressDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.identification,
-        info: addressDisplay,
-      ));
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+    );
+
+    // Telecom (phone/email)
+    if (telecom != null && telecom!.isNotEmpty) {
+      // Phone
+      final phone = telecom!
+          .where((t) => t.system?.valueString == 'phone')
+          .firstOrNull
+          ?.value
+          ?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+      );
+
+      // Email
+      final email = telecom!
+          .where((t) => t.system?.valueString == 'email')
+          .firstOrNull
+          ?.value
+          ?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+      );
+
+      // Fax
+      final fax = telecom!
+          .where((t) => t.system?.valueString == 'fax')
+          .firstOrNull
+          ?.value
+          ?.toString();
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createStatusLine(fax, prefix: 'Fax'),
+      );
     }
 
+    // Add section header only if we added content
+    if (infoLines.length > contactInfoStartIndex) {
+      infoLines.insert(contactInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Contact Information'));
+    }
+
+    final additionalInfoStartIndex = infoLines.length;
+
+    // Birth Date
+    final birthDateDisplay = birthDate?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(birthDateDisplay, prefix: 'Birth Date'),
+    );
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
         info: DateFormat.yMMMMd().format(date!),
       ));
+    }
+
+    // Add section header only if we added content
+    if (infoLines.length > additionalInfoStartIndex) {
+      infoLines.insert(additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'));
     }
 
     return infoLines;

@@ -3,6 +3,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:injectable/injectable.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:path/path.dart' as path;
 
 @Injectable()
 class PdfStorageService {
@@ -41,12 +42,28 @@ class PdfStorageService {
   Future<List<String>> getSavedPdfs() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final files = directory.listSync();
+      final allPdfs = <String>[];
 
-      return files
-          .where((file) => file.path.toLowerCase().endsWith('.pdf'))
-          .map((file) => file.path)
-          .toList();
+      final files = directory.listSync();
+      allPdfs.addAll(
+        files
+            .where((file) => file.path.toLowerCase().endsWith('.pdf'))
+            .map((file) => file.path)
+            .toList(),
+      );
+
+      final sharedDir = Directory(path.join(directory.path, 'shared_files'));
+      if (await sharedDir.exists()) {
+        final sharedFiles = sharedDir.listSync();
+        allPdfs.addAll(
+          sharedFiles
+              .where((file) => file.path.toLowerCase().endsWith('.pdf'))
+              .map((file) => file.path)
+              .toList(),
+        );
+      }
+
+      return allPdfs;
     } catch (e) {
       logger.e('Error getting saved PDFs: $e');
       return [];

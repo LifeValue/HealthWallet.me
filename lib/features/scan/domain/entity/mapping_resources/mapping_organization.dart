@@ -24,12 +24,30 @@ class MappingOrganization
 
   factory MappingOrganization.fromJson(Map<String, dynamic> json) {
     return MappingOrganization(
-      id: const Uuid().v4(),
-      organizationName: MappedProperty(value: json['organizationName'] ?? ''),
-      address: MappedProperty(value: json['address'] ?? ''),
-      phone: MappedProperty(value: json['phone'] ?? ''),
+      id: json["id"] ?? const Uuid().v4(),
+      organizationName: MappedProperty.fromJson(json['organizationName']),
+      address: MappedProperty.fromJson(json['address']),
+      phone: MappedProperty.fromJson(json['phone']),
     );
   }
+
+  factory MappingOrganization.empty() {
+    return MappingOrganization(
+      id: const Uuid().v4(),
+      organizationName: MappedProperty.empty(),
+      address: MappedProperty.empty(),
+      phone: MappedProperty.empty(),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'resourceType': 'Organization',
+        'organizationName': organizationName.toJson(),
+        'address': address.toJson(),
+        'phone': phone.toJson(),
+      };
 
   @override
   IFhirResource toFhirResource({

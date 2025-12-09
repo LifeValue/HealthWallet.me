@@ -23,12 +23,30 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
 
   factory MappingProcedure.fromJson(Map<String, dynamic> json) {
     return MappingProcedure(
-      id: const Uuid().v4(),
-      procedureName: MappedProperty(value: json['procedureName'] ?? ''),
-      performedDateTime: MappedProperty(value: json['performedDateTime'] ?? ''),
-      reason: MappedProperty(value: json['reason'] ?? ''),
+      id: json["id"] ?? const Uuid().v4(),
+      procedureName: MappedProperty.fromJson(json['procedureName']),
+      performedDateTime: MappedProperty.fromJson(json['performedDateTime']),
+      reason: MappedProperty.fromJson(json['reason']),
     );
   }
+
+  factory MappingProcedure.empty() {
+    return MappingProcedure(
+      id: const Uuid().v4(),
+      procedureName: MappedProperty.empty(),
+      performedDateTime: MappedProperty.empty(),
+      reason: MappedProperty.empty(),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'resourceType': 'Procedure',
+        'procedureName': procedureName.toJson(),
+        'performedDateTime': performedDateTime.toJson(),
+        'reason': reason.toJson(),
+      };
 
   @override
   IFhirResource toFhirResource({

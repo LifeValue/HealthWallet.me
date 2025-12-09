@@ -1,4 +1,3 @@
-// home_bloc.dart
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,6 +14,8 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
+import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 
 part 'home_bloc.freezed.dart';
 part 'home_event.dart';
@@ -25,6 +26,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final GetSourcesUseCase _getSourcesUseCase;
   final HomeLocalDataSource _homeLocalDataSource;
   final SyncRepository _syncRepository;
+  final PatientDeduplicationService _deduplicationService;
+  final PatientSelectionService _patientSelectionService;
   final PatientVitalFactory _patientVitalFactory = PatientVitalFactory();
 
   static const int _minVisibleVitalsCount = 4;
@@ -35,6 +38,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     this._homeLocalDataSource,
     this._recordsRepository,
     this._syncRepository,
+    this._deduplicationService,
+    this._patientSelectionService,
   ) : super(const HomeState()) {
     on<HomeInitialised>(_onInitialised);
     on<HomeSourceChanged>(_onSourceChanged);
@@ -98,7 +103,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onRefreshPreservingOrder(
       HomeRefreshPreservingOrder e, Emitter<HomeState> emit) async {
-    // Always reload data to pick up new attachments and other changes
     await _reloadHomeData(emit,
         force: true, overrideSourceId: state.selectedSource);
   }
@@ -218,14 +222,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<List<Source>> _fetchSources(String? patientSourceId) async {
-    // Always return all sources regardless of patient selection
     return await _getSourcesUseCase();
   }
 
-  /// Get source IDs for the currently selected patient
   Future<List<String>?> _getPatientSourceIds() async {
     try {
-      // Get the selected patient ID from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final selectedPatientId = prefs.getString('selected_patient_id');
 
@@ -234,7 +235,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         return null;
       }
 
-      // Get all patients to find the selected one
       final allPatients = await _recordsRepository.getResources(
         resourceTypes: [FhirType.Patient],
         limit: 100,
@@ -242,8 +242,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       if (allPatients.isEmpty) return null;
 
-      // Find all sources that have this specific patient
-      // The same patient can exist in multiple sources, so we need to find all instances
       final sourceIds = <String>{};
       for (final patient in allPatients) {
         if (patient.id == selectedPatientId && patient.sourceId.isNotEmpty) {
@@ -305,7 +303,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return resources;
     }
 
-    // If "All" is selected, use the provided patient source IDs or get them
     List<String>? finalPatientSourceIds = patientSourceIds;
     if ((sourceId == null || sourceId == 'All') &&
         finalPatientSourceIds == null) {
@@ -321,10 +318,30 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<List<IFhirResource>> _fetchPatientResources(String? sourceId,
-      [List<String>? patientSourceIds]) async {
+      [List<String>? patientSourceIds, String? selectedPatientId]) async {
     final resources = await _fetchResourcesFromAllSources(
         [FhirType.Patient], sourceId, patientSourceIds);
-    return resources;
+
+    final patients = resources.whereType<Patient>().toList();
+
+    if (patients.isEmpty) {
+      return [];
+    }
+
+    if (selectedPatientId != null && patients.length > 1) {
+      final patientGroups = _deduplicationService.deduplicatePatients(patients);
+      final selectedPatient = _patientSelectionService.getPatientForSource(
+        patients: patients,
+        sourceId: sourceId,
+        selectedPatientId: selectedPatientId,
+        patientGroups: patientGroups,
+      );
+      if (selectedPatient != null) {
+        return [selectedPatient];
+      }
+    }
+
+    return patients;
   }
 
   Future<List<PatientVital>> _fetchAndProcessVitals(String? sourceId,
@@ -418,7 +435,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return ordered;
     }
 
-    // Default order for vitals
     const pinnedTop = <String>[
       'Heart Rate',
       'Blood Pressure',
@@ -456,24 +472,24 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     try {
       final sourceId = _resolveSourceId(overrideSourceId);
 
+      final prefs = await SharedPreferences.getInstance();
+      final selectedPatientId = prefs.getString('selected_patient_id');
+
       final sources = await _fetchSources(sourceId);
       final overview =
           await _fetchOverviewCardsAndResources(sourceId, patientSourceIds);
-      final patientResources =
-          await _fetchPatientResources(sourceId, patientSourceIds);
+      final patientResources = await _fetchPatientResources(
+          sourceId, patientSourceIds, selectedPatientId);
       final vitalsData = await _processVitalsData(sourceId, patientSourceIds);
       final reorderedCards =
           await _applyOverviewCardsOrder(overview.overviewCards);
 
-      // Always emit state, even when no patient resources (e.g., Wallet source with no data)
       final hasData = this.hasData(
         patientVitals: vitalsData.patientVitals,
         overviewCards: reorderedCards,
         recentRecords: overview.allEnabledResources.take(3).toList(),
       );
 
-      // Don't override selectedSource if it's already set in state
-      // This preserves the user's selection during hot reload
       final currentSelectedSource = state.selectedSource.isNotEmpty
           ? state.selectedSource
           : (sourceId ?? 'All');
@@ -544,18 +560,26 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      // Delete the source from the database
+      final deletedSource = state.sources.firstWhere(
+        (source) => source.id == event.sourceId,
+        orElse: () => throw Exception('Source not found: ${event.sourceId}'),
+      );
+      final isWalletSource = deletedSource.platformType == 'wallet' ||
+          deletedSource.id == 'wallet';
+
       await _syncRepository.deleteSource(event.sourceId);
 
-      // Remove the source from the current sources list
       final updatedSources =
           state.sources.where((source) => source.id != event.sourceId).toList();
 
-      // If the deleted source was currently selected, switch to 'All' or first available source
       String? newSelectedSource = state.selectedSource;
+
       if (state.selectedSource == event.sourceId) {
-        newSelectedSource =
-            updatedSources.isNotEmpty ? updatedSources.first.id : 'All';
+        if (isWalletSource) {
+          newSelectedSource = 'All';
+        } else {
+          newSelectedSource = 'All';
+        }
       }
 
       emit(state.copyWith(
@@ -563,12 +587,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         selectedSource: newSelectedSource,
       ));
 
-      // Refresh the home data with the new source selection
       await _reloadHomeData(emit,
-          force: true, overrideSourceId: newSelectedSource);
+          force: true,
+          overrideSourceId: newSelectedSource,
+          patientSourceIds: event.patientSourceIds);
     } catch (e) {
       logger.e('Error deleting source: $e');
-      // You might want to show an error message to the user here
     }
   }
 }

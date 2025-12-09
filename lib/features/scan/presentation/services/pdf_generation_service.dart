@@ -83,18 +83,25 @@ class PdfGenerationService {
     }
   }
 
-  Future<List<DocumentGroup>> groupAndConvertDocuments({
-    required List<String> scannedImages,
-    required List<String> importedImages,
-    required List<String> importedPdfs,
-  }) async {
+  Future<List<DocumentGroup>> groupAndConvertDocuments(
+      {required List<String> filePaths}) async {
     final List<DocumentGroup> groups = [];
 
+    List<String> pdfPaths = [];
+    List<String> imagePaths = [];
+    for (final filePath in filePaths) {
+      if (path.extension(filePath) == ".pdf") {
+        pdfPaths.add(filePath);
+      } else {
+        imagePaths.add(filePath);
+      }
+    }
+
     try {
-      if (scannedImages.isNotEmpty) {
+      if (imagePaths.isNotEmpty) {
         final fileName = await _generateScannedDocumentName();
         final pdfPath = await createPdfFromImages(
-          imagePaths: scannedImages,
+          imagePaths: imagePaths,
           fileName: fileName,
           title: 'Scanned Documents',
         );
@@ -102,28 +109,13 @@ class PdfGenerationService {
         groups.add(DocumentGroup(
           type: DocumentGroupType.scannedImages,
           pdfPath: pdfPath,
-          title: 'Scanned Documents (${scannedImages.length} pages)',
-          originalCount: scannedImages.length,
+          title: 'Scanned Documents (${imagePaths.length} pages)',
+          originalCount: imagePaths.length,
         ));
       }
 
-      if (importedImages.isNotEmpty) {
-        final pdfPath = await createPdfFromImages(
-          imagePaths: importedImages,
-          fileName: 'imported_images_${_generateId()}',
-          title: 'Imported Images',
-        );
-
-        groups.add(DocumentGroup(
-          type: DocumentGroupType.importedImages,
-          pdfPath: pdfPath,
-          title: 'Imported Images (${importedImages.length} images)',
-          originalCount: importedImages.length,
-        ));
-      }
-
-      for (int i = 0; i < importedPdfs.length; i++) {
-        final originalPdfPath = importedPdfs[i];
+      for (int i = 0; i < pdfPaths.length; i++) {
+        final originalPdfPath = pdfPaths[i];
         final fileName = path.basenameWithoutExtension(originalPdfPath);
 
         final pdfPath = await copyPdfWithNewName(

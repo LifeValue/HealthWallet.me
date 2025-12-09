@@ -6,16 +6,20 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
+import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
+import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
+import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -23,6 +27,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final router = getIt<AppRouter>();
+    final routeObserver = getIt<AppRouteObserver>();
 
     return MultiBlocProvider(
       providers: [
@@ -31,17 +36,21 @@ class App extends StatelessWidget {
         BlocProvider(
             create: (_) => getIt<SyncBloc>()..add(const SyncInitialised())),
         BlocProvider(create: (_) => getIt<RecordsBloc>()),
+        BlocProvider.value(value: getIt<ScanBloc>()),
         BlocProvider(
           create: (_) => HomeBloc(
             getIt<GetSourcesUseCase>(),
             HomeLocalDataSourceImpl(),
             getIt<RecordsRepository>(),
             getIt<SyncRepository>(),
+            getIt<PatientDeduplicationService>(),
+            getIt<PatientSelectionService>(),
           )..add(const HomeInitialised()),
         ),
         BlocProvider(
           create: (_) => getIt<PatientBloc>()..add(const PatientInitialised()),
         ),
+        BlocProvider.value(value: getIt<NotificationBloc>()),
       ],
       child: MultiBlocListener(
         listeners: [
@@ -59,11 +68,14 @@ class App extends StatelessWidget {
               darkTheme: AppTheme.darkTheme,
               themeMode:
                   state.user.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-              routerConfig:
-                  router.config(navigatorObservers: () => [getIt.get<AppRouteObserver>()]),
+              routerConfig: router.config(
+                navigatorObservers: () => [routeObserver],
+              ),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              builder: (context, child) => child!,
+              builder: (context, child) {
+                return child!;
+              },
             );
           },
         ),
@@ -73,14 +85,6 @@ class App extends StatelessWidget {
 }
 
 void _handleSyncBlocStateChange(BuildContext context, SyncState state) {
-  if (state.hasDemoData) {
-    context.read<HomeBloc>().add(const HomeSourceChanged('demo_data'));
-  }
-
-  if (state.hasSyncedData) {
-    PatientSourceUtils.reloadHomeWithPatientFilter(context, 'All');
-  }
-
   if (state.shouldShowTutorial) {
     context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
   }
@@ -90,7 +94,7 @@ void _handleSyncBlocStateChange(BuildContext context, SyncState state) {
     context.read<UserBloc>().add(const UserDataUpdatedFromSync());
     context.read<PatientBloc>().add(const PatientPatientsLoaded());
 
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (context.mounted) {
         final homeState = context.read<HomeBloc>().state;
         final currentSource =

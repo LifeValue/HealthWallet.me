@@ -1,10 +1,12 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/validator.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 part 'mapping_patient.freezed.dart';
@@ -19,19 +21,70 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     @Default(MappedProperty()) MappedProperty givenName,
     @Default(MappedProperty()) MappedProperty dateOfBirth,
     @Default(MappedProperty()) MappedProperty gender,
-    @Default(MappedProperty()) MappedProperty patientId,
+    @Default(MappedProperty()) MappedProperty patientMRN,
   }) = _MappingPatient;
 
   factory MappingPatient.fromJson(Map<String, dynamic> json) {
     return MappingPatient(
-      id: const Uuid().v4(),
-      familyName: MappedProperty(value: json['familyName'] ?? ''),
-      givenName: MappedProperty(value: json['givenName'] ?? ''),
-      dateOfBirth: MappedProperty(value: json['dateOfBirth'] ?? ''),
-      gender: MappedProperty(value: json['gender'] ?? ''),
-      patientId: MappedProperty(value: json['patientId'] ?? ''),
+      id: json["id"] ?? const Uuid().v4(),
+      familyName: MappedProperty.fromJson(json['familyName']),
+      givenName: MappedProperty.fromJson(json['givenName']),
+      dateOfBirth: MappedProperty.fromJson(json['dateOfBirth']),
+      gender: MappedProperty.fromJson(json['gender']),
+      patientMRN:
+          MappedProperty.fromJson(json['patientMRN'] ?? json['patientId']),
     );
   }
+
+  factory MappingPatient.empty() {
+    return MappingPatient(
+      id: const Uuid().v4(),
+      familyName: MappedProperty.empty(),
+      givenName: MappedProperty.empty(),
+      dateOfBirth: MappedProperty.empty(),
+      gender: MappedProperty.empty(),
+      patientMRN: MappedProperty.empty(),
+    );
+  }
+
+  factory MappingPatient.fromFhirResource(Patient patient) {
+    return MappingPatient(
+      id: patient.id,
+      familyName: MappedProperty(
+        value: FhirFieldExtractor.extractPatientFamily(patient),
+        confidenceLevel: 1,
+      ),
+      givenName: MappedProperty(
+        value: FhirFieldExtractor.extractPatientGiven(patient),
+        confidenceLevel: 1,
+      ),
+      dateOfBirth: MappedProperty(
+        value: DateFormat('yyyy-MM-dd').format(
+          FhirFieldExtractor.extractPatientBirthDate(patient) ?? DateTime.now(),
+        ),
+        confidenceLevel: 1,
+      ),
+      gender: MappedProperty(
+        value: FhirFieldExtractor.extractPatientGender(patient),
+        confidenceLevel: 1,
+      ),
+      patientMRN: MappedProperty(
+        value: FhirFieldExtractor.extractPatientMRN(patient),
+        confidenceLevel: 1,
+      ),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'resourceType': 'Patient',
+        'familyName': familyName.toJson(),
+        'givenName': givenName.toJson(),
+        'dateOfBirth': dateOfBirth.toJson(),
+        'gender': gender.toJson(),
+        'patientMRN': patientMRN.toJson(),
+      };
 
   @override
   IFhirResource toFhirResource({
@@ -48,7 +101,9 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       ],
       birthDate: fhir_r4.FhirDate.fromString(dateOfBirth.value),
       gender: fhir_r4.AdministrativeGender(gender.value),
-      identifier: [fhir_r4.Identifier(id: fhir_r4.FhirString(patientId.value))],
+      identifier: [
+        fhir_r4.Identifier(id: fhir_r4.FhirString(patientMRN.value))
+      ],
     );
 
     final rawResource = patient.toJson();
@@ -91,10 +146,10 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           value: gender.value,
           confidenceLevel: gender.confidenceLevel,
         ),
-        'patientId': TextFieldDescriptor(
-          label: 'ID',
-          value: patientId.value,
-          confidenceLevel: patientId.confidenceLevel,
+        'patientMRN': TextFieldDescriptor(
+          label: 'MRN',
+          value: patientMRN.value,
+          confidenceLevel: patientMRN.confidenceLevel,
         ),
       };
 
@@ -122,10 +177,10 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           confidenceLevel:
               newValues['gender'] != null ? 1 : gender.confidenceLevel,
         ),
-        patientId: MappedProperty(
-          value: newValues['patientId'] ?? patientId.value,
+        patientMRN: MappedProperty(
+          value: newValues['patientMRN'] ?? patientMRN.value,
           confidenceLevel:
-              newValues['patientId'] != null ? 1 : patientId.confidenceLevel,
+              newValues['patientMRN'] != null ? 1 : patientMRN.confidenceLevel,
         ),
       );
 
@@ -138,7 +193,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         givenName: givenName.calculateConfidence(inputText),
         dateOfBirth: dateOfBirth.calculateConfidence(inputText),
         gender: gender.calculateConfidence(inputText),
-        patientId: patientId.calculateConfidence(inputText),
+        patientMRN: patientMRN.calculateConfidence(inputText),
       );
 
   @override
@@ -147,5 +202,5 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       givenName.isValid ||
       dateOfBirth.isValid ||
       gender.isValid ||
-      patientId.isValid;
+      patientMRN.isValid;
 }

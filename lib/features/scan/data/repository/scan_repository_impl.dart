@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter_gemma/mobile/flutter_gemma_mobile.dart';
+import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/entity/slm_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/services.dart';
@@ -12,12 +13,14 @@ import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
+import 'package:uuid/uuid.dart';
 
 @LazySingleton(as: ScanRepository)
 class ScanRepositoryImpl implements ScanRepository {
-  ScanRepositoryImpl(this._networkDataSource);
+  ScanRepositoryImpl(this._networkDataSource, this._localDataSource);
 
   final ScanNetworkDataSource _networkDataSource;
+  final ScanLocalDataSource _localDataSource;
 
   @override
   Future<List<String>> scanDocuments() async {
@@ -246,6 +249,45 @@ class ScanRepositoryImpl implements ScanRepository {
         extension == '.jpeg' ||
         extension == '.png' ||
         extension == '.pdf';
+  }
+
+  @override
+  Future<ProcessingSession> createProcessingSession({
+    required List<String> filePaths,
+    required ProcessingOrigin origin,
+  }) async {
+    final session = ProcessingSession(
+      id: const Uuid().v4(),
+      filePaths: filePaths,
+      origin: origin,
+      createdAt: DateTime.now(),
+    );
+
+    await _localDataSource.cacheProcessingSession(session.toDbCompanion());
+
+    return session;
+  }
+
+  @override
+  Future<List<ProcessingSession>> getProcessingSessions() async {
+    final dtos = await _localDataSource.getProcessingSessions();
+
+    return dtos.map(ProcessingSession.fromDto).toList();
+  }
+
+  @override
+  Future<int> editProcessingSession(ProcessingSession session) async {
+    return _localDataSource.updateProcessingSession(
+        session.id, session.toDbCompanion());
+  }
+
+  @override
+  Future<int> deleteProcessingSession(ProcessingSession session) async {
+    for (final path in session.filePaths) {
+      File(path).delete().ignore();
+    }
+
+    return _localDataSource.deleteProcessingSession(session.id);
   }
 
   @override

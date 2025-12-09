@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -92,23 +93,91 @@ class Medication with _$Medication implements IFhirResource {
   @override
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Medication Details'));
 
-    final statusDisplay = status?.valueString;
-    if (statusDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Status: $statusDisplay",
-      ));
+    // Medication Code (already in title, but could show NDC or other codes here)
+    final codeDisplay = FhirFieldExtractor.extractCodeableConceptText(code);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createMedicationLine(codeDisplay, prefix: 'Medication'),
+    );
+
+    // Form (Tablet, Capsule, Liquid, etc.) - CRITICAL for patients
+    final formDisplay = FhirFieldExtractor.extractCodeableConceptText(form);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createMedicationLine(formDisplay, prefix: 'Form'),
+    );
+
+    // Amount/Strength
+    if (amount != null) {
+      final numerator = amount!.numerator?.value?.valueDouble;
+      final numeratorUnit = amount!.numerator?.unit ?? amount!.numerator?.code ?? '';
+      final denominator = amount!.denominator?.value?.valueDouble;
+      final denominatorUnit = amount!.denominator?.unit ?? amount!.denominator?.code ?? '';
+      
+      String? amountDisplay;
+      if (numerator != null && denominator != null) {
+        amountDisplay = '$numerator$numeratorUnit / $denominator$denominatorUnit';
+      } else if (numerator != null) {
+        amountDisplay = '$numerator $numeratorUnit';
+      }
+      
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createValueLine(amountDisplay, prefix: 'Strength'),
+      );
     }
 
-    final manufacturerDisplay = manufacturer?.display?.valueString;
-    if (manufacturerDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: manufacturerDisplay,
-      ));
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+
+    // Status
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    // Manufacturer
+    final manufacturerDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(manufacturer);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(manufacturerDisplay,
+          prefix: 'Manufacturer'),
+    );
+
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+
+    // Ingredients
+    if (ingredient != null && ingredient!.isNotEmpty) {
+      // Show ingredient count
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createMedicationLine(
+            '${ingredient!.length} ingredient(s)',
+            prefix: 'Ingredients'),
+      );
     }
 
+    // Batch Information
+    if (batch != null) {
+      final lotNumber = batch!.lotNumber?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createIdentificationLine(lotNumber,
+            prefix: 'Lot Number'),
+      );
+
+      final expirationDate = batch!.expirationDate?.valueString;
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createDateLine(expirationDate,
+            prefix: 'Expiration'),
+      );
+    }
+
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

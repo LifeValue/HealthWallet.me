@@ -193,9 +193,51 @@
     "changesToPolicy": "Änderungen an dieser Datenschutzrichtlinie",
     "contactUs": "Kontaktieren Sie uns",
     "builtWithLove": "Mit Liebe von Life Value gebaut!",
+
+    "noRecords": "keine Aufzeichnungen",
     
     "sourceName": "Quellenname",
     "provideCustomLabel": "Geben Sie ein benutzerdefiniertes Label an für:",
     "success": "Erfolg",
-    "demoDataLoadedSuccessfully": "Demo-Daten wurden erfolgreich geladen. Sie werden zur Startseite weitergeleitet."
+    "demoDataLoadedSuccessfully": "Demo-Daten wurden erfolgreich geladen. Sie werden zur Startseite weitergeleitet.",
+
+    "onboardingAiModelTitle": "AI-Modell aktivieren",
+    "onboardingAiModelDescription": "Laden Sie ein sicheres, geräteinternes AI-Modell (~1,5 GB) herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren - Ihre Daten bleiben privat auf Ihrem Gerät. Dies ist eine einmalige Einrichtung.",
+    "onboardingAiModelSubtitle": "AI-gestütztes Scannen freischalten",
+    "aiModelReady": "KI-Modell bereit! Du kannst mit dem Scannen beginnen.",
+    "aiModelDownloading": "KI-Modell wird heruntergeladen...",
+    "aiModelEnableDownload": "Aktivieren & Herunterladen",
+    "aiModelError": "Modell konnte nicht überprüft werden. Bitte versuche es erneut.",
+    "aiModelMissing": "Nicht heruntergeladen.",
+    "aiModelTitle": "KI-Modell laden",
+    "aiModelUnlockTitle": "KI-gestütztes Scannen freischalten",
+    "aiModelUnlockDescription": "Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell. Ihre Daten bleiben vollständig privat.",
+    "aiModelDownloadInfo": "Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.",
+    
+    "setup": "Einrichten",
+    "patientSetupTitle": "Profil einrichten",
+    "patientSetupSubtitle": "Personalisieren Sie Ihre Gesundheits-Brieftasche mit Ihren Informationen",
+    
+    "onboardingSetupTitle": "Meine Gesundheits-Brieftasche einrichten",
+    "onboardingSetupBody": "Erstellen Sie Ihr persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen",
+    "onboardingDemoTitle": "Demo-Daten ausprobieren",
+    "onboardingDemoBody": "Erkunden Sie die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert",
+    "onboardingSyncTitle2": "Ihre Aufzeichnungen synchronisieren",
+    "onboardingSyncBody": "Verbinden Sie sich mit Ihren Gesundheitsdienstleistern, um Ihre echten medizinischen Aufzeichnungen zu importieren",
+    
+    "givenName": "Vorname",
+    "familyName": "Nachname",
+    "skipForNow": "Vorerst überspringen",
+    
+    "setUpProfile": "Einrichten",
+    "useDefaults": "Standard",
+    "editDetails": "Details bearbeiten",
+    "saveDetails": "Details speichern",
+    
+    "syncPlaceholderTutorialStep1": "Vervollständigen Sie Ihr Profil, um alle Funktionen freizuschalten.",
+    "syncPlaceholderTutorialStep2": "Noch nicht bereit zum Importieren? Laden Sie Demo-Daten, um zu sehen, wie die App in Aktion aussieht.",
+    "syncPlaceholderTutorialStep3": "Halten Sie Ihre Desktop- und Mobile-Wallet auf dem neuesten Stand.",
+    "tapToContinue": "Tippen Sie, um fortzufahren",
+    
+    "homeOnboardingReorderMessage": "Lange drücken, um sie nach Ihren Wünschen neu anzuordnen."
 }

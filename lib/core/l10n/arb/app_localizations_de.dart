@@ -55,6 +55,17 @@ class AppLocalizationsDe extends AppLocalizations {
       '<link>HealthWallet.me</link> stellt sicher, dass Ihre vollständige Gesundheitsgeschichte immer aktuell ist. Es synchronisiert automatisch neue Aufzeichnungen von verbundenen Anbietern und ermöglicht es Ihnen, physische Dokumente sofort mit einem schnellen Scan hinzuzufügen.';
 
   @override
+  String get onboardingRecordsContent =>
+      '• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of <link>Fasten Health OnPrem</link> and get all your US healthcare systems records to your wallet.';
+
+  @override
+  String get onboardingRecordsBottom =>
+      'Everything is organized securely on your device.';
+
+  @override
+  String get onboardingRequestIntegration => 'Request an integration';
+
+  @override
   String get onboardingScanButton => 'Scannen';
 
   @override
@@ -527,6 +538,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noRecordsFound => 'Keine Aufzeichnungen gefunden';
 
   @override
+  String get noRecords => 'keine Aufzeichnungen';
+
+  @override
   String get tryDifferentKeywords =>
       'Versuchen Sie es mit anderen Suchbegriffen';
 
@@ -619,4 +633,110 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get documentScanTitle => 'Scan';
+
+  @override
+  String get onboardingAiModelTitle => 'AI-Modell aktivieren';
+
+  @override
+  String get onboardingAiModelDescription =>
+      'Laden Sie ein sicheres, geräteinternes AI-Modell (~1,5 GB) herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren - Ihre Daten bleiben privat auf Ihrem Gerät. Dies ist eine einmalige Einrichtung.';
+
+  @override
+  String get onboardingAiModelSubtitle => 'AI-gestütztes Scannen freischalten';
+
+  @override
+  String get aiModelReady =>
+      'KI-Modell bereit! Du kannst mit dem Scannen beginnen.';
+
+  @override
+  String get aiModelDownloading => 'KI-Modell wird heruntergeladen...';
+
+  @override
+  String get aiModelEnableDownload => 'Aktivieren & Herunterladen';
+
+  @override
+  String get aiModelError =>
+      'Modell konnte nicht überprüft werden. Bitte versuche es erneut.';
+
+  @override
+  String get aiModelMissing => 'Nicht heruntergeladen.';
+
+  @override
+  String get aiModelTitle => 'KI-Modell laden';
+
+  @override
+  String get aiModelUnlockTitle => 'KI-gestütztes Scannen freischalten';
+
+  @override
+  String get aiModelUnlockDescription =>
+      'Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell. Ihre Daten bleiben vollständig privat.';
+
+  @override
+  String get aiModelDownloadInfo =>
+      'Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.';
+
+  @override
+  String get setup => 'Einrichten';
+
+  @override
+  String get patientSetupTitle => 'Profil einrichten';
+
+  @override
+  String get patientSetupSubtitle =>
+      'Personalisieren Sie Ihre Gesundheits-Brieftasche mit Ihren Informationen';
+
+  @override
+  String get onboardingSetupTitle => 'Meine Gesundheits-Brieftasche einrichten';
+
+  @override
+  String get onboardingSetupBody =>
+      'Erstellen Sie Ihr persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen';
+
+  @override
+  String get onboardingDemoTitle => 'Demo-Daten ausprobieren';
+
+  @override
+  String get onboardingDemoBody =>
+      'Erkunden Sie die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert';
+
+  @override
+  String get onboardingSyncTitle2 => 'Ihre Aufzeichnungen synchronisieren';
+
+  @override
+  String get onboardingSyncBody =>
+      'Verbinden Sie sich mit Ihren Gesundheitsdienstleistern, um Ihre echten medizinischen Aufzeichnungen zu importieren';
+
+  @override
+  String get givenName => 'Vorname';
+
+  @override
+  String get familyName => 'Nachname';
+
+  @override
+  String get skipForNow => 'Vorerst überspringen';
+
+  @override
+  String get setUpProfile => 'Einrichten';
+
+  @override
+  String get useDefaults => 'Standard';
+
+  @override
+  String get syncPlaceholderTutorialStep1 =>
+      'Vervollständigen Sie Ihr Profil, um alle Funktionen freizuschalten.';
+
+  @override
+  String get syncPlaceholderTutorialStep2 =>
+      'Noch nicht bereit zum Importieren? Laden Sie Demo-Daten, um zu sehen, wie die App in Aktion aussieht.';
+
+  @override
+  String get syncPlaceholderTutorialStep3 =>
+      'Halten Sie Ihre Desktop- und Mobile-Wallet auf dem neuesten Stand.';
+
+  @override
+  String get tapToContinue => 'Tippen Sie, um fortzufahren';
+
+  @override
+  String get homeOnboardingReorderMessage =>
+      'Lange drücken, um sie nach Ihren Wünschen neu anzuordnen.';
 }

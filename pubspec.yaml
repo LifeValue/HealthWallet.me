@@ -1,7 +1,7 @@
 name: health_wallet
 description: "HealthWallet.me"
 publish_to: 'none'
-version: 1.1.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -72,13 +72,17 @@ dependencies:
   pdfx: ^2.9.2
   printing: ^5.13.4
   flutter_pdfview: ^1.4.3
+  receive_sharing_intent: ^1.8.1
   # cunning_document_scanner: ^1.3.1
-  flutter_gemma: ^0.11.3
+  flutter_gemma: ^0.11.12
   string_similarity: ^2.1.1
   bloc_concurrency: ^0.2.5
   collection: ^1.19.1
   uuid: ^4.5.1
   envied: ^1.3.1
+  app_links: ^6.4.1
+  another_flushbar: ^1.12.32
+  dotted_border: ^3.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

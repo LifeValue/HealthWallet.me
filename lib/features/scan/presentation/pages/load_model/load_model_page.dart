@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,66 +11,71 @@ import 'package:health_wallet/gen/assets.gen.dart';
 
 @RoutePage<bool>()
 class LoadModelPage extends StatefulWidget {
-  const LoadModelPage({super.key});
+  const LoadModelPage({this.canAttachToEncounter = false, super.key});
+
+  final bool canAttachToEncounter;
 
   @override
   State<LoadModelPage> createState() => _LoadModelPageState();
 }
 
 class _LoadModelPageState extends State<LoadModelPage> {
-  final _bloc = getIt.get<LoadModelBloc>();
+  late final LoadModelBloc _bloc;
 
   @override
   void initState() {
     super.initState();
-
+    _bloc = getIt.get<LoadModelBloc>();
     _bloc.add(const LoadModelInitialized());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => _bloc,
+    return BlocProvider.value(
+      value: _bloc,
       child: BlocConsumer<LoadModelBloc, LoadModelState>(
-          listenWhen: (previous, current) => previous.status != current.status,
-          listener: (context, state) {
-            if (state.status == LoadModelStatus.modelLoaded) {
-              context.router.maybePop(true);
-            }
-            if (state.status == LoadModelStatus.error &&
-                state.errorMessage != null) {
-              DialogHelper.showErrorDialog(context, state.errorMessage!);
-            }
-          },
-          builder: (context, state) {
-            return Scaffold(
-              appBar: AppBar(
-                title: const Text("Load AI Model",
-                    style: AppTextStyle.titleMedium),
-                automaticallyImplyLeading:
-                    state.status != LoadModelStatus.loading,
+        listenWhen: (previous, current) => previous.status != current.status,
+        listener: (context, state) {
+          if (state.status == LoadModelStatus.modelLoaded) {
+            context.router.maybePop(true);
+          }
+          if (state.status == LoadModelStatus.error &&
+              state.errorMessage != null) {
+            DialogHelper.showErrorDialog(context, state.errorMessage!);
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                context.l10n.aiModelTitle,
+                style: AppTextStyle.titleMedium,
               ),
-              body: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildView(state),
-              ),
-            );
-          }),
+              automaticallyImplyLeading: true,
+            ),
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildView(context, state),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildView(LoadModelState state) {
+  Widget _buildView(BuildContext context, LoadModelState state) {
     if (state.status == LoadModelStatus.loading &&
-        state.downloadProgress == null) {
+        state.downloadProgress == null &&
+        !state.isBackgroundDownload) {
       return const Center(child: CircularProgressIndicator());
     }
 
     return Column(
       children: [
         const SizedBox(height: 20),
-        Assets.images.placeholder.svg(height: 250),
+        Assets.onboarding.onboarding3.svg(height: 250),
         Text(
-          "Unlock AI-Powered Scanning",
+          context.l10n.aiModelUnlockTitle,
           textAlign: TextAlign.center,
           style: AppTextStyle.titleLarge.copyWith(
             color: context.colorScheme.onSurface,
@@ -80,26 +83,52 @@ class _LoadModelPageState extends State<LoadModelPage> {
         ),
         const SizedBox(height: 32),
         Text(
-          "To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.",
+          context.l10n.aiModelUnlockDescription,
           textAlign: TextAlign.center,
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface..withValues(alpha: 0.7),
+            color: context.colorScheme.onSurface.withOpacity(0.7),
             height: 1.5,
             letterSpacing: -0.2,
           ),
         ),
         const SizedBox(height: 32),
         Text(
-          "To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.",
+          context.l10n.aiModelDownloadInfo,
           textAlign: TextAlign.center,
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface..withValues(alpha: 0.7),
+            color: context.colorScheme.onSurface.withOpacity(0.7),
             height: 1.5,
             letterSpacing: -0.2,
           ),
         ),
         const SizedBox(height: 24),
-        if (state.status != LoadModelStatus.loading) ...[
+        if (state.status == LoadModelStatus.loading) ...[
+          CustomProgressIndicator(
+            progress: (state.downloadProgress ?? 0) / 100,
+            text: context.l10n.aiModelDownloading,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'You can navigate away - download will continue in background.\nCheck notifications for progress.',
+            textAlign: TextAlign.center,
+            style: AppTextStyle.bodySmall.copyWith(
+              color: context.colorScheme.primary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () => context.router.maybePop(false),
+              child: Text(
+                widget.canAttachToEncounter
+                    ? 'Continue without AI (download in background)'
+                    : 'Continue using app',
+              ),
+            ),
+          ),
+        ] else ...[
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -113,21 +142,19 @@ class _LoadModelPageState extends State<LoadModelPage> {
                     borderRadius: BorderRadiusGeometry.circular(8)),
               ),
               onPressed: () => _bloc.add(const LoadModelDownloadInitiated()),
-              child: const Text("Enable & Download"),
+              child: Text(context.l10n.aiModelEnableDownload),
             ),
           ),
           SizedBox(
             width: double.infinity,
             child: TextButton(
-              onPressed: () => context.router.maybePop(),
-              child: const Text("Cancel"),
+              onPressed: () => context.router.maybePop(false),
+              child: Text(widget.canAttachToEncounter
+                  ? 'I want to attach the document without processing'
+                  : context.l10n.cancel),
             ),
           ),
-        ] else
-          CustomProgressIndicator(
-            progress: state.downloadProgress! / 100,
-            text: "Downloading secure AI Model",
-          )
+        ],
       ],
     );
   }

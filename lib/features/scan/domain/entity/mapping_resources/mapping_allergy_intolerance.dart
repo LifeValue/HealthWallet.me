@@ -23,12 +23,30 @@ class MappingAllergyIntolerance
 
   factory MappingAllergyIntolerance.fromJson(Map<String, dynamic> json) {
     return MappingAllergyIntolerance(
-      id: const Uuid().v4(),
-      substance: MappedProperty(value: json['substance'] ?? ''),
-      manifestation: MappedProperty(value: json['manifestation'] ?? ''),
-      category: MappedProperty(value: json['category'] ?? ''),
+      id: json["id"] ?? const Uuid().v4(),
+      substance: MappedProperty.fromJson(json['substance']),
+      manifestation: MappedProperty.fromJson(json['manifestation']),
+      category: MappedProperty.fromJson(json['category']),
     );
   }
+
+  factory MappingAllergyIntolerance.empty() {
+    return MappingAllergyIntolerance(
+      id: const Uuid().v4(),
+      substance: MappedProperty.empty(),
+      manifestation: MappedProperty.empty(),
+      category: MappedProperty.empty(),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'resourceType': 'AllergyIntolerance',
+        'substance': substance.toJson(),
+        'manifestation': manifestation.toJson(),
+        'category': category.toJson(),
+      };
 
   @override
   IFhirResource toFhirResource({
@@ -105,9 +123,8 @@ class MappingAllergyIntolerance
         ),
         category: MappedProperty(
           value: newValues['category'] ?? category.value,
-          confidenceLevel: newValues['category'] != null
-              ? 1
-              : category.confidenceLevel,
+          confidenceLevel:
+              newValues['category'] != null ? 1 : category.confidenceLevel,
         ),
       );
 

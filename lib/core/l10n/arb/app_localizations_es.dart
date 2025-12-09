@@ -55,6 +55,17 @@ class AppLocalizationsEs extends AppLocalizations {
       '<link>HealthWallet.me</link> asegura que tu historial de salud completo esté siempre actualizado. Sincroniza automáticamente nuevos registros de proveedores conectados y te permite agregar instantáneamente documentos físicos con un escaneo rápido.';
 
   @override
+  String get onboardingRecordsContent =>
+      '• Scan documents with your phone\'s camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of <link>Fasten Health OnPrem</link> and get all your US healthcare systems records to your wallet.';
+
+  @override
+  String get onboardingRecordsBottom =>
+      'Everything is organized securely on your device.';
+
+  @override
+  String get onboardingRequestIntegration => 'Request an integration';
+
+  @override
   String get onboardingScanButton => 'Escanear';
 
   @override
@@ -521,6 +532,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noRecordsFound => 'No se encontraron registros';
 
   @override
+  String get noRecords => 'Sin registros';
+
+  @override
   String get tryDifferentKeywords =>
       'Intenta buscar con palabras clave diferentes';
 
@@ -612,4 +626,110 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get documentScanTitle => 'Scan';
+
+  @override
+  String get onboardingAiModelTitle => 'Habilitar Modelo de IA';
+
+  @override
+  String get onboardingAiModelDescription =>
+      'Descarga un modelo de IA seguro y en el dispositivo (~1.5 GB) para analizar y organizar automáticamente tus registros de salud: tus datos permanecen privados en tu dispositivo. Es una configuración única.';
+
+  @override
+  String get onboardingAiModelSubtitle =>
+      'Desbloquea el escaneo impulsado por IA';
+
+  @override
+  String get aiModelReady => '¡Modelo de IA listo! Puedes empezar a escanear.';
+
+  @override
+  String get aiModelDownloading => 'Descargando modelo de IA...';
+
+  @override
+  String get aiModelEnableDownload => 'Activar y descargar';
+
+  @override
+  String get aiModelError =>
+      'No se pudo verificar el modelo. Inténtalo de nuevo.';
+
+  @override
+  String get aiModelMissing => 'No descargado.';
+
+  @override
+  String get aiModelTitle => 'Cargar modelo de IA';
+
+  @override
+  String get aiModelUnlockTitle => 'Desbloquea el escaneo con IA';
+
+  @override
+  String get aiModelUnlockDescription =>
+      'Para leer y organizar automáticamente tus documentos médicos, esta función utiliza un modelo de IA seguro y local en tu dispositivo. Tus datos permanecen completamente privados.';
+
+  @override
+  String get aiModelDownloadInfo =>
+      'Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única.';
+
+  @override
+  String get setup => 'Configurar';
+
+  @override
+  String get patientSetupTitle => 'Configura tu Perfil';
+
+  @override
+  String get patientSetupSubtitle =>
+      'Personaliza tu cartera de salud con tu información';
+
+  @override
+  String get onboardingSetupTitle => 'Configurar mi Cartera de Salud';
+
+  @override
+  String get onboardingSetupBody =>
+      'Crea tu perfil de salud personal para comenzar con HealthWallet';
+
+  @override
+  String get onboardingDemoTitle => 'Probar Datos de Demostración';
+
+  @override
+  String get onboardingDemoBody =>
+      'Explora la aplicación con registros médicos de ejemplo para ver cómo funciona';
+
+  @override
+  String get onboardingSyncTitle2 => 'Sincronizar tus Registros';
+
+  @override
+  String get onboardingSyncBody =>
+      'Conéctate a tus proveedores de salud para importar tus registros médicos reales';
+
+  @override
+  String get givenName => 'Nombre';
+
+  @override
+  String get familyName => 'Apellido';
+
+  @override
+  String get skipForNow => 'Omitir por ahora';
+
+  @override
+  String get setUpProfile => 'Configurar';
+
+  @override
+  String get useDefaults => 'Predeterminado';
+
+  @override
+  String get syncPlaceholderTutorialStep1 =>
+      'Completa tu perfil para desbloquear todas las funciones.';
+
+  @override
+  String get syncPlaceholderTutorialStep2 =>
+      '¿No estás listo para importar? Carga datos de demostración para ver cómo se ve la aplicación en acción.';
+
+  @override
+  String get syncPlaceholderTutorialStep3 =>
+      'Mantén tu cartera de escritorio y móvil actualizada.';
+
+  @override
+  String get tapToContinue => 'Toca para continuar';
+
+  @override
+  String get homeOnboardingReorderMessage =>
+      'Mantén presionado para reordenarlos según tu preferencia.';
 }

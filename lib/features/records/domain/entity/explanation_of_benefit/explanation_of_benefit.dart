@@ -5,6 +5,7 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -76,7 +77,7 @@ class ExplanationOfBenefit
       provider: fhirEob.provider,
       referral: fhirEob.referral,
       claim: fhirEob.claim,
-      outcome: fhirEob.outcome?.toString(),
+      outcome: fhirEob.outcome.toString(),
       disposition: fhirEob.disposition,
       careTeam: fhirEob.careTeam,
       insurance: fhirEob.insurance,
@@ -115,21 +116,83 @@ class ExplanationOfBenefit
   List<RecordInfoLine> get additionalInfo {
     List<RecordInfoLine> infoLines = [];
 
-    if (outcome != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: "Outcome: $outcome",
-      ));
+    // Status
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(status, prefix: 'Status'),
+    );
+
+    // Type
+    final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+    );
+
+    // Use
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(use, prefix: 'Use'),
+    );
+
+    // Outcome
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(outcome, prefix: 'Outcome'),
+    );
+
+    // Insurer
+    final insurerDisplay = FhirFieldExtractor.extractReferenceDisplay(insurer);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(insurerDisplay,
+          prefix: 'Insurer'),
+    );
+
+    // Provider
+    final providerDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(provider);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createOrganizationLine(providerDisplay,
+          prefix: 'Provider'),
+    );
+
+    // Billable Period
+    final billablePeriodDisplay =
+        FhirFieldExtractor.extractPeriodFormatted(billablePeriod);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createTimelineLine(billablePeriodDisplay,
+          prefix: 'Billable Period'),
+    );
+
+    // Disposition
+    final dispositionText = disposition?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(dispositionText,
+          prefix: 'Disposition'),
+    );
+
+    // Total
+    if (total != null && total!.isNotEmpty) {
+      for (final totalItem in total!.take(2)) {
+        final category =
+            FhirFieldExtractor.extractCodeableConceptText(totalItem.category);
+        final value = totalItem.amount.value?.valueDouble?.toStringAsFixed(2);
+        final currency = totalItem.amount.currency?.toString() ?? '';
+        if (value != null) {
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createValueLine('$currency $value',
+                prefix: category ?? 'Total'),
+          );
+        }
+      }
     }
 
-    final insurerDisplay = insurer?.display?.valueString;
-    if (insurerDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.hospital,
-        info: insurerDisplay,
-      ));
-    }
-
+    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,

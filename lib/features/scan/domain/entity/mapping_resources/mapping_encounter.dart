@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
@@ -5,6 +7,7 @@ import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapp
 import 'package:health_wallet/features/scan/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 part 'mapping_encounter.freezed.dart';
@@ -16,18 +19,48 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
   const factory MappingEncounter({
     @Default('') String id,
     @Default(MappedProperty()) MappedProperty encounterType,
-    @Default(MappedProperty()) MappedProperty location,
     @Default(MappedProperty()) MappedProperty periodStart,
   }) = _MappingEncounter;
 
   factory MappingEncounter.fromJson(Map<String, dynamic> json) {
     return MappingEncounter(
-      id: const Uuid().v4(),
-      encounterType: MappedProperty(value: json['encounterType'] ?? ''),
-      location: MappedProperty(value: json['location'] ?? ''),
-      periodStart: MappedProperty(value: json['periodStart'] ?? ''),
+      id: json["id"] ?? const Uuid().v4(),
+      encounterType: MappedProperty.fromJson(json['encounterType']),
+      periodStart: MappedProperty.fromJson(json['periodStart']),
     );
   }
+
+  factory MappingEncounter.empty() {
+    return MappingEncounter(
+      id: const Uuid().v4(),
+      encounterType: MappedProperty.empty(),
+      periodStart: MappedProperty.empty(),
+    );
+  }
+
+  factory MappingEncounter.fromFhirResource(Encounter encounter) {
+    return MappingEncounter(
+      id: encounter.id,
+      encounterType: MappedProperty(
+        value: encounter.displayTitle,
+        confidenceLevel: 1,
+      ),
+      periodStart: MappedProperty(
+        value: DateFormat('yyyy-MM-dd').format(
+          encounter.date ?? DateTime.now(),
+        ),
+        confidenceLevel: 1,
+      ),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'resourceType': 'Encounter',
+        'encounterType': encounterType.toJson(),
+        'periodStart': periodStart.toJson(),
+      };
 
   @override
   IFhirResource toFhirResource({
@@ -38,12 +71,6 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
     fhir_r4.Encounter encounter = fhir_r4.Encounter(
         type: [
           fhir_r4.CodeableConcept(text: fhir_r4.FhirString(encounterType.value))
-        ],
-        location: [
-          fhir_r4.EncounterLocation(
-            location:
-                fhir_r4.Reference(display: fhir_r4.FhirString(location.value)),
-          )
         ],
         period: fhir_r4.Period(
           start: fhir_r4.FhirDateTime.fromString(periodStart.value),
@@ -65,7 +92,6 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
       subjectId: subjectId ?? '',
       rawResource: rawResource,
       type: encounter.type,
-      location: encounter.location,
       period: encounter.period,
     );
   }
@@ -77,11 +103,6 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
           value: encounterType.value,
           confidenceLevel: encounterType.confidenceLevel,
           validators: [nonEmptyValidator],
-        ),
-        'location': TextFieldDescriptor(
-          label: 'Location',
-          value: location.value,
-          confidenceLevel: location.confidenceLevel,
         ),
         'periodStart': TextFieldDescriptor(
           label: 'Start Date',
@@ -101,11 +122,6 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
               ? 1
               : encounterType.confidenceLevel,
         ),
-        location: MappedProperty(
-          value: newValues['location'] ?? location.value,
-          confidenceLevel:
-              newValues['location'] != null ? 1 : location.confidenceLevel,
-        ),
         periodStart: MappedProperty(
           value: newValues['periodStart'] ?? periodStart.value,
           confidenceLevel: newValues['periodStart'] != null
@@ -120,11 +136,9 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
         encounterType: encounterType.calculateConfidence(inputText),
-        location: location.calculateConfidence(inputText),
         periodStart: periodStart.calculateConfidence(inputText),
       );
 
   @override
-  bool get isValid =>
-      encounterType.isValid || location.isValid || periodStart.isValid;
+  bool get isValid => encounterType.isValid || periodStart.isValid;
 }

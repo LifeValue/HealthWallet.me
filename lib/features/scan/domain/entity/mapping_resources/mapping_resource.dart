@@ -43,6 +43,35 @@ abstract class MappingResource {
     }
   }
 
+  factory MappingResource.empty(String resourceType) {
+    switch (resourceType) {
+      case 'AllergyIntolerance':
+        return MappingAllergyIntolerance.empty();
+      case 'Condition':
+        return MappingCondition.empty();
+      case 'DiagnosticReport':
+        return MappingDiagnosticReport.empty();
+      case 'Encounter':
+        return MappingEncounter.empty();
+      case 'MedicationStatement':
+        return MappingMedicationStatement.empty();
+      case 'Observation':
+        return MappingObservation.empty();
+      case 'Organization':
+        return MappingOrganization.empty();
+      case 'Patient':
+        return MappingPatient.empty();
+      case 'Practitioner':
+        return MappingPractitioner.empty();
+      case 'Procedure':
+        return MappingProcedure.empty();
+      default:
+        throw Exception();
+    }
+  }
+
+  Map<String, dynamic> toJson();
+
   IFhirResource toFhirResource({
     String? sourceId,
     String? encounterId,

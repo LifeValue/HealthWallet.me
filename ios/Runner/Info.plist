@@ -32,6 +32,8 @@
 	<string>Enable your camera to securely connect to your health provider by scanning their QR code and syncing your health records.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to your photos to add a picture from the library or take a picture image of your health documents, like lab results, directly from the app and automatically adds to your health record timeline.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Allow access to save shared medical documents to your health records.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -54,5 +56,37 @@
 		<string>https</string>
 		<string>http</string>
 	</array>
+	<key>AppGroupId</key>
+	<string>$(CUSTOM_GROUP_ID)</string>
+	<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>ShareMedia-$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+				</array>
+			</dict>
+		</array>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>To upload photos, please allow permission to access your photo library.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.techstackapps.healthwallet</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>healthwallet</string>
+				<string>ShareMedia-com.techstackapps.healthwallet</string>
+			</array>
+		</dict>
+	</array>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 </dict>
 </plist>

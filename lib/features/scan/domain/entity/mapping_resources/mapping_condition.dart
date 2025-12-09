@@ -22,12 +22,30 @@ class MappingCondition with _$MappingCondition implements MappingResource {
 
   factory MappingCondition.fromJson(Map<String, dynamic> json) {
     return MappingCondition(
-      id: const Uuid().v4(),
-      conditionName: MappedProperty(value: json['conditionName'] ?? ''),
-      onsetDateTime: MappedProperty(value: json['onsetDateTime'] ?? ''),
-      clinicalStatus: MappedProperty(value: json['clinicalStatus'] ?? ''),
+      id: json["id"] ?? const Uuid().v4(),
+      conditionName: MappedProperty.fromJson(json['conditionName']),
+      onsetDateTime: MappedProperty.fromJson(json['onsetDateTime']),
+      clinicalStatus: MappedProperty.fromJson(json['clinicalStatus']),
     );
   }
+
+  factory MappingCondition.empty() {
+    return MappingCondition(
+      id: const Uuid().v4(),
+      conditionName: MappedProperty.empty(),
+      onsetDateTime: MappedProperty.empty(),
+      clinicalStatus: MappedProperty.empty(),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'resourceType': 'Condition',
+        'conditionName': conditionName.toJson(),
+        'onsetDateTime': onsetDateTime.toJson(),
+        'clinicalStatus': clinicalStatus.toJson(),
+      };
 
   @override
   IFhirResource toFhirResource({

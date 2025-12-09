@@ -110,29 +110,49 @@ class RecordDetailsPage extends StatelessWidget {
               color: context.colorScheme.onSurface,
             ),
           ),
-          ...resource.additionalInfo.map((infoLine) => Column(
-                children: [
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      infoLine.icon.svg(
-                        width: 16,
-                        color: context.colorScheme.onSurface,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          infoLine.info,
-                          style: AppTextStyle.labelLarge.copyWith(
-                            color: context.colorScheme.onSurface,
-                          ),
-                        ),
-                      )
-                    ],
+          ...resource.additionalInfo.map((infoLine) {
+            // Section header styling
+            if (infoLine.isSection) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 8),
+                child: Text(
+                  infoLine.info,
+                  style: AppTextStyle.labelLarge.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: context.colorScheme.onSurface,
                   ),
-                ],
-              )),
+                ),
+              );
+            }
+
+            // Regular info line styling
+            return Column(
+              children: [
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: infoLine.icon.svg(
+                        width: 16,
+                        color: context.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        infoLine.info,
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -208,10 +228,15 @@ class RecordDetailsPage extends StatelessWidget {
 
   Widget _buildRelatedResourceInfo(
       BuildContext context, IFhirResource resource) {
+    // Filter out section headers and take first 2 actual info lines
+    final infoLines = resource.additionalInfo
+        .where((line) => !line.isSection)
+        .take(2)
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: resource.additionalInfo
-          .take(2)
+      children: infoLines
           .map(
             (infoLine) => Column(
               children: [

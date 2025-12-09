@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>AppGroupId</key>
+    <string>$(CUSTOM_GROUP_ID)</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+        <dict>
+            <key>PHSupportedMediaTypes</key>
+               <array>
+                   <!--TODO: Add this flag, if you want to support sharing images into your app-->
+                   <string>Image</string>
+               </array>
+            <key>NSExtensionActivationRule</key>
+            <dict>
+                <!--TODO: Add this tag, if you want to support sharing urls into your app-->
+            	<key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
+            	<integer>1</integer>
+            	<!--TODO: Add this flag, if you want to support sharing images into your app-->
+                <key>NSExtensionActivationSupportsImageWithMaxCount</key>
+                <integer>10</integer>
+                <!--TODO: Add this flag, if you want to support sharing other files into your app-->
+				<key>NSExtensionActivationSupportsFileWithMaxCount</key>
+				<integer>5</integer>
+            </dict>
+        </dict>
+		<key>NSExtensionMainStoryboard</key>
+		<string>MainInterface</string>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.share-services</string>
+	</dict>
+  </dict>
+</plist>

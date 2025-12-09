@@ -5,6 +5,7 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:injectable/injectable.dart';
+import 'package:uuid/uuid.dart';
 
 @injectable
 class DefaultPatientService {
@@ -14,30 +15,66 @@ class DefaultPatientService {
   DefaultPatientService(this._recordsRepository, this._syncLocalDataSource);
 
   Future<Patient> createDefaultWalletHolder() async {
-    // Create a basic patient with placeholder data
-    // User can edit later via patient edit dialog
+    final resourceId = const Uuid().v4();
+
+    final dbId = 'wallet_default_wallet_holder';
+
+    final mrnIdentifier = fhir_r4.Identifier(
+      type: fhir_r4.CodeableConcept(
+        coding: [
+          fhir_r4.Coding(
+            system: fhir_r4.FhirUri(
+              'http://terminology.hl7.org/CodeSystem/v2-0203',
+            ),
+            code: fhir_r4.FhirCode('MR'),
+            display: fhir_r4.FhirString('Medical Record Number'),
+          ),
+        ],
+        text: fhir_r4.FhirString('Medical Record Number'),
+      ),
+      system: fhir_r4.FhirUri('http://healthwallet.me/mrn'),
+      value: fhir_r4.FhirString('default_wallet_holder'),
+    );
+
     return Patient(
-      id: 'default_wallet_holder',
+      id: dbId,
       sourceId: 'wallet',
-      resourceId: 'default_wallet_holder',
+      resourceId: resourceId,
       title: 'Health Wallet Holder',
       name: [
         fhir_r4.HumanName(
           use: fhir_r4.NameUse.official,
-          given: [fhir_r4.FhirString('Health')],
-          family: fhir_r4.FhirString('Wallet Holder'),
+          given: [fhir_r4.FhirString('Health Wallet')],
+          family: fhir_r4.FhirString('Holder'),
         ),
       ],
-      birthDate: null, // Will prompt user to fill
-      gender: null, // Will prompt user to fill
+      birthDate: null,
+      gender: null,
+      identifier: [mrnIdentifier],
       rawResource: {
         'resourceType': 'Patient',
-        'id': 'default_wallet_holder',
+        'id': resourceId,
         'name': [
           {
             'use': 'official',
-            'given': ['Health'],
-            'family': 'Wallet Holder',
+            'given': ['Health Wallet'],
+            'family': 'Holder',
+          }
+        ],
+        'identifier': [
+          {
+            'type': {
+              'coding': [
+                {
+                  'system': 'http://terminology.hl7.org/CodeSystem/v2-0203',
+                  'code': 'MR',
+                  'display': 'Medical Record Number',
+                }
+              ],
+              'text': 'Medical Record Number',
+            },
+            'system': 'http://healthwallet.me/mrn',
+            'value': 'default_wallet_holder',
           }
         ],
       },
@@ -46,20 +83,17 @@ class DefaultPatientService {
 
   Future<void> createAndSetAsMain() async {
     try {
-      // Check if any patients already exist
       final existingPatients = await _recordsRepository.getResources(
         resourceTypes: [FhirType.Patient],
         limit: 1,
       );
-      
+
       if (existingPatients.isNotEmpty) {
-        return; // Already has patients, don't create another
+        return;
       }
 
-      // Create default patient
       final defaultPatient = await createDefaultWalletHolder();
 
-      // Create FHIR resource DTO for saving
       final fhirResourceDto = FhirResourceDto(
         id: defaultPatient.id,
         sourceId: defaultPatient.sourceId,
@@ -71,25 +105,20 @@ class DefaultPatientService {
         changeType: 'created',
       );
 
-      // Save to database using the sync local data source
       await _syncLocalDataSource.cacheFhirResources([fhirResourceDto]);
     } catch (e) {
-      // Log error but don't throw - this is a convenience feature
     }
   }
 
   Future<bool> shouldCreateDefaultWalletHolder() async {
     try {
-      // Check if any patients exist
       final patients = await _recordsRepository.getResources(
         resourceTypes: [FhirType.Patient],
         limit: 1,
       );
 
-      // If no patients exist, we should create a default one
       return patients.isEmpty;
     } catch (e) {
-      // If there's an error, assume we should create one
       return true;
     }
   }

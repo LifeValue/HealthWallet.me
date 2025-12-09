@@ -8,14 +8,14 @@ import 'package:health_wallet/gen/assets.gen.dart';
 class DateField extends StatelessWidget {
   final String label;
   final DateTime? selectedDate;
-  final ValueChanged<DateTime?> onDateChanged;
+  final ValueChanged<DateTime?>? onDateChanged;
   final Color iconColor;
 
   const DateField({
     super.key,
     required this.label,
     required this.selectedDate,
-    required this.onDateChanged,
+    this.onDateChanged,
     required this.iconColor,
   });
 
@@ -40,9 +40,7 @@ class DateField extends StatelessWidget {
 
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: selectedDate ??
-          now.subtract(
-              const Duration(days: 365 * 25)), // Default to 25 years ago
+      initialDate: selectedDate ?? now.subtract(const Duration(days: 365 * 25)),
       firstDate: firstDate,
       lastDate: lastDate,
       builder: (context, child) {
@@ -55,8 +53,8 @@ class DateField extends StatelessWidget {
       },
     );
 
-    if (pickedDate != null) {
-      onDateChanged(pickedDate);
+    if (pickedDate != null && onDateChanged != null) {
+      onDateChanged!(pickedDate);
     }
   }
 
@@ -83,7 +81,7 @@ class DateField extends StatelessWidget {
       children: [
         _buildFieldLabel(context),
         InkWell(
-          onTap: () => _showDatePicker(context),
+          onTap: onDateChanged != null ? () => _showDatePicker(context) : null,
           child: Container(
             height: 36,
             padding: const EdgeInsets.symmetric(

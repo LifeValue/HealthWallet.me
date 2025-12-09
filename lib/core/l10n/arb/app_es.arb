@@ -197,9 +197,51 @@
     "changesToPolicy": "Cambios a Esta Política de Privacidad",
     "contactUs": "Contáctanos",
     "builtWithLove": "¡Construido con amor por Life Value!",
+
+    "noRecords": "Sin registros",
     
     "sourceName": "Nombre de fuente",
     "provideCustomLabel": "Proporciona una etiqueta personalizada para:",
     "success": "Éxito",
-    "demoDataLoadedSuccessfully": "Los datos de demostración se han cargado exitosamente. Serás redirigido a la página de inicio."
+    "demoDataLoadedSuccessfully": "Los datos de demostración se han cargado exitosamente. Serás redirigido a la página de inicio.",
+
+    "onboardingAiModelTitle": "Habilitar Modelo de IA",
+    "onboardingAiModelDescription": "Descarga un modelo de IA seguro y en el dispositivo (~1.5 GB) para analizar y organizar automáticamente tus registros de salud: tus datos permanecen privados en tu dispositivo. Es una configuración única.",
+    "onboardingAiModelSubtitle": "Desbloquea el escaneo impulsado por IA", 
+    "aiModelReady": "¡Modelo de IA listo! Puedes empezar a escanear.",
+    "aiModelDownloading": "Descargando modelo de IA...",
+    "aiModelEnableDownload": "Activar y descargar",
+    "aiModelError": "No se pudo verificar el modelo. Inténtalo de nuevo.",
+    "aiModelMissing": "No descargado.",
+    "aiModelTitle": "Cargar modelo de IA",
+    "aiModelUnlockTitle": "Desbloquea el escaneo con IA",
+    "aiModelUnlockDescription": "Para leer y organizar automáticamente tus documentos médicos, esta función utiliza un modelo de IA seguro y local en tu dispositivo. Tus datos permanecen completamente privados.",
+    "aiModelDownloadInfo": "Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única.",
+    
+    "setup": "Configurar",
+    "patientSetupTitle": "Configura tu Perfil",
+    "patientSetupSubtitle": "Personaliza tu cartera de salud con tu información",
+    
+    "onboardingSetupTitle": "Configurar mi Cartera de Salud",
+    "onboardingSetupBody": "Crea tu perfil de salud personal para comenzar con HealthWallet",
+    "onboardingDemoTitle": "Probar Datos de Demostración",
+    "onboardingDemoBody": "Explora la aplicación con registros médicos de ejemplo para ver cómo funciona",
+    "onboardingSyncTitle2": "Sincronizar tus Registros",
+    "onboardingSyncBody": "Conéctate a tus proveedores de salud para importar tus registros médicos reales",
+    
+    "givenName": "Nombre",
+    "familyName": "Apellido",
+    "skipForNow": "Omitir por ahora",
+    
+    "setUpProfile": "Configurar",
+    "useDefaults": "Predeterminado",
+    "editDetails": "Editar detalles",
+    "saveDetails": "Guardar detalles",
+    
+    "syncPlaceholderTutorialStep1": "Completa tu perfil para desbloquear todas las funciones.",
+    "syncPlaceholderTutorialStep2": "¿No estás listo para importar? Carga datos de demostración para ver cómo se ve la aplicación en acción.",
+    "syncPlaceholderTutorialStep3": "Mantén tu cartera de escritorio y móvil actualizada.",
+    "tapToContinue": "Toca para continuar",
+    
+    "homeOnboardingReorderMessage": "Mantén presionado para reordenarlos según tu preferencia."
 }

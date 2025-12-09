@@ -6,6 +6,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/ai-model/ai_model_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/user/user_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/patient_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/sync/sync_section.dart';
@@ -106,6 +107,8 @@ class PreferenceModal extends StatelessWidget {
                     const PatientSection(),
                     const SizedBox(height: Insets.medium),
                     const SyncSection(),
+                    const SizedBox(height: Insets.medium),
+                    const AiModelSection(),
                     const SizedBox(height: Insets.medium),
                     const SettingsSection(),
                     const SizedBox(height: Insets.medium),
