@@ -136,10 +136,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       status: ScanStatus.sessionCreated(session: session),
       sessions: [session, ...state.sessions],
     ));
-
-    if (!_isCurrentlyProcessing) {
-      add(ScanSessionActivated(sessionId: session.id));
-    }
   }
 
   Future<void> _handlePdfScan(Emitter<ScanState> emit) async {
@@ -809,6 +805,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       emit,
       sessionId: event.sessionId,
       status: ProcessingStatus.pending,
+      resources: [],
       progress: 0.0,
       updateDb: true,
     );

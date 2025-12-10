@@ -18,4 +18,8 @@ class AppConstants {
 
   // Cache Duration
   static const Duration cacheDuration = Duration(hours: 1);
+
+  static const String modelUrl =
+      'https://huggingface.co/google/gemma-2b-it-tflite/resolve/main/gemma-2b-it-gpu-int4.bin';
+  static const String modelId = 'gemma-2b-it-gpu-int4.bin';
 }

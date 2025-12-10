@@ -1,12 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter_gemma/mobile/flutter_gemma_mobile.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/scan/domain/entity/slm_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
@@ -292,17 +291,23 @@ class ScanRepositoryImpl implements ScanRepository {
 
   @override
   Stream<double> downloadModel() async* {
-    Stream<DownloadProgress> stream = _networkDataSource
-        .downloadModel(SlmModel.gemmaModel().toInferenceSpec());
+    final controller = StreamController<double>();
 
-    await for (final progress in stream) {
-      yield progress.overallProgress.toDouble();
-    }
+    _networkDataSource.downloadModel(onProgress: (progress) {
+      controller.add(progress.toDouble());
+    }).then((_) {
+      controller.close();
+    }).catchError((error) {
+      controller.addError(error);
+      controller.close();
+    });
+
+    yield* controller.stream;
   }
 
   @override
-  Future<bool> checkModelExistence() => _networkDataSource
-      .checkModelExistence(SlmModel.gemmaModel().toInferenceSpec());
+  Future<bool> checkModelExistence() =>
+      _networkDataSource.checkModelExistence();
 
   @override
   Stream<MappingResourcesWithProgress> mapResources(String medicalText) async* {
@@ -311,7 +316,6 @@ class ScanRepositoryImpl implements ScanRepository {
       String prompt = supportedPrompts[i].buildPrompt(medicalText);
 
       String? promptResponse = await _networkDataSource.runPrompt(
-        spec: SlmModel.gemmaModel().toInferenceSpec(),
         prompt: prompt,
       );
 
