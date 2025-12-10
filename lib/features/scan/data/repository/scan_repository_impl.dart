@@ -342,11 +342,11 @@ class ScanRepositoryImpl implements ScanRepository {
 
         yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
       }
-
-      await _networkDataSource.disposeModel();
-    } catch (e) {
-      await _networkDataSource.disposeModel();
-      rethrow;
+    } finally {
+      await disposeModel();
     }
   }
+
+  @override
+  Future disposeModel() => _networkDataSource.disposeModel();
 }

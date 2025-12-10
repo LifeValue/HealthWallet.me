@@ -551,7 +551,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       try {
         await for (final (resources, progress) in stream) {
-          if (emit.isDone) {
+          if (emit.isDone || state.status == const ScanStatus.cancelled()) {
             return;
           }
           final currentSession =
@@ -800,7 +800,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   void _onScanMappingCancelled(
     ScanMappingCancelled event,
     Emitter<ScanState> emit,
-  ) {
+  ) async {
     _updateSession(
       emit,
       sessionId: event.sessionId,
@@ -809,6 +809,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       progress: 0.0,
       updateDb: true,
     );
+    await _repository.disposeModel();
     emit(state.copyWith(status: const ScanStatus.cancelled()));
   }
 
