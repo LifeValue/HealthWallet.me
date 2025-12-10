@@ -136,10 +136,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       status: ScanStatus.sessionCreated(session: session),
       sessions: [session, ...state.sessions],
     ));
-
-    if (!_isCurrentlyProcessing) {
-      add(ScanSessionActivated(sessionId: session.id));
-    }
   }
 
   Future<void> _handlePdfScan(Emitter<ScanState> emit) async {
@@ -555,7 +551,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       try {
         await for (final (resources, progress) in stream) {
-          if (emit.isDone) {
+          if (emit.isDone || state.status == const ScanStatus.cancelled()) {
             return;
           }
           final currentSession =
@@ -804,14 +800,16 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   void _onScanMappingCancelled(
     ScanMappingCancelled event,
     Emitter<ScanState> emit,
-  ) {
+  ) async {
     _updateSession(
       emit,
       sessionId: event.sessionId,
       status: ProcessingStatus.pending,
+      resources: [],
       progress: 0.0,
       updateDb: true,
     );
+    await _repository.disposeModel();
     emit(state.copyWith(status: const ScanStatus.cancelled()));
   }
 
