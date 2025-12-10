@@ -311,32 +311,42 @@ class ScanRepositoryImpl implements ScanRepository {
 
   @override
   Stream<MappingResourcesWithProgress> mapResources(String medicalText) async* {
-    List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
-    for (int i = 0; i < supportedPrompts.length; i++) {
-      String prompt = supportedPrompts[i].buildPrompt(medicalText);
+    try {
+      await _networkDataSource.initModel();
 
-      String? promptResponse = await _networkDataSource.runPrompt(
-        prompt: prompt,
-      );
+      List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
+      for (int i = 0; i < supportedPrompts.length; i++) {
+        String prompt = supportedPrompts[i].buildPrompt(medicalText);
 
-      List<MappingResource> resources = [];
+        String? promptResponse = await _networkDataSource.runPrompt(
+          prompt: prompt,
+        );
 
-      try {
-        List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+        List<MappingResource> resources = [];
 
-        for (Map<String, dynamic> json in jsonList) {
-          MappingResource resource =
-              MappingResource.fromJson(json).populateConfidence(medicalText);
+        try {
+          List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
 
-          if (resource.isValid) {
-            resources.add(resource);
+          for (Map<String, dynamic> json in jsonList) {
+            MappingResource resource =
+                MappingResource.fromJson(json).populateConfidence(medicalText);
+
+            if (resource.isValid) {
+              resources.add(resource);
+            }
           }
+        } catch (_) {
+          yield ([], (i + 1) / supportedPrompts.length);
+          continue;
         }
-      } catch (_) {
-        continue;
+
+        yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
       }
 
-      yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
+      await _networkDataSource.disposeModel();
+    } catch (e) {
+      await _networkDataSource.disposeModel();
+      rethrow;
     }
   }
 }

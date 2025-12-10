@@ -18,6 +18,10 @@ abstract class ScanNetworkDataSource {
   Future<String?> runPrompt({
     required String prompt,
   });
+
+  Future<void> initModel();
+
+  Future<void> disposeModel();
 }
 
 @LazySingleton(as: ScanNetworkDataSource)
@@ -34,6 +38,7 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
           );
 
   final Dio _dio;
+  InferenceModel? _model;
 
   @override
   Future<bool> checkModelExistence() async {
@@ -95,31 +100,50 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
   }
 
   Future<void> _activateModel() async {
+    // For some weird reason we need to do this before calling FlutterGemma.getActiveModel
+    // If we don't we get a "No active inference model set" error
     if (await checkModelExistence()) {
       await downloadModel(onProgress: (_) {});
     }
   }
 
   @override
+  Future<void> initModel() async {
+    if (_model != null) return;
+
+    await _activateModel();
+
+    _model = await FlutterGemma.getActiveModel(
+      maxTokens: 1536,
+      preferredBackend: PreferredBackend.gpu,
+    );
+  }
+
+  @override
+  Future<void> disposeModel() async {
+    await _model?.close();
+    _model = null;
+  }
+
+  @override
   Future<String?> runPrompt({
     required String prompt,
   }) async {
-    await _activateModel();
+    if (_model == null) {
+      throw Exception('Model not initialized. Call initModel() first.');
+    }
 
-    final model = await FlutterGemma.getActiveModel(
-      maxTokens: 4096,
-      preferredBackend: PreferredBackend.gpu,
-    );
-
+    final model = _model!;
     final chat = await model.createChat();
 
     await chat.addQueryChunk(Message(text: prompt, isUser: true));
     final response = await chat.generateChatResponse();
 
+    await chat.clearHistory();
+
     if (response is TextResponse) {
       return response.token;
     }
-
     return response.toString();
   }
 }
