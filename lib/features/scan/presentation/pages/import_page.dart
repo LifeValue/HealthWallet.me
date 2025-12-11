@@ -98,10 +98,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                         ),
                         const SizedBox(height: 24),
                         Expanded(
-                          child: SessionList(
-                            sessions: importSessions,
-                            activeSessionId: state.activeSessionId,
-                          ),
+                          child: SessionList(sessions: importSessions),
                         ),
                         const SizedBox(height: 16),
                         Padding(

@@ -21,7 +21,12 @@ class ScanState with _$ScanState {
   const factory ScanState({
     @Default(ScanStatus.initial()) ScanStatus status,
     @Default([]) List<ProcessingSession> sessions,
-    String? activeSessionId,
+    /// This is the id of the session that is currently being displayed on the
+    /// processing page, not the id of the sesssion that is currently being processed
+    /// 
+    /// To get the id of the session that is currently being processed search through
+    /// sessions for the session with .processing state
+    String? displayedSessionId,
     @Default([]) List<String> allImagePathsForOCR,
     @Default({}) Map<String, List<String>> sessionImagePaths,
     Notification? notification,
