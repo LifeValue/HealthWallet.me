@@ -3,6 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -10,6 +11,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/resources_form.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
@@ -302,19 +304,27 @@ class _ProcessingPageState extends State<ProcessingPage> {
   }
 
   Widget _buildQueuedMessage() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.hourglass_empty,
-            color: context.colorScheme.primary, size: 20),
-        const SizedBox(width: 8),
-        Text(
-          'Only one processing session can run at a time',
-          style: AppTextStyle.bodyMedium.copyWith(
-            color: context.colorScheme.primary,
-          ),
-        ),
-      ],
+    return FutureBuilder(
+      future: getIt<ScanRepository>().checkModelExistence(),
+      builder: (context, asyncSnapshot) {
+        if (!asyncSnapshot.hasData) return const SizedBox();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty,
+                color: context.colorScheme.primary, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              asyncSnapshot.data!
+                  ? 'Only one processing session can run at a time'
+                  : 'AI model is not available',
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.primary,
+              ),
+            )
+          ],
+        );
+      },
     );
   }
 
