@@ -373,38 +373,23 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       }
 
       if (currentSession.status == ProcessingStatus.pending) {
-        emit(state.copyWith(status: const ScanStatus.mapping()));
-        await Future.delayed(const Duration(seconds: 1));
-        if (!emit.isDone) {
-          // Double-check session status hasn't changed during the delay
-          final sessionAfterDelay =
-              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
-          if (sessionAfterDelay == null) {
-            logger.w(
-                '_onScanSessionActivated - Session not found after delay, not triggering ScanMappingInitiated');
-            return;
-          }
-          if (sessionAfterDelay.status != ProcessingStatus.pending) {
-            return;
-          }
+        try {
+          final isModelLoaded = await _repository.checkModelExistence();
 
-          try {
-            final isModelLoaded = await _repository.checkModelExistence();
-
-            if (isModelLoaded) {
-              logger.i(
-                  '_onScanSessionActivated - Model is loaded, triggering ScanMappingInitiated');
-              add(ScanMappingInitiated(sessionId: event.sessionId));
-            } else {
-              logger.i(
-                  '_onScanSessionActivated - Model not loaded, session will wait for manual trigger after model download');
-              emit(state.copyWith(status: const ScanStatus.initial()));
-            }
-          } catch (e) {
-            logger.e(
-                '_onScanSessionActivated - Error checking model existence: $e');
+          if (isModelLoaded) {
+            logger.i(
+                '_onScanSessionActivated - Model is loaded, triggering ScanMappingInitiated');
+            emit(state.copyWith(status: const ScanStatus.mapping()));
+            add(ScanMappingInitiated(sessionId: event.sessionId));
+          } else {
+            logger.i(
+                '_onScanSessionActivated - Model not loaded, session will wait for manual trigger after model download');
             emit(state.copyWith(status: const ScanStatus.initial()));
-          }
+         }
+        } catch (e) {
+          logger.e(
+              '_onScanSessionActivated - Error checking model existence: $e');
+          emit(state.copyWith(status: const ScanStatus.initial()));
         }
       } else if (session.status == ProcessingStatus.processing) {
         emit(state.copyWith(status: const ScanStatus.mapping()));
