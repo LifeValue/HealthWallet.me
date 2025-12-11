@@ -102,40 +102,36 @@ class _ProcessingPageState extends State<ProcessingPage> {
       ),
       body: BlocConsumer<ScanBloc, ScanState>(
         listener: (context, state) {
-          final activeSession =
+          final displayedSession =
               state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
-          if (activeSession == null) return;
+          if (displayedSession == null) return;
 
           if (state.status == const ScanStatus.success()) {
             context
                 .read<ScanBloc>()
-                .add(ScanSessionCleared(session: activeSession));
+                .add(ScanSessionCleared(session: displayedSession));
             context.router.replaceAll([const DashboardRoute()]);
           }
         },
         builder: (context, state) {
-          final activeSession =
+          final displayedSession =
               state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
-          if (activeSession == null) {
+          if (displayedSession == null) {
             return const Center(child: Text("Session not found!"));
           }
 
           final sessionImages = state.sessionImagePaths[widget.sessionId] ??
-              (state.activeSessionId == widget.sessionId
-                  ? state.allImagePathsForOCR
-                  : const <String>[]);
+              state.allImagePathsForOCR;
 
-          final isThisSessionConverting =
+          final isConverting =
               state.status == const ScanStatus.convertingPdfs() &&
-                  state.activeSessionId == widget.sessionId &&
                   sessionImages.isEmpty;
 
           final isQueuedAndPreparing =
-              activeSession.status == ProcessingStatus.pending &&
-                  state.activeSessionId != widget.sessionId &&
+              displayedSession.status == ProcessingStatus.pending &&
                   sessionImages.isEmpty;
 
-          if (isThisSessionConverting || isQueuedAndPreparing) {
+          if (isConverting || isQueuedAndPreparing) {
             return _buildLoadingIndicator('Preparing preview...');
           }
 
@@ -155,8 +151,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 const SizedBox(height: Insets.small),
               ],
               const SizedBox(height: Insets.large),
-              _buildMappingSection(state, activeSession),
-              _buildResourcesSection(state, activeSession),
+              _buildMappingSection(state, displayedSession),
+              _buildResourcesSection(state, displayedSession),
               const SizedBox(height: Insets.large),
             ]),
           );
@@ -179,7 +175,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
   }
 
   Widget _buildMappingSection(
-      ScanState state, ProcessingSession activeSession) {
+      ScanState state, ProcessingSession displayedSession) {
     if (state.status is Failure) {
       final error = (state.status as Failure).error;
       return Column(
@@ -278,32 +274,13 @@ class _ProcessingPageState extends State<ProcessingPage> {
       );
     }
 
-    final isThisSessionActive = state.activeSessionId == activeSession.id;
-    final isSessionProcessing =
-        activeSession.status == ProcessingStatus.processing;
-    final isSessionPending = activeSession.status == ProcessingStatus.pending;
-
-    if (isThisSessionActive && (isSessionProcessing || isSessionPending)) {
-      final isQueued = isSessionPending &&
-          state.sessions.any(
-            (s) =>
-                s.id != activeSession.id &&
-                s.status == ProcessingStatus.processing,
-          );
-
-      final primaryText = isQueued
-          ? 'Waiting for another session to finish...'
-          : 'Processing pages...';
-      final secondaryText = isQueued
-          ? 'Your documents will start processing automatically.'
-          : 'It might take a while. Please wait.';
-
+    if (displayedSession.status == ProcessingStatus.processing) {
       return Column(
         children: [
           CustomProgressIndicator(
-            progress: activeSession.progress,
-            text: primaryText,
-            secondaryText: secondaryText,
+            progress: displayedSession.progress,
+            text: 'Processing pages...',
+            secondaryText: 'It might take a while. Please wait.',
           ),
           const SizedBox(height: Insets.normal),
           AppButton(
@@ -317,66 +294,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
       );
     }
 
-    if (!isThisSessionActive && isSessionProcessing) {
-      return Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(Insets.normal),
-            decoration: BoxDecoration(
-              color:
-                  context.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: context.colorScheme.outline.withOpacity(0.5),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.refresh,
-                  color: context.colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Processing Error',
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          color: context.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'This session is no longer active. Tap retry to start over.',
-                        style: AppTextStyle.bodySmall.copyWith(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: Insets.normal),
-          AppButton(
-            label: 'Retry',
-            variant: AppButtonVariant.outlined,
-            onPressed: () => context.read<ScanBloc>().add(
-                  ScanProcessingRestartRequested(sessionId: widget.sessionId),
-                ),
-          ),
-        ],
-      );
-    }
-
-    if (isSessionPending) {
+    if (displayedSession.status == ProcessingStatus.pending) {
       return _buildQueuedMessage();
     }
 
@@ -401,8 +319,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
   }
 
   Widget _buildResourcesSection(
-      ScanState state, ProcessingSession activeSession) {
-    if (state.status != const ScanStatus.editingResources()) {
+      ScanState state, ProcessingSession displayedSession) {
+    if (displayedSession.status != ProcessingStatus.draft) {
       return const SizedBox();
     }
 
@@ -411,10 +329,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
       children: [
         ResourcesForm(
           formKey: _formKey,
-          resources: activeSession.resources,
+          resources: displayedSession.resources,
           sessionId: widget.sessionId,
-          patient: activeSession.patient,
-          encounter: activeSession.encounter,
+          patient: displayedSession.patient,
+          encounter: displayedSession.encounter,
         ),
         _buildAddResourceButton(),
         const SizedBox(height: Insets.normal),

@@ -13,12 +13,10 @@ import 'package:intl/intl.dart';
 class SessionList extends StatelessWidget {
   const SessionList({
     required this.sessions,
-    this.activeSessionId,
     super.key,
   });
 
   final List<ProcessingSession> sessions;
-  final String? activeSessionId;
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +27,8 @@ class SessionList extends StatelessWidget {
         itemBuilder: (context, index) {
           final session = sessions[index];
           final isProcessing = session.status == ProcessingStatus.processing;
-          final isInterrupted = isProcessing && activeSessionId != session.id;
-          final statusLabel =
-              isInterrupted ? 'Interrupted' : session.status.toString();
-          final statusColor = isInterrupted
-              ? context.colorScheme.error
-              : session.status.getColor(context);
-          final borderColor = isInterrupted
-              ? context.colorScheme.error
-              : context.colorScheme.primary;
+          final statusColor = session.status.getColor(context);
+          final borderColor = context.colorScheme.primary;
 
           return InkWell(
             onTap: () =>
@@ -65,7 +56,7 @@ class SessionList extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                statusLabel,
+                                session.status.toString(),
                                 style: TextStyle(
                                   color: statusColor,
                                   fontWeight: FontWeight.w600,

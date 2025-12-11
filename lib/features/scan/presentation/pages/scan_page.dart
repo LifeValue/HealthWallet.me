@@ -283,10 +283,7 @@ class _ScanViewState extends State<ScanView>
                   ),
                   const SizedBox(height: 24),
                   Expanded(
-                    child: SessionList(
-                      sessions: scanSessions,
-                      activeSessionId: state.activeSessionId,
-                    ),
+                    child: SessionList(sessions: scanSessions),
                   ),
                   const SizedBox(height: 16),
                   Padding(
