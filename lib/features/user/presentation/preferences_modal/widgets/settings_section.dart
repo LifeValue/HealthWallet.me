@@ -9,6 +9,8 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/widge
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometric_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
+import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 class SettingsSection extends StatelessWidget {
   const SettingsSection({super.key});
@@ -91,6 +93,31 @@ class SettingsSection extends StatelessWidget {
                   );
                 },
                 child: const SizedBox.shrink(),
+              ),
+              const SizedBox(height: Insets.medium),
+              InkWell(
+                onTap: () {
+                  UrlLauncherService.launchURL('https://healthwallet.me/#contact');
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Send us your feedback",
+                        style: AppTextStyle.bodySmall,
+                      ),
+                      Assets.icons.externalLink.svg(
+                        colorFilter: ColorFilter.mode(
+                          context.colorScheme.onSurface.withOpacity(0.6),
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: Insets.medium),
               InkWell(
