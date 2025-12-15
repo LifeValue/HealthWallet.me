@@ -5,7 +5,6 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
@@ -58,8 +57,6 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     if (result == true) {
       context.router.push(ProcessingRoute(sessionId: session.id));
     } else {
-      context.read<ScanBloc>().add(ScanSessionCleared(session: session));
-
       if (result == false) {
         final result = await showDialog<AttachToEncounterResult>(
           context: context,
@@ -86,7 +83,17 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
           finalEncounter = encounter.existing!;
         }
 
-        await attachToEncounter(context, session.filePaths, finalEncounter);
+        try {
+          await attachToEncounter(context, session.filePaths, finalEncounter);
+          if (context.mounted) {
+            context.read<ScanBloc>().add(ScanSessionCleared(session: session));
+          }
+        } catch (e) {
+          if (context.mounted) {
+            context.read<ScanBloc>().add(ScanSessionCleared(session: session));
+          }
+          rethrow;
+        }
       }
     }
   }

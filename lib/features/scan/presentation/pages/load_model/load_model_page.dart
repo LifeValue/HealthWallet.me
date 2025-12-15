@@ -120,7 +120,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
           SizedBox(
             width: double.infinity,
             child: TextButton(
-              onPressed: () => context.router.maybePop(false),
+              onPressed: () => context.router.maybePop(),
               child: Text(
                 widget.canAttachToEncounter
                     ? 'Continue without AI (download in background)'

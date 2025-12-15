@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_storage_service.dart';
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -66,11 +65,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanEncounterAttached>(_onScanEncounterAttached);
     on<ScanProcessingRestartRequested>(_onScanProcessingRestartRequested);
   }
-
-  bool get _isCurrentlyProcessing =>
-      state.status == const ScanStatus.convertingPdfs() ||
-      state.status == const ScanStatus.mapping() ||
-      state.sessions.any((s) => s.status == ProcessingStatus.processing);
 
   void _startNextPendingSession() {
     final pendingSession = state.sessions.firstWhereOrNull(
@@ -136,10 +130,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       status: ScanStatus.sessionCreated(session: session),
       sessions: [session, ...state.sessions],
     ));
-
-    if (!_isCurrentlyProcessing) {
-      add(ScanSessionActivated(sessionId: session.id));
-    }
   }
 
   Future<void> _handlePdfScan(Emitter<ScanState> emit) async {
@@ -219,11 +209,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       await _createSession(emit,
           filePaths: [event.filePath], origin: ProcessingOrigin.import);
-    } catch (e, stackTrace) {
-      logger.e(
-          '_onDocumentImported - Error importing document: ${event.filePath}',
-          e,
-          stackTrace);
+    } catch (e) {
       emit(state.copyWith(
         status: ScanStatus.failure(error: 'Failed to import document: $e'),
       ));
@@ -249,21 +235,16 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) async {
     try {
-      final wasActiveSession = state.activeSessionId == event.session.id;
       final newSessions = [...state.sessions]
         ..removeWhere((session) => session.id == event.session.id);
       final updatedImageMap =
           Map<String, List<String>>.from(state.sessionImagePaths)
             ..remove(event.session.id);
 
-      // Only reset status if deleting the active session
-      // This prevents blank screens when deleting non-active sessions
       emit(state.copyWith(
         sessions: newSessions,
         sessionImagePaths: updatedImageMap,
-        allImagePathsForOCR: wasActiveSession ? [] : state.allImagePathsForOCR,
-        activeSessionId: wasActiveSession ? null : state.activeSessionId,
-        status: wasActiveSession ? const ScanStatus.initial() : state.status,
+        status: const ScanStatus.initial(),
       ));
 
       await _repository.deleteProcessingSession(event.session);
@@ -313,12 +294,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.status == ProcessingStatus.processing,
     );
-    final anotherSessionConverting =
-        state.status == const ScanStatus.convertingPdfs() &&
-            state.activeSessionId != null &&
-            state.activeSessionId != event.sessionId;
-    final anotherSessionBusy =
-        anotherSessionProcessing || anotherSessionConverting;
 
     try {
       final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
@@ -328,7 +303,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       if (cachedImages != null && cachedImages.isNotEmpty) {
         allImages = cachedImages;
       } else {
-        if (!anotherSessionBusy) {
+        if (!anotherSessionProcessing) {
           emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
         }
         allImages = await _ocrProcessingHelper.prepareAllImages(
@@ -345,60 +320,34 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         sessionImagePaths: updatedImageMap,
       ));
 
-      if (anotherSessionBusy && session.status != ProcessingStatus.draft) {
-        return;
-      }
-
-      // If session is in processing status but not currently active,
-      // it's interrupted - don't activate it, just prepare images
-      if (session.status == ProcessingStatus.processing &&
-          state.activeSessionId != event.sessionId) {
-        logger.i(
-            '_onScanSessionActivated - Session is interrupted, not activating automatically');
+      if (anotherSessionProcessing &&
+          session.status != ProcessingStatus.draft) {
         return;
       }
 
       emit(state.copyWith(
-        activeSessionId: event.sessionId,
+        displayedSessionId: event.sessionId,
       ));
 
-      final currentSession =
-          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
-      if (currentSession == null) {
-        logger.e(
-            '_onScanSessionActivated - Session not found in state after image preparation');
-        emit(state.copyWith(
-            status: ScanStatus.failure(error: 'Session not found')));
-        return;
-      }
+      if (session.status == ProcessingStatus.pending) {
+        try {
+          final isModelLoaded = await _repository.checkModelExistence();
 
-      if (currentSession.status == ProcessingStatus.pending) {
-        emit(state.copyWith(status: const ScanStatus.mapping()));
-        await Future.delayed(const Duration(seconds: 1));
-        if (!emit.isDone) {
-          // Double-check session status hasn't changed during the delay
-          final sessionAfterDelay =
-              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
-          if (sessionAfterDelay == null) {
-            logger.w(
-                '_onScanSessionActivated - Session not found after delay, not triggering ScanMappingInitiated');
-            return;
+          if (isModelLoaded) {
+            emit(state.copyWith(status: const ScanStatus.mapping()));
+            add(ScanMappingInitiated(sessionId: event.sessionId));
+          } else {
+            emit(state.copyWith(status: const ScanStatus.initial()));
           }
-          if (sessionAfterDelay.status != ProcessingStatus.pending) {
-            return;
-          }
-          add(ScanMappingInitiated(sessionId: event.sessionId));
+        } catch (e) {
+          emit(state.copyWith(status: const ScanStatus.initial()));
         }
       } else if (session.status == ProcessingStatus.processing) {
         emit(state.copyWith(status: const ScanStatus.mapping()));
       } else if (session.status == ProcessingStatus.draft) {
         emit(state.copyWith(status: const ScanStatus.editingResources()));
-      } else {
-        logger.w(
-            '_onScanSessionActivated - Unexpected session status: ${session.status}');
       }
-    } catch (e, stackTrace) {
-      logger.e('_onScanSessionActivated - ERROR: $e', e, stackTrace);
+    } catch (e) {
       emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
     }
   }
@@ -410,9 +359,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) {
-      logger.e(
-        '_onScanProcessingRestartRequested - Session not found: ${event.sessionId}',
-      );
       return;
     }
 
@@ -443,6 +389,9 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     List<MappingResource>? resources,
     StagedPatient? patient,
     StagedEncounter? encounter,
+    // since we don't have a continue/resume functionality in place
+    // we only update the session in the db after the processing is done
+    // so we don't have weird behaviour when closing and re-opening the app
     bool updateDb = false,
   }) {
     final sessionIndex = state.sessions.indexWhere((s) => s.id == sessionId);
@@ -478,21 +427,15 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) {
-      logger
-          .e('_onScanMappingInitiated - Session not found: ${event.sessionId}');
       return;
     }
 
     // If session is already processing or draft, don't restart
     if (session.status == ProcessingStatus.processing) {
-      logger.w(
-          '_onScanMappingInitiated - Session is already processing, skipping');
       return;
     }
 
     if (session.status == ProcessingStatus.draft) {
-      logger.w(
-          '_onScanMappingInitiated - Session is already in draft state, skipping');
       emit(state.copyWith(status: const ScanStatus.editingResources()));
       return;
     }
@@ -502,7 +445,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         emit,
         sessionId: event.sessionId,
         status: ProcessingStatus.processing,
-        updateDb: true,
       );
       emit(state.copyWith(status: const ScanStatus.mapping()));
 
@@ -515,10 +457,9 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           sessionId: event.sessionId,
           status: ProcessingStatus.pending,
           progress: 0.0,
-          updateDb: true,
         );
         emit(state.copyWith(
-          status: ScanStatus.failure(
+          status: const ScanStatus.failure(
             error:
                 'No images were generated from the scan. Please try scanning again.',
           ),
@@ -530,39 +471,25 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           await _ocrProcessingHelper.processOcrForImages(sessionImages);
 
       if (medicalText.isEmpty || medicalText.trim().isEmpty) {
-        logger.w(
-            '_onScanMappingInitiated - Medical text is empty, cannot proceed with mapping');
         _updateSession(
           emit,
           sessionId: event.sessionId,
           status: ProcessingStatus.draft,
-          updateDb: true,
         );
         emit(state.copyWith(status: const ScanStatus.editingResources()));
         return;
       }
 
-      Stream<MappingResourcesWithProgress> stream;
-      try {
-        stream = _repository.mapResources(medicalText);
-      } catch (e, stackTrace) {
-        logger.e(
-            '_onScanMappingInitiated - ERROR creating mapResources stream: $e',
-            e,
-            stackTrace);
-        rethrow;
-      }
-
+      Stream<MappingResourcesWithProgress> stream =
+          _repository.mapResources(medicalText);
       try {
         await for (final (resources, progress) in stream) {
-          if (emit.isDone) {
+          if (emit.isDone || state.status == const ScanStatus.cancelled()) {
             return;
           }
           final currentSession =
               state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
           if (currentSession == null) {
-            logger.e(
-                '_onScanMappingInitiated - Session not found during stream processing');
             return;
           }
           _updateSession(
@@ -572,9 +499,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
             progress: progress,
           );
         }
-      } catch (e, stackTrace) {
-        logger.e('_onScanMappingInitiated - ERROR during stream processing: $e',
-            e, stackTrace);
+      } catch (e) {
         rethrow;
       }
 
@@ -620,8 +545,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       ));
 
       _startNextPendingSession();
-    } on Exception catch (e, stackTrace) {
-      logger.e('_onScanMappingInitiated - ERROR: $e', e, stackTrace);
+    } on Exception catch (e) {
       _updateSession(
         emit,
         sessionId: event.sessionId,
@@ -804,14 +728,15 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   void _onScanMappingCancelled(
     ScanMappingCancelled event,
     Emitter<ScanState> emit,
-  ) {
+  ) async {
     _updateSession(
       emit,
       sessionId: event.sessionId,
       status: ProcessingStatus.pending,
+      resources: [],
       progress: 0.0,
-      updateDb: true,
     );
+    await _repository.disposeModel();
     emit(state.copyWith(status: const ScanStatus.cancelled()));
   }
 

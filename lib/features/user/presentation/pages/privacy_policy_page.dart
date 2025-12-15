@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
 
 @RoutePage()
 class PrivacyPolicyPage extends StatelessWidget {
@@ -288,48 +289,42 @@ class PrivacyPolicyPage extends StatelessWidget {
               style: AppTextStyle.bodyMedium,
             ),
             const SizedBox(height: Insets.medium),
-            Container(
-              padding: const EdgeInsets.all(Insets.normal),
-              decoration: BoxDecoration(
-                color: context.colorScheme.surfaceVariant.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: context.colorScheme.outline.withOpacity(0.2),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'HealthWallet.me team',
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () {
+                    UrlLauncherService.launchEmail('mailto:hello@healthwallet.me');
+                  },
+                  child: Text(
                     'hello@healthwallet.me',
                     style: AppTextStyle.bodyMedium.copyWith(
                       color: context.colorScheme.primary,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () {
+                    UrlLauncherService.launchURL('https://healthwallet.me/');
+                  },
+                  child: Text(
                     'healthwallet.me',
                     style: AppTextStyle.bodyMedium.copyWith(
                       color: context.colorScheme.primary,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.l10n.builtWithLove,
-                    style: AppTextStyle.bodySmall.copyWith(
-                      fontStyle: FontStyle.italic,
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
+                ),
+                const SizedBox(height: Insets.medium),
+                Text(
+                  context.l10n.builtWithLove,
+                  style: AppTextStyle.bodySmall.copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: Insets.large),
           ],
