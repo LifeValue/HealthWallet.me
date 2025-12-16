@@ -2,9 +2,11 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:health_wallet/core/data/local/app_database.steps.dart';
+import 'package:health_wallet/core/data/local/app_database.steps.dart' as steps;
 import 'package:health_wallet/features/records/data/datasource/tables/record_notes.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/tables/processing_sessions.dart';
+import 'package:health_wallet/features/smart_health_share/data/data_source/local/tables/trusted_issuers_table.dart';
+import 'package:health_wallet/features/smart_health_share/data/data_source/local/tables/user_keys_table.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/fhir_resource_table.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/source_table.dart';
 import 'package:path/path.dart' as p;
@@ -17,12 +19,14 @@ part 'app_database.g.dart';
   Sources,
   RecordNotes,
   ProcessingSessions,
+  UserKeys,
+  TrustedIssuers,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -31,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
           // Create custom indexes after table creation
           await _createOptimizationIndexes();
         },
-        onUpgrade: stepByStep(
+        onUpgrade: steps.stepByStep(
           from1To2: (m, schema) async {
             await _createOptimizationIndexes();
             await m.createTable(schema.recordAttachments);
@@ -52,6 +56,8 @@ class AppDatabase extends _$AppDatabase {
                 schema.processingSessions, schema.processingSessions.encounter);
           },
         ),
+        // Note: from7To8 migration will be added after running drift_dev
+        // For now, tables will be created on next app launch after code generation
       );
 
   /// Create performance optimization indexes

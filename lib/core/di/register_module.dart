@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 
@@ -26,7 +27,6 @@ abstract class RegisterModule {
   @lazySingleton
   BiometricAuthService get biometricAuthService => BiometricAuthService();
 
-
-
-
+  @lazySingleton
+  FlutterSecureStorage get flutterSecureStorage => const FlutterSecureStorage();
 }

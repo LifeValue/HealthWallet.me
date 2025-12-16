@@ -21,8 +21,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
   final SyncLocalDataSource _syncLocalDataSource;
   final AppDatabase _database;
 
-  RecordsRepositoryImpl(this._database, this._syncLocalDataSource)
-      : _datasource = FhirResourceDatasource(_database);
+  RecordsRepositoryImpl(
+    this._database,
+    this._syncLocalDataSource,
+    this._datasource,
+  );
 
   @override
   Future<List<IFhirResource>> getResources({

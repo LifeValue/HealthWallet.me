@@ -34,6 +34,10 @@
 	<string>Allow access to your photos to add a picture from the library or take a picture image of your health documents, like lab results, directly from the app and automatically adds to your health record timeline.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow access to save shared medical documents to your health records.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bluetooth is required for peer-to-peer health data sharing between HealthWallet.me devices.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Bluetooth is required for peer-to-peer health data sharing between HealthWallet.me devices.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

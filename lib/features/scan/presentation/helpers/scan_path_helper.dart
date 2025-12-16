@@ -136,3 +136,4 @@ class ScanPathHelper {
     return candidate;
   }
 }
+

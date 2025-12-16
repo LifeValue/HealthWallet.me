@@ -21,8 +21,13 @@ import 'package:path_provider/path_provider.dart';
 
 class ResourceCard extends StatefulWidget {
   final IFhirResource resource;
+  final bool isViewOnly;
 
-  const ResourceCard({super.key, required this.resource});
+  const ResourceCard({
+    super.key,
+    required this.resource,
+    this.isViewOnly = false,
+  });
 
   @override
   State<ResourceCard> createState() => _ResourceCardState();
@@ -60,8 +65,10 @@ class _ResourceCardState extends State<ResourceCard> {
           // Main encounter info (always visible)
           _buildMainResourceInfo(),
 
-          const SizedBox(height: Insets.small),
-          _buildButtons(),
+          if (!widget.isViewOnly) ...[
+            const SizedBox(height: Insets.small),
+            _buildButtons(),
+          ],
         ],
       ),
     );

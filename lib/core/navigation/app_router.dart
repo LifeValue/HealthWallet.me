@@ -13,9 +13,13 @@ import 'package:health_wallet/features/onboarding/presentation/pages/onboarding_
 import 'package:health_wallet/features/onboarding/presentation/pages/splash_page.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/pages/record_detail_page.dart';
+import 'package:health_wallet/features/smart_health_share/presentation/local_qr/pages/local_qr_share_page.dart';
 import 'package:health_wallet/features/user/presentation/pages/privacy_policy_page.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
 import 'package:health_wallet/features/sync/presentation/sync_page.dart';
+import 'package:health_wallet/features/smart_health_share/presentation/pages/share_health_card_page.dart';
+import 'package:health_wallet/features/smart_health_share/presentation/pages/receive_health_card_page.dart';
+import 'package:health_wallet/features/smart_health_share/presentation/pages/trust_management_page.dart';
 import 'package:injectable/injectable.dart';
 
 part 'app_router.gr.dart';
@@ -41,5 +45,9 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: PrivacyPolicyRoute.page),
         AutoRoute(page: LoadModelRoute.page),
         AutoRoute(page: ProcessingRoute.page),
+        AutoRoute(page: ShareHealthCardRoute.page),
+        AutoRoute(page: LocalQRShareRoute.page),
+        AutoRoute(page: ReceiveHealthCardRoute.page),
+        AutoRoute(page: TrustManagementRoute.page),
       ];
 }

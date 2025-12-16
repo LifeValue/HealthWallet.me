@@ -97,7 +97,153 @@ class SettingsSection extends StatelessWidget {
               const SizedBox(height: Insets.medium),
               InkWell(
                 onTap: () {
-                  UrlLauncherService.launchURL('https://healthwallet.me/#contact');
+                  context.appRouter.push(const ShareHealthCardRoute());
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Assets.icons.qrCode.svg(
+                            width: 20,
+                            height: 20,
+                            colorFilter: ColorFilter.mode(
+                              context.colorScheme.onSurface,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Share Health Card",
+                            style: AppTextStyle.bodySmall,
+                          ),
+                        ],
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: Insets.medium),
+              InkWell(
+                onTap: () {
+                  context.appRouter.push(const LocalQRShareRoute());
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.bluetooth,
+                            size: 20,
+                            color: context.colorScheme.onSurface,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "LocalQR Peer-to-Peer",
+                            style: AppTextStyle.bodySmall,
+                          ),
+                        ],
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: Insets.medium),
+              InkWell(
+                onTap: () {
+                  context.appRouter.push(const ReceiveHealthCardRoute());
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Assets.icons.qrCode.svg(
+                            width: 20,
+                            height: 20,
+                            colorFilter: ColorFilter.mode(
+                              context.colorScheme.onSurface,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Import Health Card",
+                            style: AppTextStyle.bodySmall,
+                          ),
+                        ],
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: Insets.medium),
+              InkWell(
+                onTap: () {
+                  context.appRouter.push(const TrustManagementRoute());
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Assets.icons.shield.svg(
+                            width: 20,
+                            height: 20,
+                            colorFilter: ColorFilter.mode(
+                              context.colorScheme.onSurface,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Trusted Issuers",
+                            style: AppTextStyle.bodySmall,
+                          ),
+                        ],
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: Insets.medium),
+              InkWell(
+                onTap: () {
+                  UrlLauncherService.launchURL(
+                      'https://healthwallet.me/#contact');
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
