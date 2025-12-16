@@ -111,8 +111,17 @@ class ScanEncounterAttached extends ScanEvent with _$ScanEncounterAttached {
   }) = _ScanEncounterAttached;
 }
 
-class ScanProcessingRestartRequested extends ScanEvent {
-  const ScanProcessingRestartRequested({required this.sessionId});
+@freezed
+class ScanProcessRemainingResources extends ScanEvent
+    with _$ScanProcessRemainingResources {
+  const factory ScanProcessRemainingResources({
+    required String sessionId,
+  }) = _ScanProcessRemainingResources;
+}
 
-  final String sessionId;
+@freezed
+class ScanDocumentAttached extends ScanEvent with _$ScanDocumentAttached {
+  const factory ScanDocumentAttached({
+    required String sessionId,
+  }) = _ScanDocumentAttached;
 }

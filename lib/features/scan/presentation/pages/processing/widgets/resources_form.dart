@@ -23,6 +23,7 @@ class ResourcesForm extends StatelessWidget {
     required this.formKey,
     this.encounter,
     this.patient,
+    this.isAttachmentLocked = false,
     super.key,
   });
 
@@ -31,6 +32,7 @@ class ResourcesForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final StagedPatient? patient;
   final StagedEncounter? encounter;
+  final bool isAttachmentLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,8 @@ class ResourcesForm extends StatelessWidget {
                   : MappingPatient.fromFhirResource(patient!.existing!),
               canRemove: false,
               isStagedResource: true,
-              isReadOnly: patient!.mode == ImportMode.linkExisting,
+              isReadOnly: isAttachmentLocked ||
+                  patient!.mode == ImportMode.linkExisting,
               onPropertyChanged: (propertyKey, newValue) =>
                   context.read<ScanBloc>().add(
                         ScanResourceChanged(
@@ -66,7 +69,8 @@ class ResourcesForm extends StatelessWidget {
                   ? encounter!.draft!
                   : MappingEncounter.fromFhirResource(encounter!.existing!),
               isStagedResource: true,
-              isReadOnly: encounter!.mode == ImportMode.linkExisting,
+              isReadOnly: isAttachmentLocked ||
+                  encounter!.mode == ImportMode.linkExisting,
               onPropertyChanged: (propertyKey, newValue) =>
                   context.read<ScanBloc>().add(
                         ScanResourceChanged(
@@ -138,7 +142,7 @@ class ResourcesForm extends StatelessWidget {
                 Text(resource.label, style: AppTextStyle.bodyLarge),
                 Row(
                   children: [
-                    if (isStagedResource)
+                    if (isStagedResource && !isAttachmentLocked)
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(

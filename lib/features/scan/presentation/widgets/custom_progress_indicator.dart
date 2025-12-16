@@ -7,12 +7,14 @@ class CustomProgressIndicator extends StatefulWidget {
     required this.progress,
     this.text,
     this.secondaryText,
+    this.showProgressBar = true,
     super.key,
   });
 
   final double progress;
   final String? text;
   final String? secondaryText;
+  final bool showProgressBar;
 
   @override
   State<CustomProgressIndicator> createState() =>
@@ -85,13 +87,14 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
           ),
         ],
         const SizedBox(height: 14),
-        LinearProgressIndicator(
-          value: widget.progress,
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(4),
-          backgroundColor: context.colorScheme.primary.withValues(alpha: 0.1),
-          color: context.colorScheme.primary,
-        ),
+        if (widget.showProgressBar)
+          LinearProgressIndicator(
+            value: widget.progress,
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+            backgroundColor: context.colorScheme.primary.withValues(alpha: 0.1),
+            color: context.colorScheme.primary,
+          ),
       ],
     );
   }

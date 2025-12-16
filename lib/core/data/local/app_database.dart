@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -50,6 +50,10 @@ class AppDatabase extends _$AppDatabase {
                 schema.processingSessions, schema.processingSessions.patient);
             await m.addColumn(
                 schema.processingSessions, schema.processingSessions.encounter);
+          },
+          from7To8: (m, schema) async {
+            await m.addColumn(schema.processingSessions,
+                schema.processingSessions.isDocumentAttached);
           },
         ),
       );

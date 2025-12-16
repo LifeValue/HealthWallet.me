@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:injectable/injectable.dart';
@@ -312,45 +315,80 @@ class ScanRepositoryImpl implements ScanRepository {
       _networkDataSource.checkModelExistence();
 
   @override
-  Stream<MappingResourcesWithProgress> mapResources(String medicalText) async* {
-    try {
-      final stopwatch = Stopwatch()..start();
-      await _networkDataSource.initModel();
+  Future<(MappingPatient, MappingEncounter)> mapBasicInfo(
+    String medicalText,
+  ) async {
+    await _networkDataSource.initModel();
 
+    try {
       String prompt = BasicInfoPrompt().buildPrompt(medicalText);
 
       String? promptResponse =
           await _networkDataSource.runPrompt(prompt: prompt);
-      stopwatch.stop();
-      log("Response $promptResponse\nExecution time: ${stopwatch.elapsed}");
-      // List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
-      // for (int i = 0; i < supportedPrompts.length; i++) {
-      //   String prompt = supportedPrompts[i].buildPrompt(medicalText);
 
-      //   String? promptResponse = await _networkDataSource.runPrompt(
-      //     prompt: prompt,
-      //   );
+      List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
 
-      //   List<MappingResource> resources = [];
+      List<MappingResource> resources = [];
+      for (Map<String, dynamic> json in jsonList) {
+        MappingResource resource =
+            MappingResource.fromJson(json).populateConfidence(medicalText);
 
-      //   try {
-      //     List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+        if (resource.isValid) {
+          resources.add(resource);
+        }
+      }
+      
+      MappingEncounter encounter =
+          resources.firstWhereOrNull((resource) => resource is MappingEncounter)
+                  as MappingEncounter? ??
+              MappingEncounter.empty();
 
-      //     for (Map<String, dynamic> json in jsonList) {
-      //       MappingResource resource =
-      //           MappingResource.fromJson(json).populateConfidence(medicalText);
+      MappingPatient patient =
+          resources.firstWhereOrNull((resource) => resource is MappingPatient)
+                  as MappingPatient? ??
+              MappingPatient.empty();
 
-      //       if (resource.isValid) {
-      //         resources.add(resource);
-      //       }
-      //     }
-      //   } catch (_) {
-      //     yield ([], (i + 1) / supportedPrompts.length);
-      //     continue;
-      //   }
+      return (patient, encounter);
+    } finally {
+      await disposeModel();
+    }
+  }
 
-      //   yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
-      // }
+  @override
+  Stream<MappingResourcesWithProgress> mapRemainingResources(
+    String medicalText,
+  ) async* {
+    try {
+      await _networkDataSource.initModel();
+
+      List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
+      for (int i = 0; i < supportedPrompts.length; i++) {
+        String prompt = supportedPrompts[i].buildPrompt(medicalText);
+
+        String? promptResponse = await _networkDataSource.runPrompt(
+          prompt: prompt,
+        );
+
+        List<MappingResource> resources = [];
+
+        try {
+          List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+
+          for (Map<String, dynamic> json in jsonList) {
+            MappingResource resource =
+                MappingResource.fromJson(json).populateConfidence(medicalText);
+
+            if (resource.isValid) {
+              resources.add(resource);
+            }
+          }
+        } catch (_) {
+          yield ([], (i + 1) / supportedPrompts.length);
+          continue;
+        }
+
+        yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
+      }
     } finally {
       await disposeModel();
     }

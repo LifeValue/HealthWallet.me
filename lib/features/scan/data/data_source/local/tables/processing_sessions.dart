@@ -10,6 +10,7 @@ class ProcessingSessions extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   TextColumn get patient => text().nullable()();
   TextColumn get encounter => text().nullable()();
+  BoolColumn get isDocumentAttached => boolean().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
