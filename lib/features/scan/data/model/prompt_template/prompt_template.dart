@@ -40,8 +40,6 @@ abstract class PromptTemplate {
   String get promptExample;
 
   static supportedPrompts() => [
-        PatientPrompt(),
-        EncounterPrompt(),
         AllergyIntolerancePrompt(),
         ConditionPrompt(),
         DiagnosticReportPrompt(),

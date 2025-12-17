@@ -29,6 +29,7 @@ class ProcessingSession
     @Default(ProcessingOrigin.scan) ProcessingOrigin origin,
     @Default(StagedPatient()) StagedPatient patient,
     @Default(StagedEncounter()) StagedEncounter encounter,
+    @Default(false) bool isDocumentAttached,
     DateTime? createdAt,
   }) = _ProcessingSession;
 
@@ -50,6 +51,7 @@ class ProcessingSession
       resources: resources,
       status: ProcessingStatus.fromString(dto.status ?? ''),
       origin: ProcessingOrigin.fromString(dto.origin ?? ''),
+      isDocumentAttached: dto.isDocumentAttached ?? false,
       createdAt: dto.createdAt,
       patient: patient,
       encounter: encounter,
@@ -61,6 +63,7 @@ class ProcessingSession
         filePaths: drift.Value(jsonEncode(filePaths)),
         status: drift.Value(status.toString()),
         origin: drift.Value(origin.toString()),
+        isDocumentAttached: drift.Value(isDocumentAttached),
         resources: drift.Value(jsonEncode(
             resources.map((resource) => resource.toJson()).toList())),
         createdAt: drift.Value(createdAt!),
@@ -70,24 +73,29 @@ class ProcessingSession
 
   @override
   int compareTo(ProcessingSession other) {
-    if (status == ProcessingStatus.processing &&
-        other.status != ProcessingStatus.processing) {
+    if (isProcessing && !other.isProcessing) {
       return -1;
     }
 
-    if (status != ProcessingStatus.processing &&
-        other.status == ProcessingStatus.processing) {
+    if (!isProcessing && other.isProcessing) {
       return 1;
     }
 
     return other.createdAt!.compareTo(createdAt!);
   }
+
+  bool get isProcessing =>
+      status == ProcessingStatus.processingPatient ||
+      status == ProcessingStatus.processing;
 }
 
 enum ProcessingStatus {
   pending,
+  processingPatient,
+  patientExtracted,
   processing,
-  draft;
+  draft,
+  cancelled;
 
   factory ProcessingStatus.fromString(String string) {
     switch (string) {
@@ -95,6 +103,12 @@ enum ProcessingStatus {
         return ProcessingStatus.processing;
       case "Draft":
         return ProcessingStatus.draft;
+      case "Cancelled":
+        return ProcessingStatus.cancelled;
+      case "Processing Patient":
+        return ProcessingStatus.processingPatient;
+      case "Patient Extracted":
+        return ProcessingStatus.patientExtracted;
       default:
         return ProcessingStatus.pending;
     }
@@ -105,10 +119,16 @@ enum ProcessingStatus {
     switch (this) {
       case ProcessingStatus.pending:
         return "Pending";
+      case ProcessingStatus.processingPatient:
+        return "Processing Patient";
+      case ProcessingStatus.patientExtracted:
+        return "Patient Extracted";
       case ProcessingStatus.processing:
         return "Processing";
       case ProcessingStatus.draft:
         return "Draft";
+      case ProcessingStatus.cancelled:
+        return "Cancelled";
     }
   }
 
@@ -117,9 +137,12 @@ enum ProcessingStatus {
       case ProcessingStatus.pending:
         return context.colorScheme.secondary;
       case ProcessingStatus.processing:
-        return context.colorScheme.primary;
       case ProcessingStatus.draft:
+      case ProcessingStatus.processingPatient:
+      case ProcessingStatus.patientExtracted:
         return context.colorScheme.primary;
+      case ProcessingStatus.cancelled:
+        return context.colorScheme.error;
     }
   }
 }
