@@ -35,6 +35,10 @@ abstract class ScanRepository {
 
   Stream<MappingResourcesWithProgress> mapResources(String medicalText);
 
+  Future<void> cancelGeneration();
+
+  Future<void> waitForStreamCompletion();
+
   Future disposeModel();
 }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
@@ -230,28 +231,61 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     }
   }
 
-  void _onScanSessionCleared(
-    ScanSessionCleared event,
-    Emitter<ScanState> emit,
-  ) async {
-    try {
-      final newSessions = [...state.sessions]
-        ..removeWhere((session) => session.id == event.session.id);
-      final updatedImageMap =
-          Map<String, List<String>>.from(state.sessionImagePaths)
-            ..remove(event.session.id);
-
-      emit(state.copyWith(
-        sessions: newSessions,
-        sessionImagePaths: updatedImageMap,
-        status: const ScanStatus.initial(),
-      ));
-
-      await _repository.deleteProcessingSession(event.session);
-    } on Exception catch (e) {
-      emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+void _onScanSessionCleared(
+  ScanSessionCleared event,
+  Emitter<ScanState> emit,
+) async {
+  try {
+    // IMPORTANT: If we're deleting a processing session, stop and wait for AI
+    if (event.session.status == ProcessingStatus.processing) {
+      // Show loading state
+      emit(state.copyWith(status: const ScanStatus.loading()));
+      
+      debugPrint('_onScanSessionCleared: Cancelling generation...');
+      
+      try {
+        // Step 1: Request cancellation (sets flag to stop after current prompt)
+        await _repository.cancelGeneration();
+        
+        // Step 2: Wait for stream to actually complete and dispose
+        await _repository.waitForStreamCompletion();
+        
+        debugPrint('_onScanSessionCleared: Generation fully stopped and cleaned up');
+      } catch (e) {
+        debugPrint('_onScanSessionCleared: Error during cancellation: $e');
+      }
     }
+    
+    final newSessions = [...state.sessions]
+      ..removeWhere((session) => session.id == event.session.id);
+    
+    final updatedImageMap =
+        Map<String, List<String>>.from(state.sessionImagePaths)
+          ..remove(event.session.id);
+
+    emit(state.copyWith(
+      sessions: newSessions,
+      sessionImagePaths: updatedImageMap,
+      status: const ScanStatus.initial(),
+    ));
+
+    await _repository.deleteProcessingSession(event.session);
+    
+    // After deletion, if there are pending sessions, start the next one
+    final hasPendingSessions = newSessions.any(
+      (s) => s.status == ProcessingStatus.pending,
+    );
+    
+    if (hasPendingSessions) {
+      debugPrint('_onScanSessionCleared: Starting next pending session...');
+      await Future.delayed(const Duration(milliseconds: 100));
+      _startNextPendingSession();
+    }
+  } on Exception catch (e) {
+    debugPrint('_onScanSessionCleared: Exception: $e');
+    emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
   }
+}
 
   bool _isValidScanResult(String path) {
     return !path.contains('Failed') && !path.contains('Unknown');

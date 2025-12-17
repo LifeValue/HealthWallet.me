@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/widgets.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
@@ -20,6 +21,10 @@ class ScanRepositoryImpl implements ScanRepository {
 
   final ScanNetworkDataSource _networkDataSource;
   final ScanLocalDataSource _localDataSource;
+
+  bool _isStreamActive = false;
+  Completer<void>? _streamCompleter;
+  bool _shouldCancelGeneration = false;
 
   @override
   Future<List<String>> scanDocuments() async {
@@ -309,18 +314,39 @@ class ScanRepositoryImpl implements ScanRepository {
   Future<bool> checkModelExistence() =>
       _networkDataSource.checkModelExistence();
 
-  @override
+@override
   Stream<MappingResourcesWithProgress> mapResources(String medicalText) async* {
     try {
+      // Mark stream as active
+      _isStreamActive = true;
+      _streamCompleter = Completer<void>();
+      _shouldCancelGeneration = false;
+      
+      debugPrint('mapResources: Stream started');
+      
       await _networkDataSource.initModel();
 
       List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
       for (int i = 0; i < supportedPrompts.length; i++) {
+        // Check if we should cancel before starting next prompt
+        if (_shouldCancelGeneration) {
+          debugPrint('mapResources: Generation cancelled, stopping at prompt $i');
+          break;
+        }
+        
         String prompt = supportedPrompts[i].buildPrompt(medicalText);
 
+        debugPrint('mapResources: Running prompt ${i + 1}/${supportedPrompts.length}');
         String? promptResponse = await _networkDataSource.runPrompt(
           prompt: prompt,
         );
+        debugPrint('mapResources: Prompt ${i + 1} completed');
+
+        // Check again after prompt completes
+        if (_shouldCancelGeneration) {
+          debugPrint('mapResources: Generation cancelled after prompt ${i + 1} completion');
+          break;
+        }
 
         List<MappingResource> resources = [];
 
@@ -342,9 +368,37 @@ class ScanRepositoryImpl implements ScanRepository {
 
         yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
       }
+      
+      debugPrint('mapResources: All prompts completed or cancelled');
     } finally {
+      debugPrint('mapResources: Disposing model...');
       await disposeModel();
+      
+      _isStreamActive = false;
+      _shouldCancelGeneration = false;
+      
+      debugPrint('mapResources: Stream ended, completing completer');
+      _streamCompleter?.complete();
+      
+      debugPrint('mapResources: Cleanup complete');
     }
+  }
+
+  @override
+  Future<void> waitForStreamCompletion() async {
+    if (_isStreamActive && _streamCompleter != null && !_streamCompleter!.isCompleted) {
+      debugPrint('waitForStreamCompletion: Waiting for active stream to complete...');
+      await _streamCompleter!.future;
+      debugPrint('waitForStreamCompletion: Stream completed');
+    } else {
+      debugPrint('waitForStreamCompletion: No active stream');
+    }
+  }
+
+  @override
+  Future<void> cancelGeneration() async {
+    debugPrint('cancelGeneration: Requesting cancellation...');
+    _shouldCancelGeneration = true;
   }
 
   @override
