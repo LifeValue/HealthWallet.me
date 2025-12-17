@@ -1,11 +1,13 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_date_picker.dart';
+import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/gender_mapper.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
@@ -15,6 +17,7 @@ import 'package:health_wallet/features/scan/domain/entity/text_field_descriptor.
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:intl/intl.dart';
 
 class ResourcesForm extends StatelessWidget {
   const ResourcesForm({
@@ -36,78 +39,82 @@ class ResourcesForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: Column(
-        children: [
-          if (patient?.hasSelection == true)
-            _buildResourceForm(
-              context,
-              resource: patient!.mode == ImportMode.createNew
-                  ? patient!.draft!
-                  : MappingPatient.fromFhirResource(patient!.existing!),
-              canRemove: false,
-              isStagedResource: true,
-              isReadOnly: isAttachmentLocked ||
-                  patient!.mode == ImportMode.linkExisting,
-              onPropertyChanged: (propertyKey, newValue) =>
-                  context.read<ScanBloc>().add(
-                        ScanResourceChanged(
-                          sessionId: sessionId,
-                          index: 0,
-                          propertyKey: propertyKey,
-                          newValue: newValue,
-                          isDraftPatient: true,
+    return GestureDetector(
+      onTap: () => context.closeKeyboard(),
+      behavior: HitTestBehavior.opaque,
+      child: Form(
+        key: formKey,
+        child: Column(
+          children: [
+            if (patient?.hasSelection == true)
+              _buildResourceForm(
+                context,
+                resource: patient!.mode == ImportMode.createNew
+                    ? patient!.draft!
+                    : MappingPatient.fromFhirResource(patient!.existing!),
+                canRemove: false,
+                isStagedResource: true,
+                isReadOnly: isAttachmentLocked ||
+                    patient!.mode == ImportMode.linkExisting,
+                onPropertyChanged: (propertyKey, newValue) =>
+                    context.read<ScanBloc>().add(
+                          ScanResourceChanged(
+                            sessionId: sessionId,
+                            index: 0,
+                            propertyKey: propertyKey,
+                            newValue: newValue,
+                            isDraftPatient: true,
+                          ),
                         ),
-                      ),
-            ),
-          if (encounter?.hasSelection == true)
-            _buildResourceForm(
-              context,
-              canRemove: false,
-              resource: encounter!.mode == ImportMode.createNew
-                  ? encounter!.draft!
-                  : MappingEncounter.fromFhirResource(encounter!.existing!),
-              isStagedResource: true,
-              isReadOnly: isAttachmentLocked ||
-                  encounter!.mode == ImportMode.linkExisting,
-              onPropertyChanged: (propertyKey, newValue) =>
-                  context.read<ScanBloc>().add(
-                        ScanResourceChanged(
-                          sessionId: sessionId,
-                          index: 0,
-                          propertyKey: propertyKey,
-                          newValue: newValue,
-                          isDraftEncounter: true,
-                        ),
-                      ),
-            ),
-          ...resources.map((resource) {
-            final index = resources.indexOf(resource);
-
-            return _buildResourceForm(
-              context,
-              resource: resource,
-              onPropertyChanged: (propertyKey, newValue) =>
-                  context.read<ScanBloc>().add(
-                        ScanResourceChanged(
-                          sessionId: sessionId,
-                          index: index,
-                          propertyKey: propertyKey,
-                          newValue: newValue,
-                        ),
-                      ),
-              onResourceRemoved: () => DeleteConfirmationDialog.show(
-                context: context,
-                title: 'Delete Resources',
-                onConfirm: () {
-                  context.read<ScanBloc>().add(
-                      ScanResourceRemoved(sessionId: sessionId, index: index));
-                },
               ),
-            );
-          })
-        ],
+            if (encounter?.hasSelection == true)
+              _buildResourceForm(
+                context,
+                canRemove: false,
+                resource: encounter!.mode == ImportMode.createNew
+                    ? encounter!.draft!
+                    : MappingEncounter.fromFhirResource(encounter!.existing!),
+                isStagedResource: true,
+                isReadOnly: isAttachmentLocked ||
+                    encounter!.mode == ImportMode.linkExisting,
+                onPropertyChanged: (propertyKey, newValue) =>
+                    context.read<ScanBloc>().add(
+                          ScanResourceChanged(
+                            sessionId: sessionId,
+                            index: 0,
+                            propertyKey: propertyKey,
+                            newValue: newValue,
+                            isDraftEncounter: true,
+                          ),
+                        ),
+              ),
+            ...resources.map((resource) {
+              final index = resources.indexOf(resource);
+
+              return _buildResourceForm(
+                context,
+                resource: resource,
+                onPropertyChanged: (propertyKey, newValue) =>
+                    context.read<ScanBloc>().add(
+                          ScanResourceChanged(
+                            sessionId: sessionId,
+                            index: index,
+                            propertyKey: propertyKey,
+                            newValue: newValue,
+                          ),
+                        ),
+                onResourceRemoved: () => DeleteConfirmationDialog.show(
+                  context: context,
+                  title: 'Delete Resources',
+                  onConfirm: () {
+                    context.read<ScanBloc>().add(ScanResourceRemoved(
+                        sessionId: sessionId, index: index));
+                  },
+                ),
+              );
+            })
+          ],
+        ),
       ),
     );
   }
@@ -128,11 +135,10 @@ class ResourcesForm extends StatelessWidget {
       key: ValueKey(resource.id),
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border:
-              Border.all(color: AppColors.textPrimary.withValues(alpha: 0.1))),
+          border: Border.all(color: context.theme.dividerColor)),
       margin: const EdgeInsets.only(bottom: 24),
       child: Padding(
-        padding: const EdgeInsetsGeometry.all(16),
+        padding: const EdgeInsets.all(Insets.normal),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -142,7 +148,9 @@ class ResourcesForm extends StatelessWidget {
                 Text(resource.label, style: AppTextStyle.bodyLarge),
                 Row(
                   children: [
-                    if (isStagedResource && !isAttachmentLocked)
+                    if (isStagedResource &&
+                        !isAttachmentLocked &&
+                        resource is! MappingEncounter)
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(
@@ -230,8 +238,77 @@ class ResourcesForm extends StatelessWidget {
                         style: AppTextStyle.labelLarge,
                       ),
                     )
+                  else if (descriptor.fieldType == FieldType.date)
+                    InkWell(
+                      onTap: () => _showDatePicker(
+                        context,
+                        propertyKey,
+                        descriptor.value,
+                        onPropertyChanged,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: confidenceLevel.getColor(context),
+                            width: 1.5,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                descriptor.value.isNotEmpty
+                                    ? descriptor.value
+                                    : 'Select date',
+                                style: AppTextStyle.labelLarge.copyWith(
+                                  color: descriptor.value.isNotEmpty
+                                      ? (context.isDarkMode
+                                          ? AppColors.textPrimaryDark
+                                          : AppColors.textPrimary)
+                                      : (context.isDarkMode
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondary),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Assets.icons.calendar.svg(
+                              width: 16,
+                              height: 16,
+                              colorFilter: ColorFilter.mode(
+                                context.theme.iconTheme.color ??
+                                    context.colorScheme.onSurface,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (descriptor.fieldType == FieldType.dropdown)
+                    AppDropdownField<String>(
+                      value: _getGenderDisplayValue(descriptor.value, context),
+                      items: [
+                        context.l10n.male,
+                        context.l10n.female,
+                        context.l10n.preferNotToSay,
+                      ],
+                      getDisplayText: (item) => item,
+                      onChanged: isReadOnly
+                          ? null
+                          : (String newValue) {
+                              final fhirValue =
+                                  _mapDisplayGenderToFhir(newValue, context);
+                              onPropertyChanged?.call(propertyKey, fhirValue);
+                            },
+                    )
                   else
                     TextFormField(
+                      key: ValueKey('${resource.id}_$propertyKey'),
                       initialValue: descriptor.value,
                       validator: descriptor.validate,
                       inputFormatters: descriptor.inputFormatters,
@@ -281,5 +358,68 @@ class ResourcesForm extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getGenderDisplayValue(String fhirValue, BuildContext context) {
+    if (fhirValue.isEmpty) {
+      return context.l10n.preferNotToSay;
+    }
+    return GenderMapper.mapFhirGenderToDisplay(fhirValue, context.l10n);
+  }
+
+  String _mapDisplayGenderToFhir(String displayValue, BuildContext context) {
+    if (displayValue == context.l10n.male) {
+      return 'male';
+    } else if (displayValue == context.l10n.female) {
+      return 'female';
+    } else {
+      return 'unknown';
+    }
+  }
+
+  Future<void> _showDatePicker(
+    BuildContext context,
+    String propertyKey,
+    String currentValue,
+    Function(String, String)? onPropertyChanged,
+  ) async {
+    DateTime? initialDate;
+    if (currentValue.isNotEmpty) {
+      initialDate = DateTime.tryParse(currentValue);
+      if (initialDate == null) {
+        try {
+          final dateFormat = DateFormat('yyyy-MM-dd');
+          initialDate = dateFormat.parse(currentValue);
+        } catch (e) {
+          initialDate = null;
+        }
+      }
+    }
+    if (initialDate == null) {
+      initialDate = DateTime.now();
+    }
+
+    DateTime? firstDate;
+    DateTime? lastDate;
+
+    if (propertyKey == 'dateOfBirth') {
+      firstDate = DateTime(1900);
+      lastDate = DateTime.now();
+    } else if (propertyKey == 'periodStart') {
+      firstDate = DateTime(1900);
+      lastDate = DateTime.now();
+    }
+
+    final pickedDate = await AppDatePicker.show(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+
+    if (pickedDate != null && onPropertyChanged != null) {
+      final formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+      onPropertyChanged(propertyKey, formattedDate);
+    }
   }
 }

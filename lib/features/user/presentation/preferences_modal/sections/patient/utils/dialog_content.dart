@@ -112,7 +112,7 @@ class DialogContent extends StatelessWidget {
           const SizedBox(height: Insets.normal),
           FormFields.buildDropdownField(
             context,
-            context.l10n.sex,
+            context.l10n.gender,
             selectedGender,
             genderOptions,
             onGenderChanged,

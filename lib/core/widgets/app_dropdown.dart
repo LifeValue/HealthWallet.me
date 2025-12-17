@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 
-class DropdownField extends StatefulWidget {
+class AppDropdownField<T> extends StatefulWidget {
   final String value;
-  final List<String> items;
-  final ValueChanged<String>? onChanged;
-  final bool isSelected;
+  final List<T> items;
+  final String Function(T) getDisplayText;
+  final ValueChanged<T>? onChanged;
 
-  const DropdownField({
+  const AppDropdownField({
     super.key,
     required this.value,
     required this.items,
+    required this.getDisplayText,
     this.onChanged,
-    this.isSelected = false,
   });
 
   @override
-  State<DropdownField> createState() => _DropdownFieldState();
+  State<AppDropdownField<T>> createState() => _AppDropdownFieldState<T>();
 }
 
-class _DropdownFieldState extends State<DropdownField> {
+class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _isOpen = false;
@@ -65,6 +65,12 @@ class _DropdownFieldState extends State<DropdownField> {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: context.isDarkMode
+                        ? AppColors.borderDark
+                        : AppColors.border,
+                    width: 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
                         color: Colors.black.withValues(alpha: 0.1),
@@ -104,13 +110,16 @@ class _DropdownFieldState extends State<DropdownField> {
     overlay.insert(_overlayEntry!);
   }
 
-  Widget _buildMenuItem(String item) {
-    final isSelected = item == widget.value;
+  Widget _buildMenuItem(T item) {
+    final itemText = widget.getDisplayText(item);
+    final isSelected = itemText == widget.value;
     return InkWell(
-      onTap: widget.onChanged != null ? () {
-        widget.onChanged!(item);
-        _hideMenu();
-      } : null,
+      onTap: widget.onChanged != null
+          ? () {
+              widget.onChanged!(item);
+              _hideMenu();
+            }
+          : null,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.only(
@@ -125,12 +134,13 @@ class _DropdownFieldState extends State<DropdownField> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            item,
+            itemText,
             style: AppTextStyle.labelLarge.copyWith(
               color: isSelected
                   ? context.colorScheme.primary
                   : context.colorScheme.onSurface,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ),

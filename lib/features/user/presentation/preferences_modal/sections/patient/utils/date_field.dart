@@ -3,6 +3,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_date_picker.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class DateField extends StatelessWidget {
@@ -38,19 +39,11 @@ class DateField extends StatelessWidget {
     final firstDate = DateTime(1900);
     final lastDate = now;
 
-    final pickedDate = await showDatePicker(
+    final pickedDate = await AppDatePicker.show(
       context: context,
       initialDate: selectedDate ?? now.subtract(const Duration(days: 365 * 25)),
       firstDate: firstDate,
       lastDate: lastDate,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: context.colorScheme,
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (pickedDate != null && onDateChanged != null) {
