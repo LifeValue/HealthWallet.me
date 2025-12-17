@@ -58,7 +58,8 @@ class SourceTypeService {
     String? patientName,
     required List<Source> availableSources,
   }) async {
-    if (patientId == 'default_wallet_holder') {
+    // Check if this is the default wallet holder by ID or identifier value
+    if (_isDefaultWalletHolder(patientId)) {
       final genericWallet = availableSources
           .where((s) => s.id == 'wallet' && s.platformType == 'wallet')
           .firstOrNull;
@@ -92,6 +93,11 @@ class SourceTypeService {
     await _syncRepository.cacheSources([walletSource]);
 
     return walletSource;
+  }
+
+  bool _isDefaultWalletHolder(String patientId) {
+    return patientId == 'default_wallet_holder' ||
+        patientId == 'wallet_default_wallet_holder';
   }
 
   Future<Source> getWritableSourceForPatient({
