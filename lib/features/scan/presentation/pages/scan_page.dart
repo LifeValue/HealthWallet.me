@@ -231,13 +231,20 @@ class _ScanViewState extends State<ScanView>
         ],
         child: BlocBuilder<ScanBloc, ScanState>(
           builder: (context, state) {
-            return state.status.maybeWhen(
-              initial: () => _buildMainView(context, state),
-              loading: () => _buildLoadingView(),
-              sessionCreated: (session) => _buildMainView(context, state),
-              failure: (error) => _buildMainView(context, state),
-              orElse: () => _buildMainView(context, state),
+            final scanSessions = state.sessions
+                .where((element) => element.origin == ProcessingOrigin.scan)
+                .toList();
+
+            final isLoading = state.status.maybeWhen(
+              loading: () => true,
+              orElse: () => false,
             );
+
+            if (isLoading && scanSessions.isEmpty) {
+              return _buildLoadingView();
+            }
+
+            return _buildMainView(context, state);
           },
         ),
       ),
