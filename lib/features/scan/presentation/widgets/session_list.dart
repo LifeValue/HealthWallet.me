@@ -26,7 +26,6 @@ class SessionList extends StatelessWidget {
         itemCount: sessions.length,
         itemBuilder: (context, index) {
           final session = sessions[index];
-          final isProcessing = session.status == ProcessingStatus.processing;
           final statusColor = session.status.getColor(context);
           final borderColor = context.colorScheme.primary;
 
@@ -40,9 +39,10 @@ class SessionList extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color:
-                        isProcessing ? borderColor : context.theme.dividerColor,
-                    width: isProcessing ? 2.0 : 1.0,
+                    color: session.isProcessing
+                        ? borderColor
+                        : context.theme.dividerColor,
+                    width: session.isProcessing ? 2.0 : 1.0,
                   ),
                 ),
                 child: Padding(
@@ -83,7 +83,7 @@ class SessionList extends StatelessWidget {
                           )
                         ],
                       ),
-                      if (isProcessing)
+                      if (session.status == ProcessingStatus.processing)
                         CustomProgressIndicator(progress: session.progress),
                     ],
                   ),

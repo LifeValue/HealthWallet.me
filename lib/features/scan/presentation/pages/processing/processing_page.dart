@@ -277,8 +277,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
       );
     }
 
-    if (displayedSession.status == ProcessingStatus.processing ||
-        displayedSession.status == ProcessingStatus.processingPatient) {
+    if (displayedSession.isProcessing) {
       return Column(
         children: [
           CustomProgressIndicator(
@@ -356,7 +355,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           isAttachmentLocked: displayedSession.isDocumentAttached,
         ),
         if (displayedSession.status == ProcessingStatus.patientExtracted) ...[
-          _buildScannedBasicButtons(displayedSession),
+          _buildScannedBasicButtons(state, displayedSession),
         ] else ...[
           _buildAddResourceButton(),
           const SizedBox(height: Insets.normal),
@@ -447,7 +446,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
     }
   }
 
-  Widget _buildScannedBasicButtons(ProcessingSession session) {
+  Widget _buildScannedBasicButtons(ScanState state, ProcessingSession session) {
+    final anotherSessionProcessing = state.sessions.any(
+      (s) => s.id != session.id && s.isProcessing,
+    );
     return Row(
       children: [
         if (!session.isDocumentAttached) ...[
@@ -473,15 +475,22 @@ class _ProcessingPageState extends State<ProcessingPage> {
               foregroundColor: context.isDarkMode
                   ? Colors.white
                   : context.colorScheme.onPrimary,
+              disabledBackgroundColor:
+                  context.colorScheme.primary.withValues(alpha: 0.2),
+              disabledForegroundColor: context.isDarkMode
+                  ? Colors.white
+                  : context.colorScheme.onPrimary,
               padding: const EdgeInsets.all(8),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadiusGeometry.circular(8)),
             ),
-            onPressed: () => context.read<ScanBloc>().add(
-                  ScanProcessRemainingResources(
-                    sessionId: widget.sessionId,
-                  ),
-                ),
+            onPressed: anotherSessionProcessing
+                ? null
+                : () => context.read<ScanBloc>().add(
+                      ScanProcessRemainingResources(
+                        sessionId: widget.sessionId,
+                      ),
+                    ),
             child: const Text("Continue Processing"),
           ),
         ),

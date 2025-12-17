@@ -293,7 +293,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) async {
     final anotherSessionProcessing = state.sessions.any(
-      (s) => s.id != event.sessionId && s.status == ProcessingStatus.processing,
+      (s) => s.id != event.sessionId && s.isProcessing,
     );
 
     try {
@@ -402,11 +402,15 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     }
 
     // If session is already processing or draft, don't restart
-    if (session.status == ProcessingStatus.processing ||
-        session.status == ProcessingStatus.processingPatient ||
-        session.status == ProcessingStatus.draft) {
+    if (session.isProcessing || session.status == ProcessingStatus.draft) {
       return;
     }
+
+    final anotherSessionProcessing = state.sessions.any(
+      (s) => s.id != event.sessionId && s.isProcessing,
+    );
+
+    if (anotherSessionProcessing) return;
 
     try {
       _updateSession(
@@ -463,7 +467,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       );
 
       final notification = Notification(
-        text: "${finalSession.origin} processing finished",
+        text: "${finalSession.origin} patient info extracted",
         route: ProcessingRoute(sessionId: event.sessionId),
         time: DateTime.now(),
       );
@@ -471,6 +475,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       emit(state.copyWith(
         notification: notification,
       ));
+
+      _startNextPendingSession();
     } on Exception catch (e) {
       _updateSession(
         emit,
@@ -700,6 +706,12 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
+
+    final anotherSessionProcessing = state.sessions.any(
+      (s) => s.id != event.sessionId && s.isProcessing,
+    );
+
+    if (anotherSessionProcessing) return;
 
     try {
       _updateSession(

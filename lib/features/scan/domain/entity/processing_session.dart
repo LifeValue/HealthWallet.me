@@ -73,18 +73,20 @@ class ProcessingSession
 
   @override
   int compareTo(ProcessingSession other) {
-    if (status == ProcessingStatus.processing &&
-        other.status != ProcessingStatus.processing) {
+    if (isProcessing && !other.isProcessing) {
       return -1;
     }
 
-    if (status != ProcessingStatus.processing &&
-        other.status == ProcessingStatus.processing) {
+    if (!isProcessing && other.isProcessing) {
       return 1;
     }
 
     return other.createdAt!.compareTo(createdAt!);
   }
+
+  bool get isProcessing =>
+      status == ProcessingStatus.processingPatient ||
+      status == ProcessingStatus.processing;
 }
 
 enum ProcessingStatus {
@@ -133,11 +135,11 @@ enum ProcessingStatus {
   Color getColor(BuildContext context) {
     switch (this) {
       case ProcessingStatus.pending:
-      case ProcessingStatus.processingPatient:
-      case ProcessingStatus.patientExtracted:
         return context.colorScheme.secondary;
       case ProcessingStatus.processing:
       case ProcessingStatus.draft:
+      case ProcessingStatus.processingPatient:
+      case ProcessingStatus.patientExtracted:
         return context.colorScheme.primary;
       case ProcessingStatus.cancelled:
         return context.colorScheme.error;
