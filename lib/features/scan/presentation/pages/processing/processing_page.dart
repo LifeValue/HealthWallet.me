@@ -222,18 +222,19 @@ class _ProcessingPageState extends State<ProcessingPage> {
             ),
           ),
           const SizedBox(height: Insets.normal),
-          AppButton(
-            label: 'Retry',
-            variant: AppButtonVariant.outlined,
-            onPressed: () => context
-                .read<ScanBloc>()
-                .add(ScanMappingInitiated(sessionId: widget.sessionId)),
-          ),
+          if (displayedSession.status != ProcessingStatus.patientExtracted)
+            AppButton(
+              label: 'Retry',
+              variant: AppButtonVariant.outlined,
+              onPressed: () => context
+                  .read<ScanBloc>()
+                  .add(ScanMappingInitiated(sessionId: widget.sessionId)),
+            ),
         ],
       );
     }
 
-    if (state.status == const ScanStatus.cancelled()) {
+    if (displayedSession.status == ProcessingStatus.cancelled) {
       return Column(
         children: [
           Container(
@@ -276,13 +277,20 @@ class _ProcessingPageState extends State<ProcessingPage> {
       );
     }
 
-    if (displayedSession.status == ProcessingStatus.processing) {
+    if (displayedSession.isProcessing) {
       return Column(
         children: [
           CustomProgressIndicator(
             progress: displayedSession.progress,
-            text: 'Processing pages...',
-            secondaryText: 'It might take a while. Please wait.',
+            text: displayedSession.status == ProcessingStatus.processingPatient
+                ? 'Processing basic details...'
+                : 'Processing pages...',
+            secondaryText:
+                displayedSession.status == ProcessingStatus.processingPatient
+                    ? 'Extracting patient and encounter info.'
+                    : 'It might take a while. Please wait.',
+            showProgressBar:
+                displayedSession.status == ProcessingStatus.processing,
           ),
           const SizedBox(height: Insets.normal),
           AppButton(
@@ -330,7 +338,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   Widget _buildResourcesSection(
       ScanState state, ProcessingSession displayedSession) {
-    if (displayedSession.status != ProcessingStatus.draft) {
+    if (displayedSession.status != ProcessingStatus.draft &&
+        displayedSession.status != ProcessingStatus.patientExtracted) {
       return const SizedBox();
     }
 
@@ -343,27 +352,32 @@ class _ProcessingPageState extends State<ProcessingPage> {
           sessionId: widget.sessionId,
           patient: displayedSession.patient,
           encounter: displayedSession.encounter,
+          isAttachmentLocked: displayedSession.isDocumentAttached,
         ),
-        _buildAddResourceButton(),
-        const SizedBox(height: Insets.normal),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: context.colorScheme.primary,
-              foregroundColor: context.isDarkMode
-                  ? Colors.white
-                  : context.colorScheme.onPrimary,
-              padding: const EdgeInsets.all(8),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadiusGeometry.circular(8)),
+        if (displayedSession.status == ProcessingStatus.patientExtracted) ...[
+          _buildScannedBasicButtons(state, displayedSession),
+        ] else ...[
+          _buildAddResourceButton(),
+          const SizedBox(height: Insets.normal),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.colorScheme.primary,
+                foregroundColor: context.isDarkMode
+                    ? Colors.white
+                    : context.colorScheme.onPrimary,
+                padding: const EdgeInsets.all(8),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadiusGeometry.circular(8)),
+              ),
+              onPressed: state.status == const ScanStatus.savingResources()
+                  ? null
+                  : () => _saveResources(state),
+              child: const Text("Done"),
             ),
-            onPressed: state.status == const ScanStatus.savingResources()
-                ? null
-                : () => _saveResources(state),
-            child: const Text("Done"),
           ),
-        ),
+        ]
       ],
     );
   }
@@ -430,5 +444,96 @@ class _ProcessingPageState extends State<ProcessingPage> {
             resourceTypes: selectedResourceIds,
           ));
     }
+  }
+
+  Widget _buildScannedBasicButtons(ScanState state, ProcessingSession session) {
+    final anotherSessionProcessing = state.sessions.any(
+      (s) => s.id != session.id && s.isProcessing,
+    );
+    return Row(
+      children: [
+        if (!session.isDocumentAttached) ...[
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.colorScheme.secondary,
+                foregroundColor: context.colorScheme.onSecondary,
+                padding: const EdgeInsets.all(8),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadiusGeometry.circular(8)),
+              ),
+              onPressed: () => _attachToEncounter(session),
+              child: const Text("Attach to Encounter"),
+            ),
+          ),
+          const SizedBox(width: Insets.normal),
+        ],
+        Expanded(
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.colorScheme.primary,
+              foregroundColor: context.isDarkMode
+                  ? Colors.white
+                  : context.colorScheme.onPrimary,
+              disabledBackgroundColor:
+                  context.colorScheme.primary.withValues(alpha: 0.2),
+              disabledForegroundColor: context.isDarkMode
+                  ? Colors.white
+                  : context.colorScheme.onPrimary,
+              padding: const EdgeInsets.all(8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadiusGeometry.circular(8)),
+            ),
+            onPressed: anotherSessionProcessing
+                ? null
+                : () => context.read<ScanBloc>().add(
+                      ScanProcessRemainingResources(
+                        sessionId: widget.sessionId,
+                      ),
+                    ),
+            child: const Text("Continue Processing"),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _attachToEncounter(ProcessingSession session) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (session.patient.hasSelection && session.encounter.hasSelection) {
+      context.read<ScanBloc>().add(
+            ScanDocumentAttached(
+              sessionId: widget.sessionId,
+            ),
+          );
+      return;
+    }
+
+    final result = await showDialog<AttachToEncounterResult>(
+      context: context,
+      builder: (context) => AttachToEncounterWidget(
+        patient: session.patient,
+        encounter: session.encounter,
+      ),
+    );
+
+    if (result == null || !context.mounted) return;
+
+    final (patient, encounter) = result;
+
+    context.read<ScanBloc>().add(
+          ScanEncounterAttached(
+            sessionId: widget.sessionId,
+            patient: patient,
+            encounter: encounter,
+          ),
+        );
+
+    context.read<ScanBloc>().add(
+          ScanDocumentAttached(
+            sessionId: widget.sessionId,
+          ),
+        );
   }
 }
