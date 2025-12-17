@@ -11,6 +11,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/resources_form.dart';
@@ -293,12 +294,29 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 displayedSession.status == ProcessingStatus.processing,
           ),
           const SizedBox(height: Insets.normal),
-          AppButton(
-            label: 'Cancel',
-            variant: AppButtonVariant.outlined,
-            onPressed: () => context
-                .read<ScanBloc>()
-                .add(ScanMappingCancelled(sessionId: widget.sessionId)),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: 'Cancel',
+                  variant: AppButtonVariant.outlined,
+                  onPressed: () => context
+                      .read<ScanBloc>()
+                      .add(ScanMappingCancelled(sessionId: widget.sessionId)),
+                ),
+              ),
+              const SizedBox(width: Insets.smallNormal),
+              Expanded(
+                child: AppButton(
+                  label: 'Focus Mode',
+                  icon: Assets.icons.scan.svg(),
+                  variant: AppButtonVariant.primary,
+                  onPressed: () {
+                    context.router.push(const FocusModeRoute());
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       );
@@ -387,7 +405,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
       options: RoundedRectDottedBorderOptions(
         radius: const Radius.circular(8),
         dashPattern: [6, 6],
-        color: context.colorScheme.outline.withOpacity(0.2),
+        color: context.colorScheme.outline.withOpacity(
+          context.isDarkMode ? 0.4 : 0.2,
+        ),
       ),
       child: GestureDetector(
         onTap: _showAddResourceDialog,
