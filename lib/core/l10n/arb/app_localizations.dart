@@ -1473,6 +1473,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long press to reorder them according to your preference.'**
   String get homeOnboardingReorderMessage;
+
+  /// No description provided for @processing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing'**
+  String get processing;
+
+  /// No description provided for @sessionNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Session not found!'**
+  String get sessionNotFound;
+
+  /// No description provided for @preparingPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing preview...'**
+  String get preparingPreview;
+
+  /// No description provided for @processingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing failed'**
+  String get processingFailed;
+
+  /// No description provided for @processingCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing was cancelled'**
+  String get processingCancelled;
+
+  /// No description provided for @processingBasicDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing basic details...'**
+  String get processingBasicDetails;
+
+  /// No description provided for @processingPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing pages...'**
+  String get processingPages;
+
+  /// No description provided for @extractingPatientInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting patient and encounter info.'**
+  String get extractingPatientInfo;
+
+  /// No description provided for @pleaseWait.
+  ///
+  /// In en, this message translates to:
+  /// **'It might take a while. Please wait.'**
+  String get pleaseWait;
+
+  /// No description provided for @focusMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Mode'**
+  String get focusMode;
+
+  /// No description provided for @onlyOneSessionAtTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Only one processing session can run at a time'**
+  String get onlyOneSessionAtTime;
+
+  /// No description provided for @aiModelNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'AI model is not available'**
+  String get aiModelNotAvailable;
+
+  /// No description provided for @addResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Add resources'**
+  String get addResources;
+
+  /// No description provided for @addResourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Resources'**
+  String get addResourcesTitle;
+
+  /// No description provided for @chooseResourcesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the resources you want to add for processing.'**
+  String get chooseResourcesDescription;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @allergyIntolerance.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergy Intolerance'**
+  String get allergyIntolerance;
+
+  /// No description provided for @condition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get condition;
+
+  /// No description provided for @diagnosticReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostic Report'**
+  String get diagnosticReport;
+
+  /// No description provided for @medicationStatement.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Statement'**
+  String get medicationStatement;
+
+  /// No description provided for @observation.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation'**
+  String get observation;
+
+  /// No description provided for @organization.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization'**
+  String get organization;
+
+  /// No description provided for @practitioner.
+  ///
+  /// In en, this message translates to:
+  /// **'Practitioner'**
+  String get practitioner;
+
+  /// No description provided for @procedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure'**
+  String get procedure;
+
+  /// No description provided for @tapToViewProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap anywhere to view progress'**
+  String get tapToViewProgress;
+
+  /// No description provided for @screenWillDarkenInSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'The screen will darken in {remainingSeconds} seconds.'**
+  String screenWillDarkenInSeconds(int remainingSeconds);
+
+  /// No description provided for @screenWillDarkenInZeroSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'The screen will darken in 0 seconds.'**
+  String get screenWillDarkenInZeroSeconds;
+
+  /// No description provided for @whileDocumentsProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'While your documents are being processed:'**
+  String get whileDocumentsProcessed;
+
+  /// No description provided for @doNotLockScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not lock the screen or exit the app.'**
+  String get doNotLockScreen;
+
+  /// No description provided for @plugInCharger.
+  ///
+  /// In en, this message translates to:
+  /// **'Plug in the charger.'**
+  String get plugInCharger;
+
+  /// No description provided for @exitFocusMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Focus Mode'**
+  String get exitFocusMode;
+
+  /// No description provided for @chargerPluggedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Charger plugged in.'**
+  String get chargerPluggedIn;
+
+  /// No description provided for @plugInChargerEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Plug in the charger...'**
+  String get plugInChargerEllipsis;
 }
 
 class _AppLocalizationsDelegate

@@ -10,7 +10,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/features/notifications/notification_utils.dart';
+import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/focus_mode/bloc/focus_mode_bloc.dart';
@@ -234,7 +234,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
                           height: double.infinity,
                           child: Center(
                             child: Text(
-                              'Tap anywhere to view progress',
+                              context.l10n.tapToViewProgress,
                               style: AppTextStyle.bodyMedium.copyWith(
                                 color: Colors.white.withOpacity(0.5),
                               ),
@@ -257,7 +257,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              'Focus mode',
+              context.l10n.focusMode,
               style: AppTextStyle.titleMedium.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w500,
@@ -267,8 +267,8 @@ class _FocusModeViewState extends State<_FocusModeView> {
             const SizedBox(height: 8),
             Text(
               remainingSeconds > 0
-                  ? 'The screen will darken in $remainingSeconds seconds.'
-                  : 'The screen will darken in 0 seconds.',
+                  ? context.l10n.screenWillDarkenInSeconds(remainingSeconds)
+                  : context.l10n.screenWillDarkenInZeroSeconds,
               style: AppTextStyle.bodyMedium.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w500,
@@ -283,7 +283,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'While your documents are being processed:',
+              context.l10n.whileDocumentsProcessed,
               style: AppTextStyle.bodySmall.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w400,
@@ -299,7 +299,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
                   BlendMode.srcIn,
                 ),
               ),
-              text: 'Do not lock the screen or exit the app.',
+              text: context.l10n.doNotLockScreen,
             ),
             const SizedBox(height: 8),
             _buildInstructionItem(
@@ -308,7 +308,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
                 size: 20,
                 color: Colors.white,
               ),
-              text: 'Plug in the charger.',
+              text: context.l10n.plugInCharger,
             ),
           ],
         ),
@@ -371,7 +371,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
 
   Widget _buildExitButton(BuildContext context) {
     return AppButton(
-      label: 'Exit Focus Mode',
+      label: context.l10n.exitFocusMode,
       variant: AppButtonVariant.outlined,
       backgroundColor: Colors.white,
       onPressed: () {
@@ -413,7 +413,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
           ),
           const SizedBox(width: 5),
           Text(
-            'Charger pluged in.',
+            context.l10n.chargerPluggedIn,
             style: AppTextStyle.bodySmall.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w400,
@@ -424,7 +424,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
     }
 
     return Text(
-      'Plug in the charger...',
+      context.l10n.plugInChargerEllipsis,
       style: AppTextStyle.bodySmall.copyWith(
         color: Colors.white.withOpacity(0.6),
         fontWeight: FontWeight.w400,

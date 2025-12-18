@@ -98,7 +98,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Processing', style: AppTextStyle.titleMedium),
+        title: Text(context.l10n.processing, style: AppTextStyle.titleMedium),
         backgroundColor: context.colorScheme.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -121,7 +121,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           final displayedSession =
               state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
           if (displayedSession == null) {
-            return const Center(child: Text("Session not found!"));
+            return Center(child: Text(context.l10n.sessionNotFound));
           }
 
           final sessionImages = state.sessionImagePaths[widget.sessionId] ??
@@ -136,7 +136,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                   sessionImages.isEmpty;
 
           if (isConverting || isQueuedAndPreparing) {
-            return _buildLoadingIndicator('Preparing preview...');
+            return _buildLoadingIndicator(context.l10n.preparingPreview);
           }
 
           return SingleChildScrollView(
@@ -205,7 +205,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Processing failed',
+                      context.l10n.processingFailed,
                       style: AppTextStyle.bodyMedium.copyWith(
                         color: context.colorScheme.error,
                         fontWeight: FontWeight.w600,
@@ -226,7 +226,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           const SizedBox(height: Insets.normal),
           if (displayedSession.status != ProcessingStatus.patientExtracted)
             AppButton(
-              label: 'Retry',
+              label: context.l10n.retry,
               variant: AppButtonVariant.outlined,
               onPressed: () => context
                   .read<ScanBloc>()
@@ -258,7 +258,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Processing was cancelled',
+                  context.l10n.processingCancelled,
                   style: AppTextStyle.bodyMedium.copyWith(
                     color: context.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
@@ -285,12 +285,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
           CustomProgressIndicator(
             progress: displayedSession.progress,
             text: displayedSession.status == ProcessingStatus.processingPatient
-                ? 'Processing basic details...'
-                : 'Processing pages...',
+                ? context.l10n.processingBasicDetails
+                : context.l10n.processingPages,
             secondaryText:
                 displayedSession.status == ProcessingStatus.processingPatient
-                    ? 'Extracting patient and encounter info.'
-                    : 'It might take a while. Please wait.',
+                    ? context.l10n.extractingPatientInfo
+                    : context.l10n.pleaseWait,
             showProgressBar:
                 displayedSession.status == ProcessingStatus.processing,
           ),
@@ -299,24 +299,27 @@ class _ProcessingPageState extends State<ProcessingPage> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: 'Cancel',
+                  label: context.l10n.cancel,
                   variant: AppButtonVariant.outlined,
                   onPressed: () => context
                       .read<ScanBloc>()
                       .add(ScanMappingCancelled(sessionId: widget.sessionId)),
                 ),
               ),
-              const SizedBox(width: Insets.smallNormal),
-              Expanded(
-                child: AppButton(
-                  label: 'Focus Mode',
-                  icon: Assets.icons.scan.svg(),
-                  variant: AppButtonVariant.primary,
-                  onPressed: () {
-                    context.router.push(const FocusModeRoute());
-                  },
+              if (displayedSession.status !=
+                  ProcessingStatus.processingPatient) ...[
+                const SizedBox(width: Insets.smallNormal),
+                Expanded(
+                  child: AppButton(
+                    label: context.l10n.focusMode,
+                    icon: Assets.icons.scan.svg(),
+                    variant: AppButtonVariant.primary,
+                    onPressed: () {
+                      context.router.push(const FocusModeRoute());
+                    },
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ],
@@ -343,8 +346,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
             const SizedBox(width: 8),
             Text(
               asyncSnapshot.data!
-                  ? 'Only one processing session can run at a time'
-                  : 'AI model is not available',
+                  ? context.l10n.onlyOneSessionAtTime
+                  : context.l10n.aiModelNotAvailable,
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.primary,
               ),
@@ -425,7 +428,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Add resources',
+                context.l10n.addResources,
                 style: AppTextStyle.bodySmall.copyWith(
                   color: context.colorScheme.onSurface,
                 ),
@@ -437,24 +440,28 @@ class _ProcessingPageState extends State<ProcessingPage> {
     );
   }
 
-  static const _resourceTypes = [
-    DialogItem(id: 'AllergyIntolerance', label: 'Allergy Intolerance'),
-    DialogItem(id: 'Condition', label: 'Condition'),
-    DialogItem(id: 'DiagnosticReport', label: 'Diagnostic Report'),
-    DialogItem(id: 'MedicationStatement', label: 'Medication Statement'),
-    DialogItem(id: 'Observation', label: 'Observation'),
-    DialogItem(id: 'Organization', label: 'Organization'),
-    DialogItem(id: 'Practitioner', label: 'Practitioner'),
-    DialogItem(id: 'Procedure', label: 'Procedure'),
-  ];
+  List<DialogItem> _getResourceTypes(BuildContext context) {
+    return [
+      DialogItem(
+          id: 'AllergyIntolerance', label: context.l10n.allergyIntolerance),
+      DialogItem(id: 'Condition', label: context.l10n.condition),
+      DialogItem(id: 'DiagnosticReport', label: context.l10n.diagnosticReport),
+      DialogItem(
+          id: 'MedicationStatement', label: context.l10n.medicationStatement),
+      DialogItem(id: 'Observation', label: context.l10n.observation),
+      DialogItem(id: 'Organization', label: context.l10n.organization),
+      DialogItem(id: 'Practitioner', label: context.l10n.practitioner),
+      DialogItem(id: 'Procedure', label: context.l10n.procedure),
+    ];
+  }
 
   void _showAddResourceDialog() async {
     final selectedResourceIds = await AppDialog.showMultiSelect(
       context: context,
-      title: 'Add Resources',
-      description: 'Choose the resources you want to add for processing.',
-      items: _resourceTypes,
-      confirmText: 'Add',
+      title: context.l10n.addResourcesTitle,
+      description: context.l10n.chooseResourcesDescription,
+      items: _getResourceTypes(context),
+      confirmText: context.l10n.add,
     );
 
     if (selectedResourceIds != null &&
