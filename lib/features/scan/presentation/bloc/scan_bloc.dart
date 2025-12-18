@@ -237,21 +237,21 @@ void _onScanSessionCleared(
   Emitter<ScanState> emit,
 ) async {
   try {
-    // IMPORTANT: If we're deleting a processing session, stop and wait for AI
-    if (event.session.status == ProcessingStatus.processing) {
-      // Show loading state
-      emit(state.copyWith(status: const ScanStatus.loading()));
+    if (event.session.status == ProcessingStatus.processing ||
+        event.session.isProcessing) {
+      emit(state.copyWith(
+        status: const ScanStatus.loading(),
+        deletingSessionId: event.session.id,
+      ));
       
-      debugPrint('_onScanSessionCleared: Cancelling generation...');
+      debugPrint('_onScanSessionCleared: Cancelling session ${event.session.id}...');
       
       try {
-        // Step 1: Request cancellation (sets flag to stop after current prompt)
         await _repository.cancelGeneration();
         
-        // Step 2: Wait for stream to actually complete and dispose
         await _repository.waitForStreamCompletion();
         
-        debugPrint('_onScanSessionCleared: Generation fully stopped and cleaned up');
+        debugPrint('_onScanSessionCleared: Session cancelled successfully');
       } catch (e) {
         debugPrint('_onScanSessionCleared: Error during cancellation: $e');
       }
@@ -268,11 +268,11 @@ void _onScanSessionCleared(
       sessions: newSessions,
       sessionImagePaths: updatedImageMap,
       status: const ScanStatus.initial(),
+      deletingSessionId: null,
     ));
 
     await _repository.deleteProcessingSession(event.session);
     
-    // After deletion, if there are pending sessions, start the next one
     final hasPendingSessions = newSessions.any(
       (s) => s.status == ProcessingStatus.pending,
     );
@@ -284,7 +284,10 @@ void _onScanSessionCleared(
     }
   } on Exception catch (e) {
     debugPrint('_onScanSessionCleared: Exception: $e');
-    emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+    emit(state.copyWith(
+      status: ScanStatus.failure(error: e.toString()),
+      deletingSessionId: null,
+    ));
   }
 }
 

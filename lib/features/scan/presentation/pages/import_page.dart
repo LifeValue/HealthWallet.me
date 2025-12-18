@@ -6,7 +6,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/external_files_service.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/session_list.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -38,7 +37,6 @@ class ImportView extends StatefulWidget {
 
 class _ImportViewState extends State<ImportView> with DocumentHandler {
   late final PageViewNavigationController _navigationController;
-  
   @override
   void initState() {
     super.initState();
@@ -79,104 +77,71 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
               .where((element) => element.origin == ProcessingOrigin.import)
               .toList();
 
-          // Show loading overlay if status is loading
-          if (state.status == const ScanStatus.loading()) {
-            return Stack(
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                _buildMainView(context, importSessions),
-                // Loading overlay
-                Container(
-                  color: Colors.black.withOpacity(0.5),
-                  child: Center(
+                if (importSessions.isNotEmpty)
+                  Expanded(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircularProgressIndicator(
-                          color: context.colorScheme.primary,
+                        const Text(
+                          "Active import sessions:",
+                          style: AppTextStyle.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Only one processing session can run at a time!",
+                          style: AppTextStyle.bodySmall,
+                        ),
+                        const SizedBox(height: 24),
+                        Expanded(
+                          child: SessionList(sessions: importSessions),
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Cleaning up...',
-                          style: AppTextStyle.bodyMedium.copyWith(
-                            color: Colors.white,
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 80.0),
+                          child: ImportActions(
+                            onImportDocument: () =>
+                                _handleImportDocument(context),
+                            onPickImage: () => _handlePickImage(context),
+                            onScanDocument: () => _navigateToScanTab(context),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
+                if (importSessions.isEmpty)
+                  Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      Assets.images.emptyScan.svg(),
+                      const SizedBox(height: 36),
+                      const Text(
+                        "No imports yet",
+                        style: AppTextStyle.titleMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Import or scan documents to get started",
+                        style: AppTextStyle.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ImportActions(
+                        onImportDocument: () => _handleImportDocument(context),
+                        onPickImage: () => _handlePickImage(context),
+                        onScanDocument: () => _navigateToScanTab(context),
+                      ),
+                    ],
+                  ),
               ],
-            );
-          }
-
-          return _buildMainView(context, importSessions);
+            ),
+          );
         },
-      ),
-    );
-  }
-
-  Widget _buildMainView(BuildContext context, List<ProcessingSession> importSessions) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          if (importSessions.isNotEmpty)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Active import sessions:",
-                    style: AppTextStyle.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Only one processing session can run at a time!",
-                    style: AppTextStyle.bodySmall,
-                  ),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: SessionList(sessions: importSessions),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 80.0),
-                    child: ImportActions(
-                      onImportDocument: () => _handleImportDocument(context),
-                      onPickImage: () => _handlePickImage(context),
-                      onScanDocument: () => _navigateToScanTab(context),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (importSessions.isEmpty)
-            Column(
-              children: [
-                const SizedBox(height: 16),
-                Assets.images.emptyScan.svg(),
-                const SizedBox(height: 36),
-                const Text(
-                  "No imports yet",
-                  style: AppTextStyle.titleMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  "Import or scan documents to get started",
-                  style: AppTextStyle.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                ImportActions(
-                  onImportDocument: () => _handleImportDocument(context),
-                  onPickImage: () => _handlePickImage(context),
-                  onScanDocument: () => _navigateToScanTab(context),
-                ),
-              ],
-            ),
-        ],
       ),
     );
   }

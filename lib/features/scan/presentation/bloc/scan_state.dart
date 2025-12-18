@@ -27,6 +27,7 @@ class ScanState with _$ScanState {
     /// To get the id of the session that is currently being processed search through
     /// sessions for the session with .processing state
     String? displayedSessionId,
+    String? deletingSessionId,
     @Default([]) List<String> allImagePathsForOCR,
     @Default({}) Map<String, List<String>> sessionImagePaths,
     Notification? notification,
