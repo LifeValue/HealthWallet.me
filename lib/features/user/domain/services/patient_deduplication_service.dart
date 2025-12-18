@@ -3,13 +3,17 @@ import 'package:health_wallet/features/records/domain/entity/patient/patient.dar
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
 class PatientDeduplicationService {
   final RecordsRepository _recordsRepository;
+  final SyncRepository _syncRepository;
 
-  PatientDeduplicationService(this._recordsRepository);
+  PatientDeduplicationService(this._recordsRepository, this._syncRepository);
 
   Map<String, PatientGroup> deduplicatePatients(
       List<entity.Patient> allPatients) {
@@ -105,21 +109,6 @@ class PatientDeduplicationService {
     return value.trim().toLowerCase().replaceAll(RegExp(r'[-\s]'), '');
   }
 
-  int _scorePatientCompleteness(entity.Patient patient) {
-    int score = 0;
-
-    if (patient.name != null && patient.name!.isNotEmpty) score += 10;
-    if (patient.birthDate != null) score += 5;
-    if (patient.gender != null) score += 3;
-    if (patient.address != null && patient.address!.isNotEmpty) score += 3;
-    if (patient.telecom != null && patient.telecom!.isNotEmpty) score += 2;
-    if (patient.identifier != null && patient.identifier!.isNotEmpty) {
-      score += patient.identifier!.length;
-    }
-
-    return score;
-  }
-
   Future<Map<String, PatientGroup>> enhancePatientGroupsWithSubjectId(
     Map<String, PatientGroup> patientGroups,
     List<entity.Patient> allPatients,
@@ -167,7 +156,7 @@ class PatientDeduplicationService {
         limit: 10000,
       );
 
-      final sourceIds = allResources
+      final resourceSourceIds = allResources
           .where((resource) {
             if (resource is Patient) return false;
 
@@ -184,9 +173,29 @@ class PatientDeduplicationService {
           .toSet()
           .toList();
 
-      return sourceIds;
+      final allSources = await _syncRepository.getSources();
+      final walletSourceIds = allSources
+          .where((source) {
+            if (source.platformType == 'wallet') {
+              if (patientId == 'default_wallet_holder' ||
+                  patientId == 'wallet_default_wallet_holder') {
+                return source.id == 'wallet';
+              }
+              return source.id == 'wallet-$patientId';
+            }
+            return false;
+          })
+          .map((s) => s.id)
+          .toList();
+
+      final combinedSourceIds = {
+        ...resourceSourceIds,
+        ...walletSourceIds,
+      }.toList();
+
+      return combinedSourceIds;
     } catch (e) {
-      logger.e('Error in _getSourceIdsForPatient: $e');
+      logger.e('Error in getSourceIdsForPatient: $e');
       return [];
     }
   }
@@ -202,6 +211,93 @@ class PatientDeduplicationService {
         return group;
       }
     }
+    return null;
+  }
+
+  /// Finds an existing patient that matches the draft patient extracted from OCR
+  /// Matches by identifier (MRN) first, then by name + date of birth
+  /// Prefers wallet source patients if multiple matches found
+  entity.Patient? findMatchingPatient(
+    MappingPatient draftPatient,
+    List<entity.Patient> allPatients,
+  ) {
+    if (allPatients.isEmpty) return null;
+
+    if (draftPatient.patientMRN.value.isNotEmpty) {
+      final normalizedDraftMRN = _normalizeValue(draftPatient.patientMRN.value);
+
+      final identifierMatches = allPatients.where((patient) {
+        if (patient.identifier == null || patient.identifier!.isEmpty) {
+          return false;
+        }
+
+        return patient.identifier!.any((id) {
+          if (id.value?.valueString == null) return false;
+          final normalizedPatientMRN = _normalizeValue(id.value!.valueString!);
+          return normalizedPatientMRN == normalizedDraftMRN;
+        });
+      }).toList();
+
+      if (identifierMatches.isNotEmpty) {
+        final walletMatch = identifierMatches
+            .where((p) => p.sourceId.startsWith('wallet'))
+            .firstOrNull;
+        return walletMatch ?? identifierMatches.first;
+      }
+    }
+
+    if (draftPatient.familyName.value.isNotEmpty &&
+        draftPatient.givenName.value.isNotEmpty &&
+        draftPatient.dateOfBirth.value.isNotEmpty) {
+      final normalizedDraftFamily =
+          _normalizeValue(draftPatient.familyName.value);
+      final normalizedDraftGiven =
+          _normalizeValue(draftPatient.givenName.value);
+
+      DateTime? draftDOB;
+      try {
+        draftDOB = DateTime.parse(draftPatient.dateOfBirth.value);
+      } catch (e) {}
+
+      final nameMatches = allPatients.where((patient) {
+        final patientFamily = FhirFieldExtractor.extractPatientFamily(patient);
+        final patientGiven = FhirFieldExtractor.extractPatientGiven(patient);
+
+        if (patientFamily.isEmpty || patientGiven.isEmpty) return false;
+
+        final normalizedPatientFamily = _normalizeValue(patientFamily);
+        final normalizedPatientGiven = _normalizeValue(patientGiven);
+
+        final nameMatch = normalizedPatientFamily == normalizedDraftFamily &&
+            normalizedPatientGiven == normalizedDraftGiven;
+
+        if (!nameMatch) return false;
+
+        if (draftDOB != null) {
+          try {
+            final patientDOB =
+                FhirFieldExtractor.extractPatientBirthDate(patient);
+            if (patientDOB != null) {
+              return patientDOB.year == draftDOB.year &&
+                  patientDOB.month == draftDOB.month &&
+                  patientDOB.day == draftDOB.day;
+            }
+          } catch (e) {
+            return false;
+          }
+        }
+
+        return true;
+      }).toList();
+
+      if (nameMatches.isNotEmpty) {
+        final walletMatch = nameMatches
+            .where((p) => p.sourceId.startsWith('wallet'))
+            .firstOrNull;
+        return walletMatch ?? nameMatches.first;
+      }
+    }
+
     return null;
   }
 }

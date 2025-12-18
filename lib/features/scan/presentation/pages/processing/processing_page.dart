@@ -10,6 +10,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/alert_dialogs.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
@@ -374,7 +375,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
               onPressed: state.status == const ScanStatus.savingResources()
                   ? null
                   : () => _saveResources(state),
-              child: const Text("Done"),
+              child: Text(context.l10n.done),
             ),
           ),
         ]
@@ -454,36 +455,31 @@ class _ProcessingPageState extends State<ProcessingPage> {
       children: [
         if (!session.isDocumentAttached) ...[
           Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.colorScheme.secondary,
-                foregroundColor: context.colorScheme.onSecondary,
-                padding: const EdgeInsets.all(8),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadiusGeometry.circular(8)),
-              ),
+            child: AppButton(
+              label: context.l10n.attachToEncounter,
+              variant: AppButtonVariant.transparent,
               onPressed: () => _attachToEncounter(session),
-              child: const Text("Attach to Encounter"),
+              fullWidth: false,
+              padding: const EdgeInsets.all(8),
+            ),
+          ),
+          const SizedBox(width: Insets.normal),
+        ] else ...[
+          Expanded(
+            child: AppButton(
+              label: context.l10n.done,
+              variant: AppButtonVariant.transparent,
+              onPressed: () => _finishSession(session),
+              fullWidth: false,
+              padding: const EdgeInsets.all(8),
             ),
           ),
           const SizedBox(width: Insets.normal),
         ],
         Expanded(
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: context.colorScheme.primary,
-              foregroundColor: context.isDarkMode
-                  ? Colors.white
-                  : context.colorScheme.onPrimary,
-              disabledBackgroundColor:
-                  context.colorScheme.primary.withValues(alpha: 0.2),
-              disabledForegroundColor: context.isDarkMode
-                  ? Colors.white
-                  : context.colorScheme.onPrimary,
-              padding: const EdgeInsets.all(8),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadiusGeometry.circular(8)),
-            ),
+          child: AppButton(
+            label: context.l10n.continueProcessing,
+            variant: AppButtonVariant.primary,
             onPressed: anotherSessionProcessing
                 ? null
                 : () => context.read<ScanBloc>().add(
@@ -491,7 +487,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
                         sessionId: widget.sessionId,
                       ),
                     ),
-            child: const Text("Continue Processing"),
+            enabled: !anotherSessionProcessing,
+            fullWidth: false,
+            padding: const EdgeInsets.all(8),
           ),
         ),
       ],
@@ -535,5 +533,23 @@ class _ProcessingPageState extends State<ProcessingPage> {
             sessionId: widget.sessionId,
           ),
         );
+  }
+
+  void _finishSession(ProcessingSession session) {
+    AlertDialogs.showConfirmation(
+      context: context,
+      title: context.l10n.finishProcessing,
+      message: context.l10n.finishProcessingMessage,
+      confirmText: context.l10n.done,
+      cancelText: context.l10n.cancel,
+      warningText: context.l10n.finishProcessingWarning,
+      confirmButtonColor: context.colorScheme.primary,
+      onConfirm: () {
+        context.read<ScanBloc>().add(
+              ScanSessionCleared(session: session),
+            );
+        context.router.maybePop();
+      },
+    );
   }
 }

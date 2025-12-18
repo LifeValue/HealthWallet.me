@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
@@ -99,7 +97,7 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
         'encounterType': TextFieldDescriptor(
-          label: 'Encounter Type',
+          label: 'Encounter Name',
           value: encounterType.value,
           confidenceLevel: encounterType.confidenceLevel,
           validators: [nonEmptyValidator],
@@ -108,6 +106,7 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
           label: 'Start Date',
           value: periodStart.value,
           confidenceLevel: periodStart.confidenceLevel,
+          fieldType: FieldType.date,
           validators: [nonEmptyValidator, dateValidator],
         ),
       };

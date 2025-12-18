@@ -199,6 +199,14 @@
     "vitalSigns": "Vital Signs",
     "longPressToReorder": "Long press to move & reorder cards, or filter to select which ones appear on your dashboard.",
     
+    "finishProcessing": "Finish Processing",
+    "finishProcessingMessage": "Are you sure you want to finish this processing session?",
+    "finishProcessingWarning": "This will clear the current session.",
+    "fieldCannotBeEmpty": "This field cannot be empty",
+    "selectDate": "Select date",
+    "attachToEncounter": "Attach to Encounter",
+    "continueProcessing": "Continue Processing",
+    
     "effectiveDate": "Effective Date",
     "privacyIntro": "Your privacy is our highest priority.",
     "privacyDescription": "is a simple, secure tool designed to help you organize your health records at ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.",

@@ -562,6 +562,28 @@ class AppLocalizationsEs extends AppLocalizations {
       'Mantén presionado para mover y reordenar tarjetas, o filtra para seleccionar cuáles aparecen en tu panel de control.';
 
   @override
+  String get finishProcessing => 'Finalizar Procesamiento';
+
+  @override
+  String get finishProcessingMessage =>
+      '¿Estás seguro de que quieres finalizar esta sesión de procesamiento?';
+
+  @override
+  String get finishProcessingWarning => 'Esto borrará la sesión actual.';
+
+  @override
+  String get fieldCannotBeEmpty => 'Este campo no puede estar vacío';
+
+  @override
+  String get selectDate => 'Seleccionar fecha';
+
+  @override
+  String get attachToEncounter => 'Adjuntar a Encuentro';
+
+  @override
+  String get continueProcessing => 'Continuar Procesamiento';
+
+  @override
   String get effectiveDate => 'Fecha de vigencia';
 
   @override
