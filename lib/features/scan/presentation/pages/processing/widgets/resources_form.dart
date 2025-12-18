@@ -239,55 +239,103 @@ class ResourcesForm extends StatelessWidget {
                       ),
                     )
                   else if (descriptor.fieldType == FieldType.date)
-                    InkWell(
-                      onTap: () => _showDatePicker(
-                        context,
-                        propertyKey,
-                        descriptor.value,
-                        onPropertyChanged,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: confidenceLevel.getColor(context),
-                            width: 1.5,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                    FormField<String>(
+                      key: ValueKey(
+                          '${resource.id}_${propertyKey}_form_${descriptor.value}'),
+                      initialValue: descriptor.value,
+                      validator: (value) {
+                        final error = descriptor.validate(value);
+                        if (error != null &&
+                            error == 'This field cannot be empty') {
+                          return context.l10n.fieldCannotBeEmpty;
+                        }
+                        return error;
+                      },
+                      onSaved: (value) {
+                        if (value != null &&
+                            value != descriptor.value &&
+                            onPropertyChanged != null) {
+                          onPropertyChanged(propertyKey, value);
+                        }
+                      },
+                      builder: (field) {
+                        final hasError = field.hasError;
+                        final errorText = field.errorText;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                descriptor.value.isNotEmpty
-                                    ? descriptor.value
-                                    : 'Select date',
-                                style: AppTextStyle.labelLarge.copyWith(
-                                  color: descriptor.value.isNotEmpty
-                                      ? (context.isDarkMode
-                                          ? AppColors.textPrimaryDark
-                                          : AppColors.textPrimary)
-                                      : (context.isDarkMode
-                                          ? AppColors.textSecondaryDark
-                                          : AppColors.textSecondary),
+                            InkWell(
+                              onTap: () async {
+                                final newValue = await _showDatePicker(
+                                  context,
+                                  propertyKey,
+                                  descriptor.value,
+                                  onPropertyChanged,
+                                );
+                                if (newValue != null) {
+                                  field.didChange(newValue);
+                                  field.validate();
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: hasError
+                                        ? Colors.red
+                                        : confidenceLevel.getColor(context),
+                                    width: 1.5,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        descriptor.value.isNotEmpty
+                                            ? descriptor.value
+                                            : context.l10n.selectDate,
+                                        style: AppTextStyle.labelLarge.copyWith(
+                                          color: descriptor.value.isNotEmpty
+                                              ? (context.isDarkMode
+                                                  ? AppColors.textPrimaryDark
+                                                  : AppColors.textPrimary)
+                                              : (context.isDarkMode
+                                                  ? AppColors.textSecondaryDark
+                                                  : AppColors.textSecondary),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Assets.icons.calendar.svg(
+                                      width: 16,
+                                      height: 16,
+                                      colorFilter: ColorFilter.mode(
+                                        context.theme.iconTheme.color ??
+                                            context.colorScheme.onSurface,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            Assets.icons.calendar.svg(
-                              width: 16,
-                              height: 16,
-                              colorFilter: ColorFilter.mode(
-                                context.theme.iconTheme.color ??
-                                    context.colorScheme.onSurface,
-                                BlendMode.srcIn,
+                            if (hasError && errorText != null)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(top: 4, left: 12),
+                                child: Text(
+                                  errorText,
+                                  style: AppTextStyle.labelSmall.copyWith(
+                                    color: Colors.red,
+                                  ),
+                                ),
                               ),
-                            ),
                           ],
-                        ),
-                      ),
+                        );
+                      },
                     )
                   else if (descriptor.fieldType == FieldType.dropdown)
                     AppDropdownField<String>(
@@ -377,7 +425,7 @@ class ResourcesForm extends StatelessWidget {
     }
   }
 
-  Future<void> _showDatePicker(
+  Future<String?> _showDatePicker(
     BuildContext context,
     String propertyKey,
     String currentValue,
@@ -420,6 +468,8 @@ class ResourcesForm extends StatelessWidget {
     if (pickedDate != null && onPropertyChanged != null) {
       final formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
       onPropertyChanged(propertyKey, formattedDate);
+      return formattedDate;
     }
+    return null;
   }
 }

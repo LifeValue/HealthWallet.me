@@ -557,6 +557,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long press to move & reorder cards, or filter to select which ones appear on your dashboard.';
 
   @override
+  String get finishProcessing => 'Finish Processing';
+
+  @override
+  String get finishProcessingMessage =>
+      'Are you sure you want to finish this processing session?';
+
+  @override
+  String get finishProcessingWarning => 'This will clear the current session.';
+
+  @override
+  String get fieldCannotBeEmpty => 'This field cannot be empty';
+
+  @override
+  String get attachToEncounter => 'Attach to Encounter';
+
+  @override
+  String get continueProcessing => 'Continue Processing';
+
+  @override
   String get effectiveDate => 'Effective Date';
 
   @override
