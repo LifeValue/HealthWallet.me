@@ -367,28 +367,21 @@ class ScanRepositoryImpl implements ScanRepository {
       _isStreamActive = true;
       _streamCompleter = Completer<void>();
       _shouldCancelGeneration = false;
-      
-      debugPrint('mapResources: Stream started');
-      
+            
       await _networkDataSource.initModel();
 
       List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
       for (int i = 0; i < supportedPrompts.length; i++) {
         if (_shouldCancelGeneration) {
-          debugPrint('mapResources: Generation cancelled, stopping at prompt $i');
           break;
         }
         
         String prompt = supportedPrompts[i].buildPrompt(medicalText);
-
-        debugPrint('mapResources: Running prompt ${i + 1}/${supportedPrompts.length}');
         String? promptResponse = await _networkDataSource.runPrompt(
           prompt: prompt,
         );
-        debugPrint('mapResources: Prompt ${i + 1} completed');
 
         if (_shouldCancelGeneration) {
-          debugPrint('mapResources: Generation cancelled after prompt ${i + 1} completion');
           break;
         }
 

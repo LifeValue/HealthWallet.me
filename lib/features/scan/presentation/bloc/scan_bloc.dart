@@ -237,8 +237,7 @@ void _onScanSessionCleared(
   Emitter<ScanState> emit,
 ) async {
   try {
-    if (event.session.status == ProcessingStatus.processing ||
-        event.session.isProcessing) {
+    if (event.session.isProcessing) {
       emit(state.copyWith(
         status: const ScanStatus.loading(),
         deletingSessionId: event.session.id,
