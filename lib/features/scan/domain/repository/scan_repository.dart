@@ -43,6 +43,10 @@ abstract class ScanRepository {
     String medicalText,
   );
 
+  Future<void> cancelGeneration();
+
+  Future<void> waitForStreamCompletion();
+
   Future disposeModel();
 }
 

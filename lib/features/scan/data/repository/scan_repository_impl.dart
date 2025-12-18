@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/widgets.dart';
 import 'package:collection/collection.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
@@ -25,6 +26,10 @@ class ScanRepositoryImpl implements ScanRepository {
 
   final ScanNetworkDataSource _networkDataSource;
   final ScanLocalDataSource _localDataSource;
+
+  bool _isStreamActive = false;
+  Completer<void>? _streamCompleter;
+  bool _shouldCancelGeneration = false;
 
   @override
   Future<List<String>> scanDocuments() async {
@@ -359,15 +364,26 @@ class ScanRepositoryImpl implements ScanRepository {
     String medicalText,
   ) async* {
     try {
+      _isStreamActive = true;
+      _streamCompleter = Completer<void>();
+      _shouldCancelGeneration = false;
+            
       await _networkDataSource.initModel();
 
       List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
       for (int i = 0; i < supportedPrompts.length; i++) {
+        if (_shouldCancelGeneration) {
+          break;
+        }
+        
         String prompt = supportedPrompts[i].buildPrompt(medicalText);
-
         String? promptResponse = await _networkDataSource.runPrompt(
           prompt: prompt,
         );
+
+        if (_shouldCancelGeneration) {
+          break;
+        }
 
         List<MappingResource> resources = [];
 
@@ -389,9 +405,28 @@ class ScanRepositoryImpl implements ScanRepository {
 
         yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
       }
+      
     } finally {
       await disposeModel();
+      
+      _isStreamActive = false;
+      _shouldCancelGeneration = false;
+      _streamCompleter?.complete();
+      
     }
+  }
+
+  @override
+  Future<void> waitForStreamCompletion() async {
+    if (_isStreamActive && _streamCompleter != null && !_streamCompleter!.isCompleted) {
+      await _streamCompleter!.future;
+    } else {
+    }
+  }
+
+  @override
+  Future<void> cancelGeneration() async {
+    _shouldCancelGeneration = true;
   }
 
   @override

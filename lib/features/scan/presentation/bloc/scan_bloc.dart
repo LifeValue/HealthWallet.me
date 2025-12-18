@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
@@ -231,28 +232,55 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     }
   }
 
-  void _onScanSessionCleared(
-    ScanSessionCleared event,
-    Emitter<ScanState> emit,
-  ) async {
-    try {
-      final newSessions = [...state.sessions]
-        ..removeWhere((session) => session.id == event.session.id);
-      final updatedImageMap =
-          Map<String, List<String>>.from(state.sessionImagePaths)
-            ..remove(event.session.id);
-
+void _onScanSessionCleared(
+  ScanSessionCleared event,
+  Emitter<ScanState> emit,
+) async {
+  try {
+    if (event.session.isProcessing) {
       emit(state.copyWith(
-        sessions: newSessions,
-        sessionImagePaths: updatedImageMap,
-        status: const ScanStatus.initial(),
+        status: const ScanStatus.loading(),
+        deletingSessionId: event.session.id,
       ));
-
-      await _repository.deleteProcessingSession(event.session);
-    } on Exception catch (e) {
-      emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+      
+      try {
+        await _repository.cancelGeneration();
+        await _repository.waitForStreamCompletion();
+      } catch (e) {
+      }
     }
+    
+    final newSessions = [...state.sessions]
+      ..removeWhere((session) => session.id == event.session.id);
+    
+    final updatedImageMap =
+        Map<String, List<String>>.from(state.sessionImagePaths)
+          ..remove(event.session.id);
+
+    emit(state.copyWith(
+      sessions: newSessions,
+      sessionImagePaths: updatedImageMap,
+      status: const ScanStatus.initial(),
+      deletingSessionId: null,
+    ));
+
+    await _repository.deleteProcessingSession(event.session);
+    
+    final hasPendingSessions = newSessions.any(
+      (s) => s.status == ProcessingStatus.pending,
+    );
+    
+    if (hasPendingSessions) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      _startNextPendingSession();
+    }
+  } on Exception catch (e) {
+    emit(state.copyWith(
+      status: ScanStatus.failure(error: e.toString()),
+      deletingSessionId: null,
+    ));
   }
+}
 
   bool _isValidScanResult(String path) {
     return !path.contains('Failed') && !path.contains('Unknown');

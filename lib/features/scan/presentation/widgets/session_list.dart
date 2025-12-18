@@ -21,77 +21,137 @@ class SessionList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     sessions.sort();
-    return ListView.builder(
-        shrinkWrap: true,
-        itemCount: sessions.length,
-        itemBuilder: (context, index) {
-          final session = sessions[index];
-          final statusColor = session.status.getColor(context);
-          final borderColor = context.colorScheme.primary;
+    return BlocBuilder<ScanBloc, ScanState>(
+      builder: (context, state) {
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: sessions.length,
+          itemBuilder: (context, index) {
+            final session = sessions[index];
+            final statusColor = session.status.getColor(context);
+            final borderColor = context.colorScheme.primary;
 
-          return InkWell(
-            onTap: () =>
-                context.router.push(ProcessingRoute(sessionId: session.id)),
-            child: Padding(
-              padding: EdgeInsets.only(
-                  bottom: (index < sessions.length - 1) ? 16 : 0),
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: session.isProcessing
-                        ? borderColor
-                        : context.theme.dividerColor,
-                    width: session.isProcessing ? 2.0 : 1.0,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+            final isThisSessionDeleting = state.deletingSessionId == session.id;
+
+            return InkWell(
+              onTap: isThisSessionDeleting
+                  ? null
+                  : () => context.router
+                      .push(ProcessingRoute(sessionId: session.id)),
+              child: Padding(
+                padding: EdgeInsets.only(
+                    bottom: (index < sessions.length - 1) ? 16 : 0),
+                child: Opacity(
+                  opacity: isThisSessionDeleting ? 0.6 : 1.0,
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: isThisSessionDeleting
+                            ? context.colorScheme.error.withOpacity(0.5)
+                            : session.isProcessing
+                                ? borderColor
+                                : context.theme.dividerColor,
+                        width: session.isProcessing ? 2.0 : 1.0,
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
                             children: [
-                              Text(
-                                session.status.toString(),
-                                style: TextStyle(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          isThisSessionDeleting
+                                              ? 'Canceling...'
+                                              : session.status.toString(),
+                                          style: TextStyle(
+                                            color: isThisSessionDeleting
+                                                ? context.colorScheme.error
+                                                : statusColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          DateFormat('MMMM d, HH:mm:ss')
+                                              .format(session.createdAt!),
+                                        ),
+                                        if (isThisSessionDeleting) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Waiting for AI to finish...',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: context.colorScheme.error,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  if (!isThisSessionDeleting)
+                                    IconButton(
+                                      onPressed: () => _showDeleteConfirmation(
+                                          context, session),
+                                      icon: Assets.icons.close.svg(
+                                        colorFilter: ColorFilter.mode(
+                                          context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      visualDensity: const VisualDensity(
+                                          horizontal: -4, vertical: -4),
+                                    ),
+                                ],
                               ),
-                              const SizedBox(
-                                height: 6,
-                              ),
-                              Text(DateFormat('MMMM d, HH:mm:ss')
-                                  .format(session.createdAt!)),
+                              if (session.isProcessing &&
+                                  !isThisSessionDeleting)
+                                CustomProgressIndicator(
+                                    progress: session.progress),
                             ],
                           ),
-                          IconButton(
-                            onPressed: () =>
-                                _showDeleteConfirmation(context, session),
-                            icon: Assets.icons.close.svg(
-                              colorFilter: ColorFilter.mode(
-                                context.colorScheme.onSurface,
-                                BlendMode.srcIn,
+                        ),
+                        if (isThisSessionDeleting)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.surface
+                                    .withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: context.colorScheme.error,
+                                  ),
+                                ),
                               ),
                             ),
-                            visualDensity: const VisualDensity(
-                                horizontal: -4, vertical: -4),
-                          )
-                        ],
-                      ),
-                      if (session.status == ProcessingStatus.processing)
-                        CustomProgressIndicator(progress: session.progress),
-                    ],
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showDeleteConfirmation(
