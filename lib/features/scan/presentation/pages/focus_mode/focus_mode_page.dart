@@ -148,6 +148,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
               _currentFlushbar = showProcessingDoneNotification(
                 context,
                 notification,
+                disableTap: true,
                 onStatusChanged: (status) {
                   if (status == FlushbarStatus.DISMISSED && mounted) {
                     _currentFlushbar = null;
