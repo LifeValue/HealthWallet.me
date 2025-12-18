@@ -170,8 +170,8 @@ lib/
 
 | Branch      | Purpose                 | CI/CD Action                 |
 | ----------- | ----------------------- | ---------------------------- |
-| `main`      | Production              | Deploy to production         |
-| `dev`       | Development             | For development purposes     |
+| `master`    | Production              | Deploy to production         |
+| `dev/*`     | Development             | For development purposes     |
 | `feature/*` | New features            | Run tests only               |
 | `fix/*`     | Bug fixes               | Run tests only               |
 | `release/*` | Release stabilization   | Full test + optional staging |
@@ -185,15 +185,15 @@ lib/
 - Basic health record management
 - Authentication and security
 - Cross-platform support
-
-### In Progress 🚧
 - Document scanning & OCR
 - File import & in-app viewing
 
-### Future Plans 📋
+### In Progress 🚧
 - QR code sharing (SMART Health Cards)
 - Proximity-based communication (Airdrop)
 - Desktop app backup system(CRDT) and FHIR processing
+
+### Future Plans 📋
 - Responsive UI
 - Wearable & health provider integration
 - AI health insights
