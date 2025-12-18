@@ -173,6 +173,13 @@
     "clearAllFilters": "Alle löschen",
     "syncingData": "Daten werden synchronisiert",
     "syncingMessage": "Das kann eine Weile dauern. Bitte warten.",
+    "finishProcessing": "Verarbeitung beenden",
+    "finishProcessingMessage": "Sind Sie sicher, dass Sie diese Verarbeitungssitzung beenden möchten?",
+    "finishProcessingWarning": "Dies löscht die aktuelle Sitzung.",
+    "fieldCannotBeEmpty": "Dieses Feld darf nicht leer sein",
+    "selectDate": "Datum auswählen",
+    "attachToEncounter": "An Begegnung anhängen",
+    "continueProcessing": "Verarbeitung fortsetzen",
     "scanQRMessage": "Scannen Sie den QR-Code von Ihrem Fasten Health Server, um eine neue Synchronisierungsverbindung zu erstellen.",
     "viewAll": "Alle anzeigen",
     "vitalSigns": "Vitalzeichen",
@@ -197,6 +204,14 @@
     "noRecords": "keine Aufzeichnungen",
     
     "sourceName": "Quellenname",
+    "effectiveDate": "Gültigkeitsdatum",
+    "finishProcessing": "Verarbeitung beenden",
+    "finishProcessingMessage": "Sind Sie sicher, dass Sie diese Verarbeitungssitzung beenden möchten?",
+    "finishProcessingWarning": "Dies löscht die aktuelle Sitzung.",
+    "fieldCannotBeEmpty": "Dieses Feld darf nicht leer sein",
+    "selectDate": "Datum auswählen",
+    "attachToEncounter": "An Begegnung anhängen",
+    "continueProcessing": "Verarbeitung fortsetzen",
     "provideCustomLabel": "Geben Sie ein benutzerdefiniertes Label an für:",
     "success": "Erfolg",
     "demoDataLoadedSuccessfully": "Demo-Daten wurden erfolgreich geladen. Sie werden zur Startseite weitergeleitet.",
@@ -239,5 +254,48 @@
     "syncPlaceholderTutorialStep3": "Halten Sie Ihre Desktop- und Mobile-Wallet auf dem neuesten Stand.",
     "tapToContinue": "Tippen Sie, um fortzufahren",
     
-    "homeOnboardingReorderMessage": "Lange drücken, um sie nach Ihren Wünschen neu anzuordnen."
+    "homeOnboardingReorderMessage": "Lange drücken, um sie nach Ihren Wünschen neu anzuordnen.",
+    
+    "processing": "Verarbeitung",
+    "sessionNotFound": "Sitzung nicht gefunden!",
+    "preparingPreview": "Vorschau wird vorbereitet...",
+    "processingFailed": "Verarbeitung fehlgeschlagen",
+    "retry": "Wiederholen",
+    "processingCancelled": "Die Verarbeitung wurde abgebrochen",
+    "processingBasicDetails": "Grunddaten werden verarbeitet...",
+    "processingPages": "Seiten werden verarbeitet...",
+    "extractingPatientInfo": "Patienten- und Begegnungsinformationen werden extrahiert.",
+    "pleaseWait": "Es kann eine Weile dauern. Bitte warten Sie.",
+    "cancel": "Abbrechen",
+    "focusMode": "Fokusmodus",
+    "onlyOneSessionAtTime": "Nur eine Verarbeitungssitzung kann gleichzeitig ausgeführt werden",
+    "aiModelNotAvailable": "KI-Modell ist nicht verfügbar",
+    "addResources": "Ressourcen hinzufügen",
+    "addResourcesTitle": "Ressourcen hinzufügen",
+    "chooseResourcesDescription": "Wählen Sie die Ressourcen aus, die Sie zur Verarbeitung hinzufügen möchten.",
+    "add": "Hinzufügen",
+    "allergyIntolerance": "Allergieunverträglichkeit",
+    "condition": "Bedingung",
+    "diagnosticReport": "Diagnosebericht",
+    "medicationStatement": "Medikamentenerklärung",
+    "observation": "Beobachtung",
+    "organization": "Organisation",
+    "practitioner": "Fachkraft",
+    "procedure": "Verfahren",
+    "tapToViewProgress": "Tippen Sie irgendwo, um den Fortschritt anzuzeigen",
+    "screenWillDarkenInSeconds": "Der Bildschirm wird sich in {remainingSeconds} Sekunden verdunkeln.",
+    "@screenWillDarkenInSeconds": {
+        "placeholders": {
+            "remainingSeconds": {
+                "type": "int"
+            }
+        }
+    },
+    "screenWillDarkenInZeroSeconds": "Der Bildschirm wird sich in 0 Sekunden verdunkeln.",
+    "whileDocumentsProcessed": "Während Ihre Dokumente verarbeitet werden:",
+    "doNotLockScreen": "Sperren Sie den Bildschirm nicht und verlassen Sie die App nicht.",
+    "plugInCharger": "Stecken Sie das Ladegerät ein.",
+    "exitFocusMode": "Fokusmodus beenden",
+    "chargerPluggedIn": "Ladegerät eingesteckt.",
+    "plugInChargerEllipsis": "Stecken Sie das Ladegerät ein..."
 }

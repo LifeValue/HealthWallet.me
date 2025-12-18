@@ -139,12 +139,14 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           label: 'Date of birth',
           value: dateOfBirth.value,
           confidenceLevel: dateOfBirth.confidenceLevel,
+          fieldType: FieldType.date,
           validators: [nonEmptyValidator, dateValidator],
         ),
         'gender': TextFieldDescriptor(
           label: 'Gender',
           value: gender.value,
           confidenceLevel: gender.confidenceLevel,
+          fieldType: FieldType.dropdown,
         ),
         'patientMRN': TextFieldDescriptor(
           label: 'MRN',

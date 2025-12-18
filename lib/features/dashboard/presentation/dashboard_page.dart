@@ -1,17 +1,11 @@
-import 'dart:developer';
-
-import 'package:another_flushbar/flushbar.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
-import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/scan_page.dart';
 import 'package:health_wallet/features/scan/presentation/pages/import_page.dart';
@@ -98,19 +92,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 );
 
             if (!isMapperRoute) {
-              Flushbar(
-                title: "Processing done",
-                message: notification.text,
-                duration: const Duration(seconds: 3),
-                flushbarPosition: FlushbarPosition.TOP,
-                titleColor: Colors.white,
-                messageColor: Colors.white,
-                backgroundColor: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.all(20),
-                onTap: (_) => context.router.push(notification.route),
-              ).show(context);
+              showProcessingDoneNotification(context, notification);
             }
 
             context.read<ScanBloc>().add(const ScanNotificationAcknowledged());
