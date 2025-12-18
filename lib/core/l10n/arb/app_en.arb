@@ -208,6 +208,13 @@
     "continueProcessing": "Continue Processing",
     
     "effectiveDate": "Effective Date",
+    "finishProcessing": "Finish Processing",
+    "finishProcessingMessage": "Are you sure you want to finish this processing session?",
+    "finishProcessingWarning": "This will clear the current session.",
+    "fieldCannotBeEmpty": "This field cannot be empty",
+    "selectDate": "Select date",
+    "attachToEncounter": "Attach to Encounter",
+    "continueProcessing": "Continue Processing",
     "privacyIntro": "Your privacy is our highest priority.",
     "privacyDescription": "is a simple, secure tool designed to help you organize your health records at ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.",
     "corePrinciple": "Our Core Principle: Your Data Stays on Your Device",
@@ -268,5 +275,48 @@
     "syncPlaceholderTutorialStep3": "Keep your desktop and mobile wallet up to date.",
     "tapToContinue": "Tap to continue",
     
-    "homeOnboardingReorderMessage": "Long press to reorder them according to your preference."
+    "homeOnboardingReorderMessage": "Long press to reorder them according to your preference.",
+    
+    "processing": "Processing",
+    "sessionNotFound": "Session not found!",
+    "preparingPreview": "Preparing preview...",
+    "processingFailed": "Processing failed",
+    "retry": "Retry",
+    "processingCancelled": "Processing was cancelled",
+    "processingBasicDetails": "Processing basic details...",
+    "processingPages": "Processing pages...",
+    "extractingPatientInfo": "Extracting patient and encounter info.",
+    "pleaseWait": "It might take a while. Please wait.",
+    "cancel": "Cancel",
+    "focusMode": "Focus Mode",
+    "onlyOneSessionAtTime": "Only one processing session can run at a time",
+    "aiModelNotAvailable": "AI model is not available",
+    "addResources": "Add resources",
+    "addResourcesTitle": "Add Resources",
+    "chooseResourcesDescription": "Choose the resources you want to add for processing.",
+    "add": "Add",
+    "allergyIntolerance": "Allergy Intolerance",
+    "condition": "Condition",
+    "diagnosticReport": "Diagnostic Report",
+    "medicationStatement": "Medication Statement",
+    "observation": "Observation",
+    "organization": "Organization",
+    "practitioner": "Practitioner",
+    "procedure": "Procedure",
+    "tapToViewProgress": "Tap anywhere to view progress",
+    "screenWillDarkenInSeconds": "The screen will darken in {remainingSeconds} seconds.",
+    "@screenWillDarkenInSeconds": {
+        "placeholders": {
+            "remainingSeconds": {
+                "type": "int"
+            }
+        }
+    },
+    "screenWillDarkenInZeroSeconds": "The screen will darken in 0 seconds.",
+    "whileDocumentsProcessed": "While your documents are being processed:",
+    "doNotLockScreen": "Do not lock the screen or exit the app.",
+    "plugInCharger": "Plug in the charger.",
+    "exitFocusMode": "Exit Focus Mode",
+    "chargerPluggedIn": "Charger plugged in.",
+    "plugInChargerEllipsis": "Plug in the charger..."
 }

@@ -314,7 +314,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get retry => 'Erneut versuchen';
+  String get retry => 'Wiederholen';
 
   @override
   String get pleaseEnterSourceName => 'Bitte geben Sie einen Quellennamen ein';
@@ -761,4 +761,112 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get homeOnboardingReorderMessage =>
       'Lange drücken, um sie nach Ihren Wünschen neu anzuordnen.';
+
+  @override
+  String get processing => 'Verarbeitung';
+
+  @override
+  String get sessionNotFound => 'Sitzung nicht gefunden!';
+
+  @override
+  String get preparingPreview => 'Vorschau wird vorbereitet...';
+
+  @override
+  String get processingFailed => 'Verarbeitung fehlgeschlagen';
+
+  @override
+  String get processingCancelled => 'Die Verarbeitung wurde abgebrochen';
+
+  @override
+  String get processingBasicDetails => 'Grunddaten werden verarbeitet...';
+
+  @override
+  String get processingPages => 'Seiten werden verarbeitet...';
+
+  @override
+  String get extractingPatientInfo =>
+      'Patienten- und Begegnungsinformationen werden extrahiert.';
+
+  @override
+  String get pleaseWait => 'Es kann eine Weile dauern. Bitte warten Sie.';
+
+  @override
+  String get focusMode => 'Fokusmodus';
+
+  @override
+  String get onlyOneSessionAtTime =>
+      'Nur eine Verarbeitungssitzung kann gleichzeitig ausgeführt werden';
+
+  @override
+  String get aiModelNotAvailable => 'KI-Modell ist nicht verfügbar';
+
+  @override
+  String get addResources => 'Ressourcen hinzufügen';
+
+  @override
+  String get addResourcesTitle => 'Ressourcen hinzufügen';
+
+  @override
+  String get chooseResourcesDescription =>
+      'Wählen Sie die Ressourcen aus, die Sie zur Verarbeitung hinzufügen möchten.';
+
+  @override
+  String get add => 'Hinzufügen';
+
+  @override
+  String get allergyIntolerance => 'Allergieunverträglichkeit';
+
+  @override
+  String get condition => 'Bedingung';
+
+  @override
+  String get diagnosticReport => 'Diagnosebericht';
+
+  @override
+  String get medicationStatement => 'Medikamentenerklärung';
+
+  @override
+  String get observation => 'Beobachtung';
+
+  @override
+  String get organization => 'Organisation';
+
+  @override
+  String get practitioner => 'Fachkraft';
+
+  @override
+  String get procedure => 'Verfahren';
+
+  @override
+  String get tapToViewProgress =>
+      'Tippen Sie irgendwo, um den Fortschritt anzuzeigen';
+
+  @override
+  String screenWillDarkenInSeconds(int remainingSeconds) {
+    return 'Der Bildschirm wird sich in $remainingSeconds Sekunden verdunkeln.';
+  }
+
+  @override
+  String get screenWillDarkenInZeroSeconds =>
+      'Der Bildschirm wird sich in 0 Sekunden verdunkeln.';
+
+  @override
+  String get whileDocumentsProcessed =>
+      'Während Ihre Dokumente verarbeitet werden:';
+
+  @override
+  String get doNotLockScreen =>
+      'Sperren Sie den Bildschirm nicht und verlassen Sie die App nicht.';
+
+  @override
+  String get plugInCharger => 'Stecken Sie das Ladegerät ein.';
+
+  @override
+  String get exitFocusMode => 'Fokusmodus beenden';
+
+  @override
+  String get chargerPluggedIn => 'Ladegerät eingesteckt.';
+
+  @override
+  String get plugInChargerEllipsis => 'Stecken Sie das Ladegerät ein...';
 }
