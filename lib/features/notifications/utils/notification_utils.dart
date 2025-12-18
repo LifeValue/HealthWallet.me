@@ -9,6 +9,7 @@ Flushbar showProcessingDoneNotification(
   BuildContext context,
   notification_entity.Notification notification, {
   FlushbarStatusCallback? onStatusChanged,
+  bool disableTap = false,
 }) {
   final flushbar = Flushbar(
     title: "Processing done",
@@ -21,7 +22,8 @@ Flushbar showProcessingDoneNotification(
     borderRadius: BorderRadius.circular(12),
     padding: const EdgeInsets.all(12),
     margin: const EdgeInsets.all(20),
-    onTap: (_) => context.appRouter.push(notification.route),
+    onTap:
+        disableTap ? null : (_) => context.appRouter.push(notification.route),
     onStatusChanged: onStatusChanged,
   )..show(context);
 
