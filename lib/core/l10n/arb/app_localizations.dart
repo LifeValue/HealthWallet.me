@@ -1150,6 +1150,12 @@ abstract class AppLocalizations {
   /// **'This field cannot be empty'**
   String get fieldCannotBeEmpty;
 
+  /// No description provided for @selectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date'**
+  String get selectDate;
+
   /// No description provided for @attachToEncounter.
   ///
   /// In en, this message translates to:

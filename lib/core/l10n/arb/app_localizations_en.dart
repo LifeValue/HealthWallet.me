@@ -570,6 +570,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldCannotBeEmpty => 'This field cannot be empty';
 
   @override
+  String get selectDate => 'Select date';
+
+  @override
   String get attachToEncounter => 'Attach to Encounter';
 
   @override

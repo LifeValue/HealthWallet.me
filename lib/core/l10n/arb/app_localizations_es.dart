@@ -575,6 +575,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fieldCannotBeEmpty => 'Este campo no puede estar vacío';
 
   @override
+  String get selectDate => 'Seleccionar fecha';
+
+  @override
   String get attachToEncounter => 'Adjuntar a Encuentro';
 
   @override
