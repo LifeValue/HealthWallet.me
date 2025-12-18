@@ -1126,6 +1126,48 @@ abstract class AppLocalizations {
   /// **'Long press to move & reorder cards, or filter to select which ones appear on your dashboard.'**
   String get longPressToReorder;
 
+  /// No description provided for @finishProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Processing'**
+  String get finishProcessing;
+
+  /// No description provided for @finishProcessingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to finish this processing session?'**
+  String get finishProcessingMessage;
+
+  /// No description provided for @finishProcessingWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This will clear the current session.'**
+  String get finishProcessingWarning;
+
+  /// No description provided for @fieldCannotBeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'This field cannot be empty'**
+  String get fieldCannotBeEmpty;
+
+  /// No description provided for @selectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date'**
+  String get selectDate;
+
+  /// No description provided for @attachToEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach to Encounter'**
+  String get attachToEncounter;
+
+  /// No description provided for @continueProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Processing'**
+  String get continueProcessing;
+
   /// No description provided for @effectiveDate.
   ///
   /// In en, this message translates to:

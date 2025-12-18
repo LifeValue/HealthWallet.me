@@ -7,8 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_storage_service.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -18,9 +20,8 @@ import 'package:health_wallet/features/scan/domain/repository/scan_repository.da
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/scan/presentation/helpers/ocr_processing_helper.dart';
 import 'package:health_wallet/features/scan/presentation/helpers/scan_path_helper.dart';
-import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
+import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -34,19 +35,21 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final PdfStorageService _pdfStorageService;
   final ScanRepository _repository;
   final OcrProcessingHelper _ocrProcessingHelper;
-  final WalletPatientService _walletPatientService;
   final SyncRepository _syncRepository;
   final DocumentReferenceService _documentReferenceService;
   final PatientDeduplicationService _deduplicationService;
+  final SourceTypeService _sourceTypeService;
+  final RecordsRepository _recordsRepository;
 
   ScanBloc(
     this._pdfStorageService,
     this._repository,
     this._ocrProcessingHelper,
-    this._walletPatientService,
     this._syncRepository,
     this._documentReferenceService,
     this._deduplicationService,
+    this._sourceTypeService,
+    this._recordsRepository,
   ) : super(const ScanState()) {
     on<ScanInitialised>(_onScanInitialised);
     on<ScanButtonPressed>(_onScanButtonPressed);
@@ -357,9 +360,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     StagedPatient? patient,
     StagedEncounter? encounter,
     bool? isDocumentAttached,
-    // since we don't have a continue/resume functionality in place
-    // we only update the session in the db after the processing is done
-    // so we don't have weird behaviour when closing and re-opening the app
     bool updateDb = false,
   }) {
     final sessionIndex = state.sessions.indexWhere((s) => s.id == sessionId);
@@ -394,14 +394,12 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     Emitter<ScanState> emit,
   ) async {
     emit(state.copyWith(status: const ScanStatus.loading()));
-    // Check if session exists and is in a valid state
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) {
       return;
     }
 
-    // If session is already processing or draft, don't restart
     if (session.isProcessing || session.status == ProcessingStatus.draft) {
       return;
     }
@@ -452,16 +450,46 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       final (patient, encounter) = await _repository.mapBasicInfo(medicalText);
 
-      // All resources are now in the state. Get the final session object.
+      StagedPatient stagedPatient;
+      try {
+        final allPatientsResources = await _recordsRepository.getResources(
+          resourceTypes: [FhirType.Patient],
+          limit: 1000,
+        );
+        final allPatients = allPatientsResources.whereType<Patient>().toList();
+
+        final matchedPatient = _deduplicationService.findMatchingPatient(
+          patient,
+          allPatients,
+        );
+
+        if (matchedPatient != null) {
+          stagedPatient = StagedPatient(
+            existing: matchedPatient,
+            mode: ImportMode.linkExisting,
+          );
+        } else {
+          stagedPatient = StagedPatient(
+            draft: patient,
+            mode: ImportMode.createNew,
+          );
+        }
+      } catch (e) {
+        logger.e('Error matching patient: $e');
+        stagedPatient = StagedPatient(
+          draft: patient,
+          mode: ImportMode.createNew,
+        );
+      }
+
       final finalSession =
           state.sessions.firstWhere((s) => s.id == event.sessionId);
 
-      // Update the session a final time with the cleaned resources and new status
       _updateSession(
         emit,
         sessionId: event.sessionId,
         status: ProcessingStatus.patientExtracted,
-        patient: StagedPatient(draft: patient),
+        patient: stagedPatient,
         encounter: StagedEncounter(draft: encounter),
         updateDb: true,
       );
@@ -784,46 +812,30 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     String sourceId;
     List<IFhirResource> resourcesToSave = [];
 
+    final availableSources = await _syncRepository.getSources();
+
     if (activeSession.patient.existing != null) {
       Patient existingPatient = activeSession.patient.existing!;
-      List<String> patientSourceIds = await _deduplicationService
-          .getSourceIdsForPatient(existingPatient.id);
 
-      List<Source> sources = await _syncRepository.getSources();
-
-      String? writableSourceId = patientSourceIds.firstWhereOrNull((sourceId) {
-        final source = sources.firstWhere(
-          (s) => s.id == sourceId,
-          orElse: () => const Source(
-              id: '', platformName: null, logo: null, labelSource: null),
-        );
-        return source.platformType == 'wallet';
-      });
-
-      if (writableSourceId == null) {
-        final walletSource =
-            await _walletPatientService.createWalletSourceForPatient(
-          existingPatient.id,
-          existingPatient.displayTitle,
-        );
-
-        await _syncRepository.cacheSources([walletSource]);
-
-        writableSourceId = walletSource.id;
-      }
+      final walletSource =
+          await _sourceTypeService.ensureWalletSourceForPatient(
+        patientId: existingPatient.id,
+        patientName: existingPatient.displayTitle,
+        availableSources: availableSources,
+      );
 
       subjectId = existingPatient.id;
-      sourceId = writableSourceId;
+      sourceId = walletSource.id;
     } else {
       MappingPatient draftPatient = activeSession.patient.draft!;
 
       final walletSource =
-          await _walletPatientService.createWalletSourceForPatient(
-        draftPatient.id,
-        "${draftPatient.givenName.value} ${draftPatient.familyName.value}",
+          await _sourceTypeService.ensureWalletSourceForPatient(
+        patientId: draftPatient.id,
+        patientName:
+            "${draftPatient.givenName.value} ${draftPatient.familyName.value}",
+        availableSources: availableSources,
       );
-
-      await _syncRepository.cacheSources([walletSource]);
 
       subjectId = draftPatient.id;
       sourceId = walletSource.id;

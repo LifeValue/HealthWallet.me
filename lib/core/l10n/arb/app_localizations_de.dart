@@ -568,6 +568,28 @@ class AppLocalizationsDe extends AppLocalizations {
       'Lange drücken, um Karten zu verschieben und neu anzuordnen, oder filtern, um auszuwählen, welche in Ihrem Dashboard erscheinen.';
 
   @override
+  String get finishProcessing => 'Verarbeitung beenden';
+
+  @override
+  String get finishProcessingMessage =>
+      'Sind Sie sicher, dass Sie diese Verarbeitungssitzung beenden möchten?';
+
+  @override
+  String get finishProcessingWarning => 'Dies löscht die aktuelle Sitzung.';
+
+  @override
+  String get fieldCannotBeEmpty => 'Dieses Feld darf nicht leer sein';
+
+  @override
+  String get selectDate => 'Datum auswählen';
+
+  @override
+  String get attachToEncounter => 'An Begegnung anhängen';
+
+  @override
+  String get continueProcessing => 'Verarbeitung fortsetzen';
+
+  @override
   String get effectiveDate => 'Gültigkeitsdatum';
 
   @override
