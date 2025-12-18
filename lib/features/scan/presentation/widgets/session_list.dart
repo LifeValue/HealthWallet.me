@@ -31,7 +31,6 @@ class SessionList extends StatelessWidget {
             final statusColor = session.status.getColor(context);
             final borderColor = context.colorScheme.primary;
 
-            // Check if THIS specific session is being deleted
             final isThisSessionDeleting = state.deletingSessionId == session.id;
 
             return InkWell(
@@ -123,7 +122,6 @@ class SessionList extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Semi-transparent overlay when deleting
                         if (isThisSessionDeleting)
                           Positioned.fill(
                             child: Container(

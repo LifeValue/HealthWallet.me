@@ -364,7 +364,6 @@ class ScanRepositoryImpl implements ScanRepository {
     String medicalText,
   ) async* {
     try {
-      // Mark stream as active
       _isStreamActive = true;
       _streamCompleter = Completer<void>();
       _shouldCancelGeneration = false;
@@ -375,7 +374,6 @@ class ScanRepositoryImpl implements ScanRepository {
 
       List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
       for (int i = 0; i < supportedPrompts.length; i++) {
-        // Check if we should cancel before starting next prompt
         if (_shouldCancelGeneration) {
           debugPrint('mapResources: Generation cancelled, stopping at prompt $i');
           break;
@@ -389,7 +387,6 @@ class ScanRepositoryImpl implements ScanRepository {
         );
         debugPrint('mapResources: Prompt ${i + 1} completed');
 
-        // Check again after prompt completes
         if (_shouldCancelGeneration) {
           debugPrint('mapResources: Generation cancelled after prompt ${i + 1} completion');
           break;
@@ -416,35 +413,26 @@ class ScanRepositoryImpl implements ScanRepository {
         yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
       }
       
-      debugPrint('mapResources: All prompts completed or cancelled');
     } finally {
-      debugPrint('mapResources: Disposing model...');
       await disposeModel();
       
       _isStreamActive = false;
       _shouldCancelGeneration = false;
-      
-      debugPrint('mapResources: Stream ended, completing completer');
       _streamCompleter?.complete();
       
-      debugPrint('mapResources: Cleanup complete');
     }
   }
 
   @override
   Future<void> waitForStreamCompletion() async {
     if (_isStreamActive && _streamCompleter != null && !_streamCompleter!.isCompleted) {
-      debugPrint('waitForStreamCompletion: Waiting for active stream to complete...');
       await _streamCompleter!.future;
-      debugPrint('waitForStreamCompletion: Stream completed');
     } else {
-      debugPrint('waitForStreamCompletion: No active stream');
     }
   }
 
   @override
   Future<void> cancelGeneration() async {
-    debugPrint('cancelGeneration: Requesting cancellation...');
     _shouldCancelGeneration = true;
   }
 

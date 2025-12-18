@@ -244,16 +244,10 @@ void _onScanSessionCleared(
         deletingSessionId: event.session.id,
       ));
       
-      debugPrint('_onScanSessionCleared: Cancelling session ${event.session.id}...');
-      
       try {
         await _repository.cancelGeneration();
-        
         await _repository.waitForStreamCompletion();
-        
-        debugPrint('_onScanSessionCleared: Session cancelled successfully');
       } catch (e) {
-        debugPrint('_onScanSessionCleared: Error during cancellation: $e');
       }
     }
     
@@ -278,12 +272,10 @@ void _onScanSessionCleared(
     );
     
     if (hasPendingSessions) {
-      debugPrint('_onScanSessionCleared: Starting next pending session...');
       await Future.delayed(const Duration(milliseconds: 100));
       _startNextPendingSession();
     }
   } on Exception catch (e) {
-    debugPrint('_onScanSessionCleared: Exception: $e');
     emit(state.copyWith(
       status: ScanStatus.failure(error: e.toString()),
       deletingSessionId: null,
