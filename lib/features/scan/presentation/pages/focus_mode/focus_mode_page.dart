@@ -303,10 +303,13 @@ class _FocusModeViewState extends State<_FocusModeView> {
             ),
             const SizedBox(height: 8),
             _buildInstructionItem(
-              icon: Icon(
-                Icons.power,
-                size: 20,
-                color: Colors.white,
+              icon: Assets.icons.plugCharger.svg(
+                width: 20,
+                height: 20,
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
               ),
               text: context.l10n.plugInCharger,
             ),
@@ -347,6 +350,10 @@ class _FocusModeViewState extends State<_FocusModeView> {
             (session) => session.isProcessing,
             orElse: () => state.sessions.first,
           );
+        }
+
+        if (processingSession?.status == ProcessingStatus.processingPatient) {
+          return const SizedBox.shrink();
         }
 
         final progress = processingSession?.progress ?? 0.0;
