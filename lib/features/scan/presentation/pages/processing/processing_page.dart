@@ -269,7 +269,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           ),
           const SizedBox(height: Insets.normal),
           AppButton(
-            label: 'Retry',
+            label: context.l10n.retry,
             variant: AppButtonVariant.outlined,
             onPressed: () => context
                 .read<ScanBloc>()
@@ -306,20 +306,17 @@ class _ProcessingPageState extends State<ProcessingPage> {
                       .add(ScanMappingCancelled(sessionId: widget.sessionId)),
                 ),
               ),
-              if (displayedSession.status !=
-                  ProcessingStatus.processingPatient) ...[
-                const SizedBox(width: Insets.smallNormal),
-                Expanded(
-                  child: AppButton(
-                    label: context.l10n.focusMode,
-                    icon: Assets.icons.scan.svg(),
-                    variant: AppButtonVariant.primary,
-                    onPressed: () {
-                      context.router.push(const FocusModeRoute());
-                    },
-                  ),
+              const SizedBox(width: Insets.smallNormal),
+              Expanded(
+                child: AppButton(
+                  label: context.l10n.focusMode,
+                  icon: Assets.icons.scan.svg(),
+                  variant: AppButtonVariant.primary,
+                  onPressed: () {
+                    context.router.push(const FocusModeRoute());
+                  },
                 ),
-              ],
+              ),
             ],
           ),
         ],
