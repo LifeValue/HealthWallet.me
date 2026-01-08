@@ -1,9 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/widgets.dart';
+import 'package:collection/collection.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
+import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:injectable/injectable.dart';
@@ -20,6 +26,10 @@ class ScanRepositoryImpl implements ScanRepository {
 
   final ScanNetworkDataSource _networkDataSource;
   final ScanLocalDataSource _localDataSource;
+
+  bool _isStreamActive = false;
+  Completer<void>? _streamCompleter;
+  bool _shouldCancelGeneration = false;
 
   @override
   Future<List<String>> scanDocuments() async {
@@ -310,17 +320,70 @@ class ScanRepositoryImpl implements ScanRepository {
       _networkDataSource.checkModelExistence();
 
   @override
-  Stream<MappingResourcesWithProgress> mapResources(String medicalText) async* {
+  Future<(MappingPatient, MappingEncounter)> mapBasicInfo(
+    String medicalText,
+  ) async {
+    await _networkDataSource.initModel();
+
     try {
+      String prompt = BasicInfoPrompt().buildPrompt(medicalText);
+
+      String? promptResponse =
+          await _networkDataSource.runPrompt(prompt: prompt);
+
+      List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+
+      List<MappingResource> resources = [];
+      for (Map<String, dynamic> json in jsonList) {
+        MappingResource resource =
+            MappingResource.fromJson(json).populateConfidence(medicalText);
+
+        if (resource.isValid) {
+          resources.add(resource);
+        }
+      }
+      
+      MappingEncounter encounter =
+          resources.firstWhereOrNull((resource) => resource is MappingEncounter)
+                  as MappingEncounter? ??
+              MappingEncounter.empty();
+
+      MappingPatient patient =
+          resources.firstWhereOrNull((resource) => resource is MappingPatient)
+                  as MappingPatient? ??
+              MappingPatient.empty();
+
+      return (patient, encounter);
+    } finally {
+      await disposeModel();
+    }
+  }
+
+  @override
+  Stream<MappingResourcesWithProgress> mapRemainingResources(
+    String medicalText,
+  ) async* {
+    try {
+      _isStreamActive = true;
+      _streamCompleter = Completer<void>();
+      _shouldCancelGeneration = false;
+            
       await _networkDataSource.initModel();
 
       List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
       for (int i = 0; i < supportedPrompts.length; i++) {
+        if (_shouldCancelGeneration) {
+          break;
+        }
+        
         String prompt = supportedPrompts[i].buildPrompt(medicalText);
-
         String? promptResponse = await _networkDataSource.runPrompt(
           prompt: prompt,
         );
+
+        if (_shouldCancelGeneration) {
+          break;
+        }
 
         List<MappingResource> resources = [];
 
@@ -342,9 +405,28 @@ class ScanRepositoryImpl implements ScanRepository {
 
         yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
       }
+      
     } finally {
       await disposeModel();
+      
+      _isStreamActive = false;
+      _shouldCancelGeneration = false;
+      _streamCompleter?.complete();
+      
     }
+  }
+
+  @override
+  Future<void> waitForStreamCompletion() async {
+    if (_isStreamActive && _streamCompleter != null && !_streamCompleter!.isCompleted) {
+      await _streamCompleter!.future;
+    } else {
+    }
+  }
+
+  @override
+  Future<void> cancelGeneration() async {
+    _shouldCancelGeneration = true;
   }
 
   @override

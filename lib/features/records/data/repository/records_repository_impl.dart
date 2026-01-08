@@ -66,8 +66,10 @@ class RecordsRepositoryImpl implements RecordsRepository {
       sourceId: sourceId,
     );
 
-
-    return localDtos.map(IFhirResource.fromLocalDto).toList();
+    return localDtos
+        .where((dto) => dto.id != encounterId)
+        .map(IFhirResource.fromLocalDto)
+        .toList();
   }
 
   @override

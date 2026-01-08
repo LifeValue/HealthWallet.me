@@ -562,7 +562,29 @@ class AppLocalizationsEs extends AppLocalizations {
       'Mantén presionado para mover y reordenar tarjetas, o filtra para seleccionar cuáles aparecen en tu panel de control.';
 
   @override
-  String get effectiveDate => 'Fecha de vigencia';
+  String get finishProcessing => 'Finalizar Procesamiento';
+
+  @override
+  String get finishProcessingMessage =>
+      '¿Estás seguro de que quieres finalizar esta sesión de procesamiento?';
+
+  @override
+  String get finishProcessingWarning => 'Esto borrará la sesión actual.';
+
+  @override
+  String get fieldCannotBeEmpty => 'Este campo no puede estar vacío';
+
+  @override
+  String get selectDate => 'Seleccionar fecha';
+
+  @override
+  String get attachToEncounter => 'Adjuntar a Encuentro';
+
+  @override
+  String get continueProcessing => 'Continuar Procesamiento';
+
+  @override
+  String get effectiveDate => 'Fecha Efectiva';
 
   @override
   String get privacyIntro => 'Tu privacidad es nuestra máxima prioridad.';
@@ -732,4 +754,111 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get homeOnboardingReorderMessage =>
       'Mantén presionado para reordenarlos según tu preferencia.';
+
+  @override
+  String get processing => 'Procesamiento';
+
+  @override
+  String get sessionNotFound => '¡Sesión no encontrada!';
+
+  @override
+  String get preparingPreview => 'Preparando vista previa...';
+
+  @override
+  String get processingFailed => 'Procesamiento fallido';
+
+  @override
+  String get processingCancelled => 'El procesamiento fue cancelado';
+
+  @override
+  String get processingBasicDetails => 'Procesando detalles básicos...';
+
+  @override
+  String get processingPages => 'Procesando páginas...';
+
+  @override
+  String get extractingPatientInfo =>
+      'Extrayendo información del paciente y encuentro.';
+
+  @override
+  String get pleaseWait => 'Puede tardar un poco. Por favor espera.';
+
+  @override
+  String get focusMode => 'Modo Enfoque';
+
+  @override
+  String get onlyOneSessionAtTime =>
+      'Solo una sesión de procesamiento puede ejecutarse a la vez';
+
+  @override
+  String get aiModelNotAvailable => 'El modelo de IA no está disponible';
+
+  @override
+  String get addResources => 'Agregar recursos';
+
+  @override
+  String get addResourcesTitle => 'Agregar Recursos';
+
+  @override
+  String get chooseResourcesDescription =>
+      'Elige los recursos que deseas agregar para el procesamiento.';
+
+  @override
+  String get add => 'Agregar';
+
+  @override
+  String get allergyIntolerance => 'Intolerancia a Alergias';
+
+  @override
+  String get condition => 'Condición';
+
+  @override
+  String get diagnosticReport => 'Informe de Diagnóstico';
+
+  @override
+  String get medicationStatement => 'Declaración de Medicación';
+
+  @override
+  String get observation => 'Observación';
+
+  @override
+  String get organization => 'Organización';
+
+  @override
+  String get practitioner => 'Profesional';
+
+  @override
+  String get procedure => 'Procedimiento';
+
+  @override
+  String get tapToViewProgress =>
+      'Toca en cualquier lugar para ver el progreso';
+
+  @override
+  String screenWillDarkenInSeconds(int remainingSeconds) {
+    return 'La pantalla se oscurecerá en $remainingSeconds segundos.';
+  }
+
+  @override
+  String get screenWillDarkenInZeroSeconds =>
+      'La pantalla se oscurecerá en 0 segundos.';
+
+  @override
+  String get whileDocumentsProcessed => 'Mientras se procesan tus documentos:';
+
+  @override
+  String get doNotLockScreen =>
+      'No bloquees la pantalla ni salgas de la aplicación.';
+
+  @override
+  String get plugInCharger => 'Conecta el cargador.';
+
+  @override
+  String get exitFocusMode => 'Salir del Modo Enfoque';
+
+  @override
+  String get chargerPluggedIn => 'Cargador conectado.';
+
+  @override
+  String get plugInChargerEllipsis => 'Conecta el cargador...';
 }

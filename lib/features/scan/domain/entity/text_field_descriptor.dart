@@ -1,10 +1,17 @@
 import 'package:flutter/services.dart';
 
+enum FieldType {
+  text,
+  date,
+  dropdown,
+}
+
 class TextFieldDescriptor {
   TextFieldDescriptor({
     required this.label,
     required this.value,
     required this.confidenceLevel,
+    this.fieldType = FieldType.text,
     this.validators,
     this.inputFormatters,
     this.keyboardType,
@@ -13,6 +20,7 @@ class TextFieldDescriptor {
   final String label;
   final String value;
   final double confidenceLevel;
+  final FieldType fieldType;
   final List<String? Function(String?)>? validators;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;

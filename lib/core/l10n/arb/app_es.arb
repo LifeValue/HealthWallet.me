@@ -177,6 +177,13 @@
     "clearAllFilters": "Limpiar todo",
     "syncingData": "Sincronizando datos",
     "syncingMessage": "Puede tomar un tiempo. Por favor espera.",
+    "finishProcessing": "Finalizar Procesamiento",
+    "finishProcessingMessage": "¿Estás seguro de que quieres finalizar esta sesión de procesamiento?",
+    "finishProcessingWarning": "Esto borrará la sesión actual.",
+    "fieldCannotBeEmpty": "Este campo no puede estar vacío",
+    "selectDate": "Seleccionar fecha",
+    "attachToEncounter": "Adjuntar a Encuentro",
+    "continueProcessing": "Continuar Procesamiento",
     "scanQRMessage": "Escanea el código QR de tu servidor Fasten Health para crear una nueva conexión de sincronización.",
     "viewAll": "Ver todo",
     "vitalSigns": "Signos Vitales",
@@ -200,6 +207,14 @@
 
     "noRecords": "Sin registros",
     
+    "effectiveDate": "Fecha Efectiva",
+    "finishProcessing": "Finalizar Procesamiento",
+    "finishProcessingMessage": "¿Estás seguro de que quieres finalizar esta sesión de procesamiento?",
+    "finishProcessingWarning": "Esto borrará la sesión actual.",
+    "fieldCannotBeEmpty": "Este campo no puede estar vacío",
+    "selectDate": "Seleccionar fecha",
+    "attachToEncounter": "Adjuntar a Encuentro",
+    "continueProcessing": "Continuar Procesamiento",
     "sourceName": "Nombre de fuente",
     "provideCustomLabel": "Proporciona una etiqueta personalizada para:",
     "success": "Éxito",
@@ -243,5 +258,48 @@
     "syncPlaceholderTutorialStep3": "Mantén tu cartera de escritorio y móvil actualizada.",
     "tapToContinue": "Toca para continuar",
     
-    "homeOnboardingReorderMessage": "Mantén presionado para reordenarlos según tu preferencia."
+    "homeOnboardingReorderMessage": "Mantén presionado para reordenarlos según tu preferencia.",
+    
+    "processing": "Procesamiento",
+    "sessionNotFound": "¡Sesión no encontrada!",
+    "preparingPreview": "Preparando vista previa...",
+    "processingFailed": "Procesamiento fallido",
+    "retry": "Reintentar",
+    "processingCancelled": "El procesamiento fue cancelado",
+    "processingBasicDetails": "Procesando detalles básicos...",
+    "processingPages": "Procesando páginas...",
+    "extractingPatientInfo": "Extrayendo información del paciente y encuentro.",
+    "pleaseWait": "Puede tardar un poco. Por favor espera.",
+    "cancel": "Cancelar",
+    "focusMode": "Modo Enfoque",
+    "onlyOneSessionAtTime": "Solo una sesión de procesamiento puede ejecutarse a la vez",
+    "aiModelNotAvailable": "El modelo de IA no está disponible",
+    "addResources": "Agregar recursos",
+    "addResourcesTitle": "Agregar Recursos",
+    "chooseResourcesDescription": "Elige los recursos que deseas agregar para el procesamiento.",
+    "add": "Agregar",
+    "allergyIntolerance": "Intolerancia a Alergias",
+    "condition": "Condición",
+    "diagnosticReport": "Informe de Diagnóstico",
+    "medicationStatement": "Declaración de Medicación",
+    "observation": "Observación",
+    "organization": "Organización",
+    "practitioner": "Profesional",
+    "procedure": "Procedimiento",
+    "tapToViewProgress": "Toca en cualquier lugar para ver el progreso",
+    "screenWillDarkenInSeconds": "La pantalla se oscurecerá en {remainingSeconds} segundos.",
+    "@screenWillDarkenInSeconds": {
+        "placeholders": {
+            "remainingSeconds": {
+                "type": "int"
+            }
+        }
+    },
+    "screenWillDarkenInZeroSeconds": "La pantalla se oscurecerá en 0 segundos.",
+    "whileDocumentsProcessed": "Mientras se procesan tus documentos:",
+    "doNotLockScreen": "No bloquees la pantalla ni salgas de la aplicación.",
+    "plugInCharger": "Conecta el cargador.",
+    "exitFocusMode": "Salir del Modo Enfoque",
+    "chargerPluggedIn": "Cargador conectado.",
+    "plugInChargerEllipsis": "Conecta el cargador..."
 }

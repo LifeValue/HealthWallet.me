@@ -557,6 +557,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long press to move & reorder cards, or filter to select which ones appear on your dashboard.';
 
   @override
+  String get finishProcessing => 'Finish Processing';
+
+  @override
+  String get finishProcessingMessage =>
+      'Are you sure you want to finish this processing session?';
+
+  @override
+  String get finishProcessingWarning => 'This will clear the current session.';
+
+  @override
+  String get fieldCannotBeEmpty => 'This field cannot be empty';
+
+  @override
+  String get selectDate => 'Select date';
+
+  @override
+  String get attachToEncounter => 'Attach to Encounter';
+
+  @override
+  String get continueProcessing => 'Continue Processing';
+
+  @override
   String get effectiveDate => 'Effective Date';
 
   @override
@@ -723,4 +745,109 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get homeOnboardingReorderMessage =>
       'Long press to reorder them according to your preference.';
+
+  @override
+  String get processing => 'Processing';
+
+  @override
+  String get sessionNotFound => 'Session not found!';
+
+  @override
+  String get preparingPreview => 'Preparing preview...';
+
+  @override
+  String get processingFailed => 'Processing failed';
+
+  @override
+  String get processingCancelled => 'Processing was cancelled';
+
+  @override
+  String get processingBasicDetails => 'Processing basic details...';
+
+  @override
+  String get processingPages => 'Processing pages...';
+
+  @override
+  String get extractingPatientInfo => 'Extracting patient and encounter info.';
+
+  @override
+  String get pleaseWait => 'It might take a while. Please wait.';
+
+  @override
+  String get focusMode => 'Focus Mode';
+
+  @override
+  String get onlyOneSessionAtTime =>
+      'Only one processing session can run at a time';
+
+  @override
+  String get aiModelNotAvailable => 'AI model is not available';
+
+  @override
+  String get addResources => 'Add resources';
+
+  @override
+  String get addResourcesTitle => 'Add Resources';
+
+  @override
+  String get chooseResourcesDescription =>
+      'Choose the resources you want to add for processing.';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get allergyIntolerance => 'Allergy Intolerance';
+
+  @override
+  String get condition => 'Condition';
+
+  @override
+  String get diagnosticReport => 'Diagnostic Report';
+
+  @override
+  String get medicationStatement => 'Medication Statement';
+
+  @override
+  String get observation => 'Observation';
+
+  @override
+  String get organization => 'Organization';
+
+  @override
+  String get practitioner => 'Practitioner';
+
+  @override
+  String get procedure => 'Procedure';
+
+  @override
+  String get tapToViewProgress => 'Tap anywhere to view progress';
+
+  @override
+  String screenWillDarkenInSeconds(int remainingSeconds) {
+    return 'The screen will darken in $remainingSeconds seconds.';
+  }
+
+  @override
+  String get screenWillDarkenInZeroSeconds =>
+      'The screen will darken in 0 seconds.';
+
+  @override
+  String get whileDocumentsProcessed =>
+      'While your documents are being processed:';
+
+  @override
+  String get doNotLockScreen => 'Do not lock the screen or exit the app.';
+
+  @override
+  String get plugInCharger => 'Plug in the charger.';
+
+  @override
+  String get exitFocusMode => 'Exit Focus Mode';
+
+  @override
+  String get chargerPluggedIn => 'Charger plugged in.';
+
+  @override
+  String get plugInChargerEllipsis => 'Plug in the charger...';
 }

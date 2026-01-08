@@ -3,7 +3,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'dropdown_field.dart';
+import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 
 class FormFields {
   static Widget buildFieldLabel(BuildContext context, String label) {
@@ -92,11 +92,11 @@ class FormFields {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildFieldLabel(context, label),
-        DropdownField(
+        AppDropdownField<String>(
           value: value,
           items: items,
+          getDisplayText: (item) => item,
           onChanged: onChanged,
-          isSelected: true,
         ),
       ],
     );
