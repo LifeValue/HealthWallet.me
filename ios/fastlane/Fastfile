@@ -1,0 +1,76 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Sync certificates and provisioning profiles via Match"
+  lane :sync_certificates do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: Base64.decode64(ENV["ASC_KEY_CONTENT"]),
+      is_key_content_base64: false
+    )
+
+    match(
+      type: "appstore",
+      app_identifier: [
+        "com.techstackapps.healthwallet",
+        "com.techstackapps.healthwallet.Share-Extension"
+      ],
+      api_key: api_key,
+      readonly: is_ci
+    )
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    sync_certificates
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: Base64.decode64(ENV["ASC_KEY_CONTENT"]),
+      is_key_content_base64: false
+    )
+
+    # Override Automatic signing to Manual for CI builds
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "Runner.xcodeproj",
+      team_id: ENV["sigh_com.techstackapps.healthwallet_appstore_team-id"] || CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
+      targets: ["Runner"],
+      code_sign_identity: "iPhone Distribution",
+      profile_name: ENV["sigh_com.techstackapps.healthwallet_appstore_profile-name"]
+    )
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "Runner.xcodeproj",
+      team_id: ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_team-id"] || CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
+      targets: ["Share Extension"],
+      code_sign_identity: "iPhone Distribution",
+      profile_name: ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_profile-name"]
+    )
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.techstackapps.healthwallet" => ENV["sigh_com.techstackapps.healthwallet_appstore_profile-name"],
+          "com.techstackapps.healthwallet.Share-Extension" => ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_profile-name"]
+        }
+      }
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Release — uploads to TestFlight (production promotion is manual in ASC)"
+  lane :release do
+    beta
+  end
+end

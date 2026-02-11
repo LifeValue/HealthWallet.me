@@ -1,0 +1,89 @@
+name: iOS Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: "Fastlane lane"
+        required: true
+        type: choice
+        options:
+          - beta
+          - release
+
+concurrency:
+  group: ios-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to TestFlight (${{ inputs.lane }})
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH for private dependency
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add private dependency host to known_hosts
+        run: ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.4"
+          cache: true
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Install CocoaPods dependencies
+        run: cd ios && pod install
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Configure Match git credentials
+        run: |
+          git config --global credential.helper store
+          echo "https://x-access-token:${{ secrets.MATCH_GIT_PAT }}@github.com" > ~/.git-credentials
+
+      - name: Create CI keychain
+        run: |
+          security create-keychain -p "" fastlane_keychain
+          security default-keychain -s fastlane_keychain
+          security unlock-keychain -p "" fastlane_keychain
+          security set-keychain-settings -t 3600 -u fastlane_keychain
+
+      - name: Deploy to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_KEYCHAIN_NAME: fastlane_keychain
+          MATCH_KEYCHAIN_PASSWORD: ""
+        run: |
+          cd ios
+          bundle exec fastlane ${{ inputs.lane }}
+
+      - name: Cleanup keychain and credentials
+        if: always()
+        run: |
+          security delete-keychain fastlane_keychain || true
+          rm -f ~/.git-credentials

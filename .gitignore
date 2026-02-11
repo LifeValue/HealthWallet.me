@@ -65,4 +65,19 @@ lib/gen
 # Fastlane
 ios/fastlane/Appfile
 ios/fastlane/Matchfile
- 
+android/fastlane/service-account.json
+android/fastlane/report.xml
+android/fastlane/Preview.html
+android/fastlane/README.md
+ios/fastlane/report.xml
+ios/fastlane/Preview.html
+ios/fastlane/README.md
+ios/fastlane/test_output/
+**/fastlane/.env*
+
+# Ruby / Bundler
+vendor/bundle
+.bundle
+
+# App Store Connect API key
+*.p8
