@@ -40,10 +40,24 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(schema.recordNotes);
           },
           from3To5: (m, schema) async {
+            // Drop the record_attachments table (removed in v5)
+            await m.deleteTable('record_attachments');
+            // Rename 'name' column to 'platform_name' on sources
+            await customStatement(
+                'ALTER TABLE sources RENAME COLUMN name TO platform_name');
+            // Add new columns to sources
             await m.addColumn(schema.sources, schema.sources.labelSource);
+            await m.addColumn(schema.sources, schema.sources.platformType);
+            await m.addColumn(schema.sources, schema.sources.createdAt);
+            await m.addColumn(schema.sources, schema.sources.updatedAt);
+            // Recreate record_notes to update column constraints
+            // (resource_id FK removed, source_id column added)
+            await m.alterTable(TableMigration(schema.recordNotes));
+            // Create processing_sessions table
+            await m.createTable(schema.processingSessions);
           },
           from5To6: (m, schema) async {
-            await m.createTable(schema.processingSessions);
+            // No schema changes between v5 and v6
           },
           from6To7: (m, schema) async {
             await m.addColumn(
