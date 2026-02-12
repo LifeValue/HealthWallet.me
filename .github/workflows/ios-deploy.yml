@@ -36,6 +36,8 @@ jobs:
         run: |
           cp ~/.ci-secrets/root.env .env
           cp ~/.ci-secrets/ios/fastlane.env ios/fastlane/.env
+          cp ~/.ci-secrets/ios/Matchfile ios/fastlane/Matchfile
+          cp ~/.ci-secrets/ios/Appfile ios/fastlane/Appfile
           cp -r ~/.ci-secrets/ios/private_keys ios/fastlane/private_keys
 
       - name: Install dependencies
@@ -56,9 +58,6 @@ jobs:
           echo "https://x-access-token:${{ secrets.MATCH_GIT_PAT }}@github.com" > ~/.git-credentials
 
       - name: Deploy to TestFlight
-        env:
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
           cd ios
           bundle exec fastlane ${{ inputs.lane }}
@@ -69,4 +68,6 @@ jobs:
           rm -f ~/.git-credentials
           rm -f .env
           rm -f ios/fastlane/.env
+          rm -f ios/fastlane/Matchfile
+          rm -f ios/fastlane/Appfile
           rm -rf ios/fastlane/private_keys
