@@ -48,7 +48,7 @@ jobs:
         run: fvm dart run build_runner build --delete-conflicting-outputs
 
       - name: Install CocoaPods dependencies
-        run: cd ios && pod install
+        run: cd ios && rm -rf Podfile.lock Pods && pod install --repo-update
 
       - name: Install Fastlane dependencies
         run: cd ios && bundle install

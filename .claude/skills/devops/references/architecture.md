@@ -96,7 +96,7 @@ Checkout
   │
   ├── fvm dart run build_runner build
   │
-  ├── cd ios && pod install
+  ├── cd ios && rm -rf Podfile.lock Pods && pod install --repo-update
   │
   ├── cd ios && bundle install
   │
@@ -152,6 +152,41 @@ The runner's `.env` file at `/Users/ciagent/actions-runner/.env` configures PATH
 - Wraps flutter build in `Bundler.with_unbundled_env` so CocoaPods is visible to Flutter
 - Auto-increments build number from `latest_testflight_build_number + 1`
 - ASC API key loaded from file (`ASC_KEY_PATH`) or base64 env var (`ASC_KEY_CONTENT`)
+
+## Build Version Strategy
+
+Both platforms use **automatic build number incrementing** — no manual version bumps needed for build numbers.
+
+### Version Name (e.g., `1.1.1`)
+- Read from `pubspec.yaml` (`version: X.Y.Z+N` → extracts `X.Y.Z`)
+- Bump manually in `pubspec.yaml` when releasing a new version
+- The `+N` part in pubspec is ignored by Fastlane (build number is auto-managed)
+
+### Build Number (auto-incremented)
+
+| Platform | Source | Method |
+|----------|--------|--------|
+| **iOS** | TestFlight | `latest_testflight_build_number(version: version_name) + 1` |
+| **Android** | Google Play | `google_play_track_version_codes(track: "internal")[0] + 1` |
+
+This means:
+- You only bump the **version name** in `pubspec.yaml` (e.g., `1.1.1` → `1.2.0`)
+- Build numbers are **never set manually** — they auto-increment from the store
+- Each deploy gets the next sequential build number for that version
+- If TestFlight/Play Store has no builds for the version, it starts at 1
+
+### How it flows
+```
+pubspec.yaml: version: 1.2.0+22  (the +22 is ignored by Fastlane)
+                          │
+              ┌───────────┴───────────┐
+              │                       │
+         iOS Fastlane           Android Fastlane
+              │                       │
+  TestFlight latest: 7     Play Store latest: 45
+              │                       │
+  Build: 1.2.0 (8)        Build: 1.2.0 (46)
+```
 
 ## Signing Strategy
 
