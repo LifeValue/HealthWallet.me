@@ -52,12 +52,18 @@ jobs:
       - name: Install Fastlane dependencies
         run: cd ios && bundle install
 
-      - name: Unlock keychain for code signing
+      - name: Setup CI keychain
         run: |
-          security unlock-keychain -p "" ~/Library/Keychains/ciagent.keychain-db
-          security set-keychain-settings -t 3600 -u ~/Library/Keychains/ciagent.keychain-db
+          security create-keychain -p "ci" ci_build.keychain-db || true
+          security unlock-keychain -p "ci" ci_build.keychain-db
+          security set-keychain-settings -t 3600 -u ci_build.keychain-db
+          security list-keychains -d user -s ci_build.keychain-db login.keychain-db
+          security default-keychain -s ci_build.keychain-db
 
       - name: Deploy to TestFlight
+        env:
+          MATCH_KEYCHAIN_NAME: ci_build.keychain-db
+          MATCH_KEYCHAIN_PASSWORD: ci
         run: |
           cd ios
           bundle exec fastlane ${{ inputs.lane }}
@@ -65,6 +71,9 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
+          security delete-keychain ci_build.keychain-db || true
+          security list-keychains -d user -s login.keychain-db
+          security default-keychain -s login.keychain-db
           rm -f .env
           rm -f ios/fastlane/.env
           rm -f ios/fastlane/Matchfile
