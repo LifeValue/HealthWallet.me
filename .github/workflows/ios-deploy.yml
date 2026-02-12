@@ -29,16 +29,10 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Add private dependency host to known_hosts
-        run: ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
-
-      - name: Restore local secrets
+      - name: Add hosts to known_hosts
         run: |
-          cp ~/.ci-secrets/root.env .env
-          cp ~/.ci-secrets/ios/fastlane-ci.env ios/fastlane/.env
-          cp ~/.ci-secrets/ios/Matchfile ios/fastlane/Matchfile
-          cp ~/.ci-secrets/ios/Appfile ios/fastlane/Appfile
-          cp -r ~/.ci-secrets/ios/private_keys ios/fastlane/private_keys
+          ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Install dependencies
         run: fvm flutter pub get
@@ -62,6 +56,11 @@ jobs:
 
       - name: Deploy to TestFlight
         env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_KEYCHAIN_NAME: ci_build.keychain-db
           MATCH_KEYCHAIN_PASSWORD: ci
         run: |
@@ -74,8 +73,3 @@ jobs:
           security delete-keychain ci_build.keychain-db || true
           security list-keychains -d user -s login.keychain-db
           security default-keychain -s login.keychain-db
-          rm -f .env
-          rm -f ios/fastlane/.env
-          rm -f ios/fastlane/Matchfile
-          rm -f ios/fastlane/Appfile
-          rm -rf ios/fastlane/private_keys
