@@ -39,6 +39,8 @@ jobs:
           cp ~/.ci-secrets/ios/Matchfile ios/fastlane/Matchfile
           cp ~/.ci-secrets/ios/Appfile ios/fastlane/Appfile
           cp -r ~/.ci-secrets/ios/private_keys ios/fastlane/private_keys
+          cp ~/.ci-secrets/git-credentials ~/.git-credentials
+          git config --global credential.helper store
 
       - name: Install dependencies
         run: fvm flutter pub get
@@ -65,3 +67,4 @@ jobs:
           rm -f ios/fastlane/Matchfile
           rm -f ios/fastlane/Appfile
           rm -rf ios/fastlane/private_keys
+          rm -f ~/.git-credentials
