@@ -52,20 +52,14 @@ jobs:
       - name: Install Fastlane dependencies
         run: cd ios && bundle install
 
-      - name: Configure Match git credentials
-        run: |
-          git config --global credential.helper store
-          echo "https://x-access-token:${{ secrets.MATCH_GIT_PAT }}@github.com" > ~/.git-credentials
-
       - name: Deploy to TestFlight
         run: |
           cd ios
           bundle exec fastlane ${{ inputs.lane }}
 
-      - name: Cleanup credentials
+      - name: Cleanup
         if: always()
         run: |
-          rm -f ~/.git-credentials
           rm -f .env
           rm -f ios/fastlane/.env
           rm -f ios/fastlane/Matchfile
