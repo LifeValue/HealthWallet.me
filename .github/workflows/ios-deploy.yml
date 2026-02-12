@@ -34,6 +34,13 @@ jobs:
           ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
+      - name: Restore API key from secret
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+        run: |
+          mkdir -p ios/fastlane/private_keys
+          echo "$ASC_KEY_CONTENT" | base64 -d > ios/fastlane/private_keys/AuthKey.p8
+
       - name: Install dependencies
         run: fvm flutter pub get
 
@@ -58,7 +65,7 @@ jobs:
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          ASC_KEY_PATH: ./private_keys/AuthKey.p8
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_KEYCHAIN_NAME: ci_build.keychain-db
@@ -73,3 +80,4 @@ jobs:
           security delete-keychain ci_build.keychain-db || true
           security list-keychains -d user -s login.keychain-db
           security default-keychain -s login.keychain-db
+          rm -rf ios/fastlane/private_keys

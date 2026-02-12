@@ -22,7 +22,7 @@ platform :ios do
         key_filepath: key_path
       )
     elsif ENV["ASC_KEY_CONTENT"]
-      # CI/CD: use base64-encoded content (let Fastlane decode it)
+      # CI/CD fallback: use base64-encoded content
       app_store_connect_api_key(
         key_id: ENV["ASC_KEY_ID"],
         issuer_id: ENV["ASC_ISSUER_ID"],
