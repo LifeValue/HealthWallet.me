@@ -39,7 +39,7 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
         run: |
           mkdir -p ios/fastlane/private_keys
-          echo "$ASC_KEY_CONTENT" | base64 -d > ios/fastlane/private_keys/AuthKey.p8
+          printf '%s\n' "$ASC_KEY_CONTENT" > ios/fastlane/private_keys/AuthKey.p8
 
       - name: Install dependencies
         run: fvm flutter pub get
