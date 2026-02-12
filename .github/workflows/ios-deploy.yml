@@ -52,6 +52,11 @@ jobs:
       - name: Install Fastlane dependencies
         run: cd ios && bundle install
 
+      - name: Unlock keychain for code signing
+        run: |
+          security unlock-keychain -p "" ~/Library/Keychains/ciagent.keychain-db
+          security set-keychain-settings -t 3600 -u ~/Library/Keychains/ciagent.keychain-db
+
       - name: Deploy to TestFlight
         run: |
           cd ios
