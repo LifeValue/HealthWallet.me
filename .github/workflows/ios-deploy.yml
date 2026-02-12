@@ -32,8 +32,11 @@ jobs:
       - name: Add private dependency host to known_hosts
         run: ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
 
-      - name: Create .env file
-        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+      - name: Restore local secrets
+        run: |
+          cp ~/.ci-secrets/root.env .env
+          cp ~/.ci-secrets/ios/fastlane.env ios/fastlane/.env
+          cp -r ~/.ci-secrets/ios/private_keys ios/fastlane/private_keys
 
       - name: Install dependencies
         run: fvm flutter pub get
@@ -54,9 +57,6 @@ jobs:
 
       - name: Deploy to TestFlight
         env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
@@ -68,3 +68,5 @@ jobs:
         run: |
           rm -f ~/.git-credentials
           rm -f .env
+          rm -f ios/fastlane/.env
+          rm -rf ios/fastlane/private_keys
