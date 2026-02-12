@@ -68,9 +68,6 @@ jobs:
       - name: Reduce Gradle heap for CI
         run: sed -i 's/-Xmx8G/-Xmx4G/' android/gradle.properties
 
-      - name: Build AAB
-        run: flutter build appbundle --release
-
       - name: Decode service account JSON
         run: echo "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > android/fastlane/service-account.json
 

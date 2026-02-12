@@ -7,7 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_doc_scanner
   gtk
   open_file_linux
-  gtk
+  printing
   sqlite3_flutter_libs
   url_launcher_linux
 )

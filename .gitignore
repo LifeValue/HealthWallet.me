@@ -81,3 +81,14 @@ vendor/bundle
 
 # App Store Connect API key
 *.p8
+# iOS private keys and certificates (never commit these!)
+ios/fastlane/private_keys/
+ios/fastlane/.env
+# iOS certificate files
+*.cer
+*.certSigningRequest
+*.p12
+
+# iOS build artifacts
+ios/*.ipa
+ios/*.dSYM.zip
