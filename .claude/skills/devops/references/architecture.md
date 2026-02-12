@@ -7,10 +7,13 @@
 │                        GitHub Repository                         │
 │                                                                   │
 │  master ──────┬──── Push/PR ────→ CI Workflow (analyze + test)   │
-│  develop ─────┘                                                   │
+│  develop ─────┘                   (ubuntu-latest)                │
 │                                                                   │
 │  Manual Trigger ──→ Android Deploy Workflow ──→ Google Play      │
+│                     (ubuntu-latest)                               │
+│                                                                   │
 │  Manual Trigger ──→ iOS Deploy Workflow ──→ TestFlight           │
+│                     (self-hosted Mac Mini)                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -26,7 +29,7 @@ Checkout
   │
   ├── Configure SSH (private dependency)
   │
-  ├── Install Flutter 3.32.4
+  ├── Install Flutter 3.32.4 (subosito/flutter-action)
   │
   ├── Create .env from secret
   │
@@ -34,7 +37,7 @@ Checkout
   │
   ├── dart run build_runner build
   │
-  ├── flutter analyze --no-fatal-infos
+  ├── flutter analyze --no-fatal-infos --no-fatal-warnings
   │
   └── flutter test --coverage
 ```
@@ -51,7 +54,7 @@ Checkout
   │
   ├── Setup Java 17 (Temurin)
   │
-  ├── Install Flutter 3.32.4
+  ├── Install Flutter 3.32.4 (subosito/flutter-action)
   │
   ├── Create .env from secret
   │
@@ -62,8 +65,6 @@ Checkout
   ├── flutter pub get + code generation
   │
   ├── Reduce Gradle heap (8GB → 4GB)
-  │
-  ├── flutter build appbundle --release
   │
   ├── Decode service account JSON
   │
@@ -77,31 +78,57 @@ Checkout
 ### 3. iOS Deploy Workflow (`ios-deploy.yml`)
 
 **Trigger:** `workflow_dispatch` with lane selection (beta/release)
-**Runner:** `macos-15` (Xcode 16.x)
+**Runner:** `[self-hosted, macOS]` — Mac Mini with FVM, Ruby, CocoaPods pre-installed
 
 ```
 Checkout
   │
-  ├── Configure SSH (private dependency)
+  ├── Configure SSH (webfactory/ssh-agent)
+  │     └── Loads SSH_PRIVATE_KEY for both git.techstackapps.com and github.com
   │
-  ├── Install Flutter 3.32.4
+  ├── Add hosts to known_hosts
+  │     └── git.techstackapps.com:2822 + github.com
   │
-  ├── Create .env from secret
+  ├── Restore API key from secret
+  │     └── Writes raw ASC_KEY_CONTENT → ios/fastlane/private_keys/AuthKey.p8
   │
-  ├── flutter pub get + code generation
+  ├── fvm flutter pub get
   │
-  ├── pod install
+  ├── fvm dart run build_runner build
   │
-  ├── Setup Ruby 3.2 + bundle install
+  ├── cd ios && pod install
   │
-  ├── Configure Match git credentials
+  ├── cd ios && bundle install
   │
-  ├── Create CI keychain (fastlane_keychain)
+  ├── Setup CI keychain
+  │     └── Creates ci_build.keychain-db with password "ci"
+  │     └── Sets as default keychain
   │
-  ├── fastlane beta OR release (based on lane)
+  ├── Deploy to TestFlight
+  │     └── Env vars: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH,
+  │         MATCH_GIT_URL (SSH), MATCH_PASSWORD,
+  │         MATCH_KEYCHAIN_NAME, MATCH_KEYCHAIN_PASSWORD
+  │     └── cd ios && bundle exec fastlane <lane>
   │
-  └── Delete keychain + credentials (always)
+  └── Cleanup (always)
+        └── Delete ci_build.keychain-db
+        └── Restore login.keychain-db as default
+        └── rm -rf ios/fastlane/private_keys
 ```
+
+## Self-Hosted Runner (Mac Mini)
+
+The iOS deploy workflow runs on a self-hosted macOS runner.
+
+| Property | Value |
+|----------|-------|
+| Location | Mac Mini (`ciagent` user) |
+| Runner directory | `/Users/ciagent/actions-runner/` |
+| Service name | `actions.runner.LifeValue-HealthWallet.me.mac-mini` |
+| Work directory | `/Users/ciagent/actions-runner/_work/HealthWallet.me/` |
+| Pre-installed tools | FVM (Flutter 3.32.4), Ruby 3.0.0 (rbenv), CocoaPods 1.16.2, Xcode |
+
+The runner's `.env` file at `/Users/ciagent/actions-runner/.env` configures PATH to include FVM, rbenv, Homebrew, and other tools.
 
 ## Fastlane Lanes
 
@@ -117,8 +144,14 @@ Checkout
 | Lane | Action | Destination |
 |------|--------|-------------|
 | `sync_certificates` | Match appstore for both bundle IDs | — |
-| `beta` | Sync certs → override signing → build → upload | TestFlight |
+| `beta` | Sync certs → flutter build (via Bundler.with_unbundled_env) → override signing → build → upload | TestFlight |
 | `release` | Calls `beta` (production promotion is manual in ASC) | TestFlight |
+
+**Key implementation details:**
+- Uses `fvm flutter` (not bare `flutter`) for builds
+- Wraps flutter build in `Bundler.with_unbundled_env` so CocoaPods is visible to Flutter
+- Auto-increments build number from `latest_testflight_build_number + 1`
+- ASC API key loaded from file (`ASC_KEY_PATH`) or base64 env var (`ASC_KEY_CONTENT`)
 
 ## Signing Strategy
 
@@ -127,7 +160,8 @@ Checkout
 - On CI: keystore decoded from base64 secret, `key.properties` written from individual secrets
 
 ### iOS
-- **Local:** Automatic signing (Xcode manages)
+- **Local:** Automatic signing (Xcode manages), `.env` file provides Match credentials
 - **CI:** Manual signing via `update_code_signing_settings` at build time
-- Certificates: Fastlane Match (appstore type) from a private git repo
+- Certificates: Fastlane Match (appstore type) from a private git repo (cloned via SSH)
 - Two provisioning profiles: Runner + Share Extension
+- CI keychain: Temporary `ci_build.keychain-db` created per build, deleted after

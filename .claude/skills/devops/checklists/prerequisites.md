@@ -4,7 +4,40 @@ Complete these steps before the CI/CD pipeline can run successfully.
 
 ---
 
-## 1. Android Upload Keystore
+## 1. Self-Hosted Runner (Mac Mini) — iOS Builds
+
+The iOS deploy workflow runs on a self-hosted macOS runner (Mac Mini).
+
+### Runner setup:
+1. Download and configure the GitHub Actions runner:
+   ```bash
+   mkdir actions-runner && cd actions-runner
+   # Download latest runner package from GitHub
+   ./config.sh --url https://github.com/LifeValue/HealthWallet.me --token <REGISTRATION_TOKEN>
+   ```
+2. Install as a launchd service:
+   ```bash
+   sudo ./svc.sh install
+   sudo ./svc.sh start
+   ```
+3. Configure runner environment (`actions-runner/.env`):
+   ```
+   PATH=/Users/ciagent/.rbenv/shims:/Users/ciagent/.rbenv/bin:/opt/homebrew/bin:...
+   RBENV_ROOT=/Users/ciagent/.rbenv
+   GEM_HOME=/Users/ciagent/.gem
+   LANG=en_US.UTF-8
+   ```
+
+### Required tools on the Mac Mini:
+- **FVM** with Flutter 3.32.4 pinned (`.fvmrc` in project root)
+- **Ruby** 3.0+ via rbenv
+- **CocoaPods** 1.16.2+
+- **Xcode** with iOS SDK
+- **Bundler** for Fastlane gem management
+
+---
+
+## 2. Android Upload Keystore
 
 Generate a keystore for signing release builds:
 
@@ -32,35 +65,16 @@ Store as `ANDROID_KEYSTORE_BASE64` GitHub Secret.
 
 ---
 
-## 2. First Manual Google Play Upload
+## 3. First Manual Google Play Upload
 
 **Important:** Fastlane `supply` cannot upload to Google Play until at least one APK/AAB has been uploaded manually.
 
-1. Build a release AAB: `flutter build appbundle --release`
+1. Build a release AAB: `fvm flutter build appbundle --release`
 2. Go to [Google Play Console](https://play.google.com/console)
 3. Create the app if it doesn't exist
 4. Navigate to **Release > Testing > Internal testing**
 5. Create a new release and upload the AAB manually
 6. Complete the release
-
----
-
-## 3. Google Play Service Account
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Select or create a project linked to your Play Console
-3. Navigate to **IAM & Admin > Service Accounts**
-4. Create a service account with a descriptive name (e.g., `fastlane-deploy`)
-5. Create a JSON key and download it
-6. Go to [Google Play Console](https://play.google.com/console) > **Settings > API access**
-7. Link the Google Cloud project
-8. Grant the service account **Release manager** permissions for the app
-
-For local use: save as `android/fastlane/service-account.json` (gitignored).
-For CI: base64-encode and store as `PLAY_STORE_SERVICE_ACCOUNT_BASE64`:
-```bash
-base64 -i android/fastlane/service-account.json | pbcopy
-```
 
 ---
 
@@ -76,10 +90,12 @@ base64 -i android/fastlane/service-account.json | pbcopy
 Store these as GitHub Secrets:
 - `ASC_KEY_ID` — the Key ID
 - `ASC_ISSUER_ID` — the Issuer ID
-- `ASC_KEY_CONTENT` — base64-encoded `.p8` file content:
+- `ASC_KEY_CONTENT` — the **raw** `.p8` file content (NOT base64):
   ```bash
-  base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy
+  cat AuthKey_XXXXXXXXXX.p8 | pbcopy
   ```
+
+For local dev, place the `.p8` file at `ios/fastlane/private_keys/AuthKey_XXXXXXXXXX.p8` and set `ASC_KEY_PATH` in `ios/fastlane/.env`.
 
 ---
 
@@ -107,9 +123,26 @@ bundle exec fastlane match appstore \
 This creates and stores certificates + profiles in the Match repo.
 
 ### For CI:
-- `MATCH_GIT_URL` — HTTPS URL to the certificates repo
+- `MATCH_GIT_URL` — SSH URL to the certificates repo: `git@github.com:ciagent-techstackapps/ios-certs.git`
 - `MATCH_PASSWORD` — the encryption password chosen during `match init`
-- `MATCH_GIT_PAT` — a GitHub Personal Access Token with `repo` scope for the certificates repo
+- Authentication handled by `SSH_PRIVATE_KEY` via `webfactory/ssh-agent` (no separate PAT needed)
+
+### Changing the Match password:
+```ruby
+# Run from ios/ directory via: bundle exec ruby script.rb
+require "match"
+old_pass = "<old_password>"
+new_pass = "<new_password>"
+files = Dir.glob("/path/to/certs-repo/**/*.{p12,cer,mobileprovision}")
+files.each do |f|
+  data = File.binread(f)
+  enc = Match::Encryption::MatchDataEncryption.new
+  decrypted = enc.decrypt(base64encoded_encrypted: data, password: old_pass)
+  encrypted = enc.encrypt(data: decrypted, password: new_pass)
+  File.binwrite(f, encrypted)
+end
+```
+Then commit and push the certs repo, and update the `MATCH_PASSWORD` GitHub Secret + local `.env`.
 
 ---
 
@@ -122,12 +155,9 @@ The `fhir_ips_export` package is fetched via SSH from `git.techstackapps.com:282
    ssh-keygen -t ed25519 -C "github-actions-healthwallet" -f healthwallet_deploy_key
    ```
 2. Add the **public** key as a deploy key on the `fhir-ips-export` repo
-3. Base64-encode the **private** key and store as `SSH_PRIVATE_KEY` GitHub Secret:
-   ```bash
-   base64 -i healthwallet_deploy_key | pbcopy
-   ```
+3. Store the raw **private** key content as the `SSH_PRIVATE_KEY` GitHub Secret
 
-   Or store the raw private key content directly (the workflow uses `webfactory/ssh-agent`).
+The same SSH key must also have access to the `ios-certs` GitHub repo for Match to clone certificates.
 
 ---
 
@@ -138,28 +168,29 @@ The app uses `envied` for compile-time environment variables. The `.env` file co
 1. Copy your local `.env` file content
 2. Store the entire content as `ENV_FILE_CONTENT` GitHub Secret
 
+**Note:** This is only used by the CI workflow (`ci.yml`). The iOS deploy workflow on the Mac Mini does not use this secret.
+
 ---
 
-## 8. GitHub Secrets Inventory
+## 8. GitHub Secrets Summary
 
 All secrets must be configured in **Repository Settings > Secrets and variables > Actions**.
 
-| Secret Name | Description |
-|-------------|-------------|
-| `SSH_PRIVATE_KEY` | SSH private key for `git.techstackapps.com:2822` |
-| `ENV_FILE_CONTENT` | Contents of the `.env` file for envied |
-| `ANDROID_KEYSTORE_BASE64` | Base64-encoded upload keystore |
-| `ANDROID_KEY_ALIAS` | Keystore key alias (e.g., `upload`) |
-| `ANDROID_KEY_PASSWORD` | Keystore key password |
-| `ANDROID_STORE_PASSWORD` | Keystore store password |
-| `PLAY_STORE_SERVICE_ACCOUNT_BASE64` | Base64-encoded Google Play service account JSON |
-| `ASC_KEY_ID` | App Store Connect API Key ID |
-| `ASC_ISSUER_ID` | App Store Connect Issuer ID |
-| `ASC_KEY_CONTENT` | Base64-encoded ASC API key (.p8) |
-| `MATCH_GIT_URL` | HTTPS URL to Match certificates repo |
-| `MATCH_PASSWORD` | Match encryption password |
-| `MATCH_GIT_PAT` | GitHub PAT with repo access to certificates repo |
+| Secret Name | Description | Format |
+|-------------|-------------|--------|
+| `SSH_PRIVATE_KEY` | SSH private key for git.techstackapps.com + github.com | Raw key |
+| `ENV_FILE_CONTENT` | Contents of the `.env` file for envied | Raw text |
+| `ANDROID_KEYSTORE_BASE64` | Base64-encoded upload keystore | Base64 |
+| `ANDROID_KEY_ALIAS` | Keystore key alias (e.g., `upload`) | Plain text |
+| `ANDROID_KEY_PASSWORD` | Keystore key password | Plain text |
+| `ANDROID_STORE_PASSWORD` | Keystore store password | Plain text |
+| `PLAY_STORE_SERVICE_ACCOUNT_BASE64` | Base64-encoded Google Play service account JSON | Base64 |
+| `ASC_KEY_ID` | App Store Connect API Key ID | Plain text |
+| `ASC_ISSUER_ID` | App Store Connect Issuer ID | Plain text |
+| `ASC_KEY_CONTENT` | Raw ASC API key (.p8 content) | Raw text |
+| `MATCH_GIT_URL` | SSH URL to Match certificates repo | SSH URL |
+| `MATCH_PASSWORD` | Match encryption password | Plain text |
 
-**Total: 13 secrets**
+**Total: 12 secrets**
 
 See `references/secrets-inventory.md` for detailed generation instructions for each secret.

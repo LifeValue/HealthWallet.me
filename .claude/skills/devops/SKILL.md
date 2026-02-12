@@ -10,8 +10,8 @@ You are a DevOps assistant for the HealthWallet.me Flutter mobile app. You help 
 |----------|-------|
 | Package ID (both platforms) | `com.techstackapps.healthwallet` |
 | iOS Share Extension Bundle ID | `com.techstackapps.healthwallet.Share-Extension` |
-| Apple Team ID | Found in `ios/fastlane/Appfile` (local only) |
-| Flutter version | 3.32.4 (managed via FVM) |
+| Apple Team ID | `N668J5X92P` (in `ios/fastlane/Appfile`) |
+| Flutter version | 3.32.4 (managed via FVM on self-hosted runner) |
 | Android build system | Kotlin DSL (`build.gradle.kts`), AGP 8.7.3, Java 17 |
 | iOS workspace | `Runner.xcworkspace` (includes Share Extension) |
 | Main branch | `master` |
@@ -30,7 +30,7 @@ You are a DevOps assistant for the HealthWallet.me Flutter mobile app. You help 
 
 ### Code Generation (required before every build)
 ```bash
-dart run build_runner build --delete-conflicting-outputs
+fvm dart run build_runner build --delete-conflicting-outputs
 ```
 Generates: `*.freezed.dart`, `*.g.dart`, `*.config.dart`, `*.gr.dart` (all gitignored)
 
@@ -43,16 +43,18 @@ Generates: `*.freezed.dart`, `*.g.dart`, `*.config.dart`, `*.gr.dart` (all gitig
 ### iOS
 - Signing: Automatic locally, **overridden to Manual on CI** via `update_code_signing_settings`
 - Certificates: Fastlane Match (appstore type) for both Runner and Share Extension
+- Match certs repo: `git@github.com:ciagent-techstackapps/ios-certs.git` (cloned via SSH)
 - Build: `gym` via `Runner.xcworkspace`
+- Fastfile uses `fvm flutter` and wraps flutter build in `Bundler.with_unbundled_env` for CocoaPods compatibility
 
 ## CI/CD Pipeline Architecture
 
 See `references/architecture.md` for the full pipeline diagram.
 
 ### Workflows
-1. **CI** (`.github/workflows/ci.yml`) — runs on push/PR to `master`/`develop`; analyze + test
-2. **Android Deploy** (`.github/workflows/android-deploy.yml`) — manual trigger; builds AAB + uploads to Google Play
-3. **iOS Deploy** (`.github/workflows/ios-deploy.yml`) — manual trigger; builds IPA + uploads to TestFlight
+1. **CI** (`.github/workflows/ci.yml`) — runs on push/PR to `master`/`develop`; analyze + test (ubuntu-latest)
+2. **Android Deploy** (`.github/workflows/android-deploy.yml`) — manual trigger; builds AAB + uploads to Google Play (ubuntu-latest)
+3. **iOS Deploy** (`.github/workflows/ios-deploy.yml`) — manual trigger; builds IPA + uploads to TestFlight (**self-hosted Mac Mini**)
 
 ### Secrets
 See `references/secrets-inventory.md` for the full list with generation instructions.
@@ -72,6 +74,13 @@ org.gradle.workers.max=2
 1. Ensure Match certificates are not expired: `cd ios && bundle exec fastlane match nuke appstore` then re-create
 2. Verify both bundle IDs are in Matchfile
 3. Check that `MATCH_PASSWORD` secret is correct
+
+### CI keychain issues
+**Symptom:** `errSecInternalComponent` or codesign cannot access keychain
+**Fix:** The workflow creates a dedicated `ci_build.keychain-db` with known password. Ensure:
+1. `MATCH_KEYCHAIN_NAME` and `MATCH_KEYCHAIN_PASSWORD` env vars are set on the deploy step
+2. The keychain is created and unlocked before fastlane runs
+3. Cleanup step deletes the keychain (even on failure)
 
 ### Private dependency SSH timeout
 **Symptom:** `pub get` fails with SSH connection timeout
