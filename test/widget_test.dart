@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/app/app.dart';
-import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/di/injection.dart' hide PdfStorageService;
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
