@@ -7,14 +7,13 @@ platform :ios do
   desc "Read version name from pubspec.yaml"
   private_lane :get_version_name do
     pubspec = File.read("../../pubspec.yaml")
-    version_full = pubspec.match(/version:\s*(\S+)/)[1] # e.g. "1.1.1+22"
-    version_full.split("+")[0] # e.g. "1.1.1"
+    version_full = pubspec.match(/version:\s*(\S+)/)[1]
+    version_full.split("+")[0]
   end
 
   desc "Get App Store Connect API key (supports local file or base64)"
   private_lane :get_asc_api_key do
     if ENV["ASC_KEY_PATH"] && File.exist?(ENV["ASC_KEY_PATH"])
-      # Local development: use .p8 file directly
       key_path = File.expand_path(ENV["ASC_KEY_PATH"])
       app_store_connect_api_key(
         key_id: ENV["ASC_KEY_ID"],
@@ -22,7 +21,6 @@ platform :ios do
         key_filepath: key_path
       )
     elsif ENV["ASC_KEY_CONTENT"]
-      # CI/CD fallback: use base64-encoded content
       app_store_connect_api_key(
         key_id: ENV["ASC_KEY_ID"],
         issuer_id: ENV["ASC_ISSUER_ID"],
@@ -45,9 +43,9 @@ platform :ios do
         "com.techstackapps.healthwallet.Share-Extension"
       ],
       api_key: api_key,
-      readonly: is_ci,  # Readonly in CI, can create profiles locally
-      skip_certificate_matching: !is_ci,  # Skip cert matching when running locally
-      generate_apple_certs: false  # Don't create new certificates, use existing ones
+      readonly: is_ci,
+      skip_certificate_matching: !is_ci,
+      generate_apple_certs: false
     )
   end
 
@@ -59,7 +57,6 @@ platform :ios do
 
     version_name = get_version_name
 
-    # Fetch latest TestFlight build number and increment
     build_number = latest_testflight_build_number(
       api_key: api_key,
       version: version_name,
@@ -68,8 +65,6 @@ platform :ios do
 
     UI.message("Building version #{version_name} (#{build_number})")
 
-    # Pre-build Flutter without code signing (Fastlane handles signing)
-    # Use unbundled env so CocoaPods is visible to Flutter's Ruby detection
     Dir.chdir("../..") do
       Bundler.with_unbundled_env do
         sh("fvm", "flutter", "build", "ios", "--release", "--no-codesign",
@@ -78,7 +73,6 @@ platform :ios do
       end
     end
 
-    # Override Automatic signing to Manual for CI builds
     update_code_signing_settings(
       use_automatic_signing: false,
       path: "Runner.xcodeproj",
@@ -97,7 +91,6 @@ platform :ios do
       profile_name: ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_profile-name"]
     )
 
-    # Archive and sign (skips Flutter rebuild — uses cached artifacts)
     build_app(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",

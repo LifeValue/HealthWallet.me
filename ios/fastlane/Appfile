@@ -1,4 +1,4 @@
 app_identifier("com.techstackapps.healthwallet")
-apple_id("ciagent@lifevalue.com") # Your Apple Developer account email
-itc_team_id("121802221") # App Store Connect Team ID
-team_id("N668J5X92P") # Apple Developer Portal Team ID
+apple_id("ciagent@lifevalue.com")
+itc_team_id("121802221")
+team_id("N668J5X92P")

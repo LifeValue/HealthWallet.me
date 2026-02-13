@@ -4,15 +4,14 @@ platform :android do
   desc "Read version name from pubspec.yaml"
   private_lane :get_version_name do
     pubspec = File.read("../../pubspec.yaml")
-    version_full = pubspec.match(/version:\s*(\S+)/)[1] # e.g. "1.1.1+22"
-    version_full.split("+")[0] # e.g. "1.1.1"
+    version_full = pubspec.match(/version:\s*(\S+)/)[1]
+    version_full.split("+")[0]
   end
 
   desc "Build and upload AAB to Google Play internal track"
   lane :beta do
     version_name = get_version_name
 
-    # Fetch latest build number from internal track and increment
     track_codes = google_play_track_version_codes(
       track: "internal",
       json_key: "fastlane/service-account.json"
