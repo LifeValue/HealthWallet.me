@@ -1,0 +1,150 @@
+name: Master Deploy
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: master-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-ios:
+    name: Deploy to TestFlight
+    runs-on: [self-hosted, macOS]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH for private dependency
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add hosts to known_hosts
+        run: |
+          ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Restore API key from secret
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+        run: |
+          mkdir -p ios/fastlane/private_keys
+          printf '%s\n' "$ASC_KEY_CONTENT" > ios/fastlane/private_keys/AuthKey.p8
+
+      - name: Install dependencies
+        run: fvm flutter pub get
+
+      - name: Run code generation
+        run: fvm dart run build_runner build --delete-conflicting-outputs
+
+      - name: Install CocoaPods dependencies
+        run: cd ios && rm -rf Podfile.lock Pods && pod install --repo-update
+
+      - name: Install Fastlane dependencies
+        run: cd ios && bundle install
+
+      - name: Setup CI keychain
+        run: |
+          security create-keychain -p "ci" ci_build.keychain-db || true
+          security unlock-keychain -p "ci" ci_build.keychain-db
+          security set-keychain-settings -t 3600 -u ci_build.keychain-db
+          security list-keychains -d user -s ci_build.keychain-db login.keychain-db
+          security default-keychain -s ci_build.keychain-db
+
+      - name: Deploy to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ./private_keys/AuthKey.p8
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_KEYCHAIN_NAME: ci_build.keychain-db
+          MATCH_KEYCHAIN_PASSWORD: ci
+        run: |
+          cd ios
+          bundle exec fastlane beta
+
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain ci_build.keychain-db || true
+          security list-keychains -d user -s login.keychain-db
+          security default-keychain -s login.keychain-db
+          rm -rf ios/fastlane/private_keys
+
+  deploy-android:
+    name: Deploy to Play Store
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH for private dependency
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add private dependency host to known_hosts
+        run: ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.4"
+          cache: true
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Decode keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Write key.properties
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Reduce Gradle heap for CI
+        run: sed -i 's/-Xmx8G/-Xmx4G/' android/gradle.properties
+
+      - name: Decode service account JSON
+        run: echo "${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > android/fastlane/service-account.json
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: android
+
+      - name: Deploy to Google Play
+        run: |
+          cd android
+          bundle exec fastlane beta
+
+      - name: Cleanup sensitive files
+        if: always()
+        run: |
+          rm -f android/app/upload-keystore.jks
+          rm -f android/key.properties
+          rm -f android/fastlane/service-account.json

@@ -1,15 +1,18 @@
 name: iOS Deploy
 
 on:
+  push:
+    branches: [develop]
   workflow_dispatch:
     inputs:
       lane:
         description: "Fastlane lane"
-        required: true
+        required: false
         type: choice
         options:
           - beta
           - release
+        default: beta
 
 concurrency:
   group: ios-deploy
@@ -17,7 +20,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build & Deploy to TestFlight (${{ inputs.lane }})
+    name: Build & Deploy to TestFlight (${{ inputs.lane || 'beta' }})
     runs-on: [self-hosted, macOS]
 
     steps:
@@ -72,7 +75,7 @@ jobs:
           MATCH_KEYCHAIN_PASSWORD: ci
         run: |
           cd ios
-          bundle exec fastlane ${{ inputs.lane }}
+          bundle exec fastlane ${{ inputs.lane || 'beta' }}
 
       - name: Cleanup
         if: always()
