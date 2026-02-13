@@ -45,7 +45,7 @@ platform :ios do
         "com.techstackapps.healthwallet.Share-Extension"
       ],
       api_key: api_key,
-      readonly: is_ci,
+      readonly: is_ci,  # Readonly in CI, can create profiles locally
       skip_certificate_matching: !is_ci,  # Skip cert matching when running locally
       generate_apple_certs: false  # Don't create new certificates, use existing ones
     )

@@ -37,15 +37,21 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-    
+
     # Add permission_handler configuration
     target.build_configurations.each do |config|
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
         '$(inherited)',
-        
+
         ## dart: PermissionGroup.camera
         'PERMISSION_CAMERA=1',
       ]
+
+      # Fix deployment target for all pods (min iOS 12.0)
+      deployment_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+      if deployment_target && deployment_target.to_f < 12.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      end
     end
   end
 end

@@ -56,7 +56,7 @@ jobs:
           storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          storeFile=app/upload-keystore.jks
+          storeFile=upload-keystore.jks
           EOF
 
       - name: Install dependencies
