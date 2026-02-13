@@ -1,4 +1,4 @@
-git_url("https://github.com/ciagent-techstackapps/ios-certs.git")
+git_url("git@github.com:ciagent-lifevalue/ios-certs.git")
 
 storage_mode("git")
 
