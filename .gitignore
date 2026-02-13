@@ -87,3 +87,4 @@ ios/fastlane/private_keys/
 # iOS build artifacts
 ios/*.ipa
 ios/*.dSYM.zip
+.claude/
