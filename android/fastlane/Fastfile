@@ -1,0 +1,68 @@
+default_platform(:android)
+
+platform :android do
+  desc "Read version name from pubspec.yaml"
+  private_lane :get_version_name do
+    pubspec = File.read("../../pubspec.yaml")
+    version_full = pubspec.match(/version:\s*(\S+)/)[1]
+    version_full.split("+")[0]
+  end
+
+  desc "Build and upload AAB to Google Play internal track"
+  lane :beta do
+    version_name = get_version_name
+
+    track_codes = google_play_track_version_codes(
+      track: "internal",
+      json_key: "fastlane/service-account.json"
+    )
+    previous_build_number = track_codes.empty? ? 0 : track_codes[0]
+    version_code = previous_build_number + 1
+
+    UI.message("Building version #{version_name} (#{version_code})")
+
+    Dir.chdir("../..") do
+      sh("flutter", "build", "appbundle", "--release",
+         "--build-number=#{version_code}",
+         "--build-name=#{version_name}")
+    end
+
+    supply(
+      track: "internal",
+      aab: "../build/app/outputs/bundle/release/app-release.aab",
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Build and upload AAB to Google Play production track"
+  lane :release do
+    version_name = get_version_name
+
+    track_codes = google_play_track_version_codes(
+      track: "production",
+      json_key: "fastlane/service-account.json"
+    )
+    previous_build_number = track_codes.empty? ? 0 : track_codes[0]
+    version_code = previous_build_number + 1
+
+    UI.message("Building version #{version_name} (#{version_code})")
+
+    Dir.chdir("../..") do
+      sh("flutter", "build", "appbundle", "--release",
+         "--build-number=#{version_code}",
+         "--build-name=#{version_name}")
+    end
+
+    supply(
+      track: "production",
+      aab: "../build/app/outputs/bundle/release/app-release.aab",
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end

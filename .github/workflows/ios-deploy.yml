@@ -1,0 +1,83 @@
+name: iOS Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: "Fastlane lane"
+        required: true
+        type: choice
+        options:
+          - beta
+          - release
+
+concurrency:
+  group: ios-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to TestFlight (${{ inputs.lane }})
+    runs-on: [self-hosted, macOS]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH for private dependency
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add hosts to known_hosts
+        run: |
+          ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Restore API key from secret
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+        run: |
+          mkdir -p ios/fastlane/private_keys
+          printf '%s\n' "$ASC_KEY_CONTENT" > ios/fastlane/private_keys/AuthKey.p8
+
+      - name: Install dependencies
+        run: fvm flutter pub get
+
+      - name: Run code generation
+        run: fvm dart run build_runner build --delete-conflicting-outputs
+
+      - name: Install CocoaPods dependencies
+        run: cd ios && rm -rf Podfile.lock Pods && pod install --repo-update
+
+      - name: Install Fastlane dependencies
+        run: cd ios && bundle install
+
+      - name: Setup CI keychain
+        run: |
+          security create-keychain -p "ci" ci_build.keychain-db || true
+          security unlock-keychain -p "ci" ci_build.keychain-db
+          security set-keychain-settings -t 3600 -u ci_build.keychain-db
+          security list-keychains -d user -s ci_build.keychain-db login.keychain-db
+          security default-keychain -s ci_build.keychain-db
+
+      - name: Deploy to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ./private_keys/AuthKey.p8
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_KEYCHAIN_NAME: ci_build.keychain-db
+          MATCH_KEYCHAIN_PASSWORD: ci
+        run: |
+          cd ios
+          bundle exec fastlane ${{ inputs.lane }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain ci_build.keychain-db || true
+          security list-keychains -d user -s login.keychain-db
+          security default-keychain -s login.keychain-db
+          rm -rf ios/fastlane/private_keys

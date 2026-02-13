@@ -1,0 +1,116 @@
+require 'dotenv'
+Dotenv.load(File.join(File.dirname(__FILE__), '.env'))
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Read version name from pubspec.yaml"
+  private_lane :get_version_name do
+    pubspec = File.read("../../pubspec.yaml")
+    version_full = pubspec.match(/version:\s*(\S+)/)[1]
+    version_full.split("+")[0]
+  end
+
+  desc "Get App Store Connect API key (supports local file or base64)"
+  private_lane :get_asc_api_key do
+    if ENV["ASC_KEY_PATH"] && File.exist?(ENV["ASC_KEY_PATH"])
+      key_path = File.expand_path(ENV["ASC_KEY_PATH"])
+      app_store_connect_api_key(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_filepath: key_path
+      )
+    elsif ENV["ASC_KEY_CONTENT"]
+      app_store_connect_api_key(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_content: ENV["ASC_KEY_CONTENT"],
+        is_key_content_base64: true
+      )
+    else
+      UI.user_error!("Missing App Store Connect API key. Set either ASC_KEY_PATH (local) or ASC_KEY_CONTENT (CI)")
+    end
+  end
+
+  desc "Sync certificates and provisioning profiles via Match"
+  lane :sync_certificates do
+    api_key = get_asc_api_key
+
+    match(
+      type: "appstore",
+      app_identifier: [
+        "com.techstackapps.healthwallet",
+        "com.techstackapps.healthwallet.Share-Extension"
+      ],
+      api_key: api_key,
+      readonly: is_ci,
+      skip_certificate_matching: !is_ci,
+      generate_apple_certs: false
+    )
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    sync_certificates
+
+    api_key = get_asc_api_key
+
+    version_name = get_version_name
+
+    build_number = latest_testflight_build_number(
+      api_key: api_key,
+      version: version_name,
+      initial_build_number: 0
+    ) + 1
+
+    UI.message("Building version #{version_name} (#{build_number})")
+
+    Dir.chdir("../..") do
+      Bundler.with_unbundled_env do
+        sh("fvm", "flutter", "build", "ios", "--release", "--no-codesign",
+           "--build-number=#{build_number}",
+           "--build-name=#{version_name}")
+      end
+    end
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "Runner.xcodeproj",
+      team_id: ENV["sigh_com.techstackapps.healthwallet_appstore_team-id"] || CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
+      targets: ["Runner"],
+      code_sign_identity: "iPhone Distribution",
+      profile_name: ENV["sigh_com.techstackapps.healthwallet_appstore_profile-name"]
+    )
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "Runner.xcodeproj",
+      team_id: ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_team-id"] || CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
+      targets: ["Share Extension"],
+      code_sign_identity: "iPhone Distribution",
+      profile_name: ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_profile-name"]
+    )
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.techstackapps.healthwallet" => ENV["sigh_com.techstackapps.healthwallet_appstore_profile-name"],
+          "com.techstackapps.healthwallet.Share-Extension" => ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_profile-name"]
+        }
+      }
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Release — uploads to TestFlight (production promotion is manual in ASC)"
+  lane :release do
+    beta
+  end
+end
