@@ -1,13 +1,11 @@
-name: Android Deploy
+name: Android Deploy (Manual)
 
 on:
-  push:
-    branches: [develop]
   workflow_dispatch:
     inputs:
       track:
         description: "Google Play track"
-        required: false
+        required: true
         type: choice
         options:
           - internal
@@ -20,7 +18,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build & Deploy to Google Play (${{ inputs.track || 'internal' }})
+    name: Build & Deploy to Google Play (${{ inputs.track }})
     runs-on: ubuntu-latest
 
     steps:
@@ -84,8 +82,7 @@ jobs:
       - name: Deploy to Google Play
         run: |
           cd android
-          TRACK="${{ inputs.track || 'internal' }}"
-          if [ "$TRACK" = "production" ]; then
+          if [ "${{ inputs.track }}" = "production" ]; then
             bundle exec fastlane release
           else
             bundle exec fastlane beta
