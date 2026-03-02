@@ -1,21 +1,47 @@
 <!-- android/app/src/main/AndroidManifest.xml -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
     <!-- Permissions -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-feature android:name="android.hardware.camera" android:required="true" />
-
+    <uses-permission
+        android:name="android.permission.INTERNET"/>
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission
+        android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission
+        android:name="android.permission.CAMERA"/>
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true"/>
+    <!-- Bluetooth permissions for peer-to-peer transfer -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30"/>
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30"/>
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADVERTISE"/>
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"/>
+    <!-- WiFi permissions for peer-to-peer transfer -->
+    <uses-permission
+        android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission
+        android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation"/>
     <application
         android:name="${applicationName}"
         android:label="HealthWallet.me"
         android:icon="@mipmap/health_wallet"
         android:largeHeap="true"
         android:enableOnBackInvokedCallback="true">
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -25,88 +51,105 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize"
-            android:screenOrientation="portrait"
             android:enableOnBackInvokedCallback="true">
-
             <!-- Launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-
             <!-- Share: single image -->
             <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
+                <action
+                    android:name="android.intent.action.SEND"/>
+                <category
+                    android:name="android.intent.category.DEFAULT"/>
+                <data
+                    android:mimeType="image/*"/>
             </intent-filter>
-
             <!-- Share: multiple images -->
             <intent-filter>
-                <action android:name="android.intent.action.SEND_MULTIPLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
+                <action
+                    android:name="android.intent.action.SEND_MULTIPLE"/>
+                <category
+                    android:name="android.intent.category.DEFAULT"/>
+                <data
+                    android:mimeType="image/*"/>
             </intent-filter>
-
             <!-- Share: single PDF -->
             <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="application/pdf" />
+                <action
+                    android:name="android.intent.action.SEND"/>
+                <category
+                    android:name="android.intent.category.DEFAULT"/>
+                <data
+                    android:mimeType="application/pdf"/>
             </intent-filter>
-
             <!-- Share: multiple PDFs -->
             <intent-filter>
-                <action android:name="android.intent.action.SEND_MULTIPLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="application/pdf" />
+                <action
+                    android:name="android.intent.action.SEND_MULTIPLE"/>
+                <category
+                    android:name="android.intent.category.DEFAULT"/>
+                <data
+                    android:mimeType="application/pdf"/>
             </intent-filter>
-
             <!-- App Links: FQDN https://add.healthwallet.me/?file=... -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
+            <intent-filter
+                android:autoVerify="true">
+                <action
+                    android:name="android.intent.action.VIEW"/>
+                <category
+                    android:name="android.intent.category.DEFAULT"/>
+                <category
+                    android:name="android.intent.category.BROWSABLE"/>
                 <data
                     android:scheme="https"
                     android:host="add.healthwallet.me"
-                    android:pathPrefix="/" />
+                    android:pathPrefix="/"/>
             </intent-filter>
-
             <!-- Legacy custom scheme (optional for migration period) -->
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
+                <action
+                    android:name="android.intent.action.VIEW"/>
+                <category
+                    android:name="android.intent.category.DEFAULT"/>
+                <category
+                    android:name="android.intent.category.BROWSABLE"/>
                 <data
                     android:scheme="healthwallet"
-                    android:host="add-document" />
+                    android:host="add-document"/>
             </intent-filter>
-            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false"/>
         </activity>
-
         <!-- Flutter meta-data -->
         <meta-data
             android:name="flutterEmbedding"
-            android:value="2" />
+            android:value="2"/>
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
-            android:value="false" />
+            android:value="false"/>
     </application>
-
     <!-- Package visibility (keep for plugins like url_launcher) -->
     <queries>
         <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
+            <action
+                android:name="android.intent.action.PROCESS_TEXT"/>
+            <data
+                android:mimeType="text/plain"/>
         </intent>
         <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="https" />
+            <action
+                android:name="android.intent.action.VIEW"/>
+            <data
+                android:scheme="https"/>
         </intent>
         <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="http" />
+            <action
+                android:name="android.intent.action.VIEW"/>
+            <data
+                android:scheme="http"/>
         </intent>
     </queries>
 </manifest>

@@ -31,6 +31,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
+    DateFilter? dateFilter,
   }) async {
     final localDtos = await _datasource.getResources(
       resourceTypes: resourceTypes.map((fhirType) => fhirType.name).toList(),
@@ -40,16 +41,22 @@ class RecordsRepositoryImpl implements RecordsRepository {
       offset: offset,
     );
 
-    // Filter out resources that fail to parse to prevent app crashes
     final validResources = <IFhirResource>[];
     for (final dto in localDtos) {
       try {
         final resource = IFhirResource.fromLocalDto(dto);
+
+        if (dateFilter != null && dateFilter.hasValue) {
+          final resourceDate = resource.date;
+          if (resourceDate != null && !dateFilter.matches(resourceDate)) {
+            continue;
+          }
+        }
+
         validResources.add(resource);
       } catch (e) {
         logger.w(
             'Failed to parse resource ${dto.id} of type ${dto.resourceType}: $e');
-        // Skip this resource and continue with others
       }
     }
     return validResources;

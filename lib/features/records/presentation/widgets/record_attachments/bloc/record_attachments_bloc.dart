@@ -58,11 +58,18 @@ class RecordAttachmentsBloc
 
       final encounterId = _extractEncounterId(event.resource);
 
-      final documentReferences = await _recordsRepository.getResources(
-        resourceTypes: [FhirType.DocumentReference],
-        sourceId: null,
-        limit: 100,
-      );
+      final List<IFhirResource> documentReferences;
+      if (event.ephemeralRecords.isNotEmpty) {
+        documentReferences = event.ephemeralRecords
+            .where((r) => r.fhirType == FhirType.DocumentReference)
+            .toList();
+      } else {
+        documentReferences = await _recordsRepository.getResources(
+          resourceTypes: [FhirType.DocumentReference],
+          sourceId: null,
+          limit: 100,
+        );
+      }
 
       final relatedDocuments = documentReferences.where((doc) {
         if (doc.rawResource.isEmpty) return false;
@@ -74,9 +81,9 @@ class RecordAttachmentsBloc
           if (context['related'] != null) {
             final relatedList = context['related'] as List;
             final isRelatedToThisResource = relatedList.any((related) {
-              final reference = related['reference'];
-              return reference ==
-                  '${event.resource.fhirType.name}/${event.resource.resourceId}';
+              final refId = FhirReferenceUtils.extractReferenceId(
+                  related['reference']?.toString());
+              return refId == event.resource.resourceId;
             });
             if (isRelatedToThisResource) return true;
           }
@@ -84,8 +91,9 @@ class RecordAttachmentsBloc
           if (encounterId != null && context['encounter'] != null) {
             final encounters = context['encounter'] as List;
             final isInSameEncounter = encounters.any((encounter) {
-              final reference = encounter['reference'];
-              return reference == 'Encounter/$encounterId';
+              final refId = FhirReferenceUtils.extractReferenceId(
+                  encounter['reference']?.toString());
+              return refId == encounterId;
             });
             if (isInSameEncounter) return true;
           }
@@ -94,8 +102,9 @@ class RecordAttachmentsBloc
               context['encounter'] != null) {
             final encounters = context['encounter'] as List;
             return encounters.any((encounter) {
-              final reference = encounter['reference'];
-              return reference == 'Encounter/${event.resource.resourceId}';
+              final refId = FhirReferenceUtils.extractReferenceId(
+                  encounter['reference']?.toString());
+              return refId == event.resource.resourceId;
             });
           }
 
@@ -189,12 +198,10 @@ class RecordAttachmentsBloc
         title: originalFileName,
       );
 
-      // Trigger home page refresh to update overview cards
       try {
         final homeBloc = getIt<HomeBloc>();
         homeBloc.add(const HomeRefreshPreservingOrder());
       } catch (e) {
-        // HomeBloc might not be available in all contexts, continue anyway
       }
 
       emit(state.copyWith(attachments: []));
@@ -373,12 +380,10 @@ class RecordAttachmentsBloc
         }
       } catch (e) {}
 
-      // Trigger home page refresh to update overview cards
       try {
         final homeBloc = getIt<HomeBloc>();
         homeBloc.add(const HomeRefreshPreservingOrder());
       } catch (e) {
-        // HomeBloc might not be available in all contexts, continue anyway
       }
 
       add(RecordAttachmentsInitialised(resource: state.resource));

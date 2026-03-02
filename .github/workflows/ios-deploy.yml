@@ -42,6 +42,9 @@ jobs:
           mkdir -p ios/fastlane/private_keys
           printf '%s\n' "$ASC_KEY_CONTENT" > ios/fastlane/private_keys/AuthKey.p8
 
+      - name: Clean Flutter build cache
+        run: fvm flutter clean
+
       - name: Install dependencies
         run: fvm flutter pub get
 
@@ -49,7 +52,7 @@ jobs:
         run: fvm dart run build_runner build --delete-conflicting-outputs
 
       - name: Install CocoaPods dependencies
-        run: cd ios && rm -rf Podfile.lock Pods && pod install --repo-update
+        run: cd ios && rm -rf Podfile.lock Pods && pod install
 
       - name: Install Fastlane dependencies
         run: cd ios && bundle install
