@@ -1,7 +1,11 @@
 name: health_wallet
 description: "HealthWallet.me"
 publish_to: 'none'
+<<<<<<< feature/HM-156
 version: 1.2.0+30
+=======
+version: 1.2.0+12
+>>>>>>> develop
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
