@@ -16,6 +16,9 @@ class RecordsState with _$RecordsState {
     @Default(false) bool isLoadingDemoData,
     String? demoDataError,
     @Default('') String searchQuery,
+    @Default({}) Set<String> selectedResourceIds,
+    @Default(false) bool isSelectionMode,
+    DateFilter? dateFilter,
   }) = _RecordsState;
 }
 

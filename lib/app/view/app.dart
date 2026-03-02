@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
+import 'package:health_wallet/features/share_records/data/service/receive_mode_manager.dart';
+import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
@@ -21,8 +24,64 @@ import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({super.key});
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startSymmetricDiscovery();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopSymmetricDiscovery();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startSymmetricDiscovery();
+    } else if (state == AppLifecycleState.paused) {
+      _stopSymmetricDiscovery();
+    }
+  }
+
+  Future<void> _startSymmetricDiscovery() async {
+    final userRepository = getIt<UserRepository>();
+    final user = await userRepository.getCurrentUser();
+    if (!user.isReceiveModeEnabled) {
+      debugPrint('[App] Receive mode disabled, skipping discovery');
+      return;
+    }
+
+    final hasPermissions =
+        await SharePermissionsHelper.hasRequiredPermissions();
+    if (!hasPermissions) {
+      debugPrint('[App] Share permissions not granted, skipping discovery');
+      return;
+    }
+
+    final manager = getIt<ReceiveModeManager>();
+    if (!manager.isListening) {
+      await manager.startListening();
+    }
+  }
+
+  Future<void> _stopSymmetricDiscovery() async {
+    final manager = getIt<ReceiveModeManager>();
+    if (manager.isListening) {
+      await manager.stopListening();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

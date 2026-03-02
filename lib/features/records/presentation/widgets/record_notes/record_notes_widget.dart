@@ -13,9 +13,14 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
 
 class RecordNotesWidget extends StatefulWidget {
-  const RecordNotesWidget({required this.resource, super.key});
+  const RecordNotesWidget({
+    required this.resource,
+    this.readOnly = false,
+    super.key,
+  });
 
   final IFhirResource resource;
+  final bool readOnly;
 
   @override
   State<RecordNotesWidget> createState() => _RecordNotesWidgetState();
@@ -44,7 +49,8 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                 const Center(
                   child: CircularProgressIndicator(),
                 )
-              else if (state.status == const RecordNotesStatus.input())
+              else if (!widget.readOnly &&
+                  state.status == const RecordNotesStatus.input())
                 _buildInputWidget(state)
               else
                 _buildMainWidget(state)
@@ -108,27 +114,28 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                 ),
               ),
             ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.all(10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadiusGeometry.circular(6)),
-              ),
-              onPressed: () => _bloc.add(const RecordNotesInputInitialised()),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Assets.icons.addPlus.svg(width: 16, color: Colors.white),
-                  const SizedBox(width: 4),
-                  const Text("Add note", style: AppTextStyle.buttonSmall),
-                ],
+          if (!widget.readOnly)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadiusGeometry.circular(6)),
+                ),
+                onPressed: () => _bloc.add(const RecordNotesInputInitialised()),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Assets.icons.addPlus.svg(width: 16, color: Colors.white),
+                    const SizedBox(width: 4),
+                    const Text("Add note", style: AppTextStyle.buttonSmall),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -263,32 +270,33 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                           ?.withValues(alpha: 0.6) ??
                       context.colorScheme.onSurface.withValues(alpha: 0.6)),
             ),
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsetsGeometry.all(6),
-                  child: GestureDetector(
-                    onTap: () =>
-                        _bloc.add(RecordNotesInputInitialised(editNote: note)),
-                    child: Assets.icons.edit.svg(
-                        width: 20,
-                        color: context.theme.iconTheme.color ??
-                            context.colorScheme.onSurface),
+            if (!widget.readOnly)
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsetsGeometry.all(6),
+                    child: GestureDetector(
+                      onTap: () =>
+                          _bloc.add(RecordNotesInputInitialised(editNote: note)),
+                      child: Assets.icons.edit.svg(
+                          width: 20,
+                          color: context.theme.iconTheme.color ??
+                              context.colorScheme.onSurface),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Padding(
-                  padding: const EdgeInsetsGeometry.all(6),
-                  child: GestureDetector(
-                    onTap: () => _showDeleteConfirmationDialog(context, note),
-                    child: Assets.icons.trashCan.svg(
-                        width: 20,
-                        color: context.theme.iconTheme.color ??
-                            context.colorScheme.onSurface),
+                  const SizedBox(width: 16),
+                  Padding(
+                    padding: const EdgeInsetsGeometry.all(6),
+                    child: GestureDetector(
+                      onTap: () => _showDeleteConfirmationDialog(context, note),
+                      child: Assets.icons.trashCan.svg(
+                          width: 20,
+                          color: context.theme.iconTheme.color ??
+                              context.colorScheme.onSurface),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
         const SizedBox(height: 8),

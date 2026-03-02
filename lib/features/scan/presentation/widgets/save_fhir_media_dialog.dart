@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 class SaveFhirMediaDialog extends StatefulWidget {
   final int documentCount;
@@ -117,15 +118,21 @@ class _SaveFhirMediaDialogState extends State<SaveFhirMediaDialog> {
                     border: Border.all(color: Colors.blue[200]!),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info_outline,
-                              size: 16, color: Colors.blue),
-                          SizedBox(width: 8),
-                          Text(
+                          Assets.icons.information.svg(
+                              width: 16,
+                              height: 16,
+                              colorFilter: const ColorFilter.mode(
+                                Colors.blue,
+                                BlendMode.srcIn,
+                              ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
                             'FHIR Media Records',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -135,8 +142,8 @@ class _SaveFhirMediaDialogState extends State<SaveFhirMediaDialog> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 4),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         'Scans will be saved as FHIR Media resources in your medical records timeline and can be referenced in encounters.',
                         style: TextStyle(fontSize: 12, color: Colors.blue),
                       ),

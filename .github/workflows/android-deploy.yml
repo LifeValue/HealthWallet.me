@@ -60,6 +60,9 @@ jobs:
           storeFile=upload-keystore.jks
           EOF
 
+      - name: Clean Flutter build cache
+        run: flutter clean
+
       - name: Install dependencies
         run: flutter pub get
 

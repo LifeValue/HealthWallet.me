@@ -92,6 +92,9 @@ class HomeViewState extends State<HomeView> {
   late final MultiHighlightOverlayController _overlayController;
 
   bool _hasShownOnboarding = false;
+  bool _isScrolled = false;
+  final GlobalKey _patientRowKey = GlobalKey();
+  double _patientRowHeight = 0;
 
   @override
   void initState() {
@@ -135,6 +138,17 @@ class HomeViewState extends State<HomeView> {
     await Future.delayed(HomeConstants.refreshDelay);
   }
 
+  void _measurePatientRow() {
+    final renderBox =
+        _patientRowKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && mounted) {
+      final height = renderBox.size.height;
+      if (height != _patientRowHeight && height > 0) {
+        setState(() => _patientRowHeight = height);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<SyncBloc, SyncState>(
@@ -149,7 +163,6 @@ class HomeViewState extends State<HomeView> {
 
         if (syncState.shouldShowTutorial && !_hasShownOnboarding) {
           _hasShownOnboarding = true;
-          // Show overlay directly - data is already loaded by this point
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               _showOnboardingOverlay();
@@ -180,7 +193,7 @@ class HomeViewState extends State<HomeView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Column(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         BlocBuilder<UserBloc, UserState>(
@@ -317,34 +330,36 @@ class HomeViewState extends State<HomeView> {
         .where((card) => state.selectedRecordTypes[card.category] ?? false)
         .toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measurePatientRow());
+
+    return Stack(
       children: [
-        if (state.hasDataLoaded)
-          Container(
-            color: context.colorScheme.surface,
-            padding: const EdgeInsets.symmetric(
-              horizontal: Insets.normal,
-              vertical: Insets.small,
-            ),
-            child: Text(
-              'Patient: ${FhirFieldExtractor.extractHumanNameFamilyFirst(state.patient?.name?.first) ?? 'Loading...'}',
-              style: AppTextStyle.bodyMedium.copyWith(
-                color: context.colorScheme.onSurface,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (state.hasDataLoaded)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                height: _patientRowHeight,
+                color: Colors.transparent,
               ),
-            ),
-          ),
-        Expanded(
-          child: CustomScrollView(
+            Expanded(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  final scrolled = notification.metrics.pixels > 0;
+                  if (scrolled != _isScrolled) {
+                    setState(() => _isScrolled = scrolled);
+                  }
+                  return false;
+                },
+                child: CustomScrollView(
             slivers: [
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    SizedBox(
-                        height: MediaQuery.of(context).size.height < 700
-                            ? Insets.small
-                            : Insets.medium),
+                    const SizedBox(height: Insets.small),
                     if (state.hasDataLoaded || editMode)
                       Column(
                         children: [
@@ -571,6 +586,47 @@ class HomeViewState extends State<HomeView> {
             ],
           ),
         ),
+        ),
+          ],
+        ),
+        if (state.hasDataLoaded)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              key: _patientRowKey,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: context.colorScheme.surface,
+                borderRadius: _isScrolled
+                    ? const BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      )
+                    : BorderRadius.zero,
+                boxShadow: _isScrolled
+                    ? [
+                        BoxShadow(
+                          offset: const Offset(0, 4),
+                          blurRadius: 12,
+                          color: Colors.black.withValues(alpha: 0.15),
+                        ),
+                      ]
+                    : [],
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Insets.normal,
+                vertical: Insets.small,
+              ),
+              child: Text(
+                'Patient: ${FhirFieldExtractor.extractHumanNameFamilyFirst(state.patient?.name?.first) ?? 'Loading...'}',
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: context.colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
