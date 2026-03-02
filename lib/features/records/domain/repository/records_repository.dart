@@ -9,6 +9,7 @@ abstract class RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
+    DateFilter? dateFilter,
   });
 
   Future<List<IFhirResource>> getRelatedResourcesForEncounter({

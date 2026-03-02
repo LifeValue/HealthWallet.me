@@ -1,3 +1,20 @@
+# Claude Code
+.claude/
+
+# Secrets & Signing Keys - NEVER commit these
+**/private_keys/
+**/service-account*.json
+*.p8
+*.p12
+*.cer
+*.pem
+*.jks
+*.keystore
+**/key.properties
+**/fastlane/.env
+**/fastlane/.env.*
+!**/fastlane/.env.example
+
 # Miscellaneous
 *.class
 *.log
@@ -63,28 +80,5 @@ lib/gen
 .vscode/settings.json
 
 # Fastlane
-android/fastlane/service-account.json
-android/fastlane/report.xml
-android/fastlane/Preview.html
-android/fastlane/README.md
-ios/fastlane/report.xml
-ios/fastlane/Preview.html
-ios/fastlane/README.md
-ios/fastlane/test_output/
-**/fastlane/.env*
-
-# Ruby / Bundler
-vendor/bundle
-.bundle
-
-# App Store Connect API key and certificates
-*.p8
-*.cer
-*.certSigningRequest
-*.p12
-ios/fastlane/private_keys/
-
-# iOS build artifacts
-ios/*.ipa
-ios/*.dSYM.zip
-.claude/
+ios/fastlane/Appfile
+ios/fastlane/Matchfile

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path_provider/path_provider.dart';
@@ -40,11 +41,11 @@ class MediaFullscreenViewer extends StatelessWidget {
               }
             },
             itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'info',
                 child: ListTile(
-                  leading: Icon(Icons.info_outline),
-                  title: Text('Media Info'),
+                  leading: Assets.icons.information.svg(width: 24, height: 24),
+                  title: const Text('Media Info'),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),

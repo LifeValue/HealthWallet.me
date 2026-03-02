@@ -1,5 +1,3 @@
-// ignore_for_file: constant_identifier_names
-
 import 'dart:convert';
 
 import 'package:health_wallet/core/data/local/app_database.dart';
@@ -142,5 +140,15 @@ enum FhirType {
     return HomeRecordsCategory.values
         .firstWhere((category) => category.resourceTypes.contains(this))
         .icon;
+  }
+}
+
+extension FhirResourceListExtension on List<IFhirResource> {
+  Map<FhirType, int> countByType() {
+    final counts = <FhirType, int>{};
+    for (final resource in this) {
+      counts[resource.fhirType] = (counts[resource.fhirType] ?? 0) + 1;
+    }
+    return counts;
   }
 }

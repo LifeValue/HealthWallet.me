@@ -8,6 +8,7 @@ import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/theme_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometric_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/share_proximity_row.dart';
 import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
 import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -42,7 +43,7 @@ class SettingsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: Insets.medium),
+              const SizedBox(height: Insets.normal),
               InkWell(
                 onTap: () {
                   if (state.isBiometricAuthEnabled) {
@@ -94,7 +95,9 @@ class SettingsSection extends StatelessWidget {
                 },
                 child: const SizedBox.shrink(),
               ),
-              const SizedBox(height: Insets.medium),
+              const SizedBox(height: Insets.normal),
+              const ShareProximityRow(),
+              const SizedBox(height: Insets.normal),
               InkWell(
                 onTap: () {
                   UrlLauncherService.launchURL('https://healthwallet.me/#contact');
@@ -119,7 +122,7 @@ class SettingsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: Insets.medium),
+              const SizedBox(height: Insets.normal),
               InkWell(
                 onTap: () {
                   context.appRouter.push(const PrivacyPolicyRoute());

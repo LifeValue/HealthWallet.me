@@ -6,6 +6,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
+import 'package:health_wallet/features/share_records/data/service/receive_mode_manager.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -28,6 +30,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<UserBiometricsSetupShown>(_onBiometricsSetupShown);
     on<UserDataUpdatedFromSync>(_onUserDataUpdatedFromSync);
     on<UserNameUpdated>(_onUserNameUpdated);
+    on<UserReceiveModeToggled>(_onReceiveModeToggled);
   }
 
   Future<void> _onInitialised(
@@ -188,5 +191,36 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     Emitter<UserState> emit,
   ) async {
     emit(state.copyWith(shouldShowBiometricsSetup: false));
+  }
+
+  Future<void> _onReceiveModeToggled(
+    UserReceiveModeToggled event,
+    Emitter<UserState> emit,
+  ) async {
+    emit(state.copyWith(status: const UserStatus.loading()));
+    try {
+      final updatedUser = state.user.copyWith(
+        isReceiveModeEnabled: event.isEnabled,
+      );
+      await _userRepository.updateUser(updatedUser);
+
+      final manager = getIt<ReceiveModeManager>();
+      if (event.isEnabled) {
+        if (!manager.isListening) {
+          await manager.startListening();
+        }
+      } else {
+        if (manager.isListening) {
+          await manager.stopListening();
+        }
+      }
+
+      emit(state.copyWith(
+        status: const UserStatus.success(),
+        user: updatedUser,
+      ));
+    } catch (e) {
+      emit(state.copyWith(status: UserStatus.failure(e)));
+    }
   }
 }
