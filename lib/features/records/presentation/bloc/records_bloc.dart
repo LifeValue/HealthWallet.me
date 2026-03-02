@@ -31,6 +31,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsSearch>(_onSearch);
     on<RecordsSearchExecuted>(_onSearchExecuted);
     on<RecordsSharePressed>(_onRecordsSharePressed);
+    on<RecordsSelectionToggled>(_onSelectionToggled);
+    on<RecordsSelectionCleared>(_onSelectionCleared);
+    on<RecordsSelectionModeToggled>(_onSelectionModeToggled);
+    on<RecordsDateRangeCleared>(_onDateRangeCleared);
   }
 
   @override
@@ -70,7 +74,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
             ? null
             : state.sourceId;
 
-        // Use sourceIds when "All" is selected, otherwise use sourceId
         List<String>? sourceIdsToUse;
         if (state.sourceId == null && state.sourceIds != null) {
           sourceIdsToUse = state.sourceIds;
@@ -82,6 +85,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
           sourceIds: sourceIdsToUse,
           limit: limit,
           offset: offset,
+          dateFilter: state.dateFilter,
         );
       }
 
@@ -114,7 +118,9 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     Emitter<RecordsState> emit,
   ) async {
     if (state.activeFilters.isEmpty) {
-      emit(state.copyWith(activeFilters: [FhirType.Encounter]));
+      if (!event.isShareContext) {
+        emit(state.copyWith(activeFilters: [FhirType.Encounter]));
+      }
     }
 
     await _loadResources(emit);
@@ -144,7 +150,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       hasMorePages: true,
     );
 
-    if (nextState.activeFilters.isEmpty) {
+    if (nextState.activeFilters.isEmpty && !event.isShareContext) {
       nextState = nextState.copyWith(activeFilters: [FhirType.Encounter]);
     }
 
@@ -159,6 +165,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   ) async {
     emit(state.copyWith(
       activeFilters: event.filters,
+      dateFilter: event.dateFilter,
       resources: [],
     ));
 
@@ -186,8 +193,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     try {
       final relatedResources = event.resource.fhirType == FhirType.Encounter
           ? await _recordsRepository.getRelatedResourcesForEncounter(
-              encounterId: event.resource.resourceId,
-              sourceId: event.resource.sourceId)
+              encounterId: event.resource.resourceId)
           : await _recordsRepository.getRelatedResources(
               resource: event.resource);
 
@@ -305,5 +311,46 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     ).writeAsBytes(ipsBytes);
 
     SharePlus.instance.share(ShareParams(files: [XFile(pdfFile.path)]));
+  }
+
+  void _onSelectionToggled(
+    RecordsSelectionToggled event,
+    Emitter<RecordsState> emit,
+  ) {
+    final updated = Set<String>.from(state.selectedResourceIds);
+    if (!updated.remove(event.resourceId)) {
+      updated.add(event.resourceId);
+    }
+    emit(state.copyWith(selectedResourceIds: updated));
+  }
+
+  void _onSelectionCleared(
+    RecordsSelectionCleared event,
+    Emitter<RecordsState> emit,
+  ) {
+    emit(state.copyWith(selectedResourceIds: {}));
+  }
+
+  void _onSelectionModeToggled(
+    RecordsSelectionModeToggled event,
+    Emitter<RecordsState> emit,
+  ) {
+    final newSelectionMode = !state.isSelectionMode;
+    emit(state.copyWith(
+      isSelectionMode: newSelectionMode,
+      selectedResourceIds: newSelectionMode ? state.selectedResourceIds : {},
+    ));
+  }
+
+  void _onDateRangeCleared(
+    RecordsDateRangeCleared event,
+    Emitter<RecordsState> emit,
+  ) async {
+    emit(state.copyWith(
+      dateFilter: null,
+      resources: [],
+    ));
+
+    await _loadResources(emit);
   }
 }

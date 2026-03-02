@@ -171,6 +171,7 @@ lib/
 | Branch      | Purpose                 | CI/CD Action                 |
 | ----------- | ----------------------- | ---------------------------- |
 | `master`    | Production              | Deploy to production         |
+| `develop`   | Integration / staging   | Continuous integration       |
 | `dev/*`     | Development             | For development purposes     |
 | `feature/*` | New features            | Run tests only               |
 | `fix/*`     | Bug fixes               | Run tests only               |

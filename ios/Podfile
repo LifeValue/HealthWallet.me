@@ -45,6 +45,9 @@ post_install do |installer|
 
         ## dart: PermissionGroup.camera
         'PERMISSION_CAMERA=1',
+
+        ## dart: PermissionGroup.bluetooth
+        'PERMISSION_BLUETOOTH=1',
       ]
 
       # Fix deployment target for all pods (min iOS 12.0)

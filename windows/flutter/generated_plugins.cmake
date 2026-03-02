@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   battery_plus
   file_selector_windows
   flutter_doc_scanner
+  flutter_gemma
   local_auth_windows
   pdfx
   permission_handler_windows

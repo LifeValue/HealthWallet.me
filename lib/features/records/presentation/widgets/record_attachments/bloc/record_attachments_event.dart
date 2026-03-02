@@ -9,6 +9,7 @@ class RecordAttachmentsInitialised extends RecordAttachmentsEvent
     with _$RecordAttachmentsInitialised {
   const factory RecordAttachmentsInitialised({
     required IFhirResource resource,
+    @Default([]) List<IFhirResource> ephemeralRecords,
   }) = _RecordAttachmentsInitialised;
 }
 

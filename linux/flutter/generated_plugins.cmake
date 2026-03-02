@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_linux
   flutter_doc_scanner
+  flutter_gemma
   gtk
   open_file_linux
   printing
