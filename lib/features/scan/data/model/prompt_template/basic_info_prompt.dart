@@ -14,7 +14,7 @@ class BasicInfoPrompt extends PromptTemplate {
         "givenName": "string",
         "dateOfBirth": "string (YYYY-MM-DD, actual date not age)",
         "gender": "male | female | other | unknown",
-        "patientMRN": "string (the actual numeric value of the patient identifier, e.g. 2530926454117 or 0395-22-95, NOT the label name, empty if not found)",
+        "patientMRN": "string (the actual numeric value of the patient identifier, e.g. 1900101998765 or 0100-33-44, NOT the label name, empty if not found)",
         "identifierLabel": "string (the type of identifier found: CNP if Romanian, MRN if American, SSN, NHS, etc.)",
         "documentCategory": "visit | lab_report (visit for hospital visits, discharge summaries, consultations; lab_report for laboratory test results, blood tests, diagnostic studies)"
       },

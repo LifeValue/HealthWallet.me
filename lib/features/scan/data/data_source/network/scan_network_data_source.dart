@@ -98,9 +98,14 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
 
     await _activateModel();
 
+    final backend = Platform.isIOS
+        ? PreferredBackend.gpu
+        : PreferredBackend.cpu;
+    debugPrint('[ScanAI] initModel: using backend=${backend.name} on ${Platform.operatingSystem}');
+
     _model = await FlutterGemma.getActiveModel(
       maxTokens: AppConstants.modelKvCacheSize,
-      preferredBackend: PreferredBackend.cpu,
+      preferredBackend: backend,
     );
   }
 
