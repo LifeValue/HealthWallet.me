@@ -37,8 +37,9 @@ abstract class ScanRepository {
   );
 
   Stream<MappingResourcesWithProgress> mapRemainingResources(
-    String medicalText,
-  );
+    String medicalText, {
+    String? documentCategory,
+  });
 
   Future<void> cancelGeneration();
 

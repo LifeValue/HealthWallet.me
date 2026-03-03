@@ -850,8 +850,18 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       final medicalText =
           await _ocrProcessingHelper.processOcrForImages(sessionImages);
 
+      final activeSession =
+          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+      final docCategory =
+          activeSession?.isDiagnosticReportContainer == true
+              ? 'lab_report'
+              : 'visit';
+
       Stream<MappingResourcesWithProgress> stream =
-          _repository.mapRemainingResources(medicalText);
+          _repository.mapRemainingResources(
+        medicalText,
+        documentCategory: docCategory,
+      );
 
       await for (final (resources, progress) in stream) {
         final currentSession =

@@ -1,11 +1,9 @@
 import 'package:health_wallet/features/scan/data/model/prompt_template/allergy_intolerance_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/condition_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/diagnostic_report_prompt.dart';
-import 'package:health_wallet/features/scan/data/model/prompt_template/encounter_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/medication_statement_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/observation_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/organization_prompt.dart';
-import 'package:health_wallet/features/scan/data/model/prompt_template/patient_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/practitioner_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/procedure_prompt.dart';
 
@@ -36,14 +34,37 @@ Medical Text: "$medicalText"''';
   String get promptJsonStructure;
   String get promptExample;
 
-  static supportedPrompts() => [
-        AllergyIntolerancePrompt(),
-        ConditionPrompt(),
-        DiagnosticReportPrompt(),
-        MedicationStatementPrompt(),
+  static List<PromptTemplate> supportedPrompts({String? documentCategory}) {
+    if (documentCategory == 'lab_report') {
+      return [
         ObservationPrompt(),
-        OrganizationPrompt(),
+        ConditionPrompt(),
         PractitionerPrompt(),
-        ProcedurePrompt(),
+        OrganizationPrompt(),
       ];
+    }
+
+    if (documentCategory == 'visit') {
+      return [
+        ConditionPrompt(),
+        MedicationStatementPrompt(),
+        ProcedurePrompt(),
+        PractitionerPrompt(),
+        ObservationPrompt(),
+        AllergyIntolerancePrompt(),
+        OrganizationPrompt(),
+      ];
+    }
+
+    return [
+      AllergyIntolerancePrompt(),
+      ConditionPrompt(),
+      DiagnosticReportPrompt(),
+      MedicationStatementPrompt(),
+      ObservationPrompt(),
+      OrganizationPrompt(),
+      PractitionerPrompt(),
+      ProcedurePrompt(),
+    ];
+  }
 }

@@ -34,6 +34,29 @@ class ScanRepositoryImpl implements ScanRepository {
     return text.replaceAll(_markdownFenceRegex, '').trim();
   }
 
+  static const _labKeywords = [
+    'laborator', 'analiz', 'biochimi', 'hemato', 'hemogram',
+    'test result', 'lab result', 'specimen', 'reference range',
+    'val. ref', 'valori de referinta', 'synevo', 'medlife lab',
+    'regina maria lab', 'blood test', 'urine test',
+  ];
+
+  static const _visitKeywords = [
+    'spital', 'hospital', 'consult', 'visit summary',
+    'discharge', 'bilet de iesire', 'after visit', 'externare',
+    'internare', 'epicriza', 'scrisoare medicala',
+  ];
+
+  String _detectDocumentCategory(String medicalText) {
+    final lower = medicalText.toLowerCase();
+    final labScore = _labKeywords.where((k) => lower.contains(k)).length;
+    final visitScore = _visitKeywords.where((k) => lower.contains(k)).length;
+
+    if (labScore > visitScore) return 'lab_report';
+    if (visitScore > labScore) return 'visit';
+    return '';
+  }
+
   bool _isStreamActive = false;
   Completer<void>? _streamCompleter;
   bool _shouldCancelGeneration = false;
@@ -346,14 +369,17 @@ class ScanRepositoryImpl implements ScanRepository {
       debugPrint('[ScanAI] mapBasicInfo: cleaned response: $cleaned');
       List<dynamic> jsonList = jsonDecode(cleaned);
 
-      String? documentCategory;
+      String? aiCategory;
       for (final json in jsonList) {
         if (json is Map<String, dynamic> && json['resourceType'] == 'Patient') {
-          documentCategory = (json['documentCategory'] as String?)?.toLowerCase();
+          aiCategory = (json['documentCategory'] as String?)?.toLowerCase();
           break;
         }
       }
-      debugPrint('[ScanAI] mapBasicInfo: documentCategory=$documentCategory');
+
+      final keywordCategory = _detectDocumentCategory(medicalText);
+      final documentCategory = keywordCategory.isNotEmpty ? keywordCategory : (aiCategory ?? '');
+      debugPrint('[ScanAI] mapBasicInfo: aiCategory=$aiCategory, keywordCategory=$keywordCategory, final=$documentCategory');
 
       List<MappingResource> resources = [];
       for (Map<String, dynamic> json in jsonList) {
@@ -409,16 +435,21 @@ class ScanRepositoryImpl implements ScanRepository {
 
   @override
   Stream<MappingResourcesWithProgress> mapRemainingResources(
-    String medicalText,
-  ) async* {
+    String medicalText, {
+    String? documentCategory,
+  }) async* {
     try {
       _isStreamActive = true;
       _streamCompleter = Completer<void>();
       _shouldCancelGeneration = false;
-            
+
       await _networkDataSource.initModel();
 
-      List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
+      debugPrint('[ScanAI] mapRemainingResources: documentCategory=$documentCategory');
+      List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts(
+        documentCategory: documentCategory,
+      );
+      debugPrint('[ScanAI] mapRemainingResources: running ${supportedPrompts.length} prompts');
       for (int i = 0; i < supportedPrompts.length; i++) {
         if (_shouldCancelGeneration) {
           break;
