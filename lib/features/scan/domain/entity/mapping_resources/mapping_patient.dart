@@ -22,9 +22,11 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     @Default(MappedProperty()) MappedProperty dateOfBirth,
     @Default(MappedProperty()) MappedProperty gender,
     @Default(MappedProperty()) MappedProperty patientMRN,
+    @Default('MRN') String identifierLabel,
   }) = _MappingPatient;
 
   factory MappingPatient.fromJson(Map<String, dynamic> json) {
+    final rawLabel = (json['identifierLabel'] as String?)?.trim() ?? '';
     return MappingPatient(
       id: json["id"] ?? const Uuid().v4(),
       familyName: MappedProperty.fromJson(json['familyName']),
@@ -33,6 +35,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       gender: MappedProperty.fromJson(json['gender']),
       patientMRN:
           MappedProperty.fromJson(json['patientMRN'] ?? json['patientId']),
+      identifierLabel: rawLabel.isEmpty ? 'MRN' : rawLabel,
     );
   }
 
@@ -84,6 +87,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         'dateOfBirth': dateOfBirth.toJson(),
         'gender': gender.toJson(),
         'patientMRN': patientMRN.toJson(),
+        'identifierLabel': identifierLabel,
       };
 
   @override
@@ -149,7 +153,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           fieldType: FieldType.dropdown,
         ),
         'patientMRN': TextFieldDescriptor(
-          label: 'MRN',
+          label: identifierLabel,
           value: patientMRN.value,
           confidenceLevel: patientMRN.confidenceLevel,
         ),
@@ -184,6 +188,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           confidenceLevel:
               newValues['patientMRN'] != null ? 1 : patientMRN.confidenceLevel,
         ),
+        identifierLabel: identifierLabel,
       );
 
   @override

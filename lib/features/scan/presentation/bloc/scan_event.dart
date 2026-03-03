@@ -66,6 +66,7 @@ class ScanResourceChanged extends ScanEvent with _$ScanResourceChanged {
     required String newValue,
     bool? isDraftPatient,
     bool? isDraftEncounter,
+    bool? isDraftDiagnosticReport,
   }) = _ScanResourceChanged;
 }
 
@@ -124,4 +125,13 @@ class ScanDocumentAttached extends ScanEvent with _$ScanDocumentAttached {
   const factory ScanDocumentAttached({
     required String sessionId,
   }) = _ScanDocumentAttached;
+}
+
+@freezed
+class ScanTokenCapacityUpdated extends ScanEvent
+    with _$ScanTokenCapacityUpdated {
+  const factory ScanTokenCapacityUpdated({
+    required int newMaxTokens,
+    required String sessionId,
+  }) = _ScanTokenCapacityUpdated;
 }

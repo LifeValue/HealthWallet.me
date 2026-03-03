@@ -297,5 +297,23 @@
     "plugInCharger": "Stecken Sie das Ladegerät ein.",
     "exitFocusMode": "Fokusmodus beenden",
     "chargerPluggedIn": "Ladegerät eingesteckt.",
-    "plugInChargerEllipsis": "Stecken Sie das Ladegerät ein..."
+    "plugInChargerEllipsis": "Stecken Sie das Ladegerät ein...",
+
+    "processingFailedCapacity": "Das Dokument ist zu groß für die aktuelle KI-Token-Kapazität.",
+    "processingFailedCapacitySuggestion": "Versuchen Sie, die KI-Modellkapazität zu erhöhen, um größere Dokumente zu verarbeiten.",
+    "increaseAiModelCapacity": "KI-Modellkapazität erhöhen",
+    "goBack": "Zurück",
+
+    "setAiTokensUsage": "KI-Token-Nutzung einstellen",
+    "tokenUsageDescription": "Höhere Token-Limits ermöglichen die Verarbeitung größerer Dokumente, verbrauchen aber mehr Speicher. Starten Sie die Verarbeitung nach der Änderung neu.",
+    "tokenPresetLow": "Niedrig",
+    "tokenPresetLowDescription": "~100 Tokens - Nur kleine Dokumente",
+    "tokenPresetMedium": "Mittel",
+    "tokenPresetMediumDescription": "~500 Tokens - Die meisten einseitigen Dokumente",
+    "tokenPresetHigh": "Hoch",
+    "tokenPresetHighDescription": "~2048 Tokens - Mehrseitige Dokumente",
+    "tokenPresetCustom": "Benutzerdefiniert",
+    "tokenPresetCustomDescription": "Benutzerdefiniertes Token-Limit festlegen (max. 4096)",
+    "setTokens": "Tokens festlegen",
+    "tokens": "Tokens"
 }

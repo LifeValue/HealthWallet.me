@@ -1,10 +1,8 @@
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 
 abstract class ScanRepository {
-  // Document management
   Future<List<String>> scanDocuments();
 
   Future<List<String>> scanDocumentsAsPdf({int maxPages = 5});
@@ -30,12 +28,11 @@ abstract class ScanRepository {
 
   Future<int> deleteProcessingSession(ProcessingSession session);
 
-  // Fhir Mapping
   Stream<double> downloadModel();
 
   Future<bool> checkModelExistence();
 
-  Future<(MappingPatient, MappingEncounter)> mapBasicInfo(
+  Future<(MappingPatient, MappingResource)> mapBasicInfo(
     String medicalText,
   );
 

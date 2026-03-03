@@ -119,7 +119,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   ) async {
     if (state.activeFilters.isEmpty) {
       if (!event.isShareContext) {
-        emit(state.copyWith(activeFilters: [FhirType.Encounter]));
+        emit(state.copyWith(
+            activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]));
       }
     }
 
@@ -151,7 +152,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     );
 
     if (nextState.activeFilters.isEmpty && !event.isShareContext) {
-      nextState = nextState.copyWith(activeFilters: [FhirType.Encounter]);
+      nextState = nextState.copyWith(
+          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]);
     }
 
     emit(nextState);
@@ -191,7 +193,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     emit(
         state.copyWith(recordDetailStatus: const RecordDetailStatus.loading()));
     try {
-      final relatedResources = event.resource.fhirType == FhirType.Encounter
+      final relatedResources = (event.resource.fhirType == FhirType.Encounter ||
+              event.resource.fhirType == FhirType.DiagnosticReport)
           ? await _recordsRepository.getRelatedResourcesForEncounter(
               encounterId: event.resource.resourceId)
           : await _recordsRepository.getRelatedResources(
