@@ -3,6 +3,8 @@ import 'package:collection/collection.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/app_constants.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -16,10 +18,12 @@ import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/resources_form.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_token_settings_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/summary_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @RoutePage()
 class ProcessingPage extends StatefulWidget {
@@ -61,7 +65,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
         state.sessions.firstWhere((session) => session.id == widget.sessionId);
 
     if (activeSession.patient.hasSelection &&
-        activeSession.encounter.hasSelection) {
+        (activeSession.encounter.hasSelection ||
+            activeSession.isDiagnosticReportContainer)) {
       context
           .read<ScanBloc>()
           .add(ScanResourceCreationInitiated(sessionId: widget.sessionId));
@@ -180,6 +185,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   Widget _buildMappingSection(
       ScanState state, ProcessingSession displayedSession) {
+    if (state.status is CapacityFailure) {
+      return _buildCapacityFailure();
+    }
+
     if (state.status is Failure) {
       final error = (state.status as Failure).error;
       return Column(
@@ -330,6 +339,92 @@ class _ProcessingPageState extends State<ProcessingPage> {
     return const SizedBox.shrink();
   }
 
+  Widget _buildCapacityFailure() {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(Insets.normal),
+          decoration: BoxDecoration(
+            color: context.colorScheme.errorContainer.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+            border:
+                Border.all(color: context.colorScheme.error.withOpacity(0.5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.memory,
+                    color: context.colorScheme.error,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.l10n.processingFailed,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: context.colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.l10n.processingFailedCapacity,
+                style: AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.onErrorContainer,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                context.l10n.processingFailedCapacitySuggestion,
+                style: AppTextStyle.labelSmall.copyWith(
+                  color: context.colorScheme.onErrorContainer.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Insets.normal),
+        AppButton(
+          label: context.l10n.increaseAiModelCapacity,
+          variant: AppButtonVariant.primary,
+          onPressed: _showTokenSettingsDialog,
+        ),
+        const SizedBox(height: Insets.small),
+        AppButton(
+          label: context.l10n.goBack,
+          variant: AppButtonVariant.transparent,
+          onPressed: () => context.router.maybePop(),
+        ),
+      ],
+    );
+  }
+
+  void _showTokenSettingsDialog() async {
+    final prefs = getIt<SharedPreferences>();
+    final currentTokens =
+        prefs.getInt(SharedPrefsConstants.aiMaxTokens) ??
+            AppConstants.defaultMaxTokens;
+
+    final newTokens = await AiTokenSettingsDialog.show(
+      context,
+      currentTokens: currentTokens,
+    );
+
+    if (newTokens != null && mounted) {
+      context.read<ScanBloc>().add(
+            ScanTokenCapacityUpdated(
+              newMaxTokens: newTokens,
+              sessionId: widget.sessionId,
+            ),
+          );
+    }
+  }
+
   Widget _buildQueuedMessage() {
     return FutureBuilder(
       future: getIt<ScanRepository>().checkModelExistence(),
@@ -371,6 +466,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           sessionId: widget.sessionId,
           patient: displayedSession.patient,
           encounter: displayedSession.encounter,
+          diagnosticReport: displayedSession.diagnosticReport,
           isAttachmentLocked: displayedSession.isDocumentAttached,
         ),
         if (displayedSession.status == ProcessingStatus.patientExtracted) ...[
@@ -523,7 +619,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
   void _attachToEncounter(ProcessingSession session) async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (session.patient.hasSelection && session.encounter.hasSelection) {
+    if (session.patient.hasSelection &&
+        (session.encounter.hasSelection ||
+            session.isDiagnosticReportContainer)) {
       context.read<ScanBloc>().add(
             ScanDocumentAttached(
               sessionId: widget.sessionId,

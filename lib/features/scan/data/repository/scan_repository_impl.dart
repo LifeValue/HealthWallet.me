@@ -8,6 +8,7 @@ import 'package:health_wallet/features/scan/data/data_source/local/scan_local_da
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -26,6 +27,12 @@ class ScanRepositoryImpl implements ScanRepository {
 
   final ScanNetworkDataSource _networkDataSource;
   final ScanLocalDataSource _localDataSource;
+
+  static final _markdownFenceRegex = RegExp(r'```(?:json)?\s*');
+
+  String _stripMarkdownFences(String text) {
+    return text.replaceAll(_markdownFenceRegex, '').trim();
+  }
 
   bool _isStreamActive = false;
   Completer<void>? _streamCompleter;
@@ -320,40 +327,81 @@ class ScanRepositoryImpl implements ScanRepository {
       _networkDataSource.checkModelExistence();
 
   @override
-  Future<(MappingPatient, MappingEncounter)> mapBasicInfo(
+  Future<(MappingPatient, MappingResource)> mapBasicInfo(
     String medicalText,
   ) async {
+    debugPrint('[ScanAI] mapBasicInfo: initializing model...');
     await _networkDataSource.initModel();
+    debugPrint('[ScanAI] mapBasicInfo: model initialized');
 
     try {
       String prompt = BasicInfoPrompt().buildPrompt(medicalText);
+      debugPrint('[ScanAI] mapBasicInfo: prompt built, length: ${prompt.length}');
 
       String? promptResponse =
           await _networkDataSource.runPrompt(prompt: prompt);
+      debugPrint('[ScanAI] mapBasicInfo: got response');
 
-      List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+      final cleaned = _stripMarkdownFences(promptResponse ?? '');
+      debugPrint('[ScanAI] mapBasicInfo: cleaned response: $cleaned');
+      List<dynamic> jsonList = jsonDecode(cleaned);
+
+      String? documentCategory;
+      for (final json in jsonList) {
+        if (json is Map<String, dynamic> && json['resourceType'] == 'Patient') {
+          documentCategory = (json['documentCategory'] as String?)?.toLowerCase();
+          break;
+        }
+      }
+      debugPrint('[ScanAI] mapBasicInfo: documentCategory=$documentCategory');
 
       List<MappingResource> resources = [];
       for (Map<String, dynamic> json in jsonList) {
+        final resourceType = json['resourceType'];
+        debugPrint('[ScanAI] mapBasicInfo: parsing resourceType=$resourceType');
         MappingResource resource =
             MappingResource.fromJson(json).populateConfidence(medicalText);
 
+        debugPrint('[ScanAI] mapBasicInfo: ${resource.runtimeType} isValid=${resource.isValid}');
         if (resource.isValid) {
           resources.add(resource);
         }
       }
-      
-      MappingEncounter encounter =
-          resources.firstWhereOrNull((resource) => resource is MappingEncounter)
-                  as MappingEncounter? ??
-              MappingEncounter.empty();
+
+      debugPrint('[ScanAI] mapBasicInfo: valid resources count=${resources.length}');
+
+      final diagnosticReport = resources
+          .whereType<MappingDiagnosticReport>()
+          .firstOrNull;
+      final encounter = resources
+          .whereType<MappingEncounter>()
+          .firstOrNull;
+
+      MappingResource container;
+      if (documentCategory == 'lab_report' &&
+          diagnosticReport != null &&
+          diagnosticReport.isValid) {
+        container = diagnosticReport;
+      } else if (documentCategory == 'visit' &&
+          encounter != null &&
+          encounter.isValid) {
+        container = encounter;
+      } else if (encounter != null && encounter.isValid) {
+        container = encounter;
+      } else if (diagnosticReport != null && diagnosticReport.isValid) {
+        container = diagnosticReport;
+      } else {
+        container = MappingEncounter.empty();
+      }
+
+      debugPrint('[ScanAI] mapBasicInfo: container type=${container.runtimeType}');
 
       MappingPatient patient =
           resources.firstWhereOrNull((resource) => resource is MappingPatient)
                   as MappingPatient? ??
               MappingPatient.empty();
 
-      return (patient, encounter);
+      return (patient, container);
     } finally {
       await disposeModel();
     }
@@ -388,7 +436,8 @@ class ScanRepositoryImpl implements ScanRepository {
         List<MappingResource> resources = [];
 
         try {
-          List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+          final cleaned = _stripMarkdownFences(promptResponse ?? '');
+          List<dynamic> jsonList = jsonDecode(cleaned);
 
           for (Map<String, dynamic> json in jsonList) {
             MappingResource resource =
