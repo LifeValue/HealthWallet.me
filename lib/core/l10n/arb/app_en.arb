@@ -318,5 +318,32 @@
     "plugInCharger": "Plug in the charger.",
     "exitFocusMode": "Exit Focus Mode",
     "chargerPluggedIn": "Charger plugged in.",
-    "plugInChargerEllipsis": "Plug in the charger..."
+    "plugInChargerEllipsis": "Plug in the charger...",
+
+    "processingFailedCapacity": "The document is too large for the current AI token capacity.",
+    "processingFailedCapacitySuggestion": "Try increasing the AI model capacity to process larger documents.",
+    "increaseAiModelCapacity": "Increase AI Model Capacity",
+    "goBack": "Go Back",
+
+    "aiSettings": "AI Settings",
+    "aiSettingsDescription": "Adjust AI performance for your device. Recommended values are pre-selected.",
+    "setAiTokensUsage": "Set AI Tokens Usage",
+    "tokenUsageDescription": "Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.",
+    "gpuLayersLabel": "GPU Layers",
+    "gpuLayersDescription": "Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.",
+    "threadsLabel": "CPU Threads",
+    "threadsDescription": "Number of CPU threads for inference. More threads = faster but uses more battery.",
+    "recommended": "Recommended",
+    "tokenPresetLow": "Low",
+    "tokenPresetLowDescription": "Best for small files and quick tasks.\nUses the least resources and processes fastest.",
+    "tokenPresetMedium": "Medium",
+    "tokenPresetMediumDescription": "Good for most use cases.\nBalances file size, processing time, and resource usage.",
+    "tokenPresetHigh": "High",
+    "tokenPresetHighDescription": "Best for large files and complex processing.\nUses more resources and battery, and takes longer to complete.",
+    "tokenPresetCustom": "Custom",
+    "tokenPresetCustomDescription": "Set custom amount of tokens you want to use.",
+    "setTokens": "Set",
+    "tokens": "tokens",
+    "contextSizeLabel": "Context Size",
+    "contextSizeDescription": "Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory."
 }

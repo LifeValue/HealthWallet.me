@@ -301,5 +301,33 @@
     "plugInCharger": "Conecta el cargador.",
     "exitFocusMode": "Salir del Modo Enfoque",
     "chargerPluggedIn": "Cargador conectado.",
-    "plugInChargerEllipsis": "Conecta el cargador..."
+    "plugInChargerEllipsis": "Conecta el cargador...",
+
+    "processingFailedCapacity": "El documento es demasiado grande para la capacidad actual de tokens de IA.",
+    "processingFailedCapacitySuggestion": "Intenta aumentar la capacidad del modelo de IA para procesar documentos más grandes.",
+    "increaseAiModelCapacity": "Aumentar Capacidad del Modelo IA",
+    "goBack": "Volver",
+
+    "setAiTokensUsage": "Configurar Uso de Tokens IA",
+    "tokenUsageDescription": "Controla cuánta capacidad de procesamiento puede usar la IA. Mayor capacidad permite archivos más grandes y tareas más complejas, pero usa más recursos y tarda más.",
+    "tokenPresetLow": "Bajo",
+    "tokenPresetLowDescription": "Ideal para archivos pequeños y tareas rápidas.\nUsa menos recursos y procesa más rápido.",
+    "tokenPresetMedium": "Medio",
+    "tokenPresetMediumDescription": "Bueno para la mayoría de casos.\nEquilibra tamaño de archivo, tiempo de procesamiento y uso de recursos.",
+    "tokenPresetHigh": "Alto",
+    "tokenPresetHighDescription": "Ideal para archivos grandes y procesamiento complejo.\nUsa más recursos y batería, y tarda más en completar.",
+    "tokenPresetCustom": "Personalizado",
+    "tokenPresetCustomDescription": "Establece una cantidad personalizada de tokens.",
+    "setTokens": "Establecer",
+    "tokens": "tokens",
+
+    "aiSettings": "Ajustes de IA",
+    "aiSettingsDescription": "Ajusta el rendimiento de IA para tu dispositivo. Los valores recomendados están preseleccionados.",
+    "gpuLayersLabel": "Capas GPU",
+    "gpuLayersDescription": "Descargar capas del modelo a la GPU para un procesamiento de imágenes más rápido. Más capas = más rápido pero más memoria. Pon 0 si la app se cierra.",
+    "threadsLabel": "Hilos CPU",
+    "threadsDescription": "Número de hilos de CPU para inferencia. Más hilos = más rápido pero más batería.",
+    "recommended": "Recomendado",
+    "contextSizeLabel": "Tamaño de contexto",
+    "contextSizeDescription": "Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria."
 }

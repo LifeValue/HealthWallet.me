@@ -69,12 +69,11 @@ class DocumentReferenceService {
 
     final documentReferenceId = _generateId();
 
-    // Create encounter reference if provided
     final List<fhir_r4.Reference>? encounterReferences = encounter != null
         ? [
             fhir_r4.Reference(
-              reference: fhir_r4.FhirString('Encounter/${encounter.id}'),
-              display: fhir_r4.FhirString('Encounter ${encounter.id}'),
+              reference: fhir_r4.FhirString('Encounter/${encounter.resourceId}'),
+              display: fhir_r4.FhirString('Encounter ${encounter.resourceId}'),
             )
           ]
         : null;

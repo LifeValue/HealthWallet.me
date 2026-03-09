@@ -1,12 +1,11 @@
-// core/services/deep_link_service.dart
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:app_links/app_links.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/external_files_service.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -31,25 +30,29 @@ class DeepLinkService {
     try {
       final initialUri = await _appLinks.getInitialLink();
       if (initialUri != null) {
-        debugPrint('Initial deep link: $initialUri');
         await _handleDeepLink(initialUri);
       }
-    } catch (e) {
-      debugPrint('Error getting initial link: $e');
-    }
+    } catch (_) {}
 
     _linkSubscription = _appLinks.uriLinkStream.listen(
       (Uri uri) async {
-        debugPrint('Received deep link: $uri');
         await _handleDeepLink(uri);
       },
-      onError: (err) => debugPrint('Deep link error: $err'),
     );
   }
 
   Future<void> _handleDeepLink(Uri uri) async {
+    if (uri.scheme == 'healthwallet' && uri.host == 'emergency') {
+      _handleEmergencyLink(uri);
+      return;
+    }
+
+    if (uri.scheme == 'https' && uri.host == 'emergency.healthwallet.me') {
+      _handleEmergencyLink(uri);
+      return;
+    }
+
     if (uri.scheme != 'https' || uri.host != 'add.healthwallet.me') {
-      debugPrint('Ignored URI (not our FQDN): $uri');
       return;
     }
 
@@ -57,7 +60,6 @@ class DeepLinkService {
     final documentName = uri.queryParameters['name'];
 
     if (fileUrl == null || fileUrl.isEmpty) {
-      debugPrint('Missing required parameter: file');
       return;
     }
 
@@ -66,20 +68,22 @@ class DeepLinkService {
           await downloadFile(fileUrl, customFileName: documentName);
       _externalFilesService.addFilePaths([filePath]);
       _router.replaceAll([const DashboardRoute()]);
-      
+
       if (_navigationController.currentPage == 3) {
         _navigationController.jumpToPage(0);
       }
       _navigationController.navigateToPage(3);
-    } catch (e) {
-      debugPrint('Failed to process deep link file: $e');
-      // Optionally, show a user-facing error here
-    }
+    } catch (_) {}
+  }
+
+  void _handleEmergencyLink(Uri uri) {
+    try {
+      final cardData = EmergencyQrEncoder.decode(uri.toString());
+      _router.push(EmergencyCardRoute(cardData: cardData));
+    } catch (_) {}
   }
 
   Future<String> downloadFile(String fileUrl, {String? customFileName}) async {
-    debugPrint('Downloading file from: $fileUrl');
-
     final response = await http.get(Uri.parse(fileUrl));
     if (response.statusCode != 200) {
       throw Exception('Failed to download file: ${response.statusCode}');

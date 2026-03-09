@@ -171,11 +171,51 @@ lib/
 | Branch      | Purpose                 | CI/CD Action                 |
 | ----------- | ----------------------- | ---------------------------- |
 | `master`    | Production              | Deploy to production         |
+| `develop`   | Integration / staging   | Continuous integration       |
 | `dev/*`     | Development             | For development purposes     |
 | `feature/*` | New features            | Run tests only               |
 | `fix/*`     | Bug fixes               | Run tests only               |
 | `release/*` | Release stabilization   | Full test + optional staging |
 | `hotfix/*`  | Urgent production fixes | Run tests                    |
+
+</details>
+
+## 📱 On-Device AI Requirements
+
+HealthWallet.me uses an on-device AI model ([Qwen3-VL-2B](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct)) to scan medical documents and classify them into FHIR resources — no cloud required.
+
+### Model Specs
+| | |
+|---|---|
+| **Model** | Qwen3-VL-2B-Instruct (Q4_K_M GGUF) |
+| **Download Size** | ~1.8 GB (model + vision projector) |
+| **Runtime** | llama.cpp (Metal on iOS, CPU on Android) |
+
+### Minimum Device Requirements
+
+| Platform | RAM | What Works |
+|----------|-----|------------|
+| **Android** | 12 GB+ | Full pipeline (patient + clinical data extraction) |
+| **Android** | 8 GB | Patient extraction only |
+| **Android** | < 8 GB | Not supported |
+| **iOS** | 8 GB+ | Full pipeline |
+| **iOS** | 6 GB | Full pipeline (Metal GPU acceleration) |
+| **iOS** | < 6 GB | Not supported |
+
+> iOS devices perform better at the same RAM tier due to Metal GPU acceleration and more aggressive memory management.
+
+<details>
+  <summary><strong>Tested Devices</strong></summary>
+
+| Device | RAM | Status |
+|--------|-----|--------|
+| Pixel 7 Pro | 12 GB | Full pipeline |
+| Galaxy S21 Ultra | 12 GB | Full pipeline |
+| iPhone 15 Pro Max | 8 GB | Full pipeline |
+| Galaxy S21 | 8 GB | Patient extraction only |
+| Galaxy S20 FE | 6 GB | Not supported |
+
+For detailed memory calculations and known issues, see [`docs/ai_model_device_requirements.md`](docs/ai_model_device_requirements.md).
 
 </details>
 
@@ -185,7 +225,7 @@ lib/
 - Basic health record management
 - Authentication and security
 - Cross-platform support
-- Document scanning & OCR
+- On-device AI medical document scanning & FHIR classification
 - File import & in-app viewing
 
 ### In Progress 🚧

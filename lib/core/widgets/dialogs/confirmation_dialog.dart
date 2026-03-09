@@ -12,6 +12,7 @@ class ConfirmationDialog extends StatelessWidget {
   final String cancelText;
   final VoidCallback onConfirm;
   final VoidCallback? onCancel;
+  final Color? confirmColor;
   const ConfirmationDialog({
     super.key,
     required this.title,
@@ -20,6 +21,7 @@ class ConfirmationDialog extends StatelessWidget {
     required this.cancelText,
     required this.onConfirm,
     this.onCancel,
+    this.confirmColor,
   });
 
   static Future<bool?> show({
@@ -30,6 +32,7 @@ class ConfirmationDialog extends StatelessWidget {
     required String cancelText,
     required VoidCallback onConfirm,
     VoidCallback? onCancel,
+    Color? confirmColor,
   }) {
     return showDialog<bool>(
       context: context,
@@ -42,6 +45,7 @@ class ConfirmationDialog extends StatelessWidget {
           cancelText: cancelText,
           onConfirm: onConfirm,
           onCancel: onCancel,
+          confirmColor: confirmColor,
         );
       },
     );
@@ -111,7 +115,7 @@ class ConfirmationDialog extends StatelessWidget {
                           onConfirm();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: confirmColor ?? AppColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.all(8),
                           fixedSize: const Size.fromHeight(36),

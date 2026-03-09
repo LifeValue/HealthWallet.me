@@ -11,14 +11,16 @@ class ObservationPrompt extends PromptTemplate {
       "resourceType": "Observation",
       "observationName": "string",
       "value": "string",
-      "unit": "string"
+      "unit": "string",
+      "referenceRange": "string (e.g., < 35, 8.8 - 10.2, > 3.5, empty if not available)",
+      "interpretation": "normal | high | low (empty if not determinable)"
     }
   ''';
 
   @override
   String get promptExample => '''
-    Medical Text: "Vitals taken at 10:30. Heart rate is 78 bpm. Body temperature is 98.6 F. Patient reports mild headache."
+    Medical Text: "Lab Results - Creatinine: 2.06 mg/dL (ref: 0.7-1.2), flagged HIGH. Glucose: 95 mg/dL (ref: 70-100). Heart rate is 78 bpm."
 
-    [ { "observationName": "Heart rate", "value": 78, "unit": "bpm" }, { "observationName": "Body temperature", "value": 98.6, "unit": "F" } ]
+    [ { "resourceType": "Observation", "observationName": "Creatinine", "value": "2.06", "unit": "mg/dL", "referenceRange": "0.7 - 1.2", "interpretation": "high" }, { "resourceType": "Observation", "observationName": "Glucose", "value": "95", "unit": "mg/dL", "referenceRange": "70 - 100", "interpretation": "normal" }, { "resourceType": "Observation", "observationName": "Heart rate", "value": "78", "unit": "bpm", "referenceRange": "", "interpretation": "" } ]
   ''';
 }

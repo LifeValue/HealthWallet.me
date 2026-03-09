@@ -72,6 +72,9 @@ class MappedProperty with _$MappedProperty {
   }
 
   bool get isValid => confidenceLevel > 0.6;
+
+  MappedProperty withFullConfidence() =>
+      value.isNotEmpty ? copyWith(confidenceLevel: 1.0) : this;
 }
 
 enum ConfidenceLevel {

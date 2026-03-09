@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
-import 'package:flutter/widgets.dart';
 import 'package:collection/collection.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_prompt.dart';
-import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
+import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_vision_prompt.dart';
+import 'package:health_wallet/features/scan/data/utils/scan_log_buffer.dart';
+import 'package:health_wallet/features/scan/data/model/prompt_template/remaining_resources_vision_prompt.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/scan/data/utils/patient_post_processor.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
@@ -22,10 +25,71 @@ import 'package:uuid/uuid.dart';
 
 @LazySingleton(as: ScanRepository)
 class ScanRepositoryImpl implements ScanRepository {
-  ScanRepositoryImpl(this._networkDataSource, this._localDataSource);
+  ScanRepositoryImpl(
+    this._networkDataSource,
+    this._localDataSource,
+    this._textRecognitionService,
+  );
 
   final ScanNetworkDataSource _networkDataSource;
   final ScanLocalDataSource _localDataSource;
+  final TextRecognitionService _textRecognitionService;
+
+  static final _markdownFenceRegex = RegExp(r'```(?:json)?\s*');
+
+  String _stripMarkdownFences(String text) {
+    return text.replaceAll(_markdownFenceRegex, '').trim();
+  }
+
+  String _repairTruncatedJsonArray(String text) {
+    final trimmed = text.trim();
+    if (!trimmed.startsWith('[')) return trimmed;
+
+    try {
+      jsonDecode(trimmed);
+      return trimmed;
+    } catch (_) {}
+
+    int depth = 0;
+    int lastCompleteObjectEnd = -1;
+    bool inString = false;
+    bool escaped = false;
+
+    for (int i = 0; i < trimmed.length; i++) {
+      final c = trimmed[i];
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (c == '\\' && inString) {
+        escaped = true;
+        continue;
+      }
+      if (c == '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString) continue;
+
+      if (c == '{' || c == '[') {
+        depth++;
+      } else if (c == '}' || c == ']') {
+        depth--;
+        if (depth == 1 && c == '}') {
+          lastCompleteObjectEnd = i;
+        }
+      }
+    }
+
+    if (lastCompleteObjectEnd > 0) {
+      final repaired = '${trimmed.substring(0, lastCompleteObjectEnd + 1)}]';
+      ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] repaired truncated JSON array (cut at char $lastCompleteObjectEnd of ${trimmed.length})');
+      return repaired;
+    }
+
+    return trimmed;
+  }
 
   bool _isStreamActive = false;
   Completer<void>? _streamCompleter;
@@ -300,11 +364,26 @@ class ScanRepositoryImpl implements ScanRepository {
   }
 
   @override
-  Stream<double> downloadModel() async* {
+  Stream<double> downloadModel() {
     final controller = StreamController<double>();
 
+    int modelProgress = 0;
+    int mmprojProgress = 0;
+
+    void emitCombinedProgress() {
+      if (controller.isClosed) return;
+      final combined = (modelProgress * 0.7 + mmprojProgress * 0.3);
+      controller.add(combined);
+    }
+
     _networkDataSource.downloadModel(onProgress: (progress) {
-      controller.add(progress.toDouble());
+      modelProgress = progress;
+      emitCombinedProgress();
+    }).then((_) {
+      return _networkDataSource.downloadMmproj(onProgress: (progress) {
+        mmprojProgress = progress;
+        emitCombinedProgress();
+      });
     }).then((_) {
       controller.close();
     }).catchError((error) {
@@ -312,48 +391,211 @@ class ScanRepositoryImpl implements ScanRepository {
       controller.close();
     });
 
-    yield* controller.stream;
+    return controller.stream;
   }
 
   @override
-  Future<bool> checkModelExistence() =>
-      _networkDataSource.checkModelExistence();
+  Future<bool> checkModelExistence() async {
+    final modelExists = await _networkDataSource.checkModelExistence();
+    final mmprojExists = await _networkDataSource.checkMmprojExistence();
+    return modelExists && mmprojExists;
+  }
+
+  MappingResource _selectContainer({
+    required List<MappingResource> resources,
+    required String documentCategory,
+  }) {
+    final diagnosticReport = resources
+        .whereType<MappingDiagnosticReport>()
+        .firstOrNull;
+    final encounter = resources
+        .whereType<MappingEncounter>()
+        .firstOrNull;
+
+    if (documentCategory == 'lab_report' &&
+        diagnosticReport != null &&
+        diagnosticReport.isValid) {
+      return diagnosticReport;
+    } else if (documentCategory == 'visit' &&
+        encounter != null &&
+        encounter.isValid) {
+      return encounter;
+    } else if (encounter != null && encounter.isValid) {
+      return encounter;
+    } else if (diagnosticReport != null && diagnosticReport.isValid) {
+      return diagnosticReport;
+    } else {
+      return MappingEncounter.empty();
+    }
+  }
+
+  (MappingPatient, MappingResource, String) _parseBasicInfoResponse(
+    String? response,
+    String inputTextForConfidence,
+  ) {
+    final cleaned = _stripMarkdownFences(response ?? '');
+    final repaired = _repairTruncatedJsonArray(cleaned);
+    List<dynamic> jsonList = jsonDecode(repaired);
+
+    String? aiCategory;
+    for (final json in jsonList) {
+      if (json is Map<String, dynamic> && json['resourceType'] == 'Patient') {
+        aiCategory = (json['documentCategory'] as String?)?.toLowerCase();
+        break;
+      }
+    }
+
+    List<MappingResource> resources = [];
+    for (Map<String, dynamic> json in jsonList) {
+      MappingResource resource = MappingResource.fromJson(json);
+      if (inputTextForConfidence.isNotEmpty) {
+        resource = resource.populateConfidence(inputTextForConfidence);
+      } else {
+        resource = resource.populateConfidence(
+          json.values.whereType<String>().where((v) => v.isNotEmpty).join(' '),
+        );
+      }
+
+      if (resource.isValid) {
+        resources.add(resource);
+      }
+    }
+
+    final documentCategory = aiCategory ?? '';
+    final resourceTypes = resources.map((r) => r.runtimeType.toString().replaceAll(r'_$', '').replaceAll('Impl', '')).join(', ');
+    ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] parsed ${jsonList.length} JSON objects -> ${resources.length} valid resources [$resourceTypes], category=${documentCategory.isEmpty ? '(empty)' : documentCategory}');
+
+    final container = _selectContainer(
+      resources: resources,
+      documentCategory: documentCategory,
+    );
+
+    MappingPatient patient =
+        resources.firstWhereOrNull((resource) => resource is MappingPatient)
+                as MappingPatient? ??
+            MappingPatient.empty();
+
+    return (patient, container, documentCategory);
+  }
+
+  Future<String> _runOcrOnImages(List<String> imagePaths) async {
+    final results = await Future.wait(
+      imagePaths.map((p) => _textRecognitionService.recognizeTextFromImage(p)),
+    );
+    return results.join('\n');
+  }
+
+  static const int _minOcrCharsForTextOnly = 200;
+
+  String get _ts => DateTime.now().toIso8601String().substring(11, 23);
+
+  bool _isUsableResult(MappingPatient patient) {
+    return patient.familyName.value.isNotEmpty ||
+        patient.givenName.value.isNotEmpty ||
+        patient.patientMRN.value.isNotEmpty;
+  }
 
   @override
-  Future<(MappingPatient, MappingEncounter)> mapBasicInfo(
-    String medicalText,
+  Future<(MappingPatient, MappingResource)> mapBasicInfo(
+    List<String> imagePaths, {
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+  }) async {
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] === BASIC INFO EXTRACTION ===');
+
+    final ocrSw = Stopwatch()..start();
+    final ocrText = await _runOcrOnImages(imagePaths);
+    ocrSw.stop();
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] OCR: ${ocrText.length} chars in ${(ocrSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
+
+    if (ocrText.trim().length >= _minOcrCharsForTextOnly) {
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] OCR has enough text, trying text-only (fast path)...');
+      try {
+        final textResult = await _tryTextOnlyBasicInfo(ocrText, maxTokens, threads, contextSize);
+        if (textResult != null) {
+          final (patient, container, docCategory) = textResult;
+          final postProcessed = PatientPostProcessor.postProcess(patient, ocrText);
+          if (_isUsableResult(postProcessed)) {
+            final containerType = container is MappingDiagnosticReport ? 'DiagnosticReport' : 'Encounter';
+            ScanLogBuffer.instance.log('[$_ts][ScanAI] text-only succeeded: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory');
+            return (postProcessed, container);
+          }
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] text-only result was empty, falling back to vision...');
+        }
+      } catch (e) {
+        ScanLogBuffer.instance.log('[$_ts][ScanAI] text-only failed: $e, falling back to vision...');
+      } finally {
+        await disposeModel();
+      }
+    } else {
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] OCR too short (${ocrText.trim().length} < $_minOcrCharsForTextOnly chars), using vision directly...');
+    }
+
+    return _visionBasicInfo(imagePaths, ocrText, maxTokens, gpuLayers, threads, contextSize);
+  }
+
+  Future<(MappingPatient, MappingResource, String)?> _tryTextOnlyBasicInfo(
+    String ocrText,
+    int? maxTokens,
+    int? threads,
+    int? contextSize,
   ) async {
-    await _networkDataSource.initModel();
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] loading model (text-only, no vision projector)...');
+    await _networkDataSource.initModel(
+      withVision: false,
+      threads: threads,
+      contextSize: contextSize,
+    );
+
+    final prompt = BasicInfoPrompt().buildPrompt(ocrText);
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] running text inference, prompt ${prompt.length} chars...');
+
+    final response = await _networkDataSource.runTextPrompt(
+      prompt: prompt,
+      maxTokens: maxTokens,
+    );
+
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] parsing text-only response...');
+    return _parseBasicInfoResponse(response, ocrText);
+  }
+
+  Future<(MappingPatient, MappingResource)> _visionBasicInfo(
+    List<String> imagePaths,
+    String ocrText,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+  ) async {
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] --- VISION FALLBACK ---');
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] loading model + vision projector...');
+    await _networkDataSource.initModel(
+      gpuLayers: gpuLayers,
+      threads: threads,
+      contextSize: contextSize,
+    );
 
     try {
-      String prompt = BasicInfoPrompt().buildPrompt(medicalText);
+      final prompt = BasicInfoVisionPrompt(ocrText: ocrText).buildPrompt();
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] running vision inference...');
 
-      String? promptResponse =
-          await _networkDataSource.runPrompt(prompt: prompt);
+      final response = await _networkDataSource.runVisionPrompt(
+        prompt: prompt,
+        imagePaths: imagePaths,
+        maxTokens: maxTokens,
+      );
 
-      List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] parsing vision response...');
+      final (patient, container, docCategory) = _parseBasicInfoResponse(response, ocrText);
 
-      List<MappingResource> resources = [];
-      for (Map<String, dynamic> json in jsonList) {
-        MappingResource resource =
-            MappingResource.fromJson(json).populateConfidence(medicalText);
+      final postProcessed = PatientPostProcessor.postProcess(patient, ocrText);
 
-        if (resource.isValid) {
-          resources.add(resource);
-        }
-      }
-      
-      MappingEncounter encounter =
-          resources.firstWhereOrNull((resource) => resource is MappingEncounter)
-                  as MappingEncounter? ??
-              MappingEncounter.empty();
+      final containerType = container is MappingDiagnosticReport ? 'DiagnosticReport' : 'Encounter';
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] vision result: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory');
 
-      MappingPatient patient =
-          resources.firstWhereOrNull((resource) => resource is MappingPatient)
-                  as MappingPatient? ??
-              MappingPatient.empty();
-
-      return (patient, encounter);
+      return (postProcessed, container);
     } finally {
       await disposeModel();
     }
@@ -361,66 +603,78 @@ class ScanRepositoryImpl implements ScanRepository {
 
   @override
   Stream<MappingResourcesWithProgress> mapRemainingResources(
-    String medicalText,
-  ) async* {
+    List<String> imagePaths, {
+    String? documentCategory,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+  }) async* {
     try {
       _isStreamActive = true;
       _streamCompleter = Completer<void>();
       _shouldCancelGeneration = false;
-            
-      await _networkDataSource.initModel();
 
-      List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
-      for (int i = 0; i < supportedPrompts.length; i++) {
-        if (_shouldCancelGeneration) {
-          break;
-        }
-        
-        String prompt = supportedPrompts[i].buildPrompt(medicalText);
-        String? promptResponse = await _networkDataSource.runPrompt(
-          prompt: prompt,
-        );
+      final results = await Future.wait([
+        _networkDataSource.initModel(gpuLayers: gpuLayers, threads: threads, contextSize: contextSize),
+        _runOcrOnImages(imagePaths),
+      ]);
+      final ocrText = results[1] as String;
 
-        if (_shouldCancelGeneration) {
-          break;
-        }
+      ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
+      ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, maxTokens=${maxTokens ?? 'default'}');
 
-        List<MappingResource> resources = [];
+      final prompt = RemainingResourcesVisionPrompt(
+        documentCategory: documentCategory,
+        ocrText: ocrText,
+      ).buildPrompt();
 
-        try {
-          List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+      final response = await _networkDataSource.runVisionPrompt(
+        prompt: prompt,
+        imagePaths: imagePaths,
+        maxTokens: maxTokens,
+      );
 
-          for (Map<String, dynamic> json in jsonList) {
-            MappingResource resource =
-                MappingResource.fromJson(json).populateConfidence(medicalText);
+      if (_shouldCancelGeneration) return;
 
-            if (resource.isValid) {
-              resources.add(resource);
-            }
+      List<MappingResource> resources = [];
+      try {
+        final cleaned = _stripMarkdownFences(response ?? '');
+        final repaired = _repairTruncatedJsonArray(cleaned);
+        List<dynamic> jsonList = jsonDecode(repaired);
+
+        final confidenceText = ocrText.isNotEmpty ? ocrText : null;
+
+        for (Map<String, dynamic> json in jsonList) {
+          MappingResource resource = MappingResource.fromJson(json);
+          resource = resource.populateConfidence(
+            confidenceText ?? json.values.whereType<String>().where((v) => v.isNotEmpty).join(' '),
+          );
+
+          if (resource.isValid) {
+            resources.add(resource);
           }
-        } catch (_) {
-          yield ([], (i + 1) / supportedPrompts.length);
-          continue;
         }
-
-        yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
+        ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] extracted ${resources.length} resources from ${jsonList.length} JSON objects');
+      } catch (e) {
+        ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] failed to parse remaining resources: $e');
       }
-      
+
+      yield (resources.toSet().toList(), 1.0);
     } finally {
       await disposeModel();
-      
+
       _isStreamActive = false;
       _shouldCancelGeneration = false;
       _streamCompleter?.complete();
-      
     }
   }
+
 
   @override
   Future<void> waitForStreamCompletion() async {
     if (_isStreamActive && _streamCompleter != null && !_streamCompleter!.isCompleted) {
       await _streamCompleter!.future;
-    } else {
     }
   }
 

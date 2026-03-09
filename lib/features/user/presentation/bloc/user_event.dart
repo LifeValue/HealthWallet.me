@@ -36,3 +36,8 @@ class UserDataUpdatedFromSync extends UserEvent with _$UserDataUpdatedFromSync {
 class UserNameUpdated extends UserEvent with _$UserNameUpdated {
   const factory UserNameUpdated(String name) = _UserNameUpdated;
 }
+
+@freezed
+class UserReceiveModeToggled extends UserEvent with _$UserReceiveModeToggled {
+  const factory UserReceiveModeToggled(bool isEnabled) = _UserReceiveModeToggled;
+}

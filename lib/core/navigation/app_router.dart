@@ -13,7 +13,11 @@ import 'package:health_wallet/features/onboarding/presentation/pages/splash_page
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/pages/record_detail_page.dart';
 import 'package:health_wallet/features/user/presentation/pages/privacy_policy_page.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/presentation/pages/emergency_card_page.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
+import 'package:health_wallet/features/share_records/presentation/pages/share_records_page.dart';
+import 'package:health_wallet/features/share_records/presentation/pages/share_records_send_page.dart';
 import 'package:health_wallet/features/sync/presentation/sync_page.dart';
 import 'package:injectable/injectable.dart';
 
@@ -41,5 +45,8 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: LoadModelRoute.page),
         AutoRoute(page: ProcessingRoute.page),
         AutoRoute(page: FocusModeRoute.page),
+        AutoRoute(page: ShareRecordsRoute.page),
+        AutoRoute(page: ShareRecordsSendRoute.page),
+        AutoRoute(page: EmergencyCardRoute.page),
       ];
 }

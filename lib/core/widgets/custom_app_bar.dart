@@ -7,6 +7,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? titleWidget;
   final List<Widget>? actions;
   final bool automaticallyImplyLeading;
+  final Widget? leading;
   final Color? backgroundColor;
   final PreferredSizeWidget? bottom;
 
@@ -16,6 +17,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.titleWidget,
     this.actions,
     this.automaticallyImplyLeading = true,
+    this.leading,
     this.backgroundColor,
     this.bottom,
   }) : assert(
@@ -33,7 +35,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       automaticallyImplyLeading: automaticallyImplyLeading,
+      leading: leading,
       centerTitle: false,
+      titleSpacing: leading != null ? 0 : NavigationToolbar.kMiddleSpacing,
       title: titleWidget ??
           (title != null
               ? Text(

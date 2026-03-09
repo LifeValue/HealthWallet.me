@@ -861,4 +861,90 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get plugInChargerEllipsis => 'Conecta el cargador...';
+
+  @override
+  String get processingFailedCapacity =>
+      'El documento es demasiado grande para la capacidad actual de tokens de IA.';
+
+  @override
+  String get processingFailedCapacitySuggestion =>
+      'Intenta aumentar la capacidad del modelo de IA para procesar documentos más grandes.';
+
+  @override
+  String get increaseAiModelCapacity => 'Aumentar Capacidad del Modelo IA';
+
+  @override
+  String get goBack => 'Volver';
+
+  @override
+  String get aiSettings => 'Ajustes de IA';
+
+  @override
+  String get aiSettingsDescription =>
+      'Ajusta el rendimiento de IA para tu dispositivo. Los valores recomendados están preseleccionados.';
+
+  @override
+  String get setAiTokensUsage => 'Configurar Uso de Tokens IA';
+
+  @override
+  String get tokenUsageDescription =>
+      'Controla cuánta capacidad de procesamiento puede usar la IA. Mayor capacidad permite archivos más grandes y tareas más complejas, pero usa más recursos y tarda más.';
+
+  @override
+  String get gpuLayersLabel => 'Capas GPU';
+
+  @override
+  String get gpuLayersDescription =>
+      'Descargar capas del modelo a la GPU para un procesamiento de imágenes más rápido. Más capas = más rápido pero más memoria. Pon 0 si la app se cierra.';
+
+  @override
+  String get threadsLabel => 'Hilos CPU';
+
+  @override
+  String get threadsDescription =>
+      'Número de hilos de CPU para inferencia. Más hilos = más rápido pero más batería.';
+
+  @override
+  String get recommended => 'Recomendado';
+
+  @override
+  String get tokenPresetLow => 'Bajo';
+
+  @override
+  String get tokenPresetLowDescription =>
+      'Ideal para archivos pequeños y tareas rápidas.\nUsa menos recursos y procesa más rápido.';
+
+  @override
+  String get tokenPresetMedium => 'Medio';
+
+  @override
+  String get tokenPresetMediumDescription =>
+      'Bueno para la mayoría de casos.\nEquilibra tamaño de archivo, tiempo de procesamiento y uso de recursos.';
+
+  @override
+  String get tokenPresetHigh => 'Alto';
+
+  @override
+  String get tokenPresetHighDescription =>
+      'Ideal para archivos grandes y procesamiento complejo.\nUsa más recursos y batería, y tarda más en completar.';
+
+  @override
+  String get tokenPresetCustom => 'Personalizado';
+
+  @override
+  String get tokenPresetCustomDescription =>
+      'Establece una cantidad personalizada de tokens.';
+
+  @override
+  String get setTokens => 'Establecer';
+
+  @override
+  String get tokens => 'tokens';
+
+  @override
+  String get contextSizeLabel => 'Tamaño de contexto';
+
+  @override
+  String get contextSizeDescription =>
+      'Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria.';
 }

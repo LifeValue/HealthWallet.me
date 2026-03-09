@@ -147,8 +147,11 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
       [];
 
   @override
-  Future<Uint8List> buildIpsExport({required String? sourceId}) async =>
-      Uint8List(0);
+  Future<({Uint8List bytes, String patientName})> buildIpsExport({
+    String? sourceId,
+    String? patientId,
+  }) async =>
+      (bytes: Uint8List(0), patientName: 'Unknown');
 }
 
 class FakeSyncRepository extends Fake implements SyncRepository {
@@ -265,6 +268,7 @@ void main() {
       DefaultPatientService(fakeRecordsRepo, FakeSyncLocalDataSource()),
     );
     final recordsBloc = RecordsBloc(fakeRecordsRepo);
+    final prefs = await SharedPreferences.getInstance();
     final scanBloc = ScanBloc(
       PdfStorageService(),
       fakeScanRepo,
@@ -274,8 +278,8 @@ void main() {
       deduplicationService,
       sourceTypeService,
       fakeRecordsRepo,
+      prefs,
     );
-    final prefs = await SharedPreferences.getInstance();
     final notificationBloc = NotificationBloc(prefs);
     final patientBloc = PatientBloc(
       fakeRecordsRepo,

@@ -89,4 +89,11 @@ abstract class MappingResource {
   bool get isValid;
 
   String get id;
+
+  static String normalizeDateValue(String value) {
+    if (value.isEmpty) return value;
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return value;
+    return '${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+  }
 }
