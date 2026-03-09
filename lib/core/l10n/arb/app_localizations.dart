@@ -64,7 +64,7 @@ import 'app_localizations_es.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -87,17 +87,17 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('es'),
-    Locale('de')
+    Locale('de'),
   ];
 
   /// The title of the application
@@ -1671,6 +1671,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Plug in the charger...'**
   String get plugInChargerEllipsis;
+
+  /// No description provided for @processingFailedCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'The document is too large for the current AI token capacity.'**
+  String get processingFailedCapacity;
+
+  /// No description provided for @processingFailedCapacitySuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Try increasing the AI model capacity to process larger documents.'**
+  String get processingFailedCapacitySuggestion;
+
+  /// No description provided for @increaseAiModelCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase AI Model Capacity'**
+  String get increaseAiModelCapacity;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get goBack;
+
+  /// No description provided for @aiSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Settings'**
+  String get aiSettings;
+
+  /// No description provided for @aiSettingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust AI performance for your device. Recommended values are pre-selected.'**
+  String get aiSettingsDescription;
+
+  /// No description provided for @setAiTokensUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set AI Tokens Usage'**
+  String get setAiTokensUsage;
+
+  /// No description provided for @tokenUsageDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.'**
+  String get tokenUsageDescription;
+
+  /// No description provided for @gpuLayersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'GPU Layers'**
+  String get gpuLayersLabel;
+
+  /// No description provided for @gpuLayersDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.'**
+  String get gpuLayersDescription;
+
+  /// No description provided for @threadsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU Threads'**
+  String get threadsLabel;
+
+  /// No description provided for @threadsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of CPU threads for inference. More threads = faster but uses more battery.'**
+  String get threadsDescription;
+
+  /// No description provided for @recommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get recommended;
+
+  /// No description provided for @tokenPresetLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get tokenPresetLow;
+
+  /// No description provided for @tokenPresetLowDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Best for small files and quick tasks.\nUses the least resources and processes fastest.'**
+  String get tokenPresetLowDescription;
+
+  /// No description provided for @tokenPresetMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get tokenPresetMedium;
+
+  /// No description provided for @tokenPresetMediumDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Good for most use cases.\nBalances file size, processing time, and resource usage.'**
+  String get tokenPresetMediumDescription;
+
+  /// No description provided for @tokenPresetHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get tokenPresetHigh;
+
+  /// No description provided for @tokenPresetHighDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Best for large files and complex processing.\nUses more resources and battery, and takes longer to complete.'**
+  String get tokenPresetHighDescription;
+
+  /// No description provided for @tokenPresetCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get tokenPresetCustom;
+
+  /// No description provided for @tokenPresetCustomDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Set custom amount of tokens you want to use.'**
+  String get tokenPresetCustomDescription;
+
+  /// No description provided for @setTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get setTokens;
+
+  /// No description provided for @tokens.
+  ///
+  /// In en, this message translates to:
+  /// **'tokens'**
+  String get tokens;
+
+  /// No description provided for @contextSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Context Size'**
+  String get contextSizeLabel;
+
+  /// No description provided for @contextSizeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.'**
+  String get contextSizeDescription;
 }
 
 class _AppLocalizationsDelegate
@@ -1702,8 +1852,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }

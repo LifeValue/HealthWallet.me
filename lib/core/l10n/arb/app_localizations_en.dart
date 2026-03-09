@@ -850,4 +850,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get plugInChargerEllipsis => 'Plug in the charger...';
+
+  @override
+  String get processingFailedCapacity =>
+      'The document is too large for the current AI token capacity.';
+
+  @override
+  String get processingFailedCapacitySuggestion =>
+      'Try increasing the AI model capacity to process larger documents.';
+
+  @override
+  String get increaseAiModelCapacity => 'Increase AI Model Capacity';
+
+  @override
+  String get goBack => 'Go Back';
+
+  @override
+  String get aiSettings => 'AI Settings';
+
+  @override
+  String get aiSettingsDescription =>
+      'Adjust AI performance for your device. Recommended values are pre-selected.';
+
+  @override
+  String get setAiTokensUsage => 'Set AI Tokens Usage';
+
+  @override
+  String get tokenUsageDescription =>
+      'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.';
+
+  @override
+  String get gpuLayersLabel => 'GPU Layers';
+
+  @override
+  String get gpuLayersDescription =>
+      'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.';
+
+  @override
+  String get threadsLabel => 'CPU Threads';
+
+  @override
+  String get threadsDescription =>
+      'Number of CPU threads for inference. More threads = faster but uses more battery.';
+
+  @override
+  String get recommended => 'Recommended';
+
+  @override
+  String get tokenPresetLow => 'Low';
+
+  @override
+  String get tokenPresetLowDescription =>
+      'Best for small files and quick tasks.\nUses the least resources and processes fastest.';
+
+  @override
+  String get tokenPresetMedium => 'Medium';
+
+  @override
+  String get tokenPresetMediumDescription =>
+      'Good for most use cases.\nBalances file size, processing time, and resource usage.';
+
+  @override
+  String get tokenPresetHigh => 'High';
+
+  @override
+  String get tokenPresetHighDescription =>
+      'Best for large files and complex processing.\nUses more resources and battery, and takes longer to complete.';
+
+  @override
+  String get tokenPresetCustom => 'Custom';
+
+  @override
+  String get tokenPresetCustomDescription =>
+      'Set custom amount of tokens you want to use.';
+
+  @override
+  String get setTokens => 'Set';
+
+  @override
+  String get tokens => 'tokens';
+
+  @override
+  String get contextSizeLabel => 'Context Size';
+
+  @override
+  String get contextSizeDescription =>
+      'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.';
 }

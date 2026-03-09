@@ -22,17 +22,23 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     @Default(MappedProperty()) MappedProperty dateOfBirth,
     @Default(MappedProperty()) MappedProperty gender,
     @Default(MappedProperty()) MappedProperty patientMRN,
+    @Default('MRN') String identifierLabel,
   }) = _MappingPatient;
 
   factory MappingPatient.fromJson(Map<String, dynamic> json) {
+    final rawLabel = (json['identifierLabel'] as String?)?.trim() ?? '';
+    final rawDob = MappedProperty.fromJson(json['dateOfBirth']);
     return MappingPatient(
       id: json["id"] ?? const Uuid().v4(),
       familyName: MappedProperty.fromJson(json['familyName']),
       givenName: MappedProperty.fromJson(json['givenName']),
-      dateOfBirth: MappedProperty.fromJson(json['dateOfBirth']),
+      dateOfBirth: rawDob.copyWith(
+        value: MappingResource.normalizeDateValue(rawDob.value),
+      ),
       gender: MappedProperty.fromJson(json['gender']),
       patientMRN:
           MappedProperty.fromJson(json['patientMRN'] ?? json['patientId']),
+      identifierLabel: rawLabel.isEmpty ? 'MRN' : rawLabel,
     );
   }
 
@@ -84,6 +90,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         'dateOfBirth': dateOfBirth.toJson(),
         'gender': gender.toJson(),
         'patientMRN': patientMRN.toJson(),
+        'identifierLabel': identifierLabel,
       };
 
   @override
@@ -102,7 +109,12 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       birthDate: fhir_r4.FhirDate.fromString(dateOfBirth.value),
       gender: fhir_r4.AdministrativeGender(gender.value),
       identifier: [
-        fhir_r4.Identifier(id: fhir_r4.FhirString(patientMRN.value))
+        fhir_r4.Identifier(
+          value: fhir_r4.FhirString(patientMRN.value),
+          type: fhir_r4.CodeableConcept(
+            text: fhir_r4.FhirString(identifierLabel),
+          ),
+        )
       ],
     );
 
@@ -149,7 +161,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           fieldType: FieldType.dropdown,
         ),
         'patientMRN': TextFieldDescriptor(
-          label: 'MRN',
+          label: identifierLabel,
           value: patientMRN.value,
           confidenceLevel: patientMRN.confidenceLevel,
         ),
@@ -184,6 +196,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           confidenceLevel:
               newValues['patientMRN'] != null ? 1 : patientMRN.confidenceLevel,
         ),
+        identifierLabel: identifierLabel,
       );
 
   @override

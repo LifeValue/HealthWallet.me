@@ -1,6 +1,5 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
@@ -28,40 +27,40 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _checkAuthStatus() async {
+    final minSplash = Future.delayed(const Duration(seconds: 1));
+
+    final destination = await _resolveDestination();
+
+    await minSplash;
+    if (!mounted) return;
+    context.appRouter.replace(destination);
+  }
+
+  Future<PageRouteInfo> _resolveDestination() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
-    if (!hasSeenOnboarding) {
-      context.appRouter.replace(const OnboardingRoute());
-      return;
-    }
+    if (!hasSeenOnboarding) return const OnboardingRoute();
 
     final isBiometricAuthEnabled =
         await _userRepository.isBiometricAuthEnabled();
-
-    if (!isBiometricAuthEnabled) {
-      context.appRouter.replace(DashboardRoute());
-      return;
-    }
+    if (!isBiometricAuthEnabled) return DashboardRoute();
 
     final isBiometricAvailable =
         await _biometricAuthService.isBiometricAvailable();
-
-    if (!isBiometricAvailable) {
-      context.appRouter.replace(DashboardRoute());
-      return;
-    }
+    if (!isBiometricAvailable) return DashboardRoute();
 
     final didAuthenticate = await _biometricAuthService.authenticate();
-    if (didAuthenticate) {
-      context.appRouter.replace(DashboardRoute());
-    } else {
-      context.appRouter.replace(const OnboardingRoute());
-    }
+    return didAuthenticate ? DashboardRoute() : const OnboardingRoute();
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return Scaffold(
+      backgroundColor: context.colorScheme.surface,
+      body: Center(
+        child: Image.asset('assets/images/splash.png', width: 200),
+      ),
+    );
   }
 }

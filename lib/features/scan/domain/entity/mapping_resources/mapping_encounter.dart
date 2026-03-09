@@ -21,10 +21,13 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
   }) = _MappingEncounter;
 
   factory MappingEncounter.fromJson(Map<String, dynamic> json) {
+    final rawPeriodStart = MappedProperty.fromJson(json['periodStart']);
     return MappingEncounter(
       id: json["id"] ?? const Uuid().v4(),
       encounterType: MappedProperty.fromJson(json['encounterType']),
-      periodStart: MappedProperty.fromJson(json['periodStart']),
+      periodStart: rawPeriodStart.copyWith(
+        value: MappingResource.normalizeDateValue(rawPeriodStart.value),
+      ),
     );
   }
 

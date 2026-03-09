@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -7,8 +8,10 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_token_settings_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AiModelSection extends StatefulWidget {
   const AiModelSection({super.key});
@@ -57,93 +60,9 @@ class _AiModelSectionState extends State<AiModelSection> {
                     border: Border.all(color: borderColor),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: Insets.small,
-                              vertical: Insets.extraSmall,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(state.status)
-                                  .withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _getStatusIcon(state.status),
-                                const SizedBox(width: Insets.extraSmall),
-                                Text(
-                                  _getModelStatusText(context, state),
-                                  style: AppTextStyle.labelSmall.copyWith(
-                                    color: _getStatusColor(state.status),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      Assets.onboarding.onboarding3.svg(
-                        width: 140,
-                        height: 140,
-                      ),
-                      const SizedBox(height: Insets.small),
-                      Text(
-                        context.l10n.onboardingAiModelDescription,
-                        textAlign: TextAlign.center,
-                        style: AppTextStyle.labelLarge,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      if (state.status == LoadModelStatus.modelAbsent ||
-                          state.status == LoadModelStatus.error)
-                        AppButton(
-                          label: context.l10n.aiModelEnableDownload,
-                          icon: const Icon(Icons.download),
-                          variant: AppButtonVariant.primary,
-                          onPressed: () =>
-                              _bloc.add(const LoadModelDownloadInitiated()),
-                        )
-                      else if (state.status == LoadModelStatus.loading) ...[
-                        CustomProgressIndicator(
-                          progress: (state.downloadProgress ?? 0) / 100,
-                          text: context.l10n.aiModelDownloading,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Download continues in background',
-                          textAlign: TextAlign.center,
-                          style: AppTextStyle.labelSmall.copyWith(
-                            color: context.colorScheme.onSurface.withOpacity(0.6),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ] else if (state.status == LoadModelStatus.modelLoaded)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              size: 20,
-                              color: AppColors.success,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              context.l10n.aiModelReady,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyle.labelLarge.copyWith(
-                                color: AppColors.success,
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
+                  child: state.status == LoadModelStatus.modelLoaded
+                      ? _buildModelReadyContent(context)
+                      : _buildModelSetupContent(context, state),
                 ),
               ],
             ),
@@ -151,6 +70,139 @@ class _AiModelSectionState extends State<AiModelSection> {
         },
       ),
     );
+  }
+
+  Widget _buildModelReadyContent(BuildContext context) {
+    return Column(
+      children: [
+        Assets.onboarding.onboarding3.svg(
+          width: 140,
+          height: 140,
+        ),
+        const SizedBox(height: Insets.small),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle, size: 18, color: AppColors.success),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                context.l10n.aiModelReady,
+                style: AppTextStyle.labelLarge.copyWith(
+                  color: AppColors.success,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: Insets.smallNormal),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _openAiSettings(context),
+            icon: const Icon(Icons.tune, size: 18),
+            label: Text(context.l10n.aiSettings),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: Insets.small),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModelSetupContent(BuildContext context, LoadModelState state) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Insets.small,
+                vertical: Insets.extraSmall,
+              ),
+              decoration: BoxDecoration(
+                color: _getStatusColor(state.status).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _getStatusIcon(state.status),
+                  const SizedBox(width: Insets.extraSmall),
+                  Text(
+                    _getModelStatusText(context, state),
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: _getStatusColor(state.status),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: Insets.normal),
+        Assets.onboarding.onboarding3.svg(
+          width: 140,
+          height: 140,
+        ),
+        const SizedBox(height: Insets.small),
+        Text(
+          context.l10n.onboardingAiModelDescription,
+          textAlign: TextAlign.center,
+          style: AppTextStyle.labelLarge,
+        ),
+        const SizedBox(height: Insets.normal),
+        if (state.status == LoadModelStatus.modelAbsent ||
+            state.status == LoadModelStatus.error)
+          AppButton(
+            label: context.l10n.aiModelEnableDownload,
+            icon: const Icon(Icons.download),
+            variant: AppButtonVariant.primary,
+            onPressed: () => _bloc.add(const LoadModelDownloadInitiated()),
+          )
+        else if (state.status == LoadModelStatus.loading) ...[
+          CustomProgressIndicator(
+            progress: (state.downloadProgress ?? 0) / 100,
+            text: context.l10n.aiModelDownloading,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Download continues in background',
+            textAlign: TextAlign.center,
+            style: AppTextStyle.labelSmall.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _openAiSettings(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentTokens =
+        prefs.getInt(SharedPrefsConstants.aiMaxTokens) ?? 500;
+
+    if (!context.mounted) return;
+
+    final result = await AiTokenSettingsDialog.show(
+      context,
+      currentTokens: currentTokens,
+    );
+
+    if (result == null) return;
+
+    await prefs.setInt(SharedPrefsConstants.aiMaxTokens, result.maxTokens);
+    await prefs.setInt(SharedPrefsConstants.aiGpuLayers, result.gpuLayers);
+    await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
+    await prefs.setInt(SharedPrefsConstants.aiContextSize, result.contextSize);
   }
 
   Color _getStatusColor(LoadModelStatus status) {

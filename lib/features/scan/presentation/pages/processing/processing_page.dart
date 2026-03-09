@@ -3,6 +3,8 @@ import 'package:collection/collection.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/app_constants.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -16,10 +18,13 @@ import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/resources_form.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_token_settings_dialog.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/summary_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @RoutePage()
 class ProcessingPage extends StatefulWidget {
@@ -36,6 +41,7 @@ class ProcessingPage extends StatefulWidget {
 
 class _ProcessingPageState extends State<ProcessingPage> {
   final _formKey = GlobalKey<FormState>();
+  final _encounterSectionKey = GlobalKey();
   final _encounterNameController = TextEditingController();
   final _pageController = PageController();
 
@@ -54,14 +60,31 @@ class _ProcessingPageState extends State<ProcessingPage> {
     super.dispose();
   }
 
+  void _scrollToFormErrors() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _encounterSectionKey.currentContext ?? _formKey.currentContext;
+      if (target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: 0.1,
+      );
+    });
+  }
+
   void _saveResources(ScanState state) async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _scrollToFormErrors();
+      return;
+    }
 
     final activeSession =
         state.sessions.firstWhere((session) => session.id == widget.sessionId);
 
     if (activeSession.patient.hasSelection &&
-        activeSession.encounter.hasSelection) {
+        (activeSession.encounter.hasSelection ||
+            activeSession.isDiagnosticReportContainer)) {
       context
           .read<ScanBloc>()
           .add(ScanResourceCreationInitiated(sessionId: widget.sessionId));
@@ -95,31 +118,88 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(context.l10n.processing, style: AppTextStyle.titleMedium),
-        backgroundColor: context.colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
-      body: BlocConsumer<ScanBloc, ScanState>(
-        listener: (context, state) {
-          final displayedSession =
-              state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
-          if (displayedSession == null) return;
+    return BlocConsumer<ScanBloc, ScanState>(
+      listener: (context, state) {
+        final displayedSession =
+            state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
+        if (displayedSession == null) return;
 
-          if (state.status == const ScanStatus.success()) {
-            context
-                .read<ScanBloc>()
-                .add(ScanSessionCleared(session: displayedSession));
-            context.router.replaceAll([const DashboardRoute()]);
-          }
-        },
-        builder: (context, state) {
-          final displayedSession =
-              state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
+        if (state.status == const ScanStatus.success()) {
+          context
+              .read<ScanBloc>()
+              .add(ScanSessionCleared(session: displayedSession));
+          context.router.replaceAll([const DashboardRoute()]);
+        }
+      },
+      builder: (context, state) {
+        final displayedSession =
+            state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
+
+        final canRetry = displayedSession != null &&
+            (displayedSession.status == ProcessingStatus.patientExtracted ||
+                displayedSession.status == ProcessingStatus.draft ||
+                displayedSession.status == ProcessingStatus.cancelled ||
+                state.status is Failure ||
+                state.status is CapacityFailure);
+
+        final isStep2Retry = displayedSession != null &&
+            (displayedSession.status == ProcessingStatus.draft ||
+                (displayedSession.status == ProcessingStatus.patientExtracted &&
+                    state.status is Failure));
+
+        return Scaffold(
+          backgroundColor: context.colorScheme.surface,
+          appBar: AppBar(
+            title: Text(context.l10n.processing, style: AppTextStyle.titleMedium),
+            centerTitle: true,
+            backgroundColor: context.colorScheme.surface,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            actions: [
+              if (canRetry)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                    Icons.refresh,
+                    size: 20,
+                    color: isStep2Retry
+                        ? context.colorScheme.tertiary
+                        : null,
+                  ),
+                  tooltip: isStep2Retry
+                      ? '${context.l10n.retry} (Step 2)'
+                      : '${context.l10n.retry} (Step 1)',
+                  onPressed: () {
+                    if (isStep2Retry) {
+                      context.read<ScanBloc>().add(
+                            ScanProcessRemainingResources(
+                              sessionId: widget.sessionId,
+                            ),
+                          );
+                    } else {
+                      context.read<ScanBloc>().add(
+                            ScanMappingInitiated(sessionId: widget.sessionId),
+                          );
+                    }
+                  },
+                ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.tune, size: 20),
+                onPressed: _showAiSettingsDialog,
+              ),
+              Opacity(
+                opacity: 0.5,
+                child: IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.terminal, size: 18),
+                  onPressed: () => DebugLogSheet.show(context),
+                ),
+              ),
+            ],
+          ),
+          body: Builder(builder: (context) {
           if (displayedSession == null) {
             return Center(child: Text(context.l10n.sessionNotFound));
           }
@@ -160,8 +240,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
               const SizedBox(height: Insets.large),
             ]),
           );
-        },
-      ),
+        }),
+        );
+      },
     );
   }
 
@@ -180,6 +261,10 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   Widget _buildMappingSection(
       ScanState state, ProcessingSession displayedSession) {
+    if (state.status is CapacityFailure) {
+      return _buildCapacityFailure();
+    }
+
     if (state.status is Failure) {
       final error = (state.status as Failure).error;
       return Column(
@@ -330,6 +415,96 @@ class _ProcessingPageState extends State<ProcessingPage> {
     return const SizedBox.shrink();
   }
 
+  Widget _buildCapacityFailure() {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(Insets.normal),
+          decoration: BoxDecoration(
+            color: context.colorScheme.errorContainer.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+            border:
+                Border.all(color: context.colorScheme.error.withOpacity(0.5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.memory,
+                    color: context.colorScheme.error,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.l10n.processingFailed,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: context.colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.l10n.processingFailedCapacity,
+                style: AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.onErrorContainer,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                context.l10n.processingFailedCapacitySuggestion,
+                style: AppTextStyle.labelSmall.copyWith(
+                  color: context.colorScheme.onErrorContainer.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Insets.normal),
+        AppButton(
+          label: context.l10n.increaseAiModelCapacity,
+          variant: AppButtonVariant.primary,
+          onPressed: _showAiSettingsDialog,
+        ),
+        const SizedBox(height: Insets.small),
+        AppButton(
+          label: context.l10n.goBack,
+          variant: AppButtonVariant.transparent,
+          onPressed: () => context.router.maybePop(),
+        ),
+      ],
+    );
+  }
+
+  void _showAiSettingsDialog() async {
+    final prefs = getIt<SharedPreferences>();
+    final currentTokens =
+        prefs.getInt(SharedPrefsConstants.aiMaxTokens) ??
+            AppConstants.defaultMaxTokens;
+
+    final result = await AiTokenSettingsDialog.show(
+      context,
+      currentTokens: currentTokens,
+    );
+
+    if (result != null && mounted) {
+      await prefs.setInt(SharedPrefsConstants.aiGpuLayers, result.gpuLayers);
+      await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
+      await prefs.setInt(SharedPrefsConstants.aiContextSize, result.contextSize);
+
+      context.read<ScanBloc>().add(
+            ScanTokenCapacityUpdated(
+              newMaxTokens: result.maxTokens,
+              sessionId: widget.sessionId,
+            ),
+          );
+    }
+  }
+
   Widget _buildQueuedMessage() {
     return FutureBuilder(
       future: getIt<ScanRepository>().checkModelExistence(),
@@ -367,10 +542,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
       children: [
         ResourcesForm(
           formKey: _formKey,
+          encounterSectionKey: _encounterSectionKey,
           resources: displayedSession.resources,
           sessionId: widget.sessionId,
           patient: displayedSession.patient,
           encounter: displayedSession.encounter,
+          diagnosticReport: displayedSession.diagnosticReport,
           isAttachmentLocked: displayedSession.isDocumentAttached,
         ),
         if (displayedSession.status == ProcessingStatus.patientExtracted) ...[
@@ -521,9 +698,14 @@ class _ProcessingPageState extends State<ProcessingPage> {
   }
 
   void _attachToEncounter(ProcessingSession session) async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _scrollToFormErrors();
+      return;
+    }
 
-    if (session.patient.hasSelection && session.encounter.hasSelection) {
+    if (session.patient.hasSelection &&
+        (session.encounter.hasSelection ||
+            session.isDiagnosticReportContainer)) {
       context.read<ScanBloc>().add(
             ScanDocumentAttached(
               sessionId: widget.sessionId,

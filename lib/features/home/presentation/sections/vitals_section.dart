@@ -376,14 +376,21 @@ class VitalsSection extends StatelessWidget {
                 SizedBox(height: iconSize, width: iconSize, child: icon),
                 SizedBox(width: iconTitleSpacing),
                 Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: titleStyle,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle,
+                    ),
                   ),
                 ),
-                if (statusIcon != null) statusIcon,
+                if (statusIcon != null) ...[
+                  const SizedBox(width: 4),
+                  statusIcon,
+                ],
               ],
             ),
             const SizedBox(height: Insets.smallNormal),

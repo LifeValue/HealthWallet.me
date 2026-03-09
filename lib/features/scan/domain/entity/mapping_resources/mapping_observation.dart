@@ -17,6 +17,8 @@ class MappingObservation with _$MappingObservation implements MappingResource {
     @Default(MappedProperty()) MappedProperty observationName,
     @Default(MappedProperty()) MappedProperty value,
     @Default(MappedProperty()) MappedProperty unit,
+    @Default(MappedProperty()) MappedProperty referenceRange,
+    @Default(MappedProperty()) MappedProperty interpretation,
   }) = _MappingObservation;
 
   factory MappingObservation.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,8 @@ class MappingObservation with _$MappingObservation implements MappingResource {
       observationName: MappedProperty.fromJson(json['observationName']),
       value: MappedProperty.fromJson(json['value']),
       unit: MappedProperty.fromJson(json['unit']),
+      referenceRange: MappedProperty.fromJson(json['referenceRange']),
+      interpretation: MappedProperty.fromJson(json['interpretation']),
     );
   }
 
@@ -34,6 +38,8 @@ class MappingObservation with _$MappingObservation implements MappingResource {
       observationName: MappedProperty.empty(),
       value: MappedProperty.empty(),
       unit: MappedProperty.empty(),
+      referenceRange: MappedProperty.empty(),
+      interpretation: MappedProperty.empty(),
     );
   }
 
@@ -44,6 +50,8 @@ class MappingObservation with _$MappingObservation implements MappingResource {
         'observationName': observationName.toJson(),
         'value': value.toJson(),
         'unit': unit.toJson(),
+        'referenceRange': referenceRange.toJson(),
+        'interpretation': interpretation.toJson(),
       };
 
   @override
@@ -52,18 +60,66 @@ class MappingObservation with _$MappingObservation implements MappingResource {
     String? encounterId,
     String? subjectId,
   }) {
+    List<fhir_r4.ObservationReferenceRange>? fhirReferenceRange;
+    if (referenceRange.value.isNotEmpty) {
+      fhirReferenceRange = [
+        fhir_r4.ObservationReferenceRange(
+          text: fhir_r4.FhirString(referenceRange.value),
+        ),
+      ];
+    }
+
+    List<fhir_r4.CodeableConcept>? fhirInterpretation;
+    if (interpretation.value.isNotEmpty) {
+      final code = switch (interpretation.value.toLowerCase()) {
+        'high' || 'h' => 'H',
+        'low' || 'l' => 'L',
+        _ => 'N',
+      };
+      final display = switch (code) {
+        'H' => 'High',
+        'L' => 'Low',
+        _ => 'Normal',
+      };
+      fhirInterpretation = [
+        fhir_r4.CodeableConcept(
+          coding: [
+            fhir_r4.Coding(
+              system: fhir_r4.FhirUri(
+                  'http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation'),
+              code: fhir_r4.FhirCode(code),
+              display: fhir_r4.FhirString(display),
+            ),
+          ],
+          text: fhir_r4.FhirString(display),
+        ),
+      ];
+    }
+
+    final numericValue = double.tryParse(value.value);
+    final fhir_r4.ValueXObservation? valueX;
+    if (numericValue != null) {
+      valueX = fhir_r4.Quantity(
+        value: fhir_r4.FhirDecimal(numericValue),
+        unit: fhir_r4.FhirString(unit.value),
+      );
+    } else if (value.value.isNotEmpty) {
+      valueX = fhir_r4.FhirString(value.value);
+    } else {
+      valueX = null;
+    }
+
     fhir_r4.Observation observation = fhir_r4.Observation(
       code: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(observationName.value)),
-      valueX: fhir_r4.Quantity(
-        value: fhir_r4.FhirDecimal(double.tryParse(value.value)),
-        unit: fhir_r4.FhirString(unit.value),
-      ),
+      valueX: valueX,
       status: fhir_r4.ObservationStatus.unknown,
       subject: fhir_r4.Reference(
           reference: fhir_r4.FhirString('Patient/$subjectId')),
       encounter: fhir_r4.Reference(
           reference: fhir_r4.FhirString('Encounter/$encounterId')),
+      referenceRange: fhirReferenceRange,
+      interpretation: fhirInterpretation,
     );
 
     Map<String, dynamic> rawResource = observation.toJson();
@@ -98,6 +154,16 @@ class MappingObservation with _$MappingObservation implements MappingResource {
           value: unit.value,
           confidenceLevel: unit.confidenceLevel,
         ),
+        'referenceRange': TextFieldDescriptor(
+          label: 'Reference Range',
+          value: referenceRange.value,
+          confidenceLevel: referenceRange.confidenceLevel,
+        ),
+        'interpretation': TextFieldDescriptor(
+          label: 'Interpretation',
+          value: interpretation.value,
+          confidenceLevel: interpretation.confidenceLevel,
+        ),
       };
 
   @override
@@ -119,6 +185,18 @@ class MappingObservation with _$MappingObservation implements MappingResource {
           value: newValues['unit'] ?? unit.value,
           confidenceLevel: newValues['unit'] != null ? 1 : unit.confidenceLevel,
         ),
+        referenceRange: MappedProperty(
+          value: newValues['referenceRange'] ?? referenceRange.value,
+          confidenceLevel: newValues['referenceRange'] != null
+              ? 1
+              : referenceRange.confidenceLevel,
+        ),
+        interpretation: MappedProperty(
+          value: newValues['interpretation'] ?? interpretation.value,
+          confidenceLevel: newValues['interpretation'] != null
+              ? 1
+              : interpretation.confidenceLevel,
+        ),
       );
 
   @override
@@ -129,8 +207,15 @@ class MappingObservation with _$MappingObservation implements MappingResource {
         observationName: observationName.calculateConfidence(inputText),
         value: value.calculateConfidence(inputText),
         unit: unit.calculateConfidence(inputText),
+        referenceRange: referenceRange.calculateConfidence(inputText),
+        interpretation: interpretation.calculateConfidence(inputText),
       );
 
   @override
-  bool get isValid => observationName.isValid || value.isValid || unit.isValid;
+  bool get isValid =>
+      observationName.isValid ||
+      value.isValid ||
+      unit.isValid ||
+      referenceRange.isValid ||
+      interpretation.isValid;
 }

@@ -9,38 +9,25 @@ import 'package:path/path.dart' as path;
 
 @injectable
 class PdfPreviewService {
-  /// Preview PDF from FHIR Media resource
+  static const _previewableTypes = {FhirType.Media, FhirType.DocumentReference};
+
   Future<void> previewPdfFromResource(
     BuildContext context,
     IFhirResource resource,
   ) async {
-    if (resource.fhirType != FhirType.Media) {
+    if (!_previewableTypes.contains(resource.fhirType)) {
       _showErrorSnackBar(context, 'This resource is not a PDF file');
       return;
     }
 
     try {
-      // Extract file path from Media resource
       final rawResource = resource.rawResource;
-      final content = rawResource['content'];
-
-      if (content == null) {
-        _showErrorSnackBar(context, 'No file content found');
-        return;
-      }
-
       String? filePath;
 
-      // Check if it's a URL reference
-      if (content['url'] != null) {
-        filePath = content['url'] as String;
-      }
-
-      // Check if it's base64 data - decode and save to temp file
-      if (content['data'] != null) {
-        final base64Data = content['data'] as String;
-        filePath =
-            await _saveBase64ToTempFile(base64Data, resource.displayTitle);
+      if (resource.fhirType == FhirType.DocumentReference) {
+        filePath = _extractDocumentReferencePath(rawResource);
+      } else {
+        filePath = await _extractMediaPath(rawResource, resource.displayTitle);
       }
 
       if (filePath == null) {
@@ -48,7 +35,6 @@ class PdfPreviewService {
         return;
       }
 
-      // Open the PDF file
       final result = await OpenFile.open(filePath);
 
       if (result.type != ResultType.done) {
@@ -59,7 +45,29 @@ class PdfPreviewService {
     }
   }
 
-  /// Preview PDF from file path
+  String? _extractDocumentReferencePath(Map<String, dynamic> rawResource) {
+    final contentList = rawResource['content'] as List?;
+    if (contentList == null || contentList.isEmpty) return null;
+    final attachment = (contentList[0] as Map?)?['attachment'] as Map?;
+    final url = attachment?['url'] as String?;
+    if (url == null) return null;
+    return url.startsWith('file://') ? url.substring(7) : url;
+  }
+
+  Future<String?> _extractMediaPath(
+      Map<String, dynamic> rawResource, String displayTitle) async {
+    final content = rawResource['content'];
+    if (content == null) return null;
+
+    if (content['url'] != null) return content['url'] as String;
+
+    if (content['data'] != null) {
+      return _saveBase64ToTempFile(content['data'] as String, displayTitle);
+    }
+
+    return null;
+  }
+
   Future<void> previewPdfFromFile(
     BuildContext context,
     String filePath,
@@ -75,23 +83,16 @@ class PdfPreviewService {
     }
   }
 
-  /// Save base64 data to a temporary file and return the file path
   Future<String> _saveBase64ToTempFile(
       String base64Data, String fileName) async {
     try {
-      // Get temporary directory
       final tempDir = await getTemporaryDirectory();
-
-      // Create a unique filename
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final cleanFileName = fileName.replaceAll(RegExp(r'[^\w\s-.]'), '_');
       final tempFileName = '${cleanFileName}_$timestamp.pdf';
       final tempFilePath = path.join(tempDir.path, tempFileName);
 
-      // Decode base64 data
       final bytes = base64Decode(base64Data);
-
-      // Write to temporary file
       final file = File(tempFilePath);
       await file.writeAsBytes(bytes);
 
@@ -101,7 +102,6 @@ class PdfPreviewService {
     }
   }
 
-  /// Show error snackbar
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -111,7 +111,6 @@ class PdfPreviewService {
     );
   }
 
-  /// Show warning snackbar
   void _showWarningSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

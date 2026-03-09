@@ -33,6 +33,20 @@ class FhirResourceDto with _$FhirResourceDto {
   FhirResourceDto populateEncounterIdFromRaw() {
     String? encounterId = extractReferenceId("encounter");
 
+    if (encounterId == null) {
+      final context = resourceRaw?['context'] as Map<String, dynamic>?;
+      if (context != null) {
+        final encounterList = context['encounter'] as List?;
+        if (encounterList != null && encounterList.isNotEmpty) {
+          final ref = Reference.fromJson(encounterList[0] as Map<String, dynamic>);
+          final refString = ref.reference?.valueString;
+          if (refString != null) {
+            encounterId = FhirReferenceUtils.extractReferenceId(refString);
+          }
+        }
+      }
+    }
+
     if (encounterId == null) return this;
 
     return copyWith(encounterId: encounterId);
@@ -53,20 +67,15 @@ class FhirResourceDto with _$FhirResourceDto {
     String? refString = reference.reference?.valueString;
     if (refString == null) return null;
 
-    // Use the existing utility class that handles all FHIR reference formats correctly
     return FhirReferenceUtils.extractReferenceId(refString);
   }
 
-  /// Check if this resource represents a deletion
   bool get isDeleted => deletedAt != null || changeType == 'deleted';
 
-  /// Check if this resource was created (new)
   bool get isCreated => changeType == 'created';
 
-  /// Check if this resource was updated (modified)
   bool get isUpdated => changeType == 'updated';
 
-  /// Get a user-friendly description of the change
   String get changeDescription {
     if (isDeleted) return 'Deleted';
     if (isCreated) return 'Created';

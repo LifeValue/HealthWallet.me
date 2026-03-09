@@ -869,4 +869,90 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get plugInChargerEllipsis => 'Stecken Sie das Ladegerät ein...';
+
+  @override
+  String get processingFailedCapacity =>
+      'Das Dokument ist zu groß für die aktuelle KI-Token-Kapazität.';
+
+  @override
+  String get processingFailedCapacitySuggestion =>
+      'Versuchen Sie, die KI-Modellkapazität zu erhöhen, um größere Dokumente zu verarbeiten.';
+
+  @override
+  String get increaseAiModelCapacity => 'KI-Modellkapazität erhöhen';
+
+  @override
+  String get goBack => 'Zurück';
+
+  @override
+  String get aiSettings => 'KI-Einstellungen';
+
+  @override
+  String get aiSettingsDescription =>
+      'KI-Leistung für Ihr Gerät anpassen. Empfohlene Werte sind vorausgewählt.';
+
+  @override
+  String get setAiTokensUsage => 'KI-Token-Nutzung einstellen';
+
+  @override
+  String get tokenUsageDescription =>
+      'Steuern Sie, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.';
+
+  @override
+  String get gpuLayersLabel => 'GPU-Schichten';
+
+  @override
+  String get gpuLayersDescription =>
+      'Modell-Schichten auf GPU auslagern für schnellere Bildverarbeitung. Mehr Schichten = schneller, aber mehr Speicherverbrauch. Auf 0 setzen bei Abstürzen.';
+
+  @override
+  String get threadsLabel => 'CPU-Threads';
+
+  @override
+  String get threadsDescription =>
+      'Anzahl der CPU-Threads für Inferenz. Mehr Threads = schneller, aber höherer Akkuverbrauch.';
+
+  @override
+  String get recommended => 'Empfohlen';
+
+  @override
+  String get tokenPresetLow => 'Niedrig';
+
+  @override
+  String get tokenPresetLowDescription =>
+      'Ideal für kleine Dateien und schnelle Aufgaben.\nVerbraucht die wenigsten Ressourcen und verarbeitet am schnellsten.';
+
+  @override
+  String get tokenPresetMedium => 'Mittel';
+
+  @override
+  String get tokenPresetMediumDescription =>
+      'Gut für die meisten Anwendungsfälle.\nBalanciert Dateigröße, Verarbeitungszeit und Ressourcenverbrauch.';
+
+  @override
+  String get tokenPresetHigh => 'Hoch';
+
+  @override
+  String get tokenPresetHighDescription =>
+      'Ideal für große Dateien und komplexe Verarbeitung.\nVerbraucht mehr Ressourcen und Akku, und dauert länger.';
+
+  @override
+  String get tokenPresetCustom => 'Benutzerdefiniert';
+
+  @override
+  String get tokenPresetCustomDescription =>
+      'Legen Sie eine benutzerdefinierte Anzahl von Tokens fest.';
+
+  @override
+  String get setTokens => 'Festlegen';
+
+  @override
+  String get tokens => 'Tokens';
+
+  @override
+  String get contextSizeLabel => 'Kontextgröße';
+
+  @override
+  String get contextSizeDescription =>
+      'Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.';
 }

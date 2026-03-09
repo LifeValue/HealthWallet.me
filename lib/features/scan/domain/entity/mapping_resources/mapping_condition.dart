@@ -21,10 +21,13 @@ class MappingCondition with _$MappingCondition implements MappingResource {
   }) = _MappingCondition;
 
   factory MappingCondition.fromJson(Map<String, dynamic> json) {
+    final rawOnset = MappedProperty.fromJson(json['onsetDateTime']);
     return MappingCondition(
       id: json["id"] ?? const Uuid().v4(),
       conditionName: MappedProperty.fromJson(json['conditionName']),
-      onsetDateTime: MappedProperty.fromJson(json['onsetDateTime']),
+      onsetDateTime: rawOnset.copyWith(
+        value: MappingResource.normalizeDateValue(rawOnset.value),
+      ),
       clinicalStatus: MappedProperty.fromJson(json['clinicalStatus']),
     );
   }
@@ -93,6 +96,7 @@ class MappingCondition with _$MappingCondition implements MappingResource {
           label: 'Onset Date',
           value: onsetDateTime.value,
           confidenceLevel: onsetDateTime.confidenceLevel,
+          fieldType: FieldType.date,
           validators: [nonEmptyValidator, dateValidator],
         ),
         'clinicalStatus': TextFieldDescriptor(

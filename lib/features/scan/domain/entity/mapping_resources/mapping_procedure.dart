@@ -22,10 +22,13 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
   }) = _MappingProcedure;
 
   factory MappingProcedure.fromJson(Map<String, dynamic> json) {
+    final rawPerformed = MappedProperty.fromJson(json['performedDateTime']);
     return MappingProcedure(
       id: json["id"] ?? const Uuid().v4(),
       procedureName: MappedProperty.fromJson(json['procedureName']),
-      performedDateTime: MappedProperty.fromJson(json['performedDateTime']),
+      performedDateTime: rawPerformed.copyWith(
+        value: MappingResource.normalizeDateValue(rawPerformed.value),
+      ),
       reason: MappedProperty.fromJson(json['reason']),
     );
   }
@@ -96,6 +99,7 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
           label: 'Performed Date',
           value: performedDateTime.value,
           confidenceLevel: performedDateTime.confidenceLevel,
+          fieldType: FieldType.date,
           validators: [nonEmptyValidator, dateValidator],
         ),
         'reason': TextFieldDescriptor(

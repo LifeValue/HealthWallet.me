@@ -12,6 +12,7 @@ class User with _$User {
     @Default('') String photoUrl,
     @Default(false) bool isEmailVerified,
     @Default(false) bool isDarkMode,
+    @Default(false) bool isReceiveModeEnabled,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);

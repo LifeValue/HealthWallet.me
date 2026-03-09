@@ -9,6 +9,7 @@ abstract class RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
+    DateFilter? dateFilter,
   });
 
   Future<List<IFhirResource>> getRelatedResourcesForEncounter({
@@ -57,5 +58,8 @@ abstract class RecordsRepository {
     int limit = 50,
   });
 
-  Future<Uint8List> buildIpsExport({required String? sourceId});
+  Future<({Uint8List bytes, String patientName})> buildIpsExport({
+    String? sourceId,
+    String? patientId,
+  });
 }

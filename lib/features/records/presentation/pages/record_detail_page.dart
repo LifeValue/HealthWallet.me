@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -110,8 +111,23 @@ class RecordDetailsPage extends StatelessWidget {
               color: context.colorScheme.onSurface,
             ),
           ),
+          if (resource.fhirType == FhirType.DocumentReference ||
+              resource.fhirType == FhirType.Media)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: AppButton(
+                label: 'View Document',
+                onPressed: () => _pdfPreviewService.previewPdfFromResource(
+                    context, resource),
+                icon: const Icon(Icons.visibility_outlined),
+                variant: AppButtonVariant.outlined,
+                fullWidth: false,
+                height: 36,
+                fontSize: 12,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+            ),
           ...resource.additionalInfo.map((infoLine) {
-            // Section header styling
             if (infoLine.isSection) {
               return Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 8),
@@ -125,7 +141,6 @@ class RecordDetailsPage extends StatelessWidget {
               );
             }
 
-            // Regular info line styling
             return Column(
               children: [
                 const SizedBox(height: 10),
@@ -190,33 +205,24 @@ class RecordDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(resource.displayTitle,
-                            style: AppTextStyle.labelLarge),
+                  Text(resource.displayTitle,
+                      style: AppTextStyle.labelLarge),
+                  if (resource.fhirType == FhirType.Media ||
+                      resource.fhirType == FhirType.DocumentReference)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: AppButton(
+                        label: 'View Document',
+                        onPressed: () => _pdfPreviewService
+                            .previewPdfFromResource(context, resource),
+                        icon: const Icon(Icons.visibility_outlined),
+                        variant: AppButtonVariant.outlined,
+                        fullWidth: false,
+                        height: 36,
+                        fontSize: 12,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
-                      // VIEW button for PDF preview (if it's a Media resource)
-                      if (resource.fhirType == FhirType.Media)
-                        TextButton(
-                          onPressed: () => _pdfPreviewService
-                              .previewPdfFromResource(context, resource),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            'VIEW',
-                            style: AppTextStyle.labelSmall.copyWith(
-                              color: context.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                    ),
                   _buildRelatedResourceInfo(context, resource),
                   const SizedBox(height: 16),
                 ],
@@ -228,7 +234,6 @@ class RecordDetailsPage extends StatelessWidget {
 
   Widget _buildRelatedResourceInfo(
       BuildContext context, IFhirResource resource) {
-    // Filter out section headers and take first 2 actual info lines
     final infoLines = resource.additionalInfo
         .where((line) => !line.isSection)
         .take(2)
