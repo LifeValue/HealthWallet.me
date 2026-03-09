@@ -229,16 +229,18 @@ class $AssetsIconsGen {
   SvgGenImage get user => const SvgGenImage('assets/icons/user.svg');
 
   /// File path: assets/icons/warning.svg
+  SvgGenImage get wallet => const SvgGenImage('assets/icons/wallet.svg');
+
   SvgGenImage get warning => const SvgGenImage('assets/icons/warning.svg');
 
-  /// File path: assets/icons/warning_triangle.svg
   SvgGenImage get warningTriangle =>
       const SvgGenImage('assets/icons/warning_triangle.svg');
 
-  /// File path: assets/icons/weight.svg
   SvgGenImage get weight => const SvgGenImage('assets/icons/weight.svg');
 
-  /// List of all assets
+  AssetGenImage get appIconTransparent =>
+      const AssetGenImage('assets/icons/app-icon-transparent.png');
+
   List<dynamic> get values => [
         activity,
         addPlus,
@@ -297,9 +299,11 @@ class $AssetsIconsGen {
         timeline,
         trashCan,
         user,
+        wallet,
         warning,
         warningTriangle,
-        weight
+        weight,
+        appIconTransparent
       ];
 }
 
