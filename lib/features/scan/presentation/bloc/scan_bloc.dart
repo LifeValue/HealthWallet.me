@@ -6,12 +6,15 @@ import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
+import 'package:health_wallet/core/config/constants/app_constants.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -26,6 +29,7 @@ import 'package:health_wallet/features/sync/domain/services/source_type_service.
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'scan_state.dart';
 part 'scan_event.dart';
@@ -41,6 +45,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final PatientDeduplicationService _deduplicationService;
   final SourceTypeService _sourceTypeService;
   final RecordsRepository _recordsRepository;
+  final SharedPreferences _prefs;
 
   ScanBloc(
     this._pdfStorageService,
@@ -51,6 +56,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     this._deduplicationService,
     this._sourceTypeService,
     this._recordsRepository,
+    this._prefs,
   ) : super(const ScanState()) {
     on<ScanInitialised>(_onScanInitialised);
     on<ScanButtonPressed>(_onScanButtonPressed);
@@ -69,6 +75,14 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanEncounterAttached>(_onScanEncounterAttached);
     on<ScanProcessRemainingResources>(_onScanProcessRemainingResources);
     on<ScanDocumentAttached>(_onScanDocumentAttached);
+    on<ScanTokenCapacityUpdated>(_onScanTokenCapacityUpdated);
+  }
+
+  bool _isCapacityError(String errorString) {
+    final lower = errorString.toLowerCase();
+    return lower.contains('maxtokens') ||
+        lower.contains('input is too long') ||
+        lower.contains('input_size');
   }
 
   void _startNextPendingSession() {
@@ -235,55 +249,55 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     }
   }
 
-void _onScanSessionCleared(
-  ScanSessionCleared event,
-  Emitter<ScanState> emit,
-) async {
-  try {
-    if (event.session.isProcessing) {
-      emit(state.copyWith(
-        status: const ScanStatus.loading(),
-        deletingSessionId: event.session.id,
-      ));
-      
-      try {
-        await _repository.cancelGeneration();
-        await _repository.waitForStreamCompletion();
-      } catch (e) {
+  void _onScanSessionCleared(
+    ScanSessionCleared event,
+    Emitter<ScanState> emit,
+  ) async {
+    try {
+      if (event.session.isProcessing) {
+        emit(state.copyWith(
+          status: const ScanStatus.loading(),
+          deletingSessionId: event.session.id,
+        ));
+
+        try {
+          await _repository.cancelGeneration();
+          await _repository.waitForStreamCompletion();
+        } catch (e) {
+        }
       }
-    }
-    
-    final newSessions = [...state.sessions]
-      ..removeWhere((session) => session.id == event.session.id);
-    
-    final updatedImageMap =
-        Map<String, List<String>>.from(state.sessionImagePaths)
-          ..remove(event.session.id);
 
-    emit(state.copyWith(
-      sessions: newSessions,
-      sessionImagePaths: updatedImageMap,
-      status: const ScanStatus.initial(),
-      deletingSessionId: null,
-    ));
+      final newSessions = [...state.sessions]
+        ..removeWhere((session) => session.id == event.session.id);
 
-    await _repository.deleteProcessingSession(event.session);
-    
-    final hasPendingSessions = newSessions.any(
-      (s) => s.status == ProcessingStatus.pending,
-    );
-    
-    if (hasPendingSessions) {
-      await Future.delayed(const Duration(milliseconds: 100));
-      _startNextPendingSession();
+      final updatedImageMap =
+          Map<String, List<String>>.from(state.sessionImagePaths)
+            ..remove(event.session.id);
+
+      emit(state.copyWith(
+        sessions: newSessions,
+        sessionImagePaths: updatedImageMap,
+        status: const ScanStatus.initial(),
+        deletingSessionId: null,
+      ));
+
+      await _repository.deleteProcessingSession(event.session);
+
+      final hasPendingSessions = newSessions.any(
+        (s) => s.status == ProcessingStatus.pending,
+      );
+
+      if (hasPendingSessions) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        _startNextPendingSession();
+      }
+    } on Exception catch (e) {
+      emit(state.copyWith(
+        status: ScanStatus.failure(error: e.toString()),
+        deletingSessionId: null,
+      ));
     }
-  } on Exception catch (e) {
-    emit(state.copyWith(
-      status: ScanStatus.failure(error: e.toString()),
-      deletingSessionId: null,
-    ));
   }
-}
 
   bool _isValidScanResult(String path) {
     return !path.contains('Failed') && !path.contains('Unknown');
@@ -328,7 +342,8 @@ void _onScanSessionCleared(
     );
 
     try {
-      final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
+      final session =
+          state.sessions.firstWhere((s) => s.id == event.sessionId);
       final cachedImages = state.sessionImagePaths[event.sessionId];
 
       List<String> allImages;
@@ -387,6 +402,7 @@ void _onScanSessionCleared(
     List<MappingResource>? resources,
     StagedPatient? patient,
     StagedEncounter? encounter,
+    StagedDiagnosticReport? diagnosticReport,
     bool? isDocumentAttached,
     bool updateDb = false,
   }) {
@@ -401,6 +417,7 @@ void _onScanSessionCleared(
       resources: resources ?? activeSession.resources,
       patient: patient ?? activeSession.patient,
       encounter: encounter ?? activeSession.encounter,
+      diagnosticReport: diagnosticReport ?? activeSession.diagnosticReport,
       isDocumentAttached:
           isDocumentAttached ?? activeSession.isDocumentAttached,
     );
@@ -476,7 +493,8 @@ void _onScanSessionCleared(
         return;
       }
 
-      final (patient, encounter) = await _repository.mapBasicInfo(medicalText);
+      final (patient, container) = await _repository.mapBasicInfo(medicalText);
+      debugPrint('[ScanAI] bloc: container type=${container.runtimeType}, isDiagnosticReport=${container is MappingDiagnosticReport}');
 
       StagedPatient stagedPatient;
       try {
@@ -513,14 +531,25 @@ void _onScanSessionCleared(
       final finalSession =
           state.sessions.firstWhere((s) => s.id == event.sessionId);
 
-      _updateSession(
-        emit,
-        sessionId: event.sessionId,
-        status: ProcessingStatus.patientExtracted,
-        patient: stagedPatient,
-        encounter: StagedEncounter(draft: encounter),
-        updateDb: true,
-      );
+      if (container is MappingDiagnosticReport) {
+        _updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.patientExtracted,
+          patient: stagedPatient,
+          diagnosticReport: StagedDiagnosticReport(draft: container),
+          updateDb: true,
+        );
+      } else {
+        _updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.patientExtracted,
+          patient: stagedPatient,
+          encounter: StagedEncounter(draft: container as MappingEncounter),
+          updateDb: true,
+        );
+      }
 
       final notification = Notification(
         text: "${finalSession.origin} patient info extracted",
@@ -534,6 +563,9 @@ void _onScanSessionCleared(
 
       _startNextPendingSession();
     } on Exception catch (e) {
+      debugPrint('[ScanAI] _onScanMappingInitiated ERROR: $e');
+      debugPrint('[ScanAI] isCapacityError: ${_isCapacityError(e.toString())}');
+      debugPrint('[ScanAI] emit.isDone: ${emit.isDone}');
       _updateSession(
         emit,
         sessionId: event.sessionId,
@@ -541,7 +573,16 @@ void _onScanSessionCleared(
         updateDb: true,
       );
       if (!emit.isDone) {
-        emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+        if (_isCapacityError(e.toString())) {
+          debugPrint('[ScanAI] emitting capacityFailure');
+          emit(state.copyWith(
+            status: ScanStatus.capacityFailure(sessionId: event.sessionId),
+          ));
+        } else {
+          debugPrint('[ScanAI] emitting generic failure');
+          emit(
+              state.copyWith(status: ScanStatus.failure(error: e.toString())));
+        }
       }
     }
   }
@@ -576,6 +617,24 @@ void _onScanSessionCleared(
         patient: activeSession.patient.copyWith(
             draft: draftPatient.copyWithMap({event.propertyKey: event.newValue})
                 as MappingPatient),
+      );
+      return;
+    }
+
+    if (event.isDraftDiagnosticReport == true) {
+      MappingDiagnosticReport draftReport =
+          activeSession.diagnosticReport?.draft ??
+              const MappingDiagnosticReport();
+
+      _updateSession(
+        emit,
+        sessionId: event.sessionId,
+        diagnosticReport: (activeSession.diagnosticReport ??
+                const StagedDiagnosticReport())
+            .copyWith(
+                draft: draftReport
+                        .copyWithMap({event.propertyKey: event.newValue})
+                    as MappingDiagnosticReport),
       );
       return;
     }
@@ -617,18 +676,21 @@ void _onScanSessionCleared(
         state.sessions.firstWhere((s) => s.id == event.sessionId);
 
     try {
-      final (subjectId, sourceId, finalEncounter, _) =
+      final (subjectId, sourceId, finalContainer, _) =
           await _persistPrimaryResources(activeSession);
 
       final otherResources = activeSession.resources
-          .where((r) => r is! MappingPatient && r is! MappingEncounter)
+          .where((r) =>
+              r is! MappingPatient &&
+              r is! MappingEncounter &&
+              r is! MappingDiagnosticReport)
           .toList();
 
       List<IFhirResource> fhirResources = otherResources
           .map((resource) => resource.toFhirResource(
                 sourceId: sourceId,
                 subjectId: subjectId,
-                encounterId: finalEncounter.id,
+                encounterId: finalContainer.id,
               ))
           .toList();
 
@@ -637,12 +699,14 @@ void _onScanSessionCleared(
       }
 
       if (!activeSession.isDocumentAttached) {
+        final encounterForDoc =
+            finalContainer is Encounter ? finalContainer : null;
         await _documentReferenceService.saveGroupedDocumentsAsFhirRecords(
           filePaths: activeSession.filePaths,
           patientId: subjectId,
-          encounter: finalEncounter,
+          encounter: encounterForDoc,
           sourceId: sourceId,
-          title: finalEncounter.displayTitle,
+          title: finalContainer.displayTitle,
         );
       }
 
@@ -725,15 +789,17 @@ void _onScanSessionCleared(
     if (session == null) return;
 
     try {
-      final (subjectId, sourceId, finalEncounter, finalPatient) =
+      final (subjectId, sourceId, finalContainer, finalPatient) =
           await _persistPrimaryResources(session);
 
+      final encounterForDoc =
+          finalContainer is Encounter ? finalContainer : null;
       await _documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: session.filePaths,
         patientId: subjectId,
-        encounter: finalEncounter,
+        encounter: encounterForDoc,
         sourceId: sourceId,
-        title: finalEncounter.displayTitle,
+        title: finalContainer.displayTitle,
       );
 
       _updateSession(
@@ -742,8 +808,10 @@ void _onScanSessionCleared(
         isDocumentAttached: true,
         patient: StagedPatient(
             existing: finalPatient, mode: ImportMode.linkExisting),
-        encounter: StagedEncounter(
-            existing: finalEncounter, mode: ImportMode.linkExisting),
+        encounter: finalContainer is Encounter
+            ? StagedEncounter(
+                existing: finalContainer, mode: ImportMode.linkExisting)
+            : null,
         updateDb: true,
       );
     } catch (e) {
@@ -782,8 +850,18 @@ void _onScanSessionCleared(
       final medicalText =
           await _ocrProcessingHelper.processOcrForImages(sessionImages);
 
+      final activeSession =
+          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+      final docCategory =
+          activeSession?.isDiagnosticReportContainer == true
+              ? 'lab_report'
+              : 'visit';
+
       Stream<MappingResourcesWithProgress> stream =
-          _repository.mapRemainingResources(medicalText);
+          _repository.mapRemainingResources(
+        medicalText,
+        documentCategory: docCategory,
+      );
 
       await for (final (resources, progress) in stream) {
         final currentSession =
@@ -828,12 +906,29 @@ void _onScanSessionCleared(
         updateDb: true,
       );
       if (!emit.isDone) {
-        emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+        if (_isCapacityError(e.toString())) {
+          emit(state.copyWith(
+            status: ScanStatus.capacityFailure(sessionId: event.sessionId),
+          ));
+        } else {
+          emit(
+              state.copyWith(status: ScanStatus.failure(error: e.toString())));
+        }
       }
     }
   }
 
-  Future<(String, String, Encounter, Patient)> _persistPrimaryResources(
+  void _onScanTokenCapacityUpdated(
+    ScanTokenCapacityUpdated event,
+    Emitter<ScanState> emit,
+  ) async {
+    await _prefs.setInt(
+        SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
+    await _repository.disposeModel();
+    add(ScanMappingInitiated(sessionId: event.sessionId));
+  }
+
+  Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
     ProcessingSession activeSession,
   ) async {
     String subjectId;
@@ -875,18 +970,26 @@ void _onScanSessionCleared(
       ));
     }
 
-    Encounter finalEncounter;
-    if (activeSession.encounter.existing != null) {
-      finalEncounter = activeSession.encounter.existing!;
+    IFhirResource finalContainer;
+    if (activeSession.isDiagnosticReportContainer) {
+      MappingDiagnosticReport draftReport =
+          activeSession.diagnosticReport!.draft!;
+      finalContainer = draftReport.toFhirResource(
+        sourceId: sourceId,
+        subjectId: subjectId,
+        encounterId: draftReport.id,
+      );
+      resourcesToSave.add(finalContainer);
+    } else if (activeSession.encounter.existing != null) {
+      finalContainer = activeSession.encounter.existing!;
     } else {
       MappingEncounter draftEncounter = activeSession.encounter.draft!;
-      finalEncounter = draftEncounter.toFhirResource(
+      finalContainer = draftEncounter.toFhirResource(
         sourceId: sourceId,
         subjectId: subjectId,
         encounterId: draftEncounter.id,
-      ) as Encounter;
-
-      resourcesToSave.add(finalEncounter);
+      );
+      resourcesToSave.add(finalContainer);
     }
 
     if (resourcesToSave.isNotEmpty) {
@@ -896,7 +999,7 @@ void _onScanSessionCleared(
     return (
       subjectId,
       sourceId,
-      finalEncounter,
+      finalContainer,
       activeSession.patient.existing ??
           (resourcesToSave.firstWhere((r) => r is Patient) as Patient)
     );

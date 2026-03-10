@@ -7,6 +7,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -29,9 +30,13 @@ class ProcessingSession
     @Default(ProcessingOrigin.scan) ProcessingOrigin origin,
     @Default(StagedPatient()) StagedPatient patient,
     @Default(StagedEncounter()) StagedEncounter encounter,
+    StagedDiagnosticReport? diagnosticReport,
     @Default(false) bool isDocumentAttached,
     DateTime? createdAt,
   }) = _ProcessingSession;
+
+  bool get isDiagnosticReportContainer =>
+      diagnosticReport != null && diagnosticReport!.hasSelection;
 
   factory ProcessingSession.fromDto(ProcessingSessionDto dto) {
     final filePaths = (jsonDecode(dto.filePaths ?? '') as List<dynamic>)
@@ -43,7 +48,21 @@ class ProcessingSession
         .toList();
 
     final patient = stagedPatientFromJson(jsonDecode(dto.patient ?? ''));
-    final encounter = stagedEncounterFromJson(jsonDecode(dto.encounter ?? ''));
+
+    final containerJson =
+        jsonDecode(dto.encounter ?? '{}') as Map<String, dynamic>;
+    final draftResourceType = containerJson['draft']?['resourceType'];
+
+    StagedEncounter encounter;
+    StagedDiagnosticReport? diagnosticReport;
+
+    if (draftResourceType == 'DiagnosticReport') {
+      encounter = const StagedEncounter();
+      diagnosticReport = stagedDiagnosticReportFromJson(containerJson);
+    } else {
+      encounter = stagedEncounterFromJson(containerJson);
+      diagnosticReport = null;
+    }
 
     return ProcessingSession(
       id: dto.id,
@@ -55,6 +74,7 @@ class ProcessingSession
       createdAt: dto.createdAt,
       patient: patient,
       encounter: encounter,
+      diagnosticReport: diagnosticReport,
     );
   }
 
@@ -68,7 +88,11 @@ class ProcessingSession
             resources.map((resource) => resource.toJson()).toList())),
         createdAt: drift.Value(createdAt!),
         patient: drift.Value(jsonEncode(stagedPatientToJson(patient))),
-        encounter: drift.Value(jsonEncode(stagedEncounterToJson(encounter))),
+        encounter: drift.Value(jsonEncode(
+          isDiagnosticReportContainer
+              ? stagedDiagnosticReportToJson(diagnosticReport!)
+              : stagedEncounterToJson(encounter),
+        )),
       );
 
   @override

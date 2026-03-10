@@ -318,5 +318,23 @@
     "plugInCharger": "Plug in the charger.",
     "exitFocusMode": "Exit Focus Mode",
     "chargerPluggedIn": "Charger plugged in.",
-    "plugInChargerEllipsis": "Plug in the charger..."
+    "plugInChargerEllipsis": "Plug in the charger...",
+
+    "processingFailedCapacity": "The document is too large for the current AI token capacity.",
+    "processingFailedCapacitySuggestion": "Try increasing the AI model capacity to process larger documents.",
+    "increaseAiModelCapacity": "Increase AI Model Capacity",
+    "goBack": "Go Back",
+
+    "setAiTokensUsage": "Set AI Tokens Usage",
+    "tokenUsageDescription": "Higher token limits allow processing larger documents but use more memory. Restart processing after changing.",
+    "tokenPresetLow": "Low",
+    "tokenPresetLowDescription": "~100 tokens - Small documents only",
+    "tokenPresetMedium": "Medium",
+    "tokenPresetMediumDescription": "~500 tokens - Most single-page documents",
+    "tokenPresetHigh": "High",
+    "tokenPresetHighDescription": "~2048 tokens - Multi-page documents",
+    "tokenPresetCustom": "Custom",
+    "tokenPresetCustomDescription": "Set a custom token limit (max 4096)",
+    "setTokens": "Set Tokens",
+    "tokens": "tokens"
 }

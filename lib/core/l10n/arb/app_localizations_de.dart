@@ -869,4 +869,58 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get plugInChargerEllipsis => 'Stecken Sie das Ladegerät ein...';
+
+  @override
+  String get processingFailedCapacity =>
+      'Das Dokument ist zu groß für die aktuelle KI-Token-Kapazität.';
+
+  @override
+  String get processingFailedCapacitySuggestion =>
+      'Versuchen Sie, die KI-Modellkapazität zu erhöhen, um größere Dokumente zu verarbeiten.';
+
+  @override
+  String get increaseAiModelCapacity => 'KI-Modellkapazität erhöhen';
+
+  @override
+  String get goBack => 'Zurück';
+
+  @override
+  String get setAiTokensUsage => 'KI-Token-Nutzung einstellen';
+
+  @override
+  String get tokenUsageDescription =>
+      'Höhere Token-Limits ermöglichen die Verarbeitung größerer Dokumente, verbrauchen aber mehr Speicher. Starten Sie die Verarbeitung nach der Änderung neu.';
+
+  @override
+  String get tokenPresetLow => 'Niedrig';
+
+  @override
+  String get tokenPresetLowDescription => '~100 Tokens - Nur kleine Dokumente';
+
+  @override
+  String get tokenPresetMedium => 'Mittel';
+
+  @override
+  String get tokenPresetMediumDescription =>
+      '~500 Tokens - Die meisten einseitigen Dokumente';
+
+  @override
+  String get tokenPresetHigh => 'Hoch';
+
+  @override
+  String get tokenPresetHighDescription =>
+      '~2048 Tokens - Mehrseitige Dokumente';
+
+  @override
+  String get tokenPresetCustom => 'Benutzerdefiniert';
+
+  @override
+  String get tokenPresetCustomDescription =>
+      'Benutzerdefiniertes Token-Limit festlegen (max. 4096)';
+
+  @override
+  String get setTokens => 'Tokens festlegen';
+
+  @override
+  String get tokens => 'Tokens';
 }

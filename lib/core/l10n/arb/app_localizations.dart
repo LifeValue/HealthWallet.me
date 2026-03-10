@@ -1671,6 +1671,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Plug in the charger...'**
   String get plugInChargerEllipsis;
+
+  /// No description provided for @processingFailedCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'The document is too large for the current AI token capacity.'**
+  String get processingFailedCapacity;
+
+  /// No description provided for @processingFailedCapacitySuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Try increasing the AI model capacity to process larger documents.'**
+  String get processingFailedCapacitySuggestion;
+
+  /// No description provided for @increaseAiModelCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase AI Model Capacity'**
+  String get increaseAiModelCapacity;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get goBack;
+
+  /// No description provided for @setAiTokensUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set AI Tokens Usage'**
+  String get setAiTokensUsage;
+
+  /// No description provided for @tokenUsageDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher token limits allow processing larger documents but use more memory. Restart processing after changing.'**
+  String get tokenUsageDescription;
+
+  /// No description provided for @tokenPresetLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get tokenPresetLow;
+
+  /// No description provided for @tokenPresetLowDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'~100 tokens - Small documents only'**
+  String get tokenPresetLowDescription;
+
+  /// No description provided for @tokenPresetMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get tokenPresetMedium;
+
+  /// No description provided for @tokenPresetMediumDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'~500 tokens - Most single-page documents'**
+  String get tokenPresetMediumDescription;
+
+  /// No description provided for @tokenPresetHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get tokenPresetHigh;
+
+  /// No description provided for @tokenPresetHighDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'~2048 tokens - Multi-page documents'**
+  String get tokenPresetHighDescription;
+
+  /// No description provided for @tokenPresetCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get tokenPresetCustom;
+
+  /// No description provided for @tokenPresetCustomDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a custom token limit (max 4096)'**
+  String get tokenPresetCustomDescription;
+
+  /// No description provided for @setTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Tokens'**
+  String get setTokens;
+
+  /// No description provided for @tokens.
+  ///
+  /// In en, this message translates to:
+  /// **'tokens'**
+  String get tokens;
 }
 
 class _AppLocalizationsDelegate

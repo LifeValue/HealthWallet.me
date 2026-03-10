@@ -74,6 +74,7 @@ dependencies:
   pdfx: ^2.9.2
   printing: ^5.13.4
   flutter_gemma: ^0.12.4
+  background_downloader: ^9.5.3
   flutter_pdfview: ^1.4.3
   receive_sharing_intent: ^1.8.1
   string_similarity: ^2.1.1

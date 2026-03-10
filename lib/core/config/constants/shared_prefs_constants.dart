@@ -6,4 +6,5 @@ class SharedPrefsConstants {
   static const recordsOrder = 'recordsOrder';
   static const vitalsVisibility = 'vitalsVisibility';
   static const recordsVisibility = 'recordsVisibility';
+  static const aiMaxTokens = 'aiMaxTokens';
 }
