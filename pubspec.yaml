@@ -79,6 +79,7 @@ dependencies:
   flutter_pdfview: ^1.4.3
   receive_sharing_intent: ^1.8.1
   string_similarity: ^2.1.1
+  phone_numbers_parser: ^9.0.20
   bloc_concurrency: ^0.2.5
   collection: ^1.19.1
   uuid: ^4.5.1
@@ -128,6 +129,7 @@ flutter:
     - assets/certs/
     - assets/certs/android/
     - assets/font/matter-font/
+    - assets/correction_templates/ro/
 
   fonts:
     - family: Matter
