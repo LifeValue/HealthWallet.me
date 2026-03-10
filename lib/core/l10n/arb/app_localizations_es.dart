@@ -385,6 +385,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get done => 'Hecho';
 
   @override
+  String get page => 'Página';
+
+  @override
+  String get reorderPages => 'Reordenar páginas';
+
+  @override
   String get attachments => 'Archivos adjuntos';
 
   @override
@@ -654,7 +660,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingAiModelDescription =>
-      'Descarga un modelo de IA seguro y en el dispositivo (~1.5 GB) para analizar y organizar automáticamente tus registros de salud: tus datos permanecen privados en tu dispositivo. Es una configuración única.';
+      'Descarga un modelo de IA seguro y en el dispositivo (~1.8 GB) para analizar y organizar automáticamente tus registros de salud: tus datos permanecen privados en tu dispositivo. Es una configuración única.';
 
   @override
   String get onboardingAiModelSubtitle =>
@@ -688,7 +694,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get aiModelDownloadInfo =>
-      'Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única.';
+      'Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.8 GB). Es una configuración única.';
 
   @override
   String get setup => 'Configurar';
@@ -947,4 +953,35 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get contextSizeDescription =>
       'Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria.';
+
+  @override
+  String get aiModelNotAvailableForDevice => 'No disponible para este teléfono';
+
+  @override
+  String get aiModelNotAvailableForDeviceDescription =>
+      'Este dispositivo no tiene suficiente memoria RAM para ejecutar el modelo de IA.';
+
+  @override
+  String get noInternetConnectionTitle => 'Sin conexión a Internet';
+
+  @override
+  String get noInternetConnectionDescription =>
+      'Por favor, verifica tu conexión a Internet e inténtalo de nuevo.';
+
+  @override
+  String get processingStep2NotAvailableTitle =>
+      'Procesamiento completo no disponible';
+
+  @override
+  String get processingStep2NotEnoughRam =>
+      'Tu teléfono no tiene suficiente memoria para el procesamiento completo de documentos. Puedes guardar la información básica del paciente extraída arriba.';
+
+  @override
+  String get emergencyContact => 'Contacto telefónico de emergencia';
+
+  @override
+  String get emergencyContactHint => 'Número de teléfono';
+
+  @override
+  String get searchCountry => 'Buscar país...';
 }

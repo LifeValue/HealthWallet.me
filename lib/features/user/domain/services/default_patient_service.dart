@@ -36,6 +36,29 @@ class DefaultPatientService {
       value: fhir_r4.FhirString('default_wallet_holder'),
     );
 
+    final contactPhone = fhir_r4.PatientContact(
+      relationship: [
+        fhir_r4.CodeableConcept(
+          coding: [
+            fhir_r4.Coding(
+              system: fhir_r4.FhirUri(
+                'http://terminology.hl7.org/CodeSystem/v2-0131',
+              ),
+              code: fhir_r4.FhirCode('C'),
+              display: fhir_r4.FhirString('Emergency Contact'),
+            ),
+          ],
+        ),
+      ],
+      telecom: [
+        fhir_r4.ContactPoint(
+          system: fhir_r4.ContactPointSystem.phone,
+          value: fhir_r4.FhirString('+40712345678'),
+          use: fhir_r4.ContactPointUse.mobile,
+        ),
+      ],
+    );
+
     return Patient(
       id: dbId,
       sourceId: 'wallet',
@@ -51,6 +74,7 @@ class DefaultPatientService {
       birthDate: null,
       gender: null,
       identifier: [mrnIdentifier],
+      contact: [contactPhone],
       rawResource: {
         'resourceType': 'Patient',
         'id': resourceId,
@@ -75,6 +99,28 @@ class DefaultPatientService {
             },
             'system': 'http://healthwallet.me/mrn',
             'value': 'default_wallet_holder',
+          }
+        ],
+        'contact': [
+          {
+            'relationship': [
+              {
+                'coding': [
+                  {
+                    'system': 'http://terminology.hl7.org/CodeSystem/v2-0131',
+                    'code': 'C',
+                    'display': 'Emergency Contact',
+                  }
+                ],
+              }
+            ],
+            'telecom': [
+              {
+                'system': 'phone',
+                'value': '+40712345678',
+                'use': 'mobile',
+              }
+            ],
           }
         ],
       },

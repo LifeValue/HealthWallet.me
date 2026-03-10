@@ -790,6 +790,18 @@ abstract class AppLocalizations {
   /// **'Done'**
   String get done;
 
+  /// No description provided for @page.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get page;
+
+  /// No description provided for @reorderPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Pages'**
+  String get reorderPages;
+
   /// No description provided for @attachments.
   ///
   /// In en, this message translates to:
@@ -1297,7 +1309,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingAiModelDescription.
   ///
   /// In en, this message translates to:
-  /// **'Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.'**
+  /// **'Download a secure, on-device AI model (~1.8 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.'**
   String get onboardingAiModelDescription;
 
   /// No description provided for @onboardingAiModelSubtitle.
@@ -1357,7 +1369,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelDownloadInfo.
   ///
   /// In en, this message translates to:
-  /// **'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.'**
+  /// **'To get started, we need to download the AI component (approx. 1.8 GB). This is a one-time setup.'**
   String get aiModelDownloadInfo;
 
   /// No description provided for @setup.
@@ -1821,6 +1833,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.'**
   String get contextSizeDescription;
+
+  /// No description provided for @aiModelNotAvailableForDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available for this phone'**
+  String get aiModelNotAvailableForDevice;
+
+  /// No description provided for @aiModelNotAvailableForDeviceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This device doesn\'t have enough RAM memory to run the AI model.'**
+  String get aiModelNotAvailableForDeviceDescription;
+
+  /// No description provided for @noInternetConnectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Internet Connection'**
+  String get noInternetConnectionTitle;
+
+  /// No description provided for @noInternetConnectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your internet connection and try again.'**
+  String get noInternetConnectionDescription;
+
+  /// No description provided for @processingStep2NotAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Full processing not available'**
+  String get processingStep2NotAvailableTitle;
+
+  /// No description provided for @processingStep2NotEnoughRam.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone doesn\'t have enough memory for full document processing. You can save the basic patient information extracted above.'**
+  String get processingStep2NotEnoughRam;
+
+  /// No description provided for @emergencyContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Phone Contact'**
+  String get emergencyContact;
+
+  /// No description provided for @emergencyContactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get emergencyContactHint;
+
+  /// No description provided for @searchCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Search country...'**
+  String get searchCountry;
 }
 
 class _AppLocalizationsDelegate

@@ -7,6 +7,7 @@ import 'package:csslib/parser.dart' as css;
 import 'package:passkit/passkit.dart';
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
+import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 
 @injectable
@@ -75,14 +76,9 @@ class ApplePassBuilder {
     }
 
     final secondaryFields = <FieldDict>[];
-    if (cardData.dateOfBirth != null) {
-      final age = DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
+    if (cardData.allergies.isNotEmpty) {
       secondaryFields.add(
-        FieldDict(
-          key: 'dob',
-          label: 'Date of Birth',
-          value: '${DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!)} (Age $age)',
-        ),
+        FieldDict(key: 'allergies', label: 'Allergies', value: cardData.allergies.join(', ')),
       );
     }
     if (cardData.gender != null) {
@@ -92,22 +88,23 @@ class ApplePassBuilder {
     }
 
     final auxiliaryFields = <FieldDict>[];
-    if (cardData.allergies.isNotEmpty) {
+    if (cardData.dateOfBirth != null) {
+      final age = DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
       auxiliaryFields.add(
-        FieldDict(key: 'allergies', label: 'Allergies', value: cardData.allergies.join(', ')),
+        FieldDict(
+          key: 'dob',
+          label: 'Date of Birth',
+          value: '${DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!)} (Age $age)',
+        ),
       );
     }
-    if (cardData.patientPhone != null) {
+    if (cardData.emergencyContactPhone != null) {
       auxiliaryFields.add(
-        FieldDict(key: 'phone', label: 'Phone', value: cardData.patientPhone!),
-      );
-    }
-    if (cardData.emergencyContactName != null) {
-      final contactValue = cardData.emergencyContactPhone != null
-          ? '${cardData.emergencyContactName!} (${cardData.emergencyContactPhone!})'
-          : cardData.emergencyContactName!;
-      auxiliaryFields.add(
-        FieldDict(key: 'emergency-contact', label: 'Emergency Contact', value: contactValue),
+        FieldDict(
+          key: 'emergency-contact',
+          label: 'Emergency Phone',
+          value: PhoneDisplayFormatter.format(cardData.emergencyContactPhone!),
+        ),
       );
     }
 

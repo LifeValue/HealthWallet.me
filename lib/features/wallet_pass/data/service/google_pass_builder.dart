@@ -8,6 +8,7 @@ import 'package:pointycastle/export.dart';
 import 'package:pointycastle/asn1.dart';
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
+import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 
 @injectable
@@ -69,21 +70,11 @@ class GooglePassBuilder {
         'body': cardData.allergies.join(', '),
       });
     }
-    if (cardData.patientPhone != null) {
-      textModules.add({
-        'id': 'phone',
-        'header': 'Phone',
-        'body': cardData.patientPhone!,
-      });
-    }
-    if (cardData.emergencyContactName != null) {
-      final contactValue = cardData.emergencyContactPhone != null
-          ? '${cardData.emergencyContactName!} (${cardData.emergencyContactPhone!})'
-          : cardData.emergencyContactName!;
+    if (cardData.emergencyContactPhone != null) {
       textModules.add({
         'id': 'emergency_contact',
-        'header': 'Emergency Contact',
-        'body': contactValue,
+        'header': 'Emergency Phone',
+        'body': PhoneDisplayFormatter.format(cardData.emergencyContactPhone!),
       });
     }
     if (cardData.conditions.isNotEmpty) {

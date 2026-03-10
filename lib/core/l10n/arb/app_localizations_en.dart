@@ -382,6 +382,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get done => 'Done';
 
   @override
+  String get page => 'Page';
+
+  @override
+  String get reorderPages => 'Reorder Pages';
+
+  @override
   String get attachments => 'Attachments';
 
   @override
@@ -647,7 +653,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingAiModelDescription =>
-      'Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.';
+      'Download a secure, on-device AI model (~1.8 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.';
 
   @override
   String get onboardingAiModelSubtitle => 'Unlock AI-powered scanning';
@@ -679,7 +685,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiModelDownloadInfo =>
-      'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.';
+      'To get started, we need to download the AI component (approx. 1.8 GB). This is a one-time setup.';
 
   @override
   String get setup => 'Setup';
@@ -936,4 +942,35 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get contextSizeDescription =>
       'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.';
+
+  @override
+  String get aiModelNotAvailableForDevice => 'Not available for this phone';
+
+  @override
+  String get aiModelNotAvailableForDeviceDescription =>
+      'This device doesn\'t have enough RAM memory to run the AI model.';
+
+  @override
+  String get noInternetConnectionTitle => 'No Internet Connection';
+
+  @override
+  String get noInternetConnectionDescription =>
+      'Please check your internet connection and try again.';
+
+  @override
+  String get processingStep2NotAvailableTitle =>
+      'Full processing not available';
+
+  @override
+  String get processingStep2NotEnoughRam =>
+      'Your phone doesn\'t have enough memory for full document processing. You can save the basic patient information extracted above.';
+
+  @override
+  String get emergencyContact => 'Emergency Phone Contact';
+
+  @override
+  String get emergencyContactHint => 'Phone number';
+
+  @override
+  String get searchCountry => 'Search country...';
 }

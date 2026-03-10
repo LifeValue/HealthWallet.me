@@ -134,6 +134,8 @@
     "saveDetails": "Save details",
     "editDetails": "Edit details",
     "done": "Done",
+    "page": "Page",
+    "reorderPages": "Reorder Pages",
     "attachments": "Attachments",
     "noFilesAttached": "This record has no files attached",
     "attachFile": "Attach file",
@@ -238,7 +240,7 @@
     "documentScanTitle": "Scan",
 
     "onboardingAiModelTitle": "Enable AI Model",
-    "onboardingAiModelDescription": "Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.",
+    "onboardingAiModelDescription": "Download a secure, on-device AI model (~1.8 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.",
     "onboardingAiModelSubtitle": "Unlock AI-powered scanning",
     "aiModelReady": "AI model ready! You can start scanning.",
     "aiModelDownloading": "Downloading AI model...",
@@ -248,7 +250,7 @@
     "aiModelTitle": "Load AI Model",
     "aiModelUnlockTitle": "Unlock AI-Powered Scanning",
     "aiModelUnlockDescription": "To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.",
-    "aiModelDownloadInfo": "To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.",
+    "aiModelDownloadInfo": "To get started, we need to download the AI component (approx. 1.8 GB). This is a one-time setup.",
     
     "setup": "Setup",
     "patientSetupTitle": "Set Up Your Profile",
@@ -345,5 +347,15 @@
     "setTokens": "Set",
     "tokens": "tokens",
     "contextSizeLabel": "Context Size",
-    "contextSizeDescription": "Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory."
+    "contextSizeDescription": "Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.",
+
+    "aiModelNotAvailableForDevice": "Not available for this phone",
+    "aiModelNotAvailableForDeviceDescription": "This device doesn't have enough RAM memory to run the AI model.",
+    "noInternetConnectionTitle": "No Internet Connection",
+    "noInternetConnectionDescription": "Please check your internet connection and try again.",
+    "processingStep2NotAvailableTitle": "Full processing not available",
+    "processingStep2NotEnoughRam": "Your phone doesn't have enough memory for full document processing. You can save the basic patient information extracted above.",
+    "emergencyContact": "Emergency Phone Contact",
+    "emergencyContactHint": "Phone number",
+    "searchCountry": "Search country..."
 }
