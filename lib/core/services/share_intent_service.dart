@@ -72,8 +72,7 @@ class ShareIntentService {
           final targetPath = path.join(sharedDir.path, newFileName);
 
           await sourceFile.copy(targetPath);
-          final relativePath = await _pathResolver.toRelative(targetPath);
-          processedPaths.add(relativePath);
+          processedPaths.add(targetPath);
         } catch (e) {
           logger.e('Error processing file ${sharedFile.path}: $e');
         }
