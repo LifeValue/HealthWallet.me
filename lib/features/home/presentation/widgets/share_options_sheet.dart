@@ -27,52 +27,59 @@ Future<void> showShareOptionsMenu(
     ),
     items: [
       PopupMenuItem<String>(
+        height: 40,
         value: 'export_ips',
-        child: ListTile(
-          leading: Assets.icons.download.svg(
-            width: 28,
-            height: 28,
-            colorFilter: ColorFilter.mode(
-              colorScheme.onSurface,
-              BlendMode.srcIn,
+        child: Row(
+          children: [
+            Assets.icons.download.svg(
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(
+                colorScheme.onSurface,
+                BlendMode.srcIn,
+              ),
             ),
-          ),
-          title: Text('Export IPS (PDF)', style: AppTextStyle.menuItem),
-          contentPadding: EdgeInsets.zero,
+            const SizedBox(width: 12),
+            Text('Export IPS (PDF)', style: AppTextStyle.menuItem),
+          ],
         ),
       ),
       if (Platform.isIOS)
         PopupMenuItem<String>(
+          height: 40,
           value: 'apple_wallet',
-          child: ListTile(
-            leading: Assets.icons.wallet.svg(
-              width: 24,
-              height: 24,
-              colorFilter: ColorFilter.mode(
-                colorScheme.onSurface,
-                BlendMode.srcIn,
+          child: Row(
+            children: [
+              Assets.icons.wallet.svg(
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(
+                  colorScheme.onSurface,
+                  BlendMode.srcIn,
+                ),
               ),
-            ),
-            title:
-                Text('Add IPS to Apple Wallet', style: AppTextStyle.menuItem),
-            contentPadding: EdgeInsets.zero,
+              const SizedBox(width: 12),
+              Text('Add IPS to Apple Wallet', style: AppTextStyle.menuItem),
+            ],
           ),
         ),
       if (Platform.isAndroid)
         PopupMenuItem<String>(
+          height: 40,
           value: 'google_wallet',
-          child: ListTile(
-            leading: Assets.icons.wallet.svg(
-              width: 24,
-              height: 24,
-              colorFilter: ColorFilter.mode(
-                colorScheme.onSurface,
-                BlendMode.srcIn,
+          child: Row(
+            children: [
+              Assets.icons.wallet.svg(
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(
+                  colorScheme.onSurface,
+                  BlendMode.srcIn,
+                ),
               ),
-            ),
-            title:
-                Text('Add IPS to Google Wallet', style: AppTextStyle.menuItem),
-            contentPadding: EdgeInsets.zero,
+              const SizedBox(width: 12),
+              Text('Add IPS to Google Wallet', style: AppTextStyle.menuItem),
+            ],
           ),
         ),
     ],

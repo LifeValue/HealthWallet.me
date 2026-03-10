@@ -52,6 +52,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeVitalsExpansionToggled>((e, emit) =>
         emit(state.copyWith(vitalsExpanded: !state.vitalsExpanded)));
     on<HomeRefreshPreservingOrder>(_onRefreshPreservingOrder);
+    on<HomeScanCompleted>(_onScanCompleted);
     on<HomeSourceLabelUpdated>(_onSourceLabelUpdated);
     on<HomeSourceDeleted>(_onSourceDeleted);
   }
@@ -105,6 +106,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       HomeRefreshPreservingOrder e, Emitter<HomeState> emit) async {
     await _reloadHomeData(emit,
         force: true, overrideSourceId: state.selectedSource);
+  }
+
+  Future<void> _onScanCompleted(
+      HomeScanCompleted e, Emitter<HomeState> emit) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('home_selected_source_id', 'All');
+    emit(state.copyWith(selectedSource: 'All'));
+    await _reloadHomeData(emit, force: true);
   }
 
   Future<void> _onSourceChanged(
@@ -474,7 +483,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       final prefs = await SharedPreferences.getInstance();
       final selectedPatientId = prefs.getString('selected_patient_id');
-
       final sources = await _fetchSources(sourceId);
       final overview =
           await _fetchOverviewCardsAndResources(sourceId, patientSourceIds);
