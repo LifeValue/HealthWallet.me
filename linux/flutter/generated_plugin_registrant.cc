@@ -8,6 +8,7 @@
 
 #include <file_selector_linux/file_selector_plugin.h>
 #include <flutter_doc_scanner/flutter_doc_scanner_plugin.h>
+#include <flutter_gemma/flutter_gemma_plugin.h>
 #include <gtk/gtk_plugin.h>
 #include <open_file_linux/open_file_linux_plugin.h>
 #include <printing/printing_plugin.h>
@@ -21,6 +22,9 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) flutter_doc_scanner_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "FlutterDocScannerPlugin");
   flutter_doc_scanner_plugin_register_with_registrar(flutter_doc_scanner_registrar);
+  g_autoptr(FlPluginRegistrar) flutter_gemma_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "FlutterGemmaPlugin");
+  flutter_gemma_plugin_register_with_registrar(flutter_gemma_registrar);
   g_autoptr(FlPluginRegistrar) gtk_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "GtkPlugin");
   gtk_plugin_register_with_registrar(gtk_registrar);

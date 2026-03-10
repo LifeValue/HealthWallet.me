@@ -92,6 +92,7 @@ dependencies:
   passkit: ^1.1.0
   flutter_google_wallet: ^0.2.1
 
+
   # P2P file transfer (local package)
   airdrop:
     git:

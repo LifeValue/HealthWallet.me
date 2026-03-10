@@ -367,4 +367,45 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
 
     await _loadResources(emit);
   }
+
+  void _onSelectionToggled(
+    RecordsSelectionToggled event,
+    Emitter<RecordsState> emit,
+  ) {
+    final updated = Set<String>.from(state.selectedResourceIds);
+    if (!updated.remove(event.resourceId)) {
+      updated.add(event.resourceId);
+    }
+    emit(state.copyWith(selectedResourceIds: updated));
+  }
+
+  void _onSelectionCleared(
+    RecordsSelectionCleared event,
+    Emitter<RecordsState> emit,
+  ) {
+    emit(state.copyWith(selectedResourceIds: {}));
+  }
+
+  void _onSelectionModeToggled(
+    RecordsSelectionModeToggled event,
+    Emitter<RecordsState> emit,
+  ) {
+    final newSelectionMode = !state.isSelectionMode;
+    emit(state.copyWith(
+      isSelectionMode: newSelectionMode,
+      selectedResourceIds: newSelectionMode ? state.selectedResourceIds : {},
+    ));
+  }
+
+  void _onDateRangeCleared(
+    RecordsDateRangeCleared event,
+    Emitter<RecordsState> emit,
+  ) async {
+    emit(state.copyWith(
+      dateFilter: null,
+      resources: [],
+    ));
+
+    await _loadResources(emit);
+  }
 }
