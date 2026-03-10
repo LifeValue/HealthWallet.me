@@ -202,10 +202,11 @@ The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
 | **Android** | 12 GB+ | Full scanning (reads all medical details) |
 | **Android** | 8 GB | Basic scanning (reads patient info only) |
 | **Android** | < 8 GB | Not supported |
-| **iPhone** | 6 GB+ | Full scanning (reads all medical details) |
-| **iPhone** | < 6 GB | Not supported |
+| **iPhone** | 4 GB+ (A15+) | Full scanning (reads all medical details) |
+| **iPhone** | 3 GB (A13/A14) | Basic scanning (reads patient info only) |
+| **iPhone** | < 3 GB | Not supported |
 
-> iPhones generally perform better because they use GPU acceleration for the AI processing.
+> iPhones require less RAM because Metal GPU acceleration offloads AI processing to the GPU using Apple's unified memory architecture.
 
 <details>
   <summary><strong>Technical Details</strong></summary>
