@@ -207,8 +207,6 @@ The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
 | **Download Size** | ~1.8 GB (model + vision projector) |
 | **Runtime** | llama.cpp (Metal on iOS, CPU on Android) |
 
-For detailed memory calculations and known issues, see [`docs/ai_model_device_requirements.md`](docs/ai_model_device_requirements.md).
-
 </details>
 
 ## 🎯 Roadmap
@@ -221,11 +219,12 @@ For detailed memory calculations and known issues, see [`docs/ai_model_device_re
 - File import & in-app viewing
 
 ### In Progress 🚧
-- QR code sharing (SMART Health Cards)
-- Proximity-based communication (Airdrop)
-- Desktop app backup system(CRDT) and FHIR processing
+- Add IPS (International Patient Summary) to Google / Apple Wallet
+- Proximity-based sharing (Airdrop)
+- Desktop app with backup sync and offloaded document processing
 
 ### Future Plans 📋
+- QR code sharing (SMART Health Cards)
 - Responsive UI
 - Wearable & health provider integration
 - AI health insights
