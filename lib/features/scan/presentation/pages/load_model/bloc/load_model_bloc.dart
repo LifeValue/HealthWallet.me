@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/features/scan/domain/services/ai_model_download_service.dart';
 import 'package:injectable/injectable.dart';
 
@@ -14,12 +16,14 @@ part 'load_model_state.dart';
 part 'load_model_bloc.freezed.dart';
 
 const String kAiModelDownloadNotificationId = 'ai_model_download';
+const String kNoInternetErrorKey = 'no_internet';
 
 @LazySingleton()
 class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
   LoadModelBloc(
     this._downloadService,
     this._notificationBloc,
+    this._deviceCapabilityService,
   ) : super(const LoadModelState()) {
     on<LoadModelInitialized>(_onLoadModelInitialized);
     on<LoadModelDownloadInitiated>(
@@ -38,6 +42,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
 
   final AiModelDownloadService _downloadService;
   final NotificationBloc _notificationBloc;
+  final DeviceCapabilityService _deviceCapabilityService;
   StreamSubscription<AiModelDownloadState>? _serviceSubscription;
 
   void _syncFromService() {
@@ -51,6 +56,14 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     LoadModelInitialized event,
     Emitter<LoadModelState> emit,
   ) async {
+    final capability = await _deviceCapabilityService.getCapability();
+    emit(state.copyWith(deviceCapability: capability));
+
+    if (capability == DeviceAiCapability.unsupported) {
+      emit(state.copyWith(status: LoadModelStatus.modelAbsent));
+      return;
+    }
+
     final serviceState = _downloadService.state;
     if (serviceState.status == AiModelDownloadStatus.downloading) {
       emit(state.copyWith(
@@ -97,6 +110,16 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     ));
   }
 
+  Future<bool> _hasInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('example.com')
+          .timeout(const Duration(seconds: 5));
+      return result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _onLoadModelDownloadInitiated(
     LoadModelDownloadInitiated event,
     Emitter<LoadModelState> emit,
@@ -106,6 +129,18 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         status: LoadModelStatus.loading,
         isBackgroundDownload: true,
         downloadProgress: _downloadService.state.progress,
+      ));
+      return;
+    }
+
+    if (state.status == LoadModelStatus.error) {
+      emit(state.copyWith(status: LoadModelStatus.modelAbsent, errorMessage: null));
+    }
+
+    if (!await _hasInternetConnection()) {
+      emit(state.copyWith(
+        status: LoadModelStatus.error,
+        errorMessage: kNoInternetErrorKey,
       ));
       return;
     }
