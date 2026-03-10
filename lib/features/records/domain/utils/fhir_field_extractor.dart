@@ -516,9 +516,23 @@ class FhirFieldExtractor {
       if (mrnIdentifier.value != null) {
         return mrnIdentifier.value!.toString();
       }
-    } catch (e) {}
+    } catch (_) {}
 
-    return '';
+    try {
+      final textMatch = patient.identifier!.firstWhere(
+        (id) =>
+            id.value != null &&
+            id.value!.toString().isNotEmpty &&
+            (id.type?.text?.toString().toUpperCase().contains('MRN') ??
+                false),
+      );
+      return textMatch.value!.toString();
+    } catch (_) {}
+
+    final first = patient.identifier!
+        .where((id) => id.value != null && id.value!.toString().isNotEmpty)
+        .firstOrNull;
+    return first?.value?.toString() ?? '';
   }
 
   static String? extractBloodTypeFromObservations(List<dynamic> observations) {
