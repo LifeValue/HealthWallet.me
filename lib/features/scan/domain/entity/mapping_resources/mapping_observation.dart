@@ -139,7 +139,19 @@ class MappingObservation with _$MappingObservation implements MappingResource {
     if (raw.isEmpty) return null;
 
     final direct = double.tryParse(raw);
-    if (direct != null) return (direct, unitField);
+    if (direct != null) {
+      if (loincCode == '39156-5' && (direct < 10 || direct > 70)) return null;
+      return (direct, loincCode == '39156-5' ? 'kg/m²' : unitField);
+    }
+
+    if (loincCode == '39156-5') {
+      final numMatch = RegExp(r'^(-?[\d.]+)').firstMatch(raw);
+      if (numMatch != null) {
+        final val = double.tryParse(numMatch.group(1)!);
+        if (val != null && val >= 10 && val <= 70) return (val, 'kg/m²');
+      }
+      return null;
+    }
 
     if (loincCode == '29463-7') {
       final kgMatch = _kgPattern.firstMatch(raw);

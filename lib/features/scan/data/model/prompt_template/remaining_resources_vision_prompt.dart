@@ -56,11 +56,12 @@ Rules:
 - For dates use YYYY-MM-DD format
 - Each object must have a "resourceType" field
 - Include ALL instances found (e.g. all lab results, all conditions)
-- CRITICAL: Each test name MUST be paired with its own correct value. In tables, match values on the same row. In inline text (e.g. "Creatinina=0.71 mg/dl"), extract the value immediately after the test name. Never shift or swap values between different tests''';
+- CRITICAL: Each test name MUST be paired with its own correct value. In tables, match values on the same row. In inline text (e.g. "Creatinina=0.71 mg/dl"), extract the value immediately after the test name. Never shift or swap values between different tests
+- For vital signs: value must be numeric only (no units in value). BMI is a small number (15-50), Weight is in kg or lb. Do NOT confuse them''';
   }
 
   static const _observationSchema =
-      '{"resourceType":"Observation","observationName":"string","value":"string","unit":"string","referenceRange":"string (e.g. 0.7 - 1.2)"}';
+      '{"resourceType":"Observation","observationName":"string","value":"numeric string only (e.g. 98.5, 120, 27.56) - never include units in value","unit":"string","referenceRange":"string (e.g. 0.7 - 1.2)"}';
 
   static const _conditionSchema =
       '{"resourceType":"Condition","conditionName":"string","onsetDateTime":"YYYY-MM-DD","clinicalStatus":"active|resolved|inactive"}';
