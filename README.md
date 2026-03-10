@@ -202,11 +202,11 @@ The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
 | **Android** | 12 GB+ | Full scanning (reads all medical details) |
 | **Android** | 8 GB | Basic scanning (reads patient info only) |
 | **Android** | < 8 GB | Not supported |
-| **iPhone** | 4 GB+ (A15+) | Full scanning (reads all medical details) |
-| **iPhone** | 3 GB (A13/A14) | Basic scanning (reads patient info only) |
-| **iPhone** | < 3 GB | Not supported |
+| **iPhone** | 6 GB+ (Pro/Pro Max) | Full scanning (reads all medical details) |
+| **iPhone** | 4 GB (iPhone 13/14/15) | Basic scanning (reads patient info only) |
+| **iPhone** | < 4 GB | Not supported |
 
-> iPhones require less RAM because Metal GPU acceleration offloads AI processing to the GPU using Apple's unified memory architecture.
+> Full scanning uses vision AI which requires more memory. Basic scanning uses text-only AI with OCR, which is lighter but still extracts patient info, encounters, and basic details.
 
 <details>
   <summary><strong>Technical Details</strong></summary>
