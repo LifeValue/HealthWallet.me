@@ -107,8 +107,8 @@ The backend server aggregates medical records from healthcare providers and sync
 ## 🛠️ Development Setup
 
 ### Prerequisites
-- Flutter SDK (>=3.0.0)
-- Dart SDK (>=3.0.0)
+- Flutter SDK (>=3.38.0)
+- Dart SDK (>=3.10.7)
 - Android Studio or VS Code with Flutter extensions
 
 ### Quick Start
@@ -133,8 +133,8 @@ The backend server aggregates medical records from healthcare providers and sync
 ## 🏗️ Architecture
 
 ### Tech Stack
-- **Framework**: Flutter 3.0+
-- **Language**: Dart 3.0+
+- **Framework**: Flutter 3.38+
+- **Language**: Dart 3.10+
 - **State Management**: BLoC (flutter_bloc)
 - **Dependency Injection**: GetIt + Injectable
 - **Navigation**: Auto Route
@@ -180,40 +180,32 @@ lib/
 
 </details>
 
-## 📱 On-Device AI Requirements
+## 📱 Smart Document Scanning — Device Requirements
 
-HealthWallet.me uses an on-device AI model ([Qwen3-VL-2B](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct)) to scan medical documents and classify them into FHIR resources — no cloud required.
+HealthWallet.me includes a built-in AI that reads your medical documents (photos, PDFs) and automatically organizes them into structured health records — **everything happens on your phone, your data never leaves your device**.
 
-### Model Specs
-| | |
-|---|---|
-| **Model** | Qwen3-VL-2B-Instruct (Q4_K_M GGUF) |
-| **Download Size** | ~1.8 GB (model + vision projector) |
-| **Runtime** | llama.cpp (Metal on iOS, CPU on Android) |
+The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
 
-### Minimum Device Requirements
+### What Your Phone Needs
 
-| Platform | RAM | What Works |
-|----------|-----|------------|
-| **Android** | 12 GB+ | Full pipeline (patient + clinical data extraction) |
-| **Android** | 8 GB | Patient extraction only |
+| Phone | Memory (RAM) | What You Get |
+|-------|-------------|--------------|
+| **Android** | 12 GB+ | Full scanning (reads all medical details) |
+| **Android** | 8 GB | Basic scanning (reads patient info only) |
 | **Android** | < 8 GB | Not supported |
-| **iOS** | 8 GB+ | Full pipeline |
-| **iOS** | 6 GB | Full pipeline (Metal GPU acceleration) |
-| **iOS** | < 6 GB | Not supported |
+| **iPhone** | 6 GB+ | Full scanning (reads all medical details) |
+| **iPhone** | < 6 GB | Not supported |
 
-> iOS devices perform better at the same RAM tier due to Metal GPU acceleration and more aggressive memory management.
+> iPhones generally perform better because they use GPU acceleration for the AI processing.
 
 <details>
-  <summary><strong>Tested Devices</strong></summary>
+  <summary><strong>Technical Details</strong></summary>
 
-| Device | RAM | Status |
-|--------|-----|--------|
-| Pixel 7 Pro | 12 GB | Full pipeline |
-| Galaxy S21 Ultra | 12 GB | Full pipeline |
-| iPhone 15 Pro Max | 8 GB | Full pipeline |
-| Galaxy S21 | 8 GB | Patient extraction only |
-| Galaxy S20 FE | 6 GB | Not supported |
+| | |
+|---|---|
+| **Model** | [Qwen3-VL-2B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct) (Q4_K_M GGUF) |
+| **Download Size** | ~1.8 GB (model + vision projector) |
+| **Runtime** | llama.cpp (Metal on iOS, CPU on Android) |
 
 For detailed memory calculations and known issues, see [`docs/ai_model_device_requirements.md`](docs/ai_model_device_requirements.md).
 
@@ -225,7 +217,7 @@ For detailed memory calculations and known issues, see [`docs/ai_model_device_re
 - Basic health record management
 - Authentication and security
 - Cross-platform support
-- On-device AI medical document scanning & FHIR classification
+- Smart document scanning (AI reads and organizes your medical records)
 - File import & in-app viewing
 
 ### In Progress 🚧
