@@ -36,7 +36,17 @@ class PathResolver {
 
   Future<String> toAbsolute(String path) async {
     if (path.isEmpty) return path;
-    if (path.startsWith('/')) return path;
+
+    if (path.startsWith('/')) {
+      final docsPath = await _getDocumentsPath();
+      if (path.startsWith(docsPath)) return path;
+
+      final match = _containerPattern.firstMatch(path);
+      if (match != null) {
+        return '$docsPath/${path.substring(match.end)}';
+      }
+      return path;
+    }
 
     final docsPath = await _getDocumentsPath();
     return '$docsPath/$path';

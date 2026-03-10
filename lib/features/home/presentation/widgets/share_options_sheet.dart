@@ -30,8 +30,8 @@ Future<void> showShareOptionsMenu(
         value: 'export_ips',
         child: ListTile(
           leading: Assets.icons.download.svg(
-            width: 24,
-            height: 24,
+            width: 28,
+            height: 28,
             colorFilter: ColorFilter.mode(
               colorScheme.onSurface,
               BlendMode.srcIn,
