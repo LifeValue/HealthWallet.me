@@ -4,6 +4,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'date_field.dart';
 import 'form_fields.dart';
+import 'phone_input_field.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 
 class DialogContent extends StatelessWidget {
@@ -11,6 +12,7 @@ class DialogContent extends StatelessWidget {
   final String? selectedGiven;
   final String? selectedFamily;
   final String? selectedMRN;
+  final String? selectedContactPhone;
   final DateTime? selectedBirthDate;
   final String selectedGender;
   final String selectedBloodType;
@@ -22,19 +24,20 @@ class DialogContent extends StatelessWidget {
   final ValueChanged<String>? onGivenChanged;
   final ValueChanged<String>? onFamilyChanged;
   final ValueChanged<String>? onMRNChanged;
+  final ValueChanged<String>? onContactPhoneChanged;
   final ValueChanged<DateTime?>? onBirthDateChanged;
   final ValueChanged<String>? onGenderChanged;
   final ValueChanged<String>? onBloodTypeChanged;
   final TextEditingController? givenController;
   final TextEditingController? familyController;
   final TextEditingController? mrnController;
-
   const DialogContent({
     super.key,
     required this.patient,
     this.selectedGiven,
     this.selectedFamily,
     this.selectedMRN,
+    this.selectedContactPhone,
     required this.selectedBirthDate,
     required this.selectedGender,
     required this.selectedBloodType,
@@ -46,6 +49,7 @@ class DialogContent extends StatelessWidget {
     this.onGivenChanged,
     this.onFamilyChanged,
     this.onMRNChanged,
+    this.onContactPhoneChanged,
     this.onBirthDateChanged,
     this.onGenderChanged,
     this.onBloodTypeChanged,
@@ -125,6 +129,16 @@ class DialogContent extends StatelessWidget {
             bloodTypeOptions,
             onBloodTypeChanged,
           ),
+          if (showNameField && !isSetupMode) ...[
+            const SizedBox(height: Insets.normal),
+            FormFields.buildFieldLabel(context, context.l10n.emergencyContact),
+            PhoneInputField(
+              value: selectedContactPhone ?? '',
+              onChanged: onContactPhoneChanged != null
+                  ? (val) => onContactPhoneChanged!(val)
+                  : null,
+            ),
+          ],
         ],
       ),
     );

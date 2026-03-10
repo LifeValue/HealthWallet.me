@@ -5,6 +5,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -435,6 +436,8 @@ class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
                                           ),
                                           '${context.l10n.bloodType}: $_bloodTypeDisplay',
                                         ),
+                                        _buildEmergencyContactRow(
+                                            context, displayPatient),
                                       ],
                                     ),
                                   ),
@@ -587,6 +590,19 @@ class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
       default:
         return gender;
     }
+  }
+
+  Widget _buildEmergencyContactRow(BuildContext context, Patient patient) {
+    final phone = FhirFieldExtractor.extractTelecomBySystem(
+        patient.contact?.firstOrNull?.telecom, 'phone');
+    if (phone == null || phone.isEmpty) return const SizedBox.shrink();
+    final formatted = PhoneDisplayFormatter.format(phone);
+
+    return _buildPatientInfoRow(
+      context,
+      Icon(Icons.phone, size: 16, color: widget.iconColor),
+      '${context.l10n.emergencyContact}: $formatted',
+    );
   }
 
   Widget _buildPatientInfoRow(BuildContext context, Widget icon, String text) {

@@ -31,7 +31,7 @@ class DateField extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    return '${date.day}-${date.month}-${date.year}';
   }
 
   Future<void> _showDatePicker(BuildContext context) async {
