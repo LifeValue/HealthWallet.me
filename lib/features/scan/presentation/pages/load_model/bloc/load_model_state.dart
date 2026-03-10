@@ -7,6 +7,7 @@ class LoadModelState with _$LoadModelState {
     double? downloadProgress,
     String? errorMessage,
     @Default(false) bool isBackgroundDownload,
+    @Default(DeviceAiCapability.full) DeviceAiCapability deviceCapability,
   }) = _LoadModelState;
 }
 
