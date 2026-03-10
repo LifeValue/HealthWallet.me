@@ -299,9 +299,12 @@ class PatientVitalFactory {
     return vital;
   }
 
+  static final _leadingNumberPattern = RegExp(r'^-?[\d.]+');
+
   String? _calculateVitalSignStatus(PatientVital vital) {
     final title = vital.title.toLowerCase();
-    final value = double.tryParse(vital.value);
+    final numMatch = _leadingNumberPattern.firstMatch(vital.value.trim());
+    final value = numMatch != null ? double.tryParse(numMatch.group(0)!) : null;
 
     if (value == null) return null;
 

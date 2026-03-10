@@ -406,11 +406,13 @@ class VitalsSection extends StatelessWidget {
                     style: valueStyle,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  unit,
-                  style: unitStyle,
-                ),
+                if (unit.isNotEmpty && !value.contains(unit)) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    unit,
+                    style: unitStyle,
+                  ),
+                ],
               ],
             ),
           ],
