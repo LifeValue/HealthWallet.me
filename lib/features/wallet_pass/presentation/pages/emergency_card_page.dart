@@ -267,7 +267,7 @@ class EmergencyCardPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Emergency Contact',
+                    'Emergency Phone Contact',
                     style: AppTextStyle.labelSmall.copyWith(
                       color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),

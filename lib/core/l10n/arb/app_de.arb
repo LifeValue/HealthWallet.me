@@ -114,6 +114,8 @@
     "saveDetails": "Details speichern",
     "editDetails": "Details bearbeiten",
     "done": "Fertig",
+    "page": "Seite",
+    "reorderPages": "Seiten neu ordnen",
     "attachments": "Anhänge",
     "noFilesAttached": "Dieser Datensatz hat keine angehängten Dateien",
     "attachFile": "Datei anhängen",
@@ -217,7 +219,7 @@
     "demoDataLoadedSuccessfully": "Demo-Daten wurden erfolgreich geladen. Sie werden zur Startseite weitergeleitet.",
 
     "onboardingAiModelTitle": "AI-Modell aktivieren",
-    "onboardingAiModelDescription": "Laden Sie ein sicheres, geräteinternes AI-Modell (~1,5 GB) herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren - Ihre Daten bleiben privat auf Ihrem Gerät. Dies ist eine einmalige Einrichtung.",
+    "onboardingAiModelDescription": "Laden Sie ein sicheres, geräteinternes AI-Modell (~1,8 GB) herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren - Ihre Daten bleiben privat auf Ihrem Gerät. Dies ist eine einmalige Einrichtung.",
     "onboardingAiModelSubtitle": "AI-gestütztes Scannen freischalten",
     "aiModelReady": "KI-Modell bereit! Du kannst mit dem Scannen beginnen.",
     "aiModelDownloading": "KI-Modell wird heruntergeladen...",
@@ -227,7 +229,7 @@
     "aiModelTitle": "KI-Modell laden",
     "aiModelUnlockTitle": "KI-gestütztes Scannen freischalten",
     "aiModelUnlockDescription": "Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell. Ihre Daten bleiben vollständig privat.",
-    "aiModelDownloadInfo": "Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.",
+    "aiModelDownloadInfo": "Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,8 GB). Dies ist eine einmalige Einrichtung.",
     
     "setup": "Einrichten",
     "patientSetupTitle": "Profil einrichten",
@@ -325,5 +327,15 @@
     "threadsDescription": "Anzahl der CPU-Threads für Inferenz. Mehr Threads = schneller, aber höherer Akkuverbrauch.",
     "recommended": "Empfohlen",
     "contextSizeLabel": "Kontextgröße",
-    "contextSizeDescription": "Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher."
+    "contextSizeDescription": "Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.",
+
+    "aiModelNotAvailableForDevice": "Nicht verfügbar für dieses Telefon",
+    "aiModelNotAvailableForDeviceDescription": "Dieses Gerät hat nicht genügend RAM-Speicher, um das KI-Modell auszuführen.",
+    "noInternetConnectionTitle": "Keine Internetverbindung",
+    "noInternetConnectionDescription": "Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "processingStep2NotAvailableTitle": "Vollständige Verarbeitung nicht verfügbar",
+    "processingStep2NotEnoughRam": "Ihr Telefon hat nicht genügend Speicher für die vollständige Dokumentenverarbeitung. Sie können die oben extrahierten grundlegenden Patienteninformationen speichern.",
+    "emergencyContact": "Notfall-Telefonkontakt",
+    "emergencyContactHint": "Telefonnummer",
+    "searchCountry": "Land suchen..."
 }

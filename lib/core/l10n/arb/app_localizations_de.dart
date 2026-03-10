@@ -389,6 +389,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get done => 'Fertig';
 
   @override
+  String get page => 'Seite';
+
+  @override
+  String get reorderPages => 'Seiten neu ordnen';
+
+  @override
   String get attachments => 'Anhänge';
 
   @override
@@ -661,7 +667,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onboardingAiModelDescription =>
-      'Laden Sie ein sicheres, geräteinternes AI-Modell (~1,5 GB) herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren - Ihre Daten bleiben privat auf Ihrem Gerät. Dies ist eine einmalige Einrichtung.';
+      'Laden Sie ein sicheres, geräteinternes AI-Modell (~1,8 GB) herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren - Ihre Daten bleiben privat auf Ihrem Gerät. Dies ist eine einmalige Einrichtung.';
 
   @override
   String get onboardingAiModelSubtitle => 'AI-gestütztes Scannen freischalten';
@@ -695,7 +701,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiModelDownloadInfo =>
-      'Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.';
+      'Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,8 GB). Dies ist eine einmalige Einrichtung.';
 
   @override
   String get setup => 'Einrichten';
@@ -955,4 +961,36 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get contextSizeDescription =>
       'Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.';
+
+  @override
+  String get aiModelNotAvailableForDevice =>
+      'Nicht verfügbar für dieses Telefon';
+
+  @override
+  String get aiModelNotAvailableForDeviceDescription =>
+      'Dieses Gerät hat nicht genügend RAM-Speicher, um das KI-Modell auszuführen.';
+
+  @override
+  String get noInternetConnectionTitle => 'Keine Internetverbindung';
+
+  @override
+  String get noInternetConnectionDescription =>
+      'Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
+
+  @override
+  String get processingStep2NotAvailableTitle =>
+      'Vollständige Verarbeitung nicht verfügbar';
+
+  @override
+  String get processingStep2NotEnoughRam =>
+      'Ihr Telefon hat nicht genügend Speicher für die vollständige Dokumentenverarbeitung. Sie können die oben extrahierten grundlegenden Patienteninformationen speichern.';
+
+  @override
+  String get emergencyContact => 'Notfall-Telefonkontakt';
+
+  @override
+  String get emergencyContactHint => 'Telefonnummer';
+
+  @override
+  String get searchCountry => 'Land suchen...';
 }

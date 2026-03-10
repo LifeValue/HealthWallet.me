@@ -118,6 +118,8 @@
     "saveDetails": "Guardar detalles",
     "editDetails": "Editar detalles",
     "done": "Hecho",
+    "page": "Página",
+    "reorderPages": "Reordenar páginas",
     "attachments": "Archivos adjuntos",
     "noFilesAttached": "Este registro no tiene archivos adjuntos",
     "attachFile": "Adjuntar archivo",
@@ -221,7 +223,7 @@
     "demoDataLoadedSuccessfully": "Los datos de demostración se han cargado exitosamente. Serás redirigido a la página de inicio.",
 
     "onboardingAiModelTitle": "Habilitar Modelo de IA",
-    "onboardingAiModelDescription": "Descarga un modelo de IA seguro y en el dispositivo (~1.5 GB) para analizar y organizar automáticamente tus registros de salud: tus datos permanecen privados en tu dispositivo. Es una configuración única.",
+    "onboardingAiModelDescription": "Descarga un modelo de IA seguro y en el dispositivo (~1.8 GB) para analizar y organizar automáticamente tus registros de salud: tus datos permanecen privados en tu dispositivo. Es una configuración única.",
     "onboardingAiModelSubtitle": "Desbloquea el escaneo impulsado por IA", 
     "aiModelReady": "¡Modelo de IA listo! Puedes empezar a escanear.",
     "aiModelDownloading": "Descargando modelo de IA...",
@@ -231,7 +233,7 @@
     "aiModelTitle": "Cargar modelo de IA",
     "aiModelUnlockTitle": "Desbloquea el escaneo con IA",
     "aiModelUnlockDescription": "Para leer y organizar automáticamente tus documentos médicos, esta función utiliza un modelo de IA seguro y local en tu dispositivo. Tus datos permanecen completamente privados.",
-    "aiModelDownloadInfo": "Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.5 GB). Es una configuración única.",
+    "aiModelDownloadInfo": "Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.8 GB). Es una configuración única.",
     
     "setup": "Configurar",
     "patientSetupTitle": "Configura tu Perfil",
@@ -329,5 +331,15 @@
     "threadsDescription": "Número de hilos de CPU para inferencia. Más hilos = más rápido pero más batería.",
     "recommended": "Recomendado",
     "contextSizeLabel": "Tamaño de contexto",
-    "contextSizeDescription": "Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria."
+    "contextSizeDescription": "Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria.",
+
+    "aiModelNotAvailableForDevice": "No disponible para este teléfono",
+    "aiModelNotAvailableForDeviceDescription": "Este dispositivo no tiene suficiente memoria RAM para ejecutar el modelo de IA.",
+    "noInternetConnectionTitle": "Sin conexión a Internet",
+    "noInternetConnectionDescription": "Por favor, verifica tu conexión a Internet e inténtalo de nuevo.",
+    "processingStep2NotAvailableTitle": "Procesamiento completo no disponible",
+    "processingStep2NotEnoughRam": "Tu teléfono no tiene suficiente memoria para el procesamiento completo de documentos. Puedes guardar la información básica del paciente extraída arriba.",
+    "emergencyContact": "Contacto telefónico de emergencia",
+    "emergencyContactHint": "Número de teléfono",
+    "searchCountry": "Buscar país..."
 }
