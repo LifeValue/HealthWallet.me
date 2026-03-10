@@ -224,12 +224,12 @@ The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
 - Desktop app with backup sync and offloaded document processing
 
 ### Future Plans 📋
-- QR code sharing (SMART Health Cards)
 - Responsive UI
 - Wearable & health provider integration
 - AI health insights
 - AI Note taking prescription
 - Family management
+- QR code sharing (SMART Health Cards)
 
 
 ## 🤝 Contributing
