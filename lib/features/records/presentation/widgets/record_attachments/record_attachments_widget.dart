@@ -152,22 +152,17 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   }
 
   void _viewFile(BuildContext context, String filePath, String? contentType) {
-    final ext = filePath.toLowerCase().split('.').last;
-    final isImage = contentType?.startsWith('image/') == true ||
-        ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].contains(ext);
-    final isPdf = contentType == 'application/pdf' || ext == 'pdf';
+    final ext = extension(filePath).toLowerCase();
+    final isImage = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}.contains(ext);
+    final isPdf = ext == '.pdf';
 
     if (isImage) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => _ImageViewer(filePath: filePath),
-        ),
+        MaterialPageRoute(builder: (_) => _ImageViewer(filePath: filePath)),
       );
     } else if (isPdf) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => _PdfViewer(filePath: filePath),
-        ),
+        MaterialPageRoute(builder: (_) => _PdfViewer(filePath: filePath)),
       );
     } else {
       _openFileExternal(context, filePath);

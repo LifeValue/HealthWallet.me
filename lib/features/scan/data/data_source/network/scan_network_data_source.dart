@@ -140,24 +140,27 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     final threads = cpuCores.clamp(1, 4);
 
     int contextSize;
-    if (ramMB >= 8192) {
-      contextSize = 4096;
-    } else if (ramMB >= 6144) {
-      contextSize = 2048;
-    } else {
-      contextSize = 512;
-    }
-
-    if (!withVision) {
-      return (gpuLayers: 0, threads: threads, contextSize: contextSize);
-    }
-
     int gpuLayers = 0;
+
     if (Platform.isIOS) {
       if (ramMB >= 8192) {
-        gpuLayers = 4;
+        contextSize = 4096;
+        gpuLayers = withVision ? 4 : 0;
       } else if (ramMB >= 6144) {
-        gpuLayers = 2;
+        contextSize = 2048;
+        gpuLayers = withVision ? 2 : 0;
+      } else if (ramMB >= 4096) {
+        contextSize = 2048;
+      } else {
+        contextSize = 512;
+      }
+    } else {
+      if (ramMB >= 8192) {
+        contextSize = 4096;
+      } else if (ramMB >= 6144) {
+        contextSize = 2048;
+      } else {
+        contextSize = 512;
       }
     }
 

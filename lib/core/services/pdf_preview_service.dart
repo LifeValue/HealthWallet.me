@@ -21,34 +21,7 @@ class PdfPreviewService {
     BuildContext context,
     IFhirResource resource,
   ) async {
-    if (!_previewableTypes.contains(resource.fhirType)) {
-      _showErrorSnackBar(context, 'This resource is not a PDF file');
-      return;
-    }
-
-    try {
-      final rawResource = resource.rawResource;
-      String? filePath;
-
-      if (resource.fhirType == FhirType.DocumentReference) {
-        filePath = await _extractDocumentReferencePath(rawResource);
-      } else {
-        filePath = await _extractMediaPath(rawResource, resource.displayTitle);
-      }
-
-      if (filePath == null) {
-        _showErrorSnackBar(context, 'No file path found');
-        return;
-      }
-
-      final result = await OpenFile.open(filePath);
-
-      if (result.type != ResultType.done) {
-        _showWarningSnackBar(context, 'Could not open PDF: ${result.message}');
-      }
-    } catch (e) {
-      _showErrorSnackBar(context, 'Error opening PDF: $e');
-    }
+    return previewInApp(context, resource);
   }
 
   Future<String?> _extractDocumentReferencePath(
