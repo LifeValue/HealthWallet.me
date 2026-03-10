@@ -136,7 +136,7 @@ class MappingCondition with _$MappingCondition implements MappingResource {
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
         conditionName: conditionName.calculateConfidence(inputText),
-        onsetDateTime: onsetDateTime.calculateConfidence(inputText),
+        onsetDateTime: onsetDateTime.calculateDateConfidence(inputText),
         clinicalStatus: clinicalStatus.calculateConfidence(inputText),
       );
 

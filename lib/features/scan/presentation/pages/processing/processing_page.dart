@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -22,6 +23,7 @@ import 'package:health_wallet/features/scan/presentation/widgets/ai_token_settin
 import 'package:health_wallet/features/scan/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
+import 'package:health_wallet/features/scan/presentation/pages/reorder_pages_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/summary_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,13 +46,20 @@ class _ProcessingPageState extends State<ProcessingPage> {
   final _encounterSectionKey = GlobalKey();
   final _encounterNameController = TextEditingController();
   final _pageController = PageController();
+  DeviceAiCapability _deviceCapability = DeviceAiCapability.full;
 
   @override
   void initState() {
     context
         .read<ScanBloc>()
         .add(ScanSessionActivated(sessionId: widget.sessionId));
+    _checkDeviceCapability();
     super.initState();
+  }
+
+  void _checkDeviceCapability() async {
+    final capability = await getIt<DeviceCapabilityService>().getCapability();
+    if (mounted) setState(() => _deviceCapability = capability);
   }
 
   @override
@@ -163,9 +172,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                   icon: Icon(
                     Icons.refresh,
                     size: 20,
-                    color: isStep2Retry
-                        ? context.colorScheme.tertiary
-                        : null,
+                    color: context.colorScheme.onSurface,
                   ),
                   tooltip: isStep2Retry
                       ? '${context.l10n.retry} (Step 2)'
@@ -186,17 +193,26 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 ),
               IconButton(
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.tune, size: 20),
-                onPressed: _showAiSettingsDialog,
+                icon: Icon(
+                  Icons.tune,
+                  size: 20,
+                  color: displayedSession != null && displayedSession.isProcessing
+                      ? context.colorScheme.onSurface.withValues(alpha: 0.3)
+                      : context.colorScheme.onSurface,
+                ),
+                onPressed: displayedSession != null && displayedSession.isProcessing
+                    ? null
+                    : _showAiSettingsDialog,
               ),
-              Opacity(
-                opacity: 0.5,
-                child: IconButton(
+              IconButton(
                   visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.terminal, size: 18),
+                  icon: Icon(
+                    Icons.terminal,
+                    size: 18,
+                    color: context.colorScheme.onSurface,
+                  ),
                   onPressed: () => DebugLogSheet.show(context),
                 ),
-              ),
             ],
           ),
           body: Builder(builder: (context) {
@@ -232,6 +248,33 @@ class _ProcessingPageState extends State<ProcessingPage> {
                   imagePaths: sessionImages,
                   pageController: _pageController,
                 ),
+                if (sessionImages.length > 1 &&
+                    displayedSession.status == ProcessingStatus.pending)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        final reordered = await ReorderPagesSheet.show(
+                          context,
+                          imagePaths: sessionImages,
+                        );
+                        if (reordered != null && context.mounted) {
+                          context.read<ScanBloc>().add(ScanPagesReordered(
+                                sessionId: widget.sessionId,
+                                reorderedPaths: reordered,
+                              ));
+                        }
+                      },
+                      icon: const Icon(Icons.swap_vert, size: 18),
+                      label: Text(context.l10n.reorderPages),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Insets.smallNormal,
+                          vertical: Insets.extraSmall,
+                        ),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: Insets.small),
               ],
               const SizedBox(height: Insets.large),
@@ -652,46 +695,103 @@ class _ProcessingPageState extends State<ProcessingPage> {
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != session.id && s.isProcessing,
     );
-    return Row(
+    final isStep2Blocked =
+        _deviceCapability == DeviceAiCapability.basicOnly ||
+            anotherSessionProcessing;
+
+    return Column(
       children: [
-        if (!session.isDocumentAttached) ...[
-          Expanded(
-            child: AppButton(
-              label: context.l10n.attachToEncounter,
-              variant: AppButtonVariant.transparent,
-              onPressed: () => _attachToEncounter(session),
-              fullWidth: false,
-              padding: const EdgeInsets.all(8),
+        if (_deviceCapability == DeviceAiCapability.basicOnly) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(Insets.normal),
+            decoration: BoxDecoration(
+              color: context.colorScheme.tertiaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: context.colorScheme.tertiary.withOpacity(0.5),
+              ),
             ),
-          ),
-          const SizedBox(width: Insets.normal),
-        ] else ...[
-          Expanded(
-            child: AppButton(
-              label: context.l10n.done,
-              variant: AppButtonVariant.transparent,
-              onPressed: () => _finishSession(session),
-              fullWidth: false,
-              padding: const EdgeInsets.all(8),
-            ),
-          ),
-          const SizedBox(width: Insets.normal),
-        ],
-        Expanded(
-          child: AppButton(
-            label: context.l10n.continueProcessing,
-            variant: AppButtonVariant.primary,
-            onPressed: anotherSessionProcessing
-                ? null
-                : () => context.read<ScanBloc>().add(
-                      ScanProcessRemainingResources(
-                        sessionId: widget.sessionId,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.processingStep2NotAvailableTitle,
+                  style: AppTextStyle.bodyMedium.copyWith(
+                    color: context.colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Assets.icons.information.svg(
+                      width: 18,
+                      height: 18,
+                      colorFilter: ColorFilter.mode(
+                        context.colorScheme.tertiary,
+                        BlendMode.srcIn,
                       ),
                     ),
-            enabled: !anotherSessionProcessing,
-            fullWidth: false,
-            padding: const EdgeInsets.all(8),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        context.l10n.processingStep2NotEnoughRam,
+                        style: AppTextStyle.bodySmall.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: Insets.smallNormal),
+        ],
+        Row(
+          children: [
+            if (!session.isDocumentAttached) ...[
+              Expanded(
+                child: AppButton(
+                  label: context.l10n.attachToEncounter,
+                  variant: AppButtonVariant.transparent,
+                  onPressed: () => _attachToEncounter(session),
+                  fullWidth: false,
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+              const SizedBox(width: Insets.normal),
+            ] else ...[
+              Expanded(
+                child: AppButton(
+                  label: context.l10n.done,
+                  variant: AppButtonVariant.transparent,
+                  onPressed: () => _finishSession(session),
+                  fullWidth: false,
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+              const SizedBox(width: Insets.normal),
+            ],
+            Expanded(
+              child: AppButton(
+                label: context.l10n.continueProcessing,
+                variant: AppButtonVariant.primary,
+                onPressed: isStep2Blocked
+                    ? null
+                    : () => context.read<ScanBloc>().add(
+                          ScanProcessRemainingResources(
+                            sessionId: widget.sessionId,
+                          ),
+                        ),
+                enabled: !isStep2Blocked,
+                fullWidth: false,
+                padding: const EdgeInsets.all(8),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -752,9 +852,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
       confirmButtonColor: context.colorScheme.primary,
       onConfirm: () {
         context.read<ScanBloc>().add(
-              ScanSessionCleared(session: session),
+              ScanResourceCreationInitiated(sessionId: widget.sessionId),
             );
-        context.router.maybePop();
       },
     );
   }

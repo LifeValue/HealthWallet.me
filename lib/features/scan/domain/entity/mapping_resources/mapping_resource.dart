@@ -90,10 +90,50 @@ abstract class MappingResource {
 
   String get id;
 
+  static final _slashDateDmy = RegExp(r'^(\d{1,2})/(\d{1,2})/(\d{4})$');
+  static final _slashDateYmd = RegExp(r'^(\d{4})/(\d{1,2})/(\d{1,2})$');
+  static final _dotDateDmy = RegExp(r'^(\d{1,2})\.(\d{1,2})\.(\d{4})$');
+
   static String normalizeDateValue(String value) {
     if (value.isEmpty) return value;
-    final parsed = DateTime.tryParse(value);
-    if (parsed == null) return value;
-    return '${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+
+    final trimmed = value.trim();
+
+    final parsed = DateTime.tryParse(trimmed);
+    if (parsed != null) {
+      return '${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+    }
+
+    final dmySlash = _slashDateDmy.firstMatch(trimmed);
+    if (dmySlash != null) {
+      final d = int.tryParse(dmySlash.group(1)!);
+      final m = int.tryParse(dmySlash.group(2)!);
+      final y = int.tryParse(dmySlash.group(3)!);
+      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
+      }
+    }
+
+    final ymdSlash = _slashDateYmd.firstMatch(trimmed);
+    if (ymdSlash != null) {
+      final y = int.tryParse(ymdSlash.group(1)!);
+      final m = int.tryParse(ymdSlash.group(2)!);
+      final d = int.tryParse(ymdSlash.group(3)!);
+      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
+      }
+    }
+
+    final dmyDot = _dotDateDmy.firstMatch(trimmed);
+    if (dmyDot != null) {
+      final d = int.tryParse(dmyDot.group(1)!);
+      final m = int.tryParse(dmyDot.group(2)!);
+      final y = int.tryParse(dmyDot.group(3)!);
+      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
+      }
+    }
+
+    return value;
   }
 }

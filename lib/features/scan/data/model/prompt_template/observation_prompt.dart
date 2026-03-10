@@ -12,15 +12,14 @@ class ObservationPrompt extends PromptTemplate {
       "observationName": "string",
       "value": "string",
       "unit": "string",
-      "referenceRange": "string (e.g., < 35, 8.8 - 10.2, > 3.5, empty if not available)",
-      "interpretation": "normal | high | low (empty if not determinable)"
+      "referenceRange": "string (e.g., < 35, 8.8 - 10.2, > 3.5, empty if not available)"
     }
   ''';
 
   @override
   String get promptExample => '''
-    Medical Text: "Lab Results - Creatinine: 2.06 mg/dL (ref: 0.7-1.2), flagged HIGH. Glucose: 95 mg/dL (ref: 70-100). Heart rate is 78 bpm."
+    Medical Text: "Lab Results - Creatinine: 2.06 mg/dL (ref: 0.7-1.2). Glucose: 95 mg/dL (ref: 70-100). Heart rate is 78 bpm."
 
-    [ { "resourceType": "Observation", "observationName": "Creatinine", "value": "2.06", "unit": "mg/dL", "referenceRange": "0.7 - 1.2", "interpretation": "high" }, { "resourceType": "Observation", "observationName": "Glucose", "value": "95", "unit": "mg/dL", "referenceRange": "70 - 100", "interpretation": "normal" }, { "resourceType": "Observation", "observationName": "Heart rate", "value": "78", "unit": "bpm", "referenceRange": "", "interpretation": "" } ]
+    [ { "resourceType": "Observation", "observationName": "Creatinine", "value": "2.06", "unit": "mg/dL", "referenceRange": "0.7 - 1.2" }, { "resourceType": "Observation", "observationName": "Glucose", "value": "95", "unit": "mg/dL", "referenceRange": "70 - 100" }, { "resourceType": "Observation", "observationName": "Heart rate", "value": "78", "unit": "bpm", "referenceRange": "" } ]
   ''';
 }

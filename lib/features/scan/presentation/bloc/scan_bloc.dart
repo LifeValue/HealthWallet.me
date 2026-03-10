@@ -28,6 +28,8 @@ import 'package:health_wallet/features/sync/domain/services/source_type_service.
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'scan_state.dart';
@@ -75,6 +77,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanProcessRemainingResources>(_onScanProcessRemainingResources);
     on<ScanDocumentAttached>(_onScanDocumentAttached);
     on<ScanTokenCapacityUpdated>(_onScanTokenCapacityUpdated);
+    on<ScanPagesReordered>(_onScanPagesReordered);
   }
 
   bool _isCapacityError(String errorString) {
@@ -215,22 +218,114 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   ) async {
     emit(state.copyWith(status: const ScanStatus.loading()));
     try {
-      final file = File(event.filePath);
-      final exists = await file.exists();
+      final persistedPaths = <String>[];
 
-      if (!exists) {
+      for (final filePath in event.filePaths) {
+        final file = File(filePath);
+        if (await file.exists()) {
+          final persisted = await _persistImportedFile(file);
+          persistedPaths.add(persisted);
+        }
+      }
+
+      if (persistedPaths.isEmpty) {
         emit(state.copyWith(
-          status: const ScanStatus.failure(error: 'File does not exist'),
+          status: const ScanStatus.failure(error: 'No valid files found'),
         ));
         return;
       }
 
+      final orderedPaths = persistedPaths.length > 1
+          ? await _autoReorderByPageNumber(persistedPaths)
+          : persistedPaths;
+
       await _createSession(emit,
-          filePaths: [event.filePath], origin: ProcessingOrigin.import);
+          filePaths: orderedPaths, origin: ProcessingOrigin.import);
     } catch (e) {
       emit(state.copyWith(
         status: ScanStatus.failure(error: 'Failed to import document: $e'),
       ));
+    }
+  }
+
+  Future<String> _persistImportedFile(File sourceFile) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final importsDir = Directory('${docsDir.path}/imports');
+    if (!await importsDir.exists()) {
+      await importsDir.create(recursive: true);
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final extension = p.extension(sourceFile.path);
+    final baseName = p.basenameWithoutExtension(sourceFile.path);
+    final fileName = '${baseName}_$timestamp$extension';
+    final destPath = '${importsDir.path}/$fileName';
+
+    await sourceFile.copy(destPath);
+    return destPath;
+  }
+
+  Future<List<String>> _autoReorderByPageNumber(List<String> paths) async {
+    try {
+      final pagePattern = RegExp(
+        r'(?:page|pagina|seite|p\.?)\s*(\d+)\s*(?:of|von|de|/)\s*(\d+)',
+        caseSensitive: false,
+      );
+
+      final entries = <_PageEntry>[];
+
+      for (int i = 0; i < paths.length; i++) {
+        final text = await _ocrProcessingHelper
+            .processOcrForImages([paths[i]]);
+        final match = pagePattern.firstMatch(text);
+
+        if (match != null) {
+          final pageNum = int.tryParse(match.group(1)!);
+          final totalPages = int.tryParse(match.group(2)!);
+          if (pageNum != null && totalPages != null) {
+            entries.add(_PageEntry(
+              path: paths[i],
+              pageNumber: pageNum,
+              totalPages: totalPages,
+              originalIndex: i,
+            ));
+            continue;
+          }
+        }
+        entries.add(_PageEntry(
+          path: paths[i],
+          pageNumber: null,
+          totalPages: null,
+          originalIndex: i,
+        ));
+      }
+
+      final detected = entries.where((e) => e.pageNumber != null).toList();
+      if (detected.length < 2) return paths;
+
+      final totals = detected.map((e) => e.totalPages).toSet();
+      if (totals.length != 1) return paths;
+
+      final expectedTotal = totals.first!;
+      if (expectedTotal != paths.length) return paths;
+
+      final pageNumbers = detected.map((e) => e.pageNumber!).toSet();
+      if (pageNumbers.length != detected.length) return paths;
+
+      if (pageNumbers.any((n) => n < 1 || n > expectedTotal)) return paths;
+
+      entries.sort((a, b) {
+        if (a.pageNumber != null && b.pageNumber != null) {
+          return a.pageNumber!.compareTo(b.pageNumber!);
+        }
+        if (a.pageNumber != null) return -1;
+        if (b.pageNumber != null) return 1;
+        return a.originalIndex.compareTo(b.originalIndex);
+      });
+
+      return entries.map((e) => e.path).toList();
+    } catch (_) {
+      return paths;
     }
   }
 
@@ -538,7 +633,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       }
 
       final finalSession =
-          state.sessions.firstWhere((s) => s.id == event.sessionId);
+          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
 
       if (container is MappingDiagnosticReport) {
         _updateSession(
@@ -561,7 +656,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       }
 
       final notification = Notification(
-        text: "${finalSession.origin} patient info extracted",
+        text: "${finalSession?.origin ?? 'Document'} patient info extracted",
         route: ProcessingRoute(sessionId: event.sessionId),
         time: DateTime.now(),
       );
@@ -688,6 +783,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       final (subjectId, sourceId, finalContainer, _) =
           await _persistPrimaryResources(activeSession);
 
+      await _prefs.setString('selected_patient_id', subjectId);
+
       final otherResources = activeSession.resources
           .where((r) =>
               r is! MappingPatient &&
@@ -721,6 +818,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       emit(state.copyWith(status: const ScanStatus.success()));
     } catch (e) {
+      logger.e('[ScanBloc] resource creation failed: $e');
       emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
     }
   }
@@ -942,6 +1040,31 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     add(ScanMappingInitiated(sessionId: event.sessionId));
   }
 
+  Future<void> _onScanPagesReordered(
+    ScanPagesReordered event,
+    Emitter<ScanState> emit,
+  ) async {
+    final sessionIndex =
+        state.sessions.indexWhere((s) => s.id == event.sessionId);
+    if (sessionIndex == -1) return;
+
+    final updatedSession =
+        state.sessions[sessionIndex].copyWith(filePaths: event.reorderedPaths);
+    final updatedSessions = [...state.sessions];
+    updatedSessions[sessionIndex] = updatedSession;
+
+    final updatedImageMap =
+        Map<String, List<String>>.from(state.sessionImagePaths)
+          ..[event.sessionId] = event.reorderedPaths;
+
+    emit(state.copyWith(
+      sessions: updatedSessions,
+      sessionImagePaths: updatedImageMap,
+    ));
+
+    await _repository.editProcessingSession(updatedSession);
+  }
+
   Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
     ProcessingSession activeSession,
   ) async {
@@ -1018,4 +1141,18 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           (resourcesToSave.firstWhere((r) => r is Patient) as Patient)
     );
   }
+}
+
+class _PageEntry {
+  final String path;
+  final int? pageNumber;
+  final int? totalPages;
+  final int originalIndex;
+
+  _PageEntry({
+    required this.path,
+    required this.pageNumber,
+    required this.totalPages,
+    required this.originalIndex,
+  });
 }

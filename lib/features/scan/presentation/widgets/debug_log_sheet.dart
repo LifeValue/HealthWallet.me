@@ -82,7 +82,7 @@ class _DebugLogSheetState extends State<DebugLogSheet> {
               child: Row(
                 children: [
                   const Text(
-                    'Inference Logs',
+                    'Logs',
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 14,

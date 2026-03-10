@@ -138,7 +138,7 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
         procedureName: procedureName.calculateConfidence(inputText),
-        performedDateTime: performedDateTime.calculateConfidence(inputText),
+        performedDateTime: performedDateTime.calculateDateConfidence(inputText),
         reason: reason.calculateConfidence(inputText),
       );
 

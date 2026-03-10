@@ -16,19 +16,19 @@ Return ONLY a JSON array with exactly 2 objects: Patient + either Encounter OR D
 
 If this is a hospital visit, consultation, admission, or discharge document:
 [
-  {"resourceType":"Patient","familyName":"SURNAME","givenName":"FIRST NAME","dateOfBirth":"YYYY-MM-DD","gender":"male|female","patientMRN":"ID number","identifierLabel":"MRN","documentCategory":"visit"},
+  {"resourceType":"Patient","familyName":"<the patient surname from the document>","givenName":"<the patient first name from the document>","dateOfBirth":"YYYY-MM-DD","gender":"male|female","patientMRN":"<ID number>","identifierLabel":"MRN","documentCategory":"visit"},
   {"resourceType":"Encounter","encounterType":"consultation or admission type","periodStart":"YYYY-MM-DD"}
 ]
 
 If this is a lab test result or diagnostic report:
 [
-  {"resourceType":"Patient","familyName":"SURNAME","givenName":"FIRST NAME","dateOfBirth":"YYYY-MM-DD","gender":"male|female","patientMRN":"ID number","identifierLabel":"MRN","documentCategory":"lab_report"},
+  {"resourceType":"Patient","familyName":"<the patient surname from the document>","givenName":"<the patient first name from the document>","dateOfBirth":"YYYY-MM-DD","gender":"male|female","patientMRN":"<ID number>","identifierLabel":"MRN","documentCategory":"lab_report"},
   {"resourceType":"DiagnosticReport","reportName":"test name","conclusion":"","issuedDate":"YYYY-MM-DD"}
 ]
 
 Rules:
 - Most documents are visits. Only use DiagnosticReport for actual lab/test results
-- familyName = SURNAME (e.g. Popescu). givenName = FIRST NAME (e.g. Ion)
+- familyName and givenName MUST be the actual patient name found in the document, NOT placeholders
 - dateOfBirth = BIRTH date only. NOT admission/discharge/visit date
 - Romanian: "Data nasterii" = birth date. "Data internarii" = NOT birth date
 - identifierLabel: the type of patient ID found. Use "CNP" only for Romanian 13-digit IDs. Otherwise use "MRN", "SSN", "NHS", or "Identifier"
