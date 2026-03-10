@@ -301,5 +301,23 @@
     "plugInCharger": "Conecta el cargador.",
     "exitFocusMode": "Salir del Modo Enfoque",
     "chargerPluggedIn": "Cargador conectado.",
-    "plugInChargerEllipsis": "Conecta el cargador..."
+    "plugInChargerEllipsis": "Conecta el cargador...",
+
+    "processingFailedCapacity": "El documento es demasiado grande para la capacidad actual de tokens de IA.",
+    "processingFailedCapacitySuggestion": "Intenta aumentar la capacidad del modelo de IA para procesar documentos más grandes.",
+    "increaseAiModelCapacity": "Aumentar Capacidad del Modelo IA",
+    "goBack": "Volver",
+
+    "setAiTokensUsage": "Configurar Uso de Tokens IA",
+    "tokenUsageDescription": "Límites de tokens más altos permiten procesar documentos más grandes pero usan más memoria. Reinicia el procesamiento después de cambiar.",
+    "tokenPresetLow": "Bajo",
+    "tokenPresetLowDescription": "~100 tokens - Solo documentos pequeños",
+    "tokenPresetMedium": "Medio",
+    "tokenPresetMediumDescription": "~500 tokens - La mayoría de documentos de una página",
+    "tokenPresetHigh": "Alto",
+    "tokenPresetHighDescription": "~2048 tokens - Documentos de varias páginas",
+    "tokenPresetCustom": "Personalizado",
+    "tokenPresetCustomDescription": "Establecer un límite de tokens personalizado (máx. 4096)",
+    "setTokens": "Establecer Tokens",
+    "tokens": "tokens"
 }

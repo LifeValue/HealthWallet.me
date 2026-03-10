@@ -9,6 +9,7 @@ import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/gender_mapper.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -25,6 +26,7 @@ class ResourcesForm extends StatelessWidget {
     required this.sessionId,
     required this.formKey,
     this.encounter,
+    this.diagnosticReport,
     this.patient,
     this.isAttachmentLocked = false,
     super.key,
@@ -35,6 +37,7 @@ class ResourcesForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final StagedPatient? patient;
   final StagedEncounter? encounter;
+  final StagedDiagnosticReport? diagnosticReport;
   final bool isAttachmentLocked;
 
   @override
@@ -67,7 +70,25 @@ class ResourcesForm extends StatelessWidget {
                           ),
                         ),
               ),
-            if (encounter?.hasSelection == true)
+            if (diagnosticReport?.hasSelection == true)
+              _buildResourceForm(
+                context,
+                canRemove: false,
+                resource: diagnosticReport!.draft!,
+                isStagedResource: true,
+                isReadOnly: isAttachmentLocked,
+                onPropertyChanged: (propertyKey, newValue) =>
+                    context.read<ScanBloc>().add(
+                          ScanResourceChanged(
+                            sessionId: sessionId,
+                            index: 0,
+                            propertyKey: propertyKey,
+                            newValue: newValue,
+                            isDraftDiagnosticReport: true,
+                          ),
+                        ),
+              )
+            else if (encounter?.hasSelection == true)
               _buildResourceForm(
                 context,
                 canRemove: false,
@@ -150,7 +171,8 @@ class ResourcesForm extends StatelessWidget {
                   children: [
                     if (isStagedResource &&
                         !isAttachmentLocked &&
-                        resource is! MappingEncounter)
+                        resource is! MappingEncounter &&
+                        resource is! MappingDiagnosticReport)
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(

@@ -265,6 +265,7 @@ void main() {
       DefaultPatientService(fakeRecordsRepo, FakeSyncLocalDataSource()),
     );
     final recordsBloc = RecordsBloc(fakeRecordsRepo);
+    final prefs = await SharedPreferences.getInstance();
     final scanBloc = ScanBloc(
       PdfStorageService(),
       fakeScanRepo,
@@ -274,8 +275,8 @@ void main() {
       deduplicationService,
       sourceTypeService,
       fakeRecordsRepo,
+      prefs,
     );
-    final prefs = await SharedPreferences.getInstance();
     final notificationBloc = NotificationBloc(prefs);
     final patientBloc = PatientBloc(
       fakeRecordsRepo,

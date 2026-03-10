@@ -850,4 +850,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get plugInChargerEllipsis => 'Plug in the charger...';
+
+  @override
+  String get processingFailedCapacity =>
+      'The document is too large for the current AI token capacity.';
+
+  @override
+  String get processingFailedCapacitySuggestion =>
+      'Try increasing the AI model capacity to process larger documents.';
+
+  @override
+  String get increaseAiModelCapacity => 'Increase AI Model Capacity';
+
+  @override
+  String get goBack => 'Go Back';
+
+  @override
+  String get setAiTokensUsage => 'Set AI Tokens Usage';
+
+  @override
+  String get tokenUsageDescription =>
+      'Higher token limits allow processing larger documents but use more memory. Restart processing after changing.';
+
+  @override
+  String get tokenPresetLow => 'Low';
+
+  @override
+  String get tokenPresetLowDescription => '~100 tokens - Small documents only';
+
+  @override
+  String get tokenPresetMedium => 'Medium';
+
+  @override
+  String get tokenPresetMediumDescription =>
+      '~500 tokens - Most single-page documents';
+
+  @override
+  String get tokenPresetHigh => 'High';
+
+  @override
+  String get tokenPresetHighDescription =>
+      '~2048 tokens - Multi-page documents';
+
+  @override
+  String get tokenPresetCustom => 'Custom';
+
+  @override
+  String get tokenPresetCustomDescription =>
+      'Set a custom token limit (max 4096)';
+
+  @override
+  String get setTokens => 'Set Tokens';
+
+  @override
+  String get tokens => 'tokens';
 }

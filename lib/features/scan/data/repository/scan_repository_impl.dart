@@ -8,6 +8,7 @@ import 'package:health_wallet/features/scan/data/data_source/local/scan_local_da
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -26,6 +27,35 @@ class ScanRepositoryImpl implements ScanRepository {
 
   final ScanNetworkDataSource _networkDataSource;
   final ScanLocalDataSource _localDataSource;
+
+  static final _markdownFenceRegex = RegExp(r'```(?:json)?\s*');
+
+  String _stripMarkdownFences(String text) {
+    return text.replaceAll(_markdownFenceRegex, '').trim();
+  }
+
+  static const _labKeywords = [
+    'laborator', 'analiz', 'biochimi', 'hemato', 'hemogram',
+    'test result', 'lab result', 'specimen', 'reference range',
+    'val. ref', 'valori de referinta', 'synevo', 'medlife lab',
+    'regina maria lab', 'blood test', 'urine test',
+  ];
+
+  static const _visitKeywords = [
+    'spital', 'hospital', 'consult', 'visit summary',
+    'discharge', 'bilet de iesire', 'after visit', 'externare',
+    'internare', 'epicriza', 'scrisoare medicala',
+  ];
+
+  String _detectDocumentCategory(String medicalText) {
+    final lower = medicalText.toLowerCase();
+    final labScore = _labKeywords.where((k) => lower.contains(k)).length;
+    final visitScore = _visitKeywords.where((k) => lower.contains(k)).length;
+
+    if (labScore > visitScore) return 'lab_report';
+    if (visitScore > labScore) return 'visit';
+    return '';
+  }
 
   bool _isStreamActive = false;
   Completer<void>? _streamCompleter;
@@ -320,40 +350,84 @@ class ScanRepositoryImpl implements ScanRepository {
       _networkDataSource.checkModelExistence();
 
   @override
-  Future<(MappingPatient, MappingEncounter)> mapBasicInfo(
+  Future<(MappingPatient, MappingResource)> mapBasicInfo(
     String medicalText,
   ) async {
+    debugPrint('[ScanAI] mapBasicInfo: initializing model...');
     await _networkDataSource.initModel();
+    debugPrint('[ScanAI] mapBasicInfo: model initialized');
 
     try {
       String prompt = BasicInfoPrompt().buildPrompt(medicalText);
+      debugPrint('[ScanAI] mapBasicInfo: prompt built, length: ${prompt.length}');
 
       String? promptResponse =
           await _networkDataSource.runPrompt(prompt: prompt);
+      debugPrint('[ScanAI] mapBasicInfo: got response');
 
-      List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+      final cleaned = _stripMarkdownFences(promptResponse ?? '');
+      debugPrint('[ScanAI] mapBasicInfo: cleaned response: $cleaned');
+      List<dynamic> jsonList = jsonDecode(cleaned);
+
+      String? aiCategory;
+      for (final json in jsonList) {
+        if (json is Map<String, dynamic> && json['resourceType'] == 'Patient') {
+          aiCategory = (json['documentCategory'] as String?)?.toLowerCase();
+          break;
+        }
+      }
+
+      final keywordCategory = _detectDocumentCategory(medicalText);
+      final documentCategory = keywordCategory.isNotEmpty ? keywordCategory : (aiCategory ?? '');
+      debugPrint('[ScanAI] mapBasicInfo: aiCategory=$aiCategory, keywordCategory=$keywordCategory, final=$documentCategory');
 
       List<MappingResource> resources = [];
       for (Map<String, dynamic> json in jsonList) {
+        final resourceType = json['resourceType'];
+        debugPrint('[ScanAI] mapBasicInfo: parsing resourceType=$resourceType');
         MappingResource resource =
             MappingResource.fromJson(json).populateConfidence(medicalText);
 
+        debugPrint('[ScanAI] mapBasicInfo: ${resource.runtimeType} isValid=${resource.isValid}');
         if (resource.isValid) {
           resources.add(resource);
         }
       }
-      
-      MappingEncounter encounter =
-          resources.firstWhereOrNull((resource) => resource is MappingEncounter)
-                  as MappingEncounter? ??
-              MappingEncounter.empty();
+
+      debugPrint('[ScanAI] mapBasicInfo: valid resources count=${resources.length}');
+
+      final diagnosticReport = resources
+          .whereType<MappingDiagnosticReport>()
+          .firstOrNull;
+      final encounter = resources
+          .whereType<MappingEncounter>()
+          .firstOrNull;
+
+      MappingResource container;
+      if (documentCategory == 'lab_report' &&
+          diagnosticReport != null &&
+          diagnosticReport.isValid) {
+        container = diagnosticReport;
+      } else if (documentCategory == 'visit' &&
+          encounter != null &&
+          encounter.isValid) {
+        container = encounter;
+      } else if (encounter != null && encounter.isValid) {
+        container = encounter;
+      } else if (diagnosticReport != null && diagnosticReport.isValid) {
+        container = diagnosticReport;
+      } else {
+        container = MappingEncounter.empty();
+      }
+
+      debugPrint('[ScanAI] mapBasicInfo: container type=${container.runtimeType}');
 
       MappingPatient patient =
           resources.firstWhereOrNull((resource) => resource is MappingPatient)
                   as MappingPatient? ??
               MappingPatient.empty();
 
-      return (patient, encounter);
+      return (patient, container);
     } finally {
       await disposeModel();
     }
@@ -361,16 +435,21 @@ class ScanRepositoryImpl implements ScanRepository {
 
   @override
   Stream<MappingResourcesWithProgress> mapRemainingResources(
-    String medicalText,
-  ) async* {
+    String medicalText, {
+    String? documentCategory,
+  }) async* {
     try {
       _isStreamActive = true;
       _streamCompleter = Completer<void>();
       _shouldCancelGeneration = false;
-            
+
       await _networkDataSource.initModel();
 
-      List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
+      debugPrint('[ScanAI] mapRemainingResources: documentCategory=$documentCategory');
+      List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts(
+        documentCategory: documentCategory,
+      );
+      debugPrint('[ScanAI] mapRemainingResources: running ${supportedPrompts.length} prompts');
       for (int i = 0; i < supportedPrompts.length; i++) {
         if (_shouldCancelGeneration) {
           break;
@@ -388,7 +467,8 @@ class ScanRepositoryImpl implements ScanRepository {
         List<MappingResource> resources = [];
 
         try {
-          List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
+          final cleaned = _stripMarkdownFences(promptResponse ?? '');
+          List<dynamic> jsonList = jsonDecode(cleaned);
 
           for (Map<String, dynamic> json in jsonList) {
             MappingResource resource =

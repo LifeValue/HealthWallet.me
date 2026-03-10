@@ -17,10 +17,12 @@ packages:
   airdrop:
     dependency: "direct main"
     description:
-      path: "../packages/airdrop"
-      relative: true
-    source: path
-    version: "0.0.1"
+      path: "."
+      ref: HEAD
+      resolved-ref: fec492cb10881eb000345e759182d9e3e422ec86
+      url: "ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git"
+    source: git
+    version: "1.0.0"
   analyzer:
     dependency: transitive
     description:
@@ -142,7 +144,7 @@ packages:
     source: hosted
     version: "3.0.0"
   background_downloader:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: background_downloader
       sha256: f15da01894a400103f4efc711d2d0782ad06c164f1a56a50735bd781d6fffc96
