@@ -15,6 +15,7 @@ import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapp
 import 'package:health_wallet/features/scan/data/utils/patient_post_processor.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
@@ -29,11 +30,13 @@ class ScanRepositoryImpl implements ScanRepository {
     this._networkDataSource,
     this._localDataSource,
     this._textRecognitionService,
+    this._pathResolver,
   );
 
   final ScanNetworkDataSource _networkDataSource;
   final ScanLocalDataSource _localDataSource;
   final TextRecognitionService _textRecognitionService;
+  final PathResolver _pathResolver;
 
   static final _markdownFenceRegex = RegExp(r'```(?:json)?\s*');
 
@@ -225,7 +228,7 @@ class ScanRepositoryImpl implements ScanRepository {
 
       await sourceFile.copy(newPath);
 
-      return newPath;
+      return await _pathResolver.toRelative(newPath);
     } catch (e) {
       throw Exception('Failed to save document: $e');
     }
@@ -329,14 +332,20 @@ class ScanRepositoryImpl implements ScanRepository {
     required List<String> filePaths,
     required ProcessingOrigin origin,
   }) async {
+    final relativePaths =
+        await Future.wait(filePaths.map(_pathResolver.toRelative));
+    final absolutePaths =
+        await _pathResolver.resolveAll(relativePaths);
+
     final session = ProcessingSession(
       id: const Uuid().v4(),
-      filePaths: filePaths,
+      filePaths: absolutePaths,
       origin: origin,
       createdAt: DateTime.now(),
     );
 
-    await _localDataSource.cacheProcessingSession(session.toDbCompanion());
+    final sessionForDb = session.copyWith(filePaths: relativePaths);
+    await _localDataSource.cacheProcessingSession(sessionForDb.toDbCompanion());
 
     return session;
   }
@@ -344,20 +353,28 @@ class ScanRepositoryImpl implements ScanRepository {
   @override
   Future<List<ProcessingSession>> getProcessingSessions() async {
     final dtos = await _localDataSource.getProcessingSessions();
+    final sessions = dtos.map(ProcessingSession.fromDto).toList();
 
-    return dtos.map(ProcessingSession.fromDto).toList();
+    return Future.wait(sessions.map((s) async {
+      final absolutePaths = await _pathResolver.resolveAll(s.filePaths);
+      return s.copyWith(filePaths: absolutePaths);
+    }));
   }
 
   @override
   Future<int> editProcessingSession(ProcessingSession session) async {
+    final relativePaths =
+        await Future.wait(session.filePaths.map(_pathResolver.toRelative));
+    final sessionForDb = session.copyWith(filePaths: relativePaths);
     return _localDataSource.updateProcessingSession(
-        session.id, session.toDbCompanion());
+        session.id, sessionForDb.toDbCompanion());
   }
 
   @override
   Future<int> deleteProcessingSession(ProcessingSession session) async {
-    for (final path in session.filePaths) {
-      File(path).delete().ignore();
+    for (final filePath in session.filePaths) {
+      final absolutePath = await _pathResolver.toAbsolute(filePath);
+      File(absolutePath).delete().ignore();
     }
 
     return _localDataSource.deleteProcessingSession(session.id);

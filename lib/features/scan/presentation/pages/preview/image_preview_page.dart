@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/scan/presentation/pages/preview/bloc/preview_bloc.dart';
 
 class ImagePreviewPage extends StatefulWidget {
@@ -83,37 +85,57 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     return _buildImageViewer(widget.imagePath);
   }
 
-  Widget _buildImageViewer(String path) {
-    final file = File(path);
-    final exists = file.existsSync();
-
-    if (!exists) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        color: Colors.black,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.white,
-              size: 64,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'File not found',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Path: $path',
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+  Widget _buildImageViewer(String imagePath) {
+    final file = File(imagePath);
+    if (!file.existsSync()) {
+      return FutureBuilder<String>(
+        future: getIt<PathResolver>().toAbsolute(imagePath),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Container(
+              color: Colors.black,
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+            );
+          }
+          final resolvedPath = snapshot.data ?? imagePath;
+          final resolvedFile = File(resolvedPath);
+          if (resolvedFile.existsSync()) {
+            return _buildImageContent(resolvedFile, resolvedPath);
+          }
+          return _buildFileNotFound(imagePath);
+        },
       );
     }
+    return _buildImageContent(file, imagePath);
+  }
+
+  Widget _buildFileNotFound(String path) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      color: Colors.black,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.white, size: 64),
+          const SizedBox(height: 16),
+          const Text(
+            'File not found',
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Path: $path',
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageContent(File file, String path) {
 
     try {
       final stat = file.statSync();
@@ -138,9 +160,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           ),
         );
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (_) {}
 
     return Center(
       child: InteractiveViewer(
