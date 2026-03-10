@@ -149,18 +149,27 @@ The backend server aggregates medical records from healthcare providers and sync
 ```
 lib/
 ├── app/                    # App configuration and initialization
-├── core/                   # Core utilities, constants, and shared code
-│   ├── constants/         # App constants and configurations
-│   ├── errors/            # Error handling and custom exceptions
-│   ├── network/           # Network configuration and interceptors
-│   ├── storage/           # Local storage implementations
-│   └── utils/             # Utility functions and helpers
+├── core/                   # Shared infrastructure
+│   ├── config/            # App configuration and constants
+│   ├── data/              # Local database (Drift/SQLite)
+│   ├── di/                # Dependency injection setup
+│   ├── l10n/              # Localization
+│   ├── navigation/        # Router and route definitions
+│   ├── services/          # Shared services (path resolver, PDF, share intent)
+│   ├── theme/             # Colors, text styles, spacing
+│   ├── utils/             # Utility functions and helpers
+│   └── widgets/           # Reusable UI components
 ├── features/              # Feature modules
-│   ├── auth/              # Authentication feature
-│   ├── dashboard/         # Main dashboard
-│   ├── health_records/    # Health records management
-│   ├── sync/              # Data synchronization
-│   └── profile/           # User profile management
+│   ├── dashboard/         # Main dashboard and tab navigation
+│   ├── home/              # Home screen and health overview
+│   ├── notifications/     # In-app notifications
+│   ├── onboarding/        # First-launch onboarding flow
+│   ├── records/           # Health records management
+│   ├── scan/              # Document scanning and AI processing
+│   ├── share_records/     # Record sharing (proximity, export)
+│   ├── sync/              # Data synchronization with backend
+│   ├── user/              # User profile and patient management
+│   └── wallet_pass/       # Google / Apple Wallet passes
 └── gen/                   # Generated code (assets, routes, etc.)
 ```
 </details>
