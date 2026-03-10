@@ -99,6 +99,8 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     String? encounterId,
     String? subjectId,
   }) {
+    final identifierCoding = _mapLabelToFhirCode(identifierLabel);
+
     fhir_r4.Patient patient = fhir_r4.Patient(
       name: [
         fhir_r4.HumanName(
@@ -109,12 +111,23 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       birthDate: fhir_r4.FhirDate.fromString(dateOfBirth.value),
       gender: fhir_r4.AdministrativeGender(gender.value),
       identifier: [
-        fhir_r4.Identifier(
-          value: fhir_r4.FhirString(patientMRN.value),
-          type: fhir_r4.CodeableConcept(
-            text: fhir_r4.FhirString(identifierLabel),
-          ),
-        )
+        if (patientMRN.value.isNotEmpty)
+          fhir_r4.Identifier(
+            value: fhir_r4.FhirString(patientMRN.value),
+            type: fhir_r4.CodeableConcept(
+              coding: identifierCoding != null
+                  ? [
+                      fhir_r4.Coding(
+                        system: fhir_r4.FhirUri(
+                            'http://terminology.hl7.org/CodeSystem/v2-0203'),
+                        code: fhir_r4.FhirCode(identifierCoding),
+                        display: fhir_r4.FhirString(identifierLabel),
+                      )
+                    ]
+                  : null,
+              text: fhir_r4.FhirString(identifierLabel),
+            ),
+          )
       ],
     );
 
@@ -143,7 +156,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           confidenceLevel: givenName.confidenceLevel,
         ),
         'familyName': TextFieldDescriptor(
-          label: 'Second name',
+          label: 'Family name',
           value: familyName.value,
           confidenceLevel: familyName.confidenceLevel,
         ),
@@ -206,10 +219,28 @@ class MappingPatient with _$MappingPatient implements MappingResource {
   MappingResource populateConfidence(String inputText) => copyWith(
         familyName: familyName.calculateConfidence(inputText),
         givenName: givenName.calculateConfidence(inputText),
-        dateOfBirth: dateOfBirth.calculateConfidence(inputText),
-        gender: gender.calculateConfidence(inputText),
+        dateOfBirth: dateOfBirth.calculateDateConfidence(inputText),
+        gender: gender.calculateGenderConfidence(inputText),
         patientMRN: patientMRN.calculateConfidence(inputText),
       );
+
+  static String? _mapLabelToFhirCode(String label) {
+    switch (label.toUpperCase()) {
+      case 'MRN':
+        return 'MR';
+      case 'CNP':
+      case 'SSN':
+        return 'SS';
+      case 'NHS':
+        return 'NH';
+      case 'DL':
+        return 'DL';
+      case 'PPN':
+        return 'PPN';
+      default:
+        return null;
+    }
+  }
 
   @override
   bool get isValid =>

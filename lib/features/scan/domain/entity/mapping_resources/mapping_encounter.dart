@@ -138,7 +138,7 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
         encounterType: encounterType.calculateConfidence(inputText),
-        periodStart: periodStart.calculateConfidence(inputText),
+        periodStart: periodStart.calculateDateConfidence(inputText),
       );
 
   @override

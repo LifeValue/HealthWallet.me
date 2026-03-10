@@ -12,6 +12,7 @@ import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapp
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/scan/data/utils/observation_ocr_validator.dart';
 import 'package:health_wallet/features/scan/data/utils/patient_post_processor.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
@@ -641,10 +642,11 @@ class ScanRepositoryImpl implements ScanRepository {
       ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
       ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, maxTokens=${maxTokens ?? 'default'}');
 
-      final prompt = RemainingResourcesVisionPrompt(
+      final promptBuilder = await RemainingResourcesVisionPrompt.create(
         documentCategory: documentCategory,
         ocrText: ocrText,
-      ).buildPrompt();
+      );
+      final prompt = promptBuilder.buildPrompt();
 
       final response = await _networkDataSource.runVisionPrompt(
         prompt: prompt,
@@ -675,6 +677,10 @@ class ScanRepositoryImpl implements ScanRepository {
         ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] extracted ${resources.length} resources from ${jsonList.length} JSON objects');
       } catch (e) {
         ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] failed to parse remaining resources: $e');
+      }
+
+      if (ocrText.isNotEmpty) {
+        resources = ObservationOcrValidator.validate(resources, ocrText);
       }
 
       yield (resources.toSet().toList(), 1.0);

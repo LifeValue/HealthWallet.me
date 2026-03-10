@@ -14,6 +14,7 @@ class PatientPostProcessor {
     result = _validateIdentifierLabel(result, ocrText);
     result = _validateCnp(result, ocrText);
     result = _validateNames(result);
+    result = _recoverNamesFromOcr(result, ocrText);
 
     if (result != patient) {
       ScanLogBuffer.instance.log('[$_ts][PostProcessor] corrected: label=${result.identifierLabel}, dob=${result.dateOfBirth.value}, gender=${result.gender.value}');
@@ -135,6 +136,27 @@ class PatientPostProcessor {
     );
   }
 
+  static final _placeholderNames = {
+    'surname',
+    'first',
+    'first name',
+    'last name',
+    'name',
+    'patient name',
+    'family name',
+    'given name',
+    'firstname',
+    'lastname',
+    'familyname',
+    'givenname',
+  };
+
+  static bool _isPlaceholder(String value) {
+    if (value.isEmpty) return false;
+    if (value.startsWith('<') && value.endsWith('>')) return true;
+    return _placeholderNames.contains(value.toLowerCase().trim());
+  }
+
   static MappingPatient _validateNames(MappingPatient patient) {
     var result = patient;
 
@@ -150,6 +172,23 @@ class PatientPostProcessor {
       result = result.copyWith(
         givenName: const MappedProperty(value: '', confidenceLevel: 0.0),
       );
+    }
+
+    final familyIsPlaceholder = _isPlaceholder(result.familyName.value);
+    final givenIsPlaceholder = _isPlaceholder(result.givenName.value);
+
+    if (familyIsPlaceholder || givenIsPlaceholder) {
+      ScanLogBuffer.instance.log('[$_ts][PostProcessor] placeholder detected: family="${result.familyName.value}", given="${result.givenName.value}"');
+      if (familyIsPlaceholder) {
+        result = result.copyWith(
+          familyName: const MappedProperty(value: '', confidenceLevel: 0.0),
+        );
+      }
+      if (givenIsPlaceholder) {
+        result = result.copyWith(
+          givenName: const MappedProperty(value: '', confidenceLevel: 0.0),
+        );
+      }
     }
 
     return result;
@@ -227,6 +266,46 @@ class PatientPostProcessor {
     ];
     final matchCount = patterns.where((p) => lower.contains(p)).length;
     return matchCount >= 2;
+  }
+
+  static MappingPatient _recoverNamesFromOcr(
+    MappingPatient patient,
+    String ocrText,
+  ) {
+    final needsFamily = patient.familyName.value.isEmpty;
+    final needsGiven = patient.givenName.value.isEmpty;
+    if (!needsFamily && !needsGiven) return patient;
+
+    final namePatterns = [
+      RegExp(r'Nume\s*(?:si|și)\s*[Pp]renume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s+([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+CNP|\s+\d|\s*$)', multiLine: true),
+      RegExp(r'Nume\s*(?:si|și)\s*[Pp]renume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-]+)\s*,\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+CNP|\s+\d|\s*$)', multiLine: true),
+      RegExp(r'Nume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s+Prenume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+\d|\s*$)', multiLine: true),
+      RegExp(r'(?:Patient|Name)\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s*,?\s+([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+\d|\s*$)', multiLine: true),
+    ];
+
+    for (final pattern in namePatterns) {
+      final match = pattern.firstMatch(ocrText);
+      if (match != null) {
+        final surname = match.group(1)!.trim();
+        final firstName = match.group(2)!.trim();
+        ScanLogBuffer.instance.log('[$_ts][PostProcessor] names recovered from OCR: "$surname" "$firstName"');
+        var result = patient;
+        if (needsFamily) {
+          result = result.copyWith(
+            familyName: MappedProperty(value: surname, confidenceLevel: 0.85),
+          );
+        }
+        if (needsGiven) {
+          result = result.copyWith(
+            givenName: MappedProperty(value: firstName, confidenceLevel: 0.85),
+          );
+        }
+        return result;
+      }
+    }
+
+    ScanLogBuffer.instance.log('[$_ts][PostProcessor] could not recover names from OCR');
+    return patient;
   }
 
   static String? _findCnpInText(String ocrText) {
