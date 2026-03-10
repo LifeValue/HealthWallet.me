@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -9,6 +10,10 @@ import 'package:path/path.dart' as path;
 
 @injectable
 class PdfPreviewService {
+  final PathResolver _pathResolver;
+
+  PdfPreviewService(this._pathResolver);
+
   static const _previewableTypes = {FhirType.Media, FhirType.DocumentReference};
 
   Future<void> previewPdfFromResource(
@@ -25,7 +30,7 @@ class PdfPreviewService {
       String? filePath;
 
       if (resource.fhirType == FhirType.DocumentReference) {
-        filePath = _extractDocumentReferencePath(rawResource);
+        filePath = await _extractDocumentReferencePath(rawResource);
       } else {
         filePath = await _extractMediaPath(rawResource, resource.displayTitle);
       }
@@ -45,13 +50,15 @@ class PdfPreviewService {
     }
   }
 
-  String? _extractDocumentReferencePath(Map<String, dynamic> rawResource) {
+  Future<String?> _extractDocumentReferencePath(
+      Map<String, dynamic> rawResource) async {
     final contentList = rawResource['content'] as List?;
     if (contentList == null || contentList.isEmpty) return null;
     final attachment = (contentList[0] as Map?)?['attachment'] as Map?;
     final url = attachment?['url'] as String?;
     if (url == null) return null;
-    return url.startsWith('file://') ? url.substring(7) : url;
+    final rawPath = url.startsWith('file://') ? url.substring(7) : url;
+    return _pathResolver.toAbsolute(rawPath);
   }
 
   Future<String?> _extractMediaPath(
