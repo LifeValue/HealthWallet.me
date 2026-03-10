@@ -95,6 +95,29 @@ class ScanRepositoryImpl implements ScanRepository {
     return trimmed;
   }
 
+  static const _labKeywords = [
+    'laborator', 'analiz', 'biochimi', 'hemato', 'hemogram',
+    'test result', 'lab result', 'specimen', 'reference range',
+    'val. ref', 'valori de referinta', 'synevo', 'medlife lab',
+    'regina maria lab', 'blood test', 'urine test',
+  ];
+
+  static const _visitKeywords = [
+    'spital', 'hospital', 'consult', 'visit summary',
+    'discharge', 'bilet de iesire', 'after visit', 'externare',
+    'internare', 'epicriza', 'scrisoare medicala',
+  ];
+
+  String _detectDocumentCategory(String medicalText) {
+    final lower = medicalText.toLowerCase();
+    final labScore = _labKeywords.where((k) => lower.contains(k)).length;
+    final visitScore = _visitKeywords.where((k) => lower.contains(k)).length;
+
+    if (labScore > visitScore) return 'lab_report';
+    if (visitScore > labScore) return 'visit';
+    return '';
+  }
+
   bool _isStreamActive = false;
   Completer<void>? _streamCompleter;
   bool _shouldCancelGeneration = false;

@@ -6,12 +6,14 @@ import 'package:background_downloader/background_downloader.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:health_wallet/features/scan/data/utils/scan_log_buffer.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:image/image.dart' as img;
 import 'package:injectable/injectable.dart';
 import 'package:llamadart/llamadart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class ScanNetworkDataSource {
   Future<void> downloadModel({
@@ -51,7 +53,9 @@ abstract class ScanNetworkDataSource {
 
 @LazySingleton(as: ScanNetworkDataSource)
 class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
-  ScanNetworkDataSourceImpl();
+  final SharedPreferences _prefs;
+
+  ScanNetworkDataSourceImpl(this._prefs);
 
   LlamaEngine? _engine;
   bool _hasVisionProjector = false;
