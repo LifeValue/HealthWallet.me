@@ -74,10 +74,18 @@ class RecordsRepositoryImpl implements RecordsRepository {
       sourceId: sourceId,
     );
 
-    return localDtos
+    final resources = localDtos
         .where((dto) => dto.id != encounterId)
         .map(IFhirResource.fromLocalDto)
         .toList();
+
+    resources.sort((a, b) {
+      final aIsDoc = a.fhirType == FhirType.DocumentReference ? 0 : 1;
+      final bIsDoc = b.fhirType == FhirType.DocumentReference ? 0 : 1;
+      return aIsDoc.compareTo(bIsDoc);
+    });
+
+    return resources;
   }
 
   @override

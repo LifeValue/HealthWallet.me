@@ -10,7 +10,6 @@ import 'package:health_wallet/core/navigation/observers/order_route_observer.dar
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
-
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -120,6 +119,14 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               _handleSyncBlocStateChange(context, state);
             },
           ),
+          BlocListener<ScanBloc, ScanState>(
+            listenWhen: (previous, current) =>
+                previous.status != current.status &&
+                current.status == const ScanStatus.success(),
+            listener: (context, state) {
+              _handleScanSuccess(context);
+            },
+          ),
         ],
         child: BlocBuilder<UserBloc, UserState>(
           builder: (context, state) {
@@ -143,6 +150,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+void _handleScanSuccess(BuildContext context) {
+  context.read<PatientBloc>().add(const PatientPatientsLoaded());
+  context.read<HomeBloc>().add(const HomeScanCompleted());
+  context.read<RecordsBloc>().add(const RecordsInitialised());
 }
 
 void _handleSyncBlocStateChange(BuildContext context, SyncState state) {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
@@ -118,11 +119,137 @@ class PdfPreviewService {
     );
   }
 
+  Future<void> previewInApp(
+    BuildContext context,
+    IFhirResource resource,
+  ) async {
+    if (!_previewableTypes.contains(resource.fhirType)) {
+      _showErrorSnackBar(context, 'This resource is not a viewable file');
+      return;
+    }
+
+    try {
+      final rawResource = resource.rawResource;
+      String? filePath;
+
+      if (resource.fhirType == FhirType.DocumentReference) {
+        filePath = await _extractDocumentReferencePath(rawResource);
+      } else {
+        filePath = await _extractMediaPath(rawResource, resource.displayTitle);
+      }
+
+      if (filePath == null) {
+        _showErrorSnackBar(context, 'No file path found');
+        return;
+      }
+
+      if (!context.mounted) return;
+
+      final extension = path.extension(filePath).toLowerCase();
+      final isImage = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+          .contains(extension);
+
+      if (isImage) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => _InAppImageViewer(filePath: filePath!),
+          ),
+        );
+      } else {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => _InAppPdfViewer(filePath: filePath!),
+          ),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(context, 'Error opening file: $e');
+    }
+  }
+
   void _showWarningSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.orange,
+      ),
+    );
+  }
+}
+
+class _InAppImageViewer extends StatelessWidget {
+  final String filePath;
+
+  const _InAppImageViewer({required this.filePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(path.basename(filePath)),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Image.file(
+            File(filePath),
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                SizedBox(height: 16),
+                Text(
+                  'Failed to load image',
+                  style: TextStyle(color: Colors.white54),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InAppPdfViewer extends StatelessWidget {
+  final String filePath;
+
+  const _InAppPdfViewer({required this.filePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(path.basename(filePath)),
+      ),
+      body: PDFView(
+        filePath: filePath,
+        enableSwipe: true,
+        swipeHorizontal: true,
+        autoSpacing: true,
+        pageFling: true,
+        onError: (error) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error loading PDF: $error')),
+            );
+          }
+        },
+        onPageError: (page, error) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error on page $page: $error')),
+            );
+          }
+        },
       ),
     );
   }
