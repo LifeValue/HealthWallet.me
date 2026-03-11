@@ -15,12 +15,12 @@ class AppConstants {
   static const Duration cacheDuration = Duration(hours: 1);
 
   static const String modelUrl =
-      'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf';
-  static const String modelId = 'Qwen3VL-2B-Instruct-Q4_K_M.gguf';
+      'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf';
+  static const String modelId = 'medgemma-4b-it_Q4_K_M.gguf';
 
   static const String mmprojUrl =
-      'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-F16.gguf';
-  static const String mmprojId = 'mmproj-Qwen3VL-2B-Instruct-F16.gguf';
+      'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/mmproj-medgemma-4b-it-F16.gguf';
+  static const String mmprojId = 'mmproj-medgemma-4b-it-F16.gguf';
 
   static const int modelContextSize = 4096;
   static const int defaultMaxTokens = 4096;
