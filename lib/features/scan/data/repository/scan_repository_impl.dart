@@ -698,6 +698,15 @@ class ScanRepositoryImpl implements ScanRepository {
       for (var batchIdx = 0; batchIdx < batches.length; batchIdx++) {
         if (_shouldCancelGeneration) return;
 
+        final health = await _networkDataSource.checkMemoryHealth(
+          withVision: true,
+          contextSize: contextSize,
+        );
+        if (!health.canProceed) {
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] memory too low (${health.availableMB}MB < ${health.requiredMB}MB), switching to text fallback');
+          break;
+        }
+
         final batch = batches[batchIdx];
         try {
           ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
