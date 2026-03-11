@@ -989,6 +989,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           sessionId: event.sessionId,
           resources: [...currentSession!.resources, ...resources],
           progress: progress,
+          updateDb: true,
         );
       }
 
@@ -1011,10 +1012,14 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       _startNextPendingSession();
     } catch (e) {
+      final failedSession = state.sessions.firstWhereOrNull(
+        (s) => s.id == event.sessionId,
+      );
       _updateSession(
         emit,
         sessionId: event.sessionId,
         status: ProcessingStatus.patientExtracted,
+        resources: failedSession?.resources,
         updateDb: true,
       );
       if (!emit.isDone) {
