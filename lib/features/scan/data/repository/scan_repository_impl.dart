@@ -642,6 +642,9 @@ class ScanRepositoryImpl implements ScanRepository {
     }
   }
 
+  static const int _visionBatchSize = 2;
+  static const int _visionOcrMaxLength = 800;
+
   @override
   Stream<MappingResourcesWithProgress> mapRemainingResources(
     List<String> imagePaths, {
@@ -656,57 +659,103 @@ class ScanRepositoryImpl implements ScanRepository {
       _streamCompleter = Completer<void>();
       _shouldCancelGeneration = false;
 
-      final results = await Future.wait([
-        _networkDataSource.initModel(gpuLayers: gpuLayers, threads: threads, contextSize: contextSize),
-        _runOcrOnImages(imagePaths),
-      ]);
-      final ocrText = results[1] as String;
+      final ocrText = await _runOcrOnImages(imagePaths);
 
-      ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
-      ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, maxTokens=${maxTokens ?? 'default'}');
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}');
+
+      await _networkDataSource.initModel(
+        gpuLayers: gpuLayers,
+        threads: threads,
+        contextSize: contextSize,
+      );
 
       final promptBuilder = await RemainingResourcesVisionPrompt.create(
         documentCategory: documentCategory,
         ocrText: ocrText,
+        maxOcrLength: _visionOcrMaxLength,
+        includeFewShot: false,
       );
       final prompt = promptBuilder.buildPrompt();
 
-      final response = await _networkDataSource.runVisionPrompt(
-        prompt: prompt,
-        imagePaths: imagePaths,
-        maxTokens: maxTokens,
-      );
+      final batches = <List<String>>[];
+      for (var i = 0; i < imagePaths.length; i += _visionBatchSize) {
+        batches.add(
+          imagePaths.sublist(
+            i,
+            i + _visionBatchSize > imagePaths.length
+                ? imagePaths.length
+                : i + _visionBatchSize,
+          ),
+        );
+      }
 
-      if (_shouldCancelGeneration) return;
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $_visionBatchSize images, OCR trimmed to $_visionOcrMaxLength chars, no few-shot');
 
-      List<MappingResource> resources = [];
-      try {
-        final cleaned = _stripMarkdownFences(response ?? '');
-        final repaired = _repairTruncatedJsonArray(cleaned);
-        List<dynamic> jsonList = jsonDecode(repaired);
+      List<MappingResource> allResources = [];
+      final confidenceText = ocrText.isNotEmpty ? ocrText : null;
 
-        final confidenceText = ocrText.isNotEmpty ? ocrText : null;
+      for (var batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+        if (_shouldCancelGeneration) return;
 
-        for (Map<String, dynamic> json in jsonList) {
-          MappingResource resource = MappingResource.fromJson(json);
-          resource = resource.populateConfidence(
-            confidenceText ?? json.values.whereType<String>().where((v) => v.isNotEmpty).join(' '),
+        final batch = batches[batchIdx];
+        try {
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
+
+          final response = await _networkDataSource.runVisionPrompt(
+            prompt: prompt,
+            imagePaths: batch,
+            maxTokens: maxTokens,
           );
 
-          if (resource.isValid) {
-            resources.add(resource);
-          }
+          final parsed = _parseResourcesFromResponse(response, confidenceText);
+          allResources.addAll(parsed);
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] batch ${batchIdx + 1}: ${parsed.length} resources');
+
+          final progress = (batchIdx + 1) / (batches.length + 1);
+          yield (allResources.toSet().toList(), progress);
+        } catch (e) {
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1} failed: $e');
         }
-        ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] extracted ${resources.length} resources from ${jsonList.length} JSON objects');
-      } catch (e) {
-        ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] failed to parse remaining resources: $e');
+      }
+
+      if (allResources.isEmpty && ocrText.trim().isNotEmpty) {
+        ScanLogBuffer.instance.log('[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---');
+        await disposeModel();
+
+        final fallbackPromptBuilder = await RemainingResourcesVisionPrompt.create(
+          documentCategory: documentCategory,
+          ocrText: ocrText,
+          maxOcrLength: 2000,
+          includeFewShot: true,
+        );
+        final fallbackPrompt = fallbackPromptBuilder.buildPrompt();
+
+        await _networkDataSource.initModel(
+          withVision: false,
+          threads: threads,
+          contextSize: contextSize,
+        );
+
+        try {
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] running text-only inference, prompt ${fallbackPrompt.length} chars...');
+          final response = await _networkDataSource.runTextPrompt(
+            prompt: fallbackPrompt,
+            maxTokens: maxTokens,
+          );
+
+          allResources = _parseResourcesFromResponse(response, confidenceText);
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] text fallback: ${allResources.length} resources');
+        } catch (e) {
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] text fallback failed: $e');
+        }
       }
 
       if (ocrText.isNotEmpty) {
-        resources = ObservationOcrValidator.validate(resources, ocrText);
+        allResources = ObservationOcrValidator.validate(allResources, ocrText);
       }
 
-      yield (resources.toSet().toList(), 1.0);
+      yield (allResources.toSet().toList(), 1.0);
     } finally {
       await disposeModel();
 
@@ -714,6 +763,32 @@ class ScanRepositoryImpl implements ScanRepository {
       _shouldCancelGeneration = false;
       _streamCompleter?.complete();
     }
+  }
+
+  List<MappingResource> _parseResourcesFromResponse(
+    String? response,
+    String? confidenceText,
+  ) {
+    final cleaned = _stripMarkdownFences(response ?? '');
+    final repaired = _repairTruncatedJsonArray(cleaned);
+    List<dynamic> jsonList = jsonDecode(repaired);
+
+    List<MappingResource> resources = [];
+    for (Map<String, dynamic> json in jsonList) {
+      MappingResource resource = MappingResource.fromJson(json);
+      resource = resource.populateConfidence(
+        confidenceText ??
+            json.values
+                .whereType<String>()
+                .where((v) => v.isNotEmpty)
+                .join(' '),
+      );
+
+      if (resource.isValid) {
+        resources.add(resource);
+      }
+    }
+    return resources;
   }
 
 

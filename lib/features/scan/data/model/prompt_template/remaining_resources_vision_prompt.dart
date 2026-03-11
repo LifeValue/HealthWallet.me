@@ -4,25 +4,36 @@ class RemainingResourcesVisionPrompt {
   final String? documentCategory;
   final String? ocrText;
   final String? fewShotExample;
+  final int maxOcrLength;
+  final bool includeFewShot;
 
   RemainingResourcesVisionPrompt({
     this.documentCategory,
     this.ocrText,
     this.fewShotExample,
+    this.maxOcrLength = 2000,
+    this.includeFewShot = true,
   });
 
   static Future<RemainingResourcesVisionPrompt> create({
     String? documentCategory,
     String? ocrText,
+    int maxOcrLength = 2000,
+    bool includeFewShot = true,
   }) async {
-    final example = await CorrectionTemplateLoader().getBestExample(
-      documentCategory: documentCategory,
-      ocrText: ocrText,
-    );
+    String? example;
+    if (includeFewShot) {
+      example = await CorrectionTemplateLoader().getBestExample(
+        documentCategory: documentCategory,
+        ocrText: ocrText,
+      );
+    }
     return RemainingResourcesVisionPrompt(
       documentCategory: documentCategory,
       ocrText: ocrText,
       fewShotExample: example,
+      maxOcrLength: maxOcrLength,
+      includeFewShot: includeFewShot,
     );
   }
 
@@ -34,13 +45,15 @@ class RemainingResourcesVisionPrompt {
             : _defaultSchemas;
 
     final truncatedOcr = ocrText != null && ocrText!.isNotEmpty
-        ? (ocrText!.length > 2000 ? ocrText!.substring(0, 2000) : ocrText!)
+        ? (ocrText!.length > maxOcrLength
+            ? ocrText!.substring(0, maxOcrLength)
+            : ocrText!)
         : null;
     final ocrSection = truncatedOcr != null
         ? '\nOCR text from this document (use for exact values):\n---\n$truncatedOcr\n---\n'
         : '';
 
-    final exampleSection = fewShotExample != null
+    final exampleSection = includeFewShot && fewShotExample != null
         ? '\n--- EXAMPLE OUTPUT (for structure reference only, do NOT copy this data) ---\n$fewShotExample\n--- END EXAMPLE ---\n'
         : '';
 
