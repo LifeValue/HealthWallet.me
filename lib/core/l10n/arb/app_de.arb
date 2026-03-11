@@ -340,5 +340,11 @@
     "processingStep2NotEnoughRam": "Ihr Telefon hat nicht genügend Speicher für die vollständige Dokumentenverarbeitung. Sie können die oben extrahierten grundlegenden Patienteninformationen speichern.",
     "emergencyContact": "Notfall-Telefonkontakt",
     "emergencyContactHint": "Telefonnummer",
-    "searchCountry": "Land suchen..."
+    "searchCountry": "Land suchen...",
+    "rotatePage": "Drehen",
+    "deletePage": "Löschen",
+    "deletePageConfirmTitle": "Seite löschen",
+    "deletePageConfirmMessage": "Diese Seite wird aus dem Dokument entfernt.",
+    "cannotDeleteLastPage": "Die letzte Seite kann nicht gelöscht werden",
+    "pageRotated": "Seite gedreht"
 }

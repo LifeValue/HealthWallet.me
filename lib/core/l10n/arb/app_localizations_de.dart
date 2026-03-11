@@ -1002,4 +1002,24 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get searchCountry => 'Land suchen...';
+
+  @override
+  String get rotatePage => 'Drehen';
+
+  @override
+  String get deletePage => 'Löschen';
+
+  @override
+  String get deletePageConfirmTitle => 'Seite löschen';
+
+  @override
+  String get deletePageConfirmMessage =>
+      'Diese Seite wird aus dem Dokument entfernt.';
+
+  @override
+  String get cannotDeleteLastPage =>
+      'Die letzte Seite kann nicht gelöscht werden';
+
+  @override
+  String get pageRotated => 'Seite gedreht';
 }

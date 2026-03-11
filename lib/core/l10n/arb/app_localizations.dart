@@ -1905,6 +1905,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search country...'**
   String get searchCountry;
+
+  /// No description provided for @rotatePage.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate'**
+  String get rotatePage;
+
+  /// No description provided for @deletePage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deletePage;
+
+  /// No description provided for @deletePageConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Page'**
+  String get deletePageConfirmTitle;
+
+  /// No description provided for @deletePageConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This page will be removed from the document.'**
+  String get deletePageConfirmMessage;
+
+  /// No description provided for @cannotDeleteLastPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete the last page'**
+  String get cannotDeleteLastPage;
+
+  /// No description provided for @pageRotated.
+  ///
+  /// In en, this message translates to:
+  /// **'Page rotated'**
+  String get pageRotated;
 }
 
 class _AppLocalizationsDelegate

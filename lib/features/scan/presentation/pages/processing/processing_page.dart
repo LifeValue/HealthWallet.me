@@ -23,7 +23,6 @@ import 'package:health_wallet/features/scan/presentation/widgets/ai_token_settin
 import 'package:health_wallet/features/scan/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
-import 'package:health_wallet/features/scan/presentation/pages/reorder_pages_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/summary_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -247,34 +246,14 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 PreviewCard(
                   imagePaths: sessionImages,
                   pageController: _pageController,
+                  isEditable: true,
+                  onPagesChanged: (reordered) {
+                    context.read<ScanBloc>().add(ScanPagesReordered(
+                          sessionId: widget.sessionId,
+                          reorderedPaths: reordered,
+                        ));
+                  },
                 ),
-                if (sessionImages.length > 1 &&
-                    displayedSession.status == ProcessingStatus.pending)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () async {
-                        final reordered = await ReorderPagesSheet.show(
-                          context,
-                          imagePaths: sessionImages,
-                        );
-                        if (reordered != null && context.mounted) {
-                          context.read<ScanBloc>().add(ScanPagesReordered(
-                                sessionId: widget.sessionId,
-                                reorderedPaths: reordered,
-                              ));
-                        }
-                      },
-                      icon: const Icon(Icons.swap_vert, size: 18),
-                      label: Text(context.l10n.reorderPages),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Insets.smallNormal,
-                          vertical: Insets.extraSmall,
-                        ),
-                      ),
-                    ),
-                  ),
                 const SizedBox(height: Insets.small),
               ],
               const SizedBox(height: Insets.large),

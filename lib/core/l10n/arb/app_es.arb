@@ -344,5 +344,11 @@
     "processingStep2NotEnoughRam": "Tu teléfono no tiene suficiente memoria para el procesamiento completo de documentos. Puedes guardar la información básica del paciente extraída arriba.",
     "emergencyContact": "Contacto telefónico de emergencia",
     "emergencyContactHint": "Número de teléfono",
-    "searchCountry": "Buscar país..."
+    "searchCountry": "Buscar país...",
+    "rotatePage": "Rotar",
+    "deletePage": "Eliminar",
+    "deletePageConfirmTitle": "Eliminar página",
+    "deletePageConfirmMessage": "Esta página será eliminada del documento.",
+    "cannotDeleteLastPage": "No se puede eliminar la última página",
+    "pageRotated": "Página rotada"
 }
