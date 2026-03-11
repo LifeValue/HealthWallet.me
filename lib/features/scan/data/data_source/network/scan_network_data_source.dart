@@ -49,6 +49,11 @@ abstract class ScanNetworkDataSource {
   });
 
   Future<void> disposeModel();
+
+  Future<({int availableMB, int requiredMB, bool canProceed})> checkMemoryHealth({
+    bool withVision = true,
+    int? contextSize,
+  });
 }
 
 @LazySingleton(as: ScanNetworkDataSource)
@@ -420,6 +425,21 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
         ScanLogBuffer.instance.log('[$_ts][ScanAI] WARNING: mmproj file not found, vision disabled');
       }
     }
+  }
+
+  @override
+  Future<({int availableMB, int requiredMB, bool canProceed})> checkMemoryHealth({
+    bool withVision = true,
+    int? contextSize,
+  }) async {
+    final ramMB = await _getDeviceRamMB();
+    final autoConfig = computeModelConfig(withVision: withVision, ramMB: ramMB);
+    final ctx = contextSize ?? autoConfig.contextSize;
+    final availableMB = await _getAvailableRamMB();
+    final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
+    final canProceed = availableMB <= 0 || availableMB >= requiredMB;
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] health check: available=${availableMB}MB, required~${requiredMB}MB, canProceed=$canProceed');
+    return (availableMB: availableMB, requiredMB: requiredMB, canProceed: canProceed);
   }
 
   static const int _maxImageDimension = 560;
