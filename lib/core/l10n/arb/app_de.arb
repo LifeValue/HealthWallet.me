@@ -319,6 +319,9 @@
     "setTokens": "Festlegen",
     "tokens": "Tokens",
 
+    "aiModelManage": "KI-Modelle verwalten",
+    "aiModelNotSelected": "KI-Modell nicht ausgewählt",
+    "aiModelSelect": "KI-Modell auswählen",
     "aiSettings": "KI-Einstellungen",
     "aiSettingsDescription": "KI-Leistung für Ihr Gerät anpassen. Empfohlene Werte sind vorausgewählt.",
     "gpuLayersLabel": "GPU-Schichten",

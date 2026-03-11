@@ -1708,6 +1708,24 @@ abstract class AppLocalizations {
   /// **'Go Back'**
   String get goBack;
 
+  /// No description provided for @aiModelManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage AI Models'**
+  String get aiModelManage;
+
+  /// No description provided for @aiModelNotSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Model not selected'**
+  String get aiModelNotSelected;
+
+  /// No description provided for @aiModelSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select AI Model'**
+  String get aiModelSelect;
+
   /// No description provided for @aiSettings.
   ///
   /// In en, this message translates to:

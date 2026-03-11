@@ -327,6 +327,9 @@
     "increaseAiModelCapacity": "Increase AI Model Capacity",
     "goBack": "Go Back",
 
+    "aiModelManage": "Manage AI Models",
+    "aiModelNotSelected": "AI Model not selected",
+    "aiModelSelect": "Select AI Model",
     "aiSettings": "AI Settings",
     "aiSettingsDescription": "Adjust AI performance for your device. Recommended values are pre-selected.",
     "setAiTokensUsage": "Set AI Tokens Usage",

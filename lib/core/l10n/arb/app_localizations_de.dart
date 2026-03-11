@@ -891,6 +891,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get goBack => 'Zurück';
 
   @override
+  String get aiModelManage => 'KI-Modelle verwalten';
+
+  @override
+  String get aiModelNotSelected => 'KI-Modell nicht ausgewählt';
+
+  @override
+  String get aiModelSelect => 'KI-Modell auswählen';
+
+  @override
   String get aiSettings => 'KI-Einstellungen';
 
   @override

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:collection/collection.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_prompt.dart';
@@ -440,6 +441,49 @@ class ScanRepositoryImpl implements ScanRepository {
     final modelExists = await _networkDataSource.checkModelExistence();
     final mmprojExists = await _networkDataSource.checkMmprojExistence();
     return modelExists && mmprojExists;
+  }
+
+  @override
+  Stream<double> downloadModelForVariant(AiModelVariant variant) {
+    final controller = StreamController<double>();
+
+    int modelProgress = 0;
+    int mmprojProgress = 0;
+
+    void emitCombinedProgress() {
+      if (controller.isClosed) return;
+      final combined = (modelProgress * 0.7 + mmprojProgress * 0.3);
+      controller.add(combined);
+    }
+
+    _networkDataSource
+        .downloadModelForVariant(variant, onProgress: (progress) {
+      modelProgress = progress;
+      emitCombinedProgress();
+    }).then((_) {
+      return _networkDataSource.downloadMmprojForVariant(variant,
+          onProgress: (progress) {
+        mmprojProgress = progress;
+        emitCombinedProgress();
+      });
+    }).then((_) {
+      controller.close();
+    }).catchError((error) {
+      controller.addError(error);
+      controller.close();
+    });
+
+    return controller.stream;
+  }
+
+  @override
+  Future<bool> checkModelExistenceForVariant(AiModelVariant variant) async {
+    return _networkDataSource.checkModelExistenceForVariant(variant);
+  }
+
+  @override
+  Future<void> deleteModelForVariant(AiModelVariant variant) async {
+    return _networkDataSource.deleteModelForVariant(variant);
   }
 
   MappingResource _selectContainer({

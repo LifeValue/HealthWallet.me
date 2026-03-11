@@ -323,6 +323,9 @@
     "setTokens": "Establecer",
     "tokens": "tokens",
 
+    "aiModelManage": "Gestionar modelos de IA",
+    "aiModelNotSelected": "Modelo de IA no seleccionado",
+    "aiModelSelect": "Seleccionar modelo de IA",
     "aiSettings": "Ajustes de IA",
     "aiSettingsDescription": "Ajusta el rendimiento de IA para tu dispositivo. Los valores recomendados están preseleccionados.",
     "gpuLayersLabel": "Capas GPU",

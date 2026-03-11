@@ -7,9 +7,12 @@ import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/features/scan/domain/services/ai_model_download_service.dart';
 import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'load_model_event.dart';
 part 'load_model_state.dart';
@@ -24,14 +27,17 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     this._downloadService,
     this._notificationBloc,
     this._deviceCapabilityService,
+    this._prefs,
   ) : super(const LoadModelState()) {
     on<LoadModelInitialized>(_onLoadModelInitialized);
     on<LoadModelDownloadInitiated>(
       _onLoadModelDownloadInitiated,
-      transformer: restartable(),
+      transformer: concurrent(),
     );
     on<LoadModelServiceStateChanged>(_onServiceStateChanged);
     on<LoadModelDownloadCancelled>(_onLoadModelDownloadCancelled);
+    on<LoadModelVariantSelected>(_onVariantSelected);
+    on<LoadModelDeleteRequested>(_onDeleteRequested);
 
     _serviceSubscription = _downloadService.stateStream.listen((serviceState) {
       add(LoadModelServiceStateChanged(serviceState: serviceState));
@@ -43,11 +49,12 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
   final AiModelDownloadService _downloadService;
   final NotificationBloc _notificationBloc;
   final DeviceCapabilityService _deviceCapabilityService;
+  final SharedPreferences _prefs;
   StreamSubscription<AiModelDownloadState>? _serviceSubscription;
 
   void _syncFromService() {
-    final serviceState = _downloadService.state;
-    if (serviceState.status == AiModelDownloadStatus.downloading) {
+    if (_downloadService.isAnyDownloading) {
+      final serviceState = _downloadService.state;
       add(LoadModelServiceStateChanged(serviceState: serviceState));
     }
   }
@@ -56,19 +63,31 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     LoadModelInitialized event,
     Emitter<LoadModelState> emit,
   ) async {
+    final selectedName =
+        _prefs.getString(SharedPrefsConstants.aiSelectedModel);
+    final selectedVariant = selectedName != null
+        ? AiModelConfig.getActive(_prefs).variant
+        : null;
+
+    final medGemmaExists = await _downloadService
+        .checkModelExistsForVariant(AiModelVariant.medGemma);
+    final qwenExists = await _downloadService
+        .checkModelExistsForVariant(AiModelVariant.qwen);
+
     final capability = await _deviceCapabilityService.getCapability();
-    emit(state.copyWith(deviceCapability: capability));
 
-    if (capability == DeviceAiCapability.unsupported) {
-      emit(state.copyWith(status: LoadModelStatus.modelAbsent));
-      return;
-    }
+    emit(state.copyWith(
+      selectedVariant: selectedVariant,
+      medGemmaDownloaded: medGemmaExists,
+      qwenDownloaded: qwenExists,
+      deviceCapability: capability,
+      medGemmaDownloading: _downloadService.isVariantDownloading(AiModelVariant.medGemma),
+      qwenDownloading: _downloadService.isVariantDownloading(AiModelVariant.qwen),
+    ));
 
-    final serviceState = _downloadService.state;
-    if (serviceState.status == AiModelDownloadStatus.downloading) {
+    if (_downloadService.isAnyDownloading) {
       emit(state.copyWith(
         status: LoadModelStatus.loading,
-        downloadProgress: serviceState.progress,
         isBackgroundDownload: true,
       ));
       return;
@@ -78,22 +97,43 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       return;
     }
 
+    final serviceState = _downloadService.state;
+
     if (serviceState.status == AiModelDownloadStatus.cancelled) {
       _addCancelledNotification();
       _downloadService.resetState();
     }
 
     if (serviceState.status == AiModelDownloadStatus.completed) {
+      final activeLoaded = selectedVariant != null &&
+          (selectedVariant == AiModelVariant.medGemma
+              ? medGemmaExists
+              : qwenExists);
       emit(state.copyWith(
-        status: LoadModelStatus.modelLoaded,
+        status: activeLoaded
+            ? LoadModelStatus.modelLoaded
+            : LoadModelStatus.modelAbsent,
         isBackgroundDownload: false,
       ));
       return;
     }
 
+    if (selectedVariant == null) {
+      emit(state.copyWith(status: LoadModelStatus.modelAbsent));
+      return;
+    }
+
+    final activeConfig = AiModelConfig.fromVariant(selectedVariant);
+    if (capability == DeviceAiCapability.unsupported &&
+        !activeConfig.skipDeviceCheck) {
+      emit(state.copyWith(status: LoadModelStatus.modelAbsent));
+      return;
+    }
+
     bool isModelLoaded = false;
     try {
-      isModelLoaded = await _downloadService.checkModelExists();
+      isModelLoaded = await _downloadService
+          .checkModelExistsForVariant(selectedVariant);
     } on Exception catch (e) {
       log(e.toString());
       emit(state.copyWith(
@@ -124,14 +164,10 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     LoadModelDownloadInitiated event,
     Emitter<LoadModelState> emit,
   ) async {
-    if (_downloadService.state.status == AiModelDownloadStatus.downloading) {
-      emit(state.copyWith(
-        status: LoadModelStatus.loading,
-        isBackgroundDownload: true,
-        downloadProgress: _downloadService.state.progress,
-      ));
-      return;
-    }
+    final variant = event.variant ?? state.selectedVariant;
+    if (variant == null) return;
+
+    if (_downloadService.isVariantDownloading(variant)) return;
 
     if (state.status == LoadModelStatus.error) {
       emit(state.copyWith(status: LoadModelStatus.modelAbsent, errorMessage: null));
@@ -145,16 +181,26 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       return;
     }
 
+    final isMedGemma = variant == AiModelVariant.medGemma;
+
     emit(state.copyWith(
       status: LoadModelStatus.loading,
       isBackgroundDownload: true,
       downloadProgress: 0.0,
+      downloadingVariant: variant,
+      medGemmaDownloading: isMedGemma ? true : state.medGemmaDownloading,
+      qwenDownloading: !isMedGemma ? true : state.qwenDownloading,
+      medGemmaProgress: isMedGemma ? 0.0 : state.medGemmaProgress,
+      qwenProgress: !isMedGemma ? 0.0 : state.qwenProgress,
     ));
 
+    final modelName = AiModelConfig.fromVariant(variant).displayName;
+
+    final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
     _notificationBloc.add(NotificationAdded(
       notification: Notification(
-        id: kAiModelDownloadNotificationId,
-        text: 'Downloading AI Model',
+        id: notifId,
+        text: 'Downloading $modelName',
         description: 'Starting download...',
         type: NotificationType.progress,
         progress: 0.0,
@@ -163,7 +209,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       ),
     ));
 
-    _downloadService.startDownload();
+    _downloadService.startDownloadForVariant(variant);
   }
 
   void _onServiceStateChanged(
@@ -171,6 +217,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     Emitter<LoadModelState> emit,
   ) {
     final serviceState = event.serviceState;
+    final variant = serviceState.variant;
 
     switch (serviceState.status) {
       case AiModelDownloadStatus.idle:
@@ -178,52 +225,120 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         break;
 
       case AiModelDownloadStatus.downloading:
+        final isMedGemma = variant == AiModelVariant.medGemma;
         emit(state.copyWith(
           status: LoadModelStatus.loading,
           downloadProgress: serviceState.progress,
           isBackgroundDownload: true,
+          downloadingVariant: variant,
+          medGemmaDownloading: isMedGemma ? true : state.medGemmaDownloading,
+          qwenDownloading: !isMedGemma ? true : state.qwenDownloading,
+          medGemmaProgress: isMedGemma ? serviceState.progress : state.medGemmaProgress,
+          qwenProgress: !isMedGemma ? serviceState.progress : state.qwenProgress,
         ));
-        _notificationBloc.add(NotificationProgressUpdated(
-          id: kAiModelDownloadNotificationId,
-          progress: serviceState.progress,
-        ));
+        if (variant != null) {
+          final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
+          _notificationBloc.add(NotificationProgressUpdated(
+            id: notifId,
+            progress: serviceState.progress,
+          ));
+        }
         break;
 
       case AiModelDownloadStatus.completed:
+        final isMedGemma = variant == AiModelVariant.medGemma;
+        final otherStillDownloading =
+            isMedGemma ? state.qwenDownloading : state.medGemmaDownloading;
+
+        final hasSelectedModel = state.selectedVariant != null;
+        final selectedIsLoaded = hasSelectedModel &&
+            (state.selectedVariant == AiModelVariant.medGemma
+                ? (isMedGemma ? true : state.medGemmaDownloaded)
+                : (!isMedGemma ? true : state.qwenDownloaded));
+
+        final newStatus = otherStillDownloading
+            ? LoadModelStatus.loading
+            : (selectedIsLoaded
+                ? LoadModelStatus.modelLoaded
+                : LoadModelStatus.modelAbsent);
+
         emit(state.copyWith(
-          status: LoadModelStatus.modelLoaded,
-          downloadProgress: 100.0,
-          isBackgroundDownload: false,
+          status: newStatus,
+          downloadProgress: otherStillDownloading
+              ? (isMedGemma ? state.qwenProgress : state.medGemmaProgress)
+              : 100.0,
+          isBackgroundDownload: otherStillDownloading,
+          medGemmaDownloaded: isMedGemma ? true : state.medGemmaDownloaded,
+          qwenDownloaded: !isMedGemma ? true : state.qwenDownloaded,
+          medGemmaDownloading: isMedGemma ? false : state.medGemmaDownloading,
+          qwenDownloading: !isMedGemma ? false : state.qwenDownloading,
+          medGemmaProgress: isMedGemma ? null : state.medGemmaProgress,
+          qwenProgress: !isMedGemma ? null : state.qwenProgress,
         ));
-        _notificationBloc.add(NotificationTypeUpdated(
-          id: kAiModelDownloadNotificationId,
-          type: NotificationType.success,
-          text: 'AI Model Ready',
-          description: 'The AI model has been downloaded successfully.',
-        ));
+        if (variant != null) {
+          final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
+          final modelName = AiModelConfig.fromVariant(variant).displayName;
+          _notificationBloc.add(NotificationTypeUpdated(
+            id: notifId,
+            type: NotificationType.success,
+            text: '$modelName Ready',
+            description: '$modelName has been downloaded successfully.',
+          ));
+        }
         break;
 
       case AiModelDownloadStatus.error:
+        final isMedGemma = variant == AiModelVariant.medGemma;
+        final otherStillDownloading =
+            isMedGemma ? state.qwenDownloading : state.medGemmaDownloading;
+
         emit(state.copyWith(
-          status: LoadModelStatus.error,
+          status: otherStillDownloading
+              ? LoadModelStatus.loading
+              : LoadModelStatus.error,
           errorMessage: serviceState.errorMessage ?? 'Download failed',
-          isBackgroundDownload: false,
+          isBackgroundDownload: otherStillDownloading,
+          medGemmaDownloading: isMedGemma ? false : state.medGemmaDownloading,
+          qwenDownloading: !isMedGemma ? false : state.qwenDownloading,
+          medGemmaProgress: isMedGemma ? null : state.medGemmaProgress,
+          qwenProgress: !isMedGemma ? null : state.qwenProgress,
         ));
-        _notificationBloc.add(NotificationTypeUpdated(
-          id: kAiModelDownloadNotificationId,
-          type: NotificationType.error,
-          text: 'AI Model Download Failed',
-          description:
-              serviceState.errorMessage ?? 'An error occurred during download.',
-        ));
+        if (variant != null) {
+          final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
+          _notificationBloc.add(NotificationTypeUpdated(
+            id: notifId,
+            type: NotificationType.error,
+            text: 'Download Failed',
+            description:
+                serviceState.errorMessage ?? 'An error occurred during download.',
+          ));
+        }
         break;
 
       case AiModelDownloadStatus.cancelled:
+        final isMedGemma = variant == AiModelVariant.medGemma;
+        final otherStillDownloading =
+            isMedGemma ? state.qwenDownloading : state.medGemmaDownloading;
+
         emit(state.copyWith(
-          status: LoadModelStatus.modelAbsent,
-          isBackgroundDownload: false,
+          status: otherStillDownloading
+              ? LoadModelStatus.loading
+              : LoadModelStatus.modelAbsent,
+          isBackgroundDownload: otherStillDownloading,
+          medGemmaDownloading: isMedGemma ? false : state.medGemmaDownloading,
+          qwenDownloading: !isMedGemma ? false : state.qwenDownloading,
+          medGemmaProgress: isMedGemma ? null : state.medGemmaProgress,
+          qwenProgress: !isMedGemma ? null : state.qwenProgress,
         ));
-        _addCancelledNotification();
+        if (variant != null) {
+          final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
+          _notificationBloc.add(NotificationTypeUpdated(
+            id: notifId,
+            type: NotificationType.error,
+            text: 'Download Cancelled',
+            description: 'The download was interrupted. Please try again.',
+          ));
+        }
         break;
     }
   }
@@ -246,8 +361,39 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       status: LoadModelStatus.modelAbsent,
       isBackgroundDownload: false,
       downloadProgress: null,
+      medGemmaDownloading: false,
+      qwenDownloading: false,
+      medGemmaProgress: null,
+      qwenProgress: null,
     ));
     _addCancelledNotification();
+  }
+
+  Future<void> _onVariantSelected(
+    LoadModelVariantSelected event,
+    Emitter<LoadModelState> emit,
+  ) async {
+    await _prefs.setString(
+        SharedPrefsConstants.aiSelectedModel, event.variant.name);
+    emit(state.copyWith(selectedVariant: event.variant));
+    add(const LoadModelInitialized());
+  }
+
+  Future<void> _onDeleteRequested(
+    LoadModelDeleteRequested event,
+    Emitter<LoadModelState> emit,
+  ) async {
+    await _downloadService.deleteModelForVariant(event.variant);
+
+    final isMedGemma = event.variant == AiModelVariant.medGemma;
+    emit(state.copyWith(
+      medGemmaDownloaded: isMedGemma ? false : state.medGemmaDownloaded,
+      qwenDownloaded: isMedGemma ? state.qwenDownloaded : false,
+    ));
+
+    if (state.selectedVariant == event.variant) {
+      emit(state.copyWith(status: LoadModelStatus.modelAbsent));
+    }
   }
 
   @override
