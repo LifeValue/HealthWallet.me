@@ -145,18 +145,23 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     final isActiveAndLoaded = isActive && isDownloaded;
     final cardBorderColor =
         isActiveAndLoaded ? AppColors.success : borderColor;
+    final isTappable = isDownloaded && !isActive && !isDownloading;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(Insets.smallNormal),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: cardBorderColor,
-          width: isActiveAndLoaded ? 1.5 : 1,
+    return GestureDetector(
+      onTap: isTappable
+          ? () => _bloc.add(LoadModelVariantSelected(config.variant))
+          : null,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Insets.smallNormal),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: cardBorderColor,
+            width: isActiveAndLoaded ? 1.5 : 1,
+          ),
         ),
-      ),
-      child: Column(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -233,64 +238,45 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 color: AppColors.primary,
               ),
             ),
-          ] else
-            Row(
-              children: [
-                if (!isDownloaded)
-                  Expanded(
-                    child: SizedBox(
-                      height: 30,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _bloc.add(LoadModelDownloadInitiated(
-                            variant: config.variant)),
-                        icon: const Icon(Icons.download, size: 14),
-                        label: const Text('Download'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          textStyle: AppTextStyle.labelSmall,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                  )
-                else if (!isActive)
-                  Expanded(
-                    child: SizedBox(
-                      height: 30,
-                      child: OutlinedButton(
-                        onPressed: () => _bloc
-                            .add(LoadModelVariantSelected(config.variant)),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
-                          textStyle: AppTextStyle.labelSmall,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                        child: const Text('Select as active'),
-                      ),
-                    ),
-                  )
-                else
-                  Text(
-                    'Active',
-                    style: AppTextStyle.labelSmall.copyWith(
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w600,
-                    ),
+          ] else if (!isDownloaded)
+            SizedBox(
+              height: 30,
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _bloc.add(LoadModelDownloadInitiated(
+                    variant: config.variant)),
+                icon: const Icon(Icons.download, size: 14),
+                label: const Text('Download'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  textStyle: AppTextStyle.labelSmall,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
                   ),
-              ],
+                  elevation: 0,
+                ),
+              ),
+            )
+          else if (isActive)
+            Text(
+              'Active',
+              style: AppTextStyle.labelSmall.copyWith(
+                color: AppColors.success,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else if (isDownloaded)
+            Text(
+              'Tap to select',
+              style: AppTextStyle.labelSmall.copyWith(
+                color: AppColors.primary,
+              ),
             ),
         ],
+      ),
       ),
     );
   }

@@ -76,8 +76,13 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
 
     final capability = await _deviceCapabilityService.getCapability();
 
+    final autoSelected = selectedVariant ?? _autoSelectSingleModel(
+      medGemmaExists: medGemmaExists,
+      qwenExists: qwenExists,
+    );
+
     emit(state.copyWith(
-      selectedVariant: selectedVariant,
+      selectedVariant: autoSelected,
       medGemmaDownloaded: medGemmaExists,
       qwenDownloaded: qwenExists,
       deviceCapability: capability,
@@ -105,8 +110,8 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     }
 
     if (serviceState.status == AiModelDownloadStatus.completed) {
-      final activeLoaded = selectedVariant != null &&
-          (selectedVariant == AiModelVariant.medGemma
+      final activeLoaded = autoSelected != null &&
+          (autoSelected == AiModelVariant.medGemma
               ? medGemmaExists
               : qwenExists);
       emit(state.copyWith(
@@ -118,12 +123,12 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       return;
     }
 
-    if (selectedVariant == null) {
+    if (autoSelected == null) {
       emit(state.copyWith(status: LoadModelStatus.modelAbsent));
       return;
     }
 
-    final activeConfig = AiModelConfig.fromVariant(selectedVariant);
+    final activeConfig = AiModelConfig.fromVariant(autoSelected);
     if (capability == DeviceAiCapability.unsupported &&
         !activeConfig.skipDeviceCheck) {
       emit(state.copyWith(status: LoadModelStatus.modelAbsent));
@@ -133,7 +138,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     bool isModelLoaded = false;
     try {
       isModelLoaded = await _downloadService
-          .checkModelExistsForVariant(selectedVariant);
+          .checkModelExistsForVariant(autoSelected);
     } on Exception catch (e) {
       log(e.toString());
       emit(state.copyWith(
@@ -148,6 +153,23 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
           ? LoadModelStatus.modelLoaded
           : LoadModelStatus.modelAbsent,
     ));
+  }
+
+  AiModelVariant? _autoSelectSingleModel({
+    required bool medGemmaExists,
+    required bool qwenExists,
+  }) {
+    if (medGemmaExists && !qwenExists) {
+      _prefs.setString(
+          SharedPrefsConstants.aiSelectedModel, AiModelVariant.medGemma.name);
+      return AiModelVariant.medGemma;
+    }
+    if (qwenExists && !medGemmaExists) {
+      _prefs.setString(
+          SharedPrefsConstants.aiSelectedModel, AiModelVariant.qwen.name);
+      return AiModelVariant.qwen;
+    }
+    return null;
   }
 
   Future<bool> _hasInternetConnection() async {
@@ -250,11 +272,21 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         final otherStillDownloading =
             isMedGemma ? state.qwenDownloading : state.medGemmaDownloading;
 
-        final hasSelectedModel = state.selectedVariant != null;
-        final selectedIsLoaded = hasSelectedModel &&
-            (state.selectedVariant == AiModelVariant.medGemma
-                ? (isMedGemma ? true : state.medGemmaDownloaded)
-                : (!isMedGemma ? true : state.qwenDownloaded));
+        final updatedMedGemma = isMedGemma ? true : state.medGemmaDownloaded;
+        final updatedQwen = !isMedGemma ? true : state.qwenDownloaded;
+
+        var effectiveSelected = state.selectedVariant;
+        if (effectiveSelected == null) {
+          effectiveSelected = _autoSelectSingleModel(
+            medGemmaExists: updatedMedGemma,
+            qwenExists: updatedQwen,
+          );
+        }
+
+        final selectedIsLoaded = effectiveSelected != null &&
+            (effectiveSelected == AiModelVariant.medGemma
+                ? updatedMedGemma
+                : updatedQwen);
 
         final newStatus = otherStillDownloading
             ? LoadModelStatus.loading
@@ -264,12 +296,13 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
 
         emit(state.copyWith(
           status: newStatus,
+          selectedVariant: effectiveSelected,
           downloadProgress: otherStillDownloading
               ? (isMedGemma ? state.qwenProgress : state.medGemmaProgress)
               : 100.0,
           isBackgroundDownload: otherStillDownloading,
-          medGemmaDownloaded: isMedGemma ? true : state.medGemmaDownloaded,
-          qwenDownloaded: !isMedGemma ? true : state.qwenDownloaded,
+          medGemmaDownloaded: updatedMedGemma,
+          qwenDownloaded: updatedQwen,
           medGemmaDownloading: isMedGemma ? false : state.medGemmaDownloading,
           qwenDownloading: !isMedGemma ? false : state.qwenDownloading,
           medGemmaProgress: isMedGemma ? null : state.medGemmaProgress,
