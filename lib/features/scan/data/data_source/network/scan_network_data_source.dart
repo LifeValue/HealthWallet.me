@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:background_downloader/background_downloader.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:health_wallet/features/scan/data/utils/scan_log_buffer.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/config/env/env.dart';
@@ -27,6 +28,22 @@ abstract class ScanNetworkDataSource {
   Future<bool> checkModelExistence();
 
   Future<bool> checkMmprojExistence();
+
+  Future<void> downloadModelForVariant(
+    AiModelVariant variant, {
+    required void Function(int) onProgress,
+  });
+
+  Future<void> downloadMmprojForVariant(
+    AiModelVariant variant, {
+    required void Function(int) onProgress,
+  });
+
+  Future<bool> checkModelExistenceForVariant(AiModelVariant variant);
+
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant);
+
+  Future<void> deleteModelForVariant(AiModelVariant variant);
 
   bool isVisionModelAvailable();
 
@@ -123,8 +140,8 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     return 4096;
   }
 
-  static const int modelSizeMB = 1056;
-  static const int mmprojSizeMB = 445;
+  static const int modelSizeMB = 2490;
+  static const int mmprojSizeMB = 851;
   static const int computeOverheadMB = 700;
   static const double kvCacheMBPerCtx1024 = 170;
 
@@ -149,19 +166,17 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     if (Platform.isIOS) {
       if (ramMB >= 8192) {
         contextSize = 4096;
-        gpuLayers = withVision ? 4 : 0;
+        gpuLayers = withVision ? 8 : 4;
       } else if (ramMB >= 6144) {
         contextSize = 2048;
-        gpuLayers = withVision ? 2 : 0;
-      } else if (ramMB >= 4096) {
-        contextSize = 2048;
+        gpuLayers = withVision ? 0 : 2;
       } else {
         contextSize = 512;
       }
     } else {
-      if (ramMB >= 8192) {
+      if (ramMB >= 12288) {
         contextSize = 4096;
-      } else if (ramMB >= 6144) {
+      } else if (ramMB >= 8192) {
         contextSize = 2048;
       } else {
         contextSize = 512;
@@ -180,14 +195,16 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     return modelDir.path;
   }
 
+  AiModelConfig get _activeConfig => AiModelConfig.getActive(_prefs);
+
   Future<String> _getModelFilePath() async {
     final dir = await _getModelDirectory();
-    return path.join(dir, AppConstants.modelId);
+    return path.join(dir, _activeConfig.modelId);
   }
 
   Future<String> _getMmprojFilePath() async {
     final dir = await _getModelDirectory();
-    return path.join(dir, AppConstants.mmprojId);
+    return path.join(dir, _activeConfig.mmprojId);
   }
 
   @override
@@ -297,9 +314,10 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
   Future<void> downloadModel({
     required void Function(int) onProgress,
   }) async {
+    final config = _activeConfig;
     await _downloadFile(
-      url: AppConstants.modelUrl,
-      filename: AppConstants.modelId,
+      url: config.modelUrl,
+      filename: config.modelId,
       onProgress: onProgress,
     );
   }
@@ -308,11 +326,64 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
   Future<void> downloadMmproj({
     required void Function(int) onProgress,
   }) async {
+    final config = _activeConfig;
     await _downloadFile(
-      url: AppConstants.mmprojUrl,
-      filename: AppConstants.mmprojId,
+      url: config.mmprojUrl,
+      filename: config.mmprojId,
       onProgress: onProgress,
     );
+  }
+
+  @override
+  Future<void> downloadModelForVariant(
+    AiModelVariant variant, {
+    required void Function(int) onProgress,
+  }) async {
+    final config = AiModelConfig.fromVariant(variant);
+    await _downloadFile(
+      url: config.modelUrl,
+      filename: config.modelId,
+      onProgress: onProgress,
+    );
+  }
+
+  @override
+  Future<void> downloadMmprojForVariant(
+    AiModelVariant variant, {
+    required void Function(int) onProgress,
+  }) async {
+    final config = AiModelConfig.fromVariant(variant);
+    await _downloadFile(
+      url: config.mmprojUrl,
+      filename: config.mmprojId,
+      onProgress: onProgress,
+    );
+  }
+
+  @override
+  Future<bool> checkModelExistenceForVariant(AiModelVariant variant) async {
+    final config = AiModelConfig.fromVariant(variant);
+    final dir = await _getModelDirectory();
+    final modelPath = path.join(dir, config.modelId);
+    final mmprojPath = path.join(dir, config.mmprojId);
+    return File(modelPath).existsSync() && File(mmprojPath).existsSync();
+  }
+
+  @override
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant) async {
+    final config = AiModelConfig.fromVariant(variant);
+    final dir = await _getModelDirectory();
+    return File(path.join(dir, config.mmprojId)).existsSync();
+  }
+
+  @override
+  Future<void> deleteModelForVariant(AiModelVariant variant) async {
+    final config = AiModelConfig.fromVariant(variant);
+    final dir = await _getModelDirectory();
+    final modelFile = File(path.join(dir, config.modelId));
+    final mmprojFile = File(path.join(dir, config.mmprojId));
+    if (await modelFile.exists()) await modelFile.delete();
+    if (await mmprojFile.exists()) await mmprojFile.delete();
   }
 
   Future<bool> _isValidGgufFile(String filePath) async {
@@ -357,7 +428,7 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     final availableMB = await _getAvailableRamMB();
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
     ScanLogBuffer.instance.log('[$_ts][ScanAI] --- INIT MODEL ---');
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] model: ${AppConstants.modelId} (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)');
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] model: ${_activeConfig.modelId} (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)');
     ScanLogBuffer.instance.log('[$_ts][ScanAI] config: ctx=$ctx, gpu_layers=${config.gpuLayers}, threads=${config.threads}, ram=${ramMB}MB, available=${availableMB}MB, required~${requiredMB}MB, platform=${Platform.operatingSystem}');
 
     if (availableMB > 0 && availableMB < requiredMB) {

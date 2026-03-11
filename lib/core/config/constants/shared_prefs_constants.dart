@@ -10,4 +10,5 @@ class SharedPrefsConstants {
   static const aiGpuLayers = 'aiGpuLayers';
   static const aiThreads = 'aiThreads';
   static const aiContextSize = 'aiContextSize';
+  static const aiSelectedModel = 'aiSelectedModel';
 }

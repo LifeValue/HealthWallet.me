@@ -13,7 +13,7 @@ class LoadModelInitialized extends LoadModelEvent
 @freezed
 class LoadModelDownloadInitiated extends LoadModelEvent
     with _$LoadModelDownloadInitiated {
-  const factory LoadModelDownloadInitiated() =
+  const factory LoadModelDownloadInitiated({AiModelVariant? variant}) =
       _LoadModelDownloadInitiated;
 }
 
@@ -29,4 +29,18 @@ class LoadModelServiceStateChanged extends LoadModelEvent
 class LoadModelDownloadCancelled extends LoadModelEvent
     with _$LoadModelDownloadCancelled {
   const factory LoadModelDownloadCancelled() = _LoadModelDownloadCancelled;
+}
+
+@freezed
+class LoadModelVariantSelected extends LoadModelEvent
+    with _$LoadModelVariantSelected {
+  const factory LoadModelVariantSelected(AiModelVariant variant) =
+      _LoadModelVariantSelected;
+}
+
+@freezed
+class LoadModelDeleteRequested extends LoadModelEvent
+    with _$LoadModelDeleteRequested {
+  const factory LoadModelDeleteRequested(AiModelVariant variant) =
+      _LoadModelDeleteRequested;
 }

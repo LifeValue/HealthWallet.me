@@ -10,6 +10,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/model_management_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingNavigation extends StatelessWidget {
@@ -357,9 +358,7 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
             }
 
             return TextButton(
-              onPressed: () {
-                _bloc.add(const LoadModelDownloadInitiated());
-              },
+              onPressed: () => ModelManagementDialog.show(context),
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,

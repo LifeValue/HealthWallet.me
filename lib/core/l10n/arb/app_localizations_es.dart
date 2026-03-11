@@ -883,6 +883,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get goBack => 'Volver';
 
   @override
+  String get aiModelManage => 'Gestionar modelos de IA';
+
+  @override
+  String get aiModelNotSelected => 'Modelo de IA no seleccionado';
+
+  @override
+  String get aiModelSelect => 'Seleccionar modelo de IA';
+
+  @override
   String get aiSettings => 'Ajustes de IA';
 
   @override

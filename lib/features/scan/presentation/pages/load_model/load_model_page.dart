@@ -12,6 +12,7 @@ import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/dialog_helper.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 @RoutePage<bool>()
@@ -271,7 +272,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadiusGeometry.circular(8)),
                 ),
-                onPressed: () => _bloc.add(const LoadModelDownloadInitiated()),
+                onPressed: () => ModelManagementDialog.show(context),
                 child: Text(context.l10n.aiModelEnableDownload),
               ),
             ),

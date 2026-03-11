@@ -8,6 +8,14 @@ class LoadModelState with _$LoadModelState {
     String? errorMessage,
     @Default(false) bool isBackgroundDownload,
     @Default(DeviceAiCapability.full) DeviceAiCapability deviceCapability,
+    AiModelVariant? selectedVariant,
+    @Default(false) bool medGemmaDownloaded,
+    @Default(false) bool qwenDownloaded,
+    AiModelVariant? downloadingVariant,
+    @Default(false) bool medGemmaDownloading,
+    @Default(false) bool qwenDownloading,
+    double? medGemmaProgress,
+    double? qwenProgress,
   }) = _LoadModelState;
 }
 

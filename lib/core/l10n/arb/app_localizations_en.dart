@@ -872,6 +872,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goBack => 'Go Back';
 
   @override
+  String get aiModelManage => 'Manage AI Models';
+
+  @override
+  String get aiModelNotSelected => 'AI Model not selected';
+
+  @override
+  String get aiModelSelect => 'Select AI Model';
+
+  @override
   String get aiSettings => 'AI Settings';
 
   @override
