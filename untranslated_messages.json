@@ -5,8 +5,7 @@
     "onboardingRequestIntegration",
     "walletHolder",
     "walletHolderDescription",
-    "documentScanTitle",
-    "aiModelNotSelected"
+    "documentScanTitle"
   ],
 
   "es": [
@@ -15,7 +14,6 @@
     "onboardingRequestIntegration",
     "walletHolder",
     "walletHolderDescription",
-    "documentScanTitle",
-    "aiModelNotSelected"
+    "documentScanTitle"
   ]
 }

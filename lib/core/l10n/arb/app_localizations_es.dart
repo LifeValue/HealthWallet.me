@@ -993,4 +993,23 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get searchCountry => 'Buscar país...';
+
+  @override
+  String get rotatePage => 'Rotar';
+
+  @override
+  String get deletePage => 'Eliminar';
+
+  @override
+  String get deletePageConfirmTitle => 'Eliminar página';
+
+  @override
+  String get deletePageConfirmMessage =>
+      'Esta página será eliminada del documento.';
+
+  @override
+  String get cannotDeleteLastPage => 'No se puede eliminar la última página';
+
+  @override
+  String get pageRotated => 'Página rotada';
 }
