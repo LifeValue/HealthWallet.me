@@ -77,6 +77,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanProcessRemainingResources>(_onScanProcessRemainingResources);
     on<ScanDocumentAttached>(_onScanDocumentAttached);
     on<ScanTokenCapacityUpdated>(_onScanTokenCapacityUpdated);
+    on<ScanVisionToggled>(_onScanVisionToggled);
     on<ScanPagesReordered>(_onScanPagesReordered);
   }
 
@@ -105,9 +106,12 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     try {
       final sessions = await _repository.getProcessingSessions();
 
+      final useVision =
+          _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? false;
       emit(state.copyWith(
         sessions: sessions,
         status: const ScanStatus.initial(),
+        useVision: useVision,
       ));
     } on Exception catch (e) {
       emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
@@ -965,10 +969,13 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       final savedGpuLayers = _prefs.getInt(SharedPrefsConstants.aiGpuLayers);
       final savedThreads = _prefs.getInt(SharedPrefsConstants.aiThreads);
       final savedContextSize = _prefs.getInt(SharedPrefsConstants.aiContextSize);
+      final useVision =
+          _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? false;
       Stream<MappingResourcesWithProgress> stream =
           _repository.mapRemainingResources(
         sessionImages,
         documentCategory: docCategory,
+        useVision: useVision,
         maxTokens: savedMaxTokens,
         gpuLayers: savedGpuLayers,
         threads: savedThreads,
@@ -1043,6 +1050,14 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
     await _repository.disposeModel();
     add(ScanMappingInitiated(sessionId: event.sessionId));
+  }
+
+  void _onScanVisionToggled(
+    ScanVisionToggled event,
+    Emitter<ScanState> emit,
+  ) {
+    _prefs.setBool(SharedPrefsConstants.aiUseVision, event.useVision);
+    emit(state.copyWith(useVision: event.useVision));
   }
 
   Future<void> _onScanPagesReordered(

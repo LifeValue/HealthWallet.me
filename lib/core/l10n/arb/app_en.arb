@@ -351,13 +351,15 @@
     "tokens": "tokens",
     "contextSizeLabel": "Context Size",
     "contextSizeDescription": "Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.",
+    "useVisionLabel": "Deep Scan",
+    "useVisionDescription": "Reads images for deeper analysis (e.g. handwriting). Uses more memory and requires a more performant device.",
 
     "aiModelNotAvailableForDevice": "Not available for this phone",
     "aiModelNotAvailableForDeviceDescription": "This device doesn't have enough memory to run smart scanning.",
     "noInternetConnectionTitle": "No Internet Connection",
     "noInternetConnectionDescription": "Please check your internet connection and try again.",
-    "processingStep2NotAvailableTitle": "Full processing not available",
-    "processingStep2NotEnoughRam": "Your phone doesn't have enough memory for full document processing. You can save the basic patient information extracted above.",
+    "processingStep2NotAvailableTitle": "Deep Scan not available on this device",
+    "processingStep2NotEnoughRam": "This device doesn't have enough memory for Deep Scan. Text-based processing is still available and works well for most documents.",
     "emergencyContact": "Emergency Phone Contact",
     "emergencyContactHint": "Phone number",
     "searchCountry": "Search country...",
@@ -366,5 +368,10 @@
     "deletePageConfirmTitle": "Delete Page",
     "deletePageConfirmMessage": "This page will be removed from the document.",
     "cannotDeleteLastPage": "Cannot delete the last page",
-    "pageRotated": "Page rotated"
+    "pageRotated": "Page rotated",
+    "regionAndUnits": "Units",
+    "regionUS": "US",
+    "regionEurope": "Europe",
+    "regionUK": "UK",
+    "medGemmaIncompatibleDevice": "This model requires more memory than your device has available. Use the Standard model instead."
 }

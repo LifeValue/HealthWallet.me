@@ -1,10 +1,7 @@
-// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
-// ignore_for_file: type=lint
 
-/// The translations for Spanish Castilian (`es`).
 class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
@@ -963,6 +960,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria.';
 
   @override
+  String get useVisionLabel => 'Escaneo profundo';
+
+  @override
+  String get useVisionDescription =>
+      'Lee imágenes para un análisis más profundo (p. ej. escritura a mano). Usa más memoria y requiere un dispositivo más potente.';
+
+  @override
   String get aiModelNotAvailableForDevice => 'No disponible para este teléfono';
 
   @override
@@ -978,11 +982,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get processingStep2NotAvailableTitle =>
-      'Procesamiento completo no disponible';
+      'Escaneo profundo no disponible en este dispositivo';
 
   @override
   String get processingStep2NotEnoughRam =>
-      'Tu teléfono no tiene suficiente memoria para el procesamiento completo de documentos. Puedes guardar la información básica del paciente extraída arriba.';
+      'Este dispositivo no tiene suficiente memoria para el escaneo profundo. El procesamiento basado en texto sigue disponible y funciona bien para la mayoría de documentos.';
 
   @override
   String get emergencyContact => 'Contacto telefónico de emergencia';
@@ -1011,4 +1015,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pageRotated => 'Página rotada';
+
+  @override
+  String get regionAndUnits => 'Unidades';
+
+  @override
+  String get regionUS => 'US';
+
+  @override
+  String get regionEurope => 'Europa';
+
+  @override
+  String get regionUK => 'UK';
+
+  @override
+  String get medGemmaIncompatibleDevice =>
+      'Este modelo requiere más memoria de la que tiene disponible su dispositivo. Utilice el modelo Estándar en su lugar.';
 }

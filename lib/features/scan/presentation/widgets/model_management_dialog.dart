@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -97,6 +98,8 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         borderColor: borderColor,
                         textColor: textColor,
                         badge: null,
+                        incompatible: state.deviceCapability ==
+                            DeviceAiCapability.basicOnly,
                       ),
                       const SizedBox(height: Insets.small),
                       _buildModelCard(
@@ -141,11 +144,16 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     required Color borderColor,
     required Color textColor,
     String? badge,
+    bool incompatible = false,
   }) {
     final isActiveAndLoaded = isActive && isDownloaded;
-    final cardBorderColor =
-        isActiveAndLoaded ? AppColors.success : borderColor;
-    final isTappable = isDownloaded && !isActive && !isDownloading;
+    final cardBorderColor = incompatible
+        ? AppColors.error.withOpacity(0.5)
+        : isActiveAndLoaded
+            ? AppColors.success
+            : borderColor;
+    final isTappable =
+        isDownloaded && !isActive && !isDownloading && !incompatible;
 
     return GestureDetector(
       onTap: isTappable
@@ -219,6 +227,35 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
               color: textColor.withOpacity(0.6),
             ),
           ),
+          if (incompatible) ...[
+            const SizedBox(height: Insets.small),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Insets.small,
+                vertical: Insets.extraSmall,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded,
+                      size: 14, color: AppColors.error),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      context.l10n.medGemmaIncompatibleDevice,
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: AppColors.error,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: Insets.small),
           if (isDownloading) ...[
             ClipRRect(
@@ -238,7 +275,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 color: AppColors.primary,
               ),
             ),
-          ] else if (!isDownloaded)
+          ] else if (!isDownloaded && !incompatible)
             SizedBox(
               height: 30,
               width: double.infinity,

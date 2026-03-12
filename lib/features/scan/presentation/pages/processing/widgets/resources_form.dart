@@ -117,28 +117,31 @@ class ResourcesForm extends StatelessWidget {
                           ),
                 ),
               ),
-            ...resources.map((resource) {
-              final index = resources.indexOf(resource);
+            ...resources.indexed.map((entry) {
+              final (index, resource) = entry;
 
-              return _buildResourceForm(
-                context,
-                resource: resource,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: index,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
+              return KeyedSubtree(
+                key: ValueKey('remaining_${resource.id}_$index'),
+                child: _buildResourceForm(
+                  context,
+                  resource: resource,
+                  onPropertyChanged: (propertyKey, newValue) =>
+                      context.read<ScanBloc>().add(
+                            ScanResourceChanged(
+                              sessionId: sessionId,
+                              index: index,
+                              propertyKey: propertyKey,
+                              newValue: newValue,
+                            ),
                           ),
-                        ),
-                onResourceRemoved: () => DeleteConfirmationDialog.show(
-                  context: context,
-                  title: 'Delete Resources',
-                  onConfirm: () {
-                    context.read<ScanBloc>().add(ScanResourceRemoved(
-                        sessionId: sessionId, index: index));
-                  },
+                  onResourceRemoved: () => DeleteConfirmationDialog.show(
+                    context: context,
+                    title: 'Delete Resources',
+                    onConfirm: () {
+                      context.read<ScanBloc>().add(ScanResourceRemoved(
+                          sessionId: sessionId, index: index));
+                    },
+                  ),
                 ),
               );
             })

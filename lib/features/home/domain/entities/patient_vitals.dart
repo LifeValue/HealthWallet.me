@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/utils/unit_converter.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 
@@ -75,6 +77,21 @@ extension PatientVitalTypeX on PatientVitalType {
     }
     return null;
   }
+
+  String unitForRegion(RegionPreset region) {
+    switch (this) {
+      case PatientVitalType.weight:
+        return region.weightUnit;
+      case PatientVitalType.height:
+        return region.heightUnit;
+      case PatientVitalType.temperature:
+        return region.temperatureUnit;
+      case PatientVitalType.bloodGlucose:
+        return region.glucoseUnit;
+      default:
+        return defaultUnit;
+    }
+  }
 }
 
 class PatientVital {
@@ -96,12 +113,48 @@ class PatientVital {
     this.effectiveDate,
   });
 
-  factory PatientVital.fromObservation(Observation observation) {
+  factory PatientVital.fromObservation(
+    Observation observation, {
+    RegionPreset? region,
+  }) {
     final title = FhirFieldExtractor.extractVitalSignTitle(observation);
-    final value = FhirFieldExtractor.extractVitalSignValue(observation);
-    final unit = FhirFieldExtractor.extractVitalSignUnit(observation);
+    var value = FhirFieldExtractor.extractVitalSignValue(observation);
+    var unit = FhirFieldExtractor.extractVitalSignUnit(observation);
     final status = FhirFieldExtractor.extractVitalSignStatus(observation);
     final effectiveDate = observation.date;
+
+    if (region != null) {
+      final vitalType = PatientVitalTypeX.fromTitle(title);
+      if (vitalType != null) {
+        final numericValue = double.tryParse(value.trim());
+        if (numericValue != null) {
+          if (vitalType == PatientVitalType.height &&
+              region.heightUnit == 'ft/in') {
+            final normalizedFrom = unit.trim().toLowerCase();
+            if (normalizedFrom == 'cm' || normalizedFrom == 'centimeters') {
+              value = UnitConverter.cmToFeetInchesString(numericValue);
+              unit = '';
+              return PatientVital(
+                title: title,
+                value: value,
+                unit: unit,
+                status: status,
+                observationId: observation.id,
+                effectiveDate: effectiveDate,
+              );
+            }
+          }
+          final converted = UnitConverter.convertForDisplay(
+            value: numericValue,
+            fromUnit: unit,
+            type: vitalType,
+            region: region,
+          );
+          value = UnitConverter.formatValue(converted.value, vitalType);
+          unit = converted.unit;
+        }
+      }
+    }
 
     return PatientVital(
       title: title,
