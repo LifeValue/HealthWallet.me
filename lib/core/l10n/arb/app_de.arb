@@ -301,8 +301,8 @@
     "chargerPluggedIn": "Ladegerät eingesteckt.",
     "plugInChargerEllipsis": "Stecken Sie das Ladegerät ein...",
 
-    "processingFailedCapacity": "Das Dokument ist zu groß für die aktuelle KI-Token-Kapazität.",
-    "processingFailedCapacitySuggestion": "Versuchen Sie, die KI-Kapazität zu erhöhen, um größere Dokumente zu verarbeiten.",
+    "processingFailedCapacity": "Das Dokument ist zu groß für die aktuelle KI-Kontextgröße.",
+    "processingFailedCapacitySuggestion": "Tippen Sie oben auf das Einstellungssymbol und erhöhen Sie die Kontextgröße auf 2048 oder höher, dann erneut versuchen.",
     "increaseAiModelCapacity": "KI-Kapazität erhöhen",
     "goBack": "Zurück",
 
@@ -349,9 +349,21 @@
     "deletePageConfirmMessage": "Diese Seite wird aus dem Dokument entfernt.",
     "cannotDeleteLastPage": "Die letzte Seite kann nicht gelöscht werden",
     "pageRotated": "Seite gedreht",
-    "regionAndUnits": "Einheiten",
+    "regionAndUnits": "Sprache & Einheiten",
+    "language": "Sprache",
+    "systemDefault": "Systemstandard",
     "regionUS": "US",
     "regionEurope": "Europa",
     "regionUK": "UK",
-    "medGemmaIncompatibleDevice": "Dieses Modell benötigt mehr Arbeitsspeicher als auf Ihrem Gerät verfügbar ist. Verwenden Sie stattdessen das Standardmodell."
+    "medGemmaIncompatibleDevice": "Dieses Modell benötigt mehr Arbeitsspeicher als auf Ihrem Gerät verfügbar ist. Verwenden Sie stattdessen das Standardmodell.",
+    "deepScanDownloadTitle": "Visionsmodell herunterladen",
+    "deepScanDownloadMessage": "Tiefenscan erfordert einen zusätzlichen Download (~{size} MB). Jetzt herunterladen?",
+    "@deepScanDownloadMessage": {
+        "placeholders": {
+            "size": {
+                "type": "int"
+            }
+        }
+    },
+    "downloadingVisionModel": "Visionsmodell wird heruntergeladen..."
 }

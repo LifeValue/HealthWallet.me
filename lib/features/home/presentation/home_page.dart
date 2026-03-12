@@ -306,8 +306,7 @@ class HomeViewState extends State<HomeView> {
     final hasAnyMeaningfulData =
         hasVitalDataLoaded || hasOverviewDataLoaded || hasRecent;
 
-    final shouldShowPlaceholder =
-        !hasAnyMeaningfulData && state.selectedSource != 'wallet';
+    final shouldShowPlaceholder = !hasAnyMeaningfulData;
 
     if (shouldShowPlaceholder) {
       return SyncPlaceholderWidget(

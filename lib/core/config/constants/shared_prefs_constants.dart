@@ -13,4 +13,5 @@ class SharedPrefsConstants {
   static const aiSelectedModel = 'aiSelectedModel';
   static const aiUseVision = 'aiUseVision';
   static const regionPreset = 'regionPreset';
+  static const appLocale = 'appLocale';
 }

@@ -35,6 +35,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<UserNameUpdated>(_onUserNameUpdated);
     on<UserReceiveModeToggled>(_onReceiveModeToggled);
     on<UserRegionPresetChanged>(_onRegionPresetChanged);
+    on<UserLocaleChanged>(_onLocaleChanged);
   }
 
   Future<void> _onInitialised(
@@ -66,6 +67,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       savedRegion = RegionPreset.fromString(savedRegionString);
     }
 
+    final savedLocaleCode = prefs.getString(SharedPrefsConstants.appLocale);
+    final Locale? savedLocale =
+        savedLocaleCode != null ? Locale(savedLocaleCode) : null;
+
     try {
       User user;
       try {
@@ -88,6 +93,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         user: user,
         isBiometricAuthEnabled: isBiometricAuthEnabled,
         regionPreset: savedRegion,
+        appLocale: savedLocale,
       ));
     } catch (e) {
       final systemTheme =
@@ -103,6 +109,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         user: defaultUser,
         isBiometricAuthEnabled: isBiometricAuthEnabled,
         regionPreset: savedRegion,
+        appLocale: savedLocale,
       ));
     }
   }
@@ -253,6 +260,22 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       event.preset.name,
     );
     emit(state.copyWith(regionPreset: event.preset));
+  }
+
+  Future<void> _onLocaleChanged(
+    UserLocaleChanged event,
+    Emitter<UserState> emit,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (event.locale == null) {
+      await prefs.remove(SharedPrefsConstants.appLocale);
+    } else {
+      await prefs.setString(
+        SharedPrefsConstants.appLocale,
+        event.locale!.languageCode,
+      );
+    }
+    emit(state.copyWith(appLocale: event.locale));
   }
 
   static RegionPreset _detectRegionFromLocale() {

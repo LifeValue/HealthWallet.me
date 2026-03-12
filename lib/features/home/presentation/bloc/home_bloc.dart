@@ -253,14 +253,35 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       if (allPatients.isEmpty) return null;
 
+      final patients = allPatients.whereType<Patient>().toList();
+
       final sourceIds = <String>{};
-      for (final patient in allPatients) {
+      for (final patient in patients) {
         if (patient.id == selectedPatientId && patient.sourceId.isNotEmpty) {
           sourceIds.add(patient.sourceId);
         }
       }
 
-      return sourceIds.isNotEmpty ? sourceIds.toList() : null;
+      if (sourceIds.isNotEmpty) return sourceIds.toList();
+
+      final patientGroups = _deduplicationService.deduplicatePatients(patients);
+      final matchingGroup = _deduplicationService.findPatientGroup(
+        patientGroups,
+        selectedPatientId,
+      );
+
+      if (matchingGroup != null) {
+        return matchingGroup.sourceIds;
+      }
+
+      if (patientGroups.isNotEmpty) {
+        final firstGroup = patientGroups.values.first;
+        final newSelectedId = firstGroup.representativePatient.id;
+        await prefs.setString('selected_patient_id', newSelectedId);
+        return firstGroup.sourceIds;
+      }
+
+      return null;
     } catch (e) {
       logger.e('Error getting patient source IDs: $e');
       return null;
@@ -603,8 +624,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       await _reloadHomeData(emit,
           force: true,
-          overrideSourceId: newSelectedSource,
-          patientSourceIds: event.patientSourceIds);
+          overrideSourceId: newSelectedSource);
     } catch (e) {
       logger.e('Error deleting source: $e');
     }

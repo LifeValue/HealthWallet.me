@@ -1,7 +1,10 @@
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
+// ignore_for_file: type=lint
 
+/// The translations for Spanish Castilian (`es`).
 class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
@@ -866,11 +869,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'El documento es demasiado grande para la capacidad actual de tokens de IA.';
+      'El documento es demasiado grande para el tamaño de contexto actual de IA.';
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Intenta aumentar la capacidad de IA para procesar documentos más grandes.';
+      'Toca el icono de ajustes arriba y aumenta el Tamaño de Contexto a 2048 o más, luego reintenta.';
 
   @override
   String get increaseAiModelCapacity => 'Aumentar Capacidad de IA';
@@ -1017,7 +1020,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pageRotated => 'Página rotada';
 
   @override
-  String get regionAndUnits => 'Unidades';
+  String get regionAndUnits => 'Idioma y Unidades';
+
+  @override
+  String get language => 'Idioma';
+
+  @override
+  String get systemDefault => 'Predeterminado del sistema';
 
   @override
   String get regionUS => 'US';
@@ -1031,4 +1040,15 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get medGemmaIncompatibleDevice =>
       'Este modelo requiere más memoria de la que tiene disponible su dispositivo. Utilice el modelo Estándar en su lugar.';
+
+  @override
+  String get deepScanDownloadTitle => 'Descargar modelo de visión';
+
+  @override
+  String deepScanDownloadMessage(int size) {
+    return 'El escaneo profundo requiere una descarga adicional (~$size MB). ¿Descargar ahora?';
+  }
+
+  @override
+  String get downloadingVisionModel => 'Descargando modelo de visión...';
 }

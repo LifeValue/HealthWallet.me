@@ -17,7 +17,8 @@ class RegionSection extends StatelessWidget {
 
     return BlocBuilder<UserBloc, UserState>(
       buildWhen: (previous, current) =>
-          previous.regionPreset != current.regionPreset,
+          previous.regionPreset != current.regionPreset ||
+          previous.appLocale != current.appLocale,
       builder: (context, state) {
         final selected = state.regionPreset;
 

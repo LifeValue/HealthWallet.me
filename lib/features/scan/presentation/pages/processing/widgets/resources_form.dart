@@ -242,7 +242,21 @@ class ResourcesForm extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(descriptor.label, style: AppTextStyle.bodySmall),
+                      Row(
+                        children: [
+                          Text(descriptor.label, style: AppTextStyle.bodySmall),
+                          if (descriptor.fieldType == FieldType.date &&
+                              descriptor.value.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: Icon(
+                                Icons.error_outline,
+                                size: 16,
+                                color: Colors.red,
+                              ),
+                            ),
+                        ],
+                      ),
                       if (confidenceLevel != ConfidenceLevel.high)
                         Text(
                           "(${confidenceLevel.getString()})",

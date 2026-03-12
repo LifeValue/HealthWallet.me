@@ -64,13 +64,16 @@ $resourceSchemas
 $exampleSection
 Rules:
 - Return ONLY a JSON array, no other text
+- Do NOT include Patient, Encounter, or DiagnosticReport resources (those are extracted separately)
 - Use empty string for missing fields
-- Only include resources clearly visible in the document
 - For dates use YYYY-MM-DD format
 - Each object must have a "resourceType" field
-- Include ALL instances found (e.g. all lab results, all conditions)
-- CRITICAL: Each test name MUST be paired with its own correct value. In tables, match values on the same row. In inline text (e.g. "Creatinina=0.71 mg/dl"), extract the value immediately after the test name. Never shift or swap values between different tests
-- For vital signs: value must be numeric only (no units in value). BMI is a small number (15-50), Weight is in kg or lb. Do NOT confuse them''';
+- CRITICAL: Each test name MUST be paired with its own correct value. In tables, match values on the same row. Never shift or swap values between different tests
+- Observations are ONLY for measurable numeric values (lab results, vital signs with numbers). Do NOT create Observations for clinical exam findings
+- For vital signs: value must be numeric only (no units in value). BMI is a small number (15-50), Weight is in kg or lb
+- Conditions = actual diagnoses ONLY (e.g. "Fracture", "Contusion", "Hypertension"). Do NOT create Conditions from section headers (Anamnèse, ATCD, Examen), exam findings, or history notes
+- Keep it concise: extract only the key medical facts, not every sentence from the document
+- Avoid duplicates: do not create multiple resources for the same finding''';
   }
 
   static const _observationSchema =

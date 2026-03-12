@@ -7,6 +7,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -82,14 +83,25 @@ class RegionDialog extends StatelessWidget {
             Divider(height: 1, color: borderColor),
             BlocBuilder<UserBloc, UserState>(
               buildWhen: (previous, current) =>
-                  previous.regionPreset != current.regionPreset,
+                  previous.regionPreset != current.regionPreset ||
+                  previous.appLocale != current.appLocale,
               builder: (context, state) {
                 final selected = state.regionPreset;
 
                 return Padding(
                   padding: const EdgeInsets.all(Insets.normal),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        context.l10n.language,
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: Insets.small),
+                      _buildLanguageDropdown(context, state.appLocale),
+                      const SizedBox(height: Insets.normal),
                       Row(
                         children: RegionPreset.values.map((preset) {
                           final isSelected = preset == selected;
@@ -161,6 +173,55 @@ class RegionDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildLanguageDropdown(BuildContext context, Locale? currentLocale) {
+    final options = [
+      context.l10n.systemDefault,
+      'English',
+      'Deutsch',
+      'Español',
+    ];
+
+    final currentDisplay = _localeToDisplayName(context, currentLocale);
+
+    return AppDropdownField<String>(
+      value: currentDisplay,
+      items: options,
+      getDisplayText: (item) => item,
+      onChanged: (selected) {
+        final locale = _displayNameToLocale(context, selected);
+        context.read<UserBloc>().add(UserLocaleChanged(locale));
+      },
+    );
+  }
+
+  String _localeToDisplayName(BuildContext context, Locale? locale) {
+    if (locale == null) return context.l10n.systemDefault;
+    switch (locale.languageCode) {
+      case 'en':
+        return 'English';
+      case 'de':
+        return 'Deutsch';
+      case 'es':
+        return 'Español';
+      default:
+        return context.l10n.systemDefault;
+    }
+  }
+
+  Locale? _displayNameToLocale(BuildContext context, String displayName) {
+    if (displayName == context.l10n.systemDefault) return null;
+    switch (displayName) {
+      case 'English':
+        return const Locale('en');
+      case 'Deutsch':
+        return const Locale('de');
+      case 'Español':
+        return const Locale('es');
+      default:
+        return null;
+    }
   }
 
   String _regionDisplayName(BuildContext context, RegionPreset preset) {

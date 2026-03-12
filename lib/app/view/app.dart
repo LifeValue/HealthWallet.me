@@ -136,6 +136,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               darkTheme: AppTheme.darkTheme,
               themeMode:
                   state.user.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              locale: state.appLocale,
               routerConfig: router.config(
                 navigatorObservers: () => [routeObserver],
               ),

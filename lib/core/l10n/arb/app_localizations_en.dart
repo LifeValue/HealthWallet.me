@@ -1,7 +1,10 @@
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
+// ignore_for_file: type=lint
 
+/// The translations for English (`en`).
 class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
@@ -856,11 +859,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'The document is too large for the current AI token capacity.';
+      'The document is too large for the current AI context size.';
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Try increasing the AI capacity to process larger documents.';
+      'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.';
 
   @override
   String get increaseAiModelCapacity => 'Increase AI Capacity';
@@ -1007,7 +1010,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pageRotated => 'Page rotated';
 
   @override
-  String get regionAndUnits => 'Units';
+  String get regionAndUnits => 'Language & Units';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get systemDefault => 'System Default';
 
   @override
   String get regionUS => 'US';
@@ -1021,4 +1030,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get medGemmaIncompatibleDevice =>
       'This model requires more memory than your device has available. Use the Standard model instead.';
+
+  @override
+  String get deepScanDownloadTitle => 'Download Vision Model';
+
+  @override
+  String deepScanDownloadMessage(int size) {
+    return 'Deep Scan requires an additional download (~$size MB). Download now?';
+  }
+
+  @override
+  String get downloadingVisionModel => 'Downloading vision model...';
 }

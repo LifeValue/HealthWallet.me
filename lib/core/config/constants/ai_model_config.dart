@@ -31,7 +31,7 @@ class AiModelConfig {
   static const medGemma = AiModelConfig._(
     variant: AiModelVariant.medGemma,
     displayName: 'Advanced Medical',
-    description: 'Higher accuracy, larger download (~3.3 GB)',
+    description: 'Higher accuracy, larger download (~2.5 GB)',
     modelUrl:
         'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf',
     modelId: 'medgemma-4b-it_Q4_K_M.gguf',
@@ -46,7 +46,7 @@ class AiModelConfig {
   static const qwen = AiModelConfig._(
     variant: AiModelVariant.qwen,
     displayName: 'Standard',
-    description: 'Fast and lightweight (~1.5 GB)',
+    description: 'Fast and lightweight (~1.1 GB)',
     modelUrl:
         'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf',
     modelId: 'Qwen3VL-2B-Instruct-Q4_K_M.gguf',

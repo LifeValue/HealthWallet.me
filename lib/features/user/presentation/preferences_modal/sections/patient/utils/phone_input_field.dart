@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -94,10 +96,20 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   bool _formatting = false;
   String _lastDigits = '';
 
-  CountryEntry get _defaultCountry => _countries.firstWhere(
-        (c) => c.isoCode == IsoCode.RO,
-        orElse: () => _countries.first,
-      );
+  CountryEntry get _defaultCountry {
+    final countryCode =
+        ui.PlatformDispatcher.instance.locale.countryCode?.toUpperCase();
+    if (countryCode != null) {
+      final match = _countries
+          .where((c) => c.isoCode.name.toUpperCase() == countryCode)
+          .firstOrNull;
+      if (match != null) return match;
+    }
+    return _countries.firstWhere(
+      (c) => c.isoCode == IsoCode.US,
+      orElse: () => _countries.first,
+    );
+  }
 
   @override
   void initState() {

@@ -85,7 +85,9 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     final lower = errorString.toLowerCase();
     return lower.contains('maxtokens') ||
         lower.contains('input is too long') ||
-        lower.contains('input_size');
+        lower.contains('input_size') ||
+        lower.contains('tokenization') ||
+        lower.contains('prompt too long');
   }
 
   void _startNextPendingSession() {

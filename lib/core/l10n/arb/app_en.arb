@@ -322,8 +322,8 @@
     "chargerPluggedIn": "Charger plugged in.",
     "plugInChargerEllipsis": "Plug in the charger...",
 
-    "processingFailedCapacity": "The document is too large for the current AI token capacity.",
-    "processingFailedCapacitySuggestion": "Try increasing the AI capacity to process larger documents.",
+    "processingFailedCapacity": "The document is too large for the current AI context size.",
+    "processingFailedCapacitySuggestion": "Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.",
     "increaseAiModelCapacity": "Increase AI Capacity",
     "goBack": "Go Back",
 
@@ -369,9 +369,21 @@
     "deletePageConfirmMessage": "This page will be removed from the document.",
     "cannotDeleteLastPage": "Cannot delete the last page",
     "pageRotated": "Page rotated",
-    "regionAndUnits": "Units",
+    "regionAndUnits": "Language & Units",
+    "language": "Language",
+    "systemDefault": "System Default",
     "regionUS": "US",
     "regionEurope": "Europe",
     "regionUK": "UK",
-    "medGemmaIncompatibleDevice": "This model requires more memory than your device has available. Use the Standard model instead."
+    "medGemmaIncompatibleDevice": "This model requires more memory than your device has available. Use the Standard model instead.",
+    "deepScanDownloadTitle": "Download Vision Model",
+    "deepScanDownloadMessage": "Deep Scan requires an additional download (~{size} MB). Download now?",
+    "@deepScanDownloadMessage": {
+        "placeholders": {
+            "size": {
+                "type": "int"
+            }
+        }
+    },
+    "downloadingVisionModel": "Downloading vision model..."
 }
