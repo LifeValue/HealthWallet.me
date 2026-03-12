@@ -35,7 +35,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
 
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) {
-        final platformOffset = Platform.isIOS ? Insets.extraLarge : Insets.medium;
+        final platformOffset = Platform.isIOS ? Insets.extraLarge : Insets.large;
         final topPadding =
             MediaQuery.of(context).viewPadding.top + kToolbarHeight + platformOffset;
         return BlocBuilder<NotificationBloc, NotificationState>(
