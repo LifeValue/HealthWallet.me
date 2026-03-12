@@ -660,24 +660,23 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingAiModelDescription =>
-      'Descarga un modelo de IA seguro y en el dispositivo (~1.8 GB) para analizar y organizar automáticamente tus registros de salud: tus datos permanecen privados en tu dispositivo. Es una configuración única.';
+      'Descarga un modelo de IA seguro y en el dispositivo para analizar y organizar automáticamente tus registros de salud. Elige entre dos opciones según tus necesidades y la capacidad del dispositivo. Es una configuración única.\n\n**Tus datos permanecen privados en tu dispositivo.**';
 
   @override
   String get onboardingAiModelSubtitle =>
       'Desbloquea el escaneo impulsado por IA';
 
   @override
-  String get aiModelReady => '¡Modelo de IA listo! Puedes empezar a escanear.';
+  String get aiModelReady => '¡IA lista! Puedes empezar a escanear.';
 
   @override
-  String get aiModelDownloading => 'Descargando modelo de IA...';
+  String get aiModelDownloading => 'Descargando...';
 
   @override
-  String get aiModelEnableDownload => 'Activar y descargar';
+  String get aiModelEnableDownload => 'Elegir y descargar';
 
   @override
-  String get aiModelError =>
-      'No se pudo verificar el modelo. Inténtalo de nuevo.';
+  String get aiModelError => 'No se pudo verificar. Inténtalo de nuevo.';
 
   @override
   String get aiModelMissing => 'No descargado.';
@@ -690,11 +689,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get aiModelUnlockDescription =>
-      'Para leer y organizar automáticamente tus documentos médicos, esta función utiliza un modelo de IA seguro y local en tu dispositivo. Tus datos permanecen completamente privados.';
+      'Para leer y organizar automáticamente tus documentos médicos, esta función utiliza un modelo de IA seguro y local en tu dispositivo.\n\n**Tus datos permanecen privados en tu dispositivo.**';
 
   @override
   String get aiModelDownloadInfo =>
-      'Para comenzar, necesitamos descargar el componente de IA (aproximadamente 1.8 GB). Es una configuración única.';
+      'Para comenzar, elige y descarga una de las dos opciones de IA disponibles. Es una configuración única.';
 
   @override
   String get setup => 'Configurar';
@@ -797,7 +796,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Solo una sesión de procesamiento puede ejecutarse a la vez';
 
   @override
-  String get aiModelNotAvailable => 'El modelo de IA no está disponible';
+  String get aiModelNotAvailable => 'El escaneo inteligente no está disponible';
 
   @override
   String get addResources => 'Agregar recursos';
@@ -874,22 +873,22 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Intenta aumentar la capacidad del modelo de IA para procesar documentos más grandes.';
+      'Intenta aumentar la capacidad de IA para procesar documentos más grandes.';
 
   @override
-  String get increaseAiModelCapacity => 'Aumentar Capacidad del Modelo IA';
+  String get increaseAiModelCapacity => 'Aumentar Capacidad de IA';
 
   @override
   String get goBack => 'Volver';
 
   @override
-  String get aiModelManage => 'Gestionar modelos de IA';
+  String get aiModelManage => 'Gestionar opciones de IA';
 
   @override
-  String get aiModelNotSelected => 'Modelo de IA no seleccionado';
+  String get aiModelNotSelected => 'Ninguna opción seleccionada';
 
   @override
-  String get aiModelSelect => 'Seleccionar modelo de IA';
+  String get aiModelSelect => 'Seleccionar opción';
 
   @override
   String get aiSettings => 'Ajustes de IA';
@@ -968,7 +967,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get aiModelNotAvailableForDeviceDescription =>
-      'Este dispositivo no tiene suficiente memoria RAM para ejecutar el modelo de IA.';
+      'Este dispositivo no tiene suficiente memoria para ejecutar el escaneo inteligente.';
 
   @override
   String get noInternetConnectionTitle => 'Sin conexión a Internet';

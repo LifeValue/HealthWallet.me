@@ -405,7 +405,15 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     try {
       await _saveSelectedPatient(event.patientId);
 
+      final updatedPatients = List<Patient>.from(state.patients);
+      final index = updatedPatients.indexWhere((p) => p.id == event.patientId);
+      if (index > 0) {
+        final patient = updatedPatients.removeAt(index);
+        updatedPatients.insert(0, patient);
+      }
+
       emit(state.copyWith(
+        patients: updatedPatients,
         selectedPatientId: event.patientId,
         expandedPatientIds: {event.patientId},
       ));

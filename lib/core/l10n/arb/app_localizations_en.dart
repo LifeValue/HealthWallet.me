@@ -653,22 +653,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingAiModelDescription =>
-      'Download a secure, on-device AI model (~1.8 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.';
+      'Download a secure, on-device AI model to automatically analyze and organize your health records. Choose between two options depending on your needs and device capability. This is a one-time setup.\n\n**Your data stays private on your device.**';
 
   @override
   String get onboardingAiModelSubtitle => 'Unlock AI-powered scanning';
 
   @override
-  String get aiModelReady => 'AI model ready! You can start scanning.';
+  String get aiModelReady => 'AI ready! You can start scanning.';
 
   @override
-  String get aiModelDownloading => 'Downloading AI model...';
+  String get aiModelDownloading => 'Downloading...';
 
   @override
-  String get aiModelEnableDownload => 'Enable & Download';
+  String get aiModelEnableDownload => 'Choose & Download';
 
   @override
-  String get aiModelError => 'Couldn’t verify model. Try again.';
+  String get aiModelError => 'Couldn’t verify. Try again.';
 
   @override
   String get aiModelMissing => 'Not downloaded.';
@@ -681,11 +681,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiModelUnlockDescription =>
-      'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.';
+      'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model.\n\n**Your data stays private on your device.**';
 
   @override
   String get aiModelDownloadInfo =>
-      'To get started, we need to download the AI component (approx. 1.8 GB). This is a one-time setup.';
+      'To get started, choose and download one of two available AI options. This is a one-time setup.';
 
   @override
   String get setup => 'Setup';
@@ -787,7 +787,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only one processing session can run at a time';
 
   @override
-  String get aiModelNotAvailable => 'AI model is not available';
+  String get aiModelNotAvailable => 'Smart scanning is not available';
 
   @override
   String get addResources => 'Add resources';
@@ -863,22 +863,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Try increasing the AI model capacity to process larger documents.';
+      'Try increasing the AI capacity to process larger documents.';
 
   @override
-  String get increaseAiModelCapacity => 'Increase AI Model Capacity';
+  String get increaseAiModelCapacity => 'Increase AI Capacity';
 
   @override
   String get goBack => 'Go Back';
 
   @override
-  String get aiModelManage => 'Manage AI Models';
+  String get aiModelManage => 'Manage AI Options';
 
   @override
-  String get aiModelNotSelected => 'AI Model not selected';
+  String get aiModelNotSelected => 'No option selected';
 
   @override
-  String get aiModelSelect => 'Select AI Model';
+  String get aiModelSelect => 'Select Option';
 
   @override
   String get aiSettings => 'AI Settings';
@@ -957,7 +957,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiModelNotAvailableForDeviceDescription =>
-      'This device doesn\'t have enough RAM memory to run the AI model.';
+      'This device doesn\'t have enough memory to run smart scanning.';
 
   @override
   String get noInternetConnectionTitle => 'No Internet Connection';
