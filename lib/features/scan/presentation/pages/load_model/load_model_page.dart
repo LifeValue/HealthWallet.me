@@ -166,15 +166,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
           ),
         ),
         const SizedBox(height: 32),
-        Text(
-          context.l10n.aiModelUnlockDescription,
-          textAlign: TextAlign.center,
-          style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
-            height: 1.5,
-            letterSpacing: -0.2,
-          ),
-        ),
+        _buildRichDescription(context, context.l10n.aiModelUnlockDescription),
         const SizedBox(height: 32),
         Text(
           context.l10n.aiModelDownloadInfo,
@@ -288,6 +280,46 @@ class _LoadModelPageState extends State<LoadModelPage> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildRichDescription(BuildContext context, String description) {
+    if (description.contains('**')) {
+      final segments = description.split('**');
+      final spans = <TextSpan>[];
+      for (int i = 0; i < segments.length; i++) {
+        spans.add(TextSpan(
+          text: segments[i],
+          style: i.isOdd
+              ? AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.onSurface.withOpacity(0.85),
+                  height: 1.5,
+                  letterSpacing: -0.2,
+                  fontWeight: FontWeight.w700,
+                )
+              : null,
+        ));
+      }
+      return RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: AppTextStyle.bodySmall.copyWith(
+            color: context.colorScheme.onSurface.withOpacity(0.7),
+            height: 1.5,
+            letterSpacing: -0.2,
+          ),
+          children: spans,
+        ),
+      );
+    }
+    return Text(
+      description,
+      textAlign: TextAlign.center,
+      style: AppTextStyle.bodySmall.copyWith(
+        color: context.colorScheme.onSurface.withOpacity(0.7),
+        height: 1.5,
+        letterSpacing: -0.2,
+      ),
     );
   }
 }

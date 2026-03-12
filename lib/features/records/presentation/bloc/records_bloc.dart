@@ -313,11 +313,13 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       );
 
       final name = (event.patientName ?? export.patientName)
-          .replaceAll(RegExp(r'[^\w\s-]'), '')
-          .replaceAll(' ', '_');
+          .replaceAll(RegExp(r'[^\w\s-]'), '');
+      final now = DateTime.now();
+      final date = '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+      final fileName = '$name - IPS Summary - $date';
 
       File pdfFile = await File(
-        '${(await getTemporaryDirectory()).path}/$name-IPS.pdf',
+        '${(await getTemporaryDirectory()).path}/$fileName.pdf',
       ).writeAsBytes(export.bytes);
 
       SharePlus.instance.share(ShareParams(

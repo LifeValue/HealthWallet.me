@@ -1309,7 +1309,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingAiModelDescription.
   ///
   /// In en, this message translates to:
-  /// **'Download a secure, on-device AI model (~1.8 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.'**
+  /// **'Download a secure, on-device AI model to automatically analyze and organize your health records. Choose between two options depending on your needs and device capability. This is a one-time setup.\n\n**Your data stays private on your device.**'**
   String get onboardingAiModelDescription;
 
   /// No description provided for @onboardingAiModelSubtitle.
@@ -1321,25 +1321,25 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelReady.
   ///
   /// In en, this message translates to:
-  /// **'AI model ready! You can start scanning.'**
+  /// **'AI ready! You can start scanning.'**
   String get aiModelReady;
 
   /// No description provided for @aiModelDownloading.
   ///
   /// In en, this message translates to:
-  /// **'Downloading AI model...'**
+  /// **'Downloading...'**
   String get aiModelDownloading;
 
   /// No description provided for @aiModelEnableDownload.
   ///
   /// In en, this message translates to:
-  /// **'Enable & Download'**
+  /// **'Choose & Download'**
   String get aiModelEnableDownload;
 
   /// No description provided for @aiModelError.
   ///
   /// In en, this message translates to:
-  /// **'Couldn’t verify model. Try again.'**
+  /// **'Couldn’t verify. Try again.'**
   String get aiModelError;
 
   /// No description provided for @aiModelMissing.
@@ -1363,13 +1363,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelUnlockDescription.
   ///
   /// In en, this message translates to:
-  /// **'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.'**
+  /// **'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model.\n\n**Your data stays private on your device.**'**
   String get aiModelUnlockDescription;
 
   /// No description provided for @aiModelDownloadInfo.
   ///
   /// In en, this message translates to:
-  /// **'To get started, we need to download the AI component (approx. 1.8 GB). This is a one-time setup.'**
+  /// **'To get started, choose and download one of two available AI options. This is a one-time setup.'**
   String get aiModelDownloadInfo;
 
   /// No description provided for @setup.
@@ -1555,7 +1555,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelNotAvailable.
   ///
   /// In en, this message translates to:
-  /// **'AI model is not available'**
+  /// **'Smart scanning is not available'**
   String get aiModelNotAvailable;
 
   /// No description provided for @addResources.
@@ -1693,13 +1693,13 @@ abstract class AppLocalizations {
   /// No description provided for @processingFailedCapacitySuggestion.
   ///
   /// In en, this message translates to:
-  /// **'Try increasing the AI model capacity to process larger documents.'**
+  /// **'Try increasing the AI capacity to process larger documents.'**
   String get processingFailedCapacitySuggestion;
 
   /// No description provided for @increaseAiModelCapacity.
   ///
   /// In en, this message translates to:
-  /// **'Increase AI Model Capacity'**
+  /// **'Increase AI Capacity'**
   String get increaseAiModelCapacity;
 
   /// No description provided for @goBack.
@@ -1711,19 +1711,19 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelManage.
   ///
   /// In en, this message translates to:
-  /// **'Manage AI Models'**
+  /// **'Manage AI Options'**
   String get aiModelManage;
 
   /// No description provided for @aiModelNotSelected.
   ///
   /// In en, this message translates to:
-  /// **'AI Model not selected'**
+  /// **'No option selected'**
   String get aiModelNotSelected;
 
   /// No description provided for @aiModelSelect.
   ///
   /// In en, this message translates to:
-  /// **'Select AI Model'**
+  /// **'Select Option'**
   String get aiModelSelect;
 
   /// No description provided for @aiSettings.
@@ -1861,7 +1861,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelNotAvailableForDeviceDescription.
   ///
   /// In en, this message translates to:
-  /// **'This device doesn\'t have enough RAM memory to run the AI model.'**
+  /// **'This device doesn\'t have enough memory to run smart scanning.'**
   String get aiModelNotAvailableForDeviceDescription;
 
   /// No description provided for @noInternetConnectionTitle.

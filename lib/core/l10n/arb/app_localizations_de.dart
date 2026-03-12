@@ -667,24 +667,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onboardingAiModelDescription =>
-      'Laden Sie ein sicheres, geräteinternes AI-Modell (~1,8 GB) herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren - Ihre Daten bleiben privat auf Ihrem Gerät. Dies ist eine einmalige Einrichtung.';
+      'Laden Sie ein sicheres, geräteinternes AI-Modell herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren. Wählen Sie zwischen zwei Optionen je nach Bedarf und Gerätekapazität. Dies ist eine einmalige Einrichtung.\n\n**Ihre Daten bleiben privat auf Ihrem Gerät.**';
 
   @override
   String get onboardingAiModelSubtitle => 'AI-gestütztes Scannen freischalten';
 
   @override
-  String get aiModelReady =>
-      'KI-Modell bereit! Du kannst mit dem Scannen beginnen.';
+  String get aiModelReady => 'KI bereit! Du kannst mit dem Scannen beginnen.';
 
   @override
-  String get aiModelDownloading => 'KI-Modell wird heruntergeladen...';
+  String get aiModelDownloading => 'Wird heruntergeladen...';
 
   @override
-  String get aiModelEnableDownload => 'Aktivieren & Herunterladen';
+  String get aiModelEnableDownload => 'Auswählen & Herunterladen';
 
   @override
   String get aiModelError =>
-      'Modell konnte nicht überprüft werden. Bitte versuche es erneut.';
+      'Überprüfung fehlgeschlagen. Bitte erneut versuchen.';
 
   @override
   String get aiModelMissing => 'Nicht heruntergeladen.';
@@ -697,11 +696,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiModelUnlockDescription =>
-      'Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell. Ihre Daten bleiben vollständig privat.';
+      'Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell.\n\n**Ihre Daten bleiben privat auf Ihrem Gerät.**';
 
   @override
   String get aiModelDownloadInfo =>
-      'Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,8 GB). Dies ist eine einmalige Einrichtung.';
+      'Um zu beginnen, wählen und laden Sie eine der zwei verfügbaren KI-Optionen herunter. Dies ist eine einmalige Einrichtung.';
 
   @override
   String get setup => 'Einrichten';
@@ -804,7 +803,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nur eine Verarbeitungssitzung kann gleichzeitig ausgeführt werden';
 
   @override
-  String get aiModelNotAvailable => 'KI-Modell ist nicht verfügbar';
+  String get aiModelNotAvailable => 'Intelligentes Scannen ist nicht verfügbar';
 
   @override
   String get addResources => 'Ressourcen hinzufügen';
@@ -882,22 +881,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Versuchen Sie, die KI-Modellkapazität zu erhöhen, um größere Dokumente zu verarbeiten.';
+      'Versuchen Sie, die KI-Kapazität zu erhöhen, um größere Dokumente zu verarbeiten.';
 
   @override
-  String get increaseAiModelCapacity => 'KI-Modellkapazität erhöhen';
+  String get increaseAiModelCapacity => 'KI-Kapazität erhöhen';
 
   @override
   String get goBack => 'Zurück';
 
   @override
-  String get aiModelManage => 'KI-Modelle verwalten';
+  String get aiModelManage => 'KI-Optionen verwalten';
 
   @override
-  String get aiModelNotSelected => 'KI-Modell nicht ausgewählt';
+  String get aiModelNotSelected => 'Keine Option ausgewählt';
 
   @override
-  String get aiModelSelect => 'KI-Modell auswählen';
+  String get aiModelSelect => 'Option auswählen';
 
   @override
   String get aiSettings => 'KI-Einstellungen';
@@ -977,7 +976,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiModelNotAvailableForDeviceDescription =>
-      'Dieses Gerät hat nicht genügend RAM-Speicher, um das KI-Modell auszuführen.';
+      'Dieses Gerät hat nicht genügend Speicher, um intelligentes Scannen auszuführen.';
 
   @override
   String get noInternetConnectionTitle => 'Keine Internetverbindung';

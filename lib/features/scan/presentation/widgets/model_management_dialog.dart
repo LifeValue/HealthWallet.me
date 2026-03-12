@@ -96,7 +96,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         progress: state.medGemmaProgress,
                         borderColor: borderColor,
                         textColor: textColor,
-                        badge: 'Testing',
+                        badge: null,
                       ),
                       const SizedBox(height: Insets.small),
                       _buildModelCard(
