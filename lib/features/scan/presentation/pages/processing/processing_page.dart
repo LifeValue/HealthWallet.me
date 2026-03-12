@@ -144,8 +144,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
             state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
 
         final canRetry = displayedSession != null &&
-            (displayedSession.status == ProcessingStatus.patientExtracted ||
-                displayedSession.status == ProcessingStatus.draft ||
+            (displayedSession.status == ProcessingStatus.draft ||
                 displayedSession.status == ProcessingStatus.cancelled ||
                 state.status is Failure ||
                 state.status is CapacityFailure);
