@@ -402,6 +402,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             patient: _currentPatient!,
             showNameField: true,
             isSetupMode: false,
+            identifierLabel: FhirFieldExtractor.extractPatientIdentifierLabel(_currentPatient!),
             selectedGiven: _selectedGiven,
             selectedFamily: _selectedFamily,
             selectedMRN: _selectedMRN,

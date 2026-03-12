@@ -1,10 +1,7 @@
-// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
-// ignore_for_file: type=lint
 
-/// The translations for German (`de`).
 class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
@@ -971,6 +968,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.';
 
   @override
+  String get useVisionLabel => 'Tiefenscan';
+
+  @override
+  String get useVisionDescription =>
+      'Liest Bilder für eine tiefere Analyse (z. B. Handschrift). Verbraucht mehr Speicher und erfordert ein leistungsfähigeres Gerät.';
+
+  @override
   String get aiModelNotAvailableForDevice =>
       'Nicht verfügbar für dieses Telefon';
 
@@ -987,11 +991,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processingStep2NotAvailableTitle =>
-      'Vollständige Verarbeitung nicht verfügbar';
+      'Tiefenscan auf diesem Gerät nicht verfügbar';
 
   @override
   String get processingStep2NotEnoughRam =>
-      'Ihr Telefon hat nicht genügend Speicher für die vollständige Dokumentenverarbeitung. Sie können die oben extrahierten grundlegenden Patienteninformationen speichern.';
+      'Dieses Gerät hat nicht genügend Speicher für den Tiefenscan. Textbasierte Verarbeitung ist weiterhin verfügbar und funktioniert gut für die meisten Dokumente.';
 
   @override
   String get emergencyContact => 'Notfall-Telefonkontakt';
@@ -1021,4 +1025,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pageRotated => 'Seite gedreht';
+
+  @override
+  String get regionAndUnits => 'Einheiten';
+
+  @override
+  String get regionUS => 'US';
+
+  @override
+  String get regionEurope => 'Europa';
+
+  @override
+  String get regionUK => 'UK';
+
+  @override
+  String get medGemmaIncompatibleDevice =>
+      'Dieses Modell benötigt mehr Arbeitsspeicher als auf Ihrem Gerät verfügbar ist. Verwenden Sie stattdessen das Standardmodell.';
 }

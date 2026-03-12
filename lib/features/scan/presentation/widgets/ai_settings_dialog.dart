@@ -19,12 +19,14 @@ class AiSettingsResult {
   final int gpuLayers;
   final int threads;
   final int contextSize;
+  final bool useVision;
 
   const AiSettingsResult({
     required this.maxTokens,
     required this.gpuLayers,
     required this.threads,
     required this.contextSize,
+    required this.useVision,
   });
 }
 
@@ -38,6 +40,7 @@ class AiTokenSettingsDialog extends StatefulWidget {
   final int recommendedContextSize;
   final int deviceRamMB;
   final AiModelConfig activeModelConfig;
+  final bool currentUseVision;
 
   const AiTokenSettingsDialog({
     required this.currentTokens,
@@ -49,6 +52,7 @@ class AiTokenSettingsDialog extends StatefulWidget {
     required this.recommendedContextSize,
     required this.deviceRamMB,
     required this.activeModelConfig,
+    required this.currentUseVision,
     super.key,
   });
 
@@ -66,6 +70,8 @@ class AiTokenSettingsDialog extends StatefulWidget {
     final savedGpu = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
     final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
     final savedCtx = prefs.getInt(SharedPrefsConstants.aiContextSize);
+    final savedVision = prefs.getBool(SharedPrefsConstants.aiUseVision);
+    final useVision = savedVision ?? false;
 
     if (!context.mounted) return null;
 
@@ -84,6 +90,7 @@ class AiTokenSettingsDialog extends StatefulWidget {
         recommendedContextSize: config.contextSize,
         deviceRamMB: deviceRamMB,
         activeModelConfig: activeModelConfig,
+        currentUseVision: useVision,
       ),
     );
   }
@@ -129,6 +136,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
   late int _gpuLayers;
   late int _threads;
   late int _contextSize;
+  late bool _useVision;
 
   @override
   void initState() {
@@ -142,6 +150,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     _gpuLayers = widget.currentGpuLayers;
     _threads = widget.currentThreads;
     _contextSize = widget.currentContextSize;
+    _useVision = widget.currentUseVision;
   }
 
   @override
@@ -176,6 +185,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
       gpuLayers: _gpuLayers,
       threads: _threads,
       contextSize: _contextSize,
+      useVision: _useVision,
     ));
   }
 
@@ -192,7 +202,8 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     final activeModel = widget.activeModelConfig;
     final kvCache = (_contextSize * 170 ~/ 1024);
     final overhead = activeModel.modelSizeMB >= 2000 ? 700 : 400;
-    final estimatedMB = activeModel.modelSizeMB + activeModel.mmprojSizeMB + kvCache + overhead;
+    final visionMB = _useVision ? activeModel.mmprojSizeMB : 0;
+    final estimatedMB = activeModel.modelSizeMB + visionMB + kvCache + overhead;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -221,7 +232,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
                 child: Row(
                   children: [
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: _apply,
                       child: Icon(
                         Icons.arrow_back_ios_new,
                         size: 16,
@@ -237,7 +248,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: _apply,
                       child: Padding(
                         padding: const EdgeInsets.all(9),
                         child: Icon(
@@ -263,6 +274,8 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
                       ),
                       const SizedBox(height: Insets.small),
                       _buildDeviceInfoChip(textColor, estimatedMB),
+                      const SizedBox(height: Insets.normal),
+                      _buildVisionToggle(textColor, secondaryTextColor, borderColor),
                       const SizedBox(height: Insets.normal),
                       _buildSectionHeader(
                         context.l10n.contextSizeLabel,
@@ -405,6 +418,139 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
         style: AppTextStyle.labelSmall.copyWith(
           color: AppColors.primary,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisionToggle(
+    Color textColor,
+    Color secondaryTextColor,
+    Color borderColor,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Insets.smallNormal,
+        vertical: Insets.small,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                context.l10n.useVisionLabel,
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: Insets.extraSmall),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 1,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Beta',
+                  style: AppTextStyle.labelSmall.copyWith(
+                    color: AppColors.warning,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 9,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              _buildOnOffToggle(borderColor),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            context.l10n.useVisionDescription,
+            style: AppTextStyle.labelSmall.copyWith(
+              color: secondaryTextColor,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOnOffToggle(Color borderColor) {
+    final colorScheme = context.colorScheme;
+
+    return GestureDetector(
+      onTap: () => setState(() => _useVision = !_useVision),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: 76,
+        height: 36,
+        padding: const EdgeInsets.all(Insets.extraSmall),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                decoration: BoxDecoration(
+                  color: !_useVision
+                      ? colorScheme.primary
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Center(
+                  child: Text(
+                    'OFF',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: !_useVision
+                          ? (context.isDarkMode
+                              ? Colors.white
+                              : colorScheme.onPrimary)
+                          : colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                decoration: BoxDecoration(
+                  color: _useVision
+                      ? colorScheme.primary
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Center(
+                  child: Text(
+                    'ON',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: _useVision
+                          ? (context.isDarkMode
+                              ? Colors.white
+                              : colorScheme.onPrimary)
+                          : colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

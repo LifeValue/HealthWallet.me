@@ -7,6 +7,7 @@ class UserState with _$UserState {
     @Default(User()) User user,
     @Default(false) bool isBiometricAuthEnabled,
     @Default(false) bool shouldShowBiometricsSetup,
+    @Default(RegionPreset.europe) RegionPreset regionPreset,
   }) = _UserState;
 }
 

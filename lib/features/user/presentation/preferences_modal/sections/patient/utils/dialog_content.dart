@@ -31,6 +31,7 @@ class DialogContent extends StatelessWidget {
   final TextEditingController? givenController;
   final TextEditingController? familyController;
   final TextEditingController? mrnController;
+  final String identifierLabel;
   const DialogContent({
     super.key,
     required this.patient,
@@ -56,6 +57,7 @@ class DialogContent extends StatelessWidget {
     this.givenController,
     this.familyController,
     this.mrnController,
+    this.identifierLabel = 'MRN',
   });
 
   @override
@@ -99,11 +101,11 @@ class DialogContent extends StatelessWidget {
             const SizedBox(height: Insets.normal),
             FormFields.buildTextField(
               context,
-              'MRN',
+              identifierLabel,
               isSetupMode ? '' : (selectedMRN ?? ''),
               onMRNChanged,
               controller: mrnController,
-              hintText: isSetupMode ? 'MRN (optional)' : null,
+              hintText: isSetupMode ? '$identifierLabel (optional)' : null,
             ),
             const SizedBox(height: Insets.normal),
           ],

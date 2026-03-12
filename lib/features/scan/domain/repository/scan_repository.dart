@@ -50,6 +50,7 @@ abstract class ScanRepository {
   Stream<MappingResourcesWithProgress> mapRemainingResources(
     List<String> imagePaths, {
     String? documentCategory,
+    bool useVision = false,
     int? maxTokens,
     int? gpuLayers,
     int? threads,

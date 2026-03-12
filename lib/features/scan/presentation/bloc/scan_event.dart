@@ -137,6 +137,12 @@ class ScanTokenCapacityUpdated extends ScanEvent
 }
 
 @freezed
+class ScanVisionToggled extends ScanEvent with _$ScanVisionToggled {
+  const factory ScanVisionToggled({required bool useVision}) =
+      _ScanVisionToggled;
+}
+
+@freezed
 class ScanPagesReordered extends ScanEvent with _$ScanPagesReordered {
   const factory ScanPagesReordered({
     required String sessionId,

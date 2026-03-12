@@ -693,6 +693,7 @@ class ScanRepositoryImpl implements ScanRepository {
   Stream<MappingResourcesWithProgress> mapRemainingResources(
     List<String> imagePaths, {
     String? documentCategory,
+    bool useVision = false,
     int? maxTokens,
     int? gpuLayers,
     int? threads,
@@ -706,70 +707,74 @@ class ScanRepositoryImpl implements ScanRepository {
       final ocrText = await _runOcrOnImages(imagePaths);
 
       ScanLogBuffer.instance.log('[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}');
-
-      await _networkDataSource.initModel(
-        gpuLayers: gpuLayers,
-        threads: threads,
-        contextSize: contextSize,
-      );
-
-      final promptBuilder = await RemainingResourcesVisionPrompt.create(
-        documentCategory: documentCategory,
-        ocrText: ocrText,
-        maxOcrLength: _visionOcrMaxLength,
-        includeFewShot: false,
-      );
-      final prompt = promptBuilder.buildPrompt();
-
-      final batches = <List<String>>[];
-      for (var i = 0; i < imagePaths.length; i += _visionBatchSize) {
-        batches.add(
-          imagePaths.sublist(
-            i,
-            i + _visionBatchSize > imagePaths.length
-                ? imagePaths.length
-                : i + _visionBatchSize,
-          ),
-        );
-      }
-
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $_visionBatchSize images, OCR trimmed to $_visionOcrMaxLength chars, no few-shot');
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$useVision');
 
       List<MappingResource> allResources = [];
       final confidenceText = ocrText.isNotEmpty ? ocrText : null;
 
-      for (var batchIdx = 0; batchIdx < batches.length; batchIdx++) {
-        if (_shouldCancelGeneration) return;
-
-        final health = await _networkDataSource.checkMemoryHealth(
-          withVision: true,
+      if (useVision) {
+        await _networkDataSource.initModel(
+          gpuLayers: gpuLayers,
+          threads: threads,
           contextSize: contextSize,
         );
-        if (!health.canProceed) {
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] memory too low (${health.availableMB}MB < ${health.requiredMB}MB), switching to text fallback');
-          break;
-        }
 
-        final batch = batches[batchIdx];
-        try {
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
+        final promptBuilder = await RemainingResourcesVisionPrompt.create(
+          documentCategory: documentCategory,
+          ocrText: ocrText,
+          maxOcrLength: _visionOcrMaxLength,
+          includeFewShot: false,
+        );
+        final prompt = promptBuilder.buildPrompt();
 
-          final response = await _networkDataSource.runVisionPrompt(
-            prompt: prompt,
-            imagePaths: batch,
-            maxTokens: maxTokens,
+        final batches = <List<String>>[];
+        for (var i = 0; i < imagePaths.length; i += _visionBatchSize) {
+          batches.add(
+            imagePaths.sublist(
+              i,
+              i + _visionBatchSize > imagePaths.length
+                  ? imagePaths.length
+                  : i + _visionBatchSize,
+            ),
           );
-
-          final parsed = _parseResourcesFromResponse(response, confidenceText);
-          allResources.addAll(parsed);
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] batch ${batchIdx + 1}: ${parsed.length} resources');
-
-          final progress = (batchIdx + 1) / (batches.length + 1);
-          yield (allResources.toSet().toList(), progress);
-        } catch (e) {
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1} failed: $e');
         }
+
+        ScanLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $_visionBatchSize images, OCR trimmed to $_visionOcrMaxLength chars, no few-shot');
+
+        for (var batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+          if (_shouldCancelGeneration) return;
+
+          final health = await _networkDataSource.checkMemoryHealth(
+            withVision: true,
+            contextSize: contextSize,
+          );
+          if (!health.canProceed) {
+            ScanLogBuffer.instance.log('[$_ts][ScanAI] memory too low (${health.availableMB}MB < ${health.requiredMB}MB), switching to text fallback');
+            break;
+          }
+
+          final batch = batches[batchIdx];
+          try {
+            ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
+
+            final response = await _networkDataSource.runVisionPrompt(
+              prompt: prompt,
+              imagePaths: batch,
+              maxTokens: maxTokens,
+            );
+
+            final parsed = _parseResourcesFromResponse(response, confidenceText);
+            allResources.addAll(parsed);
+            ScanLogBuffer.instance.log('[$_ts][ScanAI] batch ${batchIdx + 1}: ${parsed.length} resources');
+
+            final progress = (batchIdx + 1) / (batches.length + 1);
+            yield (allResources.toSet().toList(), progress);
+          } catch (e) {
+            ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1} failed: $e');
+          }
+        }
+      } else {
+        ScanLogBuffer.instance.log('[$_ts][ScanAI] vision disabled by user, using text-only');
       }
 
       if (allResources.isEmpty && ocrText.trim().isNotEmpty) {
@@ -784,10 +789,11 @@ class ScanRepositoryImpl implements ScanRepository {
         );
         final fallbackPrompt = fallbackPromptBuilder.buildPrompt();
 
+        final textCtx = (contextSize != null && contextSize < 2048) ? 2048 : contextSize;
         await _networkDataSource.initModel(
           withVision: false,
           threads: threads,
-          contextSize: contextSize,
+          contextSize: textCtx,
         );
 
         try {

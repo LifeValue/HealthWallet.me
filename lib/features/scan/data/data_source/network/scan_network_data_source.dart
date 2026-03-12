@@ -726,7 +726,7 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
       heartbeat = Timer.periodic(const Duration(seconds: 5), (_) {
         final elapsed = (sw.elapsedMilliseconds / 1000.0).toStringAsFixed(0);
         if (tokenCount == 0) {
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] text: prefilling... ${elapsed}s elapsed');
+          ScanLogBuffer.instance.log('[$_ts][ScanAI] text: processing prompt (no tokens generated yet)... ${elapsed}s elapsed');
         } else {
           final snippet = buffer.length > 60 ? '...${buffer.toString().substring(buffer.length - 60)}' : buffer.toString();
           ScanLogBuffer.instance.log('[$_ts][ScanAI] text: generating... $tokenCount tokens, ${elapsed}s | $snippet');

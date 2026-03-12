@@ -100,7 +100,6 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
           value: performedDateTime.value,
           confidenceLevel: performedDateTime.confidenceLevel,
           fieldType: FieldType.date,
-          validators: [nonEmptyValidator, dateValidator],
         ),
         'reason': TextFieldDescriptor(
           label: 'Reason',
