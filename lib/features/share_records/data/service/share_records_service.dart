@@ -143,9 +143,6 @@ class ShareRecordsService {
   static PeerType get localPeerType {
     if (Platform.isAndroid) return PeerType.android;
     if (Platform.isIOS) return PeerType.ios;
-    if (Platform.isMacOS) return PeerType.macOS;
-    if (Platform.isLinux) return PeerType.linux;
-    if (Platform.isWindows) return PeerType.windows;
     return PeerType.android;
   }
 
