@@ -124,6 +124,16 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     return -1;
   }
 
+  static const double _iosMemoryCeiling = 0.45;
+
+  Future<int> _getAvailableRamMBForIos() async {
+    final deviceRam = await _getDeviceRamMB();
+    final currentRssMB = ProcessInfo.currentRss ~/ (1024 * 1024);
+    final safeLimit = (deviceRam * _iosMemoryCeiling).round();
+    final headroom = safeLimit - currentRssMB;
+    return headroom > 0 ? headroom : 0;
+  }
+
   static int estimateIosRam(String machine) {
     final iphone = RegExp(r'iPhone(\d+),').firstMatch(machine);
     if (iphone != null) {
@@ -432,13 +442,15 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
       threads: threads ?? autoConfig.threads,
     );
     final ctx = contextSize ?? autoConfig.contextSize;
-    final availableMB = await _getAvailableRamMB();
+    final availableMB = Platform.isIOS
+        ? await _getAvailableRamMBForIos()
+        : await _getAvailableRamMB();
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
     ScanLogBuffer.instance.log('[$_ts][ScanAI] --- INIT MODEL ---');
     ScanLogBuffer.instance.log('[$_ts][ScanAI] model: ${_activeConfig.modelId} (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)');
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] config: ctx=$ctx, gpu_layers=${config.gpuLayers}, threads=${config.threads}, ram=${ramMB}MB, available=${availableMB}MB, required~${requiredMB}MB, platform=${Platform.operatingSystem}');
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] config: ctx=$ctx, gpu_layers=${config.gpuLayers}, threads=${config.threads}, ram=${ramMB}MB, available=${availableMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, required~${requiredMB}MB, platform=${Platform.operatingSystem}');
 
-    if (availableMB > 0 && availableMB < requiredMB) {
+    if (availableMB >= 0 && availableMB < requiredMB) {
       ScanLogBuffer.instance.log('[$_ts][ScanAI] ABORT: only ${availableMB}MB available, need ~${requiredMB}MB');
       throw Exception('Not enough memory to load the AI model. Available: ${availableMB}MB, required: ~${requiredMB}MB. Close other apps and try again.');
     }
@@ -508,10 +520,12 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     final ramMB = await _getDeviceRamMB();
     final autoConfig = computeModelConfig(withVision: withVision, ramMB: ramMB);
     final ctx = contextSize ?? autoConfig.contextSize;
-    final availableMB = await _getAvailableRamMB();
+    final availableMB = Platform.isIOS
+        ? await _getAvailableRamMBForIos()
+        : await _getAvailableRamMB();
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
-    final canProceed = availableMB <= 0 || availableMB >= requiredMB;
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] health check: available=${availableMB}MB, required~${requiredMB}MB, canProceed=$canProceed');
+    final canProceed = (availableMB < 0) || availableMB >= requiredMB;
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] health check: available=${availableMB}MB, required~${requiredMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, canProceed=$canProceed');
     return (availableMB: availableMB, requiredMB: requiredMB, canProceed: canProceed);
   }
 
