@@ -46,6 +46,10 @@ fvm flutter build apk --release
 fvm flutter build appbundle --release
 fvm flutter build ios --release --no-codesign
 
+# Run on connected iOS device (requires code signing — cannot use --no-codesign)
+# Use `fvm flutter devices` to find the device ID, then:
+fvm flutter run -d <device-id>
+
 # Deployment (via Fastlane — auto-increments build number from store)
 cd ios && bundle exec fastlane beta          # iOS → TestFlight
 cd android && bundle exec fastlane beta      # Android → Play Store internal

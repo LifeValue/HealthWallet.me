@@ -142,10 +142,10 @@ packages:
     dependency: "direct main"
     description:
       name: background_downloader
-      sha256: f15da01894a400103f4efc711d2d0782ad06c164f1a56a50735bd781d6fffc96
+      sha256: "4cb23d9ad4f5060944f38164e7b90d4bf99b57b2472a3bd4676e59b2db4afd06"
       url: "https://pub.dev"
     source: hosted
-    version: "9.5.3"
+    version: "9.5.4"
   barcode:
     dependency: transitive
     description:
@@ -438,10 +438,10 @@ packages:
     dependency: "direct main"
     description:
       name: dio
-      sha256: b9d46faecab38fc8cc286f80bc4d61a3bb5d4ac49e51ed877b4d6706efe57b25
+      sha256: aff32c08f92787a557dd5c0145ac91536481831a01b4648136373cddb0e64f8c
       url: "https://pub.dev"
     source: hosted
-    version: "5.9.1"
+    version: "5.9.2"
   dio_web_adapter:
     dependency: transitive
     description:
@@ -478,10 +478,10 @@ packages:
     dependency: "direct main"
     description:
       name: envied
-      sha256: cd95ddf0982e53f0b6664e889d4a9ce678b3907a59a5047923404375ef6dcacc
+      sha256: "2ca9842c7f513ab527e4f35a58331d6f9a7f90f270b5ba501d73ff2d9fa449ff"
       url: "https://pub.dev"
     source: hosted
-    version: "1.3.1"
+    version: "1.3.3"
   envied_generator:
     dependency: "direct dev"
     description:
@@ -612,10 +612,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_doc_scanner
-      sha256: "5ed7089e3f51e12dc859babd35531b0860b8a559d221a8fc5768d56bd8cb1099"
+      sha256: "4df50bbdd7b8a5d648d0ac4d629b1fb50d6aea00c4df444423434207dd31b2d5"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.17"
+    version: "0.0.18"
   flutter_google_wallet:
     dependency: "direct main"
     description:
@@ -673,10 +673,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_svg
-      sha256: "87fbd7c534435b6c5d9d98b01e1fd527812b82e68ddd8bd35fc45ed0fa8f0a95"
+      sha256: "1ded017b39c8e15c8948ea855070a5ff8ff8b3d5e83f3446e02d6bb12add7ad9"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.3"
+    version: "2.2.4"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -979,10 +979,10 @@ packages:
     dependency: "direct main"
     description:
       name: llamadart
-      sha256: "9d26c7acd04cb92656261e3ef2ec86c0c262c373f19e8486ab783d4159ed72b9"
+      sha256: "6025687842b3ddec902ef4ddb18414e8beb6ad6db96b01bc4b59dfb6f436e240"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.4"
+    version: "0.6.6"
   local_auth:
     dependency: "direct main"
     description:
@@ -1075,10 +1075,10 @@ packages:
     dependency: "direct main"
     description:
       name: mobile_scanner
-      sha256: c6184bf2913dd66be244108c9c27ca04b01caf726321c44b0e7a7a1e32d41044
+      sha256: c92c26bf2231695b6d3477c8dcf435f51e28f87b1745966b1fe4c47a286171ce
       url: "https://pub.dev"
     source: hosted
-    version: "7.1.4"
+    version: "7.2.0"
   mockito:
     dependency: "direct dev"
     description:
@@ -1547,10 +1547,10 @@ packages:
     dependency: "direct main"
     description:
       name: shared_preferences
-      sha256: "6e8bf70b7fef813df4e9a36f658ac46d107db4b4cfe1048b477d4e453a8159f5"
+      sha256: "2939ae520c9024cb197fc20dee269cd8cdbf564c8b5746374ec6cacdc5169e64"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.3"
+    version: "2.5.4"
   shared_preferences_android:
     dependency: transitive
     description:
@@ -1904,10 +1904,10 @@ packages:
     dependency: "direct main"
     description:
       name: uuid
-      sha256: a11b666489b1954e01d992f3d601b1804a33937b5a8fe677bd26b8a9f96f96e8
+      sha256: "1fef9e8e11e2991bb773070d4656b7bd5d850967a2456cfc83cf47925ba79489"
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.2"
+    version: "4.5.3"
   vector_graphics:
     dependency: transitive
     description:
