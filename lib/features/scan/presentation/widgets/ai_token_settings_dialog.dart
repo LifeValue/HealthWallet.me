@@ -10,7 +10,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AiSettingsResult {
@@ -36,6 +36,7 @@ class AiTokenSettingsDialog extends StatefulWidget {
   final int recommendedThreads;
   final int recommendedContextSize;
   final int deviceRamMB;
+  final AiModelConfig activeModelConfig;
 
   const AiTokenSettingsDialog({
     required this.currentTokens,
@@ -46,6 +47,7 @@ class AiTokenSettingsDialog extends StatefulWidget {
     required this.recommendedThreads,
     required this.recommendedContextSize,
     required this.deviceRamMB,
+    required this.activeModelConfig,
     super.key,
   });
 
@@ -66,6 +68,8 @@ class AiTokenSettingsDialog extends StatefulWidget {
 
     if (!context.mounted) return null;
 
+    final activeModelConfig = AiModelConfig.getActive(prefs);
+
     return showDialog<AiSettingsResult>(
       context: context,
       barrierColor: Colors.transparent,
@@ -78,6 +82,7 @@ class AiTokenSettingsDialog extends StatefulWidget {
         recommendedThreads: config.threads,
         recommendedContextSize: config.contextSize,
         deviceRamMB: deviceRamMB,
+        activeModelConfig: activeModelConfig,
       ),
     );
   }
@@ -183,7 +188,10 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
         ? AppColors.textSecondaryDark
         : AppColors.textSecondary;
 
-    final estimatedMB = ScanNetworkDataSourceImpl.estimateRequiredMB(_contextSize);
+    final activeModel = widget.activeModelConfig;
+    final kvCache = (_contextSize * 170 ~/ 1024);
+    final overhead = activeModel.modelSizeMB >= 2000 ? 700 : 400;
+    final estimatedMB = activeModel.modelSizeMB + activeModel.mmprojSizeMB + kvCache + overhead;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
