@@ -124,7 +124,7 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     return -1;
   }
 
-  static const double _iosMemoryCeiling = 0.45;
+  static const double _iosMemoryCeiling = 0.60;
 
   Future<int> _getAvailableRamMBForIos() async {
     final deviceRam = await _getDeviceRamMB();
@@ -157,17 +157,16 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     return 4096;
   }
 
-  static const int modelSizeMB = 2490;
-  static const int mmprojSizeMB = 851;
-  static const int computeOverheadMB = 700;
   static const double kvCacheMBPerCtx1024 = 170;
 
-  static int estimateRequiredMB(int contextSize, {bool withVision = true}) {
-    final visionExtra = withVision ? mmprojSizeMB : 0;
-    return modelSizeMB +
+  int estimateRequiredMB(int contextSize, {bool withVision = true}) {
+    final modelMB = _activeConfig.modelSizeMB;
+    final visionExtra = withVision ? _activeConfig.mmprojSizeMB : 0;
+    final overheadMB = modelMB >= 2000 ? 700 : 400;
+    return modelMB +
         visionExtra +
         (contextSize * kvCacheMBPerCtx1024 ~/ 1024) +
-        computeOverheadMB;
+        overheadMB;
   }
 
   static ({int gpuLayers, int threads, int contextSize}) computeModelConfig({
@@ -188,7 +187,8 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
         contextSize = 2048;
         gpuLayers = withVision ? 2 : 0;
       } else if (ramMB >= 4096) {
-        contextSize = 2048;
+        contextSize = 1024;
+        gpuLayers = withVision ? 1 : 0;
       } else {
         contextSize = 512;
       }
