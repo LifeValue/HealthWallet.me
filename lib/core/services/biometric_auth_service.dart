@@ -7,8 +7,7 @@ import 'package:android_intent_plus/android_intent.dart';
 class BiometricAuthService {
   final LocalAuthentication _auth = LocalAuthentication();
 
-  bool get _isAndroid =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
 
   Future<bool> canAuthenticate() async {
     final canAuth =
