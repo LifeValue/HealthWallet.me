@@ -131,7 +131,9 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     final currentRssMB = ProcessInfo.currentRss ~/ (1024 * 1024);
     final safeLimit = (deviceRam * _iosMemoryCeiling).round();
     final headroom = safeLimit - currentRssMB;
-    return headroom > 0 ? headroom : 0;
+    final available = headroom > 0 ? headroom : 0;
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] iOS memory: RSS=${currentRssMB}MB, deviceRAM=${deviceRam}MB, ceiling=${(_iosMemoryCeiling * 100).toInt()}%, safeLimit=${safeLimit}MB, headroom=${available}MB');
+    return available;
   }
 
   static int estimateIosRam(String machine) {
