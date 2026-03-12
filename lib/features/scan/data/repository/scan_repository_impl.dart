@@ -135,26 +135,8 @@ class ScanRepositoryImpl implements ScanRepository {
         return [];
       }
 
-      List<String> imagePaths = [];
-
-      if (scannedResult is List) {
-        imagePaths = scannedResult.cast<String>();
-      } else if (scannedResult is String) {
-        if (scannedResult.contains('Failed') ||
-            scannedResult.contains('Unknown') ||
-            scannedResult.contains('platform documents')) {
-          throw Exception('Scanner error: $scannedResult');
-        }
-        imagePaths = [scannedResult];
-      } else {
-        imagePaths = [scannedResult.toString()];
-      }
-
-      final validPaths = imagePaths
-          .where((path) =>
-              path.isNotEmpty &&
-              !path.contains('Failed') &&
-              !path.contains('Unknown'))
+      final validPaths = scannedResult.images
+          .where((path) => path.isNotEmpty)
           .toList();
 
       return validPaths;
@@ -176,14 +158,7 @@ class ScanRepositoryImpl implements ScanRepository {
         return [];
       }
 
-      if (scannedResult is String &&
-          (scannedResult.contains('Failed') ||
-              scannedResult.contains('Unknown'))) {
-        throw Exception('PDF scanner error: $scannedResult');
-      }
-
-      final pdfPath = scannedResult.toString();
-      return [pdfPath];
+      return [scannedResult.pdfUri];
     } on PlatformException catch (e) {
       throw Exception('PDF Scanner platform error: ${e.message ?? e.code}');
     } catch (e) {
