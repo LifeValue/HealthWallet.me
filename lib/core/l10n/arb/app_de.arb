@@ -331,13 +331,15 @@
     "recommended": "Empfohlen",
     "contextSizeLabel": "Kontextgröße",
     "contextSizeDescription": "Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.",
+    "useVisionLabel": "Tiefenscan",
+    "useVisionDescription": "Liest Bilder für eine tiefere Analyse (z.\u00A0B. Handschrift). Verbraucht mehr Speicher und erfordert ein leistungsfähigeres Gerät.",
 
     "aiModelNotAvailableForDevice": "Nicht verfügbar für dieses Telefon",
     "aiModelNotAvailableForDeviceDescription": "Dieses Gerät hat nicht genügend Speicher, um intelligentes Scannen auszuführen.",
     "noInternetConnectionTitle": "Keine Internetverbindung",
     "noInternetConnectionDescription": "Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
-    "processingStep2NotAvailableTitle": "Vollständige Verarbeitung nicht verfügbar",
-    "processingStep2NotEnoughRam": "Ihr Telefon hat nicht genügend Speicher für die vollständige Dokumentenverarbeitung. Sie können die oben extrahierten grundlegenden Patienteninformationen speichern.",
+    "processingStep2NotAvailableTitle": "Tiefenscan auf diesem Gerät nicht verfügbar",
+    "processingStep2NotEnoughRam": "Dieses Gerät hat nicht genügend Speicher für den Tiefenscan. Textbasierte Verarbeitung ist weiterhin verfügbar und funktioniert gut für die meisten Dokumente.",
     "emergencyContact": "Notfall-Telefonkontakt",
     "emergencyContactHint": "Telefonnummer",
     "searchCountry": "Land suchen...",
@@ -346,5 +348,10 @@
     "deletePageConfirmTitle": "Seite löschen",
     "deletePageConfirmMessage": "Diese Seite wird aus dem Dokument entfernt.",
     "cannotDeleteLastPage": "Die letzte Seite kann nicht gelöscht werden",
-    "pageRotated": "Seite gedreht"
+    "pageRotated": "Seite gedreht",
+    "regionAndUnits": "Einheiten",
+    "regionUS": "US",
+    "regionEurope": "Europa",
+    "regionUK": "UK",
+    "medGemmaIncompatibleDevice": "Dieses Modell benötigt mehr Arbeitsspeicher als auf Ihrem Gerät verfügbar ist. Verwenden Sie stattdessen das Standardmodell."
 }

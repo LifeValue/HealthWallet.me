@@ -19,7 +19,7 @@ import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/resources_form.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_token_settings_dialog.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
@@ -399,7 +399,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
                     ? context.l10n.extractingPatientInfo
                     : context.l10n.pleaseWait,
             showProgressBar:
-                displayedSession.status == ProcessingStatus.processing,
+                displayedSession.status == ProcessingStatus.processing &&
+                    state.useVision,
           ),
           const SizedBox(height: Insets.normal),
           Row(
@@ -504,13 +505,16 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   void _showAiSettingsDialog() async {
     final prefs = getIt<SharedPreferences>();
-    final currentTokens =
+    final previousTokens =
         prefs.getInt(SharedPrefsConstants.aiMaxTokens) ??
             AppConstants.defaultMaxTokens;
+    final previousGpu = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
+    final previousThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
+    final previousCtx = prefs.getInt(SharedPrefsConstants.aiContextSize);
 
     final result = await AiTokenSettingsDialog.show(
       context,
-      currentTokens: currentTokens,
+      currentTokens: previousTokens,
     );
 
     if (result != null && mounted) {
@@ -518,12 +522,20 @@ class _ProcessingPageState extends State<ProcessingPage> {
       await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
       await prefs.setInt(SharedPrefsConstants.aiContextSize, result.contextSize);
 
-      context.read<ScanBloc>().add(
-            ScanTokenCapacityUpdated(
-              newMaxTokens: result.maxTokens,
-              sessionId: widget.sessionId,
-            ),
-          );
+      final bloc = context.read<ScanBloc>();
+      bloc.add(ScanVisionToggled(useVision: result.useVision));
+
+      final modelSettingsChanged = result.maxTokens != previousTokens ||
+          result.gpuLayers != previousGpu ||
+          result.threads != previousThreads ||
+          result.contextSize != previousCtx;
+
+      if (modelSettingsChanged) {
+        bloc.add(ScanTokenCapacityUpdated(
+          newMaxTokens: result.maxTokens,
+          sessionId: widget.sessionId,
+        ));
+      }
     }
   }
 
@@ -674,13 +686,13 @@ class _ProcessingPageState extends State<ProcessingPage> {
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != session.id && s.isProcessing,
     );
-    final isStep2Blocked =
-        _deviceCapability == DeviceAiCapability.basicOnly ||
-            anotherSessionProcessing;
+    final isVisionOnBasicDevice =
+        _deviceCapability == DeviceAiCapability.basicOnly && state.useVision;
+    final isStep2Blocked = anotherSessionProcessing || isVisionOnBasicDevice;
 
     return Column(
       children: [
-        if (_deviceCapability == DeviceAiCapability.basicOnly) ...[
+        if (isVisionOnBasicDevice) ...[
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(Insets.normal),

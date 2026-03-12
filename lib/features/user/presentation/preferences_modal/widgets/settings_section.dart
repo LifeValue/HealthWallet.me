@@ -10,6 +10,7 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/widge
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/share_proximity_row.dart';
 import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/region/region_dialog.dart';
 import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -97,6 +98,30 @@ class SettingsSection extends StatelessWidget {
               ),
               const SizedBox(height: Insets.normal),
               const ShareProximityRow(),
+              const SizedBox(height: Insets.normal),
+              InkWell(
+                onTap: () {
+                  RegionDialog.show(context);
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        context.l10n.regionAndUnits,
+                        style: AppTextStyle.bodySmall,
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: Insets.normal),
               InkWell(
                 onTap: () {

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/widgets/app_date_picker.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class DateField extends StatelessWidget {
@@ -30,8 +33,13 @@ class DateField extends StatelessWidget {
     return age.toString();
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}-${date.month}-${date.year}';
+  String _formatDate(BuildContext context, DateTime date) {
+    try {
+      final region = context.read<UserBloc>().state.regionPreset;
+      return DateFormatUtils.formatDate(date, region);
+    } catch (_) {
+      return '${date.day}-${date.month}-${date.year}';
+    }
   }
 
   Future<void> _showDatePicker(BuildContext context) async {
@@ -66,7 +74,7 @@ class DateField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ageText = selectedDate != null
-        ? '${_calculateAge(selectedDate!)} ${context.l10n.years} (${_formatDate(selectedDate!)})'
+        ? '${_calculateAge(selectedDate!)} ${context.l10n.years} (${_formatDate(context, selectedDate!)})'
         : context.l10n.selectBirthDate;
 
     return Column(

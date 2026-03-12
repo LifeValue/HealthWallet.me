@@ -1,10 +1,7 @@
-// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
-// ignore_for_file: type=lint
 
-/// The translations for English (`en`).
 class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
@@ -953,6 +950,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.';
 
   @override
+  String get useVisionLabel => 'Deep Scan';
+
+  @override
+  String get useVisionDescription =>
+      'Reads images for deeper analysis (e.g. handwriting). Uses more memory and requires a more performant device.';
+
+  @override
   String get aiModelNotAvailableForDevice => 'Not available for this phone';
 
   @override
@@ -968,11 +972,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get processingStep2NotAvailableTitle =>
-      'Full processing not available';
+      'Deep Scan not available on this device';
 
   @override
   String get processingStep2NotEnoughRam =>
-      'Your phone doesn\'t have enough memory for full document processing. You can save the basic patient information extracted above.';
+      'This device doesn\'t have enough memory for Deep Scan. Text-based processing is still available and works well for most documents.';
 
   @override
   String get emergencyContact => 'Emergency Phone Contact';
@@ -1001,4 +1005,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pageRotated => 'Page rotated';
+
+  @override
+  String get regionAndUnits => 'Units';
+
+  @override
+  String get regionUS => 'US';
+
+  @override
+  String get regionEurope => 'Europe';
+
+  @override
+  String get regionUK => 'UK';
+
+  @override
+  String get medGemmaIncompatibleDevice =>
+      'This model requires more memory than your device has available. Use the Standard model instead.';
 }

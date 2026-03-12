@@ -11,4 +11,6 @@ class SharedPrefsConstants {
   static const aiThreads = 'aiThreads';
   static const aiContextSize = 'aiContextSize';
   static const aiSelectedModel = 'aiSelectedModel';
+  static const aiUseVision = 'aiUseVision';
+  static const regionPreset = 'regionPreset';
 }

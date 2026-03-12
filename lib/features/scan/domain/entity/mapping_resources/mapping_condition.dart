@@ -97,7 +97,6 @@ class MappingCondition with _$MappingCondition implements MappingResource {
           value: onsetDateTime.value,
           confidenceLevel: onsetDateTime.confidenceLevel,
           fieldType: FieldType.date,
-          validators: [nonEmptyValidator, dateValidator],
         ),
         'clinicalStatus': TextFieldDescriptor(
           label: 'Clinical Status',
