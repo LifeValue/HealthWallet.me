@@ -549,6 +549,11 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       return;
     }
 
+    if (session.status == ProcessingStatus.patientExtracted &&
+        session.patient.hasSelection) {
+      return;
+    }
+
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
     );
@@ -844,12 +849,17 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
 
+    final hasPatientData = session.patient.hasSelection;
+
+    final newStatus = (session.status == ProcessingStatus.processing ||
+            hasPatientData)
+        ? ProcessingStatus.patientExtracted
+        : ProcessingStatus.cancelled;
+
     _updateSession(
       emit,
       sessionId: event.sessionId,
-      status: session.status == ProcessingStatus.processing
-          ? ProcessingStatus.patientExtracted
-          : ProcessingStatus.cancelled,
+      status: newStatus,
       resources: [],
       progress: 0.0,
     );
