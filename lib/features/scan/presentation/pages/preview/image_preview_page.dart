@@ -170,7 +170,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                           ? null
                           : () => context.read<PreviewBloc>().add(
                               PreviewPageRotated(pageIndex: currentIndex)),
-                      onDelete: state.isReordering
+                      onDelete: state.isReordering || state.images.length <= 1
                           ? null
                           : () => _onDeleteTapped(currentIndex),
                       isReordering: state.isReordering,

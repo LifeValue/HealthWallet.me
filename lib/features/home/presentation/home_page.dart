@@ -74,6 +74,13 @@ class HomePage extends StatelessWidget {
             }
           },
         ),
+        BlocListener<UserBloc, UserState>(
+          listenWhen: (previous, current) =>
+              previous.regionPreset != current.regionPreset,
+          listener: (context, state) {
+            context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+          },
+        ),
       ],
       child: HomeView(pageController: pageController),
     );

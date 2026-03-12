@@ -5,6 +5,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
@@ -357,7 +359,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       [List<String>? patientSourceIds]) async {
     final obs = await _fetchResourcesFromAllSources(
         [FhirType.Observation], sourceId, patientSourceIds);
-    return _patientVitalFactory.buildFromResources(obs);
+    final prefs = await SharedPreferences.getInstance();
+    final region = RegionPreset.fromString(
+      prefs.getString(SharedPrefsConstants.regionPreset),
+    );
+    return _patientVitalFactory.buildFromResources(obs, region: region);
   }
 
   Future<

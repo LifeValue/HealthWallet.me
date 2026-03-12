@@ -9,7 +9,10 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
@@ -122,6 +125,17 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     return null;
   }
 
+  List<RecordInfoLine> _getAdditionalInfo(BuildContext context) {
+    final resource = widget.resource;
+    if (resource is Observation) {
+      try {
+        final region = context.read<UserBloc>().state.regionPreset;
+        return resource.additionalInfoForRegion(region);
+      } catch (_) {}
+    }
+    return resource.additionalInfo;
+  }
+
   void _onViewDocument(IFhirResource resource) {
     if (_isEphemeral) {
       _pdfPreviewService.previewInApp(context, resource);
@@ -231,7 +245,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
             ),
-          ...widget.resource.additionalInfo.map((infoLine) {
+          ..._getAdditionalInfo(context).map((infoLine) {
             if (infoLine.isSection) {
               return Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 8),

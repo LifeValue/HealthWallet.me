@@ -11,7 +11,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_token_settings_dialog.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -177,15 +177,17 @@ class _AiModelSectionState extends State<AiModelSection> {
                   ],
                 ),
               ),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => ModelManagementDialog.show(context),
-              child: Icon(
-                Icons.swap_horiz,
-                size: 22,
-                color: AppColors.primary,
+            if (state.deviceCapability != DeviceAiCapability.unsupported) ...[
+              const Spacer(),
+              GestureDetector(
+                onTap: () => ModelManagementDialog.show(context),
+                child: Icon(
+                  Icons.swap_horiz,
+                  size: 22,
+                  color: AppColors.primary,
+                ),
               ),
-            ),
+            ],
           ],
         ),
         const SizedBox(height: Insets.normal),
@@ -195,11 +197,7 @@ class _AiModelSectionState extends State<AiModelSection> {
         ),
         if (!state.medGemmaDownloaded && !state.qwenDownloaded) ...[
           const SizedBox(height: Insets.small),
-          Text(
-            context.l10n.onboardingAiModelDescription,
-            textAlign: TextAlign.center,
-            style: AppTextStyle.labelLarge,
-          ),
+          _buildRichDescription(context, context.l10n.onboardingAiModelDescription),
         ],
         const SizedBox(height: Insets.normal),
         if (state.status == LoadModelStatus.modelAbsent ||
@@ -369,6 +367,7 @@ class _AiModelSectionState extends State<AiModelSection> {
     await prefs.setInt(SharedPrefsConstants.aiGpuLayers, result.gpuLayers);
     await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
     await prefs.setInt(SharedPrefsConstants.aiContextSize, result.contextSize);
+    await prefs.setBool(SharedPrefsConstants.aiUseVision, result.useVision);
   }
 
   Color _getStatusColor(LoadModelStatus status) {
@@ -417,6 +416,35 @@ class _AiModelSectionState extends State<AiModelSection> {
           color: AppColors.error,
         );
     }
+  }
+
+  Widget _buildRichDescription(BuildContext context, String description) {
+    if (description.contains('**')) {
+      final segments = description.split('**');
+      final spans = <TextSpan>[];
+      for (int i = 0; i < segments.length; i++) {
+        spans.add(TextSpan(
+          text: segments[i],
+          style: i.isOdd
+              ? AppTextStyle.labelLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                )
+              : null,
+        ));
+      }
+      return Text.rich(
+        TextSpan(
+          style: AppTextStyle.labelLarge,
+          children: spans,
+        ),
+        textAlign: TextAlign.center,
+      );
+    }
+    return Text(
+      description,
+      textAlign: TextAlign.center,
+      style: AppTextStyle.labelLarge,
+    );
   }
 
   String _getModelStatusText(BuildContext context, LoadModelState state) {

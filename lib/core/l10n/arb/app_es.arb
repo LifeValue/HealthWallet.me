@@ -335,13 +335,15 @@
     "recommended": "Recomendado",
     "contextSizeLabel": "Tamaño de contexto",
     "contextSizeDescription": "Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria.",
+    "useVisionLabel": "Escaneo profundo",
+    "useVisionDescription": "Lee imágenes para un análisis más profundo (p. ej. escritura a mano). Usa más memoria y requiere un dispositivo más potente.",
 
     "aiModelNotAvailableForDevice": "No disponible para este teléfono",
     "aiModelNotAvailableForDeviceDescription": "Este dispositivo no tiene suficiente memoria para ejecutar el escaneo inteligente.",
     "noInternetConnectionTitle": "Sin conexión a Internet",
     "noInternetConnectionDescription": "Por favor, verifica tu conexión a Internet e inténtalo de nuevo.",
-    "processingStep2NotAvailableTitle": "Procesamiento completo no disponible",
-    "processingStep2NotEnoughRam": "Tu teléfono no tiene suficiente memoria para el procesamiento completo de documentos. Puedes guardar la información básica del paciente extraída arriba.",
+    "processingStep2NotAvailableTitle": "Escaneo profundo no disponible en este dispositivo",
+    "processingStep2NotEnoughRam": "Este dispositivo no tiene suficiente memoria para el escaneo profundo. El procesamiento basado en texto sigue disponible y funciona bien para la mayoría de documentos.",
     "emergencyContact": "Contacto telefónico de emergencia",
     "emergencyContactHint": "Número de teléfono",
     "searchCountry": "Buscar país...",
@@ -350,5 +352,10 @@
     "deletePageConfirmTitle": "Eliminar página",
     "deletePageConfirmMessage": "Esta página será eliminada del documento.",
     "cannotDeleteLastPage": "No se puede eliminar la última página",
-    "pageRotated": "Página rotada"
+    "pageRotated": "Página rotada",
+    "regionAndUnits": "Unidades",
+    "regionUS": "US",
+    "regionEurope": "Europa",
+    "regionUK": "UK",
+    "medGemmaIncompatibleDevice": "Este modelo requiere más memoria de la que tiene disponible su dispositivo. Utilice el modelo Estándar en su lugar."
 }

@@ -24,5 +24,6 @@ class ScanState with _$ScanState {
     @Default([]) List<String> allImagePathsForOCR,
     @Default({}) Map<String, List<String>> sessionImagePaths,
     Notification? notification,
+    @Default(false) bool useVision,
   }) = _ScanState;
 }

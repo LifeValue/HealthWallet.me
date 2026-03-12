@@ -4,11 +4,13 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/animated_reorderable_list.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -389,7 +391,7 @@ class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
                                               BlendMode.srcIn,
                                             ),
                                           ),
-                                          'MRN: ${FhirFieldExtractor.extractPatientMRN(displayPatient)}',
+                                          '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient)}: ${FhirFieldExtractor.extractPatientMRN(displayPatient)}',
                                         ),
                                         _buildPatientInfoRow(
                                           context,
@@ -401,7 +403,7 @@ class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
                                               BlendMode.srcIn,
                                             ),
                                           ),
-                                          '${context.l10n.age}: ${FhirFieldExtractor.extractPatientAge(displayPatient)} (${displayPatient.birthDate})',
+                                          '${context.l10n.age}: ${FhirFieldExtractor.extractPatientAge(displayPatient)} (${_formatBirthDate(context, displayPatient)})',
                                         ),
                                       ],
                                     ),
@@ -590,6 +592,14 @@ class _UnifiedPatientCardState extends State<_UnifiedPatientCard> {
       default:
         return gender;
     }
+  }
+
+  String _formatBirthDate(BuildContext context, Patient patient) {
+    final birthDate =
+        FhirFieldExtractor.extractPatientBirthDate(patient);
+    if (birthDate == null) return patient.birthDate?.toString() ?? '';
+    final region = context.read<UserBloc>().state.regionPreset;
+    return DateFormatUtils.formatDate(birthDate, region);
   }
 
   Widget _buildEmergencyContactRow(BuildContext context, Patient patient) {
