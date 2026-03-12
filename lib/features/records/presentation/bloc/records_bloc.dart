@@ -3,11 +3,14 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'records_event.dart';
 part 'records_state.dart';
@@ -314,8 +317,11 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
 
       final name = (event.patientName ?? export.patientName)
           .replaceAll(RegExp(r'[^\w\s-]'), '');
-      final now = DateTime.now();
-      final date = '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+      final prefs = await SharedPreferences.getInstance();
+      final region = RegionPreset.fromString(
+        prefs.getString(SharedPrefsConstants.regionPreset),
+      );
+      final date = region.formatDate(DateTime.now());
       final fileName = '$name - IPS Summary - $date';
 
       File pdfFile = await File(

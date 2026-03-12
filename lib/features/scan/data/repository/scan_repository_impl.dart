@@ -409,23 +409,10 @@ class ScanRepositoryImpl implements ScanRepository {
   Stream<double> downloadModel() {
     final controller = StreamController<double>();
 
-    int modelProgress = 0;
-    int mmprojProgress = 0;
-
-    void emitCombinedProgress() {
-      if (controller.isClosed) return;
-      final combined = (modelProgress * 0.7 + mmprojProgress * 0.3);
-      controller.add(combined);
-    }
-
     _networkDataSource.downloadModel(onProgress: (progress) {
-      modelProgress = progress;
-      emitCombinedProgress();
-    }).then((_) {
-      return _networkDataSource.downloadMmproj(onProgress: (progress) {
-        mmprojProgress = progress;
-        emitCombinedProgress();
-      });
+      if (!controller.isClosed) {
+        controller.add(progress.toDouble());
+      }
     }).then((_) {
       controller.close();
     }).catchError((error) {
@@ -438,34 +425,18 @@ class ScanRepositoryImpl implements ScanRepository {
 
   @override
   Future<bool> checkModelExistence() async {
-    final modelExists = await _networkDataSource.checkModelExistence();
-    final mmprojExists = await _networkDataSource.checkMmprojExistence();
-    return modelExists && mmprojExists;
+    return _networkDataSource.checkModelExistence();
   }
 
   @override
   Stream<double> downloadModelForVariant(AiModelVariant variant) {
     final controller = StreamController<double>();
 
-    int modelProgress = 0;
-    int mmprojProgress = 0;
-
-    void emitCombinedProgress() {
-      if (controller.isClosed) return;
-      final combined = (modelProgress * 0.7 + mmprojProgress * 0.3);
-      controller.add(combined);
-    }
-
     _networkDataSource
         .downloadModelForVariant(variant, onProgress: (progress) {
-      modelProgress = progress;
-      emitCombinedProgress();
-    }).then((_) {
-      return _networkDataSource.downloadMmprojForVariant(variant,
-          onProgress: (progress) {
-        mmprojProgress = progress;
-        emitCombinedProgress();
-      });
+      if (!controller.isClosed) {
+        controller.add(progress.toDouble());
+      }
     }).then((_) {
       controller.close();
     }).catchError((error) {
@@ -484,6 +455,30 @@ class ScanRepositoryImpl implements ScanRepository {
   @override
   Future<void> deleteModelForVariant(AiModelVariant variant) async {
     return _networkDataSource.deleteModelForVariant(variant);
+  }
+
+  @override
+  Stream<double> downloadMmprojForVariant(AiModelVariant variant) {
+    final controller = StreamController<double>();
+
+    _networkDataSource
+        .downloadMmprojForVariant(variant, onProgress: (progress) {
+      if (!controller.isClosed) {
+        controller.add(progress.toDouble());
+      }
+    }).then((_) {
+      controller.close();
+    }).catchError((error) {
+      controller.addError(error);
+      controller.close();
+    });
+
+    return controller.stream;
+  }
+
+  @override
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant) async {
+    return _networkDataSource.checkMmprojExistenceForVariant(variant);
   }
 
   MappingResource _selectContainer({
@@ -627,11 +622,12 @@ class ScanRepositoryImpl implements ScanRepository {
     int? threads,
     int? contextSize,
   ) async {
+    final textCtx = (contextSize == null || contextSize < 2048) ? 2048 : contextSize;
     ScanLogBuffer.instance.log('[$_ts][ScanAI] loading model (text-only, no vision projector)...');
     await _networkDataSource.initModel(
       withVision: false,
       threads: threads,
-      contextSize: contextSize,
+      contextSize: textCtx,
     );
 
     final prompt = BasicInfoPrompt().buildPrompt(ocrText);
@@ -789,7 +785,7 @@ class ScanRepositoryImpl implements ScanRepository {
         );
         final fallbackPrompt = fallbackPromptBuilder.buildPrompt();
 
-        final textCtx = (contextSize != null && contextSize < 2048) ? 2048 : contextSize;
+        final textCtx = (contextSize == null || contextSize < 2048) ? 2048 : contextSize;
         await _networkDataSource.initModel(
           withVision: false,
           threads: threads,
@@ -807,6 +803,10 @@ class ScanRepositoryImpl implements ScanRepository {
           ScanLogBuffer.instance.log('[$_ts][ScanAI] text fallback: ${allResources.length} resources');
         } catch (e) {
           ScanLogBuffer.instance.log('[$_ts][ScanAI] text fallback failed: $e');
+          final msg = e.toString().toLowerCase();
+          if (msg.contains('tokenization') || msg.contains('prompt too long')) {
+            rethrow;
+          }
         }
       }
 
@@ -824,6 +824,53 @@ class ScanRepositoryImpl implements ScanRepository {
     }
   }
 
+  static const _basicInfoTypes = {'Patient', 'Encounter', 'DiagnosticReport'};
+  static final _numericValue = RegExp(r'^[\d.,\-+/<>= ]+$');
+  static final _sectionHeaders = RegExp(
+    r'^(anamnèse|anamn[eè]se|atcd|antécédents|examen|examen clinique|histoire|motif|conclusion|résumé|bilan|remarques?)\b',
+    caseSensitive: false,
+  );
+  static const _booleanValues = {'true', 'false', 'yes', 'no', 'oui', 'non', 'vrai', 'faux'};
+
+  static bool _shouldSkipResource(Map<String, dynamic> json) {
+    final type = json['resourceType'] as String?;
+    if (type == null) return true;
+    if (_basicInfoTypes.contains(type)) return true;
+
+    if (type == 'Observation') {
+      final value = (json['value'] as String?)?.trim() ?? '';
+      if (value.isEmpty) return false;
+      if (_booleanValues.contains(value.toLowerCase())) return true;
+      if (!_numericValue.hasMatch(value) && value.split(RegExp(r'\s+')).length > 2) return true;
+    }
+
+    if (type == 'Condition') {
+      final name = (json['conditionName'] as String?)?.trim() ?? '';
+      if (_sectionHeaders.hasMatch(name)) return true;
+      if (name.split(RegExp(r'\s+')).length > 10) return true;
+    }
+
+    return false;
+  }
+
+  static List<Map<String, dynamic>> _deduplicateResources(List<dynamic> jsonList) {
+    final seen = <String>{};
+    final result = <Map<String, dynamic>>[];
+    for (final item in jsonList) {
+      if (item is! Map<String, dynamic>) continue;
+      final type = item['resourceType'] as String? ?? '';
+      final nameKey = item['conditionName'] ?? item['observationName'] ??
+          item['medicationName'] ?? item['procedureName'] ??
+          item['practitionerName'] ?? item['organizationName'] ??
+          item['substance'] ?? '';
+      final key = '$type:${(nameKey as String).toLowerCase().trim()}';
+      if (seen.contains(key)) continue;
+      seen.add(key);
+      result.add(item);
+    }
+    return result;
+  }
+
   List<MappingResource> _parseResourcesFromResponse(
     String? response,
     String? confidenceText,
@@ -831,9 +878,15 @@ class ScanRepositoryImpl implements ScanRepository {
     final cleaned = _stripMarkdownFences(response ?? '');
     final repaired = _repairTruncatedJsonArray(cleaned);
     List<dynamic> jsonList = jsonDecode(repaired);
+    final deduplicated = _deduplicateResources(jsonList);
 
     List<MappingResource> resources = [];
-    for (Map<String, dynamic> json in jsonList) {
+    for (final json in deduplicated) {
+      if (_shouldSkipResource(json)) {
+        ScanLogBuffer.instance.log('[ScanAI] skipped ${json['resourceType']}: ${json['conditionName'] ?? json['observationName'] ?? json['value'] ?? ''}');
+        continue;
+      }
+
       MappingResource resource = MappingResource.fromJson(json);
       resource = resource.populateConfidence(
         confidenceText ??

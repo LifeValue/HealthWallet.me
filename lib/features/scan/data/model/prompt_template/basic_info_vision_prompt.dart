@@ -33,6 +33,7 @@ Rules:
 - Romanian: "Data nasterii" = birth date. "Data internarii" = NOT birth date
 - identifierLabel: the type of patient ID found. Use "CNP" only for Romanian 13-digit IDs. Otherwise use "MRN", "SSN", "NHS", or "Identifier"
 - patientMRN = the CNP number (13 digits after "CNP:"), NOT "Cod prezentare", "Foie de observatie", or "Nr. fisa"
+- If no patient ID or MRN is found in the document, set patientMRN to "" and keep identifierLabel as "MRN"
 - Use empty string for missing fields''';
   }
 }

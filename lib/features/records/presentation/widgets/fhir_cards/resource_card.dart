@@ -184,18 +184,28 @@ class _ResourceCardState extends State<ResourceCard> {
     final size = renderBox.size;
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        width: size.width + 32,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: Offset(-16, size.height + 8),
-          child: Material(
-            child: widget.readOnly
-                ? _buildEphemeralRelatedSection(context)
-                : _buildRelatedResourcesSection(context),
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closeRelatedIfOpen,
+              child: Container(color: Colors.transparent),
+            ),
           ),
-        ),
+          Positioned(
+            width: size.width + 32,
+            child: CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: Offset(-16, size.height + 8),
+              child: Material(
+                child: widget.readOnly
+                    ? _buildEphemeralRelatedSection(context)
+                    : _buildRelatedResourcesSection(context),
+              ),
+            ),
+          ),
+        ],
       ),
     );
 

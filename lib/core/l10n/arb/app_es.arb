@@ -305,8 +305,8 @@
     "chargerPluggedIn": "Cargador conectado.",
     "plugInChargerEllipsis": "Conecta el cargador...",
 
-    "processingFailedCapacity": "El documento es demasiado grande para la capacidad actual de tokens de IA.",
-    "processingFailedCapacitySuggestion": "Intenta aumentar la capacidad de IA para procesar documentos más grandes.",
+    "processingFailedCapacity": "El documento es demasiado grande para el tamaño de contexto actual de IA.",
+    "processingFailedCapacitySuggestion": "Toca el icono de ajustes arriba y aumenta el Tamaño de Contexto a 2048 o más, luego reintenta.",
     "increaseAiModelCapacity": "Aumentar Capacidad de IA",
     "goBack": "Volver",
 
@@ -353,9 +353,21 @@
     "deletePageConfirmMessage": "Esta página será eliminada del documento.",
     "cannotDeleteLastPage": "No se puede eliminar la última página",
     "pageRotated": "Página rotada",
-    "regionAndUnits": "Unidades",
+    "regionAndUnits": "Idioma y Unidades",
+    "language": "Idioma",
+    "systemDefault": "Predeterminado del sistema",
     "regionUS": "US",
     "regionEurope": "Europa",
     "regionUK": "UK",
-    "medGemmaIncompatibleDevice": "Este modelo requiere más memoria de la que tiene disponible su dispositivo. Utilice el modelo Estándar en su lugar."
+    "medGemmaIncompatibleDevice": "Este modelo requiere más memoria de la que tiene disponible su dispositivo. Utilice el modelo Estándar en su lugar.",
+    "deepScanDownloadTitle": "Descargar modelo de visión",
+    "deepScanDownloadMessage": "El escaneo profundo requiere una descarga adicional (~{size} MB). ¿Descargar ahora?",
+    "@deepScanDownloadMessage": {
+        "placeholders": {
+            "size": {
+                "type": "int"
+            }
+        }
+    },
+    "downloadingVisionModel": "Descargando modelo de visión..."
 }

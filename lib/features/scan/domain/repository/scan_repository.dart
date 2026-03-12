@@ -39,6 +39,10 @@ abstract class ScanRepository {
 
   Future<void> deleteModelForVariant(AiModelVariant variant);
 
+  Stream<double> downloadMmprojForVariant(AiModelVariant variant);
+
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant);
+
   Future<(MappingPatient, MappingResource)> mapBasicInfo(
     List<String> imagePaths, {
     int? maxTokens,

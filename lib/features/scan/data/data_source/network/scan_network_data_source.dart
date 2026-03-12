@@ -137,11 +137,16 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
   }
 
   static int estimateIosRam(String machine) {
-    final iphone = RegExp(r'iPhone(\d+),').firstMatch(machine);
+    final iphone = RegExp(r'iPhone(\d+),(\d+)').firstMatch(machine);
     if (iphone != null) {
       final major = int.tryParse(iphone.group(1)!) ?? 0;
+      final minor = int.tryParse(iphone.group(2)!) ?? 0;
       if (major >= 17) return 8192;
       if (major >= 15) return 6144;
+      if (major == 14) {
+        if (minor == 2 || minor == 3 || minor == 7 || minor == 8) return 6144;
+        return 4096;
+      }
       return 4096;
     }
 
@@ -384,8 +389,7 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     final config = AiModelConfig.fromVariant(variant);
     final dir = await _getModelDirectory();
     final modelPath = path.join(dir, config.modelId);
-    final mmprojPath = path.join(dir, config.mmprojId);
-    return File(modelPath).existsSync() && File(mmprojPath).existsSync();
+    return File(modelPath).existsSync();
   }
 
   @override

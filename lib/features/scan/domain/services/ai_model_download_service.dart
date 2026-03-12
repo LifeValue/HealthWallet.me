@@ -23,6 +23,7 @@ class AiModelDownloadState with _$AiModelDownloadState {
     @Default(AiModelDownloadStatus.idle) AiModelDownloadStatus status,
     @Default(0.0) double progress,
     @Default(false) bool isModelAvailable,
+    @Default(false) bool isMmprojDownload,
     String? errorMessage,
     AiModelVariant? variant,
   }) = _AiModelDownloadState;
@@ -43,6 +44,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
 
   final _stateController = StreamController<AiModelDownloadState>.broadcast();
   final Map<AiModelVariant, StreamSubscription<double>> _variantSubscriptions = {};
+  StreamSubscription<double>? _mmprojSubscription;
 
   AiModelDownloadState _state = const AiModelDownloadState();
 
@@ -53,7 +55,8 @@ class AiModelDownloadService with WidgetsBindingObserver {
   bool isVariantDownloading(AiModelVariant variant) =>
       _variantSubscriptions.containsKey(variant);
 
-  bool get isAnyDownloading => _variantSubscriptions.isNotEmpty;
+  bool get isAnyDownloading =>
+      _variantSubscriptions.isNotEmpty || _mmprojSubscription != null;
 
   void _checkForInterruptedDownload() {
     final wasInterrupted = _prefs.getBool(_downloadInterruptedKey) ?? false;
@@ -265,6 +268,95 @@ class AiModelDownloadService with WidgetsBindingObserver {
     ));
   }
 
+  Future<bool> checkMmprojExistsForVariant(AiModelVariant variant) async {
+    try {
+      return await _repository.checkMmprojExistenceForVariant(variant);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> startMmprojDownloadForVariant(AiModelVariant variant) async {
+    if (_mmprojSubscription != null) return;
+
+    try {
+      final exists =
+          await _repository.checkMmprojExistenceForVariant(variant);
+      if (exists) {
+        _updateState(AiModelDownloadState(
+          status: AiModelDownloadStatus.completed,
+          isMmprojDownload: true,
+          isModelAvailable: true,
+          progress: 100.0,
+          variant: variant,
+        ));
+        return;
+      }
+    } catch (e) {}
+
+    _updateState(AiModelDownloadState(
+      status: AiModelDownloadStatus.downloading,
+      isMmprojDownload: true,
+      progress: 0.0,
+      variant: variant,
+    ));
+
+    try {
+      final stream = _repository.downloadMmprojForVariant(variant);
+
+      _mmprojSubscription = stream.listen(
+        (progress) {
+          if (_mmprojSubscription != null) {
+            _updateState(AiModelDownloadState(
+              status: AiModelDownloadStatus.downloading,
+              isMmprojDownload: true,
+              progress: progress,
+              variant: variant,
+            ));
+          }
+        },
+        onDone: () {
+          _mmprojSubscription = null;
+          _updateState(AiModelDownloadState(
+            status: AiModelDownloadStatus.completed,
+            isMmprojDownload: true,
+            isModelAvailable: true,
+            progress: 100.0,
+            variant: variant,
+          ));
+        },
+        onError: (error) {
+          _mmprojSubscription = null;
+          _updateState(AiModelDownloadState(
+            status: AiModelDownloadStatus.error,
+            isMmprojDownload: true,
+            errorMessage: 'Download failed: ${error.toString()}',
+            variant: variant,
+          ));
+        },
+        cancelOnError: true,
+      );
+    } catch (e) {
+      _mmprojSubscription = null;
+      _updateState(AiModelDownloadState(
+        status: AiModelDownloadStatus.error,
+        isMmprojDownload: true,
+        errorMessage: 'Failed to start download: ${e.toString()}',
+        variant: variant,
+      ));
+    }
+  }
+
+  Future<void> cancelMmprojDownload() async {
+    await _mmprojSubscription?.cancel();
+    _mmprojSubscription = null;
+    _updateState(_state.copyWith(
+      status: AiModelDownloadStatus.cancelled,
+      isMmprojDownload: true,
+      errorMessage: 'Download cancelled',
+    ));
+  }
+
   void resetState() {
     _updateState(const AiModelDownloadState());
   }
@@ -299,6 +391,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
     for (final sub in _variantSubscriptions.values) {
       sub.cancel();
     }
+    _mmprojSubscription?.cancel();
     _stateController.close();
   }
 }

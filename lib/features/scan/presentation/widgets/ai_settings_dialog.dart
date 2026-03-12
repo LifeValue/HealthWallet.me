@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -6,12 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
+import 'package:health_wallet/features/scan/domain/services/ai_model_download_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AiSettingsResult {
@@ -138,6 +142,12 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
   late int _contextSize;
   late bool _useVision;
 
+  final AiModelDownloadService _downloadService =
+      getIt.get<AiModelDownloadService>();
+  StreamSubscription<AiModelDownloadState>? _downloadSub;
+  bool _isMmprojDownloading = false;
+  double _mmprojProgress = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -151,10 +161,36 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     _threads = widget.currentThreads;
     _contextSize = widget.currentContextSize;
     _useVision = widget.currentUseVision;
+
+    _downloadSub = _downloadService.stateStream.listen(_onDownloadState);
+  }
+
+  void _onDownloadState(AiModelDownloadState state) {
+    if (!state.isMmprojDownload) return;
+
+    if (state.status == AiModelDownloadStatus.downloading) {
+      setState(() {
+        _isMmprojDownloading = true;
+        _mmprojProgress = state.progress;
+      });
+    } else if (state.status == AiModelDownloadStatus.completed) {
+      setState(() {
+        _isMmprojDownloading = false;
+        _mmprojProgress = 0.0;
+        _useVision = true;
+      });
+    } else if (state.status == AiModelDownloadStatus.error ||
+        state.status == AiModelDownloadStatus.cancelled) {
+      setState(() {
+        _isMmprojDownloading = false;
+        _mmprojProgress = 0.0;
+      });
+    }
   }
 
   @override
   void dispose() {
+    _downloadSub?.cancel();
     _customController.dispose();
     super.dispose();
   }
@@ -177,6 +213,31 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
   int _contextStepIndex() {
     final idx = _contextSizeSteps.indexOf(_contextSize);
     return idx >= 0 ? idx : 1;
+  }
+
+  Future<void> _handleVisionToggleOn() async {
+    final variant = widget.activeModelConfig.variant;
+    final exists =
+        await _downloadService.checkMmprojExistsForVariant(variant);
+
+    if (exists) {
+      setState(() => _useVision = true);
+      return;
+    }
+
+    if (!mounted) return;
+
+    final sizeMB = widget.activeModelConfig.mmprojSizeMB;
+    ConfirmationDialog.show(
+      context: context,
+      title: context.l10n.deepScanDownloadTitle,
+      message: context.l10n.deepScanDownloadMessage(sizeMB),
+      confirmText: context.l10n.aiModelEnableDownload,
+      cancelText: context.l10n.cancel,
+      onConfirm: () {
+        _downloadService.startMmprojDownloadForVariant(variant);
+      },
+    );
   }
 
   void _apply() {
@@ -486,10 +547,20 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
   }
 
   Widget _buildOnOffToggle(Color borderColor) {
+    if (_isMmprojDownloading) {
+      return _buildMmprojProgressIndicator();
+    }
+
     final colorScheme = context.colorScheme;
 
     return GestureDetector(
-      onTap: () => setState(() => _useVision = !_useVision),
+      onTap: () {
+        if (_useVision) {
+          setState(() => _useVision = false);
+        } else {
+          _handleVisionToggleOn();
+        }
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         width: 76,
@@ -552,6 +623,37 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMmprojProgressIndicator() {
+    final percent = _mmprojProgress.round();
+    return SizedBox(
+      width: 76,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$percent%',
+            style: AppTextStyle.labelSmall.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              fontSize: 10,
+            ),
+          ),
+          const SizedBox(height: 2),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: _mmprojProgress / 100,
+              minHeight: 4,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+        ],
       ),
     );
   }

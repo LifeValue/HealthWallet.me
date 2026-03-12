@@ -73,9 +73,11 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
         type: [
           fhir_r4.CodeableConcept(text: fhir_r4.FhirString(encounterType.value))
         ],
-        period: fhir_r4.Period(
-          start: fhir_r4.FhirDateTime.fromString(periodStart.value),
-        ),
+        period: periodStart.value.isNotEmpty
+            ? fhir_r4.Period(
+                start: fhir_r4.FhirDateTime.fromString(periodStart.value),
+              )
+            : null,
         status: fhir_r4.EncounterStatus.unknown,
         class_: fhir_r4.Coding(code: fhir_r4.FhirCode("AMB")),
         subject: fhir_r4.Reference(

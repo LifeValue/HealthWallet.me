@@ -59,7 +59,9 @@ class MappingCondition with _$MappingCondition implements MappingResource {
     fhir_r4.Condition condition = fhir_r4.Condition(
       code: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(conditionName.value)),
-      onsetX: fhir_r4.FhirDateTime.fromString(onsetDateTime.value),
+      onsetX: onsetDateTime.value.isNotEmpty
+          ? fhir_r4.FhirDateTime.fromString(onsetDateTime.value)
+          : null,
       clinicalStatus: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(clinicalStatus.value)),
       subject: fhir_r4.Reference(

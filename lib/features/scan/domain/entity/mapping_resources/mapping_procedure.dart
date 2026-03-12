@@ -60,7 +60,9 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
     fhir_r4.Procedure procedure = fhir_r4.Procedure(
       code: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(procedureName.value)),
-      performedX: fhir_r4.FhirDateTime.fromString(performedDateTime.value),
+      performedX: performedDateTime.value.isNotEmpty
+          ? fhir_r4.FhirDateTime.fromString(performedDateTime.value)
+          : null,
       reasonCode: [
         fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reason.value))
       ],

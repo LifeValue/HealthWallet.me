@@ -108,7 +108,9 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           given: [fhir_r4.FhirString(givenName.value)],
         )
       ],
-      birthDate: fhir_r4.FhirDate.fromString(dateOfBirth.value),
+      birthDate: dateOfBirth.value.isNotEmpty
+          ? fhir_r4.FhirDate.fromString(dateOfBirth.value)
+          : null,
       gender: fhir_r4.AdministrativeGender(gender.value),
       identifier: [
         if (patientMRN.value.isNotEmpty)

@@ -45,6 +45,19 @@ enum RegionPreset {
     required this.displayName,
   });
 
+  String formatDate(DateTime date) {
+    final d = date.day.toString().padLeft(2, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final y = date.year.toString();
+    switch (this) {
+      case RegionPreset.us:
+        return '$m-$d-$y';
+      case RegionPreset.europe:
+      case RegionPreset.uk:
+        return '$d-$m-$y';
+    }
+  }
+
   static RegionPreset fromString(String? value) {
     if (value == null) return RegionPreset.europe;
     return RegionPreset.values.firstWhere(
