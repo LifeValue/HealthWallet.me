@@ -13,6 +13,7 @@ import 'package:health_wallet/features/home/presentation/widgets/home_greeting_t
 import 'package:health_wallet/features/home/presentation/widgets/home_patient_bar.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -175,6 +176,7 @@ class HomeViewState extends State<HomeView> {
               automaticallyImplyLeading: false,
               titleWidget: HomeGreetingTitle(homeState: state),
               actions: const [],
+              extraTopPadding: context.isTablet ? 16 : 0,
             ),
             body: RefreshIndicator(
               onRefresh: _onRefresh,
@@ -189,13 +191,33 @@ class HomeViewState extends State<HomeView> {
 
   Widget _buildHomeContent(BuildContext context, HomeState state) {
     if (state.shouldShowPlaceholder) {
-      return SyncPlaceholderWidget(
+      final placeholder = SyncPlaceholderWidget(
         pageController: widget.pageController,
         onSyncPressed: () {
           context.router.push(const SyncRoute());
         },
         recordTypeName: null,
       );
+
+      if (context.isTablet) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Align(
+                  alignment: const Alignment(0, -0.3),
+                  child: placeholder,
+                ),
+              ),
+            );
+          },
+        );
+      }
+
+      return placeholder;
     }
 
     return _buildDashboardLayout(context, state);

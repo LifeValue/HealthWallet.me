@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -22,7 +23,7 @@ class BiometricsSetupDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(Insets.medium),
       child: Container(
-        width: 400,
+        width: context.wideDialogWidth,
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),

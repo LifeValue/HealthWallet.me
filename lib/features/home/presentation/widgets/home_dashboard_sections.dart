@@ -5,9 +5,11 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
 import 'package:health_wallet/features/home/core/constants/home_constants.dart';
+import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/presentation/sections/medical_records_section.dart';
 import 'package:health_wallet/features/home/presentation/sections/recent_records_section.dart';
@@ -15,7 +17,7 @@ import 'package:health_wallet/features/home/presentation/sections/vitals_section
 import 'package:health_wallet/features/home/presentation/widgets/home_dialog_controller.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_section_header.dart';
 import 'package:health_wallet/features/home/presentation/widgets/section_info_modal.dart';
-import 'package:health_wallet/features/home/presentation/widgets/source_selector_widget.dart';
+import 'package:health_wallet/features/home/presentation/widgets/source/source_selector_widget.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
@@ -38,10 +40,10 @@ class HomeDashboardSections extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
+      padding: EdgeInsets.symmetric(horizontal: context.screenHorizontalPadding),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
-          const SizedBox(height: Insets.small),
+          SizedBox(height: context.isTablet ? Insets.normal : Insets.small),
           if (state.hasDataLoaded || editMode)
             _buildVitalsSection(context, colorScheme),
           _buildResponsiveSpacing(context),

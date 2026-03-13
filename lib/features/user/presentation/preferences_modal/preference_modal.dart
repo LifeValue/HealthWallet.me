@@ -47,7 +47,9 @@ class PreferenceModal extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(Insets.medium),
-      child: Container(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: Container(
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
@@ -135,6 +137,7 @@ class PreferenceModal extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

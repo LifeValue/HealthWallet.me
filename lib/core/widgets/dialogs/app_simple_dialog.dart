@@ -4,6 +4,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 
 class AppSimpleDialog {
   AppSimpleDialog._();
@@ -80,7 +81,7 @@ class AppSimpleDialog {
         return PopScope(
           canPop: false,
           child: _DialogShell(
-            width: 350,
+            useResponsiveWidth: true,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -256,9 +257,12 @@ class AppSimpleDialog {
 
 class _DialogShell extends StatelessWidget {
   final Widget child;
-  final double? width;
+  final bool useResponsiveWidth;
 
-  const _DialogShell({required this.child, this.width});
+  const _DialogShell({
+    required this.child,
+    this.useResponsiveWidth = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -270,7 +274,7 @@ class _DialogShell extends StatelessWidget {
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(Insets.normal),
         child: Container(
-          width: width,
+          width: useResponsiveWidth ? context.dialogWidth : null,
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
