@@ -4,7 +4,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
-import 'package:health_wallet/features/share_records/data/service/receive_mode_manager.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/theme/theme.dart';
@@ -70,14 +70,14 @@ class _AppState extends State<App> with WidgetsBindingObserver {
       return;
     }
 
-    final manager = getIt<ReceiveModeManager>();
+    final manager = getIt<ReceiveModeService>();
     if (!manager.isListening) {
       await manager.startListening();
     }
   }
 
   Future<void> _stopSymmetricDiscovery() async {
-    final manager = getIt<ReceiveModeManager>();
+    final manager = getIt<ReceiveModeService>();
     if (manager.isListening) {
       await manager.stopListening();
     }

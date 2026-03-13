@@ -4,8 +4,9 @@ import 'dart:math' as math;
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:health_wallet/features/scan/data/utils/scan_log_buffer.dart';
+import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/features/scan/domain/services/device_capability_service.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/config/env/env.dart';
@@ -136,31 +137,8 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
     return available;
   }
 
-  static int estimateIosRam(String machine) {
-    final iphone = RegExp(r'iPhone(\d+),(\d+)').firstMatch(machine);
-    if (iphone != null) {
-      final major = int.tryParse(iphone.group(1)!) ?? 0;
-      final minor = int.tryParse(iphone.group(2)!) ?? 0;
-      if (major >= 17) return 8192;
-      if (major >= 15) return 6144;
-      if (major == 14) {
-        if (minor == 2 || minor == 3 || minor == 7 || minor == 8) return 6144;
-        return 4096;
-      }
-      return 4096;
-    }
-
-    final ipad = RegExp(r'iPad(\d+),').firstMatch(machine);
-    if (ipad != null) {
-      final major = int.tryParse(ipad.group(1)!) ?? 0;
-      if (major >= 16) return 16384;
-      if (major >= 13) return 8192;
-      if (major >= 8) return 6144;
-      return 4096;
-    }
-
-    return 4096;
-  }
+  static int estimateIosRam(String machine) =>
+      DeviceCapabilityService.estimateIosRam(machine);
 
   static const double kvCacheMBPerCtx1024 = 170;
 
@@ -177,38 +155,11 @@ class ScanNetworkDataSourceImpl implements ScanNetworkDataSource {
   static ({int gpuLayers, int threads, int contextSize}) computeModelConfig({
     required bool withVision,
     required int ramMB,
-  }) {
-    final cpuCores = Platform.numberOfProcessors;
-    final threads = cpuCores.clamp(1, 4);
-
-    int contextSize;
-    int gpuLayers = 0;
-
-    if (Platform.isIOS) {
-      if (ramMB >= 8192) {
-        contextSize = 4096;
-        gpuLayers = withVision ? 4 : 0;
-      } else if (ramMB >= 6144) {
-        contextSize = 2048;
-        gpuLayers = withVision ? 2 : 0;
-      } else if (ramMB >= 4096) {
-        contextSize = 1024;
-        gpuLayers = withVision ? 1 : 0;
-      } else {
-        contextSize = 512;
-      }
-    } else {
-      if (ramMB >= 12288) {
-        contextSize = 4096;
-      } else if (ramMB >= 8192) {
-        contextSize = 2048;
-      } else {
-        contextSize = 512;
-      }
-    }
-
-    return (gpuLayers: gpuLayers, threads: threads, contextSize: contextSize);
-  }
+  }) =>
+      DeviceCapabilityService.computeModelConfig(
+        withVision: withVision,
+        ramMB: ramMB,
+      );
 
   Future<String> _getModelDirectory() async {
     final directory = await getApplicationDocumentsDirectory();

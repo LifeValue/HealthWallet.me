@@ -12,11 +12,12 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:injectable/injectable.dart';
 
-@singleton
-class ReceiveModeManager {
+@Singleton(as: ReceiveModeService)
+class ReceiveModeManager implements ReceiveModeService {
   final ShareRecordsService _shareRecordsService;
   final NotificationBloc _notificationBloc;
 

@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
+import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/home/domain/factory/patient_vitals_factory.dart';
@@ -26,7 +26,7 @@ part 'home_state.dart';
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final RecordsRepository _recordsRepository;
   final GetSourcesUseCase _getSourcesUseCase;
-  final HomeLocalDataSource _homeLocalDataSource;
+  final HomePreferencesRepository _homeLocalDataSource;
   final SyncRepository _syncRepository;
   final PatientDeduplicationService _deduplicationService;
   final PatientSelectionService _patientSelectionService;

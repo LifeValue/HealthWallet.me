@@ -14,7 +14,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
-import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
+import 'package:health_wallet/features/scan/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/scan/domain/services/ai_model_download_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -66,7 +66,7 @@ class AiTokenSettingsDialog extends StatefulWidget {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final deviceRamMB = await _detectDeviceRamMB();
-    final config = ScanNetworkDataSourceImpl.computeModelConfig(
+    final config = DeviceCapabilityService.computeModelConfig(
       withVision: true,
       ramMB: deviceRamMB,
     );
@@ -104,7 +104,7 @@ class AiTokenSettingsDialog extends StatefulWidget {
       final deviceInfo = DeviceInfoPlugin();
       if (Platform.isIOS) {
         final ios = await deviceInfo.iosInfo;
-        return ScanNetworkDataSourceImpl.estimateIosRam(ios.utsname.machine);
+        return DeviceCapabilityService.estimateIosRam(ios.utsname.machine);
       } else if (Platform.isAndroid) {
         try {
           final memInfo = await File('/proc/meminfo').readAsString();
