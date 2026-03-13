@@ -4,9 +4,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-
-/// Unified dialog widget that handles all selection cases (single, multi, filter)
-/// Uses the exact design pattern from filter_home_dialog.dart
+import 'package:health_wallet/core/utils/responsive.dart';
 class AppDialog extends StatefulWidget {
   final String title;
   final String description;
@@ -39,7 +37,6 @@ class AppDialog extends StatefulWidget {
     this.confirmButtonColor,
   });
 
-  /// Show multi-select dialog
   static Future<List<String>?> showMultiSelect({
     required BuildContext context,
     required String title,
@@ -65,7 +62,6 @@ class AppDialog extends StatefulWidget {
     );
   }
 
-  /// Show single-select dialog
   static Future<String?> showSingleSelect({
     required BuildContext context,
     required String title,
@@ -163,13 +159,11 @@ class _AppDialogState extends State<AppDialog> {
   void _toggleItem(String id) {
     setState(() {
       if (widget.mode == AppDialogMode.singleSelect) {
-        // For single select, clear all and set only this one
         for (final key in _selectedItems.keys) {
           _selectedItems[key] = false;
         }
         _selectedItems[id] = true;
       } else {
-        // For multi-select, toggle
         _selectedItems[id] = !(_selectedItems[id] ?? false);
       }
     });
@@ -177,10 +171,8 @@ class _AppDialogState extends State<AppDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -188,7 +180,7 @@ class _AppDialogState extends State<AppDialog> {
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(Insets.normal),
         child: Container(
-          width: 350,
+          width: context.dialogWidth,
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
@@ -199,7 +191,6 @@ class _AppDialogState extends State<AppDialog> {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: Insets.normal,
@@ -236,23 +227,19 @@ class _AppDialogState extends State<AppDialog> {
                     ),
                   ),
 
-                  // Divider
                   Container(height: 1, color: borderColor),
 
-                  // Content
                   Padding(
                     padding: const EdgeInsets.all(Insets.normal),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Description row (only show if not confirmation mode or if no customContent)
                         if (widget.mode != AppDialogMode.confirmation ||
                             widget.customContent == null)
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              SizedBox(
-                                width: 227,
+                              Flexible(
                                 child: Text(
                                   widget.description,
                                   style: AppTextStyle.labelLarge
@@ -408,7 +395,6 @@ class _AppDialogState extends State<AppDialog> {
                 ],
               ),
 
-              // Dropdown overlay (only for multi-select)
               if (_showDropdown && widget.mode == AppDialogMode.multiSelect)
                 Positioned(
                   top: 109,
@@ -418,7 +404,7 @@ class _AppDialogState extends State<AppDialog> {
                     borderRadius: BorderRadius.circular(12),
                     shadowColor: Colors.black.withOpacity(0.12),
                     child: Container(
-                      width: 318,
+                      width: context.dialogWidth - 32,
                       decoration: BoxDecoration(
                         color: context.colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
@@ -442,8 +428,7 @@ class _AppDialogState extends State<AppDialog> {
   }
 
   Widget _buildDropdownItem(String text, VoidCallback onTap) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final textColor = context.primaryTextColor;
 
     return InkWell(
       onTap: onTap,

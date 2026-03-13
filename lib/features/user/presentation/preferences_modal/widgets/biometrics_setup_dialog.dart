@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -15,17 +16,14 @@ class BiometricsSetupDialog extends StatelessWidget {
     final BiometricAuthService biometricService = getIt<BiometricAuthService>();
 
     final borderColor = context.theme.dividerColor;
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final iconColor = context.isDarkMode
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondary;
+    final textColor = context.primaryTextColor;
+    final iconColor = context.secondaryTextColor;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(Insets.medium),
       child: Container(
-        width: 400,
+        width: context.wideDialogWidth,
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
@@ -71,7 +69,6 @@ class BiometricsSetupDialog extends StatelessWidget {
 
             Container(height: 1, color: borderColor),
 
-            // Content
             Padding(
               padding: const EdgeInsets.all(Insets.normal),
               child: Column(
@@ -182,8 +179,7 @@ class BiometricsSetupDialog extends StatelessWidget {
   }
 
   Widget _buildSetupStep(BuildContext context, String number, String text) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final textColor = context.primaryTextColor;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: Insets.small),

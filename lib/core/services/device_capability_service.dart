@@ -37,9 +37,9 @@ class DeviceCapabilityService {
   }
 
   static const int _minRamIosMB = 4096;
-  static const int _minRamAndroidMB = 6144;
+  static const int _minRamAndroidMB = 10240;
   static const int _minRamForVisionIosMB = 6144;
-  static const int _minRamForVisionAndroidMB = 10240;
+  static const int _minRamForVisionAndroidMB = 11264;
 
   DeviceAiCapability _classifyCapability(int ramMB) {
     if (Platform.isIOS) {

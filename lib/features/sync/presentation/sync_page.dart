@@ -8,7 +8,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
-import 'package:health_wallet/core/widgets/dialogs/success_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/sync/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
@@ -416,24 +416,21 @@ class _SyncPageState extends State<SyncPage> {
     final prefs = await SharedPreferences.getInstance();
     final onboardingShown = prefs.getBool('onboarding_shown') ?? false;
 
-    await SuccessDialog.show(
+    await AppSimpleDialog.showSuccess(
       context: context,
       title: context.l10n.success,
       message: context.l10n.syncDataLoadedSuccessfully,
       onOkPressed: () {
-        // Navigate to home first
         context.router.pushAndPopUntil(
           DashboardRoute(),
           predicate: (_) => false,
         );
 
-        // Trigger tutorial if not shown before
         if (!onboardingShown) {
           Future.delayed(const Duration(milliseconds: 400), () {
             try {
               context.read<SyncBloc>().add(const TriggerTutorial());
             } catch (e) {
-              // Handle any errors silently
             }
           });
         }

@@ -8,7 +8,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
-import 'package:health_wallet/features/share_records/data/service/receive_mode_manager.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart';
@@ -230,7 +230,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       );
       await _userRepository.updateUser(updatedUser);
 
-      final manager = getIt<ReceiveModeManager>();
+      final manager = getIt<ReceiveModeService>();
       if (event.isEnabled) {
         if (!manager.isListening) {
           await manager.startListening();

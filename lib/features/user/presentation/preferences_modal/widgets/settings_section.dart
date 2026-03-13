@@ -9,7 +9,7 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/widge
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometric_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/share_proximity_row.dart';
-import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/region/region_dialog.dart';
 import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -48,7 +48,7 @@ class SettingsSection extends StatelessWidget {
               InkWell(
                 onTap: () {
                   if (state.isBiometricAuthEnabled) {
-                    ConfirmationDialog.show(
+                    AppSimpleDialog.showConfirmation(
                       context: context,
                       title: context.l10n.confirmDisableBiometric,
                       confirmText: context.l10n.disable,

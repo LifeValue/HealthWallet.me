@@ -49,8 +49,7 @@ class FormFields {
           height: 36,
           decoration: BoxDecoration(
             border: Border.all(
-              color:
-                  context.isDarkMode ? AppColors.borderDark : AppColors.border,
+              color: context.borderColor,
               width: 1.5,
             ),
             borderRadius: BorderRadius.circular(8),

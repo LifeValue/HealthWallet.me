@@ -9,9 +9,10 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_dialog.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_settings/ai_settings_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -276,10 +277,8 @@ class _AiModelSectionState extends State<AiModelSection> {
   }
 
   void _showNoInternetDialog(BuildContext context) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     showDialog(
       context: context,
@@ -290,7 +289,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(Insets.normal),
           child: Container(
-            width: 350,
+            width: context.dialogWidth,
             decoration: BoxDecoration(
               color: context.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),

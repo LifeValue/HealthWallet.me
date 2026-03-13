@@ -5,7 +5,7 @@ import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
-import 'package:health_wallet/features/records/data/datasource/fhir_resource_datasource.dart';
+import 'package:health_wallet/features/records/data/data_source/fhir_resource_datasource.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
