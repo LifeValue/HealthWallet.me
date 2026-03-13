@@ -188,20 +188,7 @@ class HomeViewState extends State<HomeView> {
   }
 
   Widget _buildHomeContent(BuildContext context, HomeState state) {
-    final hasVitalDataLoaded = state.patientVitals
-        .any((vital) => vital.value != 'N/A' && vital.observationId != null);
-
-    final hasOverviewDataLoaded =
-        state.overviewCards.any((card) => card.count != '0');
-
-    final hasRecent = state.recentRecords.isNotEmpty;
-
-    final hasAnyMeaningfulData =
-        hasVitalDataLoaded || hasOverviewDataLoaded || hasRecent;
-
-    final shouldShowPlaceholder = !hasAnyMeaningfulData;
-
-    if (shouldShowPlaceholder) {
+    if (state.shouldShowPlaceholder) {
       return SyncPlaceholderWidget(
         pageController: widget.pageController,
         onSyncPressed: () {

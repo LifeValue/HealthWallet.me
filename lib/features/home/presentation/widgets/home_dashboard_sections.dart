@@ -129,9 +129,7 @@ class HomeDashboardSections extends StatelessWidget {
   }
 
   Widget _buildOverviewSection(BuildContext context, ColorScheme colorScheme) {
-    final filteredCards = state.overviewCards
-        .where((card) => state.selectedRecordTypes[card.category] ?? false)
-        .toList();
+    final filteredCards = state.visibleOverviewCards;
 
     return Column(
       children: [

@@ -173,16 +173,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
         final displayedSession =
             state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
 
-        final canRetry = displayedSession != null &&
-            (displayedSession.status == ProcessingStatus.draft ||
-                displayedSession.status == ProcessingStatus.cancelled ||
-                state.status is Failure ||
-                state.status is CapacityFailure);
-
-        final isStep2Retry = displayedSession != null &&
-            (displayedSession.status == ProcessingStatus.draft ||
-                (displayedSession.status == ProcessingStatus.patientExtracted &&
-                    state.status is Failure));
+        final canRetry = state.canRetrySession(widget.sessionId);
+        final isStep2Retry = state.canRetryStep2(widget.sessionId);
 
         return Scaffold(
           backgroundColor: context.colorScheme.surface,
