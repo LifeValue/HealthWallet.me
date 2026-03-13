@@ -267,10 +267,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
   void _showDeleteConfirmationDialog(
       BuildContext context, AttachmentInfo attachmentInfo) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     showDialog(
       context: context,

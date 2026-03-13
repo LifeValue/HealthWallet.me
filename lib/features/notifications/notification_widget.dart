@@ -30,8 +30,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
   void _showOverlay(NotificationState state) {
     final overlay = Overlay.of(context);
     final colorScheme = context.colorScheme;
-    final isDarkMode = context.isDarkMode;
-    final dividerColor = isDarkMode ? AppColors.borderDark : AppColors.border;
+    final dividerColor = context.borderColor;
 
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) {

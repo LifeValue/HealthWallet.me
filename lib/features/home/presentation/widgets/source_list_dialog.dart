@@ -58,11 +58,8 @@ class _SourceListDialogState extends State<SourceListDialog> {
   @override
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final iconColor = context.isDarkMode
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondary;
+    final textColor = context.primaryTextColor;
+    final iconColor = context.secondaryTextColor;
 
     return Dialog(
       backgroundColor: Colors.transparent,

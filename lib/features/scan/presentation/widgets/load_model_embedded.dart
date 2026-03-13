@@ -29,10 +29,8 @@ class _LoadModelEmbeddedState extends State<LoadModelEmbedded> {
   }
 
   void _showNoInternetDialog(BuildContext context) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     showDialog(
       context: context,
