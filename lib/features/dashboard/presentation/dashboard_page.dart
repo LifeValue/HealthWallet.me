@@ -160,8 +160,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                     end: Alignment.topCenter,
                                     colors: context.isDarkMode
                                         ? [
-                                            Colors.white.withValues(alpha: 0.005),
-                                            Colors.transparent,
+                                            Colors.white.withValues(alpha: 0.08),
+                                            Colors.white.withValues(alpha: 0.04),
                                           ]
                                         : [
                                             Colors.grey.withValues(alpha: 0.08),
