@@ -193,7 +193,14 @@ lib/
 
 HealthWallet.me includes a built-in AI that reads your medical documents (photos, PDFs) and automatically organizes them into structured health records — **everything happens on your phone, your data never leaves your device**.
 
-The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
+### AI Model Options
+
+| Model | Download Size | Best For |
+|-------|--------------|----------|
+| **Standard** (Qwen) | ~1.1 GB | Fast and lightweight, works on most devices |
+| **Advanced Medical** (MedGemma) | ~2.5 GB | Higher accuracy for medical documents |
+
+> **Deep Scan (Vision)** is an optional add-on that lets the AI read directly from photos instead of relying on OCR text extraction. When you enable Deep Scan, a one-time additional download is required (~445 MB for Standard, ~851 MB for Advanced).
 
 ### What Your Phone Needs
 
@@ -211,11 +218,12 @@ The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
 <details>
   <summary><strong>Technical Details</strong></summary>
 
-| | |
-|---|---|
-| **Model** | [Qwen3-VL-2B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct) (Q4_K_M GGUF) |
-| **Download Size** | ~1.8 GB (model + vision projector) |
-| **Runtime** | llama.cpp (Metal on iOS, CPU on Android) |
+| | Model | Vision Projector (Deep Scan) |
+|---|---|---|
+| **Standard** | [Qwen3-VL-2B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF) (~1.1 GB) | [mmproj-Qwen3VL-2B](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF) (~445 MB, optional) |
+| **Advanced** | [MedGemma-4B-IT](https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF) (~2.5 GB) | [mmproj-MedGemma-4B](https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF) (~851 MB, optional) |
+| **Format** | Q4_K_M GGUF | F16 GGUF |
+| **Runtime** | llama.cpp (Metal on iOS, CPU on Android) | |
 
 </details>
 
@@ -225,8 +233,8 @@ The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
 - Basic health record management
 - Authentication and security
 - Cross-platform support
-- Smart document scanning (AI reads and organizes your medical records)
 - File import & in-app viewing
+- Smart document scanning (AI reads and organizes your medical records)
 
 ### In Progress 🚧
 - Add IPS (International Patient Summary) to Google / Apple Wallet
