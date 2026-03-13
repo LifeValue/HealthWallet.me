@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:health_wallet/features/scan/data/utils/scan_log_buffer.dart';
+import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 
 class DebugLogSheet extends StatefulWidget {
   const DebugLogSheet({super.key});

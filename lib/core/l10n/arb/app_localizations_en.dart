@@ -964,7 +964,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiModelNotAvailableForDeviceDescription =>
-      'This device doesn\'t have enough memory to run smart scanning.';
+      'Sorry, your device doesn\'t have enough memory to run the AI model. You can still use the app without smart scanning.';
 
   @override
   String get noInternetConnectionTitle => 'No Internet Connection';

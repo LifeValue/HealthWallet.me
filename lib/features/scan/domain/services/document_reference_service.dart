@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/scan/presentation/services/pdf_generation_service.dart';
+import 'package:health_wallet/features/scan/data/services/pdf_generation_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/data/local/app_database.dart';

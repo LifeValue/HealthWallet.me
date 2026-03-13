@@ -19,7 +19,7 @@ import 'package:health_wallet/features/scan/domain/repository/scan_repository.da
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/helpers/ocr_processing_helper.dart';
+import 'package:health_wallet/features/scan/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/entities/sync_qr_data.dart';
@@ -35,7 +35,7 @@ import 'package:health_wallet/features/user/domain/services/patient_deduplicatio
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/services/patient_edit_service.dart';
+import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

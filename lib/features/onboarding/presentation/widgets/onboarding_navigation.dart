@@ -7,6 +7,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
@@ -31,9 +32,12 @@ class OnboardingNavigation extends StatelessWidget {
     final isSmallScreen = screenHeight < 700;
     final isLastPage = currentPage == totalPages - 1;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-      child: Column(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(height: isSmallScreen ? Insets.extraSmall : Insets.smaller),
@@ -89,6 +93,8 @@ class OnboardingNavigation extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      ),
       ),
     );
   }
@@ -193,10 +199,8 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
   }
 
   void _showNoInternetDialog(BuildContext context) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     showDialog(
       context: context,
@@ -207,7 +211,7 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(Insets.normal),
           child: Container(
-            width: 350,
+            width: context.dialogWidth,
             decoration: BoxDecoration(
               color: context.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),

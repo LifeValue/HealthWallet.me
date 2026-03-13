@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -82,7 +81,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
               patientForSource?.displayTitle ?? 'Unknown Patient';
 
           final sourceTypeService =
-              GetIt.instance.get<SourceTypeService>();
+              getIt<SourceTypeService>();
           final walletSource =
               await sourceTypeService.getWritableSourceForPatient(
             patientId: patientId,
@@ -136,7 +135,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       final patientId = patient?.id ?? 'patient-default';
       final patientName = patient?.displayTitle ?? 'Unknown Patient';
 
-      final sourceTypeService = GetIt.instance.get<SourceTypeService>();
+      final sourceTypeService = getIt<SourceTypeService>();
       final walletSource = await sourceTypeService.getWritableSourceForPatient(
         patientId: patientId,
         patientName: patientName,
@@ -150,7 +149,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       }
 
       final documentReferenceService =
-          GetIt.instance.get<DocumentReferenceService>();
+          getIt<DocumentReferenceService>();
 
       await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: filePaths,

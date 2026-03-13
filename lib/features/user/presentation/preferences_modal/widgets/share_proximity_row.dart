@@ -8,7 +8,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
-import 'package:health_wallet/features/share_records/data/service/receive_mode_manager.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/receive_mode_toggle_button.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -58,7 +58,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
     });
 
     if (granted) {
-      final manager = getIt<ReceiveModeManager>();
+      final manager = getIt<ReceiveModeService>();
       final isEnabled =
           context.read<UserBloc>().state.user.isReceiveModeEnabled;
       if (manager.isListening && !isEnabled) {
@@ -99,7 +99,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
       return;
     }
 
-    final manager = getIt<ReceiveModeManager>();
+    final manager = getIt<ReceiveModeService>();
     await manager.startListening();
 
     for (int i = 0; i < 60; i++) {

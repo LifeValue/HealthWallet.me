@@ -1,20 +1,9 @@
 import 'dart:convert';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-abstract class HomeLocalDataSource {
-  Future<void> saveVitalsOrder(List<String> vitalsOrder);
-  Future<List<String>?> getVitalsOrder();
-  Future<void> saveRecordsOrder(List<String> recordsOrder);
-  Future<List<String>?> getRecordsOrder();
-  Future<void> saveVitalsVisibility(Map<String, bool> visibility);
-  Future<Map<String, bool>?> getVitalsVisibility();
-  Future<void> saveRecordsVisibility(Map<String, bool> visibility);
-  Future<Map<String, bool>?> getRecordsVisibility();
-  Future<void> clearPreferences();
-}
-
-class HomeLocalDataSourceImpl implements HomeLocalDataSource {
+class HomeLocalDataSourceImpl implements HomePreferencesRepository {
   Future<SharedPreferences> get _prefs async =>
       await SharedPreferences.getInstance();
 

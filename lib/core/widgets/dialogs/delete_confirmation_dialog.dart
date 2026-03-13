@@ -12,8 +12,7 @@ class DeleteConfirmationDialog {
     required VoidCallback onConfirm,
     VoidCallback? onCancel,
   }) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final textColor = context.primaryTextColor;
 
     showDialog(
       context: context,

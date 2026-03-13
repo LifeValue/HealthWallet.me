@@ -49,8 +49,6 @@ class MappedProperty with _$MappedProperty {
     return chunks;
   }
 
-  /// Does fuzzy matching between the [value] and overlapping chunks of [inputText]
-  /// to see if the [inputText] contains a substring similar to [value]
   MappedProperty calculateConfidence(String inputText) {
     if (value.isEmpty) {
       return copyWith(confidenceLevel: 0.0);
@@ -167,8 +165,7 @@ enum ConfidenceLevel {
       };
 
   Color getColor(BuildContext context) => switch (this) {
-        ConfidenceLevel.high =>
-          context.isDarkMode ? AppColors.borderDark : AppColors.border,
+        ConfidenceLevel.high => context.borderColor,
         ConfidenceLevel.medium => AppColors.warningDraft,
         ConfidenceLevel.low => AppColors.error
       };

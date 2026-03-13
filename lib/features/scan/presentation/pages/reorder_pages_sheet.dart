@@ -40,8 +40,7 @@ class _ReorderPagesSheetState extends State<ReorderPagesSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final borderColor = context.borderColor;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -126,8 +125,7 @@ class _ReorderablePageItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final borderColor = context.borderColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: Insets.small),

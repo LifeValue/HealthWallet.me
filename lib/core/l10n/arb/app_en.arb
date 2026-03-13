@@ -355,7 +355,7 @@
     "useVisionDescription": "Reads images for deeper analysis (e.g. handwriting). Uses more memory and requires a more performant device.",
 
     "aiModelNotAvailableForDevice": "Not available for this phone",
-    "aiModelNotAvailableForDeviceDescription": "This device doesn't have enough memory to run smart scanning.",
+    "aiModelNotAvailableForDeviceDescription": "Sorry, your device doesn't have enough memory to run the AI model. You can still use the app without smart scanning.",
     "noInternetConnectionTitle": "No Internet Connection",
     "noInternetConnectionDescription": "Please check your internet connection and try again.",
     "processingStep2NotAvailableTitle": "Deep Scan not available on this device",

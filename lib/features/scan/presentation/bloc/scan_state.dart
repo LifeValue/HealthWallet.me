@@ -16,6 +16,8 @@ class ScanStatus with _$ScanStatus {
 
 @freezed
 class ScanState with _$ScanState {
+  const ScanState._();
+
   const factory ScanState({
     @Default(ScanStatus.initial()) ScanStatus status,
     @Default([]) List<ProcessingSession> sessions,
@@ -26,4 +28,21 @@ class ScanState with _$ScanState {
     Notification? notification,
     @Default(false) bool useVision,
   }) = _ScanState;
+
+  bool canRetrySession(String sessionId) {
+    final session = sessions.firstWhereOrNull((s) => s.id == sessionId);
+    return session != null &&
+        (session.status == ProcessingStatus.draft ||
+            session.status == ProcessingStatus.cancelled ||
+            status is Failure ||
+            status is CapacityFailure);
+  }
+
+  bool canRetryStep2(String sessionId) {
+    final session = sessions.firstWhereOrNull((s) => s.id == sessionId);
+    return session != null &&
+        (session.status == ProcessingStatus.draft ||
+            (session.status == ProcessingStatus.patientExtracted &&
+                status is Failure));
+  }
 }

@@ -219,10 +219,8 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
 
   @override
   Widget build(BuildContext context) {
-    final bColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
-    final tColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final bColor = context.borderColor;
+    final tColor = context.primaryTextColor;
     final enabled = widget.onChanged != null;
 
     return Row(

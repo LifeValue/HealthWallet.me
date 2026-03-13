@@ -6,9 +6,9 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -20,10 +20,12 @@ import 'package:health_wallet/features/share_records/core/ephemeral_session_mana
 @RoutePage()
 class RecordDetailsPage extends StatefulWidget {
   final IFhirResource resource;
+  final List<IFhirResource> ephemeralRecords;
 
   const RecordDetailsPage({
     super.key,
     required this.resource,
+    this.ephemeralRecords = const [],
   });
 
   @override
@@ -38,91 +40,22 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _isEphemeral = EphemeralSessionManager.instance.hasActiveSession;
+    _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
+        EphemeralSessionManager.instance.hasActiveSession;
     if (_isEphemeral) {
       _ephemeralRelatedResources = _findRelatedInMemory();
     }
   }
 
   List<IFhirResource> _findRelatedInMemory() {
-    final session = EphemeralSessionManager.instance.currentSession;
-    if (session == null) return [];
-    final allRecords = session.records;
-    final resource = widget.resource;
-    final related = <IFhirResource>[];
-
-    if (resource.fhirType == FhirType.Encounter) {
-      for (final r in allRecords) {
-        if (r.id == resource.id) continue;
-        if (_resourceReferencesEncounter(r, resource.resourceId)) {
-          related.add(r);
-        }
-      }
-    } else {
-      final encounterId = _extractEncounterIdFromResource(resource);
-      if (encounterId != null) {
-        final encounter = allRecords
-            .where((r) =>
-                r.fhirType == FhirType.Encounter &&
-                r.resourceId == encounterId)
-            .firstOrNull;
-        if (encounter != null) related.add(encounter);
-      }
-
-      for (final ref in resource.resourceReferences) {
-        final refId = FhirReferenceUtils.extractReferenceId(ref);
-        if (refId == null) continue;
-        final match = allRecords.where((r) {
-          if (r.id == resource.id) return false;
-          return r.resourceId == refId;
-        }).firstOrNull;
-        if (match != null && !related.contains(match)) {
-          related.add(match);
-        }
-      }
-    }
-
-    return related;
-  }
-
-  bool _resourceReferencesEncounter(IFhirResource r, String encounterId) {
-    if (r.encounterId.isNotEmpty && r.encounterId == encounterId) {
-      return true;
-    }
-
-    final encRef = r.rawResource['encounter']?['reference'] as String?;
-    if (encRef != null) {
-      final extractedId = FhirReferenceUtils.extractReferenceId(encRef);
-      if (extractedId == encounterId) return true;
-    }
-
-    final contextEnc = r.rawResource['context']?['encounter'] as List?;
-    if (contextEnc != null) {
-      return contextEnc.any((e) {
-        final ref = e['reference'] as String?;
-        final extractedId = FhirReferenceUtils.extractReferenceId(ref);
-        return extractedId == encounterId;
-      });
-    }
-
-    return false;
-  }
-
-  String? _extractEncounterIdFromResource(IFhirResource resource) {
-    if (resource.encounterId.isNotEmpty) return resource.encounterId;
-
-    final encRef = resource.rawResource['encounter']?['reference'] as String?;
-    if (encRef != null) {
-      return FhirReferenceUtils.extractReferenceId(encRef);
-    }
-
-    final contextEnc = resource.rawResource['context']?['encounter'] as List?;
-    if (contextEnc != null && contextEnc.isNotEmpty) {
-      final ref = contextEnc.first['reference'] as String?;
-      return FhirReferenceUtils.extractReferenceId(ref);
-    }
-
-    return null;
+    final records = widget.ephemeralRecords.isNotEmpty
+        ? widget.ephemeralRecords
+        : EphemeralSessionManager.instance.currentSession?.records;
+    if (records == null || records.isEmpty) return [];
+    return FhirResourceRelationshipService.findRelatedInMemory(
+      resource: widget.resource,
+      allRecords: records,
+    );
   }
 
   List<RecordInfoLine> _getAdditionalInfo(BuildContext context) {
@@ -298,8 +231,10 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
         const Text("Encounter details", style: AppTextStyle.buttonSmall),
         const SizedBox(height: 4),
         InkWell(
-          onTap: () =>
-              context.router.push(RecordDetailsRoute(resource: encounter)),
+          onTap: () => context.router.push(RecordDetailsRoute(
+            resource: encounter,
+            ephemeralRecords: widget.ephemeralRecords,
+          )),
           child: _buildRelatedResourceInfo(context, encounter),
         ),
         Padding(
@@ -318,8 +253,10 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
         const Text("Related resources", style: AppTextStyle.buttonSmall),
         const SizedBox(height: 16),
         ...resources.map((resource) => InkWell(
-              onTap: () =>
-                  context.router.push(RecordDetailsRoute(resource: resource)),
+              onTap: () => context.router.push(RecordDetailsRoute(
+                resource: resource,
+                ephemeralRecords: widget.ephemeralRecords,
+              )),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

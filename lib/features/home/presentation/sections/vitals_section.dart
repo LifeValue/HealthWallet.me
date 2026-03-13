@@ -36,6 +36,7 @@ class VitalsSection extends StatelessWidget {
   static const double _breakpoint = 380;
 
   int _getCrossAxisCount(double screenWidth) {
+    if (screenWidth >= 600) return 4;
     return 2;
   }
 

@@ -8,6 +8,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
@@ -63,9 +64,16 @@ class _LoadModelPageState extends State<LoadModelPage> {
               ),
               automaticallyImplyLeading: true,
             ),
-            body: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _buildView(context, state),
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.screenHorizontalPadding,
+                  ),
+                  child: _buildView(context, state),
+                ),
+              ),
             ),
           );
         },
@@ -74,10 +82,8 @@ class _LoadModelPageState extends State<LoadModelPage> {
   }
 
   void _showNoInternetDialog(BuildContext context) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     showDialog(
       context: context,
@@ -88,7 +94,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(Insets.normal),
           child: Container(
-            width: 350,
+            width: context.dialogWidth,
             decoration: BoxDecoration(
               color: context.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),

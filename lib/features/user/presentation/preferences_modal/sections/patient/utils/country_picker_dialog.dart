@@ -55,11 +55,9 @@ class _CountryPickerDialogState extends State<CountryPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = context.isDarkMode ? AppColors.surfaceDark : AppColors.surface;
-    final bColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
-    final tColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final bg = context.surfaceColor;
+    final bColor = context.borderColor;
+    final tColor = context.primaryTextColor;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
