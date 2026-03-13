@@ -12,4 +12,5 @@ abstract class ReceiveModeService {
   Future<void> resumeListening();
   void clearPendingInvitation();
   void clearPendingReceivedData();
+  Future<void> dispose();
 }

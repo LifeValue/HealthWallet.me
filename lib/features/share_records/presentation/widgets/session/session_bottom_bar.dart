@@ -10,8 +10,8 @@ import 'package:health_wallet/features/share_records/presentation/widgets/exit_c
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
-import 'package:health_wallet/features/share_records/presentation/widgets/extend_request_card.dart';
-import 'package:health_wallet/features/share_records/presentation/widgets/session_timer_widget.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/session/extend_request_card.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/session/session_timer_widget.dart';
 
 class SessionBottomBar extends StatefulWidget {
   final ShareRecordsState state;
