@@ -64,7 +64,7 @@ import 'app_localizations_es.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -87,17 +87,17 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('es'),
-    Locale('de')
+    Locale('de'),
   ];
 
   /// The title of the application
@@ -790,6 +790,18 @@ abstract class AppLocalizations {
   /// **'Done'**
   String get done;
 
+  /// No description provided for @page.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get page;
+
+  /// No description provided for @reorderPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Pages'**
+  String get reorderPages;
+
   /// No description provided for @attachments.
   ///
   /// In en, this message translates to:
@@ -1297,7 +1309,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingAiModelDescription.
   ///
   /// In en, this message translates to:
-  /// **'Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.'**
+  /// **'Download a secure, on-device AI model to automatically analyze and organize your health records. Choose between two options depending on your needs and device capability. This is a one-time setup.\n\n**Your data stays private on your device.**'**
   String get onboardingAiModelDescription;
 
   /// No description provided for @onboardingAiModelSubtitle.
@@ -1309,25 +1321,25 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelReady.
   ///
   /// In en, this message translates to:
-  /// **'AI model ready! You can start scanning.'**
+  /// **'AI ready! You can start scanning.'**
   String get aiModelReady;
 
   /// No description provided for @aiModelDownloading.
   ///
   /// In en, this message translates to:
-  /// **'Downloading AI model...'**
+  /// **'Downloading...'**
   String get aiModelDownloading;
 
   /// No description provided for @aiModelEnableDownload.
   ///
   /// In en, this message translates to:
-  /// **'Enable & Download'**
+  /// **'Choose & Download'**
   String get aiModelEnableDownload;
 
   /// No description provided for @aiModelError.
   ///
   /// In en, this message translates to:
-  /// **'Couldn’t verify model. Try again.'**
+  /// **'Couldn’t verify. Try again.'**
   String get aiModelError;
 
   /// No description provided for @aiModelMissing.
@@ -1351,13 +1363,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelUnlockDescription.
   ///
   /// In en, this message translates to:
-  /// **'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.'**
+  /// **'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model.\n\n**Your data stays private on your device.**'**
   String get aiModelUnlockDescription;
 
   /// No description provided for @aiModelDownloadInfo.
   ///
   /// In en, this message translates to:
-  /// **'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.'**
+  /// **'To get started, choose and download one of two available AI options. This is a one-time setup.'**
   String get aiModelDownloadInfo;
 
   /// No description provided for @setup.
@@ -1543,7 +1555,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelNotAvailable.
   ///
   /// In en, this message translates to:
-  /// **'AI model is not available'**
+  /// **'Smart scanning is not available'**
   String get aiModelNotAvailable;
 
   /// No description provided for @addResources.
@@ -1675,19 +1687,19 @@ abstract class AppLocalizations {
   /// No description provided for @processingFailedCapacity.
   ///
   /// In en, this message translates to:
-  /// **'The document is too large for the current AI token capacity.'**
+  /// **'The document is too large for the current AI context size.'**
   String get processingFailedCapacity;
 
   /// No description provided for @processingFailedCapacitySuggestion.
   ///
   /// In en, this message translates to:
-  /// **'Try increasing the AI model capacity to process larger documents.'**
+  /// **'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.'**
   String get processingFailedCapacitySuggestion;
 
   /// No description provided for @increaseAiModelCapacity.
   ///
   /// In en, this message translates to:
-  /// **'Increase AI Model Capacity'**
+  /// **'Increase AI Capacity'**
   String get increaseAiModelCapacity;
 
   /// No description provided for @goBack.
@@ -1695,6 +1707,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go Back'**
   String get goBack;
+
+  /// No description provided for @aiModelManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage AI Options'**
+  String get aiModelManage;
+
+  /// No description provided for @aiModelNotSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No option selected'**
+  String get aiModelNotSelected;
+
+  /// No description provided for @aiModelSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Option'**
+  String get aiModelSelect;
+
+  /// No description provided for @aiSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Settings'**
+  String get aiSettings;
+
+  /// No description provided for @aiSettingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust AI performance for your device. Recommended values are pre-selected.'**
+  String get aiSettingsDescription;
 
   /// No description provided for @setAiTokensUsage.
   ///
@@ -1705,8 +1747,38 @@ abstract class AppLocalizations {
   /// No description provided for @tokenUsageDescription.
   ///
   /// In en, this message translates to:
-  /// **'Higher token limits allow processing larger documents but use more memory. Restart processing after changing.'**
+  /// **'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.'**
   String get tokenUsageDescription;
+
+  /// No description provided for @gpuLayersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'GPU Layers'**
+  String get gpuLayersLabel;
+
+  /// No description provided for @gpuLayersDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.'**
+  String get gpuLayersDescription;
+
+  /// No description provided for @threadsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU Threads'**
+  String get threadsLabel;
+
+  /// No description provided for @threadsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of CPU threads for inference. More threads = faster but uses more battery.'**
+  String get threadsDescription;
+
+  /// No description provided for @recommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get recommended;
 
   /// No description provided for @tokenPresetLow.
   ///
@@ -1717,7 +1789,7 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetLowDescription.
   ///
   /// In en, this message translates to:
-  /// **'~100 tokens - Small documents only'**
+  /// **'Best for small files and quick tasks.\nUses the least resources and processes fastest.'**
   String get tokenPresetLowDescription;
 
   /// No description provided for @tokenPresetMedium.
@@ -1729,7 +1801,7 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetMediumDescription.
   ///
   /// In en, this message translates to:
-  /// **'~500 tokens - Most single-page documents'**
+  /// **'Good for most use cases.\nBalances file size, processing time, and resource usage.'**
   String get tokenPresetMediumDescription;
 
   /// No description provided for @tokenPresetHigh.
@@ -1741,7 +1813,7 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetHighDescription.
   ///
   /// In en, this message translates to:
-  /// **'~2048 tokens - Multi-page documents'**
+  /// **'Best for large files and complex processing.\nUses more resources and battery, and takes longer to complete.'**
   String get tokenPresetHighDescription;
 
   /// No description provided for @tokenPresetCustom.
@@ -1753,13 +1825,13 @@ abstract class AppLocalizations {
   /// No description provided for @tokenPresetCustomDescription.
   ///
   /// In en, this message translates to:
-  /// **'Set a custom token limit (max 4096)'**
+  /// **'Set custom amount of tokens you want to use.'**
   String get tokenPresetCustomDescription;
 
   /// No description provided for @setTokens.
   ///
   /// In en, this message translates to:
-  /// **'Set Tokens'**
+  /// **'Set'**
   String get setTokens;
 
   /// No description provided for @tokens.
@@ -1767,6 +1839,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'tokens'**
   String get tokens;
+
+  /// No description provided for @contextSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Context Size'**
+  String get contextSizeLabel;
+
+  /// No description provided for @contextSizeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.'**
+  String get contextSizeDescription;
+
+  /// No description provided for @useVisionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep Scan'**
+  String get useVisionLabel;
+
+  /// No description provided for @useVisionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads images for deeper analysis (e.g. handwriting). Uses more memory and requires a more performant device.'**
+  String get useVisionDescription;
+
+  /// No description provided for @aiModelNotAvailableForDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available for this phone'**
+  String get aiModelNotAvailableForDevice;
+
+  /// No description provided for @aiModelNotAvailableForDeviceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This device doesn\'t have enough memory to run smart scanning.'**
+  String get aiModelNotAvailableForDeviceDescription;
+
+  /// No description provided for @noInternetConnectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Internet Connection'**
+  String get noInternetConnectionTitle;
+
+  /// No description provided for @noInternetConnectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your internet connection and try again.'**
+  String get noInternetConnectionDescription;
+
+  /// No description provided for @processingStep2NotAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep Scan not available on this device'**
+  String get processingStep2NotAvailableTitle;
+
+  /// No description provided for @processingStep2NotEnoughRam.
+  ///
+  /// In en, this message translates to:
+  /// **'This device doesn\'t have enough memory for Deep Scan. Text-based processing is still available and works well for most documents.'**
+  String get processingStep2NotEnoughRam;
+
+  /// No description provided for @emergencyContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Phone Contact'**
+  String get emergencyContact;
+
+  /// No description provided for @emergencyContactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get emergencyContactHint;
+
+  /// No description provided for @searchCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Search country...'**
+  String get searchCountry;
+
+  /// No description provided for @rotatePage.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate'**
+  String get rotatePage;
+
+  /// No description provided for @deletePage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deletePage;
+
+  /// No description provided for @deletePageConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Page'**
+  String get deletePageConfirmTitle;
+
+  /// No description provided for @deletePageConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This page will be removed from the document.'**
+  String get deletePageConfirmMessage;
+
+  /// No description provided for @cannotDeleteLastPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete the last page'**
+  String get cannotDeleteLastPage;
+
+  /// No description provided for @pageRotated.
+  ///
+  /// In en, this message translates to:
+  /// **'Page rotated'**
+  String get pageRotated;
+
+  /// No description provided for @regionAndUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Language & Units'**
+  String get regionAndUnits;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @systemDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get systemDefault;
+
+  /// No description provided for @regionUS.
+  ///
+  /// In en, this message translates to:
+  /// **'US'**
+  String get regionUS;
+
+  /// No description provided for @regionEurope.
+  ///
+  /// In en, this message translates to:
+  /// **'Europe'**
+  String get regionEurope;
+
+  /// No description provided for @regionUK.
+  ///
+  /// In en, this message translates to:
+  /// **'UK'**
+  String get regionUK;
+
+  /// No description provided for @medGemmaIncompatibleDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This model requires more memory than your device has available. Use the Standard model instead.'**
+  String get medGemmaIncompatibleDevice;
+
+  /// No description provided for @deepScanDownloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Vision Model'**
+  String get deepScanDownloadTitle;
+
+  /// No description provided for @deepScanDownloadMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep Scan requires an additional download (~{size} MB). Download now?'**
+  String deepScanDownloadMessage(int size);
+
+  /// No description provided for @downloadingVisionModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading vision model...'**
+  String get downloadingVisionModel;
 }
 
 class _AppLocalizationsDelegate
@@ -1798,8 +2044,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }

@@ -24,7 +24,6 @@ class PatientSetupDialog extends StatefulWidget {
     this.onDismiss,
   });
 
-  /// Shows the dialog in setup mode (for onboarding)
   static void show(
     BuildContext context,
     Patient patient, {
@@ -82,7 +81,6 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
   void initState() {
     super.initState();
 
-    // Start with empty fields in setup mode
     _givenController = TextEditingController();
     _familyController = TextEditingController();
     _mrnController = TextEditingController();
@@ -178,7 +176,6 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
         widget.onDismiss?.call();
       }
     } catch (e) {
-      // Error handling - dialog will remain open for user to retry
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

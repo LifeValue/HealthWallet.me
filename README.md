@@ -107,8 +107,8 @@ The backend server aggregates medical records from healthcare providers and sync
 ## 🛠️ Development Setup
 
 ### Prerequisites
-- Flutter SDK (>=3.0.0)
-- Dart SDK (>=3.0.0)
+- Flutter SDK (>=3.38.0)
+- Dart SDK (>=3.10.7)
 - Android Studio or VS Code with Flutter extensions
 
 ### Quick Start
@@ -133,8 +133,8 @@ The backend server aggregates medical records from healthcare providers and sync
 ## 🏗️ Architecture
 
 ### Tech Stack
-- **Framework**: Flutter 3.0+
-- **Language**: Dart 3.0+
+- **Framework**: Flutter 3.38+
+- **Language**: Dart 3.10+
 - **State Management**: BLoC (flutter_bloc)
 - **Dependency Injection**: GetIt + Injectable
 - **Navigation**: Auto Route
@@ -149,18 +149,27 @@ The backend server aggregates medical records from healthcare providers and sync
 ```
 lib/
 ├── app/                    # App configuration and initialization
-├── core/                   # Core utilities, constants, and shared code
-│   ├── constants/         # App constants and configurations
-│   ├── errors/            # Error handling and custom exceptions
-│   ├── network/           # Network configuration and interceptors
-│   ├── storage/           # Local storage implementations
-│   └── utils/             # Utility functions and helpers
+├── core/                   # Shared infrastructure
+│   ├── config/            # App configuration and constants
+│   ├── data/              # Local database (Drift/SQLite)
+│   ├── di/                # Dependency injection setup
+│   ├── l10n/              # Localization
+│   ├── navigation/        # Router and route definitions
+│   ├── services/          # Shared services (path resolver, PDF, share intent)
+│   ├── theme/             # Colors, text styles, spacing
+│   ├── utils/             # Utility functions and helpers
+│   └── widgets/           # Reusable UI components
 ├── features/              # Feature modules
-│   ├── auth/              # Authentication feature
-│   ├── dashboard/         # Main dashboard
-│   ├── health_records/    # Health records management
-│   ├── sync/              # Data synchronization
-│   └── profile/           # User profile management
+│   ├── dashboard/         # Main dashboard and tab navigation
+│   ├── home/              # Home screen and health overview
+│   ├── notifications/     # In-app notifications
+│   ├── onboarding/        # First-launch onboarding flow
+│   ├── records/           # Health records management
+│   ├── scan/              # Document scanning and AI processing
+│   ├── share_records/     # Record sharing (proximity, export)
+│   ├── sync/              # Data synchronization with backend
+│   ├── user/              # User profile and patient management
+│   └── wallet_pass/       # Google / Apple Wallet passes
 └── gen/                   # Generated code (assets, routes, etc.)
 ```
 </details>
@@ -180,19 +189,49 @@ lib/
 
 </details>
 
+## 📱 Smart Document Scanning — Device Requirements
+
+HealthWallet.me includes a built-in AI that reads your medical documents (photos, PDFs) and automatically organizes them into structured health records — **everything happens on your phone, your data never leaves your device**.
+
+The AI model is downloaded once (~1.8 GB) and runs entirely offline after that.
+
+### What Your Phone Needs
+
+| Phone | Memory (RAM) | What You Get |
+|-------|-------------|--------------|
+| **Android** | 12 GB+ | Full scanning (reads all medical details) |
+| **Android** | 8 GB | Basic scanning (reads patient info only) |
+| **Android** | < 8 GB | Not supported |
+| **iPhone** | 6 GB+ (Pro/Pro Max) | Full scanning (reads all medical details) |
+| **iPhone** | 4 GB (iPhone 13/14/15) | Basic scanning (reads patient info only) |
+| **iPhone** | < 4 GB | Not supported |
+
+> Full scanning uses vision AI which requires more memory. Basic scanning uses text-only AI with OCR, which is lighter but still extracts patient info, encounters, and basic details.
+
+<details>
+  <summary><strong>Technical Details</strong></summary>
+
+| | |
+|---|---|
+| **Model** | [Qwen3-VL-2B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct) (Q4_K_M GGUF) |
+| **Download Size** | ~1.8 GB (model + vision projector) |
+| **Runtime** | llama.cpp (Metal on iOS, CPU on Android) |
+
+</details>
+
 ## 🎯 Roadmap
 
 ### Completed Features ✅
 - Basic health record management
 - Authentication and security
 - Cross-platform support
-- Document scanning & OCR
+- Smart document scanning (AI reads and organizes your medical records)
 - File import & in-app viewing
 
 ### In Progress 🚧
-- QR code sharing (SMART Health Cards)
-- Proximity-based communication (Airdrop)
-- Desktop app backup system(CRDT) and FHIR processing
+- Add IPS (International Patient Summary) to Google / Apple Wallet
+- Proximity-based sharing (Airdrop)
+- Desktop app with backup sync and offloaded document processing
 
 ### Future Plans 📋
 - Responsive UI
@@ -200,6 +239,7 @@ lib/
 - AI health insights
 - AI Note taking prescription
 - Family management
+- QR code sharing (SMART Health Cards)
 
 
 ## 🤝 Contributing

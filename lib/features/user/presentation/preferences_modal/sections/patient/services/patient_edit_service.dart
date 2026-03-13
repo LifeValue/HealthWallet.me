@@ -29,6 +29,7 @@ class PatientEditService {
     DateTime? birthDate,
     String? gender,
     String? mrn,
+    String? contactPhone,
     required List<Source> availableSources,
   }) async {
     final source = availableSources.firstWhere(
@@ -47,6 +48,7 @@ class PatientEditService {
         birthDate: birthDate,
         gender: gender,
         mrn: mrn,
+        contactPhone: contactPhone,
       );
     } else {
       return await _copyPatientToWallet(
@@ -56,6 +58,7 @@ class PatientEditService {
         birthDate: birthDate,
         gender: gender,
         mrn: mrn,
+        contactPhone: contactPhone,
         availableSources: availableSources,
       );
     }
@@ -68,6 +71,7 @@ class PatientEditService {
     DateTime? birthDate,
     String? gender,
     String? mrn,
+    String? contactPhone,
   }) async {
     final fhirPatient = fhir_r4.Patient.fromJson(patient.rawResource);
 
@@ -92,11 +96,16 @@ class PatientEditService {
         ? fhir_r4.FhirDate.fromDateTime(birthDate)
         : fhirPatient.birthDate;
 
+    final updatedContact = contactPhone != null
+        ? _updateEmergencyContact(fhirPatient.contact, contactPhone)
+        : fhirPatient.contact;
+
     final updatedFhirPatient = fhirPatient.copyWith(
       name: updatedNames,
       gender: finalGender,
       birthDate: finalBirthDate,
       identifier: updatedIdentifiers,
+      contact: updatedContact,
     );
 
     final updatedRawResource = updatedFhirPatient.toJson();
@@ -116,6 +125,7 @@ class PatientEditService {
       gender: updatedFhirPatient.gender,
       birthDate: updatedFhirPatient.birthDate,
       identifier: updatedIdentifiers,
+      contact: updatedContact,
     );
 
     await _recordsRepository.updatePatient(finalPatient);
@@ -129,6 +139,7 @@ class PatientEditService {
     DateTime? birthDate,
     String? gender,
     String? mrn,
+    String? contactPhone,
     required List<Source> availableSources,
   }) async {
     final walletSource = await _sourceTypeService.getWritableSourceForPatient(
@@ -155,6 +166,7 @@ class PatientEditService {
         birthDate: birthDate,
         gender: gender,
         mrn: mrn,
+        contactPhone: contactPhone,
       );
     } else {
       return await _createWalletPatientFromReadOnly(
@@ -165,6 +177,7 @@ class PatientEditService {
         birthDate: birthDate,
         gender: gender,
         mrn: mrn,
+        contactPhone: contactPhone,
       );
     }
   }
@@ -177,6 +190,7 @@ class PatientEditService {
     DateTime? birthDate,
     String? gender,
     String? mrn,
+    String? contactPhone,
   }) async {
     final walletResourceId = const Uuid().v4();
     final walletDbId = '${walletSource.id}_$walletResourceId';
@@ -206,12 +220,17 @@ class PatientEditService {
         ? fhir_r4.FhirDate.fromDateTime(birthDate)
         : fhirPatient.birthDate;
 
+    final updatedContact = contactPhone != null
+        ? _updateEmergencyContact(fhirPatient.contact, contactPhone)
+        : fhirPatient.contact;
+
     final updatedFhirPatient = fhirPatient.copyWith(
       id: fhir_r4.FhirString(walletResourceId),
       name: finalName,
       gender: finalGender,
       birthDate: finalBirthDate,
       identifier: updatedIdentifiers,
+      contact: updatedContact,
     );
 
     final updatedRawResource = updatedFhirPatient.toJson();
@@ -238,7 +257,7 @@ class PatientEditService {
       maritalStatus: readOnlyPatient.maritalStatus,
       multipleBirthX: readOnlyPatient.multipleBirthX,
       photo: readOnlyPatient.photo,
-      contact: readOnlyPatient.contact,
+      contact: updatedContact ?? readOnlyPatient.contact,
       communication: readOnlyPatient.communication,
       generalPractitioner: readOnlyPatient.generalPractitioner,
       managingOrganization: readOnlyPatient.managingOrganization,
@@ -249,6 +268,63 @@ class PatientEditService {
     await _recordsRepository.updatePatient(finalPatient);
 
     return finalPatient;
+  }
+
+  List<fhir_r4.PatientContact>? _updateEmergencyContact(
+    List<fhir_r4.PatientContact>? existingContacts,
+    String phone,
+  ) {
+    if (phone.isEmpty) {
+      if (existingContacts == null || existingContacts.isEmpty) return null;
+      final filtered = existingContacts
+          .where((c) => !_isEmergencyContact(c))
+          .toList();
+      return filtered.isEmpty ? null : filtered;
+    }
+
+    final emergencyContact = fhir_r4.PatientContact(
+      relationship: [
+        fhir_r4.CodeableConcept(
+          coding: [
+            fhir_r4.Coding(
+              system: fhir_r4.FhirUri(
+                'http://terminology.hl7.org/CodeSystem/v2-0131',
+              ),
+              code: fhir_r4.FhirCode('C'),
+              display: fhir_r4.FhirString('Emergency Contact'),
+            ),
+          ],
+        ),
+      ],
+      telecom: [
+        fhir_r4.ContactPoint(
+          system: fhir_r4.ContactPointSystem.phone,
+          value: fhir_r4.FhirString(phone),
+        ),
+      ],
+    );
+
+    if (existingContacts == null || existingContacts.isEmpty) {
+      return [emergencyContact];
+    }
+
+    final updated = existingContacts
+        .where((c) => !_isEmergencyContact(c))
+        .toList();
+    updated.insert(0, emergencyContact);
+    return updated;
+  }
+
+  bool _isEmergencyContact(fhir_r4.PatientContact contact) {
+    if (contact.relationship == null) return false;
+    for (final rel in contact.relationship!) {
+      final codings = rel.coding;
+      if (codings == null) continue;
+      for (final coding in codings) {
+        if (coding.code?.toString() == 'C') return true;
+      }
+    }
+    return false;
   }
 
   List<fhir_r4.Identifier>? _updateMRNIdentifier(

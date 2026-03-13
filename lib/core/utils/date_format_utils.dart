@@ -1,19 +1,28 @@
+import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:intl/intl.dart';
 
 class DateFormatUtils {
   DateFormatUtils._();
 
-  // Human-friendly date like "September 12, 2024"
   static String humanReadable(DateTime? dateTime) {
     if (dateTime == null) return '';
     return DateFormat.yMMMMd().format(dateTime);
   }
 
-  // Compact ISO-like date: "2024-09-12"
   static String isoCompact(DateTime dateTime) {
     return DateFormat('yyyy-MM-dd').format(dateTime);
   }
   
+  static String formatDate(DateTime? dateTime, RegionPreset region) {
+    if (dateTime == null) return '';
+    return DateFormat(region.dateFormat).format(dateTime);
+  }
+
+  static String formatDateTime(DateTime? dateTime, RegionPreset region) {
+    if (dateTime == null) return '';
+    return DateFormat(region.dateTimeFormat).format(dateTime);
+  }
+
   static String getSincePretty(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);

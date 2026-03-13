@@ -10,7 +10,6 @@ import 'package:health_wallet/core/navigation/observers/order_route_observer.dar
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
-
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -23,6 +22,7 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/secti
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
+import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -110,12 +110,21 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           create: (_) => getIt<PatientBloc>()..add(const PatientInitialised()),
         ),
         BlocProvider.value(value: getIt<NotificationBloc>()),
+        BlocProvider(create: (_) => getIt<WalletPassBloc>()),
       ],
       child: MultiBlocListener(
         listeners: [
           BlocListener<SyncBloc, SyncState>(
             listener: (context, state) {
               _handleSyncBlocStateChange(context, state);
+            },
+          ),
+          BlocListener<ScanBloc, ScanState>(
+            listenWhen: (previous, current) =>
+                previous.status != current.status &&
+                current.status == const ScanStatus.success(),
+            listener: (context, state) {
+              _handleScanSuccess(context);
             },
           ),
         ],
@@ -127,6 +136,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               darkTheme: AppTheme.darkTheme,
               themeMode:
                   state.user.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              locale: state.appLocale,
               routerConfig: router.config(
                 navigatorObservers: () => [routeObserver],
               ),
@@ -141,6 +151,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+void _handleScanSuccess(BuildContext context) {
+  context.read<PatientBloc>().add(const PatientPatientsLoaded());
+  context.read<HomeBloc>().add(const HomeScanCompleted());
+  context.read<RecordsBloc>().add(const RecordsInitialised());
 }
 
 void _handleSyncBlocStateChange(BuildContext context, SyncState state) {

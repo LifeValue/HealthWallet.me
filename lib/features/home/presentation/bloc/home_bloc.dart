@@ -5,6 +5,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
@@ -52,6 +54,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeVitalsExpansionToggled>((e, emit) =>
         emit(state.copyWith(vitalsExpanded: !state.vitalsExpanded)));
     on<HomeRefreshPreservingOrder>(_onRefreshPreservingOrder);
+    on<HomeScanCompleted>(_onScanCompleted);
     on<HomeSourceLabelUpdated>(_onSourceLabelUpdated);
     on<HomeSourceDeleted>(_onSourceDeleted);
   }
@@ -105,6 +108,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       HomeRefreshPreservingOrder e, Emitter<HomeState> emit) async {
     await _reloadHomeData(emit,
         force: true, overrideSourceId: state.selectedSource);
+  }
+
+  Future<void> _onScanCompleted(
+      HomeScanCompleted e, Emitter<HomeState> emit) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('home_selected_source_id', 'All');
+    emit(state.copyWith(selectedSource: 'All'));
+    await _reloadHomeData(emit, force: true);
   }
 
   Future<void> _onSourceChanged(
@@ -242,14 +253,35 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       if (allPatients.isEmpty) return null;
 
+      final patients = allPatients.whereType<Patient>().toList();
+
       final sourceIds = <String>{};
-      for (final patient in allPatients) {
+      for (final patient in patients) {
         if (patient.id == selectedPatientId && patient.sourceId.isNotEmpty) {
           sourceIds.add(patient.sourceId);
         }
       }
 
-      return sourceIds.isNotEmpty ? sourceIds.toList() : null;
+      if (sourceIds.isNotEmpty) return sourceIds.toList();
+
+      final patientGroups = _deduplicationService.deduplicatePatients(patients);
+      final matchingGroup = _deduplicationService.findPatientGroup(
+        patientGroups,
+        selectedPatientId,
+      );
+
+      if (matchingGroup != null) {
+        return matchingGroup.sourceIds;
+      }
+
+      if (patientGroups.isNotEmpty) {
+        final firstGroup = patientGroups.values.first;
+        final newSelectedId = firstGroup.representativePatient.id;
+        await prefs.setString('selected_patient_id', newSelectedId);
+        return firstGroup.sourceIds;
+      }
+
+      return null;
     } catch (e) {
       logger.e('Error getting patient source IDs: $e');
       return null;
@@ -348,7 +380,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       [List<String>? patientSourceIds]) async {
     final obs = await _fetchResourcesFromAllSources(
         [FhirType.Observation], sourceId, patientSourceIds);
-    return _patientVitalFactory.buildFromResources(obs);
+    final prefs = await SharedPreferences.getInstance();
+    final region = RegionPreset.fromString(
+      prefs.getString(SharedPrefsConstants.regionPreset),
+    );
+    return _patientVitalFactory.buildFromResources(obs, region: region);
   }
 
   Future<
@@ -474,7 +510,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       final prefs = await SharedPreferences.getInstance();
       final selectedPatientId = prefs.getString('selected_patient_id');
-
       final sources = await _fetchSources(sourceId);
       final overview =
           await _fetchOverviewCardsAndResources(sourceId, patientSourceIds);
@@ -589,8 +624,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       await _reloadHomeData(emit,
           force: true,
-          overrideSourceId: newSelectedSource,
-          patientSourceIds: event.patientSourceIds);
+          overrideSourceId: newSelectedSource);
     } catch (e) {
       logger.e('Error deleting source: $e');
     }

@@ -20,7 +20,7 @@ class ScanButtonPressed extends ScanEvent with _$ScanButtonPressed {
 @freezed
 class DocumentImported extends ScanEvent with _$DocumentImported {
   const factory DocumentImported({
-    required String filePath,
+    required List<String> filePaths,
   }) = _DocumentImported;
 }
 
@@ -134,4 +134,18 @@ class ScanTokenCapacityUpdated extends ScanEvent
     required int newMaxTokens,
     required String sessionId,
   }) = _ScanTokenCapacityUpdated;
+}
+
+@freezed
+class ScanVisionToggled extends ScanEvent with _$ScanVisionToggled {
+  const factory ScanVisionToggled({required bool useVision}) =
+      _ScanVisionToggled;
+}
+
+@freezed
+class ScanPagesReordered extends ScanEvent with _$ScanPagesReordered {
+  const factory ScanPagesReordered({
+    required String sessionId,
+    required List<String> reorderedPaths,
+  }) = _ScanPagesReordered;
 }

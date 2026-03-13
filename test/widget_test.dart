@@ -13,6 +13,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
@@ -147,8 +148,11 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
       [];
 
   @override
-  Future<Uint8List> buildIpsExport({required String? sourceId}) async =>
-      Uint8List(0);
+  Future<({Uint8List bytes, String patientName})> buildIpsExport({
+    String? sourceId,
+    String? patientId,
+  }) async =>
+      (bytes: Uint8List(0), patientName: 'Unknown');
 }
 
 class FakeSyncRepository extends Fake implements SyncRepository {
@@ -204,6 +208,14 @@ class FakeScanRepository extends Fake implements ScanRepository {
 
   @override
   Future<bool> checkModelExistence() async => false;
+
+  @override
+  Stream<double> downloadMmprojForVariant(AiModelVariant variant) =>
+      const Stream.empty();
+
+  @override
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant) async =>
+      false;
 
   @override
   Future<void> cancelGeneration() async {}

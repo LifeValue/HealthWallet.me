@@ -64,7 +64,10 @@ class RecordsSearchExecuted extends RecordsEvent with _$RecordsSearchExecuted {
 
 @freezed
 class RecordsSharePressed extends RecordsEvent with _$RecordsSharePressed {
-  const factory RecordsSharePressed() = _RecordsSharePressed;
+  const factory RecordsSharePressed({
+    String? patientName,
+    String? patientId,
+  }) = _RecordsSharePressed;
 }
 
 @freezed

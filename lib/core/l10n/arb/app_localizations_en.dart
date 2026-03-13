@@ -382,6 +382,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get done => 'Done';
 
   @override
+  String get page => 'Page';
+
+  @override
+  String get reorderPages => 'Reorder Pages';
+
+  @override
   String get attachments => 'Attachments';
 
   @override
@@ -647,22 +653,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingAiModelDescription =>
-      'Download a secure, on-device AI model (~1.5 GB) to automatically analyze and organize your health records, your data stays private on your device. This is a one-time setup.';
+      'Download a secure, on-device AI model to automatically analyze and organize your health records. Choose between two options depending on your needs and device capability. This is a one-time setup.\n\n**Your data stays private on your device.**';
 
   @override
   String get onboardingAiModelSubtitle => 'Unlock AI-powered scanning';
 
   @override
-  String get aiModelReady => 'AI model ready! You can start scanning.';
+  String get aiModelReady => 'AI ready! You can start scanning.';
 
   @override
-  String get aiModelDownloading => 'Downloading AI model...';
+  String get aiModelDownloading => 'Downloading...';
 
   @override
-  String get aiModelEnableDownload => 'Enable & Download';
+  String get aiModelEnableDownload => 'Choose & Download';
 
   @override
-  String get aiModelError => 'Couldn’t verify model. Try again.';
+  String get aiModelError => 'Couldn’t verify. Try again.';
 
   @override
   String get aiModelMissing => 'Not downloaded.';
@@ -675,11 +681,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiModelUnlockDescription =>
-      'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model. This keeps your data completely private.';
+      'To automatically read and organize your medical documents, this feature uses a secure, on-device AI model.\n\n**Your data stays private on your device.**';
 
   @override
   String get aiModelDownloadInfo =>
-      'To get started, we need to download the AI component (approx. 1.5 GB). This is a one-time setup.';
+      'To get started, choose and download one of two available AI options. This is a one-time setup.';
 
   @override
   String get setup => 'Setup';
@@ -781,7 +787,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only one processing session can run at a time';
 
   @override
-  String get aiModelNotAvailable => 'AI model is not available';
+  String get aiModelNotAvailable => 'Smart scanning is not available';
 
   @override
   String get addResources => 'Add resources';
@@ -853,55 +859,186 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'The document is too large for the current AI token capacity.';
+      'The document is too large for the current AI context size.';
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Try increasing the AI model capacity to process larger documents.';
+      'Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.';
 
   @override
-  String get increaseAiModelCapacity => 'Increase AI Model Capacity';
+  String get increaseAiModelCapacity => 'Increase AI Capacity';
 
   @override
   String get goBack => 'Go Back';
+
+  @override
+  String get aiModelManage => 'Manage AI Options';
+
+  @override
+  String get aiModelNotSelected => 'No option selected';
+
+  @override
+  String get aiModelSelect => 'Select Option';
+
+  @override
+  String get aiSettings => 'AI Settings';
+
+  @override
+  String get aiSettingsDescription =>
+      'Adjust AI performance for your device. Recommended values are pre-selected.';
 
   @override
   String get setAiTokensUsage => 'Set AI Tokens Usage';
 
   @override
   String get tokenUsageDescription =>
-      'Higher token limits allow processing larger documents but use more memory. Restart processing after changing.';
+      'Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.';
+
+  @override
+  String get gpuLayersLabel => 'GPU Layers';
+
+  @override
+  String get gpuLayersDescription =>
+      'Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.';
+
+  @override
+  String get threadsLabel => 'CPU Threads';
+
+  @override
+  String get threadsDescription =>
+      'Number of CPU threads for inference. More threads = faster but uses more battery.';
+
+  @override
+  String get recommended => 'Recommended';
 
   @override
   String get tokenPresetLow => 'Low';
 
   @override
-  String get tokenPresetLowDescription => '~100 tokens - Small documents only';
+  String get tokenPresetLowDescription =>
+      'Best for small files and quick tasks.\nUses the least resources and processes fastest.';
 
   @override
   String get tokenPresetMedium => 'Medium';
 
   @override
   String get tokenPresetMediumDescription =>
-      '~500 tokens - Most single-page documents';
+      'Good for most use cases.\nBalances file size, processing time, and resource usage.';
 
   @override
   String get tokenPresetHigh => 'High';
 
   @override
   String get tokenPresetHighDescription =>
-      '~2048 tokens - Multi-page documents';
+      'Best for large files and complex processing.\nUses more resources and battery, and takes longer to complete.';
 
   @override
   String get tokenPresetCustom => 'Custom';
 
   @override
   String get tokenPresetCustomDescription =>
-      'Set a custom token limit (max 4096)';
+      'Set custom amount of tokens you want to use.';
 
   @override
-  String get setTokens => 'Set Tokens';
+  String get setTokens => 'Set';
 
   @override
   String get tokens => 'tokens';
+
+  @override
+  String get contextSizeLabel => 'Context Size';
+
+  @override
+  String get contextSizeDescription =>
+      'Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.';
+
+  @override
+  String get useVisionLabel => 'Deep Scan';
+
+  @override
+  String get useVisionDescription =>
+      'Reads images for deeper analysis (e.g. handwriting). Uses more memory and requires a more performant device.';
+
+  @override
+  String get aiModelNotAvailableForDevice => 'Not available for this phone';
+
+  @override
+  String get aiModelNotAvailableForDeviceDescription =>
+      'This device doesn\'t have enough memory to run smart scanning.';
+
+  @override
+  String get noInternetConnectionTitle => 'No Internet Connection';
+
+  @override
+  String get noInternetConnectionDescription =>
+      'Please check your internet connection and try again.';
+
+  @override
+  String get processingStep2NotAvailableTitle =>
+      'Deep Scan not available on this device';
+
+  @override
+  String get processingStep2NotEnoughRam =>
+      'This device doesn\'t have enough memory for Deep Scan. Text-based processing is still available and works well for most documents.';
+
+  @override
+  String get emergencyContact => 'Emergency Phone Contact';
+
+  @override
+  String get emergencyContactHint => 'Phone number';
+
+  @override
+  String get searchCountry => 'Search country...';
+
+  @override
+  String get rotatePage => 'Rotate';
+
+  @override
+  String get deletePage => 'Delete';
+
+  @override
+  String get deletePageConfirmTitle => 'Delete Page';
+
+  @override
+  String get deletePageConfirmMessage =>
+      'This page will be removed from the document.';
+
+  @override
+  String get cannotDeleteLastPage => 'Cannot delete the last page';
+
+  @override
+  String get pageRotated => 'Page rotated';
+
+  @override
+  String get regionAndUnits => 'Language & Units';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get systemDefault => 'System Default';
+
+  @override
+  String get regionUS => 'US';
+
+  @override
+  String get regionEurope => 'Europe';
+
+  @override
+  String get regionUK => 'UK';
+
+  @override
+  String get medGemmaIncompatibleDevice =>
+      'This model requires more memory than your device has available. Use the Standard model instead.';
+
+  @override
+  String get deepScanDownloadTitle => 'Download Vision Model';
+
+  @override
+  String deepScanDownloadMessage(int size) {
+    return 'Deep Scan requires an additional download (~$size MB). Download now?';
+  }
+
+  @override
+  String get downloadingVisionModel => 'Downloading vision model...';
 }

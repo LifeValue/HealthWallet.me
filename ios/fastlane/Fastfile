@@ -94,7 +94,34 @@ platform :ios do
     build_app(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
+      skip_package_ipa: true
+    )
+
+    archive_path = lane_context[SharedValues::XCODEBUILD_ARCHIVE]
+    fw_dir = File.join(archive_path, "Products", "Applications", "Runner.app", "Frameworks")
+    if Dir.exist?(fw_dir)
+      sdk_ver = `xcrun --sdk iphoneos --show-sdk-version`.strip
+      UI.message("Patching embedded frameworks (target iOS 16.0, SDK #{sdk_ver})")
+      Dir.glob("#{fw_dir}/*.framework").each do |fw|
+        plist = File.join(fw, "Info.plist")
+        sh("plutil", "-replace", "MinimumOSVersion", "-string", "16.0", plist) if File.exist?(plist)
+
+        binary = File.join(fw, File.basename(fw, ".framework"))
+        if File.exist?(binary)
+          sh("xcrun", "vtool", "-set-build-version", "ios", "16.0", sdk_ver,
+             "-replace", "-output", "#{binary}.patched", binary)
+          FileUtils.mv("#{binary}.patched", binary)
+        end
+      end
+      UI.message("Patched MinimumOSVersion to 16.0 in all embedded frameworks")
+    end
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
       export_method: "app-store",
+      skip_build_archive: true,
+      archive_path: archive_path,
       export_options: {
         provisioningProfiles: {
           "com.techstackapps.healthwallet" => ENV["sigh_com.techstackapps.healthwallet_appstore_profile-name"],
