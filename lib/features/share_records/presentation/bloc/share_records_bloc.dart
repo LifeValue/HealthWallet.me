@@ -14,7 +14,7 @@ import 'package:health_wallet/features/records/domain/entity/record_note/record_
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
-import 'package:health_wallet/features/share_records/data/service/receive_mode_manager.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/share_records/data/service/share_preferences_service.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
@@ -124,7 +124,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
   ) async {
     WidgetsBinding.instance.addObserver(this);
 
-    final receiveModeManager = getIt<ReceiveModeManager>();
+    final receiveModeManager = getIt<ReceiveModeService>();
     _subscribeToStreams(
       skipInvitationStream: receiveModeManager.isListening,
     );
@@ -284,7 +284,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
 
     switch (result) {
       case PermissionGranted():
-        final manager = getIt<ReceiveModeManager>();
+        final manager = getIt<ReceiveModeService>();
         if (manager.isListening) {
           manager.pauseListening();
         }
@@ -321,7 +321,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
 
     switch (result) {
       case PermissionGranted():
-        final manager = getIt<ReceiveModeManager>();
+        final manager = getIt<ReceiveModeService>();
         if (manager.isListening) {
           manager.pauseListening();
         }
@@ -1139,7 +1139,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     ReceiverInitializedWithInvitation event,
     Emitter<ShareRecordsState> emit,
   ) async {
-    final manager = getIt<ReceiveModeManager>();
+    final manager = getIt<ReceiveModeService>();
     manager.clearPendingInvitation();
     manager.pauseListening();
 
@@ -1183,7 +1183,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     ReceiverInitializedWithData event,
     Emitter<ShareRecordsState> emit,
   ) async {
-    final manager = getIt<ReceiveModeManager>();
+    final manager = getIt<ReceiveModeService>();
     final container = manager.pendingReceivedData;
     manager.clearPendingReceivedData();
     manager.clearPendingInvitation();
@@ -1411,7 +1411,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
 
     await _service.disconnect();
 
-    final manager = getIt<ReceiveModeManager>();
+    final manager = getIt<ReceiveModeService>();
     if (manager.isListening) {
       await manager.resumeListening();
     }

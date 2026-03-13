@@ -7,7 +7,7 @@ import 'package:health_wallet/features/scan/data/data_source/local/scan_local_da
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_vision_prompt.dart';
-import 'package:health_wallet/features/scan/data/utils/scan_log_buffer.dart';
+import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 import 'package:health_wallet/features/scan/data/model/prompt_template/remaining_resources_vision_prompt.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
