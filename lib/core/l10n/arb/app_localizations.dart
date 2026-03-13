@@ -1873,7 +1873,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelNotAvailableForDeviceDescription.
   ///
   /// In en, this message translates to:
-  /// **'This device doesn\'t have enough memory to run smart scanning.'**
+  /// **'Sorry, your device doesn\'t have enough memory to run the AI model. You can still use the app without smart scanning.'**
   String get aiModelNotAvailableForDeviceDescription;
 
   /// No description provided for @noInternetConnectionTitle.
