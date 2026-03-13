@@ -128,10 +128,11 @@ class _HomePatientBarState extends State<HomePatientBar> {
       Offset.zero,
       ancestor: overlay,
     );
+    final horizontalMargin = context.screenHorizontalPadding;
     final position = RelativeRect.fromLTRB(
-      Insets.normal,
+      horizontalMargin,
       rowTopLeft.dy + row.size.height,
-      Insets.normal,
+      horizontalMargin,
       0,
     );
 

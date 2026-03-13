@@ -7,7 +7,7 @@ class LoadModelState with _$LoadModelState {
     double? downloadProgress,
     String? errorMessage,
     @Default(false) bool isBackgroundDownload,
-    @Default(DeviceAiCapability.full) DeviceAiCapability deviceCapability,
+    @Default(DeviceAiCapability.unsupported) DeviceAiCapability deviceCapability,
     AiModelVariant? selectedVariant,
     @Default(false) bool medGemmaDownloaded,
     @Default(false) bool qwenDownloaded,

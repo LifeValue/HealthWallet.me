@@ -85,6 +85,41 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                           ),
                         ],
                       ),
+                      if (state.deviceCapability ==
+                          DeviceAiCapability.unsupported) ...[
+                        const SizedBox(height: Insets.smallNormal),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Insets.smallNormal,
+                            vertical: Insets.small,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.warning.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline,
+                                  size: 18, color: AppColors.warning),
+                              const SizedBox(width: Insets.small),
+                              Flexible(
+                                child: Text(
+                                  context.l10n
+                                      .aiModelNotAvailableForDeviceDescription,
+                                  style: AppTextStyle.labelSmall.copyWith(
+                                    color: textColor.withOpacity(0.8),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: Insets.smallNormal),
                       _buildModelCard(
                         context: context,
@@ -97,8 +132,12 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         borderColor: borderColor,
                         textColor: textColor,
                         badge: null,
-                        incompatible: state.deviceCapability ==
-                            DeviceAiCapability.basicOnly,
+                        incompatible: state.deviceCapability !=
+                            DeviceAiCapability.full,
+                        incompatibleMessage: state.deviceCapability ==
+                                DeviceAiCapability.basicOnly
+                            ? context.l10n.medGemmaIncompatibleDevice
+                            : null,
                       ),
                       const SizedBox(height: Insets.small),
                       _buildModelCard(
@@ -111,6 +150,8 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         progress: state.qwenProgress,
                         borderColor: borderColor,
                         textColor: textColor,
+                        incompatible: state.deviceCapability ==
+                            DeviceAiCapability.unsupported,
                       ),
                       if (state.status == LoadModelStatus.error &&
                           state.errorMessage != null &&
@@ -144,6 +185,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     required Color textColor,
     String? badge,
     bool incompatible = false,
+    String? incompatibleMessage,
   }) {
     final isActiveAndLoaded = isActive && isDownloaded;
     final cardBorderColor = incompatible
@@ -226,7 +268,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
               color: textColor.withOpacity(0.6),
             ),
           ),
-          if (incompatible) ...[
+          if (incompatible && incompatibleMessage != null) ...[
             const SizedBox(height: Insets.small),
             Container(
               padding: const EdgeInsets.symmetric(
@@ -244,7 +286,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      context.l10n.medGemmaIncompatibleDevice,
+                      incompatibleMessage,
                       style: AppTextStyle.labelSmall.copyWith(
                         color: AppColors.error,
                         fontSize: 10,
