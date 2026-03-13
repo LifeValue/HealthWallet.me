@@ -102,11 +102,21 @@ done
 
 echo "Replaced $replaced .so files with 16KB-aligned versions."
 
-PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
-HOOKS_CACHE="$PROJECT_ROOT/.dart_tool/hooks_runner/shared/llamadart"
-if [ -d "$HOOKS_CACHE" ]; then
-  rm -rf "$HOOKS_CACHE"
-  echo "Cleared hooks_runner cache to force re-copy on next build."
+BUNDLE_DIR="$PKG_DIR/.dart_tool/llamadart/native_bundles/${LLAMA_CPP_TAG}/${BUNDLE_NAME}"
+if [ -f "$BUNDLE_DIR/$ARCHIVE_NAME" ]; then
+  rm -f "$BUNDLE_DIR/$ARCHIVE_NAME"
+  echo "Removed original archive to prevent re-extraction of unaligned files."
 fi
+
+PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
+
+rm -rf "$PROJECT_ROOT/.dart_tool/hooks_runner/llamadart" 2>/dev/null
+rm -rf "$PROJECT_ROOT/.dart_tool/hooks_runner/shared/llamadart" 2>/dev/null
+rm -rf "$PROJECT_ROOT/build/native_assets" 2>/dev/null
+rm -rf "$PROJECT_ROOT/build/native_hooks" 2>/dev/null
+rm -rf "$PROJECT_ROOT/build/app/intermediates/merged_jni_libs" 2>/dev/null
+rm -rf "$PROJECT_ROOT/build/app/intermediates/merged_native_libs" 2>/dev/null
+rm -rf "$PROJECT_ROOT/build/app/intermediates/stripped_native_libs" 2>/dev/null
+echo "Cleared all native library caches (hooks_runner, native_assets, Gradle intermediates)."
 
 echo "16KB alignment fix complete."
