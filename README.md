@@ -206,11 +206,11 @@ HealthWallet.me includes a built-in AI that reads your medical documents (photos
 
 | Phone | Memory (RAM) | What You Get |
 |-------|-------------|--------------|
-| **Android** | 12 GB+ | Full scanning (reads all medical details) |
-| **Android** | 8 GB | Basic scanning (reads patient info only) |
-| **Android** | < 8 GB | Not supported |
-| **iPhone** | 6 GB+ (Pro/Pro Max) | Full scanning (reads all medical details) |
-| **iPhone** | 4 GB (iPhone 13/14/15) | Basic scanning (reads patient info only) |
+| **Android** | 12 GB+ | Full scanning (both models) |
+| **Android** | 10–11 GB | Basic scanning (Standard model only) |
+| **Android** | < 10 GB | Not supported |
+| **iPhone** | 6 GB+ (Pro/Pro Max) | Full scanning (both models) |
+| **iPhone** | 4–6 GB (iPhone 13/14/15) | Basic scanning (Standard model only) |
 | **iPhone** | < 4 GB | Not supported |
 
 > Full scanning uses vision AI which requires more memory. Basic scanning uses text-only AI with OCR, which is lighter but still extracts patient info, encounters, and basic details.
