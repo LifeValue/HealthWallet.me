@@ -13,9 +13,8 @@ import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapp
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
-import 'scan_repository_impl.dart';
 
-mixin ScanProcessingRepository on ScanRepositoryImpl {
+mixin ScanProcessingRepository {
   static final _markdownFenceRegex = RegExp(r'```(?:json)?\s*');
 
   static const int _minOcrCharsForTextOnly = 200;
@@ -35,6 +34,7 @@ mixin ScanProcessingRepository on ScanRepositoryImpl {
   ScanNetworkDataSource get networkDataSource;
   TextRecognitionService get textRecognitionService;
   bool get shouldCancelGeneration;
+  Future<void> disposeModel();
 
   String get _ts => DateTime.now().toIso8601String().substring(11, 23);
 

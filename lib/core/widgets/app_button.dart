@@ -93,7 +93,7 @@ class AppButton extends StatelessWidget {
             );
     } else if (variant == AppButtonVariant.transparent) {
       final isDisabled = !enabled || onPressed == null;
-      final activeColor = isDarkMode ? Colors.white : colorScheme.primary;
+      final activeColor = colorScheme.primary;
       final textColor = isDisabled
           ? colorScheme.onSurface.withValues(alpha: 0.4)
           : activeColor;

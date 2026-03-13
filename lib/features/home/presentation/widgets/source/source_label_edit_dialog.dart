@@ -4,6 +4,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -102,7 +103,7 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(Insets.medium),
       child: Container(
-        width: 350,
+        width: context.dialogWidth,
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),

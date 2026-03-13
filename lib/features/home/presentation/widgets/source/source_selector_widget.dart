@@ -4,8 +4,8 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:health_wallet/features/home/presentation/widgets/source_list_dialog.dart';
-import 'package:health_wallet/features/home/presentation/widgets/source_label_edit_dialog.dart';
+import 'package:health_wallet/features/home/presentation/widgets/source/source_list_dialog.dart';
+import 'package:health_wallet/features/home/presentation/widgets/source/source_label_edit_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
 class SourceSelectorWidget extends StatelessWidget {

@@ -20,10 +20,12 @@ import 'package:health_wallet/features/share_records/core/ephemeral_session_mana
 @RoutePage()
 class RecordDetailsPage extends StatefulWidget {
   final IFhirResource resource;
+  final List<IFhirResource> ephemeralRecords;
 
   const RecordDetailsPage({
     super.key,
     required this.resource,
+    this.ephemeralRecords = const [],
   });
 
   @override
@@ -38,18 +40,21 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _isEphemeral = EphemeralSessionManager.instance.hasActiveSession;
+    _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
+        EphemeralSessionManager.instance.hasActiveSession;
     if (_isEphemeral) {
       _ephemeralRelatedResources = _findRelatedInMemory();
     }
   }
 
   List<IFhirResource> _findRelatedInMemory() {
-    final session = EphemeralSessionManager.instance.currentSession;
-    if (session == null) return [];
+    final records = widget.ephemeralRecords.isNotEmpty
+        ? widget.ephemeralRecords
+        : EphemeralSessionManager.instance.currentSession?.records;
+    if (records == null || records.isEmpty) return [];
     return FhirResourceRelationshipService.findRelatedInMemory(
       resource: widget.resource,
-      allRecords: session.records,
+      allRecords: records,
     );
   }
 
@@ -226,8 +231,10 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
         const Text("Encounter details", style: AppTextStyle.buttonSmall),
         const SizedBox(height: 4),
         InkWell(
-          onTap: () =>
-              context.router.push(RecordDetailsRoute(resource: encounter)),
+          onTap: () => context.router.push(RecordDetailsRoute(
+            resource: encounter,
+            ephemeralRecords: widget.ephemeralRecords,
+          )),
           child: _buildRelatedResourceInfo(context, encounter),
         ),
         Padding(
@@ -246,8 +253,10 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
         const Text("Related resources", style: AppTextStyle.buttonSmall),
         const SizedBox(height: 16),
         ...resources.map((resource) => InkWell(
-              onTap: () =>
-                  context.router.push(RecordDetailsRoute(resource: resource)),
+              onTap: () => context.router.push(RecordDetailsRoute(
+                resource: resource,
+                ephemeralRecords: widget.ephemeralRecords,
+              )),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
