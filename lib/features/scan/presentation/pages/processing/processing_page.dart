@@ -11,6 +11,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/processing_mapping_section.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/processing_resources_section.dart';
@@ -238,6 +239,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                   onCancel: () => context.read<ScanBloc>().add(
                         ScanMappingCancelled(sessionId: widget.sessionId),
                       ),
+                  checkModelExistence: () => getIt<ScanRepository>().checkModelExistence(),
                 ),
                 ProcessingResourcesSection(
                   state: state,

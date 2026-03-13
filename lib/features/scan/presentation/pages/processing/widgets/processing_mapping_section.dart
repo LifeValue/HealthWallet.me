@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -18,6 +16,7 @@ class ProcessingMappingSection extends StatelessWidget {
   final String sessionId;
   final VoidCallback onShowAiSettings;
   final VoidCallback onRetryStep1;
+  final Future<bool> Function() checkModelExistence;
   final VoidCallback onRetryStep2;
   final VoidCallback onCancel;
 
@@ -29,6 +28,7 @@ class ProcessingMappingSection extends StatelessWidget {
     required this.onRetryStep1,
     required this.onRetryStep2,
     required this.onCancel,
+    required this.checkModelExistence,
     super.key,
   });
 
@@ -52,7 +52,7 @@ class ProcessingMappingSection extends StatelessWidget {
     }
 
     if (displayedSession.status == ProcessingStatus.pending) {
-      return _QueuedMessage();
+      return _QueuedMessage(checkModelExistence: checkModelExistence);
     }
 
     return const SizedBox.shrink();
@@ -262,10 +262,14 @@ class ProcessingMappingSection extends StatelessWidget {
 }
 
 class _QueuedMessage extends StatelessWidget {
+  final Future<bool> Function() checkModelExistence;
+
+  const _QueuedMessage({required this.checkModelExistence});
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: getIt<ScanRepository>().checkModelExistence(),
+      future: checkModelExistence(),
       builder: (context, asyncSnapshot) {
         if (!asyncSnapshot.hasData) return const SizedBox();
         return Row(
