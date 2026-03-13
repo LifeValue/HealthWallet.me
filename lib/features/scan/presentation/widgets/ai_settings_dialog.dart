@@ -12,7 +12,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
-import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/scan/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/scan/domain/services/ai_model_download_service.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_token_section.dart';
@@ -220,7 +220,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     if (!mounted) return;
 
     final sizeMB = widget.activeModelConfig.mmprojSizeMB;
-    ConfirmationDialog.show(
+    AppSimpleDialog.showConfirmation(
       context: context,
       title: context.l10n.deepScanDownloadTitle,
       message: context.l10n.deepScanDownloadMessage(sizeMB),

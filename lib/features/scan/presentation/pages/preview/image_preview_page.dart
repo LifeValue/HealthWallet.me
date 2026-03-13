@@ -5,7 +5,7 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/alert_dialogs.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/pages/preview/bloc/preview_bloc.dart';
 
 class ImagePreviewPage extends StatefulWidget {
@@ -55,7 +55,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     final bloc = context.read<PreviewBloc>();
     if (bloc.state.images.length <= 1) return;
 
-    AlertDialogs.showConfirmation(
+    AppSimpleDialog.showDestructiveConfirmation(
       context: context,
       title: context.l10n.deletePageConfirmTitle,
       message: context.l10n.deletePageConfirmMessage,
