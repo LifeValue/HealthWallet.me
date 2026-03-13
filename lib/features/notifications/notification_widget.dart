@@ -8,7 +8,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
@@ -318,7 +318,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                   ? GestureDetector(
                       onTap: () {
                         _hideOverlay();
-                        ConfirmationDialog.show(
+                        AppSimpleDialog.showConfirmation(
                           context: context,
                           title: 'Cancel Download',
                           message:
