@@ -282,7 +282,7 @@ class ScanNetworkDataSourceImpl
               Exception('Download failed for $filename: $status'),
             );
           }
-        } else if (status == TaskStatus.cancel) {
+        } else if (status == TaskStatus.canceled) {
           if (!completer.isCompleted) {
             completer.completeError(
               Exception(

@@ -15,7 +15,7 @@ import 'package:health_wallet/features/scan/domain/repository/scan_repository.da
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/processing_mapping_section.dart';
 import 'package:health_wallet/features/scan/presentation/pages/processing/widgets/processing_resources_section.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_dialog.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_settings/ai_settings_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';

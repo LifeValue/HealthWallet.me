@@ -15,8 +15,8 @@ import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/scan/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/scan/domain/services/ai_model_download_service.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_token_section.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_vision_toggle.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_settings/ai_settings_token_section.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_settings/ai_settings_vision_toggle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AiSettingsResult {

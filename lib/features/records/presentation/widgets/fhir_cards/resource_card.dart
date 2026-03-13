@@ -70,7 +70,15 @@ class _ResourceCardState extends State<ResourceCard> {
   }
 
   Widget _buildMainResourceInfo() {
-    return ResourceInfoContent(resource: widget.resource);
+    return ResourceInfoContent(
+      resource: widget.resource,
+      onTap: widget.readOnly && widget.ephemeralRecords.isNotEmpty
+          ? () => context.router.push(RecordDetailsRoute(
+                resource: widget.resource,
+                ephemeralRecords: widget.ephemeralRecords,
+              ))
+          : null,
+    );
   }
 
   bool get _hasRelated {
@@ -374,8 +382,10 @@ class _ResourceCardState extends State<ResourceCard> {
                         (resource) => InkWell(
                           onTap: () {
                             _toggleRelated();
-                            context.router
-                                .push(RecordDetailsRoute(resource: resource));
+                            context.router.push(RecordDetailsRoute(
+                              resource: resource,
+                              ephemeralRecords: widget.ephemeralRecords,
+                            ));
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10),

@@ -9,6 +9,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
 
 class ModelManagementDialog extends StatefulWidget {
@@ -51,7 +52,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
           child: BlocBuilder<LoadModelBloc, LoadModelState>(
             builder: (context, state) {
               return Container(
-                width: 350,
+                width: context.dialogWidth,
                 decoration: BoxDecoration(
                   color: context.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),

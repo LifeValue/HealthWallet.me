@@ -5,12 +5,12 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/features/records/presentation/widgets/filters/date_range_filter_model.dart';
+import 'package:health_wallet/features/records/domain/entity/date_filter/date_filter.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class RecordsActiveFiltersBar extends StatelessWidget {
   final List<FhirType> activeFilters;
-  final DateRangeFilterModel? dateFilter;
+  final DateFilter? dateFilter;
 
   const RecordsActiveFiltersBar({
     required this.activeFilters,
