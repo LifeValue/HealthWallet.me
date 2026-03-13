@@ -13,6 +13,7 @@ import 'package:health_wallet/features/records/presentation/widgets/records_acti
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
 import 'package:health_wallet/features/records/presentation/widgets/search_widget.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/resource_card.dart';
@@ -251,6 +252,7 @@ class _RecordsViewState extends State<RecordsView> {
         ),
       ),
       automaticallyImplyLeading: false,
+      extraTopPadding: context.isTablet ? 16 : 0,
       actions: [
         Container(
           margin: const EdgeInsets.only(right: 8),
@@ -473,6 +475,17 @@ class _RecordsViewState extends State<RecordsView> {
       builder: (context, constraints) {
         const double bottomNavBarSpacing = 100.0;
 
+        final placeholder = SyncPlaceholderWidget(
+          pageController: widget.pageController,
+          recordTypeName: state.activeFilters.isNotEmpty
+              ? state.activeFilters.length == 1
+                  ? state.activeFilters.first.display
+                  : state.activeFilters
+                      .map((f) => f.display)
+                      .join(', ')
+              : null,
+        );
+
         return SingleChildScrollView(
           controller: _scrollController,
           physics: const ClampingScrollPhysics(),
@@ -484,18 +497,12 @@ class _RecordsViewState extends State<RecordsView> {
               padding: const EdgeInsets.only(
                 bottom: bottomNavBarSpacing,
               ),
-              child: IntrinsicHeight(
-                child: SyncPlaceholderWidget(
-                  pageController: widget.pageController,
-                  recordTypeName: state.activeFilters.isNotEmpty
-                      ? state.activeFilters.length == 1
-                          ? state.activeFilters.first.display
-                          : state.activeFilters
-                              .map((f) => f.display)
-                              .join(', ')
-                      : null,
-                ),
-              ),
+              child: context.isTablet
+                  ? Align(
+                      alignment: const Alignment(0, -0.3),
+                      child: placeholder,
+                    )
+                  : IntrinsicHeight(child: placeholder),
             ),
           ),
         );

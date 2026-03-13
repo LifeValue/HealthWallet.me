@@ -4,6 +4,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 class AppDialog extends StatefulWidget {
   final String title;
   final String description;
@@ -179,7 +180,7 @@ class _AppDialogState extends State<AppDialog> {
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(Insets.normal),
         child: Container(
-          width: 350,
+          width: context.dialogWidth,
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
@@ -238,8 +239,7 @@ class _AppDialogState extends State<AppDialog> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              SizedBox(
-                                width: 227,
+                              Flexible(
                                 child: Text(
                                   widget.description,
                                   style: AppTextStyle.labelLarge
@@ -404,7 +404,7 @@ class _AppDialogState extends State<AppDialog> {
                     borderRadius: BorderRadius.circular(12),
                     shadowColor: Colors.black.withOpacity(0.12),
                     child: Container(
-                      width: 318,
+                      width: context.dialogWidth - 32,
                       decoration: BoxDecoration(
                         color: context.colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),

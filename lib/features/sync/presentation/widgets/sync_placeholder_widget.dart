@@ -10,6 +10,7 @@ import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -209,10 +210,12 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
   }
 
   Widget _buildActionButtons(BuildContext context, bool hasAnyMeaningfulData) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-      child: Column(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+          child: Column(
         children: [
           if (!hasAnyMeaningfulData) ...[
             SizedBox(
@@ -335,7 +338,9 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
                     ),
                   ),
           ),
-        ],
+          ],
+          ),
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
@@ -35,8 +36,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) {
         final platformOffset = Platform.isIOS ? Insets.extraLarge : Insets.large;
+        final tabletExtra = context.isTablet ? -36.0 : 0.0;
         final topPadding =
-            MediaQuery.of(context).viewPadding.top + kToolbarHeight + platformOffset;
+            MediaQuery.of(context).viewPadding.top + kToolbarHeight + platformOffset + tabletExtra;
         return BlocBuilder<NotificationBloc, NotificationState>(
           bloc: context.read<NotificationBloc>(),
           builder: (blocContext, currentState) {
@@ -52,8 +54,8 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                 ),
                 Positioned(
                   top: topPadding,
-                  left: Insets.smallNormal,
-                  right: Insets.smallNormal,
+                  left: context.isTablet ? context.screenHorizontalPadding : Insets.smallNormal,
+                  right: context.isTablet ? context.screenHorizontalPadding : Insets.smallNormal,
                   child: Card(
                     child: Container(
                       height: 368,

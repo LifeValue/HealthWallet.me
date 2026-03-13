@@ -66,11 +66,14 @@ class OnboardingScreen extends StatelessWidget {
                   final availableHeight = constraints.maxHeight;
                   return SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: availableHeight - 40,
-                      ),
-                      child: Column(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: 500,
+                          minHeight: availableHeight - 40,
+                        ),
+                        child: Column(
                         children: [
                           image.svg(height: 250),
                           if (!showBiometricToggle)
@@ -149,6 +152,7 @@ class OnboardingScreen extends StatelessWidget {
                             customWidget!,
                           ],
                         ],
+                      ),
                       ),
                     ),
                   );
