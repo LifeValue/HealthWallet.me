@@ -77,6 +77,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Fix llamadart 16KB page alignment
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build cmake > /dev/null
+          export PUB_CACHE="${PUB_CACHE:-$HOME/.pub-cache}"
+          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          bash scripts/fix_llamadart_16kb_alignment.sh
+
       - name: Run code generation
         run: dart run build_runner build --delete-conflicting-outputs
 
