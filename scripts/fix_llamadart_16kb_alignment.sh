@@ -101,4 +101,12 @@ for leftover in "$CACHE_DIR"/libggml-vulkan.so "$CACHE_DIR"/libggml-opencl.so; d
 done
 
 echo "Replaced $replaced .so files with 16KB-aligned versions."
+
+PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
+HOOKS_CACHE="$PROJECT_ROOT/.dart_tool/hooks_runner/shared/llamadart"
+if [ -d "$HOOKS_CACHE" ]; then
+  rm -rf "$HOOKS_CACHE"
+  echo "Cleared hooks_runner cache to force re-copy on next build."
+fi
+
 echo "16KB alignment fix complete."
