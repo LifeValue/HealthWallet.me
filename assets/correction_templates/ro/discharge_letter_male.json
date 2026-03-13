@@ -1,0 +1,141 @@
+{
+  "language": "ro",
+  "category": "visit",
+  "gender": "male",
+  "templateType": "Bilet de iesire din spital / Scrisoare medicala",
+  "ocrExcerpt": "CARDIOLOGIE Foaie de observatie nr.34521 Cod prezentare:7654321 Varsta la prezentare: 58 ani BILET DE IESIRE DIN SPITAL SCRISOARE MEDICALA Nume si prenume: DUMITRESCU ANDREI, CNP: 1650812350142, Varsta actuala: 58 ani Domiciliu: Str. VICTORIEI 23, Localitatea Timisoara, Judetul TIMIS Data internarii: 22.06.2022 14:20 Data externarii: 28.06.2022 11:45 Diagnostic externare INFARCT MIOCARDIC ACUT ANTEROSEPTAL HIPERTENSIUNE ARTERIALA ESENTIALA GRAD II DIABET ZAHARAT TIP 2 DISLIPIDEMIIE MIXTA OBEZITATE GRAD II Epicriza Pacient in varsta de 58 ani, se interneaza in serviciul nostru pentru durere toracica intensa, dispnee. Pacientul este cunoscut cu HTA grad II si diabet zaharat tip 2 in tratament cu Metformin. La momentul internarii pacientul prezinta: stare generala influentata, TA = 165/95 mmHg; AV = 92 bpm; FR = 22 rpm; SO2 = 94%. EKG: supradenivelare ST in V1-V4. Se efectueaza coronarografie de urgenta cu angioplastie si montare stent pe ADA. Evolutie favorabila post procedura. INVESTIGATII PARACLINICE: Troponina I = 8.5 ng/ml (ref: < 0.04), CK-MB = 156 U/L (ref: < 25), WBC = 12.4 10^3/uL, HGB = 14.2 g/dl, Creatinina = 1.1 mg/dl, Glicemie = 186 mg/dl, Colesterol total = 245 mg/dl, LDL = 168 mg/dl, HDL = 38 mg/dl, Trigliceride = 210 mg/dl. Tratament la externare: Aspirina 100mg/zi, Clopidogrel 75mg/zi, Atorvastatina 40mg/zi, Metoprolol 50mg x2/zi, Ramipril 5mg/zi, Metformin 1000mg x2/zi. Medic sef sectie: Dr. GHEORGHE VASILE Medic curant: Dr. TUDOR ALEXANDRU",
+  "extraction": [
+    {
+      "resourceType": "Patient",
+      "familyName": "DUMITRESCU",
+      "givenName": "ANDREI",
+      "dateOfBirth": "1965-08-12",
+      "gender": "male",
+      "patientMRN": "1650812350142",
+      "identifierLabel": "CNP",
+      "documentCategory": "visit"
+    },
+    {
+      "resourceType": "Encounter",
+      "encounterType": "Internare cardiologie - infarct miocardic acut",
+      "periodStart": "2022-06-22"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Infarct miocardic acut anteroseptal",
+      "onsetDateTime": "2022-06-22",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Hipertensiune arteriala esentiala grad II",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Diabet zaharat tip 2",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Dislipidemie mixta",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Obezitate grad II",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Procedure",
+      "procedureName": "Coronarografie de urgenta cu angioplastie si montare stent pe ADA",
+      "performedDateTime": "2022-06-22",
+      "reason": "Infarct miocardic acut anteroseptal"
+    },
+    {
+      "resourceType": "MedicationStatement",
+      "medicationName": "Aspirina",
+      "dosage": "100 mg/zi",
+      "reason": "Prevenire secundara post-infarct"
+    },
+    {
+      "resourceType": "MedicationStatement",
+      "medicationName": "Clopidogrel",
+      "dosage": "75 mg/zi",
+      "reason": "Antiagregare plachetara post-stent"
+    },
+    {
+      "resourceType": "MedicationStatement",
+      "medicationName": "Atorvastatina",
+      "dosage": "40 mg/zi",
+      "reason": "Dislipidemie mixta"
+    },
+    {
+      "resourceType": "MedicationStatement",
+      "medicationName": "Metoprolol",
+      "dosage": "50 mg x 2/zi",
+      "reason": "Post-infarct, control frecventa cardiaca"
+    },
+    {
+      "resourceType": "MedicationStatement",
+      "medicationName": "Ramipril",
+      "dosage": "5 mg/zi",
+      "reason": "Hipertensiune arteriala"
+    },
+    {
+      "resourceType": "MedicationStatement",
+      "medicationName": "Metformin",
+      "dosage": "1000 mg x 2/zi",
+      "reason": "Diabet zaharat tip 2"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Troponina I",
+      "value": "8.5",
+      "unit": "ng/ml",
+      "referenceRange": "< 0.04"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "CK-MB",
+      "value": "156",
+      "unit": "U/L",
+      "referenceRange": "< 25"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Glicemie",
+      "value": "186",
+      "unit": "mg/dl",
+      "referenceRange": "65 - 115"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Colesterol total",
+      "value": "245",
+      "unit": "mg/dl",
+      "referenceRange": "< 200"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "LDL",
+      "value": "168",
+      "unit": "mg/dl",
+      "referenceRange": "< 100"
+    },
+    {
+      "resourceType": "Practitioner",
+      "practitionerName": "Dr. TUDOR ALEXANDRU",
+      "role": "Medic curant - Cardiologie"
+    },
+    {
+      "resourceType": "Organization",
+      "organizationName": "Spital Clinic Municipal",
+      "organizationType": "Hospital"
+    }
+  ]
+}

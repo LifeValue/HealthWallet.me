@@ -1,3 +1,4 @@
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
@@ -30,15 +31,34 @@ abstract class ScanRepository {
 
   Stream<double> downloadModel();
 
+  Stream<double> downloadModelForVariant(AiModelVariant variant);
+
   Future<bool> checkModelExistence();
 
+  Future<bool> checkModelExistenceForVariant(AiModelVariant variant);
+
+  Future<void> deleteModelForVariant(AiModelVariant variant);
+
+  Stream<double> downloadMmprojForVariant(AiModelVariant variant);
+
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant);
+
   Future<(MappingPatient, MappingResource)> mapBasicInfo(
-    String medicalText,
-  );
+    List<String> imagePaths, {
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+  });
 
   Stream<MappingResourcesWithProgress> mapRemainingResources(
-    String medicalText, {
+    List<String> imagePaths, {
     String? documentCategory,
+    bool useVision = false,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
   });
 
   Future<void> cancelGeneration();

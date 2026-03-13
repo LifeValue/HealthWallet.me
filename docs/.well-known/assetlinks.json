@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.techstackapps.healthwallet",
+      "sha256_cert_fingerprints": [
+        "87:15:EB:08:F6:C2:3C:92:97:20:69:8F:EC:0E:11:72:75:FF:01:4E:7D:35:D8:D9:65:51:52:F9:3B:A0:42:2A"
+      ]
+    }
+  }
+]

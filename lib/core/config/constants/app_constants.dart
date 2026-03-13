@@ -15,11 +15,15 @@ class AppConstants {
   static const Duration cacheDuration = Duration(hours: 1);
 
   static const String modelUrl =
-      'https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.task';
-  static const String modelId =
-      'Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.task';
+      'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf';
+  static const String modelId = 'medgemma-4b-it_Q4_K_M.gguf';
 
-  static const int modelKvCacheSize = 4096;
+  static const String mmprojUrl =
+      'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/mmproj-medgemma-4b-it-F16.gguf';
+  static const String mmprojId = 'mmproj-medgemma-4b-it-F16.gguf';
+
+  static const int modelContextSize = 4096;
   static const int defaultMaxTokens = 4096;
   static const int maxAllowedTokens = 4096;
+  static const int visionMaxTokens = 512;
 }

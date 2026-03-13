@@ -6,7 +6,6 @@ import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
-import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_storage_service.dart';
@@ -29,6 +28,8 @@ import 'package:health_wallet/features/sync/domain/services/source_type_service.
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'scan_state.dart';
@@ -76,13 +77,17 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     on<ScanProcessRemainingResources>(_onScanProcessRemainingResources);
     on<ScanDocumentAttached>(_onScanDocumentAttached);
     on<ScanTokenCapacityUpdated>(_onScanTokenCapacityUpdated);
+    on<ScanVisionToggled>(_onScanVisionToggled);
+    on<ScanPagesReordered>(_onScanPagesReordered);
   }
 
   bool _isCapacityError(String errorString) {
     final lower = errorString.toLowerCase();
     return lower.contains('maxtokens') ||
         lower.contains('input is too long') ||
-        lower.contains('input_size');
+        lower.contains('input_size') ||
+        lower.contains('tokenization') ||
+        lower.contains('prompt too long');
   }
 
   void _startNextPendingSession() {
@@ -103,9 +108,12 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     try {
       final sessions = await _repository.getProcessingSessions();
 
+      final useVision =
+          _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? false;
       emit(state.copyWith(
         sessions: sessions,
         status: const ScanStatus.initial(),
+        useVision: useVision,
       ));
     } on Exception catch (e) {
       emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
@@ -216,22 +224,114 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
   ) async {
     emit(state.copyWith(status: const ScanStatus.loading()));
     try {
-      final file = File(event.filePath);
-      final exists = await file.exists();
+      final persistedPaths = <String>[];
 
-      if (!exists) {
+      for (final filePath in event.filePaths) {
+        final file = File(filePath);
+        if (await file.exists()) {
+          final persisted = await _persistImportedFile(file);
+          persistedPaths.add(persisted);
+        }
+      }
+
+      if (persistedPaths.isEmpty) {
         emit(state.copyWith(
-          status: const ScanStatus.failure(error: 'File does not exist'),
+          status: const ScanStatus.failure(error: 'No valid files found'),
         ));
         return;
       }
 
+      final orderedPaths = persistedPaths.length > 1
+          ? await _autoReorderByPageNumber(persistedPaths)
+          : persistedPaths;
+
       await _createSession(emit,
-          filePaths: [event.filePath], origin: ProcessingOrigin.import);
+          filePaths: orderedPaths, origin: ProcessingOrigin.import);
     } catch (e) {
       emit(state.copyWith(
         status: ScanStatus.failure(error: 'Failed to import document: $e'),
       ));
+    }
+  }
+
+  Future<String> _persistImportedFile(File sourceFile) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final importsDir = Directory('${docsDir.path}/imports');
+    if (!await importsDir.exists()) {
+      await importsDir.create(recursive: true);
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final extension = p.extension(sourceFile.path);
+    final baseName = p.basenameWithoutExtension(sourceFile.path);
+    final fileName = '${baseName}_$timestamp$extension';
+    final destPath = '${importsDir.path}/$fileName';
+
+    await sourceFile.copy(destPath);
+    return destPath;
+  }
+
+  Future<List<String>> _autoReorderByPageNumber(List<String> paths) async {
+    try {
+      final pagePattern = RegExp(
+        r'(?:page|pagina|seite|p\.?)\s*(\d+)\s*(?:of|von|de|/)\s*(\d+)',
+        caseSensitive: false,
+      );
+
+      final entries = <_PageEntry>[];
+
+      for (int i = 0; i < paths.length; i++) {
+        final text = await _ocrProcessingHelper
+            .processOcrForImages([paths[i]]);
+        final match = pagePattern.firstMatch(text);
+
+        if (match != null) {
+          final pageNum = int.tryParse(match.group(1)!);
+          final totalPages = int.tryParse(match.group(2)!);
+          if (pageNum != null && totalPages != null) {
+            entries.add(_PageEntry(
+              path: paths[i],
+              pageNumber: pageNum,
+              totalPages: totalPages,
+              originalIndex: i,
+            ));
+            continue;
+          }
+        }
+        entries.add(_PageEntry(
+          path: paths[i],
+          pageNumber: null,
+          totalPages: null,
+          originalIndex: i,
+        ));
+      }
+
+      final detected = entries.where((e) => e.pageNumber != null).toList();
+      if (detected.length < 2) return paths;
+
+      final totals = detected.map((e) => e.totalPages).toSet();
+      if (totals.length != 1) return paths;
+
+      final expectedTotal = totals.first!;
+      if (expectedTotal != paths.length) return paths;
+
+      final pageNumbers = detected.map((e) => e.pageNumber!).toSet();
+      if (pageNumbers.length != detected.length) return paths;
+
+      if (pageNumbers.any((n) => n < 1 || n > expectedTotal)) return paths;
+
+      entries.sort((a, b) {
+        if (a.pageNumber != null && b.pageNumber != null) {
+          return a.pageNumber!.compareTo(b.pageNumber!);
+        }
+        if (a.pageNumber != null) return -1;
+        if (b.pageNumber != null) return 1;
+        return a.originalIndex.compareTo(b.originalIndex);
+      });
+
+      return entries.map((e) => e.path).toList();
+    } catch (_) {
+      return paths;
     }
   }
 
@@ -449,6 +549,11 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       return;
     }
 
+    if (session.status == ProcessingStatus.patientExtracted &&
+        session.patient.hasSelection) {
+      return;
+    }
+
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
     );
@@ -493,7 +598,17 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         return;
       }
 
-      final (patient, container) = await _repository.mapBasicInfo(medicalText);
+      final savedMaxTokens = _prefs.getInt(SharedPrefsConstants.aiMaxTokens);
+      final savedGpuLayers = _prefs.getInt(SharedPrefsConstants.aiGpuLayers);
+      final savedThreads = _prefs.getInt(SharedPrefsConstants.aiThreads);
+      final savedContextSize = _prefs.getInt(SharedPrefsConstants.aiContextSize);
+      final (patient, container) = await _repository.mapBasicInfo(
+        sessionImages,
+        maxTokens: savedMaxTokens,
+        gpuLayers: savedGpuLayers,
+        threads: savedThreads,
+        contextSize: savedContextSize,
+      );
       debugPrint('[ScanAI] bloc: container type=${container.runtimeType}, isDiagnosticReport=${container is MappingDiagnosticReport}');
 
       StagedPatient stagedPatient;
@@ -529,7 +644,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       }
 
       final finalSession =
-          state.sessions.firstWhere((s) => s.id == event.sessionId);
+          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
 
       if (container is MappingDiagnosticReport) {
         _updateSession(
@@ -552,7 +667,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       }
 
       final notification = Notification(
-        text: "${finalSession.origin} patient info extracted",
+        text: "${finalSession?.origin ?? 'Document'} patient info extracted",
         route: ProcessingRoute(sessionId: event.sessionId),
         time: DateTime.now(),
       );
@@ -679,6 +794,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       final (subjectId, sourceId, finalContainer, _) =
           await _persistPrimaryResources(activeSession);
 
+      await _prefs.setString('selected_patient_id', subjectId);
+
       final otherResources = activeSession.resources
           .where((r) =>
               r is! MappingPatient &&
@@ -712,6 +829,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       emit(state.copyWith(status: const ScanStatus.success()));
     } catch (e) {
+      logger.e('[ScanBloc] resource creation failed: $e');
       emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
     }
   }
@@ -731,12 +849,17 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
 
+    final hasPatientData = session.patient.hasSelection;
+
+    final newStatus = (session.status == ProcessingStatus.processing ||
+            hasPatientData)
+        ? ProcessingStatus.patientExtracted
+        : ProcessingStatus.cancelled;
+
     _updateSession(
       emit,
       sessionId: event.sessionId,
-      status: session.status == ProcessingStatus.processing
-          ? ProcessingStatus.patientExtracted
-          : ProcessingStatus.cancelled,
+      status: newStatus,
       resources: [],
       progress: 0.0,
     );
@@ -847,9 +970,6 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
       final sessionImages =
           state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
 
-      final medicalText =
-          await _ocrProcessingHelper.processOcrForImages(sessionImages);
-
       final activeSession =
           state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
       final docCategory =
@@ -857,10 +977,21 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
               ? 'lab_report'
               : 'visit';
 
+      final savedMaxTokens = _prefs.getInt(SharedPrefsConstants.aiMaxTokens);
+      final savedGpuLayers = _prefs.getInt(SharedPrefsConstants.aiGpuLayers);
+      final savedThreads = _prefs.getInt(SharedPrefsConstants.aiThreads);
+      final savedContextSize = _prefs.getInt(SharedPrefsConstants.aiContextSize);
+      final useVision =
+          _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? false;
       Stream<MappingResourcesWithProgress> stream =
           _repository.mapRemainingResources(
-        medicalText,
+        sessionImages,
         documentCategory: docCategory,
+        useVision: useVision,
+        maxTokens: savedMaxTokens,
+        gpuLayers: savedGpuLayers,
+        threads: savedThreads,
+        contextSize: savedContextSize,
       );
 
       await for (final (resources, progress) in stream) {
@@ -877,6 +1008,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           sessionId: event.sessionId,
           resources: [...currentSession!.resources, ...resources],
           progress: progress,
+          updateDb: true,
         );
       }
 
@@ -899,10 +1031,14 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
       _startNextPendingSession();
     } catch (e) {
+      final failedSession = state.sessions.firstWhereOrNull(
+        (s) => s.id == event.sessionId,
+      );
       _updateSession(
         emit,
         sessionId: event.sessionId,
         status: ProcessingStatus.patientExtracted,
+        resources: failedSession?.resources,
         updateDb: true,
       );
       if (!emit.isDone) {
@@ -926,6 +1062,39 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
     await _repository.disposeModel();
     add(ScanMappingInitiated(sessionId: event.sessionId));
+  }
+
+  void _onScanVisionToggled(
+    ScanVisionToggled event,
+    Emitter<ScanState> emit,
+  ) {
+    _prefs.setBool(SharedPrefsConstants.aiUseVision, event.useVision);
+    emit(state.copyWith(useVision: event.useVision));
+  }
+
+  Future<void> _onScanPagesReordered(
+    ScanPagesReordered event,
+    Emitter<ScanState> emit,
+  ) async {
+    final sessionIndex =
+        state.sessions.indexWhere((s) => s.id == event.sessionId);
+    if (sessionIndex == -1) return;
+
+    final updatedSession =
+        state.sessions[sessionIndex].copyWith(filePaths: event.reorderedPaths);
+    final updatedSessions = [...state.sessions];
+    updatedSessions[sessionIndex] = updatedSession;
+
+    final updatedImageMap =
+        Map<String, List<String>>.from(state.sessionImagePaths)
+          ..[event.sessionId] = event.reorderedPaths;
+
+    emit(state.copyWith(
+      sessions: updatedSessions,
+      sessionImagePaths: updatedImageMap,
+    ));
+
+    await _repository.editProcessingSession(updatedSession);
   }
 
   Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
@@ -1004,4 +1173,18 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
           (resourcesToSave.firstWhere((r) => r is Patient) as Patient)
     );
   }
+}
+
+class _PageEntry {
+  final String path;
+  final int? pageNumber;
+  final int? totalPages;
+  final int originalIndex;
+
+  _PageEntry({
+    required this.path,
+    required this.pageNumber,
+    required this.totalPages,
+    required this.originalIndex,
+  });
 }

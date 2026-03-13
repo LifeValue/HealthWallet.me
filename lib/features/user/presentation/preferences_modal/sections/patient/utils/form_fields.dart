@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
@@ -25,6 +26,8 @@ class FormFields {
     ValueChanged<String>? onChanged, {
     TextEditingController? controller,
     String? hintText,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     final textController = controller ?? TextEditingController(text: value);
 
@@ -56,6 +59,8 @@ class FormFields {
             controller: textController,
             enabled: onChanged != null,
             onChanged: onChanged,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
             style: AppTextStyle.labelLarge.copyWith(
               color: context.isDarkMode
                   ? AppColors.textPrimaryDark

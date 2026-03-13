@@ -2,12 +2,16 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:injectable/injectable.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:path/path.dart' as path;
 
 @Injectable()
 class PdfStorageService {
-  /// Save a PDF file to permanent storage and return the new path
+  final PathResolver _pathResolver;
+
+  PdfStorageService(this._pathResolver);
+
   Future<String?> savePdfToStorage({
     required String sourcePdfPath,
     String? customFileName,
@@ -31,14 +35,13 @@ class PdfStorageService {
 
       await sourceFile.copy(newPath);
 
-      return newPath;
+      return await _pathResolver.toRelative(newPath);
     } catch (e) {
       logger.e('Error saving PDF: $e');
       return null;
     }
   }
 
-  /// Get all saved PDFs
   Future<List<String>> getSavedPdfs() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
@@ -70,7 +73,6 @@ class PdfStorageService {
     }
   }
 
-  /// Delete a saved PDF
   Future<bool> deletePdf(String pdfPath) async {
     try {
       final file = File(pdfPath);
@@ -85,7 +87,6 @@ class PdfStorageService {
     }
   }
 
-  /// Get PDF file info
   Future<Map<String, dynamic>> getPdfInfo(String pdfPath) async {
     try {
       final file = File(pdfPath);
@@ -104,7 +105,6 @@ class PdfStorageService {
     }
   }
 
-  /// Check and request storage permission
   Future<bool> _requestStoragePermission() async {
     if (Platform.isAndroid) {
       final status = await Permission.storage.status;
@@ -119,7 +119,6 @@ class PdfStorageService {
     return true;
   }
 
-  /// Format file size in human-readable format
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';

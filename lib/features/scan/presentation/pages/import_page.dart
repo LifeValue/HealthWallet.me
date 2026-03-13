@@ -50,8 +50,11 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
     final externalFileService = getIt<ExternalFilesService>();
 
     if (externalFileService.hasPendingFiles) {
-      for (final path in externalFileService.consumeFilePaths()) {
-        context.read<ScanBloc>().add(DocumentImported(filePath: path));
+      final paths = externalFileService.consumeFilePaths();
+      if (paths.isNotEmpty) {
+        context
+            .read<ScanBloc>()
+            .add(DocumentImported(filePaths: paths.toList()));
       }
     }
   }
@@ -184,6 +187,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
       await Future.delayed(const Duration(milliseconds: 100));
 
       final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
         allowCompression: false,
         withData: false,
         withReadStream: false,
@@ -201,26 +205,19 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
       );
 
       if (result != null && result.files.isNotEmpty) {
+        final validPaths = <String>[];
+
         for (final file in result.files) {
-          String finalFilePath = '';
-
-          if (file.path != null) {
-            finalFilePath = file.path!;
-          } else {
-            continue;
+          if (file.path == null || file.path!.isEmpty) continue;
+          if (await File(file.path!).exists()) {
+            validPaths.add(file.path!);
           }
+        }
 
-          if (finalFilePath.isNotEmpty) {
-            final fileExists = await File(finalFilePath).exists();
-
-            if (fileExists) {
-              if (context.mounted) {
-                context.read<ScanBloc>().add(
-                      DocumentImported(filePath: finalFilePath),
-                    );
-              }
-            }
-          }
+        if (validPaths.isNotEmpty && context.mounted) {
+          context.read<ScanBloc>().add(
+                DocumentImported(filePaths: validPaths),
+              );
         }
       }
     } catch (e) {
@@ -233,22 +230,21 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
       await Future.delayed(const Duration(milliseconds: 100));
 
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final List<XFile> images = await picker.pickMultiImage();
 
-      if (image != null) {
-        final fileExists = await File(image.path).exists();
+      if (images.isEmpty) return;
 
-        if (fileExists) {
-          if (context.mounted) {
-            try {
-              context.read<ScanBloc>().add(
-                    DocumentImported(filePath: image.path),
-                  );
-            } catch (e) {
-              // Handle error silently
-            }
-          }
+      final validPaths = <String>[];
+      for (final image in images) {
+        if (await File(image.path).exists()) {
+          validPaths.add(image.path);
         }
+      }
+
+      if (validPaths.isNotEmpty && context.mounted) {
+        context.read<ScanBloc>().add(
+              DocumentImported(filePaths: validPaths),
+            );
       }
     } catch (e) {
       // Handle error silently

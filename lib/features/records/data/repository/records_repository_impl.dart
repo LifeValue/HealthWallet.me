@@ -9,6 +9,7 @@ import 'package:health_wallet/features/records/data/datasource/fhir_resource_dat
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/domain/services/demo_data_extractor.dart';
@@ -73,10 +74,18 @@ class RecordsRepositoryImpl implements RecordsRepository {
       sourceId: sourceId,
     );
 
-    return localDtos
+    final resources = localDtos
         .where((dto) => dto.id != encounterId)
         .map(IFhirResource.fromLocalDto)
         .toList();
+
+    resources.sort((a, b) {
+      final aIsDoc = a.fhirType == FhirType.DocumentReference ? 0 : 1;
+      final bIsDoc = b.fhirType == FhirType.DocumentReference ? 0 : 1;
+      return aIsDoc.compareTo(bIsDoc);
+    });
+
+    return resources;
   }
 
   @override
@@ -391,20 +400,44 @@ class RecordsRepositoryImpl implements RecordsRepository {
   }
 
   @override
-  Future<Uint8List> buildIpsExport({required String? sourceId}) async {
+  Future<({Uint8List bytes, String patientName})> buildIpsExport({
+    String? sourceId,
+    String? patientId,
+  }) async {
+    List<String>? patientSourceIds;
+    if (patientId != null) {
+      final allPatients = await _datasource.getResources(
+        resourceTypes: [FhirType.Patient.name],
+      );
+      patientSourceIds = allPatients
+          .map(IFhirResource.fromLocalDto)
+          .where((p) => p.id == patientId && p.sourceId.isNotEmpty)
+          .map((p) => p.sourceId)
+          .toSet()
+          .toList();
+    }
+
     List<FhirResourceLocalDto> resourceDtos = await _datasource.getResources(
       resourceTypes: [],
       sourceId: sourceId,
+      sourceIds: patientSourceIds,
     );
 
     List<IFhirResource> resources =
         resourceDtos.map(IFhirResource.fromLocalDto).toList();
 
-    Patient? patient = resources.whereType<Patient>().firstOrNull;
+    Patient? patient = patientId != null
+        ? resources.whereType<Patient>().where((p) => p.id == patientId).firstOrNull
+        : resources.whereType<Patient>().firstOrNull;
 
     if (patient == null) {
       throw Exception("Patient not found");
     }
+
+    final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
+          patient.name?.first,
+        )?.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_') ??
+        'Unknown';
 
     FhirIpsBuilder builder = FhirIpsBuilder();
     FhirIpsPdfRenderer renderer = FhirIpsPdfRenderer();
@@ -414,6 +447,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
       rawPatient: patient.rawResource,
     );
 
-    return renderer.render(ipsData: ipsData);
+    final bytes = await renderer.render(ipsData: ipsData);
+    return (bytes: bytes, patientName: patientName);
   }
 }

@@ -1,41 +1,14 @@
-import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
+class BasicInfoPrompt {
+  String buildPrompt(String ocrText) {
+    final truncated = ocrText.length > 1500 ? ocrText.substring(0, 1500) : ocrText;
 
-class BasicInfoPrompt extends PromptTemplate {
-  @override
-  String get promptResourceType =>
-      "basic patient demographic information, encounter details, and diagnostic report details";
-
-  @override
-  String get promptJsonStructure => '''
-    [
-      {
-        "resourceType": "Patient",
-        "familyName": "string",
-        "givenName": "string",
-        "dateOfBirth": "string (YYYY-MM-DD, actual date not age)",
-        "gender": "male | female | other | unknown",
-        "patientMRN": "string (the actual numeric value of the patient identifier, e.g. 1900101998765 or 0100-33-44, NOT the label name, empty if not found)",
-        "identifierLabel": "string (the type of identifier found: CNP if Romanian, MRN if American, SSN, NHS, etc.)",
-        "documentCategory": "visit | lab_report (visit for hospital visits, discharge summaries, consultations; lab_report for laboratory test results, blood tests, diagnostic studies)"
-      },
-      {
-        "resourceType": "Encounter",
-        "encounterType": "string (type of visit or hospital/clinic name, empty if not a clinical visit)",
-        "periodStart": "string (YYYY-MM-DD, empty if not found)"
-      },
-      {
-        "resourceType": "DiagnosticReport",
-        "reportName": "string (lab test or report name, empty if not a lab report)",
-        "conclusion": "string (empty if not found)",
-        "issuedDate": "string (YYYY-MM-DD, empty if not found)"
-      }
-    ]
-  ''';
-
-  @override
-  String get promptExample => '''
-    Medical Text: "Patient Smith, John (DOB: 1985-02-20, Male, CNP: 1850220123456) visited General Hospital on April 2nd, 2024."
-
-    [{"resourceType":"Patient","givenName":"John","familyName":"Smith","dateOfBirth":"1985-02-20","gender":"male","patientMRN":"1850220123456","identifierLabel":"CNP","documentCategory":"visit"},{"resourceType":"Encounter","encounterType":"General Hospital","periodStart":"2024-04-02"},{"resourceType":"DiagnosticReport","reportName":"","conclusion":"","issuedDate":""}]
-  ''';
+    return '''Extract patient info from this text. Return ONLY a JSON array with 2 objects.
+Text:
+$truncated
+---
+Format: [Patient, Encounter or DiagnosticReport]
+[{"resourceType":"Patient","familyName":"<the patient surname from the text>","givenName":"<the patient first name from the text>","dateOfBirth":"YYYY-MM-DD","gender":"male|female","patientMRN":"<ID number>","identifierLabel":"MRN","documentCategory":"visit"},{"resourceType":"Encounter","encounterType":"type","periodStart":"YYYY-MM-DD"}]
+For lab results use DiagnosticReport instead: {"resourceType":"DiagnosticReport","reportName":"name","conclusion":"","issuedDate":"YYYY-MM-DD"}
+Rules: familyName and givenName MUST be the actual patient name from the text, NOT placeholders. dateOfBirth=birth date ONLY, not visit date. CNP=Romanian 13-digit ID only. patientMRN=the CNP number (13 digits after "CNP:"), NOT "Cod prezentare", "Foie de observatie", or "Nr. fisa". If no patient ID or MRN is found, set patientMRN to "" and keep identifierLabel as "MRN". Empty string for missing fields.''';
+  }
 }

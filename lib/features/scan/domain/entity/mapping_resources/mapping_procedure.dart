@@ -22,10 +22,13 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
   }) = _MappingProcedure;
 
   factory MappingProcedure.fromJson(Map<String, dynamic> json) {
+    final rawPerformed = MappedProperty.fromJson(json['performedDateTime']);
     return MappingProcedure(
       id: json["id"] ?? const Uuid().v4(),
       procedureName: MappedProperty.fromJson(json['procedureName']),
-      performedDateTime: MappedProperty.fromJson(json['performedDateTime']),
+      performedDateTime: rawPerformed.copyWith(
+        value: MappingResource.normalizeDateValue(rawPerformed.value),
+      ),
       reason: MappedProperty.fromJson(json['reason']),
     );
   }
@@ -57,7 +60,9 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
     fhir_r4.Procedure procedure = fhir_r4.Procedure(
       code: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(procedureName.value)),
-      performedX: fhir_r4.FhirDateTime.fromString(performedDateTime.value),
+      performedX: performedDateTime.value.isNotEmpty
+          ? fhir_r4.FhirDateTime.fromString(performedDateTime.value)
+          : null,
       reasonCode: [
         fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reason.value))
       ],
@@ -96,7 +101,7 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
           label: 'Performed Date',
           value: performedDateTime.value,
           confidenceLevel: performedDateTime.confidenceLevel,
-          validators: [nonEmptyValidator, dateValidator],
+          fieldType: FieldType.date,
         ),
         'reason': TextFieldDescriptor(
           label: 'Reason',
@@ -134,7 +139,7 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
         procedureName: procedureName.calculateConfidence(inputText),
-        performedDateTime: performedDateTime.calculateConfidence(inputText),
+        performedDateTime: performedDateTime.calculateDateConfidence(inputText),
         reason: reason.calculateConfidence(inputText),
       );
 

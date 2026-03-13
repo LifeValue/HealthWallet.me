@@ -25,6 +25,7 @@ class ResourcesForm extends StatelessWidget {
     required this.resources,
     required this.sessionId,
     required this.formKey,
+    this.encounterSectionKey,
     this.encounter,
     this.diagnosticReport,
     this.patient,
@@ -35,6 +36,7 @@ class ResourcesForm extends StatelessWidget {
   final List<MappingResource> resources;
   final String sessionId;
   final GlobalKey<FormState> formKey;
+  final GlobalKey? encounterSectionKey;
   final StagedPatient? patient;
   final StagedEncounter? encounter;
   final StagedDiagnosticReport? diagnosticReport;
@@ -71,66 +73,75 @@ class ResourcesForm extends StatelessWidget {
                         ),
               ),
             if (diagnosticReport?.hasSelection == true)
-              _buildResourceForm(
-                context,
-                canRemove: false,
-                resource: diagnosticReport!.draft!,
-                isStagedResource: true,
-                isReadOnly: isAttachmentLocked,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: 0,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
-                            isDraftDiagnosticReport: true,
+              KeyedSubtree(
+                key: encounterSectionKey,
+                child: _buildResourceForm(
+                  context,
+                  canRemove: false,
+                  resource: diagnosticReport!.draft!,
+                  isStagedResource: true,
+                  isReadOnly: isAttachmentLocked,
+                  onPropertyChanged: (propertyKey, newValue) =>
+                      context.read<ScanBloc>().add(
+                            ScanResourceChanged(
+                              sessionId: sessionId,
+                              index: 0,
+                              propertyKey: propertyKey,
+                              newValue: newValue,
+                              isDraftDiagnosticReport: true,
+                            ),
                           ),
-                        ),
+                ),
               )
             else if (encounter?.hasSelection == true)
-              _buildResourceForm(
-                context,
-                canRemove: false,
-                resource: encounter!.mode == ImportMode.createNew
-                    ? encounter!.draft!
-                    : MappingEncounter.fromFhirResource(encounter!.existing!),
-                isStagedResource: true,
-                isReadOnly: isAttachmentLocked ||
-                    encounter!.mode == ImportMode.linkExisting,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: 0,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
-                            isDraftEncounter: true,
+              KeyedSubtree(
+                key: encounterSectionKey,
+                child: _buildResourceForm(
+                  context,
+                  canRemove: false,
+                  resource: encounter!.mode == ImportMode.createNew
+                      ? encounter!.draft!
+                      : MappingEncounter.fromFhirResource(encounter!.existing!),
+                  isStagedResource: true,
+                  isReadOnly: isAttachmentLocked ||
+                      encounter!.mode == ImportMode.linkExisting,
+                  onPropertyChanged: (propertyKey, newValue) =>
+                      context.read<ScanBloc>().add(
+                            ScanResourceChanged(
+                              sessionId: sessionId,
+                              index: 0,
+                              propertyKey: propertyKey,
+                              newValue: newValue,
+                              isDraftEncounter: true,
+                            ),
                           ),
-                        ),
+                ),
               ),
-            ...resources.map((resource) {
-              final index = resources.indexOf(resource);
+            ...resources.indexed.map((entry) {
+              final (index, resource) = entry;
 
-              return _buildResourceForm(
-                context,
-                resource: resource,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: index,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
+              return KeyedSubtree(
+                key: ValueKey('remaining_${resource.id}_$index'),
+                child: _buildResourceForm(
+                  context,
+                  resource: resource,
+                  onPropertyChanged: (propertyKey, newValue) =>
+                      context.read<ScanBloc>().add(
+                            ScanResourceChanged(
+                              sessionId: sessionId,
+                              index: index,
+                              propertyKey: propertyKey,
+                              newValue: newValue,
+                            ),
                           ),
-                        ),
-                onResourceRemoved: () => DeleteConfirmationDialog.show(
-                  context: context,
-                  title: 'Delete Resources',
-                  onConfirm: () {
-                    context.read<ScanBloc>().add(ScanResourceRemoved(
-                        sessionId: sessionId, index: index));
-                  },
+                  onResourceRemoved: () => DeleteConfirmationDialog.show(
+                    context: context,
+                    title: 'Delete Resources',
+                    onConfirm: () {
+                      context.read<ScanBloc>().add(ScanResourceRemoved(
+                          sessionId: sessionId, index: index));
+                    },
+                  ),
                 ),
               );
             })
@@ -231,7 +242,21 @@ class ResourcesForm extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(descriptor.label, style: AppTextStyle.bodySmall),
+                      Row(
+                        children: [
+                          Text(descriptor.label, style: AppTextStyle.bodySmall),
+                          if (descriptor.fieldType == FieldType.date &&
+                              descriptor.value.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: Icon(
+                                Icons.error_outline,
+                                size: 16,
+                                color: Colors.red,
+                              ),
+                            ),
+                        ],
+                      ),
                       if (confidenceLevel != ConfidenceLevel.high)
                         Text(
                           "(${confidenceLevel.getString()})",

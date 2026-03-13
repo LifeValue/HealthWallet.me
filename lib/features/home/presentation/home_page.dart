@@ -28,6 +28,7 @@ import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholde
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/home/presentation/widgets/share_options_sheet.dart';
 
 @RoutePage()
 class HomePage extends StatelessWidget {
@@ -73,6 +74,13 @@ class HomePage extends StatelessWidget {
             }
           },
         ),
+        BlocListener<UserBloc, UserState>(
+          listenWhen: (previous, current) =>
+              previous.regionPreset != current.regionPreset,
+          listener: (context, state) {
+            context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+          },
+        ),
       ],
       child: HomeView(pageController: pageController),
     );
@@ -93,6 +101,7 @@ class HomeViewState extends State<HomeView> {
 
   bool _hasShownOnboarding = false;
   bool _isScrolled = false;
+  bool _isShareMenuOpen = false;
   final GlobalKey _patientRowKey = GlobalKey();
   double _patientRowHeight = 0;
 
@@ -297,8 +306,7 @@ class HomeViewState extends State<HomeView> {
     final hasAnyMeaningfulData =
         hasVitalDataLoaded || hasOverviewDataLoaded || hasRecent;
 
-    final shouldShowPlaceholder =
-        !hasAnyMeaningfulData && state.selectedSource != 'wallet';
+    final shouldShowPlaceholder = !hasAnyMeaningfulData;
 
     if (shouldShowPlaceholder) {
       return SyncPlaceholderWidget(
@@ -619,10 +627,68 @@ class HomeViewState extends State<HomeView> {
                 horizontal: Insets.normal,
                 vertical: Insets.small,
               ),
-              child: Text(
-                'Patient: ${FhirFieldExtractor.extractHumanNameFamilyFirst(state.patient?.name?.first) ?? 'Loading...'}',
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: context.colorScheme.onSurface,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (_isShareMenuOpen) return;
+                  final row = _patientRowKey.currentContext
+                      ?.findRenderObject() as RenderBox?;
+                  if (row == null) return;
+                  final overlay = Overlay.of(context)
+                      .context
+                      .findRenderObject() as RenderBox;
+                  final rowTopLeft = row.localToGlobal(
+                    Offset.zero,
+                    ancestor: overlay,
+                  );
+                  final position = RelativeRect.fromLTRB(
+                    Insets.normal,
+                    rowTopLeft.dy + row.size.height,
+                    Insets.normal,
+                    0,
+                  );
+
+                  setState(() => _isShareMenuOpen = true);
+
+                  final patientName =
+                      FhirFieldExtractor.extractHumanNameFamilyFirst(
+                          state.patient?.name?.first);
+                  showShareOptionsMenu(
+                    context,
+                    position: position,
+                    patientName: patientName,
+                    patientId: state.patient?.id,
+                  ).then((_) {
+                    if (mounted) {
+                      setState(() => _isShareMenuOpen = false);
+                    }
+                  });
+                },
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'Patient: ${FhirFieldExtractor.extractHumanNameFamilyFirst(state.patient?.name?.first) ?? 'Loading...'}',
+                        style: AppTextStyle.bodyMedium.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: Insets.extraSmall),
+                    AnimatedRotation(
+                      turns: _isShareMenuOpen ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Assets.icons.chevronDown.svg(
+                        width: 20,
+                        height: 20,
+                        colorFilter: ColorFilter.mode(
+                          context.colorScheme.primary,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

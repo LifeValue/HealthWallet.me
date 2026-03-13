@@ -1,0 +1,58 @@
+{
+  "language": "ro",
+  "category": "lab_report",
+  "gender": "female",
+  "templateType": "Buletin anatomo-patologic",
+  "ocrExcerpt": "Serviciul de ANATOMIE PATOLOGICA Buletin anatomo-patologic NR: 2021/1845-2-8 Data examinarii 18.03.21 13:48 Cod prezentare 4891234 MARINESCU ELENA F 68 ani Data nasterii 15.03.1953 Cod numeric personal 2520315054321 Adresa Str. LIBERTATII Nr 7 Localitate Cluj-Napoca Judet CLUJ Departament: CHIRURGIE GENERALA 2 Medic: IONESCU MIHAI Diagnostic trimitere METRORAGIE TUMORA UTERIN Piesa trimisa UTER+ANEXE Diagnostic macroscopic PIESA DE HISTERECTOMIE TOTALA CU ANEXECTOMIE BILATERALA CU CORP UTERIN DE 7/7/6 CM CARE LA SECTIONARE PREZINTA O FORMATIUNE TUMORALA DE CONSISTENTA SCAZUTA CARE OCUPA INTREAGA CAVITATE ENDOMETRIALA SI INFILTREAZA MIOMETRUL Diagnostic microscopic PIESA DE HISTERECTOMIE TOTALA CU ANEXECTOMIE BILATERALA CU CORP UTERIN LA NIVELUL CARUIA ESTE PREZENTA PROLIFERARE TUMORALA CU STRUCTURA UNUI ADENOCARCINOM ENDOMETRIAL DE TIP ENDOMETRIOID CU GRADING DE MALIGNITATE ARHITECTURAL 3 SI GRADING NUCLEAR 3(G3) CONCLUZIE: ADENOCARCINOM ENDOMETRIAL DE TIP ENDOMETRIOID G3 AL CORPULUI UTERIN pT3aNxMXL1V1PNO FIGO III a M 8570/3 Medic examinator Dr. VASILE IOANA Asistent STANCU ROBERT",
+  "extraction": [
+    {
+      "resourceType": "Patient",
+      "familyName": "MARINESCU",
+      "givenName": "ELENA",
+      "dateOfBirth": "1953-03-15",
+      "gender": "female",
+      "patientMRN": "2520315054321",
+      "identifierLabel": "CNP",
+      "documentCategory": "lab_report"
+    },
+    {
+      "resourceType": "DiagnosticReport",
+      "reportName": "Buletin anatomo-patologic - Examen histopatologic",
+      "conclusion": "Adenocarcinom endometrial de tip endometrioid G3, al corpului uterin. pT3aNxMXL1V1PNO, FIGO III a",
+      "issuedDate": "2021-03-18"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Adenocarcinom endometrial de tip endometrioid G3",
+      "onsetDateTime": "2021-03-18",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Metroragie - tumora uterin",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Procedure",
+      "procedureName": "Examen histopatologic - piesa histerectomie totala cu anexectomie bilaterala",
+      "performedDateTime": "2021-03-18",
+      "reason": "Diagnostic oncologic - tumora uterina"
+    },
+    {
+      "resourceType": "Practitioner",
+      "practitionerName": "Dr. VASILE IOANA",
+      "role": "Medic examinator anatomie patologica"
+    },
+    {
+      "resourceType": "Practitioner",
+      "practitionerName": "Dr. IONESCU MIHAI",
+      "role": "Medic trimitator"
+    },
+    {
+      "resourceType": "Organization",
+      "organizationName": "Serviciul de Anatomie Patologica - Spital Clinic Judetean",
+      "organizationType": "Laboratory"
+    }
+  ]
+}

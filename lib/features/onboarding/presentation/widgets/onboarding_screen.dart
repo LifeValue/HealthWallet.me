@@ -301,6 +301,29 @@ class OnboardingScreen extends StatelessWidget {
           ),
         ),
       );
+    } else if (description.contains('**')) {
+      final segments = description.split('**');
+      final spans = <TextSpan>[];
+      for (int i = 0; i < segments.length; i++) {
+        spans.add(TextSpan(
+          text: segments[i],
+          style: i.isOdd
+              ? AppTextStyle.regular.copyWith(
+                  color: context.colorScheme.onSurface.withOpacity(0.85),
+                  fontWeight: FontWeight.w700,
+                )
+              : null,
+        ));
+      }
+      return RichText(
+        textAlign: textAlign,
+        text: TextSpan(
+          style: AppTextStyle.regular.copyWith(
+            color: context.colorScheme.onSurface.withOpacity(0.7),
+          ),
+          children: spans,
+        ),
+      );
     } else {
       return Text(
         description,

@@ -150,21 +150,25 @@ class _SourceListDialogState extends State<SourceListDialog> {
                           Container(
                             width: 32,
                             height: 32,
+                            alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: Icon(
-                              source.platformType == 'wallet'
-                                  ? Icons.account_balance_wallet
-                                  : Icons.source,
-                              size: 16,
-                              color: source.platformType == 'wallet'
-                                  ? Colors.green
-                                  : (isSelected
-                                      ? context.colorScheme.primary
-                                      : iconColor),
-                            ),
+                            child: source.platformType == 'wallet'
+                                ? Assets.icons.wallet.svg(
+                                    width: 18,
+                                    height: 18,
+                                    colorFilter: const ColorFilter.mode(
+                                        Colors.green, BlendMode.srcIn),
+                                  )
+                                : Icon(
+                                    Icons.source,
+                                    size: 16,
+                                    color: isSelected
+                                        ? context.colorScheme.primary
+                                        : iconColor,
+                                  ),
                           ),
                           const SizedBox(width: Insets.small),
                           Expanded(
@@ -309,7 +313,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
     DeleteConfirmationDialog.show(
       context: context,
       title:
-          'Are you sure you want to delete "${_getSourceDisplayName(context, source)}"?',
+          'Are you sure you want to delete\n"${_getSourceDisplayName(context, source)}"?',
       onConfirm: () {
         widget.onSourceDelete!(source);
         Navigator.of(context).pop();

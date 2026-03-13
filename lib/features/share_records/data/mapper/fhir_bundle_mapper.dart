@@ -77,6 +77,13 @@ class FhirBundleMapper {
   }
 
   static Future<File?> _resolveFile(String storedPath) async {
+    if (!storedPath.startsWith('/')) {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final resolved = File('${docsDir.path}/$storedPath');
+      if (await resolved.exists()) return resolved;
+      return null;
+    }
+
     final file = File(storedPath);
     if (await file.exists()) return file;
 

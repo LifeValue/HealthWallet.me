@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/external_files_service.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 
@@ -15,9 +16,10 @@ class ShareIntentService {
   final ExternalFilesService _externalFileService;
   final AppRouter _router;
   final PageViewNavigationController _navigationController;
+  final PathResolver _pathResolver;
 
-  ShareIntentService(
-      this._externalFileService, this._router, this._navigationController);
+  ShareIntentService(this._externalFileService, this._router,
+      this._navigationController, this._pathResolver);
 
   StreamSubscription? _intentSub;
   bool _isInitialized = false;

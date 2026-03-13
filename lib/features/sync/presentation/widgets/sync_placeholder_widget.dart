@@ -167,25 +167,28 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
         final hasAnyMeaningfulData =
             hasVitalDataLoaded || hasOverviewDataLoaded || hasRecent;
 
-        return Column(
-          children: [
-            const SizedBox(height: Insets.medium),
-            SizedBox(
-              width: 240,
-              height: 240,
-              child: context.isDarkMode
-                  ? Assets.images.placeholderDark.svg(
-                      fit: BoxFit.contain,
-                    )
-                  : Assets.images.placeholder.svg(
-                      fit: BoxFit.contain,
-                    ),
-            ),
-            const SizedBox(height: Insets.large),
-            _buildMessageSection(context, hasAnyMeaningfulData),
-            const SizedBox(height: Insets.large),
-            _buildActionButtons(context, hasAnyMeaningfulData),
-          ],
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: Insets.medium),
+              SizedBox(
+                width: 240,
+                height: 240,
+                child: context.isDarkMode
+                    ? Assets.images.placeholderDark.svg(
+                        fit: BoxFit.contain,
+                      )
+                    : Assets.images.placeholder.svg(
+                        fit: BoxFit.contain,
+                      ),
+              ),
+              const SizedBox(height: Insets.large),
+              _buildMessageSection(context, hasAnyMeaningfulData),
+              const SizedBox(height: Insets.large),
+              _buildActionButtons(context, hasAnyMeaningfulData),
+              const SizedBox(height: Insets.large),
+            ],
+          ),
         );
       },
     ));

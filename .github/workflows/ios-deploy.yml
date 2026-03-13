@@ -42,8 +42,20 @@ jobs:
           mkdir -p ios/fastlane/private_keys
           printf '%s\n' "$ASC_KEY_CONTENT" > ios/fastlane/private_keys/AuthKey.p8
 
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Restore Apple Wallet certificates
+        run: |
+          mkdir -p assets/certs
+          echo "${{ secrets.APPLE_PASS_CERTIFICATE_BASE64 }}" | base64 --decode > assets/certs/pass_certificate.pem
+          echo "${{ secrets.APPLE_PASS_PRIVATE_KEY_BASE64 }}" | base64 --decode > assets/certs/private_key.pem
+
       - name: Clean Flutter build cache
         run: fvm flutter clean
+
+      - name: Precache iOS engine artifacts
+        run: fvm flutter precache --ios
 
       - name: Install dependencies
         run: fvm flutter pub get

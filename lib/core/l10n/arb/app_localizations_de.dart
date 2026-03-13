@@ -389,6 +389,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get done => 'Fertig';
 
   @override
+  String get page => 'Seite';
+
+  @override
+  String get reorderPages => 'Seiten neu ordnen';
+
+  @override
   String get attachments => 'Anhänge';
 
   @override
@@ -661,24 +667,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onboardingAiModelDescription =>
-      'Laden Sie ein sicheres, geräteinternes AI-Modell (~1,5 GB) herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren - Ihre Daten bleiben privat auf Ihrem Gerät. Dies ist eine einmalige Einrichtung.';
+      'Laden Sie ein sicheres, geräteinternes AI-Modell herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren. Wählen Sie zwischen zwei Optionen je nach Bedarf und Gerätekapazität. Dies ist eine einmalige Einrichtung.\n\n**Ihre Daten bleiben privat auf Ihrem Gerät.**';
 
   @override
   String get onboardingAiModelSubtitle => 'AI-gestütztes Scannen freischalten';
 
   @override
-  String get aiModelReady =>
-      'KI-Modell bereit! Du kannst mit dem Scannen beginnen.';
+  String get aiModelReady => 'KI bereit! Du kannst mit dem Scannen beginnen.';
 
   @override
-  String get aiModelDownloading => 'KI-Modell wird heruntergeladen...';
+  String get aiModelDownloading => 'Wird heruntergeladen...';
 
   @override
-  String get aiModelEnableDownload => 'Aktivieren & Herunterladen';
+  String get aiModelEnableDownload => 'Auswählen & Herunterladen';
 
   @override
   String get aiModelError =>
-      'Modell konnte nicht überprüft werden. Bitte versuche es erneut.';
+      'Überprüfung fehlgeschlagen. Bitte erneut versuchen.';
 
   @override
   String get aiModelMissing => 'Nicht heruntergeladen.';
@@ -691,11 +696,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiModelUnlockDescription =>
-      'Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell. Ihre Daten bleiben vollständig privat.';
+      'Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell.\n\n**Ihre Daten bleiben privat auf Ihrem Gerät.**';
 
   @override
   String get aiModelDownloadInfo =>
-      'Um zu beginnen, müssen wir die KI-Komponente herunterladen (ca. 1,5 GB). Dies ist eine einmalige Einrichtung.';
+      'Um zu beginnen, wählen und laden Sie eine der zwei verfügbaren KI-Optionen herunter. Dies ist eine einmalige Einrichtung.';
 
   @override
   String get setup => 'Einrichten';
@@ -798,7 +803,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nur eine Verarbeitungssitzung kann gleichzeitig ausgeführt werden';
 
   @override
-  String get aiModelNotAvailable => 'KI-Modell ist nicht verfügbar';
+  String get aiModelNotAvailable => 'Intelligentes Scannen ist nicht verfügbar';
 
   @override
   String get addResources => 'Ressourcen hinzufügen';
@@ -872,55 +877,188 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processingFailedCapacity =>
-      'Das Dokument ist zu groß für die aktuelle KI-Token-Kapazität.';
+      'Das Dokument ist zu groß für die aktuelle KI-Kontextgröße.';
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Versuchen Sie, die KI-Modellkapazität zu erhöhen, um größere Dokumente zu verarbeiten.';
+      'Tippen Sie oben auf das Einstellungssymbol und erhöhen Sie die Kontextgröße auf 2048 oder höher, dann erneut versuchen.';
 
   @override
-  String get increaseAiModelCapacity => 'KI-Modellkapazität erhöhen';
+  String get increaseAiModelCapacity => 'KI-Kapazität erhöhen';
 
   @override
   String get goBack => 'Zurück';
+
+  @override
+  String get aiModelManage => 'KI-Optionen verwalten';
+
+  @override
+  String get aiModelNotSelected => 'Keine Option ausgewählt';
+
+  @override
+  String get aiModelSelect => 'Option auswählen';
+
+  @override
+  String get aiSettings => 'KI-Einstellungen';
+
+  @override
+  String get aiSettingsDescription =>
+      'KI-Leistung für Ihr Gerät anpassen. Empfohlene Werte sind vorausgewählt.';
 
   @override
   String get setAiTokensUsage => 'KI-Token-Nutzung einstellen';
 
   @override
   String get tokenUsageDescription =>
-      'Höhere Token-Limits ermöglichen die Verarbeitung größerer Dokumente, verbrauchen aber mehr Speicher. Starten Sie die Verarbeitung nach der Änderung neu.';
+      'Steuern Sie, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.';
+
+  @override
+  String get gpuLayersLabel => 'GPU-Schichten';
+
+  @override
+  String get gpuLayersDescription =>
+      'Modell-Schichten auf GPU auslagern für schnellere Bildverarbeitung. Mehr Schichten = schneller, aber mehr Speicherverbrauch. Auf 0 setzen bei Abstürzen.';
+
+  @override
+  String get threadsLabel => 'CPU-Threads';
+
+  @override
+  String get threadsDescription =>
+      'Anzahl der CPU-Threads für Inferenz. Mehr Threads = schneller, aber höherer Akkuverbrauch.';
+
+  @override
+  String get recommended => 'Empfohlen';
 
   @override
   String get tokenPresetLow => 'Niedrig';
 
   @override
-  String get tokenPresetLowDescription => '~100 Tokens - Nur kleine Dokumente';
+  String get tokenPresetLowDescription =>
+      'Ideal für kleine Dateien und schnelle Aufgaben.\nVerbraucht die wenigsten Ressourcen und verarbeitet am schnellsten.';
 
   @override
   String get tokenPresetMedium => 'Mittel';
 
   @override
   String get tokenPresetMediumDescription =>
-      '~500 Tokens - Die meisten einseitigen Dokumente';
+      'Gut für die meisten Anwendungsfälle.\nBalanciert Dateigröße, Verarbeitungszeit und Ressourcenverbrauch.';
 
   @override
   String get tokenPresetHigh => 'Hoch';
 
   @override
   String get tokenPresetHighDescription =>
-      '~2048 Tokens - Mehrseitige Dokumente';
+      'Ideal für große Dateien und komplexe Verarbeitung.\nVerbraucht mehr Ressourcen und Akku, und dauert länger.';
 
   @override
   String get tokenPresetCustom => 'Benutzerdefiniert';
 
   @override
   String get tokenPresetCustomDescription =>
-      'Benutzerdefiniertes Token-Limit festlegen (max. 4096)';
+      'Legen Sie eine benutzerdefinierte Anzahl von Tokens fest.';
 
   @override
-  String get setTokens => 'Tokens festlegen';
+  String get setTokens => 'Festlegen';
 
   @override
   String get tokens => 'Tokens';
+
+  @override
+  String get contextSizeLabel => 'Kontextgröße';
+
+  @override
+  String get contextSizeDescription =>
+      'Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.';
+
+  @override
+  String get useVisionLabel => 'Tiefenscan';
+
+  @override
+  String get useVisionDescription =>
+      'Liest Bilder für eine tiefere Analyse (z. B. Handschrift). Verbraucht mehr Speicher und erfordert ein leistungsfähigeres Gerät.';
+
+  @override
+  String get aiModelNotAvailableForDevice =>
+      'Nicht verfügbar für dieses Telefon';
+
+  @override
+  String get aiModelNotAvailableForDeviceDescription =>
+      'Dieses Gerät hat nicht genügend Speicher, um intelligentes Scannen auszuführen.';
+
+  @override
+  String get noInternetConnectionTitle => 'Keine Internetverbindung';
+
+  @override
+  String get noInternetConnectionDescription =>
+      'Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
+
+  @override
+  String get processingStep2NotAvailableTitle =>
+      'Tiefenscan auf diesem Gerät nicht verfügbar';
+
+  @override
+  String get processingStep2NotEnoughRam =>
+      'Dieses Gerät hat nicht genügend Speicher für den Tiefenscan. Textbasierte Verarbeitung ist weiterhin verfügbar und funktioniert gut für die meisten Dokumente.';
+
+  @override
+  String get emergencyContact => 'Notfall-Telefonkontakt';
+
+  @override
+  String get emergencyContactHint => 'Telefonnummer';
+
+  @override
+  String get searchCountry => 'Land suchen...';
+
+  @override
+  String get rotatePage => 'Drehen';
+
+  @override
+  String get deletePage => 'Löschen';
+
+  @override
+  String get deletePageConfirmTitle => 'Seite löschen';
+
+  @override
+  String get deletePageConfirmMessage =>
+      'Diese Seite wird aus dem Dokument entfernt.';
+
+  @override
+  String get cannotDeleteLastPage =>
+      'Die letzte Seite kann nicht gelöscht werden';
+
+  @override
+  String get pageRotated => 'Seite gedreht';
+
+  @override
+  String get regionAndUnits => 'Sprache & Einheiten';
+
+  @override
+  String get language => 'Sprache';
+
+  @override
+  String get systemDefault => 'Systemstandard';
+
+  @override
+  String get regionUS => 'US';
+
+  @override
+  String get regionEurope => 'Europa';
+
+  @override
+  String get regionUK => 'UK';
+
+  @override
+  String get medGemmaIncompatibleDevice =>
+      'Dieses Modell benötigt mehr Arbeitsspeicher als auf Ihrem Gerät verfügbar ist. Verwenden Sie stattdessen das Standardmodell.';
+
+  @override
+  String get deepScanDownloadTitle => 'Visionsmodell herunterladen';
+
+  @override
+  String deepScanDownloadMessage(int size) {
+    return 'Tiefenscan erfordert einen zusätzlichen Download (~$size MB). Jetzt herunterladen?';
+  }
+
+  @override
+  String get downloadingVisionModel => 'Visionsmodell wird heruntergeladen...';
 }
