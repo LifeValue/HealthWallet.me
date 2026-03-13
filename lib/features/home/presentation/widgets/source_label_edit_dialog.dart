@@ -95,11 +95,8 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
   @override
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final iconColor = context.isDarkMode
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondary;
+    final textColor = context.primaryTextColor;
+    final iconColor = context.secondaryTextColor;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -114,7 +111,6 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Padding(
               padding: const EdgeInsets.symmetric(
                   horizontal: Insets.normal, vertical: Insets.small),
@@ -161,7 +157,6 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
               ),
             ),
             Container(height: 1, color: borderColor),
-            // Content
             Padding(
               padding: const EdgeInsets.all(Insets.normal),
               child: Column(
@@ -245,7 +240,6 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
                               onPressed: () {
                                 _controller.clear();
                                 setState(() {});
-                                // Focus the text field to bring up the keyboard
                                 _focusNode.requestFocus();
                               },
                               padding: EdgeInsets.zero,
@@ -262,7 +256,6 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
               ),
             ),
             const SizedBox(height: Insets.medium),
-            // Action buttons
             Padding(
               padding: const EdgeInsets.all(Insets.normal),
               child: Row(

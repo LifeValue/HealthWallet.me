@@ -74,11 +74,8 @@ class AppSimpleDialog {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        final textColor = context.isDarkMode
-            ? AppColors.textPrimaryDark
-            : AppColors.textPrimary;
-        final borderColor =
-            context.isDarkMode ? AppColors.borderDark : AppColors.border;
+        final textColor = context.primaryTextColor;
+        final borderColor = context.borderColor;
 
         return PopScope(
           canPop: false,
@@ -265,8 +262,7 @@ class _DialogShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final borderColor = context.borderColor;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),

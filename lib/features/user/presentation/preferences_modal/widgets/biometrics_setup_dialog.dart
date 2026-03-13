@@ -15,11 +15,8 @@ class BiometricsSetupDialog extends StatelessWidget {
     final BiometricAuthService biometricService = getIt<BiometricAuthService>();
 
     final borderColor = context.theme.dividerColor;
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final iconColor = context.isDarkMode
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondary;
+    final textColor = context.primaryTextColor;
+    final iconColor = context.secondaryTextColor;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -71,7 +68,6 @@ class BiometricsSetupDialog extends StatelessWidget {
 
             Container(height: 1, color: borderColor),
 
-            // Content
             Padding(
               padding: const EdgeInsets.all(Insets.normal),
               child: Column(
@@ -182,8 +178,7 @@ class BiometricsSetupDialog extends StatelessWidget {
   }
 
   Widget _buildSetupStep(BuildContext context, String number, String text) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final textColor = context.primaryTextColor;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: Insets.small),

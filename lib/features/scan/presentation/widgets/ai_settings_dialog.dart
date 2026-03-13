@@ -244,13 +244,9 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
-    final secondaryTextColor = context.isDarkMode
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondary;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
+    final secondaryTextColor = context.secondaryTextColor;
 
     final activeModel = widget.activeModelConfig;
     final kvCache = (_contextSize * 170 ~/ 1024);

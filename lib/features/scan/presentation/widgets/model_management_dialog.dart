@@ -38,10 +38,8 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final borderColor = context.borderColor;
+    final textColor = context.primaryTextColor;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
