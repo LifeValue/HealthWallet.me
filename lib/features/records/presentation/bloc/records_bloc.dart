@@ -329,6 +329,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ).writeAsBytes(export.bytes);
 
       SharePlus.instance.share(ShareParams(
+        title: fileName,
         files: [XFile(pdfFile.path)],
         sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
       ));
