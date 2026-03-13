@@ -8,7 +8,7 @@ import 'package:health_wallet/core/utils/blood_observation_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/services/patient_name_builder.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/gender_mapper.dart';
+import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 

@@ -21,7 +21,7 @@ import 'package:health_wallet/features/scan/domain/entity/processing_session.dar
 import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
-import 'package:health_wallet/features/scan/presentation/helpers/ocr_processing_helper.dart';
+import 'package:health_wallet/features/scan/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/scan/presentation/helpers/scan_path_helper.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
