@@ -9,6 +9,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/records/presentation/widgets/records_active_filters_bar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
 import 'package:health_wallet/features/records/presentation/widgets/search_widget.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
@@ -61,31 +62,11 @@ class _RecordsViewState extends State<RecordsView> {
   @override
   void initState() {
     super.initState();
-
     _scrollController.addListener(_onScroll);
 
     final selected = context.read<HomeBloc>().state.selectedSource;
     final selectedSourceId = selected == 'All' ? null : selected;
-
-    List<String>? patientSourceIds;
-    if (selected == 'All') {
-      try {
-        final patientBloc = context.read<PatientBloc>();
-        final patientState = patientBloc.state;
-        final selectedPatientId = patientState.selectedPatientId;
-
-        if (selectedPatientId != null &&
-            patientState.patientGroups.isNotEmpty) {
-          final patientGroup = patientState.patientGroups[selectedPatientId];
-          if (patientGroup != null) {
-            patientSourceIds = patientGroup.sourceIds;
-          }
-        }
-      } catch (e) {
-        debugPrint(
-            'PatientBloc not available, continue without patient source IDs');
-      }
-    }
+    final patientSourceIds = _resolvePatientSourceIds(context, selected);
 
     context.read<RecordsBloc>().add(const RecordsInitialised());
     context.read<RecordsBloc>().add(
@@ -96,6 +77,29 @@ class _RecordsViewState extends State<RecordsView> {
           .read<RecordsBloc>()
           .add(RecordsFiltersApplied(widget.initFilters!));
     }
+  }
+
+  List<String>? _resolvePatientSourceIds(
+      BuildContext context, String? selectedSource) {
+    if (selectedSource != 'All') return null;
+
+    try {
+      final patientBloc = context.read<PatientBloc>();
+      final patientState = patientBloc.state;
+      final selectedPatientId = patientState.selectedPatientId;
+
+      if (selectedPatientId != null &&
+          patientState.patientGroups.isNotEmpty) {
+        final patientGroup = patientState.patientGroups[selectedPatientId];
+        if (patientGroup != null) {
+          return patientGroup.sourceIds;
+        }
+      }
+    } catch (e) {
+      debugPrint(
+          'PatientBloc not available, continue without patient source IDs');
+    }
+    return null;
   }
 
   void _onScroll() {
@@ -174,27 +178,8 @@ class _RecordsViewState extends State<RecordsView> {
           listener: (context, state) {
             final selectedSourceId =
                 state.selectedSource == 'All' ? null : state.selectedSource;
-
-            List<String>? patientSourceIds;
-            if (state.selectedSource == 'All') {
-              try {
-                final patientBloc = context.read<PatientBloc>();
-                final patientState = patientBloc.state;
-                final selectedPatientId = patientState.selectedPatientId;
-
-                if (selectedPatientId != null &&
-                    patientState.patientGroups.isNotEmpty) {
-                  final patientGroup =
-                      patientState.patientGroups[selectedPatientId];
-                  if (patientGroup != null) {
-                    patientSourceIds = patientGroup.sourceIds;
-                  }
-                }
-              } catch (e) {
-                debugPrint(
-                    'PatientBloc not available, continue without patient source IDs');
-              }
-            }
+            final patientSourceIds =
+                _resolvePatientSourceIds(context, state.selectedSource);
 
             context.read<RecordsBloc>().add(RecordsSourceChanged(
                 selectedSourceId,
@@ -210,27 +195,8 @@ class _RecordsViewState extends State<RecordsView> {
               final selectedSourceId = homeState.selectedSource == 'All'
                   ? null
                   : homeState.selectedSource;
-
-              List<String>? patientSourceIds;
-              if (homeState.selectedSource == 'All') {
-                try {
-                  final patientBloc = context.read<PatientBloc>();
-                  final patientState = patientBloc.state;
-                  final selectedPatientId = patientState.selectedPatientId;
-
-                  if (selectedPatientId != null &&
-                      patientState.patientGroups.isNotEmpty) {
-                    final patientGroup =
-                        patientState.patientGroups[selectedPatientId];
-                    if (patientGroup != null) {
-                      patientSourceIds = patientGroup.sourceIds;
-                    }
-                  }
-                } catch (e) {
-                  debugPrint(
-                      'PatientBloc not available, continue without patient source IDs');
-                }
-              }
+              final patientSourceIds =
+                  _resolvePatientSourceIds(context, homeState.selectedSource);
 
               context.read<RecordsBloc>().add(RecordsSourceChanged(
                   selectedSourceId,
@@ -247,481 +213,10 @@ class _RecordsViewState extends State<RecordsView> {
           return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              appBar: CustomAppBar(
-                titleWidget: Text(
-                  appBarState.isSelectionMode
-                      ? '${appBarState.selectedResourceIds.length} ${appBarState.selectedResourceIds.length == 1 ? 'record' : 'records'} selected'
-                      : 'No records selected',
-                  style: AppTextStyle.bodyMedium.copyWith(
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-                automaticallyImplyLeading: false,
-                actions: [
-                  Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: TextButton(
-                      onPressed: () {
-                        CustomArrowTooltip.dismiss();
-                        context
-                            .read<RecordsBloc>()
-                            .add(const RecordsSelectionModeToggled());
-                      },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 8,
-                        ),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        appBarState.isSelectionMode ? 'Cancel' : 'Select',
-                        style: AppTextStyle.labelLarge.copyWith(
-                          color: context.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    key: _shareTooltipKey,
-                    onPressed: () async {
-                      final recordsState = context.read<RecordsBloc>().state;
-                      final hasSelection =
-                          recordsState.selectedResourceIds.isNotEmpty;
-
-                      if (!hasSelection) {
-                        CustomArrowTooltip.show(
-                          context: context,
-                          buttonKey: _shareTooltipKey,
-                          message: 'Select records\nbefore sharing',
-                          alignment: TooltipAlignment.auto,
-                          width: 160,
-                        );
-                        return;
-                      }
-
-                      final result = await SharePermissionsHelper
-                          .requestSharePermissions();
-                      if (!context.mounted) return;
-
-                      switch (result) {
-                        case PermissionGranted():
-                          final userBloc = context.read<UserBloc>();
-                          if (!userBloc.state.user.isReceiveModeEnabled) {
-                            userBloc.add(const UserReceiveModeToggled(true));
-                          }
-                          break;
-                        case PermissionDenied(:final message):
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(message)),
-                          );
-                          return;
-                        case PermissionPermanentlyDenied(:final message):
-                          _showPermissionsSettingsDialog(context, message);
-                          return;
-                      }
-
-                      CustomArrowTooltip.dismiss();
-
-                      final selectedResources = recordsState.resources
-                          .where((r) => recordsState.selectedResourceIds.contains(r.id))
-                          .toList();
-                      final activeFilters = recordsState.activeFilters;
-
-                      context.router.push(
-                        ShareRecordsSendRoute(
-                          preSelectedResources: selectedResources,
-                          appliedFilters:
-                              activeFilters.isNotEmpty ? activeFilters : null,
-                        ),
-                      );
-                    },
-                    icon: Assets.icons.shareNearby.svg(
-                      colorFilter: ColorFilter.mode(
-                        appBarState.selectedResourceIds.isEmpty
-                            ? context.colorScheme.onSurface
-                                .withValues(alpha: 0.3)
-                            : context.colorScheme.onSurface,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
-                  BlocBuilder<RecordsBloc, RecordsState>(
-                    builder: (context, filterState) {
-                      return IconButton(
-                        onPressed: () async {
-                          showModalBottomSheet(
-                            context: context,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            builder: (context) => RecordsFilterBottomSheet(
-                              activeFilters: filterState.activeFilters,
-                              currentDateFilter: filterState.dateFilter,
-                              onApply: (filters, dateFilter) =>
-                                  context
-                                      .read<RecordsBloc>()
-                                      .add(RecordsFiltersApplied(
-                                        filters,
-                                        dateFilter: dateFilter,
-                                      )),
-                            ),
-                            isScrollControlled: true,
-                          );
-                        },
-                        icon: Assets.icons.filter.svg(
-                          colorFilter: ColorFilter.mode(
-                            context.colorScheme.onSurface,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+              appBar: _buildAppBar(context, appBarState),
               body: Stack(
                 children: [
-                  BlocBuilder<RecordsBloc, RecordsState>(
-                buildWhen: (previous, current) =>
-                    previous.activeFilters != current.activeFilters ||
-                    previous.dateFilter != current.dateFilter,
-                builder: (context, filterState) {
-                  return AnimatedStickyHeader(
-                    children: [
-                      const SearchWidget(),
-                      const SizedBox(height: Insets.small),
-                      BlocBuilder<RecordsBloc, RecordsState>(
-                        buildWhen: (previous, current) =>
-                            previous.activeFilters != current.activeFilters ||
-                            previous.dateFilter != current.dateFilter,
-                        builder: (context, recordsState) {
-                          final hasTypeFilters =
-                              recordsState.activeFilters.isNotEmpty;
-                          final hasDateFilter =
-                              recordsState.dateFilter?.hasValue ?? false;
-
-                          if (!hasTypeFilters && !hasDateFilter) {
-                            return const SizedBox();
-                          }
-
-                          return BlocBuilder<HomeBloc, HomeState>(
-                            buildWhen: (previous, current) =>
-                                previous.hasDataLoaded != current.hasDataLoaded,
-                            builder: (context, homeState) {
-                              if (!homeState.hasDataLoaded) {
-                                return const SizedBox();
-                              }
-
-                              final List<Widget> allChips = [];
-
-                              if (hasDateFilter) {
-                                allChips.add(
-                                  GestureDetector(
-                                    onTap: () => context
-                                        .read<RecordsBloc>()
-                                        .add(const RecordsDateRangeCleared()),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 4,
-                                        horizontal: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary
-                                            .withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            recordsState.dateFilter!.formatChipLabel(),
-                                            style: AppTextStyle.labelSmall
-                                                .copyWith(
-                                              color: AppColors.primary,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Assets.icons.close.svg(
-                                            width: 12,
-                                            height: 12,
-                                            colorFilter: const ColorFilter.mode(
-                                              AppColors.primary,
-                                              BlendMode.srcIn,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              allChips.addAll(
-                                recordsState.activeFilters.map(
-                                  (filter) => GestureDetector(
-                                    onTap: () => context
-                                        .read<RecordsBloc>()
-                                        .add(RecordsFilterRemoved(filter)),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 4,
-                                        horizontal: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary
-                                            .withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            filter.display,
-                                            style: AppTextStyle.labelSmall
-                                                .copyWith(
-                                              color: AppColors.primary,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Assets.icons.close.svg(
-                                            width: 12,
-                                            height: 12,
-                                            colorFilter: const ColorFilter.mode(
-                                              AppColors.primary,
-                                              BlendMode.srcIn,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-
-                              return Row(
-                                children: [
-                                  Expanded(
-                                    child: Wrap(
-                                      spacing: 8.0,
-                                      runSpacing: 8,
-                                      children: allChips,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        context
-                                            .read<RecordsBloc>()
-                                            .add(const RecordsFiltersApplied([]));
-                                        context
-                                            .read<RecordsBloc>()
-                                            .add(const RecordsDateRangeCleared());
-                                      },
-                                      child: Assets.icons.close.svg(
-                                        width: 20,
-                                        height: 20,
-                                        colorFilter: const ColorFilter.mode(
-                                          AppColors.primary,
-                                          BlendMode.srcIn,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                    body: BlocBuilder<RecordsBloc, RecordsState>(
-                      buildWhen: (previous, current) =>
-                          previous.status != current.status ||
-                          previous.resources != current.resources ||
-                          previous.searchQuery != current.searchQuery ||
-                          previous.selectedResourceIds !=
-                              current.selectedResourceIds ||
-                          previous.isSelectionMode != current.isSelectionMode,
-                      builder: (context, state) {
-                        if (state.status == const RecordsStatus.loading()) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 4,
-                              color: context.colorScheme.primary,
-                            ),
-                          );
-                        }
-
-                        if (state.status ==
-                            RecordsStatus.failure(Exception())) {
-                          return Center(child: Text(state.status.toString()));
-                        }
-
-                        final timelineResources =
-                            List<IFhirResource>.from(state.resources);
-
-                        if (timelineResources.isEmpty) {
-                          if (state.searchQuery.isNotEmpty) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.search_off,
-                                      size: 64,
-                                      color: context.colorScheme.onSurface
-                                          .withOpacity(0.4),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      context.l10n.noRecordsFound,
-                                      style: AppTextStyle.titleMedium.copyWith(
-                                        color: context.colorScheme.onSurface,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      context.l10n.tryDifferentKeywords,
-                                      style: AppTextStyle.bodyMedium.copyWith(
-                                        color: context.colorScheme.onSurface
-                                            .withOpacity(0.6),
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          } else {
-                            return LayoutBuilder(
-                              builder: (context, constraints) {
-                                const double bottomNavBarSpacing = 100.0;
-
-                                return SingleChildScrollView(
-                                  controller: _scrollController,
-                                  physics: const ClampingScrollPhysics(),
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minHeight: constraints.maxHeight,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: bottomNavBarSpacing,
-                                      ),
-                                      child: IntrinsicHeight(
-                                        child: SyncPlaceholderWidget(
-                                          pageController: widget.pageController,
-                                          recordTypeName: state
-                                                  .activeFilters.isNotEmpty
-                                              ? state.activeFilters.length == 1
-                                                  ? state.activeFilters.first
-                                                      .display
-                                                  : state.activeFilters
-                                                      .map((f) => f.display)
-                                                      .join(', ')
-                                              : null,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          }
-                        }
-
-                        const double bottomBarHeight = Insets.extraLarge;
-                        const double bottomBarOffset = Insets.medium;
-                        const double extraSpacing = Insets.large;
-                        final double bottomSafeInset =
-                            MediaQuery.of(context).padding.bottom;
-
-                        return ListView.builder(
-                          controller: _scrollController,
-                          padding: EdgeInsets.only(
-                            top: 8,
-                            bottom: bottomSafeInset +
-                                bottomBarHeight +
-                                bottomBarOffset +
-                                extraSpacing,
-                          ),
-                          itemCount: timelineResources.length +
-                              (state.hasMorePages ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == timelineResources.length) {
-                              return Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 4,
-                                    color: context.colorScheme.primary,
-                                  ),
-                                ),
-                              );
-                            }
-
-                            final resource = timelineResources[index];
-                            return TimelineEntry(
-                              key: ValueKey(
-                                  'timeline-${resource.fhirType}-${resource.id}-$index'),
-                              isFirst: index == 0,
-                              isLast: index == timelineResources.length - 1,
-                              isSelected: state.selectedResourceIds
-                                  .contains(resource.id),
-                              isSelectionMode: state.isSelectionMode,
-                              onTap: () {
-                                if (state.isSelectionMode) {
-                                  context.read<RecordsBloc>().add(
-                                        RecordsSelectionToggled(resource.id),
-                                      );
-                                } else {
-                                  context.router.push(
-                                    RecordDetailsRoute(resource: resource),
-                                  );
-                                }
-                              },
-                              onLongPress: state.isSelectionMode
-                                  ? null
-                                  : () {
-                                      final bloc = context.read<RecordsBloc>();
-                                      bloc.add(const RecordsSelectionModeToggled());
-                                      bloc.add(RecordsSelectionToggled(resource.id));
-                                    },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  RecordTypeHeader(
-                                    fhirType: resource.fhirType,
-                                    date: resource.date,
-                                    onTypeTap: state.isSelectionMode
-                                        ? null
-                                        : () {
-                                            context.read<RecordsBloc>().add(
-                                                  RecordsFiltersApplied(
-                                                      [resource.fhirType]),
-                                                );
-                                          },
-                                  ),
-                                  const SizedBox(height: Insets.small),
-                                  ResourceCard(resource: resource),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
+                  _buildBody(context),
                   if (_showScrollToTopButton)
                     Positioned(
                       right: 16,
@@ -742,6 +237,354 @@ class _RecordsViewState extends State<RecordsView> {
           );
         },
       ),
+    );
+  }
+
+  CustomAppBar _buildAppBar(BuildContext context, RecordsState appBarState) {
+    return CustomAppBar(
+      titleWidget: Text(
+        appBarState.isSelectionMode
+            ? '${appBarState.selectedResourceIds.length} ${appBarState.selectedResourceIds.length == 1 ? 'record' : 'records'} selected'
+            : 'No records selected',
+        style: AppTextStyle.bodyMedium.copyWith(
+          color: context.colorScheme.onSurface,
+        ),
+      ),
+      automaticallyImplyLeading: false,
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: context.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: TextButton(
+            onPressed: () {
+              CustomArrowTooltip.dismiss();
+              context
+                  .read<RecordsBloc>()
+                  .add(const RecordsSelectionModeToggled());
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 8,
+              ),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              appBarState.isSelectionMode ? 'Cancel' : 'Select',
+              style: AppTextStyle.labelLarge.copyWith(
+                color: context.colorScheme.primary,
+              ),
+            ),
+          ),
+        ),
+        IconButton(
+          key: _shareTooltipKey,
+          onPressed: () => _handleShare(context),
+          icon: Assets.icons.shareNearby.svg(
+            colorFilter: ColorFilter.mode(
+              appBarState.selectedResourceIds.isEmpty
+                  ? context.colorScheme.onSurface.withValues(alpha: 0.3)
+                  : context.colorScheme.onSurface,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+        BlocBuilder<RecordsBloc, RecordsState>(
+          builder: (context, filterState) {
+            return IconButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  builder: (context) => RecordsFilterBottomSheet(
+                    activeFilters: filterState.activeFilters,
+                    currentDateFilter: filterState.dateFilter,
+                    onApply: (filters, dateFilter) =>
+                        context.read<RecordsBloc>().add(RecordsFiltersApplied(
+                              filters,
+                              dateFilter: dateFilter,
+                            )),
+                  ),
+                  isScrollControlled: true,
+                );
+              },
+              icon: Assets.icons.filter.svg(
+                colorFilter: ColorFilter.mode(
+                  context.colorScheme.onSurface,
+                  BlendMode.srcIn,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleShare(BuildContext context) async {
+    final recordsState = context.read<RecordsBloc>().state;
+    final hasSelection = recordsState.selectedResourceIds.isNotEmpty;
+
+    if (!hasSelection) {
+      CustomArrowTooltip.show(
+        context: context,
+        buttonKey: _shareTooltipKey,
+        message: 'Select records\nbefore sharing',
+        alignment: TooltipAlignment.auto,
+        width: 160,
+      );
+      return;
+    }
+
+    final result = await SharePermissionsHelper.requestSharePermissions();
+    if (!context.mounted) return;
+
+    switch (result) {
+      case PermissionGranted():
+        final userBloc = context.read<UserBloc>();
+        if (!userBloc.state.user.isReceiveModeEnabled) {
+          userBloc.add(const UserReceiveModeToggled(true));
+        }
+        break;
+      case PermissionDenied(:final message):
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+        return;
+      case PermissionPermanentlyDenied(:final message):
+        _showPermissionsSettingsDialog(context, message);
+        return;
+    }
+
+    CustomArrowTooltip.dismiss();
+
+    final selectedResources = recordsState.resources
+        .where((r) => recordsState.selectedResourceIds.contains(r.id))
+        .toList();
+    final activeFilters = recordsState.activeFilters;
+
+    context.router.push(
+      ShareRecordsSendRoute(
+        preSelectedResources: selectedResources,
+        appliedFilters: activeFilters.isNotEmpty ? activeFilters : null,
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    return BlocBuilder<RecordsBloc, RecordsState>(
+      buildWhen: (previous, current) =>
+          previous.activeFilters != current.activeFilters ||
+          previous.dateFilter != current.dateFilter,
+      builder: (context, filterState) {
+        return AnimatedStickyHeader(
+          children: [
+            const SearchWidget(),
+            const SizedBox(height: Insets.small),
+            BlocBuilder<RecordsBloc, RecordsState>(
+              buildWhen: (previous, current) =>
+                  previous.activeFilters != current.activeFilters ||
+                  previous.dateFilter != current.dateFilter,
+              builder: (context, recordsState) {
+                return RecordsActiveFiltersBar(
+                  activeFilters: recordsState.activeFilters,
+                  dateFilter: recordsState.dateFilter,
+                );
+              },
+            ),
+          ],
+          body: BlocBuilder<RecordsBloc, RecordsState>(
+            buildWhen: (previous, current) =>
+                previous.status != current.status ||
+                previous.resources != current.resources ||
+                previous.searchQuery != current.searchQuery ||
+                previous.selectedResourceIds !=
+                    current.selectedResourceIds ||
+                previous.isSelectionMode != current.isSelectionMode,
+            builder: (context, state) {
+              if (state.status == const RecordsStatus.loading()) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4,
+                    color: context.colorScheme.primary,
+                  ),
+                );
+              }
+
+              if (state.status == RecordsStatus.failure(Exception())) {
+                return Center(child: Text(state.status.toString()));
+              }
+
+              final timelineResources =
+                  List<IFhirResource>.from(state.resources);
+
+              if (timelineResources.isEmpty) {
+                return _buildEmptyState(context, state);
+              }
+
+              return _buildRecordsList(context, state, timelineResources);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, RecordsState state) {
+    if (state.searchQuery.isNotEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 64,
+                color: context.colorScheme.onSurface.withOpacity(0.4),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                context.l10n.noRecordsFound,
+                style: AppTextStyle.titleMedium.copyWith(
+                  color: context.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.l10n.tryDifferentKeywords,
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: context.colorScheme.onSurface.withOpacity(0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double bottomNavBarSpacing = 100.0;
+
+        return SingleChildScrollView(
+          controller: _scrollController,
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(
+                bottom: bottomNavBarSpacing,
+              ),
+              child: IntrinsicHeight(
+                child: SyncPlaceholderWidget(
+                  pageController: widget.pageController,
+                  recordTypeName: state.activeFilters.isNotEmpty
+                      ? state.activeFilters.length == 1
+                          ? state.activeFilters.first.display
+                          : state.activeFilters
+                              .map((f) => f.display)
+                              .join(', ')
+                      : null,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecordsList(
+    BuildContext context,
+    RecordsState state,
+    List<IFhirResource> timelineResources,
+  ) {
+    const double bottomBarHeight = Insets.extraLarge;
+    const double bottomBarOffset = Insets.medium;
+    const double extraSpacing = Insets.large;
+    final double bottomSafeInset = MediaQuery.of(context).padding.bottom;
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: EdgeInsets.only(
+        top: 8,
+        bottom: bottomSafeInset +
+            bottomBarHeight +
+            bottomBarOffset +
+            extraSpacing,
+      ),
+      itemCount:
+          timelineResources.length + (state.hasMorePages ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == timelineResources.length) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 4,
+                color: context.colorScheme.primary,
+              ),
+            ),
+          );
+        }
+
+        final resource = timelineResources[index];
+        return TimelineEntry(
+          key: ValueKey(
+              'timeline-${resource.fhirType}-${resource.id}-$index'),
+          isFirst: index == 0,
+          isLast: index == timelineResources.length - 1,
+          isSelected:
+              state.selectedResourceIds.contains(resource.id),
+          isSelectionMode: state.isSelectionMode,
+          onTap: () {
+            if (state.isSelectionMode) {
+              context.read<RecordsBloc>().add(
+                    RecordsSelectionToggled(resource.id),
+                  );
+            } else {
+              context.router.push(
+                RecordDetailsRoute(resource: resource),
+              );
+            }
+          },
+          onLongPress: state.isSelectionMode
+              ? null
+              : () {
+                  final bloc = context.read<RecordsBloc>();
+                  bloc.add(const RecordsSelectionModeToggled());
+                  bloc.add(RecordsSelectionToggled(resource.id));
+                },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RecordTypeHeader(
+                fhirType: resource.fhirType,
+                date: resource.date,
+                onTypeTap: state.isSelectionMode
+                    ? null
+                    : () {
+                        context.read<RecordsBloc>().add(
+                              RecordsFiltersApplied(
+                                  [resource.fhirType]),
+                            );
+                      },
+              ),
+              const SizedBox(height: Insets.small),
+              ResourceCard(resource: resource),
+            ],
+          ),
+        );
+      },
     );
   }
 }

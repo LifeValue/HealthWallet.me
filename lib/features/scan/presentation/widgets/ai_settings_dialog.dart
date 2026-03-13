@@ -4,7 +4,6 @@ import 'dart:ui';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -16,6 +15,8 @@ import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
 import 'package:health_wallet/features/scan/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/scan/domain/services/ai_model_download_service.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_token_section.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/ai_settings_vision_toggle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AiSettingsResult {
@@ -122,20 +123,10 @@ class AiTokenSettingsDialog extends StatefulWidget {
   State<AiTokenSettingsDialog> createState() => _AiTokenSettingsDialogState();
 }
 
-enum _TokenPreset {
-  low(100),
-  medium(500),
-  high(2000),
-  custom(0);
-
-  final int tokens;
-  const _TokenPreset(this.tokens);
-}
-
 const _contextSizeSteps = [512, 1024, 2048, 4096];
 
 class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
-  late _TokenPreset _selectedPreset;
+  late TokenPreset _selectedPreset;
   late TextEditingController _customController;
   late int _gpuLayers;
   late int _threads;
@@ -153,7 +144,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     super.initState();
     _selectedPreset = _presetFromValue(widget.currentTokens);
     _customController = TextEditingController(
-      text: _selectedPreset == _TokenPreset.custom
+      text: _selectedPreset == TokenPreset.custom
           ? widget.currentTokens.toString()
           : '',
     );
@@ -195,16 +186,17 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     super.dispose();
   }
 
-  _TokenPreset _presetFromValue(int value) {
-    if (value <= 100) return _TokenPreset.low;
-    if (value <= 500) return _TokenPreset.medium;
-    if (value <= 2000) return _TokenPreset.high;
-    return _TokenPreset.custom;
+  TokenPreset _presetFromValue(int value) {
+    if (value <= 100) return TokenPreset.low;
+    if (value <= 500) return TokenPreset.medium;
+    if (value <= 2000) return TokenPreset.high;
+    return TokenPreset.custom;
   }
 
   int _currentTokenValue() {
-    if (_selectedPreset == _TokenPreset.custom) {
-      return int.tryParse(_customController.text)?.clamp(1, AppConstants.maxAllowedTokens) ??
+    if (_selectedPreset == TokenPreset.custom) {
+      return int.tryParse(_customController.text)
+              ?.clamp(1, AppConstants.maxAllowedTokens) ??
           widget.currentTokens;
     }
     return _selectedPreset.tokens;
@@ -264,7 +256,8 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     final kvCache = (_contextSize * 170 ~/ 1024);
     final overhead = activeModel.modelSizeMB >= 2000 ? 700 : 400;
     final visionMB = _useVision ? activeModel.mmprojSizeMB : 0;
-    final estimatedMB = activeModel.modelSizeMB + visionMB + kvCache + overhead;
+    final estimatedMB =
+        activeModel.modelSizeMB + visionMB + kvCache + overhead;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -285,43 +278,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.normal,
-                  vertical: Insets.small,
-                ),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: _apply,
-                      child: Icon(
-                        Icons.arrow_back_ios_new,
-                        size: 16,
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(width: Insets.small),
-                    Expanded(
-                      child: Text(
-                        context.l10n.aiSettings,
-                        style: AppTextStyle.bodyMedium
-                            .copyWith(color: textColor, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _apply,
-                      child: Padding(
-                        padding: const EdgeInsets.all(9),
-                        child: Icon(
-                          Icons.close,
-                          size: 24,
-                          color: textColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildHeader(textColor),
               Divider(height: 1, thickness: 1, color: borderColor),
               Flexible(
                 child: SingleChildScrollView(
@@ -331,124 +288,74 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
                     children: [
                       Text(
                         context.l10n.aiSettingsDescription,
-                        style: AppTextStyle.labelLarge.copyWith(color: secondaryTextColor),
+                        style: AppTextStyle.labelLarge
+                            .copyWith(color: secondaryTextColor),
                       ),
                       const SizedBox(height: Insets.small),
                       _buildDeviceInfoChip(textColor, estimatedMB),
                       const SizedBox(height: Insets.normal),
-                      _buildVisionToggle(textColor, secondaryTextColor, borderColor),
-                      const SizedBox(height: Insets.normal),
-                      _buildSectionHeader(
-                        context.l10n.contextSizeLabel,
-                        textColor,
-                      ),
-                      const SizedBox(height: Insets.extraSmall),
-                      Text(
-                        context.l10n.contextSizeDescription,
-                        style: AppTextStyle.labelSmall.copyWith(
-                          color: secondaryTextColor,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: Insets.small),
-                      _buildSliderSetting(
-                        value: _contextStepIndex(),
-                        min: 0,
-                        max: _contextSizeSteps.length - 1,
-                        recommended: _contextSizeSteps.indexOf(widget.recommendedContextSize).clamp(0, _contextSizeSteps.length - 1),
-                        label: '$_contextSize',
-                        onChanged: (v) => setState(() => _contextSize = _contextSizeSteps[v]),
+                      AiVisionToggleSection(
+                        useVision: _useVision,
+                        isMmprojDownloading: _isMmprojDownloading,
+                        mmprojProgress: _mmprojProgress,
+                        onToggleOn: _handleVisionToggleOn,
+                        onToggleOff: () => setState(() => _useVision = false),
                         textColor: textColor,
-                        borderColor: borderColor,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      _buildSectionHeader(
-                        context.l10n.gpuLayersLabel,
-                        textColor,
-                      ),
-                      const SizedBox(height: Insets.extraSmall),
-                      Text(
-                        context.l10n.gpuLayersDescription,
-                        style: AppTextStyle.labelSmall.copyWith(
-                          color: secondaryTextColor,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: Insets.small),
-                      _buildSliderSetting(
-                        value: _gpuLayers,
-                        min: 0,
-                        max: 8,
-                        recommended: widget.recommendedGpuLayers,
-                        onChanged: (v) => setState(() => _gpuLayers = v),
-                        textColor: textColor,
-                        borderColor: borderColor,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      _buildSectionHeader(
-                        context.l10n.threadsLabel,
-                        textColor,
-                      ),
-                      const SizedBox(height: Insets.extraSmall),
-                      Text(
-                        context.l10n.threadsDescription,
-                        style: AppTextStyle.labelSmall.copyWith(
-                          color: secondaryTextColor,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: Insets.small),
-                      _buildSliderSetting(
-                        value: _threads,
-                        min: 1,
-                        max: Platform.numberOfProcessors.clamp(1, 8),
-                        recommended: widget.recommendedThreads,
-                        onChanged: (v) => setState(() => _threads = v),
-                        textColor: textColor,
-                        borderColor: borderColor,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      _buildSectionHeader(
-                        context.l10n.setAiTokensUsage,
-                        textColor,
-                      ),
-                      const SizedBox(height: Insets.extraSmall),
-                      Text(
-                        context.l10n.tokenUsageDescription,
-                        style: AppTextStyle.labelSmall.copyWith(
-                          color: secondaryTextColor,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: Insets.small),
-                      _buildTokenOptions(
-                        textColor: textColor,
-                        borderColor: borderColor,
                         secondaryTextColor: secondaryTextColor,
+                        borderColor: borderColor,
                       ),
                       const SizedBox(height: Insets.normal),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 44,
-                        child: ElevatedButton(
-                          onPressed: _apply,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            context.l10n.setTokens,
-                            style: AppTextStyle.bodyMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
+                      _buildSliderSection(
+                        context.l10n.contextSizeLabel,
+                        context.l10n.contextSizeDescription,
+                        _contextStepIndex(),
+                        0,
+                        _contextSizeSteps.length - 1,
+                        _contextSizeSteps
+                            .indexOf(widget.recommendedContextSize)
+                            .clamp(0, _contextSizeSteps.length - 1),
+                        (v) =>
+                            setState(() => _contextSize = _contextSizeSteps[v]),
+                        textColor,
+                        secondaryTextColor,
+                        borderColor,
+                        label: '$_contextSize',
+                        stepValues: _contextSizeSteps,
                       ),
+                      const SizedBox(height: Insets.normal),
+                      _buildSliderSection(
+                        context.l10n.gpuLayersLabel,
+                        context.l10n.gpuLayersDescription,
+                        _gpuLayers,
+                        0,
+                        8,
+                        widget.recommendedGpuLayers,
+                        (v) => setState(() => _gpuLayers = v),
+                        textColor,
+                        secondaryTextColor,
+                        borderColor,
+                      ),
+                      const SizedBox(height: Insets.normal),
+                      _buildSliderSection(
+                        context.l10n.threadsLabel,
+                        context.l10n.threadsDescription,
+                        _threads,
+                        1,
+                        Platform.numberOfProcessors.clamp(1, 8),
+                        widget.recommendedThreads,
+                        (v) => setState(() => _threads = v),
+                        textColor,
+                        secondaryTextColor,
+                        borderColor,
+                      ),
+                      const SizedBox(height: Insets.normal),
+                      _buildTokenSection(
+                        textColor,
+                        secondaryTextColor,
+                        borderColor,
+                      ),
+                      const SizedBox(height: Insets.normal),
+                      _buildApplyButton(),
                     ],
                   ),
                 ),
@@ -456,6 +363,38 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Insets.normal,
+        vertical: Insets.small,
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _apply,
+            child: Icon(Icons.arrow_back_ios_new, size: 16, color: textColor),
+          ),
+          const SizedBox(width: Insets.small),
+          Expanded(
+            child: Text(
+              context.l10n.aiSettings,
+              style: AppTextStyle.bodyMedium
+                  .copyWith(color: textColor, fontWeight: FontWeight.w500),
+            ),
+          ),
+          GestureDetector(
+            onTap: _apply,
+            child: Padding(
+              padding: const EdgeInsets.all(9),
+              child: Icon(Icons.close, size: 24, color: textColor),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -484,455 +423,111 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     );
   }
 
-  Widget _buildVisionToggle(
+  Widget _buildSliderSection(
+    String title,
+    String description,
+    int value,
+    int min,
+    int max,
+    int recommended,
+    ValueChanged<int> onChanged,
+    Color textColor,
+    Color secondaryTextColor,
+    Color borderColor, {
+    String? label,
+    List<int>? stepValues,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: textColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: Insets.extraSmall),
+        Text(
+          description,
+          style: AppTextStyle.labelSmall.copyWith(
+            color: secondaryTextColor,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: Insets.small),
+        AiSliderSetting(
+          value: value,
+          min: min,
+          max: max,
+          recommended: recommended,
+          onChanged: onChanged,
+          textColor: textColor,
+          borderColor: borderColor,
+          label: label,
+          stepValues: stepValues,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTokenSection(
     Color textColor,
     Color secondaryTextColor,
     Color borderColor,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Insets.smallNormal,
-        vertical: Insets.small,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                context.l10n.useVisionLabel,
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: Insets.extraSmall),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 1,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'Beta',
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: AppColors.warning,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 9,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              _buildOnOffToggle(borderColor),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.l10n.setAiTokensUsage,
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: textColor,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 4),
-          Text(
-            context.l10n.useVisionDescription,
-            style: AppTextStyle.labelSmall.copyWith(
-              color: secondaryTextColor,
-              height: 1.4,
-            ),
+        ),
+        const SizedBox(height: Insets.extraSmall),
+        Text(
+          context.l10n.tokenUsageDescription,
+          style: AppTextStyle.labelSmall.copyWith(
+            color: secondaryTextColor,
+            height: 1.4,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: Insets.small),
+        AiTokenOptionsSection(
+          selectedPreset: _selectedPreset,
+          customController: _customController,
+          onPresetChanged: (preset) =>
+              setState(() => _selectedPreset = preset),
+          onCustomValueChanged: () => setState(() {}),
+          textColor: textColor,
+          borderColor: borderColor,
+        ),
+      ],
     );
   }
 
-  Widget _buildOnOffToggle(Color borderColor) {
-    if (_isMmprojDownloading) {
-      return _buildMmprojProgressIndicator();
-    }
-
-    final colorScheme = context.colorScheme;
-
-    return GestureDetector(
-      onTap: () {
-        if (_useVision) {
-          setState(() => _useVision = false);
-        } else {
-          _handleVisionToggleOn();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: 76,
-        height: 36,
-        padding: const EdgeInsets.all(Insets.extraSmall),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                decoration: BoxDecoration(
-                  color: !_useVision
-                      ? colorScheme.primary
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Center(
-                  child: Text(
-                    'OFF',
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: !_useVision
-                          ? (context.isDarkMode
-                              ? Colors.white
-                              : colorScheme.onPrimary)
-                          : colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                decoration: BoxDecoration(
-                  color: _useVision
-                      ? colorScheme.primary
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Center(
-                  child: Text(
-                    'ON',
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: _useVision
-                          ? (context.isDarkMode
-                              ? Colors.white
-                              : colorScheme.onPrimary)
-                          : colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMmprojProgressIndicator() {
-    final percent = _mmprojProgress.round();
+  Widget _buildApplyButton() {
     return SizedBox(
-      width: 76,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '$percent%',
-            style: AppTextStyle.labelSmall.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
-            ),
+      width: double.infinity,
+      height: 44,
+      child: ElevatedButton(
+        onPressed: _apply,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
           ),
-          const SizedBox(height: 2),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: _mmprojProgress / 100,
-              minHeight: 4,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
-            ),
+          elevation: 0,
+        ),
+        child: Text(
+          context.l10n.setTokens,
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, Color textColor) {
-    return Text(
-      title,
-      style: AppTextStyle.bodyMedium.copyWith(
-        color: textColor,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-
-  Widget _buildSliderSetting({
-    required int value,
-    required int min,
-    required int max,
-    required int recommended,
-    required ValueChanged<int> onChanged,
-    required Color textColor,
-    required Color borderColor,
-    String? label,
-  }) {
-    final isRecommended = value == recommended;
-    final displayValue = label ?? '$value';
-    final recLabel = label != null
-        ? _contextSizeSteps[recommended.clamp(0, _contextSizeSteps.length - 1)].toString()
-        : '$recommended';
-
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              displayValue,
-              style: AppTextStyle.titleSmall.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            if (isRecommended)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  context.l10n.recommended,
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: const Color(0xFF4CAF50),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 10,
-                  ),
-                ),
-              )
-            else
-              GestureDetector(
-                onTap: () => onChanged(recommended),
-                child: Text(
-                  '${context.l10n.recommended}: $recLabel',
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackHeight: 4,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-            activeTrackColor: AppColors.primary,
-            inactiveTrackColor: borderColor,
-            thumbColor: AppColors.primary,
-          ),
-          child: Slider(
-            value: value.toDouble(),
-            min: min.toDouble(),
-            max: max.toDouble(),
-            divisions: max - min > 0 ? max - min : 1,
-            onChanged: (v) => onChanged(v.round()),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTokenOptions({
-    required Color textColor,
-    required Color borderColor,
-    required Color secondaryTextColor,
-  }) {
-    return Column(
-      children: [
-        _buildTokenChip(
-          _TokenPreset.low,
-          context.l10n.tokenPresetLow,
-          '~100',
-          textColor,
-          borderColor,
-        ),
-        const SizedBox(height: Insets.extraSmall),
-        _buildTokenChip(
-          _TokenPreset.medium,
-          context.l10n.tokenPresetMedium,
-          '~500',
-          textColor,
-          borderColor,
-        ),
-        const SizedBox(height: Insets.extraSmall),
-        _buildTokenChip(
-          _TokenPreset.high,
-          context.l10n.tokenPresetHigh,
-          '~2000',
-          textColor,
-          borderColor,
-        ),
-        const SizedBox(height: Insets.extraSmall),
-        _buildCustomTokenRow(textColor, borderColor),
-      ],
-    );
-  }
-
-  Widget _buildTokenChip(
-    _TokenPreset preset,
-    String title,
-    String tokenLabel,
-    Color textColor,
-    Color borderColor,
-  ) {
-    final isSelected = _selectedPreset == preset;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPreset = preset),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: Insets.smallNormal,
-          vertical: Insets.small,
-        ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : borderColor,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            _buildRadioCircle(isSelected),
-            const SizedBox(width: Insets.small),
-            Text(
-              title,
-              style: AppTextStyle.bodyMedium.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '$tokenLabel ${context.l10n.tokens}',
-              style: AppTextStyle.labelSmall.copyWith(color: textColor),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCustomTokenRow(Color textColor, Color borderColor) {
-    final isSelected = _selectedPreset == _TokenPreset.custom;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPreset = _TokenPreset.custom),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: Insets.smallNormal,
-          vertical: Insets.small,
-        ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : borderColor,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            _buildRadioCircle(isSelected),
-            const SizedBox(width: Insets.small),
-            Text(
-              context.l10n.tokenPresetCustom,
-              style: AppTextStyle.bodyMedium.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: Insets.small),
-              Expanded(
-                child: SizedBox(
-                  height: 32,
-                  child: TextField(
-                    controller: _customController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    onChanged: (_) => setState(() {}),
-                    style: AppTextStyle.labelLarge.copyWith(
-                      color: textColor,
-                      height: 1.6,
-                    ),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: Insets.small,
-                        vertical: 7,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: BorderSide(color: borderColor),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: BorderSide(color: borderColor),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: AppColors.primary),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRadioCircle(bool isSelected) {
-    if (isSelected) {
-      return Container(
-        width: 16,
-        height: 16,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary, width: 2),
-        ),
-        child: Center(
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primary,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      width: 16,
-      height: 16,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: const Color.fromRGBO(30, 30, 30, 0.3),
-          width: 1.5,
         ),
       ),
     );
