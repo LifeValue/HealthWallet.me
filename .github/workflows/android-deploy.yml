@@ -93,6 +93,13 @@ jobs:
           bundler-cache: true
           working-directory: android
 
+      - name: Setup Shorebird
+        uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+
       - name: Deploy to Google Play
         run: |
           cd android

@@ -77,6 +77,13 @@ jobs:
           security list-keychains -d user -s ci_build.keychain-db login.keychain-db
           security default-keychain -s ci_build.keychain-db
 
+      - name: Setup Shorebird
+        uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+
       - name: Deploy to TestFlight
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}

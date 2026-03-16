@@ -136,6 +136,7 @@ flutter:
     - assets/certs/android/
     - assets/font/matter-font/
     - assets/correction_templates/ro/
+    - shorebird.yaml
 
   fonts:
     - family: Matter

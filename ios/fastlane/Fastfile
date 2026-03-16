@@ -67,7 +67,7 @@ platform :ios do
 
     Dir.chdir("../..") do
       Bundler.with_unbundled_env do
-        sh("fvm", "flutter", "build", "ios", "--release", "--no-codesign",
+        sh("shorebird", "release", "ios", "--force", "--no-codesign", "--",
            "--build-number=#{build_number}",
            "--build-name=#{version_name}")
       end
