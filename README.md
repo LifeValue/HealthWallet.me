@@ -53,14 +53,14 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 
 ## Features
 
-| | Feature | Description |
-|---|---|---|
-| **AI Scan** | On-device document intelligence | Photograph or import medical documents; the local LLM extracts patient info, encounters, medications, allergies, and lab results into structured FHIR records |
-| **Aggregate** | 52K+ provider connectivity | Sync records from hospitals, clinics, and labs through FHIR R4 APIs |
-| **Organize** | Unified health timeline | Browse all records — conditions, medications, immunizations, lab results, clinical notes — in one place |
-| **Share** | Proximity-based sharing | Transfer records device-to-device without an internet connection |
-| **Export** | IPS & Wallet passes | Generate an International Patient Summary PDF or add emergency info to Apple/Google Wallet |
-| **Secure** | Biometric + offline-first | Face ID / fingerprint lock, local SQLite storage, no mandatory cloud dependency |
+| Feature | Description |
+|---------|-------------|
+| **AI Scan** | Photograph or import medical documents; the on-device LLM extracts patient info, encounters, medications, allergies, and lab results into structured FHIR records |
+| **Aggregate** | Sync records from 52,000+ hospitals, clinics, and labs through FHIR R4 APIs |
+| **Organize** | Browse all records — conditions, medications, immunizations, lab results, clinical notes — in one place |
+| **Share** | Transfer records device-to-device via proximity sharing, no internet needed |
+| **Export** | Generate an **International Patient Summary** PDF or add emergency info to **Apple/Google Wallet** |
+| **Secure** | Face ID / fingerprint lock, local SQLite storage, no mandatory cloud dependency |
 
 ---
 
