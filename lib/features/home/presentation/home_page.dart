@@ -134,17 +134,6 @@ class HomeViewState extends State<HomeView> {
     await Future.delayed(HomeConstants.refreshDelay);
   }
 
-  void _measurePatientRow() {
-    final renderBox =
-        _patientRowKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null && mounted) {
-      final height = renderBox.size.height;
-      if (height != _patientRowHeight && height > 0) {
-        setState(() => _patientRowHeight = height);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<SyncBloc, SyncState>(
