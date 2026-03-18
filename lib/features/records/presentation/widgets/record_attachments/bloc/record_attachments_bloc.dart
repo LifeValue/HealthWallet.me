@@ -6,6 +6,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -29,6 +30,7 @@ class RecordAttachmentsBloc
     this._sourceTypeService,
     this._syncRepository,
     this._database,
+    this._pathResolver,
   ) : super(const RecordAttachmentsState()) {
     on<RecordAttachmentsInitialised>(_onRecordAttachmentsInitialised);
     on<RecordAttachmentsFileAttached>(_onRecordAttachmentsFileAttached);
@@ -39,6 +41,7 @@ class RecordAttachmentsBloc
   final SourceTypeService _sourceTypeService;
   final SyncRepository _syncRepository;
   final AppDatabase _database;
+  final PathResolver _pathResolver;
 
   _onRecordAttachmentsInitialised(
     RecordAttachmentsInitialised event,
@@ -48,7 +51,7 @@ class RecordAttachmentsBloc
 
     try {
       if (event.resource.fhirType == FhirType.DocumentReference) {
-        final attachmentInfo = _extractAttachmentInfo(event.resource);
+        final attachmentInfo = await _extractAttachmentInfo(event.resource);
         emit(state.copyWith(
             attachments: [attachmentInfo],
             resource: event.resource,
@@ -58,11 +61,18 @@ class RecordAttachmentsBloc
 
       final encounterId = _extractEncounterId(event.resource);
 
-      final documentReferences = await _recordsRepository.getResources(
-        resourceTypes: [FhirType.DocumentReference],
-        sourceId: null,
-        limit: 100,
-      );
+      final List<IFhirResource> documentReferences;
+      if (event.ephemeralRecords.isNotEmpty) {
+        documentReferences = event.ephemeralRecords
+            .where((r) => r.fhirType == FhirType.DocumentReference)
+            .toList();
+      } else {
+        documentReferences = await _recordsRepository.getResources(
+          resourceTypes: [FhirType.DocumentReference],
+          sourceId: null,
+          limit: 100,
+        );
+      }
 
       final relatedDocuments = documentReferences.where((doc) {
         if (doc.rawResource.isEmpty) return false;
@@ -74,9 +84,9 @@ class RecordAttachmentsBloc
           if (context['related'] != null) {
             final relatedList = context['related'] as List;
             final isRelatedToThisResource = relatedList.any((related) {
-              final reference = related['reference'];
-              return reference ==
-                  '${event.resource.fhirType.name}/${event.resource.resourceId}';
+              final refId = FhirReferenceUtils.extractReferenceId(
+                  related['reference']?.toString());
+              return refId == event.resource.resourceId;
             });
             if (isRelatedToThisResource) return true;
           }
@@ -84,8 +94,9 @@ class RecordAttachmentsBloc
           if (encounterId != null && context['encounter'] != null) {
             final encounters = context['encounter'] as List;
             final isInSameEncounter = encounters.any((encounter) {
-              final reference = encounter['reference'];
-              return reference == 'Encounter/$encounterId';
+              final refId = FhirReferenceUtils.extractReferenceId(
+                  encounter['reference']?.toString());
+              return refId == encounterId;
             });
             if (isInSameEncounter) return true;
           }
@@ -94,8 +105,9 @@ class RecordAttachmentsBloc
               context['encounter'] != null) {
             final encounters = context['encounter'] as List;
             return encounters.any((encounter) {
-              final reference = encounter['reference'];
-              return reference == 'Encounter/${event.resource.resourceId}';
+              final refId = FhirReferenceUtils.extractReferenceId(
+                  encounter['reference']?.toString());
+              return refId == event.resource.resourceId;
             });
           }
 
@@ -105,8 +117,8 @@ class RecordAttachmentsBloc
         }
       }).toList();
 
-      final attachmentInfos =
-          relatedDocuments.map((doc) => _extractAttachmentInfo(doc)).toList();
+      final attachmentInfos = await Future.wait(
+          relatedDocuments.map((doc) => _extractAttachmentInfo(doc)));
 
       emit(state.copyWith(
           attachments: attachmentInfos,
@@ -117,7 +129,8 @@ class RecordAttachmentsBloc
     }
   }
 
-  AttachmentInfo _extractAttachmentInfo(IFhirResource documentReference) {
+  Future<AttachmentInfo> _extractAttachmentInfo(
+      IFhirResource documentReference) async {
     try {
       final content = documentReference.rawResource['content'] as List?;
       final attachmentData = content?.isNotEmpty == true
@@ -128,8 +141,12 @@ class RecordAttachmentsBloc
       final title =
           attachmentData?['title'] as String? ?? documentReference.title;
       final url = attachmentData?['url'] as String?;
-      final filePath =
-          url?.startsWith('file://') == true ? url!.substring(7) : null;
+
+      String? filePath;
+      if (url?.startsWith('file://') == true) {
+        final rawPath = url!.substring(7);
+        filePath = await _pathResolver.toAbsolute(rawPath);
+      }
 
       return AttachmentInfo(
         documentReference: documentReference,
@@ -189,12 +206,10 @@ class RecordAttachmentsBloc
         title: originalFileName,
       );
 
-      // Trigger home page refresh to update overview cards
       try {
         final homeBloc = getIt<HomeBloc>();
         homeBloc.add(const HomeRefreshPreservingOrder());
       } catch (e) {
-        // HomeBloc might not be available in all contexts, continue anyway
       }
 
       emit(state.copyWith(attachments: []));
@@ -216,6 +231,7 @@ class RecordAttachmentsBloc
     final bytes = await file.readAsBytes();
     final timestamp = DateTime.now();
     final documentReferenceId = _generateId();
+    final relativeFilePath = await _pathResolver.toRelative(filePath);
 
     final List<fhir_r4.Reference>? encounterReferences = encounterId != null
         ? [
@@ -250,7 +266,7 @@ class RecordAttachmentsBloc
         fhir_r4.DocumentReferenceContent(
           attachment: fhir_r4.Attachment(
             contentType: fhir_r4.FhirCode(_getContentTypeFromPath(filePath)),
-            url: fhir_r4.FhirUrl('file://$filePath'),
+            url: fhir_r4.FhirUrl('file://$relativeFilePath'),
             title: fhir_r4.FhirString(fileName),
             size: fhir_r4.FhirUnsignedInt(bytes.length.toString()),
           ),
@@ -364,8 +380,9 @@ class RecordAttachmentsBloc
           final attachment = content.first['attachment'];
           final url = attachment?['url'] as String?;
           if (url != null && url.startsWith('file://')) {
-            final filePath = url.substring(7);
-            final file = File(filePath);
+            final rawPath = url.substring(7);
+            final absolutePath = await _pathResolver.toAbsolute(rawPath);
+            final file = File(absolutePath);
             if (await file.exists()) {
               await file.delete();
             }
@@ -373,12 +390,10 @@ class RecordAttachmentsBloc
         }
       } catch (e) {}
 
-      // Trigger home page refresh to update overview cards
       try {
         final homeBloc = getIt<HomeBloc>();
         homeBloc.add(const HomeRefreshPreservingOrder());
       } catch (e) {
-        // HomeBloc might not be available in all contexts, continue anyway
       }
 
       add(RecordAttachmentsInitialised(resource: state.resource));

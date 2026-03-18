@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class Insets {
   static const double extraSmall = 4;
   static const double smaller = 6;
@@ -11,8 +9,3 @@ class Insets {
   static const double extraLarge = 48;
   static const double huge = 64;
 }
-
-const defaultScreenPadding = EdgeInsets.fromLTRB(16, 16, 16, 0);
-const defaultScreenHorizontalPadding = EdgeInsets.symmetric(horizontal: 16);
-const defaultAppBarPadding = EdgeInsets.fromLTRB(16, 64, 16, 16);
-const defaultAppBarHeight = 56.0;

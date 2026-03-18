@@ -36,6 +36,7 @@ class VitalsSection extends StatelessWidget {
   static const double _breakpoint = 380;
 
   int _getCrossAxisCount(double screenWidth) {
+    if (screenWidth >= 600) return 4;
     return 2;
   }
 
@@ -376,14 +377,21 @@ class VitalsSection extends StatelessWidget {
                 SizedBox(height: iconSize, width: iconSize, child: icon),
                 SizedBox(width: iconTitleSpacing),
                 Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: titleStyle,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle,
+                    ),
                   ),
                 ),
-                if (statusIcon != null) statusIcon,
+                if (statusIcon != null) ...[
+                  const SizedBox(width: 4),
+                  statusIcon,
+                ],
               ],
             ),
             const SizedBox(height: Insets.smallNormal),
@@ -399,11 +407,13 @@ class VitalsSection extends StatelessWidget {
                     style: valueStyle,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  unit,
-                  style: unitStyle,
-                ),
+                if (unit.isNotEmpty && !value.contains(unit)) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    unit,
+                    style: unitStyle,
+                  ),
+                ],
               ],
             ),
           ],

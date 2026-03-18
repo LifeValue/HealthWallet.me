@@ -2,68 +2,121 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
+import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 
 @RoutePage()
-class RecordDetailsPage extends StatelessWidget {
+class RecordDetailsPage extends StatefulWidget {
   final IFhirResource resource;
-  final PdfPreviewService _pdfPreviewService = getIt<PdfPreviewService>();
+  final List<IFhirResource> ephemeralRecords;
 
-  RecordDetailsPage({
+  const RecordDetailsPage({
     super.key,
     required this.resource,
+    this.ephemeralRecords = const [],
   });
 
   @override
+  State<RecordDetailsPage> createState() => _RecordDetailsPageState();
+}
+
+class _RecordDetailsPageState extends State<RecordDetailsPage> {
+  final PdfPreviewService _pdfPreviewService = getIt<PdfPreviewService>();
+  late final bool _isEphemeral;
+  List<IFhirResource> _ephemeralRelatedResources = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
+        EphemeralSessionManager.instance.hasActiveSession;
+    if (_isEphemeral) {
+      _ephemeralRelatedResources = _findRelatedInMemory();
+    }
+  }
+
+  List<IFhirResource> _findRelatedInMemory() {
+    final records = widget.ephemeralRecords.isNotEmpty
+        ? widget.ephemeralRecords
+        : EphemeralSessionManager.instance.currentSession?.records;
+    if (records == null || records.isEmpty) return [];
+    return FhirResourceRelationshipService.findRelatedInMemory(
+      resource: widget.resource,
+      allRecords: records,
+    );
+  }
+
+  List<RecordInfoLine> _getAdditionalInfo(BuildContext context) {
+    final resource = widget.resource;
+    if (resource is Observation) {
+      try {
+        final region = context.read<UserBloc>().state.regionPreset;
+        return resource.additionalInfoForRegion(region);
+      } catch (_) {}
+    }
+    return resource.additionalInfo;
+  }
+
+  void _onViewDocument(IFhirResource resource) {
+    if (_isEphemeral) {
+      _pdfPreviewService.previewInApp(context, resource);
+    } else {
+      _pdfPreviewService.previewPdfFromResource(context, resource);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isEphemeral) {
+      return _buildScaffold(context, _ephemeralRelatedResources);
+    }
+
     return BlocProvider(
       create: (context) =>
-          getIt<RecordsBloc>()..add(RecordDetailLoaded(resource)),
+          getIt<RecordsBloc>()..add(RecordDetailLoaded(widget.resource)),
       child: BlocBuilder<RecordsBloc, RecordsState>(
         builder: (context, state) {
-          IFhirResource? encounter = state.relatedResources.firstWhere(
-            (resource) => resource.fhirType == FhirType.Encounter,
-            orElse: () => const GeneralResource(),
-          );
-
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text(
-                'Record Details',
-                style: AppTextStyle.titleMedium,
-              ),
-              centerTitle: false,
-              backgroundColor: context.colorScheme.surface,
-              leading: IconButton(
-                onPressed: () => context.router.maybePop(),
-                icon: const Icon(Icons.arrow_back),
-              ),
-              elevation: 0,
-            ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(Insets.normal),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeaderCard(context),
-                  const SizedBox(height: 20),
-                  if (resource.fhirType != FhirType.Encounter &&
-                      encounter.fhirType == FhirType.Encounter)
-                    _buildEncounterDetails(context, encounter as Encounter),
-                  if (state.relatedResources.isNotEmpty)
-                    _buildRelatedResourcesSection(
-                        context, state.relatedResources),
-                ],
-              ),
-            ),
-          );
+          return _buildScaffold(context, state.relatedResources);
         },
+      ),
+    );
+  }
+
+  Widget _buildScaffold(
+      BuildContext context, List<IFhirResource> relatedResources) {
+    IFhirResource? encounter = relatedResources.firstWhere(
+      (resource) => resource.fhirType == FhirType.Encounter,
+      orElse: () => const GeneralResource(),
+    );
+
+    return Scaffold(
+      appBar: const CustomAppBar(title: 'Record Details'),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(Insets.normal),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeaderCard(context),
+            const SizedBox(height: 20),
+            if (widget.resource.fhirType != FhirType.Encounter &&
+                encounter.fhirType == FhirType.Encounter)
+              _buildEncounterDetails(context, encounter as Encounter),
+            if (relatedResources.isNotEmpty)
+              _buildRelatedResourcesSection(context, relatedResources),
+          ],
+        ),
       ),
     );
   }
@@ -91,13 +144,13 @@ class RecordDetailsPage extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                resource.fhirType.icon.svg(
+                widget.resource.fhirType.icon.svg(
                   width: 15,
                   color: context.colorScheme.onSurface,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  resource.fhirType.display,
+                  widget.resource.fhirType.display,
                   style: AppTextStyle.labelSmall,
                 ),
               ],
@@ -105,13 +158,27 @@ class RecordDetailsPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            resource.displayTitle,
+            widget.resource.displayTitle,
             style: AppTextStyle.bodyMedium.copyWith(
               color: context.colorScheme.onSurface,
             ),
           ),
-          ...resource.additionalInfo.map((infoLine) {
-            // Section header styling
+          if (widget.resource.fhirType == FhirType.DocumentReference ||
+              widget.resource.fhirType == FhirType.Media)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: AppButton(
+                label: 'View Document',
+                onPressed: () => _onViewDocument(widget.resource),
+                icon: const Icon(Icons.visibility_outlined),
+                variant: AppButtonVariant.outlined,
+                fullWidth: false,
+                height: 36,
+                fontSize: 12,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+            ),
+          ..._getAdditionalInfo(context).map((infoLine) {
             if (infoLine.isSection) {
               return Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 8),
@@ -125,7 +192,6 @@ class RecordDetailsPage extends StatelessWidget {
               );
             }
 
-            // Regular info line styling
             return Column(
               children: [
                 const SizedBox(height: 10),
@@ -165,8 +231,10 @@ class RecordDetailsPage extends StatelessWidget {
         const Text("Encounter details", style: AppTextStyle.buttonSmall),
         const SizedBox(height: 4),
         InkWell(
-          onTap: () =>
-              context.router.push(RecordDetailsRoute(resource: encounter)),
+          onTap: () => context.router.push(RecordDetailsRoute(
+            resource: encounter,
+            ephemeralRecords: widget.ephemeralRecords,
+          )),
           child: _buildRelatedResourceInfo(context, encounter),
         ),
         Padding(
@@ -185,38 +253,30 @@ class RecordDetailsPage extends StatelessWidget {
         const Text("Related resources", style: AppTextStyle.buttonSmall),
         const SizedBox(height: 16),
         ...resources.map((resource) => InkWell(
-              onTap: () =>
-                  context.router.push(RecordDetailsRoute(resource: resource)),
+              onTap: () => context.router.push(RecordDetailsRoute(
+                resource: resource,
+                ephemeralRecords: widget.ephemeralRecords,
+              )),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(resource.displayTitle,
-                            style: AppTextStyle.labelLarge),
+                  Text(resource.displayTitle,
+                      style: AppTextStyle.labelLarge),
+                  if (resource.fhirType == FhirType.Media ||
+                      resource.fhirType == FhirType.DocumentReference)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: AppButton(
+                        label: 'View Document',
+                        onPressed: () => _onViewDocument(resource),
+                        icon: const Icon(Icons.visibility_outlined),
+                        variant: AppButtonVariant.outlined,
+                        fullWidth: false,
+                        height: 36,
+                        fontSize: 12,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
-                      // VIEW button for PDF preview (if it's a Media resource)
-                      if (resource.fhirType == FhirType.Media)
-                        TextButton(
-                          onPressed: () => _pdfPreviewService
-                              .previewPdfFromResource(context, resource),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            'VIEW',
-                            style: AppTextStyle.labelSmall.copyWith(
-                              color: context.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                    ),
                   _buildRelatedResourceInfo(context, resource),
                   const SizedBox(height: 16),
                 ],
@@ -228,7 +288,6 @@ class RecordDetailsPage extends StatelessWidget {
 
   Widget _buildRelatedResourceInfo(
       BuildContext context, IFhirResource resource) {
-    // Filter out section headers and take first 2 actual info lines
     final infoLines = resource.additionalInfo
         .where((line) => !line.isSection)
         .take(2)

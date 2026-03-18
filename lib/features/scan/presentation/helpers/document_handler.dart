@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -16,12 +15,7 @@ import 'package:health_wallet/features/sync/domain/services/source_type_service.
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:auto_route/auto_route.dart';
 
-/// Mixin providing common document handling functionality for scan and import pages.
-///
-/// This mixin extracts duplicate code for navigating to FHIR mapper,
-/// attaching documents to encounters, and handling document taps/deletion.
 mixin DocumentHandler<T extends StatefulWidget> on State<T> {
-  /// Navigate to the FHIR mapper page after loading the model.
   Future<void> navigateToFhirMapper(
     BuildContext context,
     ProcessingSession session,
@@ -67,14 +61,36 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
 
         final (patient, encounter) = result;
 
-        // The patient will always be an existing one here
         final existingPatient = patient.existing!;
 
-        // The encounter can either be an existing one or a draft
         Encounter finalEncounter;
         if (encounter.draft != null) {
+          final homeState = context.read<HomeBloc>().state;
+          final patientState = context.read<PatientBloc>().state;
+
+          final selectedPatient = patientState.patients.isNotEmpty
+              ? patientState.patients.firstWhere(
+                  (p) => p.id == patientState.selectedPatientId,
+                  orElse: () => patientState.patients.first,
+                )
+              : null;
+
+          final patientForSource = selectedPatient ?? homeState.patient;
+          final patientId = patientForSource?.id ?? 'patient-default';
+          final patientName =
+              patientForSource?.displayTitle ?? 'Unknown Patient';
+
+          final sourceTypeService =
+              getIt<SourceTypeService>();
+          final walletSource =
+              await sourceTypeService.getWritableSourceForPatient(
+            patientId: patientId,
+            patientName: patientName,
+            availableSources: homeState.sources,
+          );
+
           finalEncounter = encounter.draft!.toFhirResource(
-            sourceId: existingPatient.sourceId,
+            sourceId: walletSource.id,
             subjectId: existingPatient.subjectId,
           ) as Encounter;
 
@@ -82,6 +98,8 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         } else {
           finalEncounter = encounter.existing!;
         }
+
+        if (!context.mounted) return;
 
         try {
           await attachToEncounter(context, session.filePaths, finalEncounter);
@@ -97,8 +115,6 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       }
     }
   }
-
-  /// Attach documents to the specified encounter.
   Future<void> attachToEncounter(
     BuildContext context,
     List<String> filePaths,
@@ -119,7 +135,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       final patientId = patient?.id ?? 'patient-default';
       final patientName = patient?.displayTitle ?? 'Unknown Patient';
 
-      final sourceTypeService = GetIt.instance.get<SourceTypeService>();
+      final sourceTypeService = getIt<SourceTypeService>();
       final walletSource = await sourceTypeService.getWritableSourceForPatient(
         patientId: patientId,
         patientName: patientName,
@@ -133,7 +149,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       }
 
       final documentReferenceService =
-          GetIt.instance.get<DocumentReferenceService>();
+          getIt<DocumentReferenceService>();
 
       await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: filePaths,

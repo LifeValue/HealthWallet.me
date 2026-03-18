@@ -1,0 +1,165 @@
+{
+  "language": "ro",
+  "category": "visit",
+  "gender": "female",
+  "templateType": "Bilet de iesire din spital / Scrisoare medicala",
+  "ocrExcerpt": "CHIRURGIE GENERALA 2 Foaie de observatie nr.28451 Cod prezentare:4891234 Varsta la prezentare: 68 ani Contract CAS 1502/01.05.2018 BILET DE IESIRE DIN SPITAL SCRISOARE MEDICALA Nume si prenume: MARINESCU ELENA, CNP: 2520315054321, Varsta actuala: 68 ani Domiciliu: Str. LIBERTATII 7, Localitatea Cluj-Napoca, Judetul CLUJ Data internarii: 12.03.2021 09:15 Data externarii: 18.03.2021 14:30 Diagnostic externare CARCINOM SEROS DE CORP UTERIN G3 METRORAGIE ADERENTE PERITONEALE POSTOPERATORII ANEMIE SECUNDARA HEPATOMEGALIE STEATOZICA HIPERTENSIUNE ARTERIALA ESENTIALA CARDIOPATIE HIPERTENSIVA HIPOACUZIE SEVERA SINDROM DEPRESIV OBEZITATE GRADUL IV Epicriza Pacienta in varsta de 68 ani, se interneaza in serviciul nostru pentru: metroragie, stare generala influentata. Pacienta este cunoscuta cu carcinom seros de corp uterin diagnosticat in urma unui raclaj bioptic. IN 13/03/2021 se intervine chirurgical si se practica, in anestezie generala cu intubatie oro-traheala: 1. HISTERECTOMIE TOTALA CU ANEXECTOMIE BILATERALA; 2. SECTIONAREA PARTIALA A ADERENTELOR PERITONEALE (SUBOMBILICALE); 3. DRENAJ PERITONEAL PELVIN SI DRENAJ SUBCUTANAT. Protocol Operator nr. 312 din 13/03/2021 (Dr. Ionescu Mihai; Dr. Vasilescu Ana; asistenta instrumentara: Pop Maria; medic anestezist: Dr. Radu Victor). Semen vitale: TA = 140/85 mmHg; AV = 78 bpm; FR = 15 rpm; SO2 (aer) = 97%; temperatura = 36.5 grade Celsus. INVESTIGATII PARACLINICE - PREOPERATOR: WBC=10.36 10^3/uL, NEU=5.693 10^3/uL, HGB=10.73 g/dl, HCT=36.54%, PLT=366.9, ALAT (GPT)=12 U/L, ASAT (GOT)=30 U/L, Creatinina ser=0.80 mg/dl, Glicemie=111 mg/dl, Uree ser=40.66 mg/dl Medic sef sectie: Dr. POPESCU ADRIAN Medic curant: Dr. IONESCU MIHAI",
+  "extraction": [
+    {
+      "resourceType": "Patient",
+      "familyName": "MARINESCU",
+      "givenName": "ELENA",
+      "dateOfBirth": "1953-03-15",
+      "gender": "female",
+      "patientMRN": "2520315054321",
+      "identifierLabel": "CNP",
+      "documentCategory": "visit"
+    },
+    {
+      "resourceType": "Encounter",
+      "encounterType": "Internare chirurgie generala - histerectomie",
+      "periodStart": "2021-03-12"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Carcinom seros de corp uterin G3",
+      "onsetDateTime": "2021-03-12",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Metroragie",
+      "onsetDateTime": "2021-03-12",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Aderente peritoneale postoperatorii",
+      "onsetDateTime": "2021-03-12",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Anemie secundara",
+      "onsetDateTime": "2021-03-12",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Hepatomegalie steatozica",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Hipertensiune arteriala esentiala",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Cardiopatie hipertensiva",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Hipoacuzie severa",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Sindrom depresiv",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Obezitate gradul IV",
+      "onsetDateTime": "",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Procedure",
+      "procedureName": "Histerectomie totala cu anexectomie bilaterala",
+      "performedDateTime": "2021-03-13",
+      "reason": "Carcinom seros de corp uterin G3"
+    },
+    {
+      "resourceType": "Procedure",
+      "procedureName": "Sectionarea partiala a aderentelor peritoneale subombilicale",
+      "performedDateTime": "2021-03-13",
+      "reason": "Aderente peritoneale postoperatorii"
+    },
+    {
+      "resourceType": "Procedure",
+      "procedureName": "Drenaj peritoneal pelvin si drenaj subcutanat",
+      "performedDateTime": "2021-03-13",
+      "reason": "Postoperator"
+    },
+    {
+      "resourceType": "MedicationStatement",
+      "medicationName": "Fraxiparina",
+      "dosage": "0.6 ml / 24 ore",
+      "reason": "Profilaxie tromboembolica postoperatorie"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "WBC",
+      "value": "10.36",
+      "unit": "10^3/uL",
+      "referenceRange": "4.0 - 10.0"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "HGB",
+      "value": "10.73",
+      "unit": "g/dl",
+      "referenceRange": "11.7 - 16.1"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Creatinina ser",
+      "value": "0.80",
+      "unit": "mg/dl",
+      "referenceRange": "0.10 - 1.00"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Glicemie",
+      "value": "111",
+      "unit": "mg/dl",
+      "referenceRange": "65 - 115"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "ALAT (GPT)",
+      "value": "12",
+      "unit": "U/L",
+      "referenceRange": "0 - 55"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "ASAT (GOT)",
+      "value": "30",
+      "unit": "U/L",
+      "referenceRange": "5 - 34"
+    },
+    {
+      "resourceType": "Practitioner",
+      "practitionerName": "Dr. IONESCU MIHAI",
+      "role": "Medic curant - Chirurgie generala"
+    },
+    {
+      "resourceType": "Practitioner",
+      "practitionerName": "Dr. POPESCU ADRIAN",
+      "role": "Medic sef sectie"
+    },
+    {
+      "resourceType": "Organization",
+      "organizationName": "Spital Clinic Judetean de Urgenta",
+      "organizationType": "Hospital"
+    }
+  ]
+}

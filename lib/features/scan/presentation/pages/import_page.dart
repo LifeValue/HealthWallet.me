@@ -17,6 +17,7 @@ import 'package:health_wallet/features/scan/presentation/widgets/dialog_helper.d
 import 'package:health_wallet/features/scan/presentation/widgets/import_actions.dart';
 import 'package:health_wallet/features/scan/presentation/helpers/document_handler.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 
 @RoutePage()
 class ImportPage extends StatelessWidget {
@@ -50,8 +51,11 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
     final externalFileService = getIt<ExternalFilesService>();
 
     if (externalFileService.hasPendingFiles) {
-      for (final path in externalFileService.consumeFilePaths()) {
-        context.read<ScanBloc>().add(DocumentImported(filePath: path));
+      final paths = externalFileService.consumeFilePaths();
+      if (paths.isNotEmpty) {
+        context
+            .read<ScanBloc>()
+            .add(DocumentImported(filePaths: paths.toList()));
       }
     }
   }
@@ -59,9 +63,10 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'Import',
         automaticallyImplyLeading: false,
+        extraTopPadding: context.isTablet ? 16 : 0,
       ),
       body: BlocConsumer<ScanBloc, ScanState>(
         listenWhen: (previous, current) => previous.status != current.status,
@@ -78,7 +83,12 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
               .toList();
 
           return Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.only(
+              left: context.screenHorizontalPadding,
+              right: context.screenHorizontalPadding,
+              top: context.isTablet ? 24.0 : 16.0,
+              bottom: 16.0,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -114,34 +124,53 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                     ),
                   ),
                 if (importSessions.isEmpty)
-                  Column(
-                    children: [
-                      const SizedBox(height: 16),
-                      Assets.images.emptyScan.svg(),
-                      const SizedBox(height: 36),
-                      const Text(
-                        "No imports yet",
-                        style: AppTextStyle.titleMedium,
-                        textAlign: TextAlign.center,
+                  if (context.isTablet)
+                    Expanded(
+                      child: Align(
+                        alignment: const Alignment(0, -0.3),
+                        child: _buildEmptyState(context),
                       ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        "Import or scan documents to get started",
-                        style: AppTextStyle.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      ImportActions(
-                        onImportDocument: () => _handleImportDocument(context),
-                        onPickImage: () => _handlePickImage(context),
-                        onScanDocument: () => _navigateToScanTab(context),
-                      ),
-                    ],
-                  ),
+                    )
+                  else
+                    Center(child: _buildEmptyState(context)),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 500),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          Assets.images.emptyScan.svg(),
+          const SizedBox(height: 36),
+          const Text(
+            "No imports yet",
+            style: AppTextStyle.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Import or scan documents to get started",
+            style: AppTextStyle.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: ImportActions(
+              onImportDocument: () => _handleImportDocument(context),
+              onPickImage: () => _handlePickImage(context),
+              onScanDocument: () => _navigateToScanTab(context),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -184,6 +213,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
       await Future.delayed(const Duration(milliseconds: 100));
 
       final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
         allowCompression: false,
         withData: false,
         withReadStream: false,
@@ -201,26 +231,19 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
       );
 
       if (result != null && result.files.isNotEmpty) {
+        final validPaths = <String>[];
+
         for (final file in result.files) {
-          String finalFilePath = '';
-
-          if (file.path != null) {
-            finalFilePath = file.path!;
-          } else {
-            continue;
+          if (file.path == null || file.path!.isEmpty) continue;
+          if (await File(file.path!).exists()) {
+            validPaths.add(file.path!);
           }
+        }
 
-          if (finalFilePath.isNotEmpty) {
-            final fileExists = await File(finalFilePath).exists();
-
-            if (fileExists) {
-              if (context.mounted) {
-                context.read<ScanBloc>().add(
-                      DocumentImported(filePath: finalFilePath),
-                    );
-              }
-            }
-          }
+        if (validPaths.isNotEmpty && context.mounted) {
+          context.read<ScanBloc>().add(
+                DocumentImported(filePaths: validPaths),
+              );
         }
       }
     } catch (e) {
@@ -233,22 +256,21 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
       await Future.delayed(const Duration(milliseconds: 100));
 
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final List<XFile> images = await picker.pickMultiImage();
 
-      if (image != null) {
-        final fileExists = await File(image.path).exists();
+      if (images.isEmpty) return;
 
-        if (fileExists) {
-          if (context.mounted) {
-            try {
-              context.read<ScanBloc>().add(
-                    DocumentImported(filePath: image.path),
-                  );
-            } catch (e) {
-              // Handle error silently
-            }
-          }
+      final validPaths = <String>[];
+      for (final image in images) {
+        if (await File(image.path).exists()) {
+          validPaths.add(image.path);
         }
+      }
+
+      if (validPaths.isNotEmpty && context.mounted) {
+        context.read<ScanBloc>().add(
+              DocumentImported(filePaths: validPaths),
+            );
       }
     } catch (e) {
       // Handle error silently

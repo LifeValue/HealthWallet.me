@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -100,14 +100,13 @@ class SyncLoadingWidget extends StatelessWidget {
   }
 
   void _showCancelConfirmation(BuildContext context) {
-    ConfirmationDialog.show(
+    AppSimpleDialog.showConfirmation(
       context: context,
       title: context.l10n.cancelSyncTitle,
       message: context.l10n.cancelSyncMessage,
       confirmText: context.l10n.yesCancel,
       cancelText: context.l10n.continueSync,
       onConfirm: () {
-        // Cancel the sync operation
         context.read<SyncBloc>().add(const SyncCancel());
         onCancel?.call();
       },

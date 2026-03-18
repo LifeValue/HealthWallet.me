@@ -22,4 +22,15 @@ class RecordNote with _$RecordNote {
         content: dto.content,
         timestamp: dto.timestamp,
       );
+
+  Map<String, dynamic> toMap() => {
+        'content': content,
+        'timestamp': timestamp.toIso8601String(),
+      };
+
+  factory RecordNote.fromMap(Map<String, dynamic> map) => RecordNote(
+        content: map['content'] as String? ?? '',
+        timestamp: DateTime.tryParse(map['timestamp'] as String? ?? '') ??
+            DateTime.now(),
+      );
 }

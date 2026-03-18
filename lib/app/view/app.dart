@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
+import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
-
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -20,9 +22,66 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/secti
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
+import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({super.key});
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startSymmetricDiscovery();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopSymmetricDiscovery();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startSymmetricDiscovery();
+    } else if (state == AppLifecycleState.paused) {
+      _stopSymmetricDiscovery();
+    }
+  }
+
+  Future<void> _startSymmetricDiscovery() async {
+    final userRepository = getIt<UserRepository>();
+    final user = await userRepository.getCurrentUser();
+    if (!user.isReceiveModeEnabled) {
+      debugPrint('[App] Receive mode disabled, skipping discovery');
+      return;
+    }
+
+    final hasPermissions =
+        await SharePermissionsHelper.hasRequiredPermissions();
+    if (!hasPermissions) {
+      debugPrint('[App] Share permissions not granted, skipping discovery');
+      return;
+    }
+
+    final manager = getIt<ReceiveModeService>();
+    if (!manager.isListening) {
+      await manager.startListening();
+    }
+  }
+
+  Future<void> _stopSymmetricDiscovery() async {
+    final manager = getIt<ReceiveModeService>();
+    if (manager.isListening) {
+      await manager.stopListening();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,12 +110,21 @@ class App extends StatelessWidget {
           create: (_) => getIt<PatientBloc>()..add(const PatientInitialised()),
         ),
         BlocProvider.value(value: getIt<NotificationBloc>()),
+        BlocProvider(create: (_) => getIt<WalletPassBloc>()),
       ],
       child: MultiBlocListener(
         listeners: [
           BlocListener<SyncBloc, SyncState>(
             listener: (context, state) {
               _handleSyncBlocStateChange(context, state);
+            },
+          ),
+          BlocListener<ScanBloc, ScanState>(
+            listenWhen: (previous, current) =>
+                previous.status != current.status &&
+                current.status == const ScanStatus.success(),
+            listener: (context, state) {
+              _handleScanSuccess(context);
             },
           ),
         ],
@@ -68,6 +136,7 @@ class App extends StatelessWidget {
               darkTheme: AppTheme.darkTheme,
               themeMode:
                   state.user.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              locale: state.appLocale,
               routerConfig: router.config(
                 navigatorObservers: () => [routeObserver],
               ),
@@ -82,6 +151,12 @@ class App extends StatelessWidget {
       ),
     );
   }
+}
+
+void _handleScanSuccess(BuildContext context) {
+  context.read<PatientBloc>().add(const PatientPatientsLoaded());
+  context.read<HomeBloc>().add(const HomeScanCompleted());
+  context.read<RecordsBloc>().add(const RecordsInitialised());
 }
 
 void _handleSyncBlocStateChange(BuildContext context, SyncState state) {

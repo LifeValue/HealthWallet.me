@@ -8,6 +8,7 @@ enum AppButtonVariant {
   secondary,
   transparent,
   outlined,
+  tinted,
 }
 
 class AppButton extends StatelessWidget {
@@ -20,6 +21,9 @@ class AppButton extends StatelessWidget {
   final Color? backgroundColor;
   final bool enabled;
   final double? iconSize;
+  final double? height;
+  final double? fontSize;
+  final bool pillShaped;
 
   const AppButton({
     super.key,
@@ -32,6 +36,9 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.enabled = true,
     this.iconSize = 16,
+    this.height,
+    this.fontSize,
+    this.pillShaped = false,
   });
 
   @override
@@ -41,72 +48,119 @@ class AppButton extends StatelessWidget {
 
     Widget button;
 
-    if (variant == AppButtonVariant.transparent) {
-      // Text button for transparent variant
-      final textColor = isDarkMode ? Colors.white : colorScheme.primary;
-      final iconColor = isDarkMode ? Colors.white : colorScheme.primary;
+    final effectivePadding = padding ??
+        const EdgeInsets.symmetric(
+          horizontal: Insets.medium,
+          vertical: Insets.smallNormal,
+        );
+    final fixedSize = height != null ? Size.fromHeight(height!) : null;
+    final effectiveShape = pillShaped
+        ? const StadiumBorder()
+        : RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Insets.small),
+          );
 
-      button = TextButton.icon(
-        onPressed: enabled ? onPressed : null,
-        icon: icon != null
-            ? _buildIconWithColorFilter(icon!, iconColor)
-            : const SizedBox.shrink(),
-        label: Text(
-          label,
-          style: AppTextStyle.buttonMedium.copyWith(
-            color: textColor,
-          ),
-        ),
-        style: TextButton.styleFrom(
-          padding: padding ??
-              const EdgeInsets.symmetric(
-                horizontal: Insets.medium,
-                vertical: Insets.smallNormal,
-              ),
+    if (variant == AppButtonVariant.tinted) {
+      final tintColor = backgroundColor ?? colorScheme.primary;
+      final labelWidget = Text(
+        label,
+        style: AppTextStyle.buttonMedium.copyWith(
+          color: tintColor,
+          fontSize: fontSize,
         ),
       );
+      final style = TextButton.styleFrom(
+        backgroundColor: tintColor.withValues(alpha: 0.08),
+        foregroundColor: tintColor,
+        disabledForegroundColor: tintColor.withValues(alpha: 0.5),
+        disabledBackgroundColor: tintColor.withValues(alpha: 0.04),
+        padding: effectivePadding,
+        fixedSize: fixedSize,
+        shape: effectiveShape,
+      );
+
+      button = icon != null
+          ? TextButton.icon(
+              onPressed: enabled ? onPressed : null,
+              icon: _buildIconWithColorFilter(icon!, tintColor),
+              label: labelWidget,
+              style: style,
+            )
+          : TextButton(
+              onPressed: enabled ? onPressed : null,
+              style: style,
+              child: labelWidget,
+            );
+    } else if (variant == AppButtonVariant.transparent) {
+      final isDisabled = !enabled || onPressed == null;
+      final activeColor = colorScheme.primary;
+      final textColor = isDisabled
+          ? colorScheme.onSurface.withValues(alpha: 0.4)
+          : activeColor;
+      final iconColor = textColor;
+      final labelWidget = Text(
+        label,
+        style: AppTextStyle.buttonMedium.copyWith(
+          color: textColor,
+          fontSize: fontSize,
+        ),
+      );
+      final style = TextButton.styleFrom(
+        padding: effectivePadding,
+        fixedSize: fixedSize,
+      );
+
+      button = icon != null
+          ? TextButton.icon(
+              onPressed: enabled ? onPressed : null,
+              icon: _buildIconWithColorFilter(icon!, iconColor),
+              label: labelWidget,
+              style: style,
+            )
+          : TextButton(
+              onPressed: enabled ? onPressed : null,
+              style: style,
+              child: labelWidget,
+            );
     } else if (variant == AppButtonVariant.outlined) {
-      // Outlined button variant
       final borderColor = backgroundColor ?? colorScheme.primary;
       final textColor = backgroundColor ?? colorScheme.primary;
       final iconColor = backgroundColor ?? colorScheme.primary;
-
-      button = OutlinedButton.icon(
-        onPressed: enabled ? onPressed : null,
-        icon: icon != null
-            ? _buildIconWithColorFilter(icon!, iconColor)
-            : const SizedBox.shrink(),
-        label: Text(
-          label,
-          style: AppTextStyle.buttonMedium.copyWith(
-            color: textColor,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: textColor,
-          side: BorderSide(color: borderColor, width: 1),
-          disabledForegroundColor: textColor.withOpacity(0.5),
-          disabledBackgroundColor: Colors.transparent,
-          padding: padding ??
-              const EdgeInsets.symmetric(
-                horizontal: Insets.medium,
-                vertical: Insets.smallNormal,
-              ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Insets.small),
-          ),
+      final labelWidget = Text(
+        label,
+        style: AppTextStyle.buttonMedium.copyWith(
+          color: textColor,
+          fontSize: fontSize,
         ),
       );
+      final style = OutlinedButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        foregroundColor: textColor,
+        side: BorderSide(color: borderColor, width: 1),
+        disabledForegroundColor: textColor.withOpacity(0.5),
+        disabledBackgroundColor: Colors.transparent,
+        padding: effectivePadding,
+        fixedSize: fixedSize,
+        shape: effectiveShape,
+      );
+
+      button = icon != null
+          ? OutlinedButton.icon(
+              onPressed: enabled ? onPressed : null,
+              icon: _buildIconWithColorFilter(icon!, iconColor),
+              label: labelWidget,
+              style: style,
+            )
+          : OutlinedButton(
+              onPressed: enabled ? onPressed : null,
+              style: style,
+              child: labelWidget,
+            );
     } else {
-      // Elevated button for primary and secondary variants
       final bgColor = backgroundColor ??
           (variant == AppButtonVariant.primary
               ? colorScheme.primary
               : colorScheme.secondary);
-      // Always use white text when custom backgroundColor is provided
-      // In dark mode, always use white text for buttons with background
-      // Otherwise use the appropriate onColor for the variant
       final fgColor = backgroundColor != null
           ? Colors.white
           : (isDarkMode
@@ -114,34 +168,36 @@ class AppButton extends StatelessWidget {
               : (variant == AppButtonVariant.primary
                   ? colorScheme.onPrimary
                   : colorScheme.onSecondary));
-
-      button = ElevatedButton.icon(
-        onPressed: enabled ? onPressed : null,
-        icon: icon != null
-            ? _buildIconWithColorFilter(icon!, fgColor)
-            : const SizedBox.shrink(),
-        label: Text(
-          label,
-          style: AppTextStyle.buttonMedium.copyWith(
-            color: fgColor,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: bgColor,
-          foregroundColor: fgColor,
-          disabledBackgroundColor: bgColor.withOpacity(0.5),
-          disabledForegroundColor: fgColor.withOpacity(0.5),
-          padding: padding ??
-              const EdgeInsets.symmetric(
-                horizontal: Insets.medium,
-                vertical: Insets.smallNormal,
-              ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Insets.small),
-          ),
-          elevation: 0,
+      final labelWidget = Text(
+        label,
+        style: AppTextStyle.buttonMedium.copyWith(
+          color: fgColor,
+          fontSize: fontSize,
         ),
       );
+      final style = ElevatedButton.styleFrom(
+        backgroundColor: bgColor,
+        foregroundColor: fgColor,
+        disabledBackgroundColor: bgColor.withOpacity(0.5),
+        disabledForegroundColor: fgColor.withOpacity(0.5),
+        padding: effectivePadding,
+        fixedSize: fixedSize,
+        shape: effectiveShape,
+        elevation: 0,
+      );
+
+      button = icon != null
+          ? ElevatedButton.icon(
+              onPressed: enabled ? onPressed : null,
+              icon: _buildIconWithColorFilter(icon!, fgColor),
+              label: labelWidget,
+              style: style,
+            )
+          : ElevatedButton(
+              onPressed: enabled ? onPressed : null,
+              style: style,
+              child: labelWidget,
+            );
     }
 
     if (fullWidth) {
@@ -155,7 +211,6 @@ class AppButton extends StatelessWidget {
   }
 
   Widget _buildIconWithColorFilter(Widget icon, Color color) {
-    // If icon is a Material Icon, apply color directly
     if (icon is Icon) {
       return Icon(
         icon.icon,
@@ -164,8 +219,6 @@ class AppButton extends StatelessWidget {
       );
     }
 
-    // For SVG widgets, wrap with ColorFiltered to apply color
-    // This works for SVG widgets that don't already have a colorFilter
     return SizedBox(
       width: iconSize,
       height: iconSize,

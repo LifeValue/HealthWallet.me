@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/alert_dialogs.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
@@ -158,7 +158,7 @@ class SessionList extends StatelessWidget {
       BuildContext context, ProcessingSession session) {
     final scanBloc = context.read<ScanBloc>();
 
-    AlertDialogs.showConfirmation(
+    AppSimpleDialog.showDestructiveConfirmation(
       context: context,
       title: 'Delete Session',
       message: 'Are you sure you want to delete this session?',

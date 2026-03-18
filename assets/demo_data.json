@@ -130,6 +130,32 @@
           ],
           "text": "Married"
         },
+        "contact": [
+          {
+            "relationship": [
+              {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                    "code": "C",
+                    "display": "Emergency Contact"
+                  }
+                ]
+              }
+            ],
+            "name": {
+              "family": "Doe",
+              "given": ["Jane"]
+            },
+            "telecom": [
+              {
+                "system": "phone",
+                "value": "+15551234567",
+                "use": "mobile"
+              }
+            ]
+          }
+        ],
         "multipleBirthBoolean": false,
         "communication": [
           {

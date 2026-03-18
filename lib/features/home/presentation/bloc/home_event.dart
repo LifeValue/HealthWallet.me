@@ -68,6 +68,11 @@ class HomeSourceLabelUpdated extends HomeEvent with _$HomeSourceLabelUpdated {
 }
 
 @freezed
+class HomeScanCompleted extends HomeEvent with _$HomeScanCompleted {
+  const factory HomeScanCompleted() = _HomeScanCompleted;
+}
+
+@freezed
 class HomeSourceDeleted extends HomeEvent with _$HomeSourceDeleted {
   const factory HomeSourceDeleted(
     String sourceId, {

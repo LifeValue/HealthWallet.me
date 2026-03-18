@@ -2,14 +2,13 @@ part of 'scan_bloc.dart';
 
 @freezed
 class ScanStatus with _$ScanStatus {
-  // Statuses used for scan and import pages
   const factory ScanStatus.initial() = Initial;
   const factory ScanStatus.loading() = Loading;
   const factory ScanStatus.sessionCreated(
       {required ProcessingSession session}) = SessionCreated;
-  // General error status
   const factory ScanStatus.failure({required String error}) = Failure;
-  // Statuses used for processing page
+  const factory ScanStatus.capacityFailure({required String sessionId}) =
+      CapacityFailure;
   const factory ScanStatus.convertingPdfs() = ConvertingPdfs;
   const factory ScanStatus.savingResources() = SavingResources;
   const factory ScanStatus.success() = Success;
@@ -17,19 +16,33 @@ class ScanStatus with _$ScanStatus {
 
 @freezed
 class ScanState with _$ScanState {
+  const ScanState._();
+
   const factory ScanState({
     @Default(ScanStatus.initial()) ScanStatus status,
     @Default([]) List<ProcessingSession> sessions,
-
-    /// This is the id of the session that is currently being displayed on the
-    /// processing page, not the id of the sesssion that is currently being processed
-    ///
-    /// To get the id of the session that is currently being processed search through
-    /// sessions for the session with .processing state
     String? displayedSessionId,
     String? deletingSessionId,
     @Default([]) List<String> allImagePathsForOCR,
     @Default({}) Map<String, List<String>> sessionImagePaths,
     Notification? notification,
+    @Default(false) bool useVision,
   }) = _ScanState;
+
+  bool canRetrySession(String sessionId) {
+    final session = sessions.firstWhereOrNull((s) => s.id == sessionId);
+    return session != null &&
+        (session.status == ProcessingStatus.draft ||
+            session.status == ProcessingStatus.cancelled ||
+            status is Failure ||
+            status is CapacityFailure);
+  }
+
+  bool canRetryStep2(String sessionId) {
+    final session = sessions.firstWhereOrNull((s) => s.id == sessionId);
+    return session != null &&
+        (session.status == ProcessingStatus.draft ||
+            (session.status == ProcessingStatus.patientExtracted &&
+                status is Failure));
+  }
 }

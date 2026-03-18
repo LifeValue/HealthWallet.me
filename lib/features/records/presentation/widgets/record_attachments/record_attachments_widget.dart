@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -12,13 +12,21 @@ import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dar
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path/path.dart';
 import 'package:share_plus/share_plus.dart';
 
 class RecordAttachmentsWidget extends StatefulWidget {
-  const RecordAttachmentsWidget({required this.resource, super.key});
+  const RecordAttachmentsWidget({
+    required this.resource,
+    this.readOnly = false,
+    this.ephemeralRecords = const [],
+    super.key,
+  });
 
   final IFhirResource resource;
+  final bool readOnly;
+  final List<IFhirResource> ephemeralRecords;
 
   @override
   State<RecordAttachmentsWidget> createState() =>
@@ -27,11 +35,13 @@ class RecordAttachmentsWidget extends StatefulWidget {
 
 class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   final _bloc = getIt.get<RecordAttachmentsBloc>();
-  final _pdfPreviewService = getIt<PdfPreviewService>();
 
   @override
   void initState() {
-    _bloc.add(RecordAttachmentsInitialised(resource: widget.resource));
+    _bloc.add(RecordAttachmentsInitialised(
+      resource: widget.resource,
+      ephemeralRecords: widget.ephemeralRecords,
+    ));
     super.initState();
   }
 
@@ -100,37 +110,38 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                         ),
                       ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.all(10),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadiusGeometry.circular(6)),
-                      ),
-                      onPressed: () async {
-                        FilePickerResult? result =
-                            await FilePicker.platform.pickFiles();
-                        if (result == null) return;
+                  if (!widget.readOnly)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadiusGeometry.circular(6)),
+                        ),
+                        onPressed: () async {
+                          FilePickerResult? result =
+                              await FilePicker.platform.pickFiles();
+                          if (result == null) return;
 
-                        File selectedFile = File(result.files.first.path!);
+                          File selectedFile = File(result.files.first.path!);
 
-                        _bloc.add(RecordAttachmentsFileAttached(selectedFile));
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Assets.icons.attachment
-                              .svg(width: 16, color: Colors.white),
-                          const SizedBox(width: 4),
-                          Text(context.l10n.attachFile,
-                              style: AppTextStyle.buttonSmall),
-                        ],
+                          _bloc.add(RecordAttachmentsFileAttached(selectedFile));
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Assets.icons.attachment
+                                .svg(width: 16, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(context.l10n.attachFile,
+                                style: AppTextStyle.buttonSmall),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ]
               ],
             ),
@@ -138,6 +149,48 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
         },
       ),
     );
+  }
+
+  void _viewFile(BuildContext context, String filePath, String? contentType) {
+    final ext = extension(filePath).toLowerCase();
+    final isImage = contentType?.startsWith('image/') == true ||
+        {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}.contains(ext);
+    final isPdf = contentType == 'application/pdf' || ext == '.pdf';
+
+    if (isImage) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => _ImageViewer(filePath: filePath)),
+      );
+    } else if (isPdf) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => _PdfViewer(filePath: filePath)),
+      );
+    } else {
+      _openFileExternal(context, filePath);
+    }
+  }
+
+  Future<void> _openFileExternal(BuildContext context, String filePath) async {
+    try {
+      final result = await OpenFile.open(filePath);
+      if (result.type != ResultType.done && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open file: ${result.message}'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildAttachmentRow(
@@ -159,9 +212,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: GestureDetector(
-                    onTap: contentType == 'application/pdf' && filePath != null
-                        ? () => _pdfPreviewService.previewPdfFromFile(
-                            context, filePath)
+                    onTap: filePath != null
+                        ? () => _viewFile(context, filePath, contentType)
                         : null,
                     child: Text(
                       filePath != null ? basename(filePath) : title,
@@ -174,39 +226,38 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
           ),
           Row(
             children: [
-              if (contentType == 'application/pdf' && filePath != null)
+              if (filePath != null)
                 Padding(
                   padding: const EdgeInsets.all(6),
                   child: GestureDetector(
-                      onTap: () => _pdfPreviewService.previewPdfFromFile(
-                          context, filePath),
+                      onTap: () => _viewFile(context, filePath, contentType),
                       child: const Icon(Icons.remove_red_eye_outlined)
-                      // .svg(width: 24, color: context.theme.iconTheme.color),
                       ),
                 ),
-              if (contentType == 'application/pdf' && filePath != null)
+              if (filePath != null)
                 const SizedBox(width: 16),
-              Padding(
-                padding: const EdgeInsets.all(6),
-                child: GestureDetector(
-                  onTap: () => filePath != null
-                      ? SharePlus.instance
-                          .share(ShareParams(files: [XFile(filePath)]))
-                      : null,
-                  child: Assets.icons.download
-                      .svg(width: 24, color: context.theme.iconTheme.color),
+              if (!widget.readOnly) ...[
+                Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: GestureDetector(
+                    onTap: () => filePath != null
+                        ? SharePlus.instance
+                            .share(ShareParams(files: [XFile(filePath)]))
+                        : null,
+                    child: Assets.icons.download
+                        .svg(width: 24, color: context.theme.iconTheme.color),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              // Delete icon
-              Padding(
-                padding: const EdgeInsets.all(6),
-                child: GestureDetector(
-                    onTap: () =>
-                        _showDeleteConfirmationDialog(context, attachmentInfo),
-                    child: Assets.icons.trashCan
-                        .svg(width: 24, color: context.theme.iconTheme.color)),
-              ),
+                const SizedBox(width: 16),
+                Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: GestureDetector(
+                      onTap: () =>
+                          _showDeleteConfirmationDialog(context, attachmentInfo),
+                      child: Assets.icons.trashCan
+                          .svg(width: 24, color: context.theme.iconTheme.color)),
+                ),
+              ],
             ],
           ),
         ],
@@ -216,10 +267,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
   void _showDeleteConfirmationDialog(
       BuildContext context, AttachmentInfo attachmentInfo) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     showDialog(
       context: context,
@@ -241,7 +290,6 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Content
                     Text(
                       'Are you sure you want to delete "${attachmentInfo.title}"?',
                       style: AppTextStyle.labelLarge.copyWith(color: textColor),
@@ -283,7 +331,6 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
                     const SizedBox(height: Insets.normal),
 
-                    // Action buttons
                     Row(
                       children: [
                         Expanded(
@@ -340,6 +387,84 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
           ),
         );
       },
+    );
+  }
+}
+
+class _ImageViewer extends StatelessWidget {
+  final String filePath;
+
+  const _ImageViewer({required this.filePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(basename(filePath)),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Image.file(
+            File(filePath),
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                SizedBox(height: 16),
+                Text(
+                  'Failed to load image',
+                  style: TextStyle(color: Colors.white54),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PdfViewer extends StatelessWidget {
+  final String filePath;
+
+  const _PdfViewer({required this.filePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(basename(filePath)),
+      ),
+      body: PDFView(
+        filePath: filePath,
+        enableSwipe: true,
+        swipeHorizontal: true,
+        autoSpacing: true,
+        pageFling: true,
+        onError: (error) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error loading PDF: $error')),
+            );
+          }
+        },
+        onPageError: (page, error) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error on page $page: $error')),
+            );
+          }
+        },
+      ),
     );
   }
 }

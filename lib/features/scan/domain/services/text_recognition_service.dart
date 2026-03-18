@@ -78,8 +78,8 @@ class TextRecognitionService {
   }
 
   Future<Directory> _getCacheDirectory() async {
-    final cacheDir = await getTemporaryDirectory();
-    final pdfCacheDir = Directory(path.join(cacheDir.path, 'pdf_preview_cache'));
+    final docsDir = await getApplicationDocumentsDirectory();
+    final pdfCacheDir = Directory(path.join(docsDir.path, 'pdf_preview_cache'));
     if (!await pdfCacheDir.exists()) {
       await pdfCacheDir.create(recursive: true);
     }
