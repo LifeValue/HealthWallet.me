@@ -13,11 +13,16 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 
 <br>
 
-[![CI](https://github.com/LifeValue/HealthWallet.me/actions/workflows/ci.yml/badge.svg)](https://github.com/LifeValue/HealthWallet.me/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)](changelog.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.md)
 [![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?logo=flutter)](https://flutter.dev)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E44D26)](https://hl7.org/fhir/R4/)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey)]()
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lifevalue)
+[![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@TechStackAppsCo)
+[![Facebook](https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/techstackapps/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/company/lifevalue/)
+[![Follow @techstackapps](https://img.shields.io/twitter/follow/techstackapps)](https://x.com/techstackapps)
 
 <br>
 
@@ -27,16 +32,16 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 
 ---
 
-## Why HealthWallet?
+## About
 
-Every time you visit a new doctor, you fill out the same forms. Your records are scattered across hospital portals, paper files, and USB drives. **You deserve better.**
+**HealthWallet.me** is a **patient-controlled**, **community-driven** health record platform that consolidates your medical data from multiple providers into one accessible app.
 
-HealthWallet aggregates your complete medical history from thousands of healthcare providers into a single, encrypted, offline-capable app. When you need to share records — with a new specialist, at an ER, or while traveling — everything is right there on your phone.
+**Patient-Centered** | **Privacy-First** | **FHIR Compliant** | **Offline Capable**
 
 **What makes it different:**
 
-- **On-device AI** — Scan paper documents and the built-in LLM (Qwen / MedGemma via llama.cpp) extracts structured FHIR resources locally. No cloud. No uploads. No data leaks.
-- **52,000+ providers** — Connect to US healthcare systems through FHIR R4 APIs via a self-hosted [FastenHealth](https://github.com/fastenhealth/fasten-onprem) backend.
+- **On-device AI** — Scan paper documents and the built-in LLM extracts structured FHIR resources locally. No cloud. No uploads. No data leaks.
+- **52,000+ providers** — Connect to US healthcare systems through FHIR R4 APIs via a **self-hosted** [FastenHealth](https://github.com/fastenhealth/fasten-onprem) backend.
 - **Truly offline** — Full access to all your records without internet. Sync when you're ready.
 - **Proximity sharing** — Share records face-to-face via AirDrop-style transfer. No intermediary server.
 - **International Patient Summary (IPS)** — Export a globally recognized health summary for travel or emergencies.
@@ -203,11 +208,25 @@ flutter test
 
 ## Roadmap
 
-**Shipped:** Health record aggregation, biometric auth, cross-platform (iOS + Android), file import with in-app viewing, AI document scanning with on-device LLM
+### Completed Features
+- Basic health record management
+- Authentication and security
+- Cross-platform support
+- File import & in-app viewing
+- Smart document scanning (AI reads and organizes your medical records)
+- Add IPS (International Patient Summary) to Google / Apple Wallet
+- Proximity-based sharing (Airdrop)
 
-**In Progress:** Apple/Google Wallet IPS card, proximity sharing (AirDrop), desktop companion app with backup sync
+### In Progress
+- Desktop app with backup sync and offloaded document processing
 
-**Planned:** Responsive UI, wearable integration, AI health insights, prescription note-taking, family management, SMART Health Cards (QR sharing)
+### Future Plans
+- Responsive UI
+- Wearable & health provider integration
+- AI health insights
+- AI Note taking prescription
+- Family management
+- QR code sharing (SMART Health Cards)
 
 ---
 
@@ -227,6 +246,8 @@ git push origin feature/your-feature
 
 ## Sponsors
 
+**HealthWallet.me** is an open-source project dedicated to improving healthcare accessibility and patient data management.
+
 <div align="center">
 
 <a href="https://lifevalue.com/"><img src="assets/readme/lifevalue.svg" alt="LifeValue" width="120"></a>
@@ -235,7 +256,14 @@ git push origin feature/your-feature
 
 </div>
 
-Interested in sponsorship or partnerships? [Contact us](https://lifevalue.com/company/contact)
+Interested in **corporate sponsorship** or **partnership opportunities**? We offer:
+
+- **Enterprise features** and custom integrations
+- **White-label solutions** for healthcare organizations
+- **Strategic partnerships** in the healthcare technology space
+- **Priority support** and dedicated resources
+
+[**Contact us**](https://lifevalue.com/company/contact)
 
 ---
 
