@@ -2,6 +2,8 @@ part of 'home_bloc.dart';
 
 @freezed
 class HomeState with _$HomeState {
+  const HomeState._();
+
   const factory HomeState({
     @Default(HomeStatus.initial()) HomeStatus status,
     @Default([]) List<PatientVital> patientVitals,
@@ -46,6 +48,19 @@ class HomeState with _$HomeState {
     @Default(false) bool vitalsExpanded,
     @Default(false) bool hasDataLoaded,
   }) = _HomeState;
+
+  bool get shouldShowPlaceholder {
+    final hasVitalData = patientVitals
+        .any((vital) => vital.value != 'N/A' && vital.observationId != null);
+    final hasOverviewData = overviewCards.any((card) => card.count != '0');
+    final hasRecent = recentRecords.isNotEmpty;
+    return !(hasVitalData || hasOverviewData || hasRecent);
+  }
+
+  List<OverviewCard> get visibleOverviewCards =>
+      overviewCards
+          .where((card) => selectedRecordTypes[card.category] ?? false)
+          .toList(growable: false);
 }
 
 @freezed

@@ -1,35 +1,50 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
-import 'package:flutter/widgets.dart';
-import 'package:collection/collection.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/scan/data/data_source/local/scan_local_data_source.dart';
 import 'package:health_wallet/features/scan/data/data_source/network/scan_network_data_source.dart';
-import 'package:health_wallet/features/scan/data/model/prompt_template/basic_info_prompt.dart';
-import 'package:health_wallet/features/scan/data/model/prompt_template/prompt_template.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/features/scan/data/repository/scan_processing_repository.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
 import 'package:uuid/uuid.dart';
 
 @LazySingleton(as: ScanRepository)
-class ScanRepositoryImpl implements ScanRepository {
-  ScanRepositoryImpl(this._networkDataSource, this._localDataSource);
+class ScanRepositoryImpl extends Object
+    with ScanProcessingRepository
+    implements ScanRepository {
+  ScanRepositoryImpl(
+    this._networkDataSource,
+    this._localDataSource,
+    this._textRecognitionService,
+    this._pathResolver,
+  );
 
   final ScanNetworkDataSource _networkDataSource;
   final ScanLocalDataSource _localDataSource;
+  final TextRecognitionService _textRecognitionService;
+  final PathResolver _pathResolver;
 
   bool _isStreamActive = false;
   Completer<void>? _streamCompleter;
   bool _shouldCancelGeneration = false;
+
+  @override
+  ScanNetworkDataSource get networkDataSource => _networkDataSource;
+
+  @override
+  TextRecognitionService get textRecognitionService => _textRecognitionService;
+
+  @override
+  bool get shouldCancelGeneration => _shouldCancelGeneration;
 
   @override
   Future<List<String>> scanDocuments() async {
@@ -43,26 +58,8 @@ class ScanRepositoryImpl implements ScanRepository {
         return [];
       }
 
-      List<String> imagePaths = [];
-
-      if (scannedResult is List) {
-        imagePaths = scannedResult.cast<String>();
-      } else if (scannedResult is String) {
-        if (scannedResult.contains('Failed') ||
-            scannedResult.contains('Unknown') ||
-            scannedResult.contains('platform documents')) {
-          throw Exception('Scanner error: $scannedResult');
-        }
-        imagePaths = [scannedResult];
-      } else {
-        imagePaths = [scannedResult.toString()];
-      }
-
-      final validPaths = imagePaths
-          .where((path) =>
-              path.isNotEmpty &&
-              !path.contains('Failed') &&
-              !path.contains('Unknown'))
+      final validPaths = scannedResult.images
+          .where((path) => path.isNotEmpty)
           .toList();
 
       return validPaths;
@@ -84,14 +81,7 @@ class ScanRepositoryImpl implements ScanRepository {
         return [];
       }
 
-      if (scannedResult is String &&
-          (scannedResult.contains('Failed') ||
-              scannedResult.contains('Unknown'))) {
-        throw Exception('PDF scanner error: $scannedResult');
-      }
-
-      final pdfPath = scannedResult.toString();
-      return [pdfPath];
+      return [scannedResult.pdfUri];
     } on PlatformException catch (e) {
       throw Exception('PDF Scanner platform error: ${e.message ?? e.code}');
     } catch (e) {
@@ -161,7 +151,7 @@ class ScanRepositoryImpl implements ScanRepository {
 
       await sourceFile.copy(newPath);
 
-      return newPath;
+      return await _pathResolver.toRelative(newPath);
     } catch (e) {
       throw Exception('Failed to save document: $e');
     }
@@ -265,14 +255,20 @@ class ScanRepositoryImpl implements ScanRepository {
     required List<String> filePaths,
     required ProcessingOrigin origin,
   }) async {
+    final relativePaths =
+        await Future.wait(filePaths.map(_pathResolver.toRelative));
+    final absolutePaths =
+        await _pathResolver.resolveAll(relativePaths);
+
     final session = ProcessingSession(
       id: const Uuid().v4(),
-      filePaths: filePaths,
+      filePaths: absolutePaths,
       origin: origin,
       createdAt: DateTime.now(),
     );
 
-    await _localDataSource.cacheProcessingSession(session.toDbCompanion());
+    final sessionForDb = session.copyWith(filePaths: relativePaths);
+    await _localDataSource.cacheProcessingSession(sessionForDb.toDbCompanion());
 
     return session;
   }
@@ -280,31 +276,41 @@ class ScanRepositoryImpl implements ScanRepository {
   @override
   Future<List<ProcessingSession>> getProcessingSessions() async {
     final dtos = await _localDataSource.getProcessingSessions();
+    final sessions = dtos.map(ProcessingSession.fromDto).toList();
 
-    return dtos.map(ProcessingSession.fromDto).toList();
+    return Future.wait(sessions.map((s) async {
+      final absolutePaths = await _pathResolver.resolveAll(s.filePaths);
+      return s.copyWith(filePaths: absolutePaths);
+    }));
   }
 
   @override
   Future<int> editProcessingSession(ProcessingSession session) async {
+    final relativePaths =
+        await Future.wait(session.filePaths.map(_pathResolver.toRelative));
+    final sessionForDb = session.copyWith(filePaths: relativePaths);
     return _localDataSource.updateProcessingSession(
-        session.id, session.toDbCompanion());
+        session.id, sessionForDb.toDbCompanion());
   }
 
   @override
   Future<int> deleteProcessingSession(ProcessingSession session) async {
-    for (final path in session.filePaths) {
-      File(path).delete().ignore();
+    for (final filePath in session.filePaths) {
+      final absolutePath = await _pathResolver.toAbsolute(filePath);
+      File(absolutePath).delete().ignore();
     }
 
     return _localDataSource.deleteProcessingSession(session.id);
   }
 
   @override
-  Stream<double> downloadModel() async* {
+  Stream<double> downloadModel() {
     final controller = StreamController<double>();
 
     _networkDataSource.downloadModel(onProgress: (progress) {
-      controller.add(progress.toDouble());
+      if (!controller.isClosed) {
+        controller.add(progress.toDouble());
+      }
     }).then((_) {
       controller.close();
     }).catchError((error) {
@@ -312,107 +318,114 @@ class ScanRepositoryImpl implements ScanRepository {
       controller.close();
     });
 
-    yield* controller.stream;
+    return controller.stream;
   }
 
   @override
-  Future<bool> checkModelExistence() =>
-      _networkDataSource.checkModelExistence();
+  Future<bool> checkModelExistence() async {
+    return _networkDataSource.checkModelExistence();
+  }
 
   @override
-  Future<(MappingPatient, MappingEncounter)> mapBasicInfo(
-    String medicalText,
-  ) async {
-    await _networkDataSource.initModel();
+  Stream<double> downloadModelForVariant(AiModelVariant variant) {
+    final controller = StreamController<double>();
 
-    try {
-      String prompt = BasicInfoPrompt().buildPrompt(medicalText);
-
-      String? promptResponse =
-          await _networkDataSource.runPrompt(prompt: prompt);
-
-      List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
-
-      List<MappingResource> resources = [];
-      for (Map<String, dynamic> json in jsonList) {
-        MappingResource resource =
-            MappingResource.fromJson(json).populateConfidence(medicalText);
-
-        if (resource.isValid) {
-          resources.add(resource);
-        }
+    _networkDataSource
+        .downloadModelForVariant(variant, onProgress: (progress) {
+      if (!controller.isClosed) {
+        controller.add(progress.toDouble());
       }
-      
-      MappingEncounter encounter =
-          resources.firstWhereOrNull((resource) => resource is MappingEncounter)
-                  as MappingEncounter? ??
-              MappingEncounter.empty();
+    }).then((_) {
+      controller.close();
+    }).catchError((error) {
+      controller.addError(error);
+      controller.close();
+    });
 
-      MappingPatient patient =
-          resources.firstWhereOrNull((resource) => resource is MappingPatient)
-                  as MappingPatient? ??
-              MappingPatient.empty();
+    return controller.stream;
+  }
 
-      return (patient, encounter);
-    } finally {
-      await disposeModel();
-    }
+  @override
+  Future<bool> checkModelExistenceForVariant(AiModelVariant variant) async {
+    return _networkDataSource.checkModelExistenceForVariant(variant);
+  }
+
+  @override
+  Future<void> deleteModelForVariant(AiModelVariant variant) async {
+    return _networkDataSource.deleteModelForVariant(variant);
+  }
+
+  @override
+  Stream<double> downloadMmprojForVariant(AiModelVariant variant) {
+    final controller = StreamController<double>();
+
+    _networkDataSource
+        .downloadMmprojForVariant(variant, onProgress: (progress) {
+      if (!controller.isClosed) {
+        controller.add(progress.toDouble());
+      }
+    }).then((_) {
+      controller.close();
+    }).catchError((error) {
+      controller.addError(error);
+      controller.close();
+    });
+
+    return controller.stream;
+  }
+
+  @override
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant) async {
+    return _networkDataSource.checkMmprojExistenceForVariant(variant);
+  }
+
+  @override
+  Future<(MappingPatient, MappingResource)> mapBasicInfo(
+    List<String> imagePaths, {
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+  }) async {
+    return processMapBasicInfo(
+      imagePaths,
+      maxTokens: maxTokens,
+      gpuLayers: gpuLayers,
+      threads: threads,
+      contextSize: contextSize,
+    );
   }
 
   @override
   Stream<MappingResourcesWithProgress> mapRemainingResources(
-    String medicalText,
-  ) async* {
+    List<String> imagePaths, {
+    String? documentCategory,
+    bool useVision = false,
+    int? maxTokens,
+    int? gpuLayers,
+    int? threads,
+    int? contextSize,
+  }) async* {
     try {
       _isStreamActive = true;
       _streamCompleter = Completer<void>();
       _shouldCancelGeneration = false;
-            
-      await _networkDataSource.initModel();
 
-      List<PromptTemplate> supportedPrompts = PromptTemplate.supportedPrompts();
-      for (int i = 0; i < supportedPrompts.length; i++) {
-        if (_shouldCancelGeneration) {
-          break;
-        }
-        
-        String prompt = supportedPrompts[i].buildPrompt(medicalText);
-        String? promptResponse = await _networkDataSource.runPrompt(
-          prompt: prompt,
-        );
-
-        if (_shouldCancelGeneration) {
-          break;
-        }
-
-        List<MappingResource> resources = [];
-
-        try {
-          List<dynamic> jsonList = jsonDecode(promptResponse ?? '');
-
-          for (Map<String, dynamic> json in jsonList) {
-            MappingResource resource =
-                MappingResource.fromJson(json).populateConfidence(medicalText);
-
-            if (resource.isValid) {
-              resources.add(resource);
-            }
-          }
-        } catch (_) {
-          yield ([], (i + 1) / supportedPrompts.length);
-          continue;
-        }
-
-        yield (resources.toSet().toList(), (i + 1) / supportedPrompts.length);
-      }
-      
+      yield* processMapRemainingResources(
+        imagePaths,
+        documentCategory: documentCategory,
+        useVision: useVision,
+        maxTokens: maxTokens,
+        gpuLayers: gpuLayers,
+        threads: threads,
+        contextSize: contextSize,
+      );
     } finally {
       await disposeModel();
-      
+
       _isStreamActive = false;
       _shouldCancelGeneration = false;
       _streamCompleter?.complete();
-      
     }
   }
 
@@ -420,7 +433,6 @@ class ScanRepositoryImpl implements ScanRepository {
   Future<void> waitForStreamCompletion() async {
     if (_isStreamActive && _streamCompleter != null && !_streamCompleter!.isCompleted) {
       await _streamCompleter!.future;
-    } else {
     }
   }
 

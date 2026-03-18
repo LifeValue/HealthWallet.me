@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -10,6 +11,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final Color? backgroundColor;
   final PreferredSizeWidget? bottom;
+  final double extraTopPadding;
 
   const CustomAppBar({
     super.key,
@@ -20,6 +22,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.backgroundColor,
     this.bottom,
+    this.extraTopPadding = 0,
   }) : assert(
           title != null || titleWidget != null,
           'Either title or titleWidget must be provided',
@@ -30,6 +33,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final colorScheme = context.colorScheme;
 
     return AppBar(
+      toolbarHeight: extraTopPadding > 0
+          ? kToolbarHeight + extraTopPadding
+          : kToolbarHeight,
       backgroundColor: backgroundColor ?? colorScheme.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
@@ -37,7 +43,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: automaticallyImplyLeading,
       leading: leading,
       centerTitle: false,
-      titleSpacing: leading != null ? 0 : NavigationToolbar.kMiddleSpacing,
+      titleSpacing: leading != null
+          ? 0
+          : context.isTablet
+              ? context.screenHorizontalPadding
+              : NavigationToolbar.kMiddleSpacing,
       title: titleWidget ??
           (title != null
               ? Text(
@@ -52,9 +62,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        bottom != null
-            ? kToolbarHeight + bottom!.preferredSize.height
-            : kToolbarHeight,
+        kToolbarHeight +
+            extraTopPadding +
+            (bottom != null ? bottom!.preferredSize.height : 0),
       );
 }
 

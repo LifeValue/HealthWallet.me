@@ -111,6 +111,14 @@ class AppTextStyle {
     height: 1.2857,
   );
 
+  static const TextStyle menuItem = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    letterSpacing: -0.36,
+    height: 1.0,
+  );
+
   static const TextStyle semiBold = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 13,

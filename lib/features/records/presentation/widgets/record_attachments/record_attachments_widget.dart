@@ -152,22 +152,18 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   }
 
   void _viewFile(BuildContext context, String filePath, String? contentType) {
-    final ext = filePath.toLowerCase().split('.').last;
+    final ext = extension(filePath).toLowerCase();
     final isImage = contentType?.startsWith('image/') == true ||
-        ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].contains(ext);
-    final isPdf = contentType == 'application/pdf' || ext == 'pdf';
+        {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}.contains(ext);
+    final isPdf = contentType == 'application/pdf' || ext == '.pdf';
 
     if (isImage) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => _ImageViewer(filePath: filePath),
-        ),
+        MaterialPageRoute(builder: (_) => _ImageViewer(filePath: filePath)),
       );
     } else if (isPdf) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => _PdfViewer(filePath: filePath),
-        ),
+        MaterialPageRoute(builder: (_) => _PdfViewer(filePath: filePath)),
       );
     } else {
       _openFileExternal(context, filePath);
@@ -271,10 +267,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
   void _showDeleteConfirmationDialog(
       BuildContext context, AttachmentInfo attachmentInfo) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor =
-        context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     showDialog(
       context: context,

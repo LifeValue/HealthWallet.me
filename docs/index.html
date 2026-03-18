@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emergency Medical ID — HealthWallet</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+background:#f0f2f5;color:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px}
+.card{background:#fff;border-radius:16px;max-width:420px;width:100%;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)}
+.header{background:#5767FF;color:#fff;padding:20px 24px;text-align:center}
+.header h1{font-size:18px;font-weight:600;margin-bottom:4px}
+.header .name{font-size:24px;font-weight:700}
+.section{padding:16px 24px;border-bottom:1px solid #eee}
+.section:last-child{border-bottom:none}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#5767FF;margin-bottom:8px}
+.section-body{font-size:15px;line-height:1.5}
+.tag{display:inline-block;background:#eef0ff;color:#5767FF;border-radius:6px;padding:4px 10px;margin:2px 4px 2px 0;font-size:13px}
+.info-row{display:flex;justify-content:space-between;padding:4px 0}
+.info-label{color:#666;font-size:13px}
+.info-value{font-weight:600;font-size:14px}
+.contact-phone{color:#5767FF;text-decoration:none;font-weight:600}
+.stores{display:flex;gap:12px;justify-content:center;padding:20px 24px}
+.store-btn{display:inline-flex;align-items:center;gap:8px;background:#1a1a2e;color:#fff;
+border-radius:10px;padding:10px 20px;text-decoration:none;font-size:14px;font-weight:600;transition:opacity .2s}
+.store-btn:hover{opacity:.85}
+.footer{text-align:center;padding:16px;color:#999;font-size:12px}
+.error{text-align:center;padding:40px 24px;color:#c0392b}
+.error h2{margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="card" id="card"></div>
+<div class="stores" id="open-app" style="display:none">
+<a class="store-btn" id="app-link" style="background:#5767FF">Open in App</a>
+</div>
+<div class="stores">
+<a class="store-btn" href="https://apps.apple.com/app/healthwallet-me/id6740091498">App Store</a>
+<a class="store-btn" href="https://play.google.com/store/apps/details?id=com.techstackapps.healthwallet">Google Play</a>
+</div>
+<div class="footer">Powered by HealthWallet.me</div>
+<script>
+(function(){
+  var p=new URLSearchParams(window.location.search);
+  var card=document.getElementById('card');
+  var qs=window.location.search.substring(1);
+
+  var isAndroid=/android/i.test(navigator.userAgent);
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  var customUrl='healthwallet://emergency?'+qs;
+  var intentUrl='intent://emergency?'+qs+'#Intent;scheme=healthwallet;package=com.techstackapps.healthwallet;S.browser_fallback_url='+encodeURIComponent(window.location.href)+';end';
+
+  if(isAndroid){
+    window.location.href=intentUrl;
+  } else if(isIOS){
+    window.location.href=customUrl;
+  }
+
+  var d;
+  if(p.get('data')){
+    try{
+      var raw=p.get('data');
+      var padded=raw;while(padded.length%4)padded+='=';
+      var json=atob(padded.replace(/-/g,'+').replace(/_/g,'/'));
+      var m=JSON.parse(json);
+      d={name:m.n,blood:m.b,dob:m.d?formatDateIso(m.d):null,gender:m.g,phone:m.p,
+         allergies:m.a||[],conditions:m.c||[],meds:m.m||[],ec_name:m.en,ec_phone:m.ep};
+    }catch(e){card.innerHTML='<div class="error"><h2>Invalid Data</h2><p>Could not decode emergency card.</p></div>';return}
+  } else if(p.get('name')){
+    d={name:p.get('name'),blood:p.get('blood'),dob:p.get('dob'),gender:p.get('gender'),
+       phone:p.get('phone'),allergies:splitList(p.get('allergies')),
+       conditions:splitList(p.get('conditions')),meds:splitList(p.get('meds')),
+       ec_name:p.get('ec_name'),ec_phone:p.get('ec_phone')};
+  } else {
+    card.innerHTML='<div class="error"><h2>No Data</h2><p>This link is missing emergency card data.</p></div>';return;
+  }
+
+  var html='<div class="header"><h1>Emergency Medical ID</h1><div class="name">'+esc(d.name||'Unknown')+'</div></div>';
+
+  var info=[];
+  if(d.blood)info.push(row('Blood Type',d.blood));
+  if(d.dob)info.push(row('Date of Birth',d.dob));
+  if(d.gender)info.push(row('Gender',cap(d.gender)));
+  if(d.phone)info.push(row('Phone',d.phone));
+  if(info.length)html+='<div class="section"><div class="section-title">Patient Information</div><div class="section-body">'+info.join('')+'</div></div>';
+
+  if(d.ec_name){
+    var cv=esc(d.ec_name);
+    if(d.ec_phone)cv+='<br><a class="contact-phone" href="tel:'+esc(d.ec_phone)+'">'+esc(d.ec_phone)+'</a>';
+    html+='<div class="section"><div class="section-title">Emergency Contact</div><div class="section-body">'+cv+'</div></div>';
+  }
+
+  if(d.allergies&&d.allergies.length)html+=tagSection('Allergies',d.allergies);
+  if(d.conditions&&d.conditions.length)html+=tagSection('Medical Conditions',d.conditions);
+  if(d.meds&&d.meds.length)html+=tagSection('Medications',d.meds);
+
+  card.innerHTML=html;
+
+  var appBtn=document.getElementById('app-link');
+  appBtn.href=isAndroid?intentUrl:customUrl;
+  document.getElementById('open-app').style.display='flex';
+
+  function row(l,v){return '<div class="info-row"><span class="info-label">'+esc(l)+'</span><span class="info-value">'+esc(v)+'</span></div>'}
+  function tagSection(t,arr){var s='<div class="section"><div class="section-title">'+esc(t)+'</div><div class="section-body">';for(var i=0;i<arr.length;i++)s+='<span class="tag">'+esc(arr[i])+'</span>';return s+'</div></div>'}
+  function splitList(v){if(!v)return[];return v.split(', ')}
+  function esc(s){var e=document.createElement('div');e.textContent=s;return e.innerHTML}
+  function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+  function formatDateIso(s){var x=s.split('-');if(x.length===3)return x[1]+'/'+x[2]+'/'+x[0];return s}
+})();
+</script>
+</body>
+</html>

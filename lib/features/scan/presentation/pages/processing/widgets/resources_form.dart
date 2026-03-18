@@ -7,8 +7,9 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_date_picker.dart';
 import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/gender_mapper.dart';
+import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
@@ -24,7 +25,9 @@ class ResourcesForm extends StatelessWidget {
     required this.resources,
     required this.sessionId,
     required this.formKey,
+    this.encounterSectionKey,
     this.encounter,
+    this.diagnosticReport,
     this.patient,
     this.isAttachmentLocked = false,
     super.key,
@@ -33,8 +36,10 @@ class ResourcesForm extends StatelessWidget {
   final List<MappingResource> resources;
   final String sessionId;
   final GlobalKey<FormState> formKey;
+  final GlobalKey? encounterSectionKey;
   final StagedPatient? patient;
   final StagedEncounter? encounter;
+  final StagedDiagnosticReport? diagnosticReport;
   final bool isAttachmentLocked;
 
   @override
@@ -67,49 +72,76 @@ class ResourcesForm extends StatelessWidget {
                           ),
                         ),
               ),
-            if (encounter?.hasSelection == true)
-              _buildResourceForm(
-                context,
-                canRemove: false,
-                resource: encounter!.mode == ImportMode.createNew
-                    ? encounter!.draft!
-                    : MappingEncounter.fromFhirResource(encounter!.existing!),
-                isStagedResource: true,
-                isReadOnly: isAttachmentLocked ||
-                    encounter!.mode == ImportMode.linkExisting,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: 0,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
-                            isDraftEncounter: true,
+            if (diagnosticReport?.hasSelection == true)
+              KeyedSubtree(
+                key: encounterSectionKey,
+                child: _buildResourceForm(
+                  context,
+                  canRemove: false,
+                  resource: diagnosticReport!.draft!,
+                  isStagedResource: true,
+                  isReadOnly: isAttachmentLocked,
+                  onPropertyChanged: (propertyKey, newValue) =>
+                      context.read<ScanBloc>().add(
+                            ScanResourceChanged(
+                              sessionId: sessionId,
+                              index: 0,
+                              propertyKey: propertyKey,
+                              newValue: newValue,
+                              isDraftDiagnosticReport: true,
+                            ),
                           ),
-                        ),
+                ),
+              )
+            else if (encounter?.hasSelection == true)
+              KeyedSubtree(
+                key: encounterSectionKey,
+                child: _buildResourceForm(
+                  context,
+                  canRemove: false,
+                  resource: encounter!.mode == ImportMode.createNew
+                      ? encounter!.draft!
+                      : MappingEncounter.fromFhirResource(encounter!.existing!),
+                  isStagedResource: true,
+                  isReadOnly: isAttachmentLocked ||
+                      encounter!.mode == ImportMode.linkExisting,
+                  onPropertyChanged: (propertyKey, newValue) =>
+                      context.read<ScanBloc>().add(
+                            ScanResourceChanged(
+                              sessionId: sessionId,
+                              index: 0,
+                              propertyKey: propertyKey,
+                              newValue: newValue,
+                              isDraftEncounter: true,
+                            ),
+                          ),
+                ),
               ),
-            ...resources.map((resource) {
-              final index = resources.indexOf(resource);
+            ...resources.indexed.map((entry) {
+              final (index, resource) = entry;
 
-              return _buildResourceForm(
-                context,
-                resource: resource,
-                onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
-                            sessionId: sessionId,
-                            index: index,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
+              return KeyedSubtree(
+                key: ValueKey('remaining_${resource.id}_$index'),
+                child: _buildResourceForm(
+                  context,
+                  resource: resource,
+                  onPropertyChanged: (propertyKey, newValue) =>
+                      context.read<ScanBloc>().add(
+                            ScanResourceChanged(
+                              sessionId: sessionId,
+                              index: index,
+                              propertyKey: propertyKey,
+                              newValue: newValue,
+                            ),
                           ),
-                        ),
-                onResourceRemoved: () => DeleteConfirmationDialog.show(
-                  context: context,
-                  title: 'Delete Resources',
-                  onConfirm: () {
-                    context.read<ScanBloc>().add(ScanResourceRemoved(
-                        sessionId: sessionId, index: index));
-                  },
+                  onResourceRemoved: () => DeleteConfirmationDialog.show(
+                    context: context,
+                    title: 'Delete Resources',
+                    onConfirm: () {
+                      context.read<ScanBloc>().add(ScanResourceRemoved(
+                          sessionId: sessionId, index: index));
+                    },
+                  ),
                 ),
               );
             })
@@ -150,7 +182,8 @@ class ResourcesForm extends StatelessWidget {
                   children: [
                     if (isStagedResource &&
                         !isAttachmentLocked &&
-                        resource is! MappingEncounter)
+                        resource is! MappingEncounter &&
+                        resource is! MappingDiagnosticReport)
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(
@@ -209,7 +242,21 @@ class ResourcesForm extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(descriptor.label, style: AppTextStyle.bodySmall),
+                      Row(
+                        children: [
+                          Text(descriptor.label, style: AppTextStyle.bodySmall),
+                          if (descriptor.fieldType == FieldType.date &&
+                              descriptor.value.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: Icon(
+                                Icons.error_outline,
+                                size: 16,
+                                color: Colors.red,
+                              ),
+                            ),
+                        ],
+                      ),
                       if (confidenceLevel != ConfidenceLevel.high)
                         Text(
                           "(${confidenceLevel.getString()})",

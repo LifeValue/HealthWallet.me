@@ -41,3 +41,13 @@ class UserNameUpdated extends UserEvent with _$UserNameUpdated {
 class UserReceiveModeToggled extends UserEvent with _$UserReceiveModeToggled {
   const factory UserReceiveModeToggled(bool isEnabled) = _UserReceiveModeToggled;
 }
+
+@freezed
+class UserRegionPresetChanged extends UserEvent with _$UserRegionPresetChanged {
+  const factory UserRegionPresetChanged(RegionPreset preset) = _UserRegionPresetChanged;
+}
+
+@freezed
+class UserLocaleChanged extends UserEvent with _$UserLocaleChanged {
+  const factory UserLocaleChanged(Locale? locale) = _UserLocaleChanged;
+}

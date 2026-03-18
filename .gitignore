@@ -8,6 +8,8 @@
 *.p12
 *.cer
 *.pem
+assets/certs/*
+!assets/certs/.gitkeep
 *.jks
 *.keystore
 **/key.properties
@@ -66,7 +68,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-lib/gen
+
 
 **/*.freezed.dart
 **/*.g.dart

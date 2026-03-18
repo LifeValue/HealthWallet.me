@@ -132,7 +132,7 @@ class MappingDiagnosticReport
   MappingResource populateConfidence(String inputText) => copyWith(
         reportName: reportName.calculateConfidence(inputText),
         conclusion: conclusion.calculateConfidence(inputText),
-        issuedDate: issuedDate.calculateConfidence(inputText),
+        issuedDate: issuedDate.calculateDateConfidence(inputText),
       );
 
   @override

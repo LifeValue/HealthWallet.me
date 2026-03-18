@@ -1,0 +1,59 @@
+{
+  "language": "ro",
+  "category": "visit",
+  "gender": "female",
+  "templateType": "Fisa de examinare ginecologica + Ecografie",
+  "ocrExcerpt": "Spitalul Privat SRL FISA DE EXAMINARE Data Examinarii: 10.03.2021 15:00 Cod prezentare: 987654 C GINECOLOGIE MARINESCU ELENA F 68 ani Data nasterii: 15.03.1953 Tel: 0741234567 CNP: 2520315054321 Localitate: Cluj-Napoca Judet: CJ Medic curant: Dr. Antal Liana MEDIC PRIMAR OBSTETRICA-GINECOLOGIE Tip diagnostic: Acut Diagnostic trimitere (prezumtiv): 998 Alte motive de recurgere la serviciile de sanatate Diagnostic final (definitiv): 998 Alte motive de recurgere la serviciile de sanatate Examen obiectiv: Metroragie in menopauza Neo de endometru Examen clinic Ovare genitale externe cu relatii normale clinic Uter in marit in volum si moale nedureros Sangerare abundenta la exteriorul orificiului Ecografie ginecologica: Uter globulos cu dim de 90/73 mm cu continut hiperecogen neomogen cu dim de 46/33 mm Zone parametru anexiale fara modificari ecografice Concluzii/Recomandari/Tratament: -Biopsie de endometru Servicii medicale efectuate: Consultatie initiala",
+  "extraction": [
+    {
+      "resourceType": "Patient",
+      "familyName": "MARINESCU",
+      "givenName": "ELENA",
+      "dateOfBirth": "1953-03-15",
+      "gender": "female",
+      "patientMRN": "2520315054321",
+      "identifierLabel": "CNP",
+      "documentCategory": "visit"
+    },
+    {
+      "resourceType": "Encounter",
+      "encounterType": "Consultatie ginecologica - examinare + ecografie",
+      "periodStart": "2021-03-10"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Metroragie in menopauza",
+      "onsetDateTime": "2021-03-10",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Condition",
+      "conditionName": "Neoplasm de endometru (suspect)",
+      "onsetDateTime": "2021-03-10",
+      "clinicalStatus": "active"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Ecografie ginecologica - dimensiuni uter",
+      "value": "90/73 mm, continut hiperecogen neomogen 46/33 mm",
+      "unit": "mm",
+      "referenceRange": ""
+    },
+    {
+      "resourceType": "Procedure",
+      "procedureName": "Biopsie de endometru",
+      "performedDateTime": "2021-03-10",
+      "reason": "Metroragie in menopauza, suspect neoplasm endometru"
+    },
+    {
+      "resourceType": "Practitioner",
+      "practitionerName": "Dr. Antal Liana",
+      "role": "Medic primar obstetrica-ginecologie"
+    },
+    {
+      "resourceType": "Organization",
+      "organizationName": "Spitalul Privat SRL",
+      "organizationType": "Clinic"
+    }
+  ]
+}

@@ -15,7 +15,7 @@ import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/r
 import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
-import 'package:health_wallet/features/share_records/presentation/widgets/session_bottom_bar.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/session/session_bottom_bar.dart';
 
 class EphemeralViewerView extends StatefulWidget {
   final ShareRecordsState state;
@@ -197,7 +197,11 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView> {
           isLast: index == _filteredRecords.length - 1,
           onTap: () {
             context.pushRoute(
-              RecordDetailsRoute(resource: resource),
+              RecordDetailsRoute(
+                resource: resource,
+                ephemeralRecords:
+                    widget.state.receivedData?.records ?? const [],
+              ),
             );
           },
           child: Column(

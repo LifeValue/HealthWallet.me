@@ -15,6 +15,7 @@ import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 
 @RoutePage()
@@ -131,40 +132,43 @@ class _DashboardPageState extends State<DashboardPage> {
             BlocBuilder<SyncBloc, SyncState>(
               builder: (context, syncState) {
                 if (!_isKeyboardVisible) {
+                  final bottomPadding =
+                      MediaQuery.of(context).padding.bottom + 8;
                   return Positioned(
-                    left: 8,
-                    right: 8,
-                    bottom: 24,
-                    child: SizedBox(
-                      height: 60,
+                    left: 0,
+                    right: 0,
+                    bottom: bottomPadding,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: context.isTablet ? 500 : double.infinity,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: SizedBox(
+                            height: 60,
                       child: Stack(
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(100),
                             child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: context.isDarkMode
-                                      ? Colors.white.withOpacity(0.03)
-                                      : Colors.white.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(
-                                    color: context.isDarkMode
-                                        ? Colors.white.withOpacity(0.08)
-                                        : Colors.white.withOpacity(0.2),
-                                    width: 1.0,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: context.isDarkMode
+                                        ? [
+                                            Colors.white.withValues(alpha: 0.08),
+                                            Colors.white.withValues(alpha: 0.04),
+                                          ]
+                                        : [
+                                            Colors.grey.withValues(alpha: 0.08),
+                                            Colors.grey.withValues(alpha: 0.03),
+                                          ],
                                   ),
-                                  boxShadow: context.isDarkMode
-                                      ? [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.05),
-                                            blurRadius: 8,
-                                            spreadRadius: 0,
-                                          ),
-                                        ]
-                                      : null,
+                                  borderRadius: BorderRadius.circular(100),
                                 ),
                               ),
                             ),
@@ -267,6 +271,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         ],
                       ),
                     ),
+                          ),
+                        ),
+                      ),
                   );
                 }
                 return const SizedBox.shrink();

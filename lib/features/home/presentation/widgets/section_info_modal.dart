@@ -30,8 +30,8 @@ class SectionInfoModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final borderColor = context.isDarkMode ? AppColors.borderDark : AppColors.border;
+    final textColor = context.primaryTextColor;
+    final borderColor = context.borderColor;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -48,7 +48,6 @@ class SectionInfoModal extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Content
               Text(
                 description,
                 style: AppTextStyle.labelLarge.copyWith(color: textColor),
@@ -56,7 +55,6 @@ class SectionInfoModal extends StatelessWidget {
               
               const SizedBox(height: Insets.normal),
               
-              // Action button
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [

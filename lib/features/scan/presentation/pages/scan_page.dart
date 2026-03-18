@@ -17,6 +17,7 @@ import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/scan/presentation/helpers/document_handler.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/navigation_settled_callback_mixin.dart';
 
 @RoutePage()
@@ -143,6 +144,7 @@ class _ScanViewState extends State<ScanView>
       appBar: CustomAppBar(
         title: AppLocalizationsX(context).l10n.onboardingScanButton,
         automaticallyImplyLeading: false,
+        extraTopPadding: context.isTablet ? 16 : 0,
         actions: [
           BlocBuilder<LoadModelBloc, LoadModelState>(
             builder: (context, state) {
@@ -270,7 +272,12 @@ class _ScanViewState extends State<ScanView>
         .toList();
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.only(
+        left: context.screenHorizontalPadding,
+        right: context.screenHorizontalPadding,
+        top: context.isTablet ? 24.0 : 16.0,
+        bottom: 16.0,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -306,31 +313,50 @@ class _ScanViewState extends State<ScanView>
               ),
             ),
           if (scanSessions.isEmpty)
-            Column(
-              children: [
-                const SizedBox(height: 16),
-                Assets.images.emptyScan.svg(),
-                const SizedBox(height: 36),
-                const Text(
-                  "No scans yet",
-                  style: AppTextStyle.titleMedium,
-                  textAlign: TextAlign.center,
+            if (context.isTablet)
+              Expanded(
+                child: Align(
+                  alignment: const Alignment(0, -0.3),
+                  child: _buildEmptyState(context),
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  "Scan or import documents to get started",
-                  style: AppTextStyle.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                AppButton(
-                  label: 'Scan Document',
-                  icon: Assets.icons.scan.svg(),
-                  variant: AppButtonVariant.primary,
-                  onPressed: () => _handleDirectScan(context),
-                ),
-              ],
+              )
+            else
+              Center(child: _buildEmptyState(context)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 500),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          Assets.images.emptyScan.svg(),
+          const SizedBox(height: 36),
+          const Text(
+            "No scans yet",
+            style: AppTextStyle.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Scan or import documents to get started",
+            style: AppTextStyle.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: AppButton(
+              label: 'Scan Document',
+              icon: Assets.icons.scan.svg(),
+              variant: AppButtonVariant.primary,
+              onPressed: () => _handleDirectScan(context),
             ),
+          ),
         ],
       ),
     );

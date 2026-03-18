@@ -34,6 +34,15 @@ jobs:
           mkdir -p ios/fastlane/private_keys
           printf '%s\n' "$ASC_KEY_CONTENT" > ios/fastlane/private_keys/AuthKey.p8
 
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Restore Apple Wallet certificates
+        run: |
+          mkdir -p assets/certs
+          echo "${{ secrets.APPLE_PASS_CERTIFICATE_BASE64 }}" | base64 --decode > assets/certs/pass_certificate.pem
+          echo "${{ secrets.APPLE_PASS_PRIVATE_KEY_BASE64 }}" | base64 --decode > assets/certs/private_key.pem
+
       - name: Install dependencies
         run: fvm flutter pub get
 
@@ -100,11 +109,22 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.32.4"
+          flutter-version: "3.38.7"
           cache: true
 
       - name: Create .env file
         run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Restore Apple Wallet certificates
+        run: |
+          mkdir -p assets/certs
+          echo "${{ secrets.APPLE_PASS_CERTIFICATE_BASE64 }}" | base64 --decode > assets/certs/pass_certificate.pem
+          echo "${{ secrets.APPLE_PASS_PRIVATE_KEY_BASE64 }}" | base64 --decode > assets/certs/private_key.pem
+
+      - name: Restore Google Wallet service account
+        run: |
+          mkdir -p assets/certs/android
+          echo "${{ secrets.GOOGLE_WALLET_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > assets/certs/android/service-account.json
 
       - name: Decode keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
@@ -148,3 +168,4 @@ jobs:
           rm -f android/app/upload-keystore.jks
           rm -f android/key.properties
           rm -f android/fastlane/service-account.json
+          rm -f assets/certs/android/service-account.json

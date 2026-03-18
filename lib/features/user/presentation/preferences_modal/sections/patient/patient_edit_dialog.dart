@@ -15,8 +15,8 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/secti
 import 'package:health_wallet/core/di/injection.dart';
 import 'utils/dialog_content.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
-import 'services/patient_edit_service.dart';
-import 'utils/gender_mapper.dart';
+import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
+import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 
 class PatientEditDialog extends StatefulWidget {
   final Patient patient;
@@ -30,7 +30,6 @@ class PatientEditDialog extends StatefulWidget {
     this.onDismiss,
   });
 
-  /// Shows the dialog in edit mode
   static void show(
     BuildContext context,
     Patient patient, {
@@ -75,6 +74,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   String _selectedGender = 'Prefer not to say';
   String _selectedBloodType = 'N/A';
   String _selectedMRN = '';
+  String _selectedContactPhone = '';
   late PatientEditService _patientEditService;
   bool _isLoading = false;
   Patient? _currentPatient;
@@ -154,6 +154,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
           GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
 
       _selectedMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
+      _selectedContactPhone = _extractContactPhone(_currentPatient!);
 
       _givenController.text = _selectedGiven;
       _familyController.text = _selectedFamily;
@@ -181,6 +182,14 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
       }
     }
     return '';
+  }
+
+  String _extractContactPhone(Patient patient) {
+    final contact = patient.contact?.firstOrNull;
+    if (contact == null) return '';
+    return FhirFieldExtractor.extractTelecomBySystem(
+            contact.telecom, 'phone') ??
+        '';
   }
 
   Future<void> _initializeBloodType() async {
@@ -222,7 +231,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final hasChanges = await _patientEditService.hasPatientChanges(
+      final hasServiceChanges = await _patientEditService.hasPatientChanges(
         currentPatient: _currentPatient!,
         newBirthDate: _selectedBirthDate,
         newGender: _selectedGender,
@@ -230,6 +239,13 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
         newMRN: _selectedMRN,
         l10n: context.l10n,
       );
+      final hasNameChanges =
+          _extractGiven(_currentPatient!) != _givenController.text ||
+              _extractFamily(_currentPatient!) != _familyController.text;
+      final hasContactPhoneChanges =
+          _extractContactPhone(_currentPatient!) != _selectedContactPhone;
+      final hasChanges =
+          hasServiceChanges || hasNameChanges || hasContactPhoneChanges;
 
       if (!hasChanges) {
         if (mounted) {
@@ -252,6 +268,8 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
       final currentGiven = _extractGiven(_currentPatient!);
       final currentFamily = _extractFamily(_currentPatient!);
       final currentMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
+      final currentContactPhone = _extractContactPhone(_currentPatient!);
+      final currentContactPhoneValue = _selectedContactPhone;
 
       final givenChanged = currentGiven != currentGivenValue;
       final familyChanged = currentFamily != currentFamilyValue;
@@ -262,12 +280,14 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
               _selectedGender;
       final bloodTypeChanged = currentBloodType != _selectedBloodType;
       final mrnChanged = currentMRN != currentMRNValue;
+      final contactPhoneChanged = currentContactPhone != currentContactPhoneValue;
 
       final onlyBloodTypeChanged = bloodTypeChanged &&
           !nameChanged &&
           !birthDateChanged &&
           !genderChanged &&
-          !mrnChanged;
+          !mrnChanged &&
+          !contactPhoneChanged;
 
       if (onlyBloodTypeChanged) {
         await _patientEditService.updateBloodTypeObservation(
@@ -293,6 +313,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             birthDateChanged ||
             genderChanged ||
             mrnChanged ||
+            contactPhoneChanged ||
             bloodTypeChanged;
 
         if (patientFieldsChanged) {
@@ -318,6 +339,9 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
                       ? _selectedBloodType
                       : currentBloodType ?? 'N/A',
                   mrn: mrnChanged ? currentMRNValue : null,
+                  contactPhone: contactPhoneChanged
+                      ? currentContactPhoneValue
+                      : null,
                   availableSources: homeState.sources,
                 ),
               );
@@ -331,7 +355,6 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
         widget.onDismiss?.call();
       }
     } catch (e) {
-      // Error handling - dialog will remain open for user to retry
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -379,9 +402,11 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             patient: _currentPatient!,
             showNameField: true,
             isSetupMode: false,
+            identifierLabel: FhirFieldExtractor.extractPatientIdentifierLabel(_currentPatient!),
             selectedGiven: _selectedGiven,
             selectedFamily: _selectedFamily,
             selectedMRN: _selectedMRN,
+            selectedContactPhone: _selectedContactPhone,
             selectedBirthDate: _selectedBirthDate,
             selectedGender: _selectedGender,
             selectedBloodType: _selectedBloodType,
@@ -396,6 +421,9 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             },
             onMRNChanged: (String value) {
               _selectedMRN = value;
+            },
+            onContactPhoneChanged: (String value) {
+              _selectedContactPhone = value;
             },
             givenController: _givenController,
             familyController: _familyController,

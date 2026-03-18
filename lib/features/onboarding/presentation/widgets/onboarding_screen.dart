@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
@@ -66,11 +66,14 @@ class OnboardingScreen extends StatelessWidget {
                   final availableHeight = constraints.maxHeight;
                   return SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: availableHeight - 40,
-                      ),
-                      child: Column(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: 500,
+                          minHeight: availableHeight - 40,
+                        ),
+                        child: Column(
                         children: [
                           image.svg(height: 250),
                           if (!showBiometricToggle)
@@ -109,7 +112,7 @@ class OnboardingScreen extends StatelessWidget {
                                     final isEnabled =
                                         userState.isBiometricAuthEnabled;
                                     if (isEnabled) {
-                                      ConfirmationDialog.show(
+                                      AppSimpleDialog.showConfirmation(
                                         context: context,
                                         title: context
                                             .l10n.confirmDisableBiometric,
@@ -149,6 +152,7 @@ class OnboardingScreen extends StatelessWidget {
                             customWidget!,
                           ],
                         ],
+                      ),
                       ),
                     ),
                   );
@@ -299,6 +303,29 @@ class OnboardingScreen extends StatelessWidget {
               TextSpan(text: afterLink),
             ],
           ),
+        ),
+      );
+    } else if (description.contains('**')) {
+      final segments = description.split('**');
+      final spans = <TextSpan>[];
+      for (int i = 0; i < segments.length; i++) {
+        spans.add(TextSpan(
+          text: segments[i],
+          style: i.isOdd
+              ? AppTextStyle.regular.copyWith(
+                  color: context.colorScheme.onSurface.withOpacity(0.85),
+                  fontWeight: FontWeight.w700,
+                )
+              : null,
+        ));
+      }
+      return RichText(
+        textAlign: textAlign,
+        text: TextSpan(
+          style: AppTextStyle.regular.copyWith(
+            color: context.colorScheme.onSurface.withOpacity(0.7),
+          ),
+          children: spans,
         ),
       );
     } else {

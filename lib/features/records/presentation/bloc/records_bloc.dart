@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
+import 'dart:ui';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'records_event.dart';
 part 'records_state.dart';
@@ -119,7 +122,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   ) async {
     if (state.activeFilters.isEmpty) {
       if (!event.isShareContext) {
-        emit(state.copyWith(activeFilters: [FhirType.Encounter]));
+        emit(state.copyWith(
+            activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]));
       }
     }
 
@@ -151,7 +155,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     );
 
     if (nextState.activeFilters.isEmpty && !event.isShareContext) {
-      nextState = nextState.copyWith(activeFilters: [FhirType.Encounter]);
+      nextState = nextState.copyWith(
+          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]);
     }
 
     emit(nextState);
@@ -191,7 +196,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     emit(
         state.copyWith(recordDetailStatus: const RecordDetailStatus.loading()));
     try {
-      final relatedResources = event.resource.fhirType == FhirType.Encounter
+      final relatedResources = (event.resource.fhirType == FhirType.Encounter ||
+              event.resource.fhirType == FhirType.DiagnosticReport)
           ? await _recordsRepository.getRelatedResourcesForEncounter(
               encounterId: event.resource.resourceId)
           : await _recordsRepository.getRelatedResources(
@@ -303,14 +309,72 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSharePressed event,
     Emitter<RecordsState> emit,
   ) async {
-    Uint8List ipsBytes =
-        await _recordsRepository.buildIpsExport(sourceId: state.sourceId);
+    try {
+      final export = await _recordsRepository.buildIpsExport(
+        sourceId: state.sourceId,
+        patientId: event.patientId,
+      );
 
-    File pdfFile = await File(
-      '${(await getTemporaryDirectory()).path}/ips-export-${DateTime.now().toIso8601String()}.pdf',
-    ).writeAsBytes(ipsBytes);
+      final name = (event.patientName ?? export.patientName)
+          .replaceAll(RegExp(r'[^\w\s-]'), '');
+      final prefs = await SharedPreferences.getInstance();
+      final region = RegionPreset.fromString(
+        prefs.getString(SharedPrefsConstants.regionPreset),
+      );
+      final date = region.formatDate(DateTime.now());
+      final fileName = '$name - IPS Summary - $date';
 
-    SharePlus.instance.share(ShareParams(files: [XFile(pdfFile.path)]));
+      File pdfFile = await File(
+        '${(await getTemporaryDirectory()).path}/$fileName.pdf',
+      ).writeAsBytes(export.bytes);
+
+      SharePlus.instance.share(ShareParams(
+        title: fileName,
+        files: [XFile(pdfFile.path)],
+        sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
+      ));
+    } catch (_) {}
+  }
+
+  void _onSelectionToggled(
+    RecordsSelectionToggled event,
+    Emitter<RecordsState> emit,
+  ) {
+    final updated = Set<String>.from(state.selectedResourceIds);
+    if (!updated.remove(event.resourceId)) {
+      updated.add(event.resourceId);
+    }
+    emit(state.copyWith(selectedResourceIds: updated));
+  }
+
+  void _onSelectionCleared(
+    RecordsSelectionCleared event,
+    Emitter<RecordsState> emit,
+  ) {
+    emit(state.copyWith(selectedResourceIds: {}));
+  }
+
+  void _onSelectionModeToggled(
+    RecordsSelectionModeToggled event,
+    Emitter<RecordsState> emit,
+  ) {
+    final newSelectionMode = !state.isSelectionMode;
+    emit(state.copyWith(
+      isSelectionMode: newSelectionMode,
+      selectedResourceIds: newSelectionMode ? state.selectedResourceIds : {},
+    ));
+  }
+
+  void _onDateRangeCleared(
+    RecordsDateRangeCleared event,
+    Emitter<RecordsState> emit,
+  ) async {
+    emit(state.copyWith(
+      dateFilter: null,
+      resources: [],
+    ));
+
+    await _loadResources(emit);
   }
 
   void _onSelectionToggled(
