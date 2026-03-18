@@ -1,3 +1,5 @@
+# HealthWallet.me
+
 <div align="center">
 
 <img src="assets/readme/icon_and_healthwallet.svg" alt="HealthWallet.me Logo" width="500">
