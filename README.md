@@ -276,7 +276,7 @@ Interested in **corporate sponsorship** or **partnership opportunities**? We off
 
 ## License
 
-[GPL-3.0](LICENSE.md) — Copyright 2025 SC TECH STACK APPS SRL
+[GPL-3.0](LICENSE.md) — © Copyright 2026, Life Value
 
 ---
 
