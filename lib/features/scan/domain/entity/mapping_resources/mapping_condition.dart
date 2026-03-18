@@ -21,10 +21,13 @@ class MappingCondition with _$MappingCondition implements MappingResource {
   }) = _MappingCondition;
 
   factory MappingCondition.fromJson(Map<String, dynamic> json) {
+    final rawOnset = MappedProperty.fromJson(json['onsetDateTime']);
     return MappingCondition(
       id: json["id"] ?? const Uuid().v4(),
       conditionName: MappedProperty.fromJson(json['conditionName']),
-      onsetDateTime: MappedProperty.fromJson(json['onsetDateTime']),
+      onsetDateTime: rawOnset.copyWith(
+        value: MappingResource.normalizeDateValue(rawOnset.value),
+      ),
       clinicalStatus: MappedProperty.fromJson(json['clinicalStatus']),
     );
   }
@@ -56,7 +59,9 @@ class MappingCondition with _$MappingCondition implements MappingResource {
     fhir_r4.Condition condition = fhir_r4.Condition(
       code: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(conditionName.value)),
-      onsetX: fhir_r4.FhirDateTime.fromString(onsetDateTime.value),
+      onsetX: onsetDateTime.value.isNotEmpty
+          ? fhir_r4.FhirDateTime.fromString(onsetDateTime.value)
+          : null,
       clinicalStatus: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(clinicalStatus.value)),
       subject: fhir_r4.Reference(
@@ -93,7 +98,7 @@ class MappingCondition with _$MappingCondition implements MappingResource {
           label: 'Onset Date',
           value: onsetDateTime.value,
           confidenceLevel: onsetDateTime.confidenceLevel,
-          validators: [nonEmptyValidator, dateValidator],
+          fieldType: FieldType.date,
         ),
         'clinicalStatus': TextFieldDescriptor(
           label: 'Clinical Status',
@@ -132,7 +137,7 @@ class MappingCondition with _$MappingCondition implements MappingResource {
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
         conditionName: conditionName.calculateConfidence(inputText),
-        onsetDateTime: onsetDateTime.calculateConfidence(inputText),
+        onsetDateTime: onsetDateTime.calculateDateConfidence(inputText),
         clinicalStatus: clinicalStatus.calculateConfidence(inputText),
       );
 

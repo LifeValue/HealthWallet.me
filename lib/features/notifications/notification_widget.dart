@@ -1,12 +1,15 @@
+import 'dart:io' show Platform;
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart' hide Notification;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
@@ -28,11 +31,14 @@ class _NotificationWidgetState extends State<NotificationWidget> {
   void _showOverlay(NotificationState state) {
     final overlay = Overlay.of(context);
     final colorScheme = context.colorScheme;
-    final isDarkMode = context.isDarkMode;
-    final dividerColor = isDarkMode ? AppColors.borderDark : AppColors.border;
+    final dividerColor = context.borderColor;
 
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) {
+        final platformOffset = Platform.isIOS ? Insets.extraLarge : Insets.large;
+        final tabletExtra = context.isTablet ? -36.0 : 0.0;
+        final topPadding =
+            MediaQuery.of(context).viewPadding.top + kToolbarHeight + platformOffset + tabletExtra;
         return BlocBuilder<NotificationBloc, NotificationState>(
           bloc: context.read<NotificationBloc>(),
           builder: (blocContext, currentState) {
@@ -47,9 +53,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                   ),
                 ),
                 Positioned(
-                  top: 115,
-                  left: Insets.smallNormal,
-                  right: Insets.smallNormal,
+                  top: topPadding,
+                  left: context.isTablet ? context.screenHorizontalPadding : Insets.smallNormal,
+                  right: context.isTablet ? context.screenHorizontalPadding : Insets.smallNormal,
                   child: Card(
                     child: Container(
                       height: 368,
@@ -313,7 +319,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                   ? GestureDetector(
                       onTap: () {
                         _hideOverlay();
-                        ConfirmationDialog.show(
+                        AppSimpleDialog.showConfirmation(
                           context: context,
                           title: 'Cancel Download',
                           message:

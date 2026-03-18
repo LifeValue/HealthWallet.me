@@ -49,6 +49,7 @@ class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
     String? gender,
     required String bloodType,
     String? mrn,
+    String? contactPhone,
     required List<dynamic> availableSources,
   }) = _PatientEditSaved;
 }

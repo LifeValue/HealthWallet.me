@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
@@ -8,12 +9,6 @@ import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 part 'staged_resource.freezed.dart';
 
 @freezed
-
-/// Class to hold patient and encounter resources in their possible states
-///
-/// D - Draft ([DraftPatient] | [DraftEncounter])
-///
-/// F - FHIR ([Patient] | [Encounter])
 class StagedResource<D, F> with _$StagedResource<D, F> {
   const StagedResource._();
 
@@ -53,6 +48,7 @@ enum ImportMode {
 
 typedef StagedPatient = StagedResource<MappingPatient, Patient>;
 typedef StagedEncounter = StagedResource<MappingEncounter, Encounter>;
+typedef StagedDiagnosticReport = StagedResource<MappingDiagnosticReport, Never>;
 
 Map<String, dynamic> stagedPatientToJson(StagedPatient patient) => {
       'draft': patient.draft?.toJson(),
@@ -82,6 +78,23 @@ StagedEncounter stagedEncounterFromJson(Map<String, dynamic> json) =>
           : null,
       existing: json['existing'] != null
           ? Encounter.fromDto(FhirResourceDto.fromJson(json['existing']))
+          : null,
+      mode: ImportMode.fromString(json['mode']),
+    );
+
+Map<String, dynamic> stagedDiagnosticReportToJson(
+        StagedDiagnosticReport report) =>
+    {
+      'draft': report.draft?.toJson(),
+      'existing': null,
+      'mode': report.mode.toString(),
+    };
+
+StagedDiagnosticReport stagedDiagnosticReportFromJson(
+        Map<String, dynamic> json) =>
+    StagedDiagnosticReport(
+      draft: json['draft'] != null
+          ? MappingDiagnosticReport.fromJson(json['draft'])
           : null,
       mode: ImportMode.fromString(json['mode']),
     );

@@ -45,11 +45,8 @@ class _EncounterSelectorState extends State<EncounterSelector> {
 
   @override
   Widget build(BuildContext context) {
-    final textColor =
-        context.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final iconColor = context.isDarkMode
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondary;
+    final textColor = context.primaryTextColor;
+    final iconColor = context.secondaryTextColor;
     final borderColor = context.theme.dividerColor;
 
     return BlocBuilder<AttachToEncounterBloc, AttachToEncounterState>(

@@ -10,11 +10,15 @@ import 'package:health_wallet/features/scan/presentation/pages/preview/image_pre
 class PreviewCard extends StatefulWidget {
   final List<String> imagePaths;
   final PageController pageController;
+  final bool isEditable;
+  final void Function(List<String>)? onPagesChanged;
 
   const PreviewCard({
     super.key,
     required this.imagePaths,
     required this.pageController,
+    this.isEditable = false,
+    this.onPagesChanged,
   });
 
   @override
@@ -50,10 +54,10 @@ class _PreviewCardState extends State<PreviewCard> {
     super.dispose();
   }
 
-  void _openFullScreenPreview(BuildContext context, int currentIndex) {
+  void _openFullScreenPreview(BuildContext context, int currentIndex) async {
     if (widget.imagePaths.isEmpty) return;
 
-    Navigator.of(context).push(
+    final result = await Navigator.of(context).push<List<String>>(
       MaterialPageRoute(
         builder: (context) => BlocProvider.value(
           value: _previewBloc,
@@ -61,10 +65,15 @@ class _PreviewCardState extends State<PreviewCard> {
             imagePath: widget.imagePaths[currentIndex],
             allImages: widget.imagePaths,
             currentIndex: currentIndex,
+            isEditable: widget.isEditable,
           ),
         ),
       ),
     );
+
+    if (result != null) {
+      widget.onPagesChanged?.call(result);
+    }
   }
 
   @override

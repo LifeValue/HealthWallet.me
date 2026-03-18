@@ -11,17 +11,26 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
-    
-    // Force all subprojects to use the same Java version
+
     afterEvaluate {
         project.extensions.findByType<com.android.build.gradle.BaseExtension>()?.apply {
+            if (namespace.isNullOrEmpty()) {
+                namespace = project.group.toString().ifEmpty {
+                    val manifest = project.file("src/main/AndroidManifest.xml")
+                    if (manifest.exists()) {
+                        val pkg = Regex("package=\"([^\"]+)\"").find(manifest.readText())?.groupValues?.get(1)
+                        pkg ?: "com.${project.name.replace("-", ".")}"
+                    } else {
+                        "com.${project.name.replace("-", ".")}"
+                    }
+                }
+            }
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_11
                 targetCompatibility = JavaVersion.VERSION_11
             }
         }
-        
-        // Set Kotlin JVM target for all subprojects using compilerOptions
+
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
             compilerOptions {
                 jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)

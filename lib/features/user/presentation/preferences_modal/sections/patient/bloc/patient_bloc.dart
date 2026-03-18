@@ -6,7 +6,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/services/patient_edit_service.dart';
+import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -355,6 +355,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         birthDate: event.birthDate,
         gender: event.gender,
         mrn: event.mrn,
+        contactPhone: event.contactPhone,
         availableSources: availableSources,
       );
 
@@ -404,7 +405,15 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     try {
       await _saveSelectedPatient(event.patientId);
 
+      final updatedPatients = List<Patient>.from(state.patients);
+      final index = updatedPatients.indexWhere((p) => p.id == event.patientId);
+      if (index > 0) {
+        final patient = updatedPatients.removeAt(index);
+        updatedPatients.insert(0, patient);
+      }
+
       emit(state.copyWith(
+        patients: updatedPatients,
         selectedPatientId: event.patientId,
         expandedPatientIds: {event.patientId},
       ));

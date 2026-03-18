@@ -1,0 +1,152 @@
+{
+  "language": "ro",
+  "category": "lab_report",
+  "gender": "female",
+  "templateType": "Buletin de analize medicale",
+  "ocrExcerpt": "LABORATOR DE ANALIZE MEDICALE Buletin de analize Cod set GH4455 Nume: MARINESCU Prenume: ELENA C.N.P: 2520315054321 Data solicitarii: 15.03.2021 05:25 Data recoltarii: 15.03.2021 05:32 Medic: POPESCU ADRIAN Recoltat de: STAN MARIA Cod prezentare: 4891234 Varsta: 68 ani Nr. FO: 28451/21 Salon: 302 Departament CHIRURGIE GENERALA 2 Urgenta DA HEMOLEUCOGRAMA COMPLETA Test Rezultat UM Interval biologic de referinta WBC 13.97 10^3/uL 4.0 - 10.0 NEU 10.75 10^3/uL 2.4 - 6.5 LYM 2.173 10^3/uL 1.0 - 4.0 MONO .7545 10^3/uL 0.3 - 1.0 EOS .1911 10^3/uL 0.0 - 0.6 BASO .1033 10^3/uL 0.0 - 0.2 RBC 4.035 10^6/uL 3.8 - 5.2 HGB 9.311 g/dl 11.7 - 16.1 HCT 32.62 % 35 - 47 MCV 80.85 fL 80 - 100 PLT 314.3 10^3/uL 150 - 400 CHIMIE CLINICA ALAT (GPT) 62 U/L 0 - 55 ASAT (GOT) 109 U/L 5 - 34 D-BIL 0.17 mg/dl 0.0 - 0.50 T-BIL 0.43 mg/dl 0.2 - 1.2 Creatinina ser 0.71 mg/dl 0.10 - 1.00 GGT 29 U/L 9 - 36 Glicemie 96 mg/dl 65 - 115 Uree ser 19.26 mg/dl 21.0 - 43.0 RATA FILTRARII GLOMERULARE (GFR) 88.75 >=90 mil/min/1.73 m2 Eliberat de: Dr. Stanescu Maria",
+  "extraction": [
+    {
+      "resourceType": "Patient",
+      "familyName": "MARINESCU",
+      "givenName": "ELENA",
+      "dateOfBirth": "1953-03-15",
+      "gender": "female",
+      "patientMRN": "2520315054321",
+      "identifierLabel": "CNP",
+      "documentCategory": "lab_report"
+    },
+    {
+      "resourceType": "DiagnosticReport",
+      "reportName": "Hemoleucograma completa + Chimie clinica",
+      "conclusion": "",
+      "issuedDate": "2021-03-15"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "WBC",
+      "value": "13.97",
+      "unit": "10^3/uL",
+      "referenceRange": "4.0 - 10.0"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "NEU",
+      "value": "10.75",
+      "unit": "10^3/uL",
+      "referenceRange": "2.4 - 6.5"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "LYM",
+      "value": "2.173",
+      "unit": "10^3/uL",
+      "referenceRange": "1.0 - 4.0"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "RBC",
+      "value": "4.035",
+      "unit": "10^6/uL",
+      "referenceRange": "3.8 - 5.2"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "HGB",
+      "value": "9.311",
+      "unit": "g/dl",
+      "referenceRange": "11.7 - 16.1"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "HCT",
+      "value": "32.62",
+      "unit": "%",
+      "referenceRange": "35 - 47"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "PLT",
+      "value": "314.3",
+      "unit": "10^3/uL",
+      "referenceRange": "150 - 400"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "ALAT (GPT)",
+      "value": "62",
+      "unit": "U/L",
+      "referenceRange": "0 - 55"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "ASAT (GOT)",
+      "value": "109",
+      "unit": "U/L",
+      "referenceRange": "5 - 34"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "D-BIL",
+      "value": "0.17",
+      "unit": "mg/dl",
+      "referenceRange": "0.0 - 0.50"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "T-BIL",
+      "value": "0.43",
+      "unit": "mg/dl",
+      "referenceRange": "0.2 - 1.2"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Creatinina ser",
+      "value": "0.71",
+      "unit": "mg/dl",
+      "referenceRange": "0.10 - 1.00"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "GGT",
+      "value": "29",
+      "unit": "U/L",
+      "referenceRange": "9 - 36"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Glicemie",
+      "value": "96",
+      "unit": "mg/dl",
+      "referenceRange": "65 - 115"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "Uree ser",
+      "value": "19.26",
+      "unit": "mg/dl",
+      "referenceRange": "21.0 - 43.0"
+    },
+    {
+      "resourceType": "Observation",
+      "observationName": "GFR",
+      "value": "88.75",
+      "unit": "mil/min/1.73 m2",
+      "referenceRange": ">= 90"
+    },
+    {
+      "resourceType": "Practitioner",
+      "practitionerName": "Dr. POPESCU ADRIAN",
+      "role": "Medic solicitant"
+    },
+    {
+      "resourceType": "Practitioner",
+      "practitionerName": "Dr. Stanescu Maria",
+      "role": "Medic laborator"
+    },
+    {
+      "resourceType": "Organization",
+      "organizationName": "Laborator de Analize Medicale - Spital Clinic Judetean",
+      "organizationType": "Laboratory"
+    }
+  ]
+}

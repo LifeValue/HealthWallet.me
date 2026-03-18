@@ -1,3 +1,5 @@
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/utils/unit_converter.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
@@ -7,14 +9,17 @@ import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor
 class PatientVitalFactory {
   PatientVitalFactory();
 
-  List<PatientVital> buildFromResources(List<IFhirResource> resources) {
+  List<PatientVital> buildFromResources(
+    List<IFhirResource> resources, {
+    RegionPreset? region,
+  }) {
     final Map<String, PatientVital> latestByTitle = <String, PatientVital>{};
 
     for (final resource in resources) {
       if (resource is! Observation) continue;
 
       final List<PatientVital> extracted =
-          _extractVitalSignsFromObservation(resource);
+          _extractVitalSignsFromObservation(resource, region: region);
       for (final vital in extracted) {
         final String normalizedTitle = _normalizeTitle(vital.title);
         final PatientVital normalizedVital = (normalizedTitle == vital.title)
@@ -59,13 +64,16 @@ class PatientVitalFactory {
       PatientVitalType.bloodGlucose.title,
     ];
 
-    // Add placeholders for missing vitals
     for (final title in expectedOrder) {
       if (!latestByTitle.containsKey(title)) {
+        final vitalType = PatientVitalTypeX.fromTitle(title);
+        final unit = (region != null && vitalType != null)
+            ? vitalType.unitForRegion(region)
+            : (vitalType?.defaultUnit ?? '');
         latestByTitle[title] = PatientVital(
           title: title,
           value: 'N/A',
-          unit: PatientVitalTypeX.fromTitle(title)?.defaultUnit ?? '',
+          unit: unit,
           status: null,
           observationId: null,
           effectiveDate: null,
@@ -73,7 +81,6 @@ class PatientVitalFactory {
       }
     }
 
-    // Return ordered list with placeholders
     final List<PatientVital> ordered = [
       for (final t in expectedOrder) latestByTitle[t]!,
       ...latestByTitle.entries
@@ -126,7 +133,9 @@ class PatientVitalFactory {
   }
 
   List<PatientVital> _extractVitalSignsFromObservation(
-      Observation observation) {
+    Observation observation, {
+    RegionPreset? region,
+  }) {
     final List<PatientVital> vitals = <PatientVital>[];
 
     final Set<String> primaryCodes = (observation.code?.coding ?? [])
@@ -172,7 +181,7 @@ class PatientVitalFactory {
       }
     } else {
       if (FhirFieldExtractor.isVitalSign(observation)) {
-        final vital = PatientVital.fromObservation(observation);
+        final vital = PatientVital.fromObservation(observation, region: region);
         final processedVital = _processVitalSignStatus(vital);
         vitals.add(processedVital);
       }
@@ -299,9 +308,12 @@ class PatientVitalFactory {
     return vital;
   }
 
+  static final _leadingNumberPattern = RegExp(r'^-?[\d.]+');
+
   String? _calculateVitalSignStatus(PatientVital vital) {
     final title = vital.title.toLowerCase();
-    final value = double.tryParse(vital.value);
+    final numMatch = _leadingNumberPattern.firstMatch(vital.value.trim());
+    final value = numMatch != null ? double.tryParse(numMatch.group(0)!) : null;
 
     if (value == null) return null;
 
@@ -309,13 +321,13 @@ class PatientVitalFactory {
       case 'heart rate':
         return _calculateHeartRateStatus(value);
       case 'temperature':
-        return _calculateTemperatureStatus(value);
+        return _calculateTemperatureStatus(value, vital.unit);
       case 'blood oxygen':
         return _calculateBloodOxygenStatus(value);
       case 'respiratory rate':
         return _calculateRespiratoryRateStatus(value);
       case 'blood glucose':
-        return _calculateBloodGlucoseStatus(value);
+        return _calculateBloodGlucoseStatus(value, vital.unit);
       case 'weight':
         return _calculateWeightStatus(value);
       case 'height':
@@ -333,9 +345,12 @@ class PatientVitalFactory {
     return 'Normal';
   }
 
-  String? _calculateTemperatureStatus(double value) {
-    if (value < 95.0) return 'Low';
-    if (value > 100.4) return 'High';
+  String? _calculateTemperatureStatus(double value, String unit) {
+    final celsius = UnitConverter.normalizeToBaseUnit(
+            value, unit, PatientVitalType.temperature) ??
+        value;
+    if (celsius < 35.0) return 'Low';
+    if (celsius > 38.0) return 'High';
     return 'Normal';
   }
 
@@ -351,10 +366,13 @@ class PatientVitalFactory {
     return 'Normal';
   }
 
-  String? _calculateBloodGlucoseStatus(double value) {
-    if (value < 70) return 'Low';
-    if (value > 140) return 'High';
-    if (value > 100) return 'Elevated';
+  String? _calculateBloodGlucoseStatus(double value, String unit) {
+    final mgDl = UnitConverter.normalizeToBaseUnit(
+            value, unit, PatientVitalType.bloodGlucose) ??
+        value;
+    if (mgDl < 70) return 'Low';
+    if (mgDl > 140) return 'High';
+    if (mgDl > 100) return 'Elevated';
     return 'Normal';
   }
 

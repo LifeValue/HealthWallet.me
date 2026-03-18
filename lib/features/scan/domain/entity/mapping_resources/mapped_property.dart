@@ -49,29 +49,108 @@ class MappedProperty with _$MappedProperty {
     return chunks;
   }
 
-  /// Does fuzzy matching between the [value] and overlapping chunks of [inputText]
-  /// to see if the [inputText] contains a substring similar to [value]
   MappedProperty calculateConfidence(String inputText) {
     if (value.isEmpty) {
       return copyWith(confidenceLevel: 0.0);
     }
 
-    final chunkLength = (value.length * 1.2).ceil();
-    if (inputText.length < chunkLength) {
-      final bestMatch = StringSimilarity.findBestMatch(value, [inputText]);
+    final normalizedValue = _normalize(value);
+    final normalizedInput = _normalize(inputText);
+
+    if (normalizedInput.contains(normalizedValue)) {
+      return copyWith(confidenceLevel: 1.0);
+    }
+
+    final valueTokens = _extractTokens(normalizedValue);
+    if (valueTokens.isNotEmpty) {
+      final matchedTokens =
+          valueTokens.where((t) => normalizedInput.contains(t)).length;
+      final tokenRatio = matchedTokens / valueTokens.length;
+      if (tokenRatio >= 0.8) {
+        return copyWith(confidenceLevel: 0.9);
+      }
+      if (tokenRatio >= 0.5) {
+        return copyWith(confidenceLevel: 0.7);
+      }
+    }
+
+    final chunkLength = (normalizedValue.length * 1.5).ceil();
+    if (normalizedInput.length < chunkLength) {
+      final bestMatch =
+          StringSimilarity.findBestMatch(normalizedValue, [normalizedInput]);
       return copyWith(confidenceLevel: bestMatch.bestMatch.rating ?? 0.0);
     }
 
     final List<String> textChunks =
-        _createOverlappingChunks(inputText, chunkLength);
+        _createOverlappingChunks(normalizedInput, chunkLength);
 
-    final bestMatch = StringSimilarity.findBestMatch(value, textChunks);
+    final bestMatch =
+        StringSimilarity.findBestMatch(normalizedValue, textChunks);
     final rating = bestMatch.bestMatch.rating ?? 0.0;
 
     return copyWith(confidenceLevel: rating);
   }
 
+  static String _normalize(String text) {
+    return text
+        .toLowerCase()
+        .replaceAll(RegExp(r'[/\-.,]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  static List<String> _extractTokens(String normalizedText) {
+    return normalizedText
+        .split(' ')
+        .where((t) => t.length >= 2)
+        .toList();
+  }
+
+  MappedProperty calculateGenderConfidence(String inputText) {
+    if (value.isEmpty) return copyWith(confidenceLevel: 0.0);
+
+    final normalizedInput = inputText.toLowerCase();
+    final normalizedValue = value.toLowerCase();
+
+    const genderMap = {
+      'male': ['male', 'masculin', 'masc', 'mann', 'männlich', 'hombre', 'masculino', 'm'],
+      'female': ['female', 'feminin', 'fem', 'frau', 'weiblich', 'mujer', 'femenino', 'f'],
+    };
+
+    final synonyms = genderMap[normalizedValue];
+    if (synonyms != null) {
+      for (final synonym in synonyms) {
+        if (normalizedInput.contains(synonym)) {
+          return copyWith(confidenceLevel: 1.0);
+        }
+      }
+    }
+
+    return calculateConfidence(inputText);
+  }
+
+  MappedProperty calculateDateConfidence(String inputText) {
+    if (value.isEmpty) return copyWith(confidenceLevel: 0.0);
+
+    final digits = RegExp(r'\d+').allMatches(value).map((m) => m.group(0)!).toList();
+    if (digits.isEmpty) return calculateConfidence(inputText);
+
+    final year = digits.firstWhere((d) => d.length == 4, orElse: () => '');
+    final others = digits.where((d) => d.length <= 2).toList();
+
+    if (year.isNotEmpty && inputText.contains(year)) {
+      final allFound = others.every((d) => inputText.contains(d));
+      if (allFound) return copyWith(confidenceLevel: 1.0);
+      return copyWith(confidenceLevel: 0.85);
+    }
+
+    return calculateConfidence(inputText);
+  }
+
   bool get isValid => confidenceLevel > 0.6;
+
+  MappedProperty withFullConfidence() =>
+      value.isNotEmpty ? copyWith(confidenceLevel: 1.0) : this;
 }
 
 enum ConfidenceLevel {
@@ -86,8 +165,7 @@ enum ConfidenceLevel {
       };
 
   Color getColor(BuildContext context) => switch (this) {
-        ConfidenceLevel.high =>
-          context.isDarkMode ? AppColors.borderDark : AppColors.border,
+        ConfidenceLevel.high => context.borderColor,
         ConfidenceLevel.medium => AppColors.warningDraft,
         ConfidenceLevel.low => AppColors.error
       };

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -127,14 +129,12 @@ class Observation with _$Observation implements IFhirResource {
     List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Result'));
 
-    // Value (THE MOST IMPORTANT - The actual test result)
     final valueDisplay = FhirFieldExtractor.extractObservationValue(valueX);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createValueLine(valueDisplay, prefix: 'Value'),
     );
 
-    // Component values (e.g., for blood pressure with systolic/diastolic)
     if (component != null && component!.isNotEmpty) {
       for (final comp in component!) {
         final componentCode = FhirFieldExtractor.extractCodeableConceptText(comp.code);
@@ -149,7 +149,6 @@ class Observation with _$Observation implements IFhirResource {
       }
     }
 
-    // Interpretation (HIGH/LOW/NORMAL - CRITICAL)
     final interpretationDisplay =
         FhirFieldExtractor.extractInterpretation(interpretation);
     ResourceFieldMapper.addIfNotNull(
@@ -158,13 +157,12 @@ class Observation with _$Observation implements IFhirResource {
           prefix: 'Status'),
     );
 
-    // Reference Range (Normal range for comparison)
     if (referenceRange != null && referenceRange!.isNotEmpty) {
       final range = referenceRange!.first;
       final lowValue = range.low?.value?.valueDouble?.toStringAsFixed(2);
       final highValue = range.high?.value?.valueDouble?.toStringAsFixed(2);
       final unit = range.low?.unit ?? range.high?.unit ?? '';
-      
+
       String? rangeDisplay;
       if (lowValue != null && highValue != null) {
         rangeDisplay = '$lowValue - $highValue $unit';
@@ -173,8 +171,7 @@ class Observation with _$Observation implements IFhirResource {
       } else if (highValue != null) {
         rangeDisplay = '< $highValue $unit';
       }
-      
-      // Add range type/meaning if available
+
       final rangeType = FhirFieldExtractor.extractCodeableConceptText(range);
       if (rangeType != null && rangeDisplay != null) {
         rangeDisplay = '$rangeDisplay ($rangeType)';
@@ -187,7 +184,6 @@ class Observation with _$Observation implements IFhirResource {
       );
     }
 
-    // Data Absent Reason (if no value available)
     if (valueDisplay == null || valueDisplay.isEmpty) {
       final absentReason = FhirFieldExtractor.extractCodeableConceptText(dataAbsentReason);
       ResourceFieldMapper.addIfNotNull(
@@ -199,7 +195,6 @@ class Observation with _$Observation implements IFhirResource {
 
     infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
 
-    // Category (Laboratory, Vital Signs, Imaging, etc.)
     final categoryDisplay =
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
@@ -208,7 +203,6 @@ class Observation with _$Observation implements IFhirResource {
           prefix: 'Category'),
     );
 
-    // Effective Date (Test/Observation Date)
     final effectiveDisplay = FhirFieldExtractor.extractEffectiveXFormatted(effectiveX);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -216,7 +210,6 @@ class Observation with _$Observation implements IFhirResource {
           prefix: 'Test Date'),
     );
 
-    // Issued Date (Result Date - when result was released)
     final issuedDisplay = FhirFieldExtractor.formatFhirInstant(issued);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -224,14 +217,12 @@ class Observation with _$Observation implements IFhirResource {
           prefix: 'Result Date'),
     );
 
-    // Performer (Lab/Person who performed the test)
     final performerDisplay = FhirFieldExtractor.extractPerformers(performer);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performed By'),
     );
 
-    // Method (How the test was performed)
     final methodDisplay = FhirFieldExtractor.extractCodeableConceptText(method);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -240,14 +231,12 @@ class Observation with _$Observation implements IFhirResource {
 
     infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
 
-    // Status (Final, Preliminary, Corrected, etc.)
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
     );
 
-    // Specimen (Type of sample collected)
     final specimenDisplay = FhirFieldExtractor.extractReferenceDisplay(specimen);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -255,7 +244,6 @@ class Observation with _$Observation implements IFhirResource {
           prefix: 'Specimen Type'),
     );
 
-    // Body Site (Where sample was taken from)
     final bodySiteDisplay =
         FhirFieldExtractor.extractCodeableConceptText(bodySite);
     ResourceFieldMapper.addIfNotNull(
@@ -264,7 +252,6 @@ class Observation with _$Observation implements IFhirResource {
           prefix: 'Body Site'),
     );
 
-    // Device (Equipment used)
     final deviceDisplay = FhirFieldExtractor.extractReferenceDisplay(device);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -272,7 +259,6 @@ class Observation with _$Observation implements IFhirResource {
           prefix: 'Device'),
     );
 
-    // Has Member (Related observations - for panels)
     if (hasMember != null && hasMember!.isNotEmpty) {
       final memberDisplay = hasMember!
           .map((m) => FhirFieldExtractor.extractReferenceDisplay(m))
@@ -290,7 +276,6 @@ class Observation with _$Observation implements IFhirResource {
       }
     }
 
-    // Derived From (Previous observations this is calculated from)
     if (derivedFrom != null && derivedFrom!.isNotEmpty) {
       final derivedDisplay = derivedFrom!
           .map((d) => FhirFieldExtractor.extractReferenceDisplay(d))
@@ -304,7 +289,6 @@ class Observation with _$Observation implements IFhirResource {
       );
     }
 
-    // Based On (Order/Request that led to this observation)
     if (basedOn != null && basedOn!.isNotEmpty) {
       final basedOnDisplay = basedOn!
           .map((b) => FhirFieldExtractor.extractReferenceDisplay(b))
@@ -318,7 +302,6 @@ class Observation with _$Observation implements IFhirResource {
       );
     }
 
-    // Reference Range Text/AppliesTo (Additional range context)
     if (referenceRange != null && referenceRange!.isNotEmpty) {
       final range = referenceRange!.first;
       final rangeText = range.text?.valueString;
@@ -330,7 +313,6 @@ class Observation with _$Observation implements IFhirResource {
         );
       }
 
-      // Applies To (Age/Gender specific ranges)
       if (range.appliesTo != null && range.appliesTo!.isNotEmpty) {
         final appliesDisplay = range.appliesTo!
             .map((a) => FhirFieldExtractor.extractCodeableConceptText(a))
@@ -345,7 +327,6 @@ class Observation with _$Observation implements IFhirResource {
       }
     }
 
-    // Date
     if (date != null) {
       infoLines.add(RecordInfoLine(
         icon: Assets.icons.calendar,
@@ -353,7 +334,6 @@ class Observation with _$Observation implements IFhirResource {
       ));
     }
 
-    // Notes (Clinical interpretation/comments)
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -362,6 +342,262 @@ class Observation with _$Observation implements IFhirResource {
 
     return infoLines;
   }
+
+  List<RecordInfoLine> additionalInfoForRegion(RegionPreset region) {
+    List<RecordInfoLine> infoLines = [];
+    infoLines.add(ResourceFieldMapper.createSectionHeader('Result'));
+
+    final valueDisplay =
+        FhirFieldExtractor.extractObservationValueForRegion(valueX, region);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createValueLine(valueDisplay, prefix: 'Value'),
+    );
+
+    if (component != null && component!.isNotEmpty) {
+      for (final comp in component!) {
+        final componentCode =
+            FhirFieldExtractor.extractCodeableConceptText(comp.code);
+        final componentValue =
+            FhirFieldExtractor.extractObservationValueForRegion(
+                comp.valueX, region);
+
+        if (componentCode != null && componentValue != null) {
+          ResourceFieldMapper.addIfNotNull(
+            infoLines,
+            ResourceFieldMapper.createValueLine(componentValue,
+                prefix: componentCode),
+          );
+        }
+      }
+    }
+
+    final interpretationDisplay =
+        FhirFieldExtractor.extractInterpretation(interpretation);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createWarningLine(interpretationDisplay,
+          prefix: 'Status'),
+    );
+
+    if (referenceRange != null && referenceRange!.isNotEmpty) {
+      final range = referenceRange!.first;
+      final rawLow = range.low?.value?.valueDouble;
+      final rawHigh = range.high?.value?.valueDouble;
+      final rawUnit = range.low?.unit ?? range.high?.unit ?? '';
+
+      double? displayLow = rawLow;
+      double? displayHigh = rawHigh;
+      String displayUnit = rawUnit.toString();
+
+      if (rawLow != null) {
+        final converted = FhirFieldExtractor.convertQuantityForRegion(
+            rawLow, displayUnit, region);
+        displayLow = converted.value;
+        displayUnit = converted.unit;
+      }
+      if (rawHigh != null) {
+        final converted = FhirFieldExtractor.convertQuantityForRegion(
+            rawHigh, displayUnit, region);
+        displayHigh = converted.value;
+        displayUnit = converted.unit;
+      }
+
+      String? rangeDisplay;
+      if (displayLow != null && displayHigh != null) {
+        rangeDisplay =
+            '${displayLow.toStringAsFixed(2)} - ${displayHigh.toStringAsFixed(2)} $displayUnit';
+      } else if (displayLow != null) {
+        rangeDisplay = '> ${displayLow.toStringAsFixed(2)} $displayUnit';
+      } else if (displayHigh != null) {
+        rangeDisplay = '< ${displayHigh.toStringAsFixed(2)} $displayUnit';
+      }
+
+      final rangeType =
+          FhirFieldExtractor.extractCodeableConceptText(range);
+      if (rangeType != null && rangeDisplay != null) {
+        rangeDisplay = '$rangeDisplay ($rangeType)';
+      }
+
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createLabLine(rangeDisplay,
+            prefix: 'Reference Range'),
+      );
+    }
+
+    if (valueDisplay == null || valueDisplay.isEmpty) {
+      final absentReason =
+          FhirFieldExtractor.extractCodeableConceptText(dataAbsentReason);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createWarningLine(absentReason,
+            prefix: 'Data Absent Reason'),
+      );
+    }
+
+    infoLines
+        .add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+
+    final categoryDisplay =
+        FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createCategoryLine(categoryDisplay,
+          prefix: 'Category'),
+    );
+
+    final effectiveDisplay =
+        FhirFieldExtractor.extractEffectiveXFormatted(effectiveX);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(effectiveDisplay,
+          prefix: 'Test Date'),
+    );
+
+    final issuedDisplay = FhirFieldExtractor.formatFhirInstant(issued);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createDateLine(issuedDisplay,
+          prefix: 'Result Date'),
+    );
+
+    final performerDisplay =
+        FhirFieldExtractor.extractPerformers(performer);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createUserLine(performerDisplay,
+          prefix: 'Performed By'),
+    );
+
+    final methodDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(method);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createProcedureLine(methodDisplay,
+          prefix: 'Method'),
+    );
+
+    infoLines.add(
+        ResourceFieldMapper.createSectionHeader('Additional Information'));
+
+    final statusText = status?.valueString;
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+    );
+
+    final specimenDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(specimen);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createLabLine(specimenDisplay,
+          prefix: 'Specimen Type'),
+    );
+
+    final bodySiteDisplay =
+        FhirFieldExtractor.extractCodeableConceptText(bodySite);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
+          prefix: 'Body Site'),
+    );
+
+    final deviceDisplay =
+        FhirFieldExtractor.extractReferenceDisplay(device);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createProcedureLine(deviceDisplay,
+          prefix: 'Device'),
+    );
+
+    if (hasMember != null && hasMember!.isNotEmpty) {
+      final memberDisplay = hasMember!
+          .map((m) => FhirFieldExtractor.extractReferenceDisplay(m))
+          .where((m) => m != null && m.isNotEmpty)
+          .take(3)
+          .join(', ');
+
+      if (memberDisplay.isNotEmpty) {
+        final suffix = hasMember!.length > 3
+            ? ' (${hasMember!.length - 3} more)'
+            : '';
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createLabLine(memberDisplay + suffix,
+              prefix: 'Panel Components'),
+        );
+      }
+    }
+
+    if (derivedFrom != null && derivedFrom!.isNotEmpty) {
+      final derivedDisplay = derivedFrom!
+          .map((d) => FhirFieldExtractor.extractReferenceDisplay(d))
+          .where((d) => d != null && d.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createLabLine(
+            derivedDisplay.isNotEmpty ? derivedDisplay : null,
+            prefix: 'Derived From'),
+      );
+    }
+
+    if (basedOn != null && basedOn!.isNotEmpty) {
+      final basedOnDisplay = basedOn!
+          .map((b) => FhirFieldExtractor.extractReferenceDisplay(b))
+          .where((b) => b != null && b.isNotEmpty)
+          .join(', ');
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createDocumentLine(
+            basedOnDisplay.isNotEmpty ? basedOnDisplay : null,
+            prefix: 'Ordered By'),
+      );
+    }
+
+    if (referenceRange != null && referenceRange!.isNotEmpty) {
+      final range = referenceRange!.first;
+      final rangeText = range.text?.valueString;
+      if (rangeText != null && rangeText.isNotEmpty) {
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createNotesLine(rangeText,
+              prefix: 'Range Notes'),
+        );
+      }
+
+      if (range.appliesTo != null && range.appliesTo!.isNotEmpty) {
+        final appliesDisplay = range.appliesTo!
+            .map((a) => FhirFieldExtractor.extractCodeableConceptText(a))
+            .where((a) => a != null && a.isNotEmpty)
+            .join(', ');
+        ResourceFieldMapper.addIfNotNull(
+          infoLines,
+          ResourceFieldMapper.createNotesLine(
+              appliesDisplay.isNotEmpty ? appliesDisplay : null,
+              prefix: 'Range Applies To'),
+        );
+      }
+    }
+
+    if (date != null) {
+      infoLines.add(RecordInfoLine(
+        icon: Assets.icons.calendar,
+        info: DateFormatUtils.formatDate(date!, region),
+      ));
+    }
+
+    final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      ResourceFieldMapper.createNotesLine(notesDisplay,
+          prefix: 'Clinical Notes'),
+    );
+
+    return infoLines;
+  }
+
   @override
   List<String?> get resourceReferences {
     return {

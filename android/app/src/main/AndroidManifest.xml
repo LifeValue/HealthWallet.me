@@ -119,6 +119,31 @@
                     android:scheme="healthwallet"
                     android:host="add-document"/>
             </intent-filter>
+            <!-- Emergency card HTTPS universal link -->
+            <intent-filter
+                android:autoVerify="true">
+                <action
+                    android:name="android.intent.action.VIEW"/>
+                <category
+                    android:name="android.intent.category.DEFAULT"/>
+                <category
+                    android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="https"
+                    android:host="emergency.healthwallet.me"/>
+            </intent-filter>
+            <!-- Legacy custom scheme emergency link -->
+            <intent-filter>
+                <action
+                    android:name="android.intent.action.VIEW"/>
+                <category
+                    android:name="android.intent.category.DEFAULT"/>
+                <category
+                    android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="healthwallet"
+                    android:host="emergency"/>
+            </intent-filter>
             <meta-data
                 android:name="flutter_deeplinking_enabled"
                 android:value="false"/>

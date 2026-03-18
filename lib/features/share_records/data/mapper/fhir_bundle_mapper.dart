@@ -77,6 +77,13 @@ class FhirBundleMapper {
   }
 
   static Future<File?> _resolveFile(String storedPath) async {
+    if (!storedPath.startsWith('/')) {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final resolved = File('${docsDir.path}/$storedPath');
+      if (await resolved.exists()) return resolved;
+      return null;
+    }
+
     final file = File(storedPath);
     if (await file.exists()) return file;
 
@@ -205,47 +212,38 @@ class FhirBundleMapper {
           if (coding != null && coding.isNotEmpty) {
             return coding[0]['display']?.toString() ?? 'Encounter';
           }
+          final text = type[0]['text']?.toString();
+          if (text != null) return text;
         }
         return 'Encounter';
       case 'Observation':
-        final code = json['code']?['coding'] as List?;
-        if (code != null && code.isNotEmpty) {
-          return code[0]['display']?.toString() ?? 'Observation';
-        }
-        return 'Observation';
+        return _extractCodeableConceptTitle(json['code'], 'Observation');
       case 'Condition':
-        final code = json['code']?['coding'] as List?;
-        if (code != null && code.isNotEmpty) {
-          return code[0]['display']?.toString() ?? 'Condition';
-        }
-        return 'Condition';
+        return _extractCodeableConceptTitle(json['code'], 'Condition');
       case 'Procedure':
-        final code = json['code']?['coding'] as List?;
-        if (code != null && code.isNotEmpty) {
-          return code[0]['display']?.toString() ?? 'Procedure';
-        }
-        return 'Procedure';
+        return _extractCodeableConceptTitle(json['code'], 'Procedure');
       case 'Immunization':
-        final code = json['vaccineCode']?['coding'] as List?;
-        if (code != null && code.isNotEmpty) {
-          return code[0]['display']?.toString() ?? 'Immunization';
-        }
-        return 'Immunization';
+        return _extractCodeableConceptTitle(
+            json['vaccineCode'], 'Immunization');
       case 'MedicationRequest':
-        final med = json['medicationCodeableConcept']?['coding'] as List?;
-        if (med != null && med.isNotEmpty) {
-          return med[0]['display']?.toString() ?? 'Medication Request';
-        }
-        return 'Medication Request';
+        return _extractCodeableConceptTitle(
+            json['medicationCodeableConcept'], 'Medication Request');
       case 'DiagnosticReport':
-        final code = json['code']?['coding'] as List?;
-        if (code != null && code.isNotEmpty) {
-          return code[0]['display']?.toString() ?? 'Diagnostic Report';
-        }
-        return 'Diagnostic Report';
+        return _extractCodeableConceptTitle(
+            json['code'], 'Diagnostic Report');
       default:
         return resourceType;
     }
+  }
+
+  static String _extractCodeableConceptTitle(
+      dynamic codeableConcept, String fallback) {
+    if (codeableConcept is! Map<String, dynamic>) return fallback;
+    final coding = codeableConcept['coding'] as List?;
+    if (coding != null && coding.isNotEmpty) {
+      return coding[0]['display']?.toString() ?? fallback;
+    }
+    return codeableConcept['text']?.toString() ?? fallback;
   }
 
   static DateTime? _extractDate(

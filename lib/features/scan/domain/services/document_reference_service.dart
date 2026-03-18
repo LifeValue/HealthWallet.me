@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/scan/presentation/services/pdf_generation_service.dart';
+import 'package:health_wallet/features/scan/data/services/pdf_generation_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 
@@ -13,8 +14,10 @@ import 'package:health_wallet/core/utils/logger.dart';
 class DocumentReferenceService {
   final AppDatabase _database;
   final PdfGenerationService _pdfGenerationService;
+  final PathResolver _pathResolver;
 
-  DocumentReferenceService(this._database, this._pdfGenerationService);
+  DocumentReferenceService(
+      this._database, this._pdfGenerationService, this._pathResolver);
 
   Future<List<String>> saveGroupedDocumentsAsFhirRecords({
     required List<String> filePaths,
@@ -66,6 +69,7 @@ class DocumentReferenceService {
     final file = File(pdfPath);
     final bytes = await file.readAsBytes();
     final timestamp = DateTime.now();
+    final relativePdfPath = await _pathResolver.toRelative(pdfPath);
 
     final documentReferenceId = _generateId();
 
@@ -102,7 +106,7 @@ class DocumentReferenceService {
         fhir_r4.DocumentReferenceContent(
           attachment: fhir_r4.Attachment(
             contentType: fhir_r4.FhirCode('application/pdf'),
-            url: fhir_r4.FhirUrl('file://$pdfPath'),
+            url: fhir_r4.FhirUrl('file://$relativePdfPath'),
             title: fhir_r4.FhirString(title),
             size: fhir_r4.FhirUnsignedInt(bytes.length.toString()),
           ),
