@@ -225,13 +225,14 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildEmergencyContactRow(BuildContext context, Patient patient) {
     final phone = FhirFieldExtractor.extractTelecomBySystem(
         patient.contact?.firstOrNull?.telecom, 'phone');
-    if (phone == null || phone.isEmpty) return const SizedBox.shrink();
-    final formatted = PhoneDisplayFormatter.format(phone);
+    final display = (phone != null && phone.isNotEmpty)
+        ? PhoneDisplayFormatter.format(phone)
+        : '-';
 
     return _buildPatientInfoRow(
       context,
       Icon(Icons.phone, size: 16, color: iconColor),
-      '${context.l10n.emergencyContact}: $formatted',
+      '${context.l10n.emergencyContact}: $display',
     );
   }
 

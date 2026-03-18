@@ -1,5 +1,8 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
@@ -16,23 +19,28 @@ class DefaultPatientService {
 
   Future<Patient> createDefaultWalletHolder() async {
     final resourceId = const Uuid().v4();
+    final prefs = await SharedPreferences.getInstance();
+    final savedCountry = prefs.getString(SharedPrefsConstants.countryCode);
+    final profile = savedCountry != null
+        ? CountryIdentifier.forCountry(savedCountry)
+        : CountryIdentifier.forCurrentLocale();
 
     final dbId = 'wallet_default_wallet_holder';
 
-    final mrnIdentifier = fhir_r4.Identifier(
+    final identifier = fhir_r4.Identifier(
       type: fhir_r4.CodeableConcept(
         coding: [
           fhir_r4.Coding(
             system: fhir_r4.FhirUri(
               'http://terminology.hl7.org/CodeSystem/v2-0203',
             ),
-            code: fhir_r4.FhirCode('MR'),
-            display: fhir_r4.FhirString('Medical Record Number'),
+            code: fhir_r4.FhirCode(profile.identifierFhirCode),
+            display: fhir_r4.FhirString(profile.identifierDisplayName),
           ),
         ],
-        text: fhir_r4.FhirString('Medical Record Number'),
+        text: fhir_r4.FhirString(profile.identifierDisplayName),
       ),
-      system: fhir_r4.FhirUri('http://healthwallet.me/mrn'),
+      system: fhir_r4.FhirUri(profile.fhirIdentifierSystem),
       value: fhir_r4.FhirString('default_wallet_holder'),
     );
 
@@ -50,7 +58,7 @@ class DefaultPatientService {
       ],
       birthDate: null,
       gender: null,
-      identifier: [mrnIdentifier],
+      identifier: [identifier],
       rawResource: {
         'resourceType': 'Patient',
         'id': resourceId,
@@ -67,13 +75,13 @@ class DefaultPatientService {
               'coding': [
                 {
                   'system': 'http://terminology.hl7.org/CodeSystem/v2-0203',
-                  'code': 'MR',
-                  'display': 'Medical Record Number',
+                  'code': profile.identifierFhirCode,
+                  'display': profile.identifierDisplayName,
                 }
               ],
-              'text': 'Medical Record Number',
+              'text': profile.identifierDisplayName,
             },
-            'system': 'http://healthwallet.me/mrn',
+            'system': profile.fhirIdentifierSystem,
             'value': 'default_wallet_holder',
           }
         ],

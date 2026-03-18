@@ -1,3 +1,4 @@
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
@@ -5,7 +6,11 @@ import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapp
 class PatientPostProcessor {
   static String get _ts => DateTime.now().toIso8601String().substring(11, 23);
 
-  static MappingPatient postProcess(MappingPatient patient, String ocrText) {
+  static MappingPatient postProcess(
+    MappingPatient patient,
+    String ocrText, {
+    String? regionDefaultLabel,
+  }) {
     ScanLogBuffer.instance.log('[$_ts][PostProcessor] patient: ${patient.givenName.value} ${patient.familyName.value}, mrn=${patient.patientMRN.value}, label=${patient.identifierLabel}');
 
     var result = patient;
@@ -16,6 +21,14 @@ class PatientPostProcessor {
     result = _validateNames(result);
     result = _recoverNamesFromOcr(result, ocrText);
 
+    final defaultLabel = regionDefaultLabel ??
+        CountryIdentifier.forCurrentLocale().identifierLabel;
+    if (defaultLabel != 'ID' &&
+        (result.identifierLabel == 'ID' || result.identifierLabel == 'MRN') &&
+        result.patientMRN.value.isEmpty) {
+      result = result.copyWith(identifierLabel: defaultLabel);
+    }
+
     if (result != patient) {
       ScanLogBuffer.instance.log('[$_ts][PostProcessor] corrected: label=${result.identifierLabel}, dob=${result.dateOfBirth.value}, gender=${result.gender.value}');
     }
@@ -23,7 +36,7 @@ class PatientPostProcessor {
     return result;
   }
 
-  static final _knownLabels = {'CNP', 'MRN', 'SSN', 'NHS', 'Identifier'};
+  static final _knownLabels = {'CNP', 'MRN', 'SSN', 'NHS', 'KVNR', 'SVNr', 'DNI', 'CIP', 'NIR', 'CF', 'BSN', 'PESEL', 'PNR', 'AHV', 'Identifier'};
   static final _numericPattern = RegExp(r'^\d[\d\s\-\.]+$');
 
   static MappingPatient _fixSwappedIdentifierFields(MappingPatient patient) {

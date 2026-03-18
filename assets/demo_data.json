@@ -69,7 +69,7 @@
               "text": "Medical Record Number"
             },
             "system": "http://hospital.smarthealthit.org",
-            "value": "MRN-001"
+            "value": "1234567890"
           },
           {
             "type": {
@@ -98,7 +98,7 @@
         "telecom": [
           {
             "system": "phone",
-            "value": "555-123-4567",
+            "value": "+1 (555) 000-0000",
             "use": "home"
           },
           {
@@ -150,7 +150,7 @@
             "telecom": [
               {
                 "system": "phone",
-                "value": "+15551234567",
+                "value": "+1 (555) 000-0001",
                 "use": "mobile"
               }
             ]
@@ -205,7 +205,7 @@
         "telecom": [
           {
             "system": "phone",
-            "value": "555-987-6543"
+            "value": "+1 (555) 000-0002"
           }
         ],
         "address": [

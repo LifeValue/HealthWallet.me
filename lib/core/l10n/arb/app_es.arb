@@ -186,6 +186,8 @@
     "selectDate": "Seleccionar fecha",
     "attachToEncounter": "Adjuntar a Encuentro",
     "continueProcessing": "Continuar Procesamiento",
+    "recordsSavedTitle": "Registros Guardados",
+    "recordsSavedMessage": "Sus registros de salud se han guardado correctamente. ¿Qué le gustaría hacer a continuación?",
     "scanQRMessage": "Escanea el código QR de tu servidor Fasten Health para crear una nueva conexión de sincronización.",
     "viewAll": "Ver todo",
     "vitalSigns": "Signos Vitales",
@@ -354,6 +356,9 @@
     "cannotDeleteLastPage": "No se puede eliminar la última página",
     "pageRotated": "Página rotada",
     "regionAndUnits": "Idioma y Unidades",
+    "country": "País",
+    "scanIdCard": "Escanear DNI o Pasaporte",
+    "scanIdCardDescription": "Completa automáticamente desde tu documento. Los datos permanecen en tu dispositivo.",
     "language": "Idioma",
     "systemDefault": "Predeterminado del sistema",
     "regionUS": "US",
@@ -369,5 +374,227 @@
             }
         }
     },
-    "downloadingVisionModel": "Descargando modelo de visión..."
+    "downloadingVisionModel": "Descargando modelo de visión...",
+
+    "shareUnknownDevice": "Dispositivo Desconocido",
+    "shareViewOnlyBanner": "SOLO LECTURA - Los datos se eliminarán cuando cierre la sesión o salga del área de proximidad",
+    "shareViewOnlyBannerViewing": "SOLO LECTURA - Los datos se eliminarán cuando salga",
+    "shareInfoBannerMessage": "Los registros compartidos son de solo lectura. Todos los datos se eliminan automáticamente cuando la sesión termina o el límite de tiempo expira.",
+    "shareTitle": "Compartir",
+    "shareFindDevices": "Buscar Dispositivos",
+    "shareWaiting": "Esperando...",
+    "shareConnectingTitle": "Conectando",
+    "shareSending": "Enviando",
+    "shareReceiving": "Recibiendo",
+    "shareSessionActive": "Sesión Activa",
+    "shareViewingRecords": "Viendo Registros",
+    "shareComplete": "Completo",
+    "shareError": "Error",
+    "sharePermissionsRequired": "Permisos Requeridos",
+    "shareHealthWalletDevice": "Dispositivo HealthWallet",
+    "shareInvitationDeclined": "Invitación Rechazada",
+    "shareSessionComplete": "Sesión Completa",
+    "shareInvitationDeclinedMessage": "El receptor rechazó su invitación para ver los registros.",
+    "shareSessionCompleteMessage": "Todos los datos compartidos han sido eliminados de forma segura de este dispositivo",
+    "shareBackHome": "Volver al Inicio",
+    "shareConnectionFailed": "Conexión Fallida",
+    "shareUnableToConnect": "No se pudo conectar. Inténtelo de nuevo.",
+    "shareNoDataReceived": "No se recibieron datos",
+    "shareSearchRecords": "Buscar registros",
+    "shareNoRecordsMatchFilters": "No hay registros que coincidan con los filtros",
+    "shareNoRecordsAvailable": "No hay registros disponibles",
+    "shareReceiverViewingRecords": "El receptor está viendo los registros",
+    "shareSessionAutoExpire": "La sesión expirará automáticamente cuando el temporizador llegue a cero",
+    "shareRecordsDelivered": "Registros entregados con éxito",
+    "shareConnecting": "Conectando...",
+    "shareConnectionInterrupted": "Conexión interrumpida, reconectando",
+    "shareSendingRecords": "Enviando registros...",
+    "shareReceivingRecords": "Recibiendo registros...",
+    "shareConfirmExit": "Confirmar Salida",
+    "shareDeleteSharedRecords": "¿Eliminar Registros Compartidos?",
+    "shareDeleteWarning": "El registro compartido se eliminará permanentemente de este dispositivo. La acción no se puede deshacer",
+    "shareDeleteAndExit": "Eliminar y Salir",
+    "shareIncomingTransfer": "Transferencia Entrante",
+    "shareViewOnlyWarning": "Los registros serán de solo lectura y se eliminarán automáticamente al salir",
+    "shareDecline": "Rechazar",
+    "shareAccept": "Aceptar",
+    "shareSearchingForDevices": "Buscando dispositivos cercanos...",
+    "shareSearchForDevices": "Buscar dispositivos...",
+    "shareNoDevicesFound": "No se Encontraron Dispositivos",
+    "shareConnectionIssue": "Problema de Conexión",
+    "shareWifiDirectUnresponsive": "WiFi Direct no responde en este dispositivo.",
+    "shareWifiToggleHint": "WiFi Direct no responde. Desactive/active WiFi, luego toque Reintentar.",
+    "shareDiscoveryHint": "Asegúrese de que el otro dispositivo tenga la aplicación HealthWallet.me abierta",
+    "shareProximityHint": "El dispositivo receptor debe tener Proximidad de Compartir ACTIVADA en Preferencias para ser detectable.",
+    "shareNoRecordsMatchSelectedFilters": "No hay registros que coincidan con los filtros seleccionados",
+    "shareNoRecordsForAppliedFilters": "No se encontraron registros para los filtros aplicados",
+    "shareTryClearingFilters": "Intente borrar algunos filtros",
+    "shareRecordsPageFiltersNoResults": "Los filtros de la página de Registros no devolvieron resultados",
+    "shareImportOrSyncRecords": "Importe o sincronice registros para compartirlos",
+    "shareSessionTime": "Tiempo de sesión",
+    "shareSetAsDefault": "Establecer como predeterminado",
+    "shareRecordsButton": "Compartir Registros",
+    "shareSelectRecordsToShare": "Seleccione registros para compartir",
+    "shareEndSession": "Finalizar Sesión",
+    "shareRequestTenMin": "Solicitar +10 min",
+    "shareWaitingForResponse": "Esperando respuesta...",
+    "shareAddMoreTime": "Agregar más tiempo",
+    "shareSessionExpiresIn": "La sesión expira en",
+    "shareExtensionRequestedTitle": "Extensión Solicitada",
+    "shareHoursLabel": "horas",
+    "shareMinLabel": "min",
+    "shareSelectedCount": "{count} seleccionados",
+    "@shareSelectedCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "shareRecordCount": "{recordCount} registro(s)",
+    "@shareRecordCount": {
+        "placeholders": {
+            "recordCount": {
+                "type": "int"
+            }
+        }
+    },
+    "shareSharedFrom": "compartido desde {source}",
+    "@shareSharedFrom": {
+        "placeholders": {
+            "source": {
+                "type": "String"
+            }
+        }
+    },
+    "shareFoundDevices": "Se encontraron {count} dispositivo(s)",
+    "@shareFoundDevices": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "shareRetryingCount": "Reintentando ({retryCount}/3)...",
+    "@shareRetryingCount": {
+        "placeholders": {
+            "retryCount": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDeviceWantsToShare": "{deviceName} quiere compartir registros contigo",
+    "@shareDeviceWantsToShare": {
+        "placeholders": {
+            "deviceName": {
+                "type": "String"
+            }
+        }
+    },
+    "shareExtensionsUsed": "{used}/{max} extensiones usadas",
+    "@shareExtensionsUsed": {
+        "placeholders": {
+            "used": {
+                "type": "int"
+            },
+            "max": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationHoursMinutes": "{hours}h {minutes} min",
+    "@shareDurationHoursMinutes": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            },
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationHours": "{hours}h",
+    "@shareDurationHours": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationMinutes": "{minutes} min",
+    "@shareDurationMinutes": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerHoursMinutesSeconds": "{hours}h {minutes}min {seconds}s",
+    "@shareTimerHoursMinutesSeconds": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            },
+            "minutes": {
+                "type": "int"
+            },
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerMinutesSeconds": "{minutes}min {seconds}s",
+    "@shareTimerMinutesSeconds": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            },
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerSeconds": "{seconds}s",
+    "@shareTimerSeconds": {
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareMinuteCount": "{minutes} minuto(s)",
+    "@shareMinuteCount": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareSecondsCount": "{seconds} segundos",
+    "@shareSecondsCount": {
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareExtensionRequestMessage": "El {peerRole} quiere extender la sesión en {duration}",
+    "@shareExtensionRequestMessage": {
+        "placeholders": {
+            "peerRole": {
+                "type": "String"
+            },
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "shareExtensionDurationRequested": "{duration} solicitado",
+    "@shareExtensionDurationRequested": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    }
 }

@@ -89,7 +89,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
           timeRemaining: state.viewingTimeRemaining,
           isExpanded: _isExpanded,
           statusText: state.extensionRequestPending
-              ? '${_formatDuration(_lastRequestedSeconds)} requested'
+              ? '${_formatDuration(context, _lastRequestedSeconds)} requested'
               : null,
           onToggleExpanded: state.canRequestExtension &&
                   !state.extensionRequestPending
@@ -105,7 +105,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             Padding(
               padding: const EdgeInsets.only(bottom: Insets.small),
               child: Text(
-                '${state.extensionsUsed}/${state.maxExtensions} extensions used',
+                context.l10n.shareExtensionsUsed(state.extensionsUsed, state.maxExtensions),
                 style: AppTextStyle.labelSmall.copyWith(
                   color: context.colorScheme.onSurface
                       .withValues(alpha: 0.5),
@@ -137,7 +137,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: 'Request +10 min',
+                  label: context.l10n.shareRequestTenMin,
                   onPressed: state.extensionRequestPending ||
                           !state.canRequestExtension
                       ? null
@@ -154,7 +154,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
               const SizedBox(width: Insets.small),
               Expanded(
                 child: AppButton(
-                  label: 'End Session',
+                  label: context.l10n.shareEndSession,
                   onPressed: () => _confirmEndSession(context),
                   backgroundColor: AppColors.error,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -188,7 +188,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             Padding(
               padding: const EdgeInsets.only(bottom: Insets.small),
               child: Text(
-                '${state.extensionsUsed}/${state.maxExtensions} extensions used',
+                context.l10n.shareExtensionsUsed(state.extensionsUsed, state.maxExtensions),
                 style: AppTextStyle.labelSmall.copyWith(
                   color: context.colorScheme.onSurface
                       .withValues(alpha: 0.5),
@@ -217,7 +217,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             Insets.normal,
           ),
           child: AppButton(
-            label: 'End Session',
+            label: context.l10n.shareEndSession,
             onPressed: () => _confirmEndSession(context),
             backgroundColor: AppColors.error,
             padding: const EdgeInsets.symmetric(
@@ -243,7 +243,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
           ),
           const SizedBox(width: Insets.small),
           Text(
-            'Waiting for response...',
+            context.l10n.shareWaitingForResponse,
             style: AppTextStyle.bodyMedium.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
@@ -265,7 +265,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               AppButton(
-                label: 'Cancel',
+                label: context.l10n.cancel,
                 onPressed: () => setState(() => _isExpanded = false),
                 variant: AppButtonVariant.tinted,
                 backgroundColor: context.colorScheme.onSurface,
@@ -278,13 +278,13 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
                 fontSize: AppTextStyle.labelLarge.fontSize,
               ),
               Text(
-                'Add more time',
+                context.l10n.shareAddMoreTime,
                 style: AppTextStyle.bodyMedium.copyWith(
                   color: context.colorScheme.onSurface,
                 ),
               ),
               AppButton(
-                label: 'Save',
+                label: context.l10n.save,
                 onPressed: _submitExtension,
                 variant: AppButtonVariant.tinted,
                 pillShaped: true,
@@ -308,7 +308,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
                 child: _buildScrollWheel(
                   context: context,
                   controller: _hoursController,
-                  label: 'hours',
+                  label: context.l10n.shareHoursLabel,
                   maxValue: 3,
                   currentValue: _extendHours,
                   onChanged: (v) {
@@ -329,7 +329,7 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
                 child: _buildScrollWheel(
                   context: context,
                   controller: _minutesController,
-                  label: 'min',
+                  label: context.l10n.shareMinLabel,
                   maxValue: 59,
                   step: 5,
                   currentValue: _extendMinutes,
@@ -408,13 +408,13 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
     }
   }
 
-  String _formatDuration(int? seconds) {
+  String _formatDuration(BuildContext context, int? seconds) {
     if (seconds == null || seconds <= 0) return '';
     final h = seconds ~/ 3600;
     final m = (seconds % 3600) ~/ 60;
-    if (h > 0 && m > 0) return '${h}h ${m}min';
-    if (h > 0) return '${h}h';
-    return '${m}min';
+    if (h > 0 && m > 0) return context.l10n.shareDurationHoursMinutes(h, m);
+    if (h > 0) return context.l10n.shareDurationHours(h);
+    return context.l10n.shareDurationMinutes(m);
   }
 
   void _confirmEndSession(BuildContext context) async {

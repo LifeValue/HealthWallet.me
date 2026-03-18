@@ -208,7 +208,9 @@
     "selectDate": "Select date",
     "attachToEncounter": "Attach to Encounter",
     "continueProcessing": "Continue Processing",
-    
+    "recordsSavedTitle": "Records Saved",
+    "recordsSavedMessage": "Your health records have been saved successfully. What would you like to do next?",
+
     "effectiveDate": "Effective Date",
     "finishProcessing": "Finish Processing",
     "finishProcessingMessage": "Are you sure you want to finish this processing session?",
@@ -370,6 +372,9 @@
     "cannotDeleteLastPage": "Cannot delete the last page",
     "pageRotated": "Page rotated",
     "regionAndUnits": "Language & Units",
+    "country": "Country",
+    "scanIdCard": "Scan ID Card or Passport",
+    "scanIdCardDescription": "Auto-fill from your document. Data stays on your device.",
     "language": "Language",
     "systemDefault": "System Default",
     "regionUS": "US",
@@ -385,5 +390,227 @@
             }
         }
     },
-    "downloadingVisionModel": "Downloading vision model..."
+    "downloadingVisionModel": "Downloading vision model...",
+
+    "shareUnknownDevice": "Unknown Device",
+    "shareViewOnlyBanner": "VIEW ONLY - Data will be deleted when you close the session or leave proximity area",
+    "shareViewOnlyBannerViewing": "VIEW ONLY - Data will be deleted when you exit",
+    "shareInfoBannerMessage": "Shared records are view-only. All data is automatically deleted when the session ends or the time limit expires.",
+    "shareTitle": "Share",
+    "shareFindDevices": "Find Devices",
+    "shareWaiting": "Waiting...",
+    "shareConnectingTitle": "Connecting",
+    "shareSending": "Sending",
+    "shareReceiving": "Receiving",
+    "shareSessionActive": "Session Active",
+    "shareViewingRecords": "Viewing Records",
+    "shareComplete": "Complete",
+    "shareError": "Error",
+    "sharePermissionsRequired": "Permissions Required",
+    "shareHealthWalletDevice": "HealthWallet Device",
+    "shareInvitationDeclined": "Invitation Declined",
+    "shareSessionComplete": "Session Complete",
+    "shareInvitationDeclinedMessage": "The receiver declined your invitation to view the records.",
+    "shareSessionCompleteMessage": "All shared data has been securely removed from this device",
+    "shareBackHome": "Back Home",
+    "shareConnectionFailed": "Connection Failed",
+    "shareUnableToConnect": "Unable to connect. Please try again.",
+    "shareNoDataReceived": "No data received",
+    "shareSearchRecords": "Search records",
+    "shareNoRecordsMatchFilters": "No records match the filters",
+    "shareNoRecordsAvailable": "No records available",
+    "shareReceiverViewingRecords": "Receiver is viewing records",
+    "shareSessionAutoExpire": "Session will auto-expire when timer reaches zero",
+    "shareRecordsDelivered": "Records delivered successfully",
+    "shareConnecting": "Connecting...",
+    "shareConnectionInterrupted": "Connection interrupted, reconnecting",
+    "shareSendingRecords": "Sending records...",
+    "shareReceivingRecords": "Receiving records...",
+    "shareConfirmExit": "Confirm Exit",
+    "shareDeleteSharedRecords": "Delete Shared Records?",
+    "shareDeleteWarning": "The shared record will be permanently deleted from this device. Action cannot be undone",
+    "shareDeleteAndExit": "Delete & Exit",
+    "shareIncomingTransfer": "Incoming Transfer",
+    "shareViewOnlyWarning": "Records will be view-only and automatically deleted when you exit",
+    "shareDecline": "Decline",
+    "shareAccept": "Accept",
+    "shareSearchingForDevices": "Searching for nearby devices...",
+    "shareSearchForDevices": "Search for devices...",
+    "shareNoDevicesFound": "No Devices Found",
+    "shareConnectionIssue": "Connection Issue",
+    "shareWifiDirectUnresponsive": "WiFi Direct is unresponsive on this device.",
+    "shareWifiToggleHint": "WiFi Direct unresponsive. Toggle WiFi off/on, then tap Retry.",
+    "shareDiscoveryHint": "Make sure the other device has the HealthWallet.me app opened",
+    "shareProximityHint": "The receiving device must have Share Proximity ON in Preferences to be discoverable.",
+    "shareNoRecordsMatchSelectedFilters": "No records match the selected filters",
+    "shareNoRecordsForAppliedFilters": "No records found for the applied filters",
+    "shareTryClearingFilters": "Try clearing some filters",
+    "shareRecordsPageFiltersNoResults": "The Records page filters returned no results",
+    "shareImportOrSyncRecords": "Import or sync records to share them",
+    "shareSessionTime": "Session time",
+    "shareSetAsDefault": "Set as default",
+    "shareRecordsButton": "Share Records",
+    "shareSelectRecordsToShare": "Select records to share",
+    "shareEndSession": "End Session",
+    "shareRequestTenMin": "Request +10 min",
+    "shareWaitingForResponse": "Waiting for response...",
+    "shareAddMoreTime": "Add more time",
+    "shareSessionExpiresIn": "Session expires in",
+    "shareExtensionRequestedTitle": "Extension Requested",
+    "shareHoursLabel": "hours",
+    "shareMinLabel": "min",
+    "shareSelectedCount": "{count} selected",
+    "@shareSelectedCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "shareRecordCount": "{recordCount} record(s)",
+    "@shareRecordCount": {
+        "placeholders": {
+            "recordCount": {
+                "type": "int"
+            }
+        }
+    },
+    "shareSharedFrom": "shared from {source}",
+    "@shareSharedFrom": {
+        "placeholders": {
+            "source": {
+                "type": "String"
+            }
+        }
+    },
+    "shareFoundDevices": "Found {count} device(s)",
+    "@shareFoundDevices": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "shareRetryingCount": "Retrying ({retryCount}/3)...",
+    "@shareRetryingCount": {
+        "placeholders": {
+            "retryCount": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDeviceWantsToShare": "{deviceName} wants to share records with you",
+    "@shareDeviceWantsToShare": {
+        "placeholders": {
+            "deviceName": {
+                "type": "String"
+            }
+        }
+    },
+    "shareExtensionsUsed": "{used}/{max} extensions used",
+    "@shareExtensionsUsed": {
+        "placeholders": {
+            "used": {
+                "type": "int"
+            },
+            "max": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationHoursMinutes": "{hours}h {minutes} min",
+    "@shareDurationHoursMinutes": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            },
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationHours": "{hours}h",
+    "@shareDurationHours": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationMinutes": "{minutes} min",
+    "@shareDurationMinutes": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerHoursMinutesSeconds": "{hours}h {minutes}min {seconds}s",
+    "@shareTimerHoursMinutesSeconds": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            },
+            "minutes": {
+                "type": "int"
+            },
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerMinutesSeconds": "{minutes}min {seconds}s",
+    "@shareTimerMinutesSeconds": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            },
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerSeconds": "{seconds}s",
+    "@shareTimerSeconds": {
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareMinuteCount": "{minutes} minute(s)",
+    "@shareMinuteCount": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareSecondsCount": "{seconds} seconds",
+    "@shareSecondsCount": {
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareExtensionRequestMessage": "The {peerRole} wants to extend the session by {duration}",
+    "@shareExtensionRequestMessage": {
+        "placeholders": {
+            "peerRole": {
+                "type": "String"
+            },
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "shareExtensionDurationRequested": "{duration} requested",
+    "@shareExtensionDurationRequested": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    }
 }

@@ -66,7 +66,7 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
           child: _buildScrollWheel(
             context: context,
             controller: _getHoursController(hours),
-            label: 'hours',
+            label: context.l10n.shareHoursLabel,
             maxValue: 3,
             currentValue: hours,
             onChanged: (newHours) {
@@ -89,7 +89,7 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
           child: _buildScrollWheel(
             context: context,
             controller: _getMinutesController(minutes),
-            label: 'min',
+            label: context.l10n.shareMinLabel,
             maxValue: 59,
             step: 5,
             currentValue: minutes,

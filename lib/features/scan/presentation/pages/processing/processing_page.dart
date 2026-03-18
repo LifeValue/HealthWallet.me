@@ -20,6 +20,7 @@ import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encou
 import 'package:health_wallet/features/scan/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/summary_card.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @RoutePage()
@@ -167,7 +168,19 @@ class _ProcessingPageState extends State<ProcessingPage> {
           context
               .read<ScanBloc>()
               .add(ScanSessionCleared(session: displayedSession));
-          context.router.replaceAll([const DashboardRoute()]);
+          AppSimpleDialog.showConfirmation(
+            context: context,
+            title: context.l10n.recordsSavedTitle,
+            message: context.l10n.recordsSavedMessage,
+            confirmText: context.l10n.continueButton,
+            cancelText: context.l10n.dashboardTitle,
+            onConfirm: () {
+              context.router.maybePop();
+            },
+            onCancel: () {
+              context.router.replaceAll([const DashboardRoute()]);
+            },
+          );
         }
       },
       builder: (context, state) {

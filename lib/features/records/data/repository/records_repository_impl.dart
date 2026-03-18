@@ -12,7 +12,10 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/sync/domain/services/demo_data_extractor.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/services.dart';
 
@@ -188,6 +191,18 @@ class RecordsRepositoryImpl implements RecordsRepository {
             'Demo data file has invalid format: neither "entry" nor "resources" key found');
       }
 
+      final prefs = await SharedPreferences.getInstance();
+      final savedCountry = prefs.getString(SharedPrefsConstants.countryCode);
+      final profile = savedCountry != null
+          ? CountryIdentifier.forCountry(savedCountry)
+          : CountryIdentifier.forCurrentLocale();
+      for (int i = 0; i < resources.length; i++) {
+        final resource = resources[i] as Map<String, dynamic>;
+        if (resource['resourceType'] == 'Patient') {
+          resources[i] = _adaptDemoPatientIdentifier(resource, profile);
+        }
+      }
+
       final processedResources = resources
           .map((resource) => FhirResourceDto.fromJson({
                 'id': resource['id'],
@@ -209,9 +224,75 @@ class RecordsRepositoryImpl implements RecordsRepository {
     }
   }
 
+  Map<String, dynamic> _adaptDemoPatientIdentifier(
+    Map<String, dynamic> patient,
+    CountryIdentifier profile,
+  ) {
+    var result = Map<String, dynamic>.from(patient);
+
+    final identifiers = result['identifier'] as List<dynamic>?;
+    if (identifiers != null) {
+      result['identifier'] = identifiers.map((id) {
+        final idMap = Map<String, dynamic>.from(id as Map<String, dynamic>);
+        final type = idMap['type'] as Map<String, dynamic>?;
+        if (type == null) return idMap;
+        final codings = type['coding'] as List<dynamic>?;
+        if (codings == null || codings.isEmpty) return idMap;
+        final coding = Map<String, dynamic>.from(codings.first as Map<String, dynamic>);
+        if (coding['code'] == 'MR') {
+          coding['code'] = profile.identifierFhirCode;
+          coding['display'] = profile.identifierDisplayName;
+          idMap['type'] = {
+            'coding': [coding],
+            'text': profile.identifierDisplayName,
+          };
+          idMap['system'] = profile.fhirIdentifierSystem;
+        }
+        return idMap;
+      }).toList();
+    }
+
+    result = _adaptPhoneNumbers(result, profile.dialCode);
+
+    return result;
+  }
+
+  Map<String, dynamic> _adaptPhoneNumbers(
+    Map<String, dynamic> resource,
+    String dialCode,
+  ) {
+    final result = Map<String, dynamic>.from(resource);
+
+    final telecom = result['telecom'] as List<dynamic>?;
+    if (telecom != null) {
+      result['telecom'] = telecom.map((t) {
+        final tMap = Map<String, dynamic>.from(t as Map<String, dynamic>);
+        if (tMap['system'] == 'phone') tMap['value'] = '+$dialCode';
+        return tMap;
+      }).toList();
+    }
+
+    final contact = result['contact'] as List<dynamic>?;
+    if (contact != null) {
+      result['contact'] = contact.map((c) {
+        final cMap = Map<String, dynamic>.from(c as Map<String, dynamic>);
+        final cTelecom = cMap['telecom'] as List<dynamic>?;
+        if (cTelecom != null) {
+          cMap['telecom'] = cTelecom.map((t) {
+            final tMap = Map<String, dynamic>.from(t as Map<String, dynamic>);
+            if (tMap['system'] == 'phone') tMap['value'] = '+$dialCode';
+            return tMap;
+          }).toList();
+        }
+        return cMap;
+      }).toList();
+    }
+
+    return result;
+  }
+
   @override
   Future<void> clearDemoData() async {
-    // Delete all FHIR resources for demo_data source
     await _datasource.deleteResourcesBySourceId('demo_data');
 
     // Delete the demo_data source itself

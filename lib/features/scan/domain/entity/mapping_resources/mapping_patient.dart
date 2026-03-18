@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
@@ -22,10 +23,13 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     @Default(MappedProperty()) MappedProperty dateOfBirth,
     @Default(MappedProperty()) MappedProperty gender,
     @Default(MappedProperty()) MappedProperty patientMRN,
-    @Default('MRN') String identifierLabel,
+    @Default('ID') String identifierLabel,
   }) = _MappingPatient;
 
-  factory MappingPatient.fromJson(Map<String, dynamic> json) {
+  factory MappingPatient.fromJson(
+    Map<String, dynamic> json, {
+    String defaultLabel = 'ID',
+  }) {
     final rawLabel = (json['identifierLabel'] as String?)?.trim() ?? '';
     final rawDob = MappedProperty.fromJson(json['dateOfBirth']);
     return MappingPatient(
@@ -38,7 +42,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       gender: MappedProperty.fromJson(json['gender']),
       patientMRN:
           MappedProperty.fromJson(json['patientMRN'] ?? json['patientId']),
-      identifierLabel: rawLabel.isEmpty ? 'MRN' : rawLabel,
+      identifierLabel: rawLabel.isEmpty ? defaultLabel : rawLabel,
     );
   }
 
@@ -100,6 +104,10 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     String? subjectId,
   }) {
     final identifierCoding = _mapLabelToFhirCode(identifierLabel);
+    final profile = CountryIdentifier.forCurrentLocale();
+    final identifierSystem = identifierCoding == profile.identifierFhirCode
+        ? profile.fhirIdentifierSystem
+        : 'http://healthwallet.me/mrn';
 
     fhir_r4.Patient patient = fhir_r4.Patient(
       name: [
@@ -116,6 +124,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         if (patientMRN.value.isNotEmpty)
           fhir_r4.Identifier(
             value: fhir_r4.FhirString(patientMRN.value),
+            system: fhir_r4.FhirUri(identifierSystem),
             type: fhir_r4.CodeableConcept(
               coding: identifierCoding != null
                   ? [
@@ -231,9 +240,20 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         return 'MR';
       case 'CNP':
       case 'SSN':
+      case 'KVNR':
+      case 'SVNR':
+      case 'CIP':
+      case 'NIR':
+      case 'CF':
+      case 'BSN':
+      case 'PESEL':
+      case 'PNR':
+      case 'AHV':
         return 'SS';
       case 'NHS':
         return 'NH';
+      case 'DNI':
+        return 'NI';
       case 'DL':
         return 'DL';
       case 'PPN':

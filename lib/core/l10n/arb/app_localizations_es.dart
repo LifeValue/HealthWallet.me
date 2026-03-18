@@ -590,6 +590,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get continueProcessing => 'Continuar Procesamiento';
 
   @override
+  String get recordsSavedTitle => 'Registros Guardados';
+
+  @override
+  String get recordsSavedMessage =>
+      'Sus registros de salud se han guardado correctamente. ¿Qué le gustaría hacer a continuación?';
+
+  @override
   String get effectiveDate => 'Fecha Efectiva';
 
   @override
@@ -1023,6 +1030,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get regionAndUnits => 'Idioma y Unidades';
 
   @override
+  String get country => 'País';
+
+  @override
+  String get scanIdCard => 'Escanear DNI o Pasaporte';
+
+  @override
+  String get scanIdCardDescription =>
+      'Completa automáticamente desde tu documento. Los datos permanecen en tu dispositivo.';
+
+  @override
   String get language => 'Idioma';
 
   @override
@@ -1051,4 +1068,309 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get downloadingVisionModel => 'Descargando modelo de visión...';
+
+  @override
+  String get shareUnknownDevice => 'Dispositivo Desconocido';
+
+  @override
+  String get shareViewOnlyBanner =>
+      'SOLO LECTURA - Los datos se eliminarán cuando cierre la sesión o salga del área de proximidad';
+
+  @override
+  String get shareViewOnlyBannerViewing =>
+      'SOLO LECTURA - Los datos se eliminarán cuando salga';
+
+  @override
+  String get shareInfoBannerMessage =>
+      'Los registros compartidos son de solo lectura. Todos los datos se eliminan automáticamente cuando la sesión termina o el límite de tiempo expira.';
+
+  @override
+  String get shareTitle => 'Compartir';
+
+  @override
+  String get shareFindDevices => 'Buscar Dispositivos';
+
+  @override
+  String get shareWaiting => 'Esperando...';
+
+  @override
+  String get shareConnectingTitle => 'Conectando';
+
+  @override
+  String get shareSending => 'Enviando';
+
+  @override
+  String get shareReceiving => 'Recibiendo';
+
+  @override
+  String get shareSessionActive => 'Sesión Activa';
+
+  @override
+  String get shareViewingRecords => 'Viendo Registros';
+
+  @override
+  String get shareComplete => 'Completo';
+
+  @override
+  String get shareError => 'Error';
+
+  @override
+  String get sharePermissionsRequired => 'Permisos Requeridos';
+
+  @override
+  String get shareHealthWalletDevice => 'Dispositivo HealthWallet';
+
+  @override
+  String get shareInvitationDeclined => 'Invitación Rechazada';
+
+  @override
+  String get shareSessionComplete => 'Sesión Completa';
+
+  @override
+  String get shareInvitationDeclinedMessage =>
+      'El receptor rechazó su invitación para ver los registros.';
+
+  @override
+  String get shareSessionCompleteMessage =>
+      'Todos los datos compartidos han sido eliminados de forma segura de este dispositivo';
+
+  @override
+  String get shareBackHome => 'Volver al Inicio';
+
+  @override
+  String get shareConnectionFailed => 'Conexión Fallida';
+
+  @override
+  String get shareUnableToConnect => 'No se pudo conectar. Inténtelo de nuevo.';
+
+  @override
+  String get shareNoDataReceived => 'No se recibieron datos';
+
+  @override
+  String get shareSearchRecords => 'Buscar registros';
+
+  @override
+  String get shareNoRecordsMatchFilters =>
+      'No hay registros que coincidan con los filtros';
+
+  @override
+  String get shareNoRecordsAvailable => 'No hay registros disponibles';
+
+  @override
+  String get shareReceiverViewingRecords =>
+      'El receptor está viendo los registros';
+
+  @override
+  String get shareSessionAutoExpire =>
+      'La sesión expirará automáticamente cuando el temporizador llegue a cero';
+
+  @override
+  String get shareRecordsDelivered => 'Registros entregados con éxito';
+
+  @override
+  String get shareConnecting => 'Conectando...';
+
+  @override
+  String get shareConnectionInterrupted =>
+      'Conexión interrumpida, reconectando';
+
+  @override
+  String get shareSendingRecords => 'Enviando registros...';
+
+  @override
+  String get shareReceivingRecords => 'Recibiendo registros...';
+
+  @override
+  String get shareConfirmExit => 'Confirmar Salida';
+
+  @override
+  String get shareDeleteSharedRecords => '¿Eliminar Registros Compartidos?';
+
+  @override
+  String get shareDeleteWarning =>
+      'El registro compartido se eliminará permanentemente de este dispositivo. La acción no se puede deshacer';
+
+  @override
+  String get shareDeleteAndExit => 'Eliminar y Salir';
+
+  @override
+  String get shareIncomingTransfer => 'Transferencia Entrante';
+
+  @override
+  String get shareViewOnlyWarning =>
+      'Los registros serán de solo lectura y se eliminarán automáticamente al salir';
+
+  @override
+  String get shareDecline => 'Rechazar';
+
+  @override
+  String get shareAccept => 'Aceptar';
+
+  @override
+  String get shareSearchingForDevices => 'Buscando dispositivos cercanos...';
+
+  @override
+  String get shareSearchForDevices => 'Buscar dispositivos...';
+
+  @override
+  String get shareNoDevicesFound => 'No se Encontraron Dispositivos';
+
+  @override
+  String get shareConnectionIssue => 'Problema de Conexión';
+
+  @override
+  String get shareWifiDirectUnresponsive =>
+      'WiFi Direct no responde en este dispositivo.';
+
+  @override
+  String get shareWifiToggleHint =>
+      'WiFi Direct no responde. Desactive/active WiFi, luego toque Reintentar.';
+
+  @override
+  String get shareDiscoveryHint =>
+      'Asegúrese de que el otro dispositivo tenga la aplicación HealthWallet.me abierta';
+
+  @override
+  String get shareProximityHint =>
+      'El dispositivo receptor debe tener Proximidad de Compartir ACTIVADA en Preferencias para ser detectable.';
+
+  @override
+  String get shareNoRecordsMatchSelectedFilters =>
+      'No hay registros que coincidan con los filtros seleccionados';
+
+  @override
+  String get shareNoRecordsForAppliedFilters =>
+      'No se encontraron registros para los filtros aplicados';
+
+  @override
+  String get shareTryClearingFilters => 'Intente borrar algunos filtros';
+
+  @override
+  String get shareRecordsPageFiltersNoResults =>
+      'Los filtros de la página de Registros no devolvieron resultados';
+
+  @override
+  String get shareImportOrSyncRecords =>
+      'Importe o sincronice registros para compartirlos';
+
+  @override
+  String get shareSessionTime => 'Tiempo de sesión';
+
+  @override
+  String get shareSetAsDefault => 'Establecer como predeterminado';
+
+  @override
+  String get shareRecordsButton => 'Compartir Registros';
+
+  @override
+  String get shareSelectRecordsToShare => 'Seleccione registros para compartir';
+
+  @override
+  String get shareEndSession => 'Finalizar Sesión';
+
+  @override
+  String get shareRequestTenMin => 'Solicitar +10 min';
+
+  @override
+  String get shareWaitingForResponse => 'Esperando respuesta...';
+
+  @override
+  String get shareAddMoreTime => 'Agregar más tiempo';
+
+  @override
+  String get shareSessionExpiresIn => 'La sesión expira en';
+
+  @override
+  String get shareExtensionRequestedTitle => 'Extensión Solicitada';
+
+  @override
+  String get shareHoursLabel => 'horas';
+
+  @override
+  String get shareMinLabel => 'min';
+
+  @override
+  String shareSelectedCount(int count) {
+    return '$count seleccionados';
+  }
+
+  @override
+  String shareRecordCount(int recordCount) {
+    return '$recordCount registro(s)';
+  }
+
+  @override
+  String shareSharedFrom(String source) {
+    return 'compartido desde $source';
+  }
+
+  @override
+  String shareFoundDevices(int count) {
+    return 'Se encontraron $count dispositivo(s)';
+  }
+
+  @override
+  String shareRetryingCount(int retryCount) {
+    return 'Reintentando ($retryCount/3)...';
+  }
+
+  @override
+  String shareDeviceWantsToShare(String deviceName) {
+    return '$deviceName quiere compartir registros contigo';
+  }
+
+  @override
+  String shareExtensionsUsed(int used, int max) {
+    return '$used/$max extensiones usadas';
+  }
+
+  @override
+  String shareDurationHoursMinutes(int hours, int minutes) {
+    return '${hours}h $minutes min';
+  }
+
+  @override
+  String shareDurationHours(int hours) {
+    return '${hours}h';
+  }
+
+  @override
+  String shareDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String shareTimerHoursMinutesSeconds(int hours, int minutes, int seconds) {
+    return '${hours}h ${minutes}min ${seconds}s';
+  }
+
+  @override
+  String shareTimerMinutesSeconds(int minutes, int seconds) {
+    return '${minutes}min ${seconds}s';
+  }
+
+  @override
+  String shareTimerSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String shareMinuteCount(int minutes) {
+    return '$minutes minuto(s)';
+  }
+
+  @override
+  String shareSecondsCount(int seconds) {
+    return '$seconds segundos';
+  }
+
+  @override
+  String shareExtensionRequestMessage(String peerRole, String duration) {
+    return 'El $peerRole quiere extender la sesión en $duration';
+  }
+
+  @override
+  String shareExtensionDurationRequested(String duration) {
+    return '$duration solicitado';
+  }
 }

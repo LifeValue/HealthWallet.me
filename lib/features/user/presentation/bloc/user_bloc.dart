@@ -67,6 +67,19 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       savedRegion = RegionPreset.fromString(savedRegionString);
     }
 
+    var savedCountryCode = prefs.getString(SharedPrefsConstants.countryCode);
+    if (savedCountryCode == null) {
+      savedCountryCode = WidgetsBinding
+          .instance.platformDispatcher.locale.countryCode
+          ?.toUpperCase();
+      if (savedCountryCode != null) {
+        await prefs.setString(
+          SharedPrefsConstants.countryCode,
+          savedCountryCode,
+        );
+      }
+    }
+
     final savedLocaleCode = prefs.getString(SharedPrefsConstants.appLocale);
     final Locale? savedLocale =
         savedLocaleCode != null ? Locale(savedLocaleCode) : null;
@@ -93,6 +106,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         user: user,
         isBiometricAuthEnabled: isBiometricAuthEnabled,
         regionPreset: savedRegion,
+        countryCode: savedCountryCode,
         appLocale: savedLocale,
       ));
     } catch (e) {
@@ -109,6 +123,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         user: defaultUser,
         isBiometricAuthEnabled: isBiometricAuthEnabled,
         regionPreset: savedRegion,
+        countryCode: savedCountryCode,
         appLocale: savedLocale,
       ));
     }
