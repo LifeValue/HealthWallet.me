@@ -2,8 +2,10 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/features/backup/presentation/pages/backup_page.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
@@ -30,6 +32,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final PageViewNavigationController _navigationController;
+  final bool _isDesktop = getIt<AppPlatform>().isDesktop;
   bool _isKeyboardVisible = false;
 
   @override
@@ -110,6 +113,24 @@ class _DashboardPageState extends State<DashboardPage> {
               },
               itemCount: 4,
               itemBuilder: (context, index) {
+                if (_isDesktop) {
+                  switch (index) {
+                    case 0:
+                      return HomePage(
+                        pageController: _navigationController.pageController,
+                      );
+                    case 1:
+                      return RecordsPage(
+                        pageController: _navigationController.pageController,
+                      );
+                    case 2:
+                      return const ImportPage();
+                    case 3:
+                      return const BackupPage();
+                    default:
+                      return const SizedBox.shrink();
+                  }
+                }
                 switch (index) {
                   case 0:
                     return HomePage(
@@ -120,7 +141,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       pageController: _navigationController.pageController,
                     );
                   case 2:
-                    // Keep your ScanPage API that expects navigationController
                     return const ScanPage();
                   case 3:
                     return const ImportPage();
@@ -223,48 +243,91 @@ class _DashboardPageState extends State<DashboardPage> {
                                     pageIndex: 1,
                                   ),
                                 ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    context: context,
-                                    icon: Assets.icons.scan.svg(
-                                      width: 24,
-                                      height: 24,
-                                      colorFilter: ColorFilter.mode(
-                                        _navigationController.currentPage == 2
-                                            ? (context.isDarkMode
-                                                ? Colors.white
-                                                : context.colorScheme.surface)
-                                            : context.colorScheme.onSurface,
-                                        BlendMode.srcIn,
+                                if (_isDesktop) ...[
+                                  Expanded(
+                                    child: _buildNavItem(
+                                      context: context,
+                                      icon: Assets.icons.cloudDownload.svg(
+                                        width: 24,
+                                        height: 24,
+                                        colorFilter: ColorFilter.mode(
+                                          _navigationController.currentPage == 2
+                                              ? (context.isDarkMode
+                                                  ? Colors.white
+                                                  : context.colorScheme.surface)
+                                              : context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
                                       ),
+                                      label: 'Import',
+                                      isSelected:
+                                          _navigationController.currentPage == 2,
+                                      pageIndex: 2,
                                     ),
-                                    label: context.l10n.documentScanTitle,
-                                    isSelected:
-                                        _navigationController.currentPage == 2,
-                                    pageIndex: 2,
                                   ),
-                                ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    context: context,
-                                    icon: Assets.icons.cloudDownload.svg(
-                                      width: 24,
-                                      height: 24,
-                                      colorFilter: ColorFilter.mode(
-                                        _navigationController.currentPage == 3
-                                            ? (context.isDarkMode
-                                                ? Colors.white
-                                                : context.colorScheme.surface)
-                                            : context.colorScheme.onSurface,
-                                        BlendMode.srcIn,
+                                  Expanded(
+                                    child: _buildNavItem(
+                                      context: context,
+                                      icon: Icon(
+                                        Icons.backup_outlined,
+                                        size: 24,
+                                        color:
+                                            _navigationController.currentPage == 3
+                                                ? (context.isDarkMode
+                                                    ? Colors.white
+                                                    : context.colorScheme.surface)
+                                                : context.colorScheme.onSurface,
                                       ),
+                                      label: 'Backup',
+                                      isSelected:
+                                          _navigationController.currentPage == 3,
+                                      pageIndex: 3,
                                     ),
-                                    label: 'Import',
-                                    isSelected:
-                                        _navigationController.currentPage == 3,
-                                    pageIndex: 3,
                                   ),
-                                ),
+                                ] else ...[
+                                  Expanded(
+                                    child: _buildNavItem(
+                                      context: context,
+                                      icon: Assets.icons.scan.svg(
+                                        width: 24,
+                                        height: 24,
+                                        colorFilter: ColorFilter.mode(
+                                          _navigationController.currentPage == 2
+                                              ? (context.isDarkMode
+                                                  ? Colors.white
+                                                  : context.colorScheme.surface)
+                                              : context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      label: context.l10n.documentScanTitle,
+                                      isSelected:
+                                          _navigationController.currentPage == 2,
+                                      pageIndex: 2,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _buildNavItem(
+                                      context: context,
+                                      icon: Assets.icons.cloudDownload.svg(
+                                        width: 24,
+                                        height: 24,
+                                        colorFilter: ColorFilter.mode(
+                                          _navigationController.currentPage == 3
+                                              ? (context.isDarkMode
+                                                  ? Colors.white
+                                                  : context.colorScheme.surface)
+                                              : context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      label: 'Import',
+                                      isSelected:
+                                          _navigationController.currentPage == 3,
+                                      pageIndex: 3,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
