@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
@@ -62,6 +65,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   }
 
   Future<void> _startSymmetricDiscovery() async {
+    if (getIt<AppPlatform>().isDesktop) return;
+
     final userRepository = getIt<UserRepository>();
     final user = await userRepository.getCurrentUser();
     if (!user.isReceiveModeEnabled) return;
@@ -84,6 +89,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   }
 
   Future<void> _stopSymmetricDiscovery() async {
+    if (getIt<AppPlatform>().isDesktop) return;
+
     final manager = getIt<ReceiveModeService>();
     if (manager.isListening) {
       await manager.stopListening();
@@ -150,6 +157,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         child: BlocBuilder<UserBloc, UserState>(
           builder: (context, state) {
             return MaterialApp.router(
+              scrollBehavior: const MaterialScrollBehavior().copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
               title: 'HealthWallet.me',
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
