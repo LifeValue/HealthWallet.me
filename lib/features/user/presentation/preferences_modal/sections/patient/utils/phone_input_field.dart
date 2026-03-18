@@ -78,11 +78,13 @@ int _maxNsnLength(IsoCode isoCode) {
 class PhoneInputField extends StatefulWidget {
   final String value;
   final ValueChanged<String>? onChanged;
+  final String? defaultCountryCode;
 
   const PhoneInputField({
     super.key,
     required this.value,
     this.onChanged,
+    this.defaultCountryCode,
   });
 
   @override
@@ -96,7 +98,23 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   bool _formatting = false;
   String _lastDigits = '';
 
+  CountryEntry _countryForCode(String code) {
+    return _countries.firstWhere(
+      (c) => c.isoCode.name.toUpperCase() == code.toUpperCase(),
+      orElse: () => _countries.firstWhere(
+        (c) => c.isoCode == IsoCode.US,
+        orElse: () => _countries.first,
+      ),
+    );
+  }
+
   CountryEntry get _defaultCountry {
+    if (widget.defaultCountryCode != null) {
+      final match = _countries
+          .where((c) => c.isoCode.name.toUpperCase() == widget.defaultCountryCode!.toUpperCase())
+          .firstOrNull;
+      if (match != null) return match;
+    }
     final countryCode =
         ui.PlatformDispatcher.instance.locale.countryCode?.toUpperCase();
     if (countryCode != null) {
@@ -122,6 +140,13 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     if (widget.value.isNotEmpty) {
       try {
         final parsed = PhoneNumber.parse(widget.value);
+        final hasRealDigits = parsed.nsn.replaceAll(RegExp(r'0'), '').isNotEmpty;
+        if (!hasRealDigits && widget.defaultCountryCode != null) {
+          _selectedCountry = _defaultCountry;
+          _lastDigits = '';
+          _numberCtrl = TextEditingController();
+          return;
+        }
         _selectedCountry = _countries.firstWhere(
           (c) => c.isoCode == parsed.isoCode,
           orElse: () => _defaultCountry,
@@ -217,6 +242,17 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     }
   }
 
+  String _getPlaceholder() {
+    try {
+      final example = PhoneNumber.parse(
+        '+${_selectedCountry.dialCode}${'0' * _maxNsnLength(_selectedCountry.isoCode)}',
+      );
+      return example.formatNsn().replaceAll(RegExp(r'\d'), '0');
+    } catch (_) {
+      return '+${_selectedCountry.dialCode}';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bColor = context.borderColor;
@@ -278,7 +314,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
           ),
           border: InputBorder.none,
           isDense: true,
-          hintText: '+${_selectedCountry.dialCode}',
+          hintText: _getPlaceholder(),
           hintStyle: AppTextStyle.labelLarge.copyWith(
             color: context.isDarkMode
                 ? AppColors.textSecondaryDark

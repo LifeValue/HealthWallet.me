@@ -17,7 +17,11 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/widgets/patient_setup_dialog.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/form_fields.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SyncPlaceholderWidget extends StatefulWidget {
@@ -360,62 +364,82 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
   }
 
   void _handleLoadDemoData(BuildContext context) {
-    _hasInitiatedDemoDataLoading = true;
-    context.read<SyncBloc>().add(const LoadDemoData());
+    final detectedCountry = WidgetsBinding
+            .instance.platformDispatcher.locale.countryCode
+            ?.toUpperCase() ??
+        'US';
+
+    _showCountrySelectionForDemo(context, detectedCountry);
   }
 
-  void _handleDemoDataCompletion(BuildContext context) async {
-    if (!mounted || !context.mounted) return;
+  void _showCountrySelectionForDemo(
+    BuildContext outerContext,
+    String initialCountry,
+  ) {
+    final patientBloc = outerContext.read<PatientBloc>();
+    final homeBloc = outerContext.read<HomeBloc>();
+    final syncBloc = outerContext.read<SyncBloc>();
 
-    final patientBloc = context.read<PatientBloc>();
-    final homeBloc = context.read<HomeBloc>();
-    final syncBloc = context.read<SyncBloc>();
-
-    AppSimpleDialog.showSuccess(
-      context: context,
-      title: context.l10n.success,
-      message: context.l10n.demoDataLoadedSuccessfully,
-      onOkPressed: () async {
-        _syncBloc?.add(const DemoDataConfirmed());
-
-        patientBloc.add(const PatientInitialised());
-        await Future.delayed(const Duration(milliseconds: 300));
-
-        final patientState = patientBloc.state;
-        final demoPatients = patientState.patients
-            .where((p) => p.sourceId == 'demo_data')
-            .toList();
-
-        if (demoPatients.isNotEmpty) {
-          final demoPatient = demoPatients.first;
-          if (patientState.selectedPatientId != demoPatient.id) {
-            patientBloc.add(PatientSelectionChanged(patientId: demoPatient.id));
-          }
-          homeBloc.add(
-            const HomeSourceChanged('demo_data',
-                patientSourceIds: ['demo_data']),
-          );
-        }
-
-        await Future.delayed(const Duration(milliseconds: 200));
-
-        if (context.mounted) {
-          Navigator.of(context).pop();
-        }
-
-        final pageControllerRef = widget.pageController;
-        if (pageControllerRef != null) {
-          pageControllerRef.animateToPage(0,
-              duration: const Duration(milliseconds: 300), curve: Curves.ease);
-        } else if (context.mounted) {
-          context.router.pop();
-        }
-
-        Future.delayed(const Duration(milliseconds: 350), () {
-          syncBloc.add(const TriggerTutorial());
-        });
+    showDialog(
+      context: outerContext,
+      barrierDismissible: false,
+      builder: (_) {
+        return _DemoDataFlowDialog(
+          initialCountry: initialCountry,
+          onComplete: (dialogContext) => _onDemoDataComplete(
+            dialogContext, patientBloc, homeBloc, syncBloc,
+          ),
+        );
       },
     );
+  }
+
+  void _handleDemoDataCompletion(BuildContext context) async {}
+
+  void _onDemoDataComplete(
+    BuildContext dialogContext,
+    PatientBloc patientBloc,
+    HomeBloc homeBloc,
+    SyncBloc syncBloc,
+  ) async {
+    _syncBloc?.add(const DemoDataConfirmed());
+
+    patientBloc.add(const PatientInitialised());
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    final patientState = patientBloc.state;
+    final demoPatients = patientState.patients
+        .where((p) => p.sourceId == 'demo_data')
+        .toList();
+
+    if (demoPatients.isNotEmpty) {
+      final demoPatient = demoPatients.first;
+      if (patientState.selectedPatientId != demoPatient.id) {
+        patientBloc.add(PatientSelectionChanged(patientId: demoPatient.id));
+      }
+      homeBloc.add(
+        const HomeSourceChanged('demo_data',
+            patientSourceIds: ['demo_data']),
+      );
+    }
+
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    if (dialogContext.mounted) {
+      Navigator.of(dialogContext).pop();
+    }
+
+    final pageControllerRef = widget.pageController;
+    if (pageControllerRef != null) {
+      pageControllerRef.animateToPage(0,
+          duration: const Duration(milliseconds: 300), curve: Curves.ease);
+    } else if (mounted) {
+      context.router.pop();
+    }
+
+    Future.delayed(const Duration(milliseconds: 350), () {
+      syncBloc.add(const TriggerTutorial());
+    });
   }
 
   void _handleSyncRecords(BuildContext context) {
@@ -521,6 +545,191 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     } catch (e) {
       logger.e('Error waiting for wallet patient: $e');
       return null;
+    }
+  }
+}
+
+class _DemoDataFlowDialog extends StatefulWidget {
+  final String initialCountry;
+  final void Function(BuildContext dialogContext) onComplete;
+
+  const _DemoDataFlowDialog({
+    required this.initialCountry,
+    required this.onComplete,
+  });
+
+  @override
+  State<_DemoDataFlowDialog> createState() => _DemoDataFlowDialogState();
+}
+
+class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
+  late String _selectedCountry;
+  int _step = 0;
+
+  static const _countries = <String, String>{
+    'AT': '🇦🇹 Austria',
+    'FR': '🇫🇷 France',
+    'DE': '🇩🇪 Germany',
+    'IT': '🇮🇹 Italy',
+    'NL': '🇳🇱 Netherlands',
+    'PL': '🇵🇱 Poland',
+    'RO': '🇷🇴 Romania',
+    'ES': '🇪🇸 Spain',
+    'SE': '🇸🇪 Sweden',
+    'CH': '🇨🇭 Switzerland',
+    'US': '🇺🇸 United States',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCountry = widget.initialCountry;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = context.isDarkMode
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimary;
+    final borderColor = context.isDarkMode
+        ? AppColors.borderDark
+        : AppColors.border;
+
+    return BlocListener<SyncBloc, SyncState>(
+      listenWhen: (prev, curr) => curr.hasDemoData && !curr.hasSyncedData,
+      listener: (ctx, state) {
+        if (_step == 1 && state.hasDemoData) {
+          setState(() => _step = 2);
+        }
+      },
+      child: PopScope(
+        canPop: false,
+        child: Dialog(
+          backgroundColor: context.colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: borderColor, width: 1),
+          ),
+          insetPadding: const EdgeInsets.all(Insets.normal),
+          child: Padding(
+            padding: const EdgeInsets.all(Insets.normal),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: _buildStepContent(context, textColor, borderColor),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildStepContent(
+    BuildContext context,
+    Color textColor,
+    Color borderColor,
+  ) {
+    if (_step == 0) {
+      final countryItems = _countries.values.toList();
+      final currentDisplay = _countries[_selectedCountry] ?? _countries['US']!;
+
+      return [
+        Text(
+          context.l10n.country,
+          textAlign: TextAlign.center,
+          style: AppTextStyle.titleLarge.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: Insets.small),
+        FormFields.buildDropdownField(
+          context,
+          '',
+          currentDisplay,
+          countryItems,
+          (value) {
+            final code = _countries.entries
+                .firstWhere((e) => e.value == value,
+                    orElse: () => const MapEntry('US', ''))
+                .key;
+            setState(() => _selectedCountry = code);
+          },
+        ),
+        const SizedBox(height: Insets.normal),
+        ElevatedButton(
+          onPressed: _onContinue,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.all(8),
+            fixedSize: const Size.fromHeight(36),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            context.l10n.continueButton,
+            style: AppTextStyle.buttonSmall.copyWith(color: Colors.white),
+          ),
+        ),
+      ];
+    }
+
+    if (_step == 1) {
+      return [
+        const SizedBox(height: Insets.medium),
+        const Center(child: CircularProgressIndicator()),
+        const SizedBox(height: Insets.normal),
+        Text(
+          context.l10n.loading,
+          textAlign: TextAlign.center,
+          style: AppTextStyle.labelLarge.copyWith(color: textColor),
+        ),
+        const SizedBox(height: Insets.medium),
+      ];
+    }
+
+    return [
+      Text(
+        context.l10n.success,
+        textAlign: TextAlign.center,
+        style: AppTextStyle.titleLarge.copyWith(fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: Insets.normal),
+      Text(
+        context.l10n.demoDataLoadedSuccessfully,
+        style: AppTextStyle.labelLarge.copyWith(color: textColor),
+      ),
+      const SizedBox(height: Insets.normal),
+      ElevatedButton(
+        onPressed: () => widget.onComplete(context),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.all(8),
+          fixedSize: const Size.fromHeight(36),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+          ),
+          elevation: 0,
+        ),
+        child: Text(
+          'OK',
+          style: AppTextStyle.buttonSmall.copyWith(color: Colors.white),
+        ),
+      ),
+    ];
+  }
+
+  Future<void> _onContinue() async {
+    setState(() => _step = 1);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SharedPrefsConstants.countryCode, _selectedCountry);
+    if (mounted) {
+      context.read<SyncBloc>().add(const LoadDemoData());
     }
   }
 }

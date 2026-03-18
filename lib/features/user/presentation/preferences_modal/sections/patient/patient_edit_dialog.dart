@@ -2,9 +2,16 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
+import 'package:health_wallet/features/scan/presentation/helpers/scan_path_helper.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -13,10 +20,12 @@ import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
 import 'utils/dialog_content.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class PatientEditDialog extends StatefulWidget {
   final Patient patient;
@@ -73,15 +82,20 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   DateTime? _selectedBirthDate;
   String _selectedGender = 'Prefer not to say';
   String _selectedBloodType = 'N/A';
-  String _selectedMRN = '';
+  String _selectedIdentifier = '';
   String _selectedContactPhone = '';
   late PatientEditService _patientEditService;
   bool _isLoading = false;
+  bool _isScanning = false;
+  bool _scanCompleted = false;
+  String? _lastScannedImagePath;
+  String? _countryCode;
+  String? _initialCountryCode;
   Patient? _currentPatient;
 
   late TextEditingController _givenController;
   late TextEditingController _familyController;
-  late TextEditingController _mrnController;
+  late TextEditingController _identifierController;
 
   List<String> _getGenderOptions(AppLocalizations l10n) =>
       [l10n.male, l10n.female, l10n.preferNotToSay];
@@ -94,12 +108,13 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   void initState() {
     super.initState();
     _patientEditService = getIt<PatientEditService>();
+    _loadCountryCode();
 
     _givenController =
         TextEditingController(text: _extractGiven(widget.patient));
     _familyController =
         TextEditingController(text: _extractFamily(widget.patient));
-    _mrnController = TextEditingController(
+    _identifierController = TextEditingController(
         text: FhirFieldExtractor.extractPatientMRN(widget.patient));
     _initializeControllers();
     _initializeCurrentPatient();
@@ -112,6 +127,17 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
         FhirFieldExtractor.extractPatientGender(widget.patient);
     _selectedGender =
         GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
+  }
+
+  Future<void> _loadCountryCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(SharedPrefsConstants.countryCode);
+    if (mounted && saved != null) {
+      setState(() {
+        _countryCode = saved;
+        _initialCountryCode = saved;
+      });
+    }
   }
 
   void _initializeControllers() {
@@ -153,12 +179,12 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
       _selectedGender =
           GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
 
-      _selectedMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
+      _selectedIdentifier = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
       _selectedContactPhone = _extractContactPhone(_currentPatient!);
 
       _givenController.text = _selectedGiven;
       _familyController.text = _selectedFamily;
-      _mrnController.text = _selectedMRN;
+      _identifierController.text = _selectedIdentifier;
 
       _initializeBloodType();
     });
@@ -221,8 +247,120 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   void dispose() {
     _givenController.dispose();
     _familyController.dispose();
-    _mrnController.dispose();
+    _identifierController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleScanIdCard() async {
+    if (_isScanning) return;
+
+    final status = await Permission.camera.request();
+    if (!status.isGranted) return;
+
+    setState(() => _isScanning = true);
+
+    try {
+      final scannedResult =
+          await FlutterDocScanner().getScannedDocumentAsImages(page: 1);
+
+      if (scannedResult == null || scannedResult.images.isEmpty) {
+        if (mounted) setState(() => _isScanning = false);
+        return;
+      }
+
+      final rawPaths = scannedResult.images
+          .where((p) => p.isNotEmpty)
+          .toList();
+      final sanitizedPaths = ScanPathHelper.normalizePaths(rawPaths);
+      if (sanitizedPaths.isEmpty) {
+        if (mounted) setState(() => _isScanning = false);
+        return;
+      }
+
+      final imagePath = sanitizedPaths.first;
+      _lastScannedImagePath = imagePath;
+      await _extractFromImage(imagePath);
+    } catch (e) {
+      debugPrint('ID card scan failed: $e');
+      if (mounted) setState(() => _isScanning = false);
+    }
+  }
+
+  Future<void> _handleRetryOcr() async {
+    if (_isScanning || _lastScannedImagePath == null) return;
+    setState(() => _isScanning = true);
+    try {
+      await _extractFromImage(_lastScannedImagePath!);
+    } catch (e) {
+      debugPrint('OCR retry failed: $e');
+      if (mounted) setState(() => _isScanning = false);
+    }
+  }
+
+  Future<void> _handlePickFromGallery() async {
+    if (_isScanning) return;
+    setState(() => _isScanning = true);
+
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) {
+        if (mounted) setState(() => _isScanning = false);
+        return;
+      }
+
+      _lastScannedImagePath = image.path;
+      await _extractFromImage(image.path);
+    } catch (e) {
+      debugPrint('Gallery pick failed: $e');
+      if (mounted) setState(() => _isScanning = false);
+    }
+  }
+
+  Future<void> _extractFromImage(String imagePath) async {
+    final textRecognition = getIt<TextRecognitionService>();
+    final ocrText = await textRecognition.recognizeTextFromImage(imagePath);
+
+    if (ocrText.isEmpty) {
+      if (mounted) setState(() => _isScanning = false);
+      return;
+    }
+
+    debugPrint('[IdCardScan] OCR text:\n$ocrText');
+
+    final countryCode = context.read<UserBloc>().state.countryCode;
+    final result = IdCardExtractor.extract(ocrText, countryCode);
+
+    debugPrint('[IdCardScan] Result: given=${result.givenName}, family=${result.familyName}, id=${result.identifierValue}, dob=${result.dateOfBirth}, gender=${result.gender}');
+
+    if (mounted && result.hasData) {
+      setState(() {
+        if (result.familyName != null && result.familyName!.isNotEmpty) {
+          _selectedFamily = result.familyName!;
+          _familyController.text = result.familyName!;
+        }
+        if (result.givenName != null && result.givenName!.isNotEmpty) {
+          _selectedGiven = result.givenName!;
+          _givenController.text = result.givenName!;
+        }
+        if (result.identifierValue != null &&
+            result.identifierValue!.isNotEmpty) {
+          _selectedIdentifier = result.identifierValue!;
+          _identifierController.text = result.identifierValue!;
+        }
+        if (result.dateOfBirth != null) {
+          _selectedBirthDate = DateTime.tryParse(result.dateOfBirth!);
+        }
+        if (result.gender != null) {
+          _selectedGender = GenderMapper.mapFhirGenderToDisplay(
+              result.gender!, context.l10n);
+        }
+        _isScanning = false;
+        _scanCompleted = true;
+      });
+    } else {
+      if (mounted) setState(() => _isScanning = false);
+    }
   }
 
   Future<void> _handleSave() async {
@@ -231,12 +369,16 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     setState(() => _isLoading = true);
 
     try {
+      if (_countryCode != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(SharedPrefsConstants.countryCode, _countryCode!);
+      }
       final hasServiceChanges = await _patientEditService.hasPatientChanges(
         currentPatient: _currentPatient!,
         newBirthDate: _selectedBirthDate,
         newGender: _selectedGender,
         newBloodType: _selectedBloodType,
-        newMRN: _selectedMRN,
+        newIdentifierValue: _selectedIdentifier,
         l10n: context.l10n,
       );
       final hasNameChanges =
@@ -244,8 +386,10 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
               _extractFamily(_currentPatient!) != _familyController.text;
       final hasContactPhoneChanges =
           _extractContactPhone(_currentPatient!) != _selectedContactPhone;
+      final hasCountryChanged = _countryCode != null &&
+          _countryCode != _initialCountryCode;
       final hasChanges =
-          hasServiceChanges || hasNameChanges || hasContactPhoneChanges;
+          hasServiceChanges || hasNameChanges || hasContactPhoneChanges || hasCountryChanged;
 
       if (!hasChanges) {
         if (mounted) {
@@ -263,11 +407,11 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
           FhirFieldExtractor.extractPatientGender(_currentPatient!);
       final currentGivenValue = _givenController.text;
       final currentFamilyValue = _familyController.text;
-      final currentMRNValue = _mrnController.text;
+      final currentIdentifierValue = _identifierController.text;
 
       final currentGiven = _extractGiven(_currentPatient!);
       final currentFamily = _extractFamily(_currentPatient!);
-      final currentMRN = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
+      final currentIdentifier = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
       final currentContactPhone = _extractContactPhone(_currentPatient!);
       final currentContactPhoneValue = _selectedContactPhone;
 
@@ -279,14 +423,14 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
           GenderMapper.mapFhirGenderToDisplay(currentGender, context.l10n) !=
               _selectedGender;
       final bloodTypeChanged = currentBloodType != _selectedBloodType;
-      final mrnChanged = currentMRN != currentMRNValue;
+      final identifierChanged = currentIdentifier != currentIdentifierValue;
       final contactPhoneChanged = currentContactPhone != currentContactPhoneValue;
 
       final onlyBloodTypeChanged = bloodTypeChanged &&
           !nameChanged &&
           !birthDateChanged &&
           !genderChanged &&
-          !mrnChanged &&
+          !identifierChanged &&
           !contactPhoneChanged;
 
       if (onlyBloodTypeChanged) {
@@ -312,11 +456,11 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
         final patientFieldsChanged = nameChanged ||
             birthDateChanged ||
             genderChanged ||
-            mrnChanged ||
+            identifierChanged ||
             contactPhoneChanged ||
             bloodTypeChanged;
 
-        if (patientFieldsChanged) {
+        if (patientFieldsChanged || hasCountryChanged) {
           final homeState = context.read<HomeBloc>().state;
 
           final givenList = currentGivenValue.isNotEmpty
@@ -338,7 +482,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
                   bloodType: bloodTypeChanged
                       ? _selectedBloodType
                       : currentBloodType ?? 'N/A',
-                  mrn: mrnChanged ? currentMRNValue : null,
+                  identifierValue: (identifierChanged || hasCountryChanged) ? currentIdentifierValue : null,
                   contactPhone: contactPhoneChanged
                       ? currentContactPhoneValue
                       : null,
@@ -402,10 +546,24 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             patient: _currentPatient!,
             showNameField: true,
             isSetupMode: false,
-            identifierLabel: FhirFieldExtractor.extractPatientIdentifierLabel(_currentPatient!),
+            isScanning: _isScanning,
+            scanCompleted: _scanCompleted,
+            onScanIdCard: _handleScanIdCard,
+            onPickFromGallery: _handlePickFromGallery,
+            onRetryOcr: _scanCompleted ? _handleRetryOcr : null,
+            identifierLabel: _countryCode != null
+                ? CountryIdentifier.forCountry(_countryCode).identifierLabel
+                : FhirFieldExtractor.extractPatientIdentifierLabel(_currentPatient!),
+            selectedCountryCode: _countryCode,
+            onCountryChanged: (code) {
+              setState(() {
+                _countryCode = code;
+                _selectedContactPhone = '';
+              });
+            },
             selectedGiven: _selectedGiven,
             selectedFamily: _selectedFamily,
-            selectedMRN: _selectedMRN,
+            selectedIdentifier: _selectedIdentifier,
             selectedContactPhone: _selectedContactPhone,
             selectedBirthDate: _selectedBirthDate,
             selectedGender: _selectedGender,
@@ -419,15 +577,15 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             onFamilyChanged: (String value) {
               _selectedFamily = value;
             },
-            onMRNChanged: (String value) {
-              _selectedMRN = value;
+            onIdentifierChanged: (String value) {
+              _selectedIdentifier = value;
             },
             onContactPhoneChanged: (String value) {
               _selectedContactPhone = value;
             },
             givenController: _givenController,
             familyController: _familyController,
-            mrnController: _mrnController,
+            identifierController: _identifierController,
             onBirthDateChanged: (DateTime? date) =>
                 setState(() => _selectedBirthDate = date),
             onGenderChanged: (String value) =>
