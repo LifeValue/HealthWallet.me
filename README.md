@@ -58,7 +58,7 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 | **AI Scan** | Photograph or import medical documents; the on-device LLM extracts patient info, encounters, medications, allergies, and lab results into structured FHIR records |
 | **Aggregate** | Sync records from 52,000+ hospitals, clinics, and labs through FHIR R4 APIs |
 | **Organize** | Browse all records — conditions, medications, immunizations, lab results, clinical notes — in one place |
-| **Share** | Transfer records device-to-device via proximity sharing, no internet needed |
+| **Share** | **Cross-platform** proximity sharing — transfer records between **iOS and Android** devices, no internet needed. Data is **view-only** on the receiver side — never stored, **screenshots blocked** |
 | **Export** | Generate an **International Patient Summary** PDF or add emergency info to **Apple/Google Wallet** |
 | **Secure** | Face ID / fingerprint lock, local SQLite storage, no mandatory cloud dependency |
 
@@ -217,7 +217,7 @@ flutter test
 - File import & in-app viewing
 - Smart document scanning (AI reads and organizes your medical records)
 - Add IPS (International Patient Summary) to Google / Apple Wallet
-- Proximity-based sharing (Airdrop)
+- **Cross-platform** proximity sharing — works between **iOS and Android**, view-only on receiver, no data saved, screenshots blocked
 
 ### In Progress
 - Desktop app with backup sync and offloaded document processing
