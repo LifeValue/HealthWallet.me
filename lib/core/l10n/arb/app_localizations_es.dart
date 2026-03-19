@@ -597,6 +597,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Sus registros de salud se han guardado correctamente. ¿Qué le gustaría hacer a continuación?';
 
   @override
+  String get continueScanning => 'Continuar Escaneando';
+
+  @override
   String get effectiveDate => 'Fecha Efectiva';
 
   @override

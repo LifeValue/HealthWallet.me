@@ -127,6 +127,18 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               _handleScanSuccess(context);
             },
           ),
+          BlocListener<RecordsBloc, RecordsState>(
+            listenWhen: (previous, current) =>
+                current.status == const RecordsStatus.deleted(),
+            listener: (context, state) {
+              context
+                  .read<PatientBloc>()
+                  .add(const PatientPatientsLoaded());
+              context
+                  .read<HomeBloc>()
+                  .add(const HomeRefreshPreservingOrder());
+            },
+          ),
         ],
         child: BlocBuilder<UserBloc, UserState>(
           builder: (context, state) {

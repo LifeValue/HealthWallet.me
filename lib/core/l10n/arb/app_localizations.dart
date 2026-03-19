@@ -1194,6 +1194,12 @@ abstract class AppLocalizations {
   /// **'Your health records have been saved successfully. What would you like to do next?'**
   String get recordsSavedMessage;
 
+  /// No description provided for @continueScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Scanning'**
+  String get continueScanning;
+
   /// No description provided for @effectiveDate.
   ///
   /// In en, this message translates to:

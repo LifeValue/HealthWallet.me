@@ -212,6 +212,29 @@ class ResourcesForm extends StatelessWidget {
                                   context.colorScheme.onSurface),
                         ),
                       ),
+                    if (isStagedResource &&
+                        !isAttachmentLocked &&
+                        (resource is MappingEncounter ||
+                            resource is MappingDiagnosticReport))
+                      Padding(
+                        padding: const EdgeInsetsGeometry.all(6),
+                        child: GestureDetector(
+                          onTap: () => context.read<ScanBloc>().add(
+                                ScanContainerTypeSwitched(sessionId: sessionId),
+                              ),
+                          child: Tooltip(
+                            message: resource is MappingEncounter
+                                ? 'Switch to Diagnostic Report'
+                                : 'Switch to Encounter',
+                            child: Icon(
+                              Icons.swap_horiz,
+                              size: 20,
+                              color: context.theme.iconTheme.color ??
+                                  context.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
                     if (canRemove)
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),

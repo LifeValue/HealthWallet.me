@@ -188,6 +188,7 @@
     "continueProcessing": "Continuar Procesamiento",
     "recordsSavedTitle": "Registros Guardados",
     "recordsSavedMessage": "Sus registros de salud se han guardado correctamente. ¿Qué le gustaría hacer a continuación?",
+    "continueScanning": "Continuar Escaneando",
     "scanQRMessage": "Escanea el código QR de tu servidor Fasten Health para crear una nueva conexión de sincronización.",
     "viewAll": "Ver todo",
     "vitalSigns": "Signos Vitales",

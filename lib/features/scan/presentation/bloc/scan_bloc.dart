@@ -10,6 +10,7 @@ import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
@@ -103,6 +104,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState>
     on<ScanTokenCapacityUpdated>(onScanTokenCapacityUpdated);
     on<ScanVisionToggled>(onScanVisionToggled);
     on<ScanPagesReordered>(onScanPagesReordered);
+    on<ScanContainerTypeSwitched>(_onContainerTypeSwitched);
   }
 
   @override
@@ -329,6 +331,56 @@ class ScanBloc extends Bloc<ScanEvent, ScanState>
       return 'Unable to access camera. Please ensure your camera is working.';
     } else {
       return 'Failed to scan. Please try again.';
+    }
+  }
+
+  void _onContainerTypeSwitched(
+    ScanContainerTypeSwitched event,
+    Emitter<ScanState> emit,
+  ) {
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
+    if (session == null) return;
+
+    if (session.diagnosticReport?.draft != null) {
+      final dr = session.diagnosticReport!.draft!;
+      final encounter = MappingEncounter(
+        id: dr.id,
+        encounterType: MappedProperty(
+          value: dr.reportName.value,
+          confidenceLevel: dr.reportName.confidenceLevel,
+        ),
+        periodStart: MappedProperty(
+          value: dr.issuedDate.value,
+          confidenceLevel: dr.issuedDate.confidenceLevel,
+        ),
+      );
+      updateSession(emit,
+        sessionId: event.sessionId,
+        encounter: StagedEncounter(draft: encounter),
+        diagnosticReport: const StagedDiagnosticReport(),
+        updateDb: true,
+      );
+    } else if (session.encounter?.draft != null) {
+      final enc = session.encounter!.draft!;
+      final report = MappingDiagnosticReport(
+        id: enc.id,
+        reportName: MappedProperty(
+          value: enc.encounterType.value,
+          confidenceLevel: enc.encounterType.confidenceLevel,
+        ),
+        issuedDate: MappedProperty(
+          value: enc.periodStart.value,
+          confidenceLevel: enc.periodStart.confidenceLevel,
+        ),
+      );
+      updateSession(emit,
+        sessionId: event.sessionId,
+        encounter: const StagedEncounter(),
+        diagnosticReport: StagedDiagnosticReport(draft: report),
+        updateDb: true,
+      );
     }
   }
 }

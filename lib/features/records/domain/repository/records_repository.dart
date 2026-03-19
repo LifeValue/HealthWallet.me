@@ -40,7 +40,12 @@ abstract class RecordsRepository {
 
   Future<void> deleteResourceWithRelated(String resourceId);
 
+  Future<void> deleteResourcesByIds(List<String> ids);
+
   Future<int> getRelatedResourceCount(String resourceId);
+
+  Future<List<IFhirResource>> getRelatedResourcesForDeletion(
+      String resourceId);
 
   Future<void> loadDemoData();
 

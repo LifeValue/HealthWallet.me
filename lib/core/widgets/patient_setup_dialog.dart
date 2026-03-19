@@ -311,7 +311,14 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
         if (result.dateOfBirth != null) 'DOB',
         if (result.identifierValue != null) 'ID',
       ].length;
-      if (fieldsFound < 2) _showScanQualityMessage(true);
+      if (fieldsFound < 2) {
+        _showScanQualityMessage(true);
+      } else {
+        setState(() {
+          _scanMessage =
+              'Verify the details are correct. Retry scanning if needed.';
+        });
+      }
     } else {
       if (mounted) {
         setState(() => _isScanning = false);

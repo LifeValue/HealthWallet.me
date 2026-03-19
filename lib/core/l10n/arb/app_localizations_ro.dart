@@ -598,6 +598,9 @@ class AppLocalizationsRo extends AppLocalizations {
       'Înregistrările tale de sănătate au fost salvate cu succes. Ce ai dori să faci în continuare?';
 
   @override
+  String get continueScanning => 'Continuă Scanarea';
+
+  @override
   String get effectiveDate => 'Data Efectivă';
 
   @override

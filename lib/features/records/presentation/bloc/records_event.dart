@@ -101,5 +101,6 @@ class RecordsResourceDeleted extends RecordsEvent
   const factory RecordsResourceDeleted({
     required String resourceId,
     @Default(false) bool deleteRelated,
+    @Default([]) List<String> selectedRelatedIds,
   }) = _RecordsResourceDeleted;
 }

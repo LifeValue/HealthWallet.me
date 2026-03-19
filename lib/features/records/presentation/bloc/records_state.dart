@@ -27,6 +27,7 @@ class RecordsStatus with _$RecordsStatus {
   const factory RecordsStatus.initial() = _Initial;
   const factory RecordsStatus.loading() = _Loading;
   const factory RecordsStatus.success() = _Success;
+  const factory RecordsStatus.deleted() = _Deleted;
   const factory RecordsStatus.failure(Object error) = _Failure;
 }
 

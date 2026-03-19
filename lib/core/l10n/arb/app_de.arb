@@ -184,6 +184,7 @@
     "continueProcessing": "Verarbeitung fortsetzen",
     "recordsSavedTitle": "Aufzeichnungen Gespeichert",
     "recordsSavedMessage": "Ihre Gesundheitsdaten wurden erfolgreich gespeichert. Was möchten Sie als Nächstes tun?",
+    "continueScanning": "Weiter Scannen",
     "scanQRMessage": "Scannen Sie den QR-Code von Ihrem Fasten Health Server, um eine neue Synchronisierungsverbindung zu erstellen.",
     "viewAll": "Alle anzeigen",
     "vitalSigns": "Vitalzeichen",

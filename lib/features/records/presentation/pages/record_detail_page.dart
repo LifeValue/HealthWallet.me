@@ -348,110 +348,260 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   }
 
   void _showDeleteDialog(BuildContext context) async {
-    final relatedCount = await _appRecordsBloc
-        .recordsRepository
-        .getRelatedResourceCount(widget.resource.id);
+    final relatedResources = await _appRecordsBloc.recordsRepository
+        .getRelatedResourcesForDeletion(widget.resource.id);
 
     if (!context.mounted) return;
 
-    final resourceType = widget.resource.fhirType.name;
-    final hasRelated = relatedCount > 0;
-
-    if (!hasRelated) {
-      AppSimpleDialog.showDestructiveConfirmation(
+    if (relatedResources.isEmpty) {
+      _showDeleteConfirmation(
         context: context,
-        title: context.l10n.deletePage,
-        message: '${context.l10n.actionCannotBeUndone}',
-        confirmText: context.l10n.deletePage,
-        cancelText: context.l10n.cancel,
-        onConfirm: () => _deleteResource(context, false),
+        onConfirm: () => _deleteResource(context, selectedRelatedIds: []),
       );
       return;
     }
+
+    _showDeleteSelectionDialog(context, relatedResources);
+  }
+
+  void _showDeleteSelectionDialog(
+    BuildContext context,
+    List<IFhirResource> relatedResources,
+  ) {
+    final selectedIds = <String>{};
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        final textColor = context.primaryTextColor;
-        final borderColor = context.borderColor;
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final textColor = context.primaryTextColor;
+            final borderColor = context.borderColor;
 
-        return Dialog(
-          backgroundColor: context.colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: borderColor, width: 1),
-          ),
-          insetPadding: const EdgeInsets.all(Insets.normal),
-          child: Padding(
-            padding: const EdgeInsets.all(Insets.normal),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  context.l10n.deletePage,
-                  style: AppTextStyle.bodyMedium.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: Insets.normal),
-                Text(
-                  context.l10n.actionCannotBeUndone,
-                  style: AppTextStyle.labelLarge.copyWith(color: textColor),
-                ),
-                const SizedBox(height: Insets.normal),
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    _deleteResource(context, false);
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: context.colorScheme.error,
-                    side: BorderSide(color: context.colorScheme.error.withValues(alpha: 0.3)),
-                    padding: const EdgeInsets.symmetric(vertical: Insets.smallNormal),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+            return Dialog(
+              backgroundColor: context.colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: borderColor, width: 1),
+              ),
+              insetPadding: const EdgeInsets.all(Insets.normal),
+              child: Padding(
+                padding: const EdgeInsets.all(Insets.normal),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      context.l10n.deletePage,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  child: Text('$resourceType ${context.l10n.deletePage.toLowerCase()}'),
-                ),
-                const SizedBox(height: Insets.small),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    _deleteResource(context, true);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: context.colorScheme.error,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: Insets.smallNormal),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: Insets.normal),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        _showDeleteConfirmation(
+                          context: context,
+                          onConfirm: () =>
+                              _deleteResource(context, selectedRelatedIds: []),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: context.colorScheme.error,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: Insets.smallNormal),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        '${widget.resource.fhirType.name} ${context.l10n.deletePage.toLowerCase()}',
+                      ),
                     ),
-                    elevation: 0,
-                  ),
-                  child: Text('$resourceType + $relatedCount related'),
+                    if (relatedResources.isNotEmpty) ...[
+                      const SizedBox(height: Insets.normal),
+                      Text(
+                        'Related resources',
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: Insets.small),
+                      ...relatedResources.map((resource) {
+                        final isSelected = selectedIds.contains(resource.id);
+                        return Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: Insets.extraSmall),
+                          child: InkWell(
+                            onTap: () {
+                              setDialogState(() {
+                                if (isSelected) {
+                                  selectedIds.remove(resource.id);
+                                } else {
+                                  selectedIds.add(resource.id);
+                                }
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: Insets.smallNormal,
+                                vertical: Insets.small,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? context.colorScheme.error
+                                          .withValues(alpha: 0.5)
+                                      : borderColor,
+                                ),
+                                color: isSelected
+                                    ? context.colorScheme.error
+                                        .withValues(alpha: 0.05)
+                                    : null,
+                              ),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: Checkbox(
+                                      value: isSelected,
+                                      onChanged: (value) {
+                                        setDialogState(() {
+                                          if (value == true) {
+                                            selectedIds.add(resource.id);
+                                          } else {
+                                            selectedIds.remove(resource.id);
+                                          }
+                                        });
+                                      },
+                                      activeColor: context.colorScheme.error,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  ),
+                                  const SizedBox(width: Insets.small),
+                                  resource.fhirType.icon.svg(
+                                    width: 16,
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(width: Insets.small),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          resource.displayTitle,
+                                          style:
+                                              AppTextStyle.labelLarge.copyWith(
+                                            color: textColor,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          resource.fhirType.display,
+                                          style:
+                                              AppTextStyle.labelSmall.copyWith(
+                                            color: context
+                                                .colorScheme.onSurface
+                                                .withValues(alpha: 0.5),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                    if (selectedIds.isNotEmpty) ...[
+                      const SizedBox(height: Insets.small),
+                      OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          _showDeleteConfirmation(
+                            context: context,
+                            itemCount: 1 + selectedIds.length,
+                            onConfirm: () => _deleteResource(
+                              context,
+                              selectedRelatedIds: selectedIds.toList(),
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: context.colorScheme.error,
+                          side: BorderSide(
+                            color: context.colorScheme.error
+                                .withValues(alpha: 0.3),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: Insets.smallNormal),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          '${context.l10n.deletePage} + ${selectedIds.length} related',
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: Insets.small),
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: Text(context.l10n.cancel),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: Insets.small),
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(context.l10n.cancel),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  void _deleteResource(BuildContext context, bool deleteRelated) {
+  void _showDeleteConfirmation({
+    required BuildContext context,
+    required VoidCallback onConfirm,
+    int itemCount = 1,
+  }) {
+    final message = itemCount > 1
+        ? '${context.l10n.actionCannotBeUndone} ($itemCount items)'
+        : context.l10n.actionCannotBeUndone;
+
+    AppSimpleDialog.showDestructiveConfirmation(
+      context: context,
+      title: context.l10n.deletePage,
+      message: message,
+      confirmText: context.l10n.deletePage,
+      cancelText: context.l10n.cancel,
+      onConfirm: onConfirm,
+    );
+  }
+
+  void _deleteResource(
+    BuildContext context, {
+    List<String> selectedRelatedIds = const [],
+  }) {
     _appRecordsBloc.add(
       RecordsResourceDeleted(
         resourceId: widget.resource.id,
-        deleteRelated: deleteRelated,
+        selectedRelatedIds: selectedRelatedIds,
       ),
     );
     context.router.maybePop();

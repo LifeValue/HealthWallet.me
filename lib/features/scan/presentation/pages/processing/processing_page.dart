@@ -165,19 +165,23 @@ class _ProcessingPageState extends State<ProcessingPage> {
         if (displayedSession == null) return;
 
         if (state.status == const ScanStatus.success()) {
-          context
-              .read<ScanBloc>()
-              .add(ScanSessionCleared(session: displayedSession));
+          final sessionToClear = displayedSession;
           AppSimpleDialog.showConfirmation(
             context: context,
             title: context.l10n.recordsSavedTitle,
             message: context.l10n.recordsSavedMessage,
-            confirmText: context.l10n.continueButton,
+            confirmText: context.l10n.continueScanning,
             cancelText: context.l10n.dashboardTitle,
             onConfirm: () {
-              context.router.maybePop();
+              context
+                  .read<ScanBloc>()
+                  .add(ScanSessionCleared(session: sessionToClear));
+              context.router.replaceAll([const DashboardRoute()]);
             },
             onCancel: () {
+              context
+                  .read<ScanBloc>()
+                  .add(ScanSessionCleared(session: sessionToClear));
               context.router.replaceAll([const DashboardRoute()]);
             },
           );

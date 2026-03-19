@@ -603,6 +603,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ihre Gesundheitsdaten wurden erfolgreich gespeichert. Was möchten Sie als Nächstes tun?';
 
   @override
+  String get continueScanning => 'Weiter Scannen';
+
+  @override
   String get effectiveDate => 'Gültigkeitsdatum';
 
   @override

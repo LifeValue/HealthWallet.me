@@ -238,15 +238,21 @@ mixin ScanProcessingRepository {
     );
 
     final truncated = ocrText.length > 1500 ? ocrText.substring(0, 1500) : ocrText;
-    final prompt = '''Classify this medical document and extract the title and date. Return ONLY a single JSON object.
+    final prompt = '''What type of medical document is this? Return ONLY a single JSON object.
 Text:
 $truncated
 ---
-If this is a hospital visit, consultation, admission, or discharge document:
-{"resourceType":"Encounter","encounterType":"<document title or consultation name from the text>","periodStart":"YYYY-MM-DD"}
-If this is a lab test result or diagnostic report:
-{"resourceType":"DiagnosticReport","reportName":"<test or report name from the text>","conclusion":"","issuedDate":"YYYY-MM-DD"}
-Rules: encounterType = the actual document title, department name, or consultation type found in the text (e.g. "Foaie de observatie", "Scrisoare medicala", "Consult cardiologie"). NOT generic words like "admission" or "visit". reportName = the actual test name. Date = the document or visit date, NOT birth date. Empty string for missing fields.''';
+Most documents are hospital visits. Use Encounter for: discharge letters, admission notes, consultation notes, observation sheets, referrals, prescriptions, any hospital/clinic visit document.
+{"resourceType":"Encounter","encounterType":"<the document heading/title>","periodStart":"YYYY-MM-DD"}
+
+Use DiagnosticReport ONLY for standalone lab test results (blood tests, urine tests, imaging reports):
+{"resourceType":"DiagnosticReport","reportName":"<test name>","conclusion":"","issuedDate":"YYYY-MM-DD"}
+
+Rules:
+- encounterType = the document HEADING at the top (e.g. "Bilet de iesire din spital", "Foaie de observatie", "Scrisoare medicala", "Consult cardiologie"). NOT the diagnosis. NOT "Admission" or "Visit".
+- "Diagnostic externare" is a SECTION inside a discharge letter, not the document type. The document is still an Encounter.
+- periodStart/issuedDate = the visit or document date, NOT birth date.
+- Empty string for missing fields.''';
 
     ScanLogBuffer.instance.log('[$_ts][ScanAI] running container-only inference, prompt ${prompt.length} chars...');
 

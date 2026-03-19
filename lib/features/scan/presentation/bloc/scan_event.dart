@@ -149,3 +149,11 @@ class ScanPagesReordered extends ScanEvent with _$ScanPagesReordered {
     required List<String> reorderedPaths,
   }) = _ScanPagesReordered;
 }
+
+@freezed
+class ScanContainerTypeSwitched extends ScanEvent
+    with _$ScanContainerTypeSwitched {
+  const factory ScanContainerTypeSwitched({
+    required String sessionId,
+  }) = _ScanContainerTypeSwitched;
+}

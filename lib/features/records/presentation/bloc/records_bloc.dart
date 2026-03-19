@@ -387,18 +387,24 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     emit(state.copyWith(status: const RecordsStatus.loading()));
 
     try {
-      if (event.deleteRelated) {
+      if (event.selectedRelatedIds.isNotEmpty) {
+        final allIds = <String>[event.resourceId, ...event.selectedRelatedIds];
+        await _recordsRepository.deleteResourcesByIds(allIds);
+      } else if (event.deleteRelated) {
         await _recordsRepository.deleteResourceWithRelated(event.resourceId);
       } else {
         await _recordsRepository.deleteResource(event.resourceId);
       }
 
+      emit(state.copyWith(
+        status: const RecordsStatus.deleted(),
+        resources: [],
+      ));
+
       final remainingPatients = await _recordsRepository.getResources(
         resourceTypes: [FhirType.Patient],
         limit: 1,
       );
-
-      emit(state.copyWith(resources: []));
 
       if (remainingPatients.isEmpty) {
         emit(state.copyWith(

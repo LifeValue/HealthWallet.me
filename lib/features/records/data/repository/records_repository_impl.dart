@@ -169,6 +169,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
   }
 
   @override
+  Future<void> deleteResourcesByIds(List<String> ids) async {
+    await _datasource.deleteResourcesByIds(ids);
+  }
+
+  @override
   Future<void> deleteResourceWithRelated(String resourceId) async {
     final resource = await _datasource.getResources(
       resourceTypes: [],
@@ -229,6 +234,53 @@ class RecordsRepositoryImpl implements RecordsRepository {
     }
 
     return 0;
+  }
+
+  @override
+  Future<List<IFhirResource>> getRelatedResourcesForDeletion(
+      String resourceId) async {
+    final targetResource = (await (_database.select(_database.fhirResource)
+          ..where((f) => f.id.equals(resourceId)))
+        .get())
+        .firstOrNull;
+
+    if (targetResource == null) return [];
+
+    final relatedIds = <String>{};
+
+    if (targetResource.resourceType == 'Encounter' ||
+        targetResource.resourceType == 'DiagnosticReport') {
+      final related = await _datasource.getResourcesByEncounterId(
+        encounterId: targetResource.resourceId ?? '',
+      );
+      for (final r in related) {
+        if (r.id != resourceId) relatedIds.add(r.id);
+      }
+    }
+
+    final encId = targetResource.encounterId;
+    if (encId != null && encId.isNotEmpty) {
+      final encounterRows = await (_database.select(_database.fhirResource)
+            ..where((f) => f.resourceId.equals(encId)))
+          .get();
+      for (final r in encounterRows) {
+        if (r.id != resourceId) relatedIds.add(r.id);
+      }
+
+      final siblings =
+          await _datasource.getResourcesByEncounterId(encounterId: encId);
+      for (final r in siblings) {
+        if (r.id != resourceId) relatedIds.add(r.id);
+      }
+    }
+
+    if (relatedIds.isEmpty) return [];
+
+    final relatedRows = await (_database.select(_database.fhirResource)
+          ..where((f) => f.id.isIn(relatedIds.toList())))
+        .get();
+
+    return relatedRows.map(IFhirResource.fromLocalDto).toList();
   }
 
   @override
@@ -411,10 +463,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
     );
 
     final patientList = patients.whereType<Patient>().toList();
+    if (patientList.isEmpty) return [];
+
     final targetPatient = patientList.firstWhere(
       (p) => p.id == patientId,
-      orElse: () =>
-          patientList.isNotEmpty ? patientList.first : patientList.first,
+      orElse: () => patientList.first,
     );
 
     final bloodTypeObservations = observations.where((resource) {

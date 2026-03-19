@@ -210,6 +210,7 @@
     "continueProcessing": "Continue Processing",
     "recordsSavedTitle": "Records Saved",
     "recordsSavedMessage": "Your health records have been saved successfully. What would you like to do next?",
+    "continueScanning": "Continue Scanning",
 
     "effectiveDate": "Effective Date",
     "finishProcessing": "Finish Processing",
