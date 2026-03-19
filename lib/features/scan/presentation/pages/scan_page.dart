@@ -298,7 +298,7 @@ class _ScanViewState extends State<ScanView>
                   ),
                   const SizedBox(height: 16),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 80.0),
+                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
                     child: AppButton(
                       label: 'Scan Document',
                       icon: Assets.icons.scan.svg(),
@@ -354,6 +354,7 @@ class _ScanViewState extends State<ScanView>
               onPressed: () => _handleDirectScan(context),
             ),
           ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 76),
         ],
       ),
     );
