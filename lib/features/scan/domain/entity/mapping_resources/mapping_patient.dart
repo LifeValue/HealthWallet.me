@@ -22,7 +22,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     @Default(MappedProperty()) MappedProperty givenName,
     @Default(MappedProperty()) MappedProperty dateOfBirth,
     @Default(MappedProperty()) MappedProperty gender,
-    @Default(MappedProperty()) MappedProperty patientMRN,
+    @Default(MappedProperty()) MappedProperty patientIdentifier,
     @Default('ID') String identifierLabel,
   }) = _MappingPatient;
 
@@ -40,8 +40,8 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         value: MappingResource.normalizeDateValue(rawDob.value),
       ),
       gender: MappedProperty.fromJson(json['gender']),
-      patientMRN:
-          MappedProperty.fromJson(json['patientMRN'] ?? json['patientId']),
+      patientIdentifier:
+          MappedProperty.fromJson(json['patientIdentifier'] ?? json['patientMRN'] ?? json['patientId']),
       identifierLabel: rawLabel.isEmpty ? defaultLabel : rawLabel,
     );
   }
@@ -53,7 +53,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       givenName: MappedProperty.empty(),
       dateOfBirth: MappedProperty.empty(),
       gender: MappedProperty.empty(),
-      patientMRN: MappedProperty.empty(),
+      patientIdentifier: MappedProperty.empty(),
     );
   }
 
@@ -78,7 +78,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         value: FhirFieldExtractor.extractPatientGender(patient),
         confidenceLevel: 1,
       ),
-      patientMRN: MappedProperty(
+      patientIdentifier: MappedProperty(
         value: FhirFieldExtractor.extractPatientIdentifierValue(patient),
         confidenceLevel: 1,
       ),
@@ -94,7 +94,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         'givenName': givenName.toJson(),
         'dateOfBirth': dateOfBirth.toJson(),
         'gender': gender.toJson(),
-        'patientMRN': patientMRN.toJson(),
+        'patientIdentifier': patientIdentifier.toJson(),
         'identifierLabel': identifierLabel,
       };
 
@@ -122,9 +122,9 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           : null,
       gender: fhir_r4.AdministrativeGender(gender.value),
       identifier: [
-        if (patientMRN.value.isNotEmpty)
+        if (patientIdentifier.value.isNotEmpty)
           fhir_r4.Identifier(
-            value: fhir_r4.FhirString(patientMRN.value),
+            value: fhir_r4.FhirString(patientIdentifier.value),
             system: fhir_r4.FhirUri(identifierSystem),
             type: fhir_r4.CodeableConcept(
               coding: identifierCoding != null
@@ -184,10 +184,10 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           confidenceLevel: gender.confidenceLevel,
           fieldType: FieldType.dropdown,
         ),
-        'patientMRN': TextFieldDescriptor(
+        'patientIdentifier': TextFieldDescriptor(
           label: identifierLabel,
-          value: patientMRN.value,
-          confidenceLevel: patientMRN.confidenceLevel,
+          value: patientIdentifier.value,
+          confidenceLevel: patientIdentifier.confidenceLevel,
         ),
       };
 
@@ -215,10 +215,10 @@ class MappingPatient with _$MappingPatient implements MappingResource {
           confidenceLevel:
               newValues['gender'] != null ? 1 : gender.confidenceLevel,
         ),
-        patientMRN: MappedProperty(
-          value: newValues['patientMRN'] ?? patientMRN.value,
+        patientIdentifier: MappedProperty(
+          value: newValues['patientIdentifier'] ?? patientIdentifier.value,
           confidenceLevel:
-              newValues['patientMRN'] != null ? 1 : patientMRN.confidenceLevel,
+              newValues['patientIdentifier'] != null ? 1 : patientIdentifier.confidenceLevel,
         ),
         identifierLabel: identifierLabel,
       );
@@ -232,7 +232,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         givenName: givenName.calculateConfidence(inputText),
         dateOfBirth: dateOfBirth.calculateDateConfidence(inputText),
         gender: gender.calculateGenderConfidence(inputText),
-        patientMRN: patientMRN.calculateConfidence(inputText),
+        patientIdentifier: patientIdentifier.calculateConfidence(inputText),
       );
 
   static String? _mapLabelToFhirCode(String label) {
@@ -270,5 +270,5 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       givenName.isValid ||
       dateOfBirth.isValid ||
       gender.isValid ||
-      patientMRN.isValid;
+      patientIdentifier.isValid;
 }

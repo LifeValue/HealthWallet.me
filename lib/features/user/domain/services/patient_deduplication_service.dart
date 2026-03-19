@@ -223,8 +223,8 @@ class PatientDeduplicationService {
   ) {
     if (allPatients.isEmpty) return null;
 
-    if (draftPatient.patientMRN.value.isNotEmpty) {
-      final normalizedDraftMRN = _normalizeValue(draftPatient.patientMRN.value);
+    if (draftPatient.patientIdentifier.value.isNotEmpty) {
+      final normalizedDraftMRN = _normalizeValue(draftPatient.patientIdentifier.value);
 
       final identifierMatches = allPatients.where((patient) {
         if (patient.identifier == null || patient.identifier!.isEmpty) {

@@ -29,7 +29,7 @@ class CountryIdentifier {
       promptHints:
           '- Romanian: "Data nasterii" = birth date. "Data internarii" = NOT birth date\n'
           '- CNP (Cod Numeric Personal) = Romanian 13-digit ID. Encodes birth date and gender\n'
-          '- patientMRN = the CNP number (13 digits after "CNP:"), NOT "Cod prezentare", "Foie de observatie", or "Nr. fisa"',
+          '- patientIdentifier = the CNP number (13 digits after "CNP:"), NOT "Cod prezentare", "Foie de observatie", or "Nr. fisa"',
     ),
     'DE': CountryIdentifier(
       identifierLabel: 'KVNR',

@@ -179,7 +179,7 @@ mixin ScanProcessingRepository {
   bool _isUsableResult(MappingPatient patient) {
     return patient.familyName.value.isNotEmpty ||
         patient.givenName.value.isNotEmpty ||
-        patient.patientMRN.value.isNotEmpty;
+        patient.patientIdentifier.value.isNotEmpty;
   }
 
   Future<(MappingPatient, MappingResource)> processMapBasicInfo(

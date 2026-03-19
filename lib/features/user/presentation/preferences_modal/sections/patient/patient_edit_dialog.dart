@@ -2,16 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
-import 'package:health_wallet/features/scan/presentation/helpers/scan_path_helper.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -25,7 +21,7 @@ import 'utils/dialog_content.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';
 
 class PatientEditDialog extends StatefulWidget {
   final Patient patient;
@@ -76,7 +72,8 @@ class PatientEditDialog extends StatefulWidget {
   State<PatientEditDialog> createState() => _PatientEditDialogState();
 }
 
-class _PatientEditDialogState extends State<PatientEditDialog> {
+class _PatientEditDialogState extends State<PatientEditDialog>
+    with IdCardScanMixin {
   String _selectedGiven = '';
   String _selectedFamily = '';
   DateTime? _selectedBirthDate;
@@ -97,6 +94,53 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   late TextEditingController _givenController;
   late TextEditingController _familyController;
   late TextEditingController _identifierController;
+
+  @override
+  TextEditingController get givenController => _givenController;
+  @override
+  TextEditingController get familyController => _familyController;
+  @override
+  TextEditingController get identifierController => _identifierController;
+
+  @override
+  bool get isScanning => _isScanning;
+  @override
+  set isScanning(bool value) => _isScanning = value;
+  @override
+  bool get scanCompleted => _scanCompleted;
+  @override
+  set scanCompleted(bool value) => _scanCompleted = value;
+  @override
+  String? get scanMessage => _scanMessage;
+  @override
+  set scanMessage(String? value) => _scanMessage = value;
+  @override
+  String? get lastScannedImagePath => _lastScannedImagePath;
+  @override
+  set lastScannedImagePath(String? value) => _lastScannedImagePath = value;
+  @override
+  String? get scanCountryCode => _countryCode;
+
+  @override
+  void onScanResultApplied(IdCardExtractionResult result) {
+    if (result.familyName != null && result.familyName!.isNotEmpty) {
+      _selectedFamily = result.familyName!;
+    }
+    if (result.givenName != null && result.givenName!.isNotEmpty) {
+      _selectedGiven = result.givenName!;
+    }
+    if (result.identifierValue != null &&
+        result.identifierValue!.isNotEmpty) {
+      _selectedIdentifier = result.identifierValue!;
+    }
+    if (result.dateOfBirth != null) {
+      _selectedBirthDate = DateTime.tryParse(result.dateOfBirth!);
+    }
+    if (result.gender != null) {
+      _selectedGender = GenderMapper.mapFhirGenderToDisplay(
+          result.gender!, context.l10n);
+    }
+  }
 
   List<String> _getGenderOptions(AppLocalizations l10n) =>
       [l10n.male, l10n.female, l10n.preferNotToSay];
@@ -250,140 +294,6 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     _familyController.dispose();
     _identifierController.dispose();
     super.dispose();
-  }
-
-  Future<void> _handleScanIdCard() async {
-    if (_isScanning) return;
-
-    final status = await Permission.camera.request();
-    if (!status.isGranted) return;
-
-    setState(() => _isScanning = true);
-
-    try {
-      final scannedResult =
-          await FlutterDocScanner().getScannedDocumentAsImages(page: 1);
-
-      if (scannedResult == null || scannedResult.images.isEmpty) {
-        if (mounted) setState(() => _isScanning = false);
-        return;
-      }
-
-      final rawPaths = scannedResult.images
-          .where((p) => p.isNotEmpty)
-          .toList();
-      final sanitizedPaths = ScanPathHelper.normalizePaths(rawPaths);
-      if (sanitizedPaths.isEmpty) {
-        if (mounted) setState(() => _isScanning = false);
-        return;
-      }
-
-      final imagePath = sanitizedPaths.first;
-      _lastScannedImagePath = imagePath;
-      await _extractFromImage(imagePath);
-    } catch (_) {
-      if (mounted) setState(() => _isScanning = false);
-    }
-  }
-
-  Future<void> _handleRetryOcr() async {
-    if (_isScanning || _lastScannedImagePath == null) return;
-    setState(() => _isScanning = true);
-    try {
-      await _extractFromImage(_lastScannedImagePath!);
-    } catch (_) {
-      if (mounted) setState(() => _isScanning = false);
-    }
-  }
-
-  Future<void> _handlePickFromGallery() async {
-    if (_isScanning) return;
-    setState(() => _isScanning = true);
-
-    try {
-      final picker = ImagePicker();
-      final image = await picker.pickImage(source: ImageSource.gallery);
-      if (image == null) {
-        if (mounted) setState(() => _isScanning = false);
-        return;
-      }
-
-      _lastScannedImagePath = image.path;
-      await _extractFromImage(image.path);
-    } catch (_) {
-      if (mounted) setState(() => _isScanning = false);
-    }
-  }
-
-  Future<void> _extractFromImage(String imagePath) async {
-    final textRecognition = getIt<TextRecognitionService>();
-    final ocrText = await textRecognition.recognizeTextFromImage(imagePath);
-
-    if (ocrText.isEmpty) {
-      if (mounted) {
-        setState(() => _isScanning = false);
-        _showScanQualityMessage(false);
-      }
-      return;
-    }
-
-    final countryCode = _countryCode ?? context.read<UserBloc>().state.countryCode;
-    final result = IdCardExtractor.extract(ocrText, countryCode);
-
-    if (mounted && result.hasData) {
-      setState(() {
-        if (result.familyName != null && result.familyName!.isNotEmpty) {
-          _selectedFamily = result.familyName!;
-          _familyController.text = result.familyName!;
-        }
-        if (result.givenName != null && result.givenName!.isNotEmpty) {
-          _selectedGiven = result.givenName!;
-          _givenController.text = result.givenName!;
-        }
-        if (result.identifierValue != null &&
-            result.identifierValue!.isNotEmpty) {
-          _selectedIdentifier = result.identifierValue!;
-          _identifierController.text = result.identifierValue!;
-        }
-        if (result.dateOfBirth != null) {
-          _selectedBirthDate = DateTime.tryParse(result.dateOfBirth!);
-        }
-        if (result.gender != null) {
-          _selectedGender = GenderMapper.mapFhirGenderToDisplay(
-              result.gender!, context.l10n);
-        }
-        _isScanning = false;
-        _scanCompleted = true;
-      });
-      final fieldsFound = [
-        if (result.familyName != null) 'name',
-        if (result.dateOfBirth != null) 'DOB',
-        if (result.identifierValue != null) 'ID',
-      ].length;
-      if (fieldsFound < 2) {
-        _showScanQualityMessage(true);
-      } else {
-        setState(() {
-          _scanMessage =
-              'Verify the details are correct. Retry scanning if needed.';
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() => _isScanning = false);
-        _showScanQualityMessage(false);
-      }
-    }
-  }
-
-  void _showScanQualityMessage(bool partial) {
-    if (!mounted) return;
-    setState(() {
-      _scanMessage = partial
-          ? 'Some fields could not be read. Try a clearer photo.'
-          : 'Could not read the document. Retake with better lighting.';
-      _scanCompleted = true;
-    });
   }
 
   Future<void> _handleSave() async {
@@ -574,10 +484,10 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             scanMessage: _scanMessage,
             onScanIdCard: () {
               setState(() => _scanMessage = null);
-              _handleScanIdCard();
+              handleScanIdCard();
             },
-            onPickFromGallery: _handlePickFromGallery,
-            onRetryOcr: _scanCompleted ? _handleRetryOcr : null,
+            onPickFromGallery: handlePickFromGallery,
+            onRetryOcr: _scanCompleted ? handleRetryOcr : null,
             identifierLabel: _countryCode != null
                 ? CountryIdentifier.forCountry(_countryCode).identifierLabel
                 : FhirFieldExtractor.extractPatientIdentifierLabel(_currentPatient!),
