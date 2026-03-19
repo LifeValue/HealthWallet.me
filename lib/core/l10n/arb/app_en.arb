@@ -385,6 +385,7 @@
     "pageRotated": "Page rotated",
     "regionAndUnits": "Language & Units",
     "country": "Country",
+    "patientModifiedNewWillBeCreated": "Modified — a new patient will be created",
     "scanIdCard": "Scan ID Card or Passport",
     "scanIdCardDescription": "Auto-fill from your document. Data stays on your device.",
     "patientMatchFound": "Found existing patient: {name}",

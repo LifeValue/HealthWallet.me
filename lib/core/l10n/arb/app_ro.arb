@@ -359,6 +359,7 @@
     "pageRotated": "Pagină rotită",
     "regionAndUnits": "Limbă și Unități",
     "country": "Țara",
+    "patientModifiedNewWillBeCreated": "Modificat — va fi creat un pacient nou",
     "scanIdCard": "Scanează carte de identitate sau pașaport",
     "scanIdCardDescription": "Completare automată din document. Datele rămân pe dispozitivul tău.",
     "patientMatchFound": "Pacient existent găsit: {name}",

@@ -241,16 +241,29 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
         state.sessions.firstWhere((s) => s.id == event.sessionId);
 
     if (event.isDraftPatient == true) {
-      MappingPatient draftPatient =
-          activeSession.patient.draft ?? const MappingPatient();
+      MappingPatient draftPatient;
+      ImportMode newMode;
+
+      if (activeSession.patient.mode == ImportMode.linkExisting &&
+          activeSession.patient.existing != null) {
+        draftPatient = activeSession.patient.draft ??
+            MappingPatient.fromFhirResource(activeSession.patient.existing!);
+        newMode = ImportMode.createNew;
+      } else {
+        draftPatient = activeSession.patient.draft ?? const MappingPatient();
+        newMode = activeSession.patient.mode;
+      }
 
       updateSession(
         emit,
         sessionId: event.sessionId,
-        patient: activeSession.patient.copyWith(
-            draft: draftPatient
-                    .copyWithMap({event.propertyKey: event.newValue})
-                as MappingPatient),
+        patient: StagedPatient(
+          draft: draftPatient
+                  .copyWithMap({event.propertyKey: event.newValue})
+              as MappingPatient,
+          existing: activeSession.patient.existing,
+          mode: newMode,
+        ),
       );
       return;
     }

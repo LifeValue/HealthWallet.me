@@ -2010,6 +2010,8 @@ abstract class AppLocalizations {
   /// **'Country'**
   String get country;
 
+  String get patientModifiedNewWillBeCreated;
+
   /// No description provided for @scanIdCard.
   ///
   /// In en, this message translates to:

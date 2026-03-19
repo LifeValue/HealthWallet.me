@@ -1053,6 +1053,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get country => 'País';
 
   @override
+  String get patientModifiedNewWillBeCreated => 'Modificado — se creará un nuevo paciente';
+
+  @override
   String get scanIdCard => 'Escanear DNI o Pasaporte';
 
   @override

@@ -250,40 +250,8 @@ class ResourcesForm extends StatelessWidget {
                 ),
               ],
             ),
-            if (resource is MappingPatient &&
-                patient?.mode == ImportMode.linkExisting &&
-                patient?.existing != null)
-              Padding(
-                padding: const EdgeInsets.only(top: Insets.small),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Insets.smallNormal,
-                    vertical: Insets.small,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle,
-                          size: 16, color: context.colorScheme.primary),
-                      const SizedBox(width: Insets.small),
-                      Expanded(
-                        child: Text(
-                          context.l10n.patientMatchFound(
-                              patient!.existing!.displayTitle),
-                          style: AppTextStyle.labelSmall.copyWith(
-                            color: context.colorScheme.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            if (resource is MappingPatient && patient?.existing != null)
+              _buildPatientMatchBanner(context, patient!),
             const SizedBox(height: 24),
             ...textFields.entries.map((entry) {
               final propertyKey = entry.key;
@@ -574,5 +542,48 @@ class ResourcesForm extends StatelessWidget {
       return formattedDate;
     }
     return null;
+  }
+
+  Widget _buildPatientMatchBanner(BuildContext context, StagedPatient patient) {
+    final isModified = patient.mode == ImportMode.createNew && patient.existing != null;
+    final color = isModified
+        ? AppColors.warning
+        : context.colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: Insets.small),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          horizontal: Insets.smallNormal,
+          vertical: Insets.small,
+        ),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isModified ? Icons.person_add : Icons.check_circle,
+              size: 16,
+              color: color,
+            ),
+            const SizedBox(width: Insets.small),
+            Expanded(
+              child: Text(
+                isModified
+                    ? context.l10n.patientModifiedNewWillBeCreated
+                    : context.l10n.patientMatchFound(patient.existing!.displayTitle),
+                style: AppTextStyle.labelSmall.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

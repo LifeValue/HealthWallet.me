@@ -362,6 +362,7 @@
     "pageRotated": "Página rotada",
     "regionAndUnits": "Idioma y Unidades",
     "country": "País",
+    "patientModifiedNewWillBeCreated": "Modificado — se creará un nuevo paciente",
     "scanIdCard": "Escanear DNI o Pasaporte",
     "scanIdCardDescription": "Completa automáticamente desde tu documento. Los datos permanecen en tu dispositivo.",
     "patientMatchFound": "Paciente existente encontrado: {name}",
