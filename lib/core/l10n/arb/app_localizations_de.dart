@@ -367,6 +367,23 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Aktion kann nicht rückgängig gemacht werden.';
 
   @override
+  String get deleteRecordConfirm =>
+      'Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?';
+
+  @override
+  String get deleteNoteConfirm =>
+      'Sind Sie sicher, dass Sie diese Notiz löschen möchten?';
+
+  @override
+  String get deleteAttachmentConfirm =>
+      'Sind Sie sicher, dass Sie diesen Anhang löschen möchten?';
+
+  @override
+  String deleteRecordsConfirm(int count) {
+    return 'Sind Sie sicher, dass Sie $count Einträge löschen möchten?';
+  }
+
+  @override
   String confirmDeleteFile(Object filename) {
     return 'Sind Sie sicher, dass Sie \"$filename\" löschen möchten?';
   }

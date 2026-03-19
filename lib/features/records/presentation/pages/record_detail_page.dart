@@ -581,13 +581,14 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     int itemCount = 1,
   }) {
     final message = itemCount > 1
-        ? '${context.l10n.actionCannotBeUndone} ($itemCount items)'
-        : context.l10n.actionCannotBeUndone;
+        ? context.l10n.deleteRecordsConfirm(itemCount)
+        : context.l10n.deleteRecordConfirm;
 
     AppSimpleDialog.showDestructiveConfirmation(
       context: context,
       title: context.l10n.deletePage,
       message: message,
+      warningText: context.l10n.actionCannotBeUndone,
       confirmText: context.l10n.deletePage,
       cancelText: context.l10n.cancel,
       onConfirm: onConfirm,

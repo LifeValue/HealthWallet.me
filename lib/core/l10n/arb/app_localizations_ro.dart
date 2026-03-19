@@ -364,6 +364,22 @@ class AppLocalizationsRo extends AppLocalizations {
   String get actionCannotBeUndone => 'Această acțiune nu poate fi anulată.';
 
   @override
+  String get deleteRecordConfirm =>
+      'Ești sigur că vrei să ștergi această înregistrare?';
+
+  @override
+  String get deleteNoteConfirm => 'Ești sigur că vrei să ștergi această notă?';
+
+  @override
+  String get deleteAttachmentConfirm =>
+      'Ești sigur că vrei să ștergi acest atașament?';
+
+  @override
+  String deleteRecordsConfirm(int count) {
+    return 'Ești sigur că vrei să ștergi $count elemente?';
+  }
+
+  @override
   String confirmDeleteFile(Object filename) {
     return 'Ești sigur că vrei să ștergi \"$filename\"?';
   }

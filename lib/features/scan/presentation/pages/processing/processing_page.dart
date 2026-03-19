@@ -7,6 +7,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -166,23 +167,23 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
         if (state.status == const ScanStatus.success()) {
           final sessionToClear = displayedSession;
+          final scanBloc = context.read<ScanBloc>();
+          final navController = getIt<PageViewNavigationController>();
+          final router = context.router;
           AppSimpleDialog.showConfirmation(
             context: context,
             title: context.l10n.recordsSavedTitle,
             message: context.l10n.recordsSavedMessage,
             confirmText: context.l10n.continueScanning,
-            cancelText: context.l10n.dashboardTitle,
+            cancelText: context.l10n.recordsTitle,
             onConfirm: () {
-              context
-                  .read<ScanBloc>()
-                  .add(ScanSessionCleared(session: sessionToClear));
-              context.router.replaceAll([const DashboardRoute()]);
+              scanBloc.add(ScanSessionCleared(session: sessionToClear));
+              Navigator.of(context).popUntil((route) => route.isFirst);
             },
             onCancel: () {
-              context
-                  .read<ScanBloc>()
-                  .add(ScanSessionCleared(session: sessionToClear));
-              context.router.replaceAll([const DashboardRoute()]);
+              navController.jumpToPage(1);
+              scanBloc.add(ScanSessionCleared(session: sessionToClear));
+              Navigator.of(context).popUntil((route) => route.isFirst);
             },
           );
         }

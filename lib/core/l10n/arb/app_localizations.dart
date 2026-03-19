@@ -756,6 +756,30 @@ abstract class AppLocalizations {
   /// **'This action cannot be undone.'**
   String get actionCannotBeUndone;
 
+  /// No description provided for @deleteRecordConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this record?'**
+  String get deleteRecordConfirm;
+
+  /// No description provided for @deleteNoteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this note?'**
+  String get deleteNoteConfirm;
+
+  /// No description provided for @deleteAttachmentConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this attachment?'**
+  String get deleteAttachmentConfirm;
+
+  /// No description provided for @deleteRecordsConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} items?'**
+  String deleteRecordsConfirm(int count);
+
   /// No description provided for @confirmDeleteFile.
   ///
   /// In en, this message translates to:

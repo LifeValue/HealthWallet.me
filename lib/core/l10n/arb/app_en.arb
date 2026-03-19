@@ -127,6 +127,17 @@
     "getStarted": "Get Started",
     "failedToUpdateDisplayName": "Failed to update display name",
     "actionCannotBeUndone": "This action cannot be undone.",
+    "deleteRecordConfirm": "Are you sure you want to delete this record?",
+    "deleteNoteConfirm": "Are you sure you want to delete this note?",
+    "deleteAttachmentConfirm": "Are you sure you want to delete this attachment?",
+    "deleteRecordsConfirm": "Are you sure you want to delete {count} items?",
+    "@deleteRecordsConfirm": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
     "confirmDeleteFile": "Are you sure you want to delete \"{filename}\"?",
     "selectAtLeastOne": "Select at least one {type} to continue.",
     

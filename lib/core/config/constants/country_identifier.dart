@@ -162,4 +162,14 @@ class CountryIdentifier {
 
   static String defaultIdentifierLabel(String? countryCode) =>
       forCountry(countryCode).identifierLabel;
+
+  static String? labelFromSystem(String system) {
+    if (system.isEmpty) return null;
+    for (final profile in _profiles.values) {
+      if (system.contains(profile.fhirIdentifierSystem)) {
+        return profile.identifierLabel;
+      }
+    }
+    return null;
+  }
 }

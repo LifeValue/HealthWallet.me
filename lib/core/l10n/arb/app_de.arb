@@ -107,6 +107,10 @@
     "errorSavingPatientData": "Fehler beim Speichern der Patientendaten",
     "failedToUpdateDisplayName": "Fehler beim Aktualisieren des Anzeigenamens",
     "actionCannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteRecordConfirm": "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?",
+    "deleteNoteConfirm": "Sind Sie sicher, dass Sie diese Notiz löschen möchten?",
+    "deleteAttachmentConfirm": "Sind Sie sicher, dass Sie diesen Anhang löschen möchten?",
+    "deleteRecordsConfirm": "Sind Sie sicher, dass Sie {count} Einträge löschen möchten?",
     "confirmDeleteFile": "Sind Sie sicher, dass Sie \"{filename}\" löschen möchten?",
     "selectAtLeastOne": "Wählen Sie mindestens einen {type} aus, um fortzufahren.",
     

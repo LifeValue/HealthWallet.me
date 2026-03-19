@@ -122,6 +122,10 @@
     "getStarted": "Începe",
     "failedToUpdateDisplayName": "Nu s-a putut actualiza numele afișat",
     "actionCannotBeUndone": "Această acțiune nu poate fi anulată.",
+    "deleteRecordConfirm": "Ești sigur că vrei să ștergi această înregistrare?",
+    "deleteNoteConfirm": "Ești sigur că vrei să ștergi această notă?",
+    "deleteAttachmentConfirm": "Ești sigur că vrei să ștergi acest atașament?",
+    "deleteRecordsConfirm": "Ești sigur că vrei să ștergi {count} elemente?",
     "confirmDeleteFile": "Ești sigur că vrei să ștergi \"{filename}\"?",
     "@confirmDeleteFile": {
         "placeholders": {

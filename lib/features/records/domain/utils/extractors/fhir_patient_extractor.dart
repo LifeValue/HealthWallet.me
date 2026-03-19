@@ -1,3 +1,4 @@
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
@@ -179,7 +180,12 @@ class FhirPatientExtractor {
                 combined.contains('PNR')) return 'PNR';
             if (combined.contains('AHV') ||
                 combined.contains('HINTERLASSENENVERSICHERUNG')) return 'AHV';
-            return 'SSN';
+            final system = id.system?.toString() ?? '';
+            final systemLabel = CountryIdentifier.labelFromSystem(system);
+            if (systemLabel != null) return systemLabel;
+            final profile = CountryIdentifier.forCurrentLocale();
+            if (profile.identifierFhirCode == 'SS') return profile.identifierLabel;
+            return 'ID';
           case 'NI':
             final displayText = id.type?.text?.toString().toUpperCase() ?? '';
             if (displayText.contains('DNI')) return 'DNI';

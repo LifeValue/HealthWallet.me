@@ -360,6 +360,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionCannotBeUndone => 'This action cannot be undone.';
 
   @override
+  String get deleteRecordConfirm =>
+      'Are you sure you want to delete this record?';
+
+  @override
+  String get deleteNoteConfirm => 'Are you sure you want to delete this note?';
+
+  @override
+  String get deleteAttachmentConfirm =>
+      'Are you sure you want to delete this attachment?';
+
+  @override
+  String deleteRecordsConfirm(int count) {
+    return 'Are you sure you want to delete $count items?';
+  }
+
+  @override
   String confirmDeleteFile(Object filename) {
     return 'Are you sure you want to delete \"$filename\"?';
   }

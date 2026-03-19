@@ -111,6 +111,10 @@
     "errorSavingPatientData": "Error al guardar datos del paciente",
     "failedToUpdateDisplayName": "Error al actualizar nombre para mostrar",
     "actionCannotBeUndone": "Esta acción no se puede deshacer.",
+    "deleteRecordConfirm": "¿Estás seguro de que quieres eliminar este registro?",
+    "deleteNoteConfirm": "¿Estás seguro de que quieres eliminar esta nota?",
+    "deleteAttachmentConfirm": "¿Estás seguro de que quieres eliminar este archivo adjunto?",
+    "deleteRecordsConfirm": "¿Estás seguro de que quieres eliminar {count} elementos?",
     "confirmDeleteFile": "¿Estás seguro de que quieres eliminar \"{filename}\"?",
     "selectAtLeastOne": "Selecciona al menos un {type} para continuar.",
     

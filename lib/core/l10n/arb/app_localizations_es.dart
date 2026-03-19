@@ -363,6 +363,23 @@ class AppLocalizationsEs extends AppLocalizations {
   String get actionCannotBeUndone => 'Esta acción no se puede deshacer.';
 
   @override
+  String get deleteRecordConfirm =>
+      '¿Estás seguro de que quieres eliminar este registro?';
+
+  @override
+  String get deleteNoteConfirm =>
+      '¿Estás seguro de que quieres eliminar esta nota?';
+
+  @override
+  String get deleteAttachmentConfirm =>
+      '¿Estás seguro de que quieres eliminar este archivo adjunto?';
+
+  @override
+  String deleteRecordsConfirm(int count) {
+    return '¿Estás seguro de que quieres eliminar $count elementos?';
+  }
+
+  @override
   String confirmDeleteFile(Object filename) {
     return '¿Estás seguro de que quieres eliminar \"$filename\"?';
   }
