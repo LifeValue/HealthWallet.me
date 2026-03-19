@@ -8,6 +8,7 @@ import 'date_field.dart';
 import 'form_fields.dart';
 import 'phone_input_field.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 class DialogContent extends StatelessWidget {
   final Patient patient;
@@ -25,6 +26,7 @@ class DialogContent extends StatelessWidget {
   final bool isSetupMode;
   final bool isScanning;
   final bool scanCompleted;
+  final String? scanMessage;
   final ValueChanged<String>? onGivenChanged;
   final ValueChanged<String>? onFamilyChanged;
   final ValueChanged<String>? onIdentifierChanged;
@@ -58,6 +60,7 @@ class DialogContent extends StatelessWidget {
     this.isSetupMode = false,
     this.isScanning = false,
     this.scanCompleted = false,
+    this.scanMessage,
     this.onGivenChanged,
     this.onFamilyChanged,
     this.onIdentifierChanged,
@@ -102,6 +105,7 @@ class DialogContent extends StatelessWidget {
               onRetryOcr: onRetryOcr,
               isScanning: isScanning,
               scanCompleted: scanCompleted,
+              scanMessage: scanMessage,
             ),
             const SizedBox(height: Insets.normal),
           ],
@@ -238,6 +242,7 @@ class _ScanIdCardButton extends StatelessWidget {
   final VoidCallback? onRetryOcr;
   final bool isScanning;
   final bool scanCompleted;
+  final String? scanMessage;
 
   const _ScanIdCardButton({
     required this.onTap,
@@ -245,6 +250,7 @@ class _ScanIdCardButton extends StatelessWidget {
     this.onRetryOcr,
     this.isScanning = false,
     this.scanCompleted = false,
+    this.scanMessage,
   });
 
   @override
@@ -273,45 +279,52 @@ class _ScanIdCardButton extends StatelessWidget {
     }
 
     if (scanCompleted) {
-      final buttonStyle = OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primary,
-        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
-        padding: const EdgeInsets.symmetric(
-          vertical: Insets.small,
-          horizontal: Insets.small,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        textStyle: AppTextStyle.labelSmall.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      );
-
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           FormFields.buildFieldLabel(context, context.l10n.scanIdCard),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onTap,
-                  icon: const Icon(Icons.camera_alt_outlined, size: 14),
-                  label: Text(context.l10n.retry),
-                  style: buttonStyle,
+          if (scanMessage != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: Insets.small),
+              child: Row(
+                children: [
+                  Assets.icons.information.svg(
+                    width: 14,
+                    height: 14,
+                    colorFilter: ColorFilter.mode(AppColors.warning, BlendMode.srcIn),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      scanMessage!,
+                      style: AppTextStyle.regular.copyWith(
+                        color: AppColors.warning,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onTap,
+              icon: const Icon(Icons.camera_alt_outlined, size: 14),
+              label: Text(context.l10n.retry),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                textStyle: AppTextStyle.labelSmall.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: Insets.small),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onRetryOcr,
-                  icon: const Icon(Icons.refresh, size: 14),
-                  label: Text(context.l10n.retry),
-                  style: buttonStyle,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       );

@@ -94,3 +94,12 @@ class RecordsDateRangeCleared extends RecordsEvent
     with _$RecordsDateRangeCleared {
   const factory RecordsDateRangeCleared() = _RecordsDateRangeCleared;
 }
+
+@freezed
+class RecordsResourceDeleted extends RecordsEvent
+    with _$RecordsResourceDeleted {
+  const factory RecordsResourceDeleted({
+    required String resourceId,
+    @Default(false) bool deleteRelated,
+  }) = _RecordsResourceDeleted;
+}

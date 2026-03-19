@@ -6,7 +6,9 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
@@ -101,8 +103,23 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
       orElse: () => const GeneralResource(),
     );
 
+    final isEphemeral = widget.ephemeralRecords.isNotEmpty;
+
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Record Details'),
+      appBar: CustomAppBar(
+        title: 'Record Details',
+        actions: isEphemeral
+            ? null
+            : [
+                IconButton(
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: context.colorScheme.error,
+                  ),
+                  onPressed: () => _showDeleteDialog(context),
+                ),
+              ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(Insets.normal),
         child: Column(
@@ -323,5 +340,116 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
           )
           .toList(),
     );
+  }
+
+  void _showDeleteDialog(BuildContext context) async {
+    final relatedCount = await context
+        .read<RecordsBloc>()
+        .recordsRepository
+        .getRelatedResourceCount(widget.resource.id);
+
+    if (!context.mounted) return;
+
+    final resourceType = widget.resource.fhirType.name;
+    final hasRelated = relatedCount > 0;
+
+    if (!hasRelated) {
+      AppSimpleDialog.showDestructiveConfirmation(
+        context: context,
+        title: context.l10n.deletePage,
+        message: '${context.l10n.actionCannotBeUndone}',
+        confirmText: context.l10n.deletePage,
+        cancelText: context.l10n.cancel,
+        onConfirm: () => _deleteResource(context, false),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final textColor = context.primaryTextColor;
+        final borderColor = context.borderColor;
+
+        return Dialog(
+          backgroundColor: context.colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: borderColor, width: 1),
+          ),
+          insetPadding: const EdgeInsets.all(Insets.normal),
+          child: Padding(
+            padding: const EdgeInsets.all(Insets.normal),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  context.l10n.deletePage,
+                  style: AppTextStyle.bodyMedium.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: Insets.normal),
+                Text(
+                  context.l10n.actionCannotBeUndone,
+                  style: AppTextStyle.labelLarge.copyWith(color: textColor),
+                ),
+                const SizedBox(height: Insets.normal),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _deleteResource(context, false);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: context.colorScheme.error,
+                    side: BorderSide(color: context.colorScheme.error.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: Insets.smallNormal),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text('$resourceType ${context.l10n.deletePage.toLowerCase()}'),
+                ),
+                const SizedBox(height: Insets.small),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _deleteResource(context, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.colorScheme.error,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: Insets.smallNormal),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text('$resourceType + $relatedCount related'),
+                ),
+                const SizedBox(height: Insets.small),
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(context.l10n.cancel),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _deleteResource(BuildContext context, bool deleteRelated) {
+    context.read<RecordsBloc>().add(
+      RecordsResourceDeleted(
+        resourceId: widget.resource.id,
+        deleteRelated: deleteRelated,
+      ),
+    );
+    context.router.maybePop();
   }
 }

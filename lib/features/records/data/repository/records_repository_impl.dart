@@ -164,6 +164,74 @@ class RecordsRepositoryImpl implements RecordsRepository {
   }
 
   @override
+  Future<void> deleteResource(String resourceId) async {
+    await _datasource.deleteResourceById(resourceId);
+  }
+
+  @override
+  Future<void> deleteResourceWithRelated(String resourceId) async {
+    final resource = await _datasource.getResources(
+      resourceTypes: [],
+      limit: 1,
+    );
+
+    final targetResource = (await (_database.select(_database.fhirResource)
+          ..where((f) => f.id.equals(resourceId)))
+        .get())
+        .firstOrNull;
+
+    if (targetResource == null) return;
+
+    final idsToDelete = <String>{resourceId};
+
+    if (targetResource.resourceType == 'Encounter' ||
+        targetResource.resourceType == 'DiagnosticReport') {
+      final related = await _datasource.getResourcesByEncounterId(
+        encounterId: targetResource.resourceId ?? '',
+      );
+      idsToDelete.addAll(related.map((r) => r.id));
+    }
+
+    final encId = targetResource.encounterId;
+    if (encId != null && encId.isNotEmpty) {
+      final encounterRows = await (_database.select(_database.fhirResource)
+            ..where((f) => f.resourceId.equals(encId)))
+          .get();
+      idsToDelete.addAll(encounterRows.map((r) => r.id));
+
+      final siblings = await _datasource.getResourcesByEncounterId(encounterId: encId);
+      idsToDelete.addAll(siblings.map((r) => r.id));
+    }
+
+    await _datasource.deleteResourcesByIds(idsToDelete.toList());
+  }
+
+  @override
+  Future<int> getRelatedResourceCount(String resourceId) async {
+    final targetResource = (await (_database.select(_database.fhirResource)
+          ..where((f) => f.id.equals(resourceId)))
+        .get())
+        .firstOrNull;
+
+    if (targetResource == null) return 0;
+
+    if (targetResource.resourceType == 'Encounter' ||
+        targetResource.resourceType == 'DiagnosticReport') {
+      return _datasource.getRelatedResourceCount(
+        targetResource.resourceId ?? '',
+      );
+    }
+
+    final encId = targetResource.encounterId;
+    if (encId != null && encId.isNotEmpty) {
+      final count = await _datasource.getRelatedResourceCount(encId);
+      return count + 1;
+    }
+
+    return 0;
+  }
+
+  @override
   Future<void> loadDemoData() async {
     try {
       // Create demo_data source first

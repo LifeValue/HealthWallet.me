@@ -76,6 +76,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
   bool _isLoading = false;
   bool _isScanning = false;
   bool _scanCompleted = false;
+  String? _scanMessage;
   String? _lastScannedImagePath;
   Patient? _currentPatient;
   late String _selectedCountryCode;
@@ -273,7 +274,10 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
     final ocrText = await textRecognition.recognizeTextFromImage(imagePath);
 
     if (ocrText.isEmpty) {
-      if (mounted) setState(() => _isScanning = false);
+      if (mounted) {
+        setState(() => _isScanning = false);
+        _showScanQualityMessage(false);
+      }
       return;
     }
 
@@ -302,9 +306,28 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
         _isScanning = false;
         _scanCompleted = true;
       });
+      final fieldsFound = [
+        if (result.familyName != null) 'name',
+        if (result.dateOfBirth != null) 'DOB',
+        if (result.identifierValue != null) 'ID',
+      ].length;
+      if (fieldsFound < 2) _showScanQualityMessage(true);
     } else {
-      if (mounted) setState(() => _isScanning = false);
+      if (mounted) {
+        setState(() => _isScanning = false);
+        _showScanQualityMessage(false);
+      }
     }
+  }
+
+  void _showScanQualityMessage(bool partial) {
+    if (!mounted) return;
+    setState(() {
+      _scanMessage = partial
+          ? 'Some fields could not be read. Try a clearer photo.'
+          : 'Could not read the document. Retake with better lighting.';
+      _scanCompleted = true;
+    });
   }
 
   void _handleCancel() {
@@ -350,7 +373,11 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
             isSetupMode: true,
             isScanning: _isScanning,
             scanCompleted: _scanCompleted,
-            onScanIdCard: _handleScanIdCard,
+            scanMessage: _scanMessage,
+            onScanIdCard: () {
+              setState(() => _scanMessage = null);
+              _handleScanIdCard();
+            },
             onPickFromGallery: _handlePickFromGallery,
             onRetryOcr: _scanCompleted ? _handleRetryOcr : null,
             identifierLabel: CountryIdentifier.forCountry(

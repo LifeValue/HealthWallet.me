@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
@@ -19,6 +20,7 @@ part 'records_bloc.freezed.dart';
 @injectable
 class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   final RecordsRepository _recordsRepository;
+  RecordsRepository get recordsRepository => _recordsRepository;
   Timer? _searchDebounceTimer;
   bool _isSearching = false;
 
@@ -38,6 +40,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsSelectionCleared>(_onSelectionCleared);
     on<RecordsSelectionModeToggled>(_onSelectionModeToggled);
     on<RecordsDateRangeCleared>(_onDateRangeCleared);
+    on<RecordsResourceDeleted>(_onResourceDeleted);
   }
 
   @override
@@ -375,5 +378,26 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     ));
 
     await _loadResources(emit);
+  }
+
+  Future<void> _onResourceDeleted(
+    RecordsResourceDeleted event,
+    Emitter<RecordsState> emit,
+  ) async {
+    emit(state.copyWith(status: const RecordsStatus.loading()));
+
+    try {
+      if (event.deleteRelated) {
+        await _recordsRepository.deleteResourceWithRelated(event.resourceId);
+      } else {
+        await _recordsRepository.deleteResource(event.resourceId);
+      }
+
+      emit(state.copyWith(resources: []));
+      await _loadResources(emit);
+    } catch (e) {
+      debugPrint('Failed to delete resource: $e');
+      emit(state.copyWith(status: RecordsStatus.failure(e)));
+    }
   }
 }

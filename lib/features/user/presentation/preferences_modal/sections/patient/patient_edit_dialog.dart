@@ -88,6 +88,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
   bool _isLoading = false;
   bool _isScanning = false;
   bool _scanCompleted = false;
+  String? _scanMessage;
   String? _lastScannedImagePath;
   String? _countryCode;
   String? _initialCountryCode;
@@ -322,16 +323,15 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     final ocrText = await textRecognition.recognizeTextFromImage(imagePath);
 
     if (ocrText.isEmpty) {
-      if (mounted) setState(() => _isScanning = false);
+      if (mounted) {
+        setState(() => _isScanning = false);
+        _showScanQualityMessage(false);
+      }
       return;
     }
 
-    debugPrint('[IdCardScan] OCR text:\n$ocrText');
-
-    final countryCode = context.read<UserBloc>().state.countryCode;
+    final countryCode = _countryCode ?? context.read<UserBloc>().state.countryCode;
     final result = IdCardExtractor.extract(ocrText, countryCode);
-
-    debugPrint('[IdCardScan] Result: given=${result.givenName}, family=${result.familyName}, id=${result.identifierValue}, dob=${result.dateOfBirth}, gender=${result.gender}');
 
     if (mounted && result.hasData) {
       setState(() {
@@ -358,9 +358,28 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
         _isScanning = false;
         _scanCompleted = true;
       });
+      final fieldsFound = [
+        if (result.familyName != null) 'name',
+        if (result.dateOfBirth != null) 'DOB',
+        if (result.identifierValue != null) 'ID',
+      ].length;
+      if (fieldsFound < 2) _showScanQualityMessage(true);
     } else {
-      if (mounted) setState(() => _isScanning = false);
+      if (mounted) {
+        setState(() => _isScanning = false);
+        _showScanQualityMessage(false);
+      }
     }
+  }
+
+  void _showScanQualityMessage(bool partial) {
+    if (!mounted) return;
+    setState(() {
+      _scanMessage = partial
+          ? 'Some fields could not be read. Try a clearer photo.'
+          : 'Could not read the document. Retake with better lighting.';
+      _scanCompleted = true;
+    });
   }
 
   Future<void> _handleSave() async {
@@ -548,7 +567,11 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
             isSetupMode: false,
             isScanning: _isScanning,
             scanCompleted: _scanCompleted,
-            onScanIdCard: _handleScanIdCard,
+            scanMessage: _scanMessage,
+            onScanIdCard: () {
+              setState(() => _scanMessage = null);
+              _handleScanIdCard();
+            },
             onPickFromGallery: _handlePickFromGallery,
             onRetryOcr: _scanCompleted ? _handleRetryOcr : null,
             identifierLabel: _countryCode != null
