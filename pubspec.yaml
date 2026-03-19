@@ -1,7 +1,7 @@
 name: health_wallet
 description: "Open-source, patient-controlled health record app with on-device AI. Aggregates medical data from 52K+ providers via FHIR R4. Offline-first."
 publish_to: 'none'
-version: 1.2.0+59
+version: 1.2.1+60
 
 environment:
   sdk: '>=3.10.7 <4.0.0'
