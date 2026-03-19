@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:bloc/bloc.dart';
-import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
@@ -416,7 +415,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         await _loadResources(emit);
       }
     } catch (e) {
-      debugPrint('Failed to delete resource: $e');
       emit(state.copyWith(status: RecordsStatus.failure(e)));
     }
   }

@@ -175,11 +175,6 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<void> deleteResourceWithRelated(String resourceId) async {
-    final resource = await _datasource.getResources(
-      resourceTypes: [],
-      limit: 1,
-    );
-
     final targetResource = (await (_database.select(_database.fhirResource)
           ..where((f) => f.id.equals(resourceId)))
         .get())

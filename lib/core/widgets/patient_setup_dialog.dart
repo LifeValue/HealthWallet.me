@@ -232,8 +232,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
       final imagePath = sanitizedPaths.first;
       _lastScannedImagePath = imagePath;
       await _extractFromImage(imagePath);
-    } catch (e) {
-      debugPrint('ID card scan failed: $e');
+    } catch (_) {
       if (mounted) setState(() => _isScanning = false);
     }
   }
@@ -243,8 +242,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
     setState(() => _isScanning = true);
     try {
       await _extractFromImage(_lastScannedImagePath!);
-    } catch (e) {
-      debugPrint('OCR retry failed: $e');
+    } catch (_) {
       if (mounted) setState(() => _isScanning = false);
     }
   }
@@ -263,8 +261,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
 
       _lastScannedImagePath = image.path;
       await _extractFromImage(image.path);
-    } catch (e) {
-      debugPrint('Gallery pick failed: $e');
+    } catch (_) {
       if (mounted) setState(() => _isScanning = false);
     }
   }

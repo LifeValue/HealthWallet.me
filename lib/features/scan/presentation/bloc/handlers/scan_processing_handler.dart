@@ -150,8 +150,6 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
         threads: savedThreads,
         contextSize: savedContextSize,
       );
-      debugPrint(
-          '[ScanAI] bloc: container type=${container.runtimeType}, isDiagnosticReport=${container is MappingDiagnosticReport}');
       final stagedPatient = await _matchOrCreatePatient(patient);
       final finalSession =
           state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
@@ -180,21 +178,16 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
 
       startNextPendingSession();
     } on Exception catch (e) {
-      debugPrint('[ScanAI] _onScanMappingInitiated ERROR: $e');
-      debugPrint('[ScanAI] isCapacityError: ${isCapacityError(e.toString())}');
-      debugPrint('[ScanAI] emit.isDone: ${emit.isDone}');
       updateSession(emit,
           sessionId: event.sessionId,
           status: ProcessingStatus.pending,
           updateDb: true);
       if (!emit.isDone) {
         if (isCapacityError(e.toString())) {
-          debugPrint('[ScanAI] emitting capacityFailure');
           emit(state.copyWith(
             status: ScanStatus.capacityFailure(sessionId: event.sessionId),
           ));
         } else {
-          debugPrint('[ScanAI] emitting generic failure');
           emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
         }
       }
@@ -222,9 +215,7 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
           }
         }
       }
-    } catch (e) {
-      debugPrint('OCR pre-match failed: $e');
-    }
+    } catch (_) {}
     return null;
   }
 

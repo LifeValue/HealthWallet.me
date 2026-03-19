@@ -98,16 +98,6 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   bool _formatting = false;
   String _lastDigits = '';
 
-  CountryEntry _countryForCode(String code) {
-    return _countries.firstWhere(
-      (c) => c.isoCode.name.toUpperCase() == code.toUpperCase(),
-      orElse: () => _countries.firstWhere(
-        (c) => c.isoCode == IsoCode.US,
-        orElse: () => _countries.first,
-      ),
-    );
-  }
-
   CountryEntry get _defaultCountry {
     if (widget.defaultCountryCode != null) {
       final match = _countries

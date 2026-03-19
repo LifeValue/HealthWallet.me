@@ -1,5 +1,3 @@
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
-
 enum RegionPreset {
   us(
     dateFormat: 'MM-dd-yyyy',
@@ -66,9 +64,5 @@ enum RegionPreset {
       (preset) => preset.name == value,
       orElse: () => RegionPreset.europe,
     );
-  }
-
-  static String defaultIdentifierLabel(String? countryCode) {
-    return CountryIdentifier.defaultIdentifierLabel(countryCode);
   }
 }

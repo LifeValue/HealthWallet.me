@@ -52,14 +52,12 @@ class _ScanViewState extends State<ScanView>
 
   @override
   void onPageSettled() {
-    debugPrint('[ScanPage] onPageSettled called');
     context.read<LoadModelBloc>().add(const LoadModelInitialized());
     _autoStartScanning();
   }
 
   @override
   void onPageLeft() {
-    debugPrint('[ScanPage] onPageLeft called');
     setState(() {
       _hasAutoScanned = false;
     });
@@ -79,24 +77,16 @@ class _ScanViewState extends State<ScanView>
   }
 
   Future<void> _autoStartScanning() async {
-    debugPrint('[ScanPage] _autoStartScanning: _hasAutoScanned=$_hasAutoScanned, _isAttachingDocuments=$_isAttachingDocuments');
-    if (_hasAutoScanned || _isAttachingDocuments) {
-      debugPrint('[ScanPage] _autoStartScanning: SKIPPED (already scanned or attaching)');
-      return;
-    }
+    if (_hasAutoScanned || _isAttachingDocuments) return;
 
     _hasAutoScanned = true;
 
     final currentState = context.read<ScanBloc>().state;
     final hasAnySessions = currentState.sessions
         .any((session) => session.origin == ProcessingOrigin.scan);
-    debugPrint('[ScanPage] _autoStartScanning: sessions=${currentState.sessions.length}, hasAnySessions=$hasAnySessions, statuses=${currentState.sessions.map((s) => "${s.id}:${s.status}").toList()}');
 
     if (!hasAnySessions) {
-      debugPrint('[ScanPage] _autoStartScanning: OPENING CAMERA');
       await _handleScanButtonPressed(context);
-    } else {
-      debugPrint('[ScanPage] _autoStartScanning: sessions exist, NOT opening camera');
     }
   }
 
@@ -215,14 +205,12 @@ class _ScanViewState extends State<ScanView>
               return previous.sessions.isNotEmpty && current.sessions.isEmpty;
             },
             listener: (context, state) {
-              debugPrint('[ScanPage] BlocListener: sessions became empty, _hasAutoScanned=$_hasAutoScanned, currentPage=${_navigationController.currentPage}');
               if (state.sessions.isEmpty &&
                   _hasAutoScanned &&
                   !_isAttachingDocuments) {
                 _resetAutoScanFlag();
 
                 if (_navigationController.currentPage == 2) {
-                  debugPrint('[ScanPage] BlocListener: RE-TRIGGERING _autoStartScanning');
                   _autoStartScanning();
                 }
               }
@@ -233,7 +221,6 @@ class _ScanViewState extends State<ScanView>
                 previous.status != current.status,
             listener: (context, state) {
               if (state.status case SessionCreated(:final session)) {
-                // Check if the session is from scan origin before navigating
                 if (session.origin == ProcessingOrigin.scan) {
                   navigateToFhirMapper(context, session);
                 }

@@ -41,7 +41,6 @@ class SyncPlaceholderWidget extends StatefulWidget {
 }
 
 class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
-  bool _hasInitiatedDemoDataLoading = false;
   SyncBloc? _syncBloc;
   late final SyncPlaceholderHighlightController _highlightController;
   late final StepByStepOverlayController _overlayController;
@@ -141,16 +140,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
   Widget build(BuildContext context) {
     _syncBloc = context.read<SyncBloc>();
 
-    return BlocListener<SyncBloc, SyncState>(listenWhen: (previous, current) {
-      return current.hasDemoData && !current.hasSyncedData;
-    }, listener: (context, state) {
-      if (state.hasDemoData &&
-          !state.hasSyncedData &&
-          _hasInitiatedDemoDataLoading) {
-        _handleDemoDataCompletion(context);
-        _hasInitiatedDemoDataLoading = false;
-      } else {}
-    }, child: BlocBuilder<HomeBloc, HomeState>(
+    return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, homeState) {
         final hasVitalDataLoaded = homeState.patientVitals.any(
             (vital) => vital.value != 'N/A' && vital.observationId != null);
@@ -184,7 +174,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
           ),
         );
       },
-    ));
+    );
   }
 
   Widget _buildMessageSection(BuildContext context, bool hasAnyMeaningfulData) {
@@ -393,8 +383,6 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
       },
     );
   }
-
-  void _handleDemoDataCompletion(BuildContext context) async {}
 
   void _onDemoDataComplete(
     BuildContext dialogContext,
