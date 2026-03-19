@@ -375,6 +375,14 @@
     "country": "Country",
     "scanIdCard": "Scan ID Card or Passport",
     "scanIdCardDescription": "Auto-fill from your document. Data stays on your device.",
+    "patientMatchFound": "Found existing patient: {name}",
+    "@patientMatchFound": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
     "language": "Language",
     "systemDefault": "System Default",
     "regionUS": "US",

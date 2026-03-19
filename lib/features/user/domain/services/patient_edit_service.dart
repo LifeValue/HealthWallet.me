@@ -499,7 +499,7 @@ class PatientEditService {
     final currentGender =
         FhirFieldExtractor.extractPatientGender(currentPatient);
     final currentBloodType = await getCurrentBloodType(currentPatient);
-    final currentIdentifier = FhirFieldExtractor.extractPatientMRN(currentPatient);
+    final currentIdentifier = FhirFieldExtractor.extractPatientIdentifierValue(currentPatient);
 
     final birthDateChanged = currentBirthDate != newBirthDate;
     final genderChanged =

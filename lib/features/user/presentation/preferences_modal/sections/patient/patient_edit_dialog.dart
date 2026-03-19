@@ -116,7 +116,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
     _familyController =
         TextEditingController(text: _extractFamily(widget.patient));
     _identifierController = TextEditingController(
-        text: FhirFieldExtractor.extractPatientMRN(widget.patient));
+        text: FhirFieldExtractor.extractPatientIdentifierValue(widget.patient));
     _initializeControllers();
     _initializeCurrentPatient();
   }
@@ -180,7 +180,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
       _selectedGender =
           GenderMapper.mapFhirGenderToDisplay(extractedGender, context.l10n);
 
-      _selectedIdentifier = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
+      _selectedIdentifier = FhirFieldExtractor.extractPatientIdentifierValue(_currentPatient!);
       _selectedContactPhone = _extractContactPhone(_currentPatient!);
 
       _givenController.text = _selectedGiven;
@@ -430,7 +430,7 @@ class _PatientEditDialogState extends State<PatientEditDialog> {
 
       final currentGiven = _extractGiven(_currentPatient!);
       final currentFamily = _extractFamily(_currentPatient!);
-      final currentIdentifier = FhirFieldExtractor.extractPatientMRN(_currentPatient!);
+      final currentIdentifier = FhirFieldExtractor.extractPatientIdentifierValue(_currentPatient!);
       final currentContactPhone = _extractContactPhone(_currentPatient!);
       final currentContactPhoneValue = _selectedContactPhone;
 

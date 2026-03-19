@@ -1992,6 +1992,12 @@ abstract class AppLocalizations {
   /// **'Auto-fill from your document. Data stays on your device.'**
   String get scanIdCardDescription;
 
+  /// No description provided for @patientMatchFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Found existing patient: {name}'**
+  String patientMatchFound(String name);
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

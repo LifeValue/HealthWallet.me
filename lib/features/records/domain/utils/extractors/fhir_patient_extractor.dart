@@ -204,7 +204,7 @@ class FhirPatientExtractor {
     return 'ID';
   }
 
-  static String extractPatientMRN(Patient patient) {
+  static String extractPatientIdentifierValue(Patient patient) {
     if (patient.identifier == null || patient.identifier!.isEmpty) {
       return '';
     }

@@ -6,6 +6,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
@@ -42,6 +43,10 @@ class ProcessingResourcesSection extends StatelessWidget {
         displayedSession.status != ProcessingStatus.patientExtracted) {
       return const SizedBox();
     }
+
+    final isPatientMatched =
+        displayedSession.patient.mode == ImportMode.linkExisting &&
+            displayedSession.patient.existing != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

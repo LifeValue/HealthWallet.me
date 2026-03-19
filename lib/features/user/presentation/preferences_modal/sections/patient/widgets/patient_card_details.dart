@@ -72,7 +72,7 @@ class PatientCardDetails extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient)}: ${FhirFieldExtractor.extractPatientMRN(displayPatient)}',
+            '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient)}: ${FhirFieldExtractor.extractPatientIdentifierValue(displayPatient)}',
           ),
           _buildPatientInfoRow(
             context,

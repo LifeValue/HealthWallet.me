@@ -7,6 +7,7 @@ import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/scan/presentation/pages/preview/bloc/preview_bloc.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final String imagePath;
@@ -461,7 +462,14 @@ class _BottomActionBar extends StatelessWidget {
             onTap: onRotate,
           ),
           _ActionButton(
-            icon: Icons.delete_outline,
+            iconWidget: Assets.icons.trashCan.svg(
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(
+                onDelete != null ? Colors.white : Colors.white38,
+                BlendMode.srcIn,
+              ),
+            ),
             label: context.l10n.deletePage,
             onTap: onDelete,
           ),
@@ -472,17 +480,19 @@ class _BottomActionBar extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget? iconWidget;
   final String label;
   final VoidCallback? onTap;
   final bool isActive;
 
   const _ActionButton({
-    required this.icon,
+    this.icon,
+    this.iconWidget,
     required this.label,
     required this.onTap,
     this.isActive = false,
-  });
+  }) : assert(icon != null || iconWidget != null);
 
   @override
   Widget build(BuildContext context) {
@@ -501,7 +511,10 @@ class _ActionButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 20),
+            if (iconWidget != null)
+              iconWidget!
+            else
+              Icon(icon, color: color, size: 20),
             const SizedBox(height: 2),
             Text(
               label,

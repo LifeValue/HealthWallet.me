@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -93,6 +94,51 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
             sessionId: event.sessionId, status: ProcessingStatus.draft);
         return;
       }
+      final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
+      if (ocrPreMatch != null) {
+        ScanLogBuffer.instance.log(
+          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: ${ocrPreMatch.displayTitle}, running container-only AI');
+        final stagedPatient = StagedPatient(
+          existing: ocrPreMatch,
+          mode: ImportMode.linkExisting,
+        );
+        final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
+        final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
+        final savedContextSize = prefs.getInt(SharedPrefsConstants.aiContextSize);
+        final container = await scanRepository.mapContainerOnly(
+          medicalText,
+          maxTokens: savedMaxTokens,
+          threads: savedThreads,
+          contextSize: savedContextSize,
+        );
+        final finalSession =
+            state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+        if (container is MappingDiagnosticReport) {
+          updateSession(emit,
+              sessionId: event.sessionId,
+              status: ProcessingStatus.patientExtracted,
+              patient: stagedPatient,
+              diagnosticReport: StagedDiagnosticReport(draft: container),
+              updateDb: true);
+        } else {
+          updateSession(emit,
+              sessionId: event.sessionId,
+              status: ProcessingStatus.patientExtracted,
+              patient: stagedPatient,
+              encounter: StagedEncounter(draft: container as MappingEncounter),
+              updateDb: true);
+        }
+        emit(state.copyWith(
+          notification: Notification(
+            text: "${finalSession?.origin ?? 'Document'} patient matched",
+            route: ProcessingRoute(sessionId: event.sessionId),
+            time: DateTime.now(),
+          ),
+        ));
+        startNextPendingSession();
+        return;
+      }
+
       final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
       final savedGpuLayers = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
       final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
@@ -131,6 +177,7 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
           time: DateTime.now(),
         ),
       ));
+
       startNextPendingSession();
     } on Exception catch (e) {
       debugPrint('[ScanAI] _onScanMappingInitiated ERROR: $e');
@@ -152,6 +199,33 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
         }
       }
     }
+  }
+
+  Future<Patient?> _tryMatchPatientFromOcr(String ocrText) async {
+    if (ocrText.isEmpty) return null;
+    try {
+      final allPatientsResources = await recordsRepository.getResources(
+        resourceTypes: [FhirType.Patient],
+        limit: 1000,
+      );
+      final allPatients = allPatientsResources.whereType<Patient>().toList();
+      if (allPatients.isEmpty) return null;
+
+      for (final patient in allPatients) {
+        if (patient.identifier == null) continue;
+        for (final id in patient.identifier!) {
+          final value = id.value?.valueString;
+          if (value != null && value.length >= 5 && ocrText.contains(value)) {
+            ScanLogBuffer.instance.log(
+              '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value');
+            return patient;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('OCR pre-match failed: $e');
+    }
+    return null;
   }
 
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {

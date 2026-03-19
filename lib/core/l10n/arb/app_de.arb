@@ -355,6 +355,8 @@
     "country": "Land",
     "scanIdCard": "Ausweis oder Reisepass scannen",
     "scanIdCardDescription": "Automatisch aus Ihrem Dokument ausfüllen. Daten bleiben auf Ihrem Gerät.",
+    "patientMatchFound": "Bestehenden Patienten gefunden: {name}",
+    "@patientMatchFound": { "placeholders": { "name": { "type": "String" } } },
     "language": "Sprache",
     "systemDefault": "Systemstandard",
     "regionUS": "US",

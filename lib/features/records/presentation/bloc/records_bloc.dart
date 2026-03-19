@@ -393,8 +393,22 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         await _recordsRepository.deleteResource(event.resourceId);
       }
 
+      final remainingPatients = await _recordsRepository.getResources(
+        resourceTypes: [FhirType.Patient],
+        limit: 1,
+      );
+
       emit(state.copyWith(resources: []));
-      await _loadResources(emit);
+
+      if (remainingPatients.isEmpty) {
+        emit(state.copyWith(
+          status: const RecordsStatus.success(),
+          resources: [],
+          hasMorePages: false,
+        ));
+      } else {
+        await _loadResources(emit);
+      }
     } catch (e) {
       debugPrint('Failed to delete resource: $e');
       emit(state.copyWith(status: RecordsStatus.failure(e)));

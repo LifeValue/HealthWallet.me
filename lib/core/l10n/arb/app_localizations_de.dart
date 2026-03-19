@@ -1050,6 +1050,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Automatisch aus Ihrem Dokument ausfüllen. Daten bleiben auf Ihrem Gerät.';
 
   @override
+  String patientMatchFound(String name) {
+    return 'Bestehenden Patienten gefunden: $name';
+  }
+
+  @override
   String get language => 'Sprache';
 
   @override

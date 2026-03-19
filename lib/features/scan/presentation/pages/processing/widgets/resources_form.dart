@@ -59,8 +59,7 @@ class ResourcesForm extends StatelessWidget {
                     : MappingPatient.fromFhirResource(patient!.existing!),
                 canRemove: false,
                 isStagedResource: true,
-                isReadOnly: isAttachmentLocked ||
-                    patient!.mode == ImportMode.linkExisting,
+                isReadOnly: isAttachmentLocked,
                 onPropertyChanged: (propertyKey, newValue) =>
                     context.read<ScanBloc>().add(
                           ScanResourceChanged(
@@ -228,6 +227,40 @@ class ResourcesForm extends StatelessWidget {
                 ),
               ],
             ),
+            if (resource is MappingPatient &&
+                patient?.mode == ImportMode.linkExisting &&
+                patient?.existing != null)
+              Padding(
+                padding: const EdgeInsets.only(top: Insets.small),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Insets.smallNormal,
+                    vertical: Insets.small,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle,
+                          size: 16, color: context.colorScheme.primary),
+                      const SizedBox(width: Insets.small),
+                      Expanded(
+                        child: Text(
+                          context.l10n.patientMatchFound(
+                              patient!.existing!.displayTitle),
+                          style: AppTextStyle.labelSmall.copyWith(
+                            color: context.colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             const SizedBox(height: 24),
             ...textFields.entries.map((entry) {
               final propertyKey = entry.key;

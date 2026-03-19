@@ -222,6 +222,64 @@ mixin ScanProcessingRepository {
     return _visionBasicInfo(imagePaths, ocrText, maxTokens, gpuLayers, threads, contextSize);
   }
 
+  Future<MappingResource> mapContainerOnly(
+    String ocrText, {
+    int? maxTokens,
+    int? threads,
+    int? contextSize,
+  }) async {
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] === CONTAINER-ONLY EXTRACTION (pre-matched patient) ===');
+
+    final textCtx = (contextSize == null || contextSize < 2048) ? 2048 : contextSize;
+    await networkDataSource.initModel(
+      withVision: false,
+      threads: threads,
+      contextSize: textCtx,
+    );
+
+    final truncated = ocrText.length > 1500 ? ocrText.substring(0, 1500) : ocrText;
+    final prompt = '''Classify this medical document and extract the title and date. Return ONLY a single JSON object.
+Text:
+$truncated
+---
+If this is a hospital visit, consultation, admission, or discharge document:
+{"resourceType":"Encounter","encounterType":"<document title or consultation name from the text>","periodStart":"YYYY-MM-DD"}
+If this is a lab test result or diagnostic report:
+{"resourceType":"DiagnosticReport","reportName":"<test or report name from the text>","conclusion":"","issuedDate":"YYYY-MM-DD"}
+Rules: encounterType = the actual document title, department name, or consultation type found in the text (e.g. "Foaie de observatie", "Scrisoare medicala", "Consult cardiologie"). NOT generic words like "admission" or "visit". reportName = the actual test name. Date = the document or visit date, NOT birth date. Empty string for missing fields.''';
+
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] running container-only inference, prompt ${prompt.length} chars...');
+
+    final response = await networkDataSource.runTextPrompt(
+      prompt: prompt,
+      maxTokens: maxTokens ?? 256,
+    );
+
+    await disposeModel();
+
+    if (response == null || response.isEmpty) {
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only: empty response');
+      return MappingEncounter.empty();
+    }
+
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only response: ${response.length > 200 ? response.substring(0, 200) : response}');
+
+    try {
+      final cleaned = response.replaceAll(_markdownFenceRegex, '').trim();
+      final json = jsonDecode(cleaned.startsWith('[') ? cleaned : '[$cleaned]') as List;
+      if (json.isEmpty) return MappingEncounter.empty();
+
+      final first = json.first as Map<String, dynamic>;
+      if (first['resourceType'] == 'DiagnosticReport') {
+        return MappingDiagnosticReport.fromJson(first);
+      }
+      return MappingEncounter.fromJson(first);
+    } catch (e) {
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only parse failed: $e');
+      return MappingEncounter.empty();
+    }
+  }
+
   Future<(MappingPatient, MappingResource, String)?> _tryTextOnlyBasicInfo(
     String ocrText,
     int? maxTokens,

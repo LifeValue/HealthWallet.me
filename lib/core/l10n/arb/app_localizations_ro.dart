@@ -1042,6 +1042,11 @@ class AppLocalizationsRo extends AppLocalizations {
       'Completare automată din document. Datele rămân pe dispozitivul tău.';
 
   @override
+  String patientMatchFound(String name) {
+    return 'Pacient existent găsit: $name';
+  }
+
+  @override
   String get language => 'Limbă';
 
   @override

@@ -18,6 +18,7 @@ import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 @RoutePage()
 class RecordDetailsPage extends StatefulWidget {
@@ -37,11 +38,13 @@ class RecordDetailsPage extends StatefulWidget {
 class _RecordDetailsPageState extends State<RecordDetailsPage> {
   final PdfPreviewService _pdfPreviewService = getIt<PdfPreviewService>();
   late final bool _isEphemeral;
+  late final RecordsBloc _appRecordsBloc;
   List<IFhirResource> _ephemeralRelatedResources = [];
 
   @override
   void initState() {
     super.initState();
+    _appRecordsBloc = context.read<RecordsBloc>();
     _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
         EphemeralSessionManager.instance.hasActiveSession;
     if (_isEphemeral) {
@@ -112,9 +115,11 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
             ? null
             : [
                 IconButton(
-                  icon: Icon(
-                    Icons.delete_outline,
-                    color: context.colorScheme.error,
+                  icon: Assets.icons.trashCan.svg(
+                    colorFilter: ColorFilter.mode(
+                      context.colorScheme.error,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   onPressed: () => _showDeleteDialog(context),
                 ),
@@ -343,8 +348,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   }
 
   void _showDeleteDialog(BuildContext context) async {
-    final relatedCount = await context
-        .read<RecordsBloc>()
+    final relatedCount = await _appRecordsBloc
         .recordsRepository
         .getRelatedResourceCount(widget.resource.id);
 
@@ -444,7 +448,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   }
 
   void _deleteResource(BuildContext context, bool deleteRelated) {
-    context.read<RecordsBloc>().add(
+    _appRecordsBloc.add(
       RecordsResourceDeleted(
         resourceId: widget.resource.id,
         deleteRelated: deleteRelated,

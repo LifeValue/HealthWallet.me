@@ -1040,6 +1040,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Completa automáticamente desde tu documento. Los datos permanecen en tu dispositivo.';
 
   @override
+  String patientMatchFound(String name) {
+    return 'Paciente existente encontrado: $name';
+  }
+
+  @override
   String get language => 'Idioma';
 
   @override

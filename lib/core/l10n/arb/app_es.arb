@@ -359,6 +359,8 @@
     "country": "País",
     "scanIdCard": "Escanear DNI o Pasaporte",
     "scanIdCardDescription": "Completa automáticamente desde tu documento. Los datos permanecen en tu dispositivo.",
+    "patientMatchFound": "Paciente existente encontrado: {name}",
+    "@patientMatchFound": { "placeholders": { "name": { "type": "String" } } },
     "language": "Idioma",
     "systemDefault": "Predeterminado del sistema",
     "regionUS": "US",

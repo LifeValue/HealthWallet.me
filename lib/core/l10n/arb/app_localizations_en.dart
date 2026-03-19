@@ -1030,6 +1030,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Auto-fill from your document. Data stays on your device.';
 
   @override
+  String patientMatchFound(String name) {
+    return 'Found existing patient: $name';
+  }
+
+  @override
   String get language => 'Language';
 
   @override

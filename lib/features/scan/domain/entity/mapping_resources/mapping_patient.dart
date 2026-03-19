@@ -79,9 +79,10 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         confidenceLevel: 1,
       ),
       patientMRN: MappedProperty(
-        value: FhirFieldExtractor.extractPatientMRN(patient),
+        value: FhirFieldExtractor.extractPatientIdentifierValue(patient),
         confidenceLevel: 1,
       ),
+      identifierLabel: FhirFieldExtractor.extractPatientIdentifierLabel(patient),
     );
   }
 
