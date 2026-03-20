@@ -67,9 +67,16 @@ platform :ios do
 
     Dir.chdir("../..") do
       Bundler.with_unbundled_env do
-        sh("shorebird", "release", "ios", "--force", "--no-codesign", "--",
-           "--build-number=#{build_number}",
-           "--build-name=#{version_name}")
+        begin
+          sh("shorebird", "release", "--platforms", "ios", "--no-codesign",
+             "--build-number=#{build_number}",
+             "--build-name=#{version_name}")
+        rescue => e
+          UI.important("Shorebird release failed (#{e.message}), falling back to flutter build")
+          sh("fvm", "flutter", "build", "ios", "--release", "--no-codesign",
+             "--build-number=#{build_number}",
+             "--build-name=#{version_name}")
+        end
       end
     end
 

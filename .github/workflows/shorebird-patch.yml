@@ -42,7 +42,7 @@ jobs:
 
       - run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
-      - run: shorebird patch android --force
+      - run: shorebird patch --platforms android
     env:
       SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
 
@@ -65,6 +65,6 @@ jobs:
         with:
           cache: true
 
-      - run: shorebird patch ios --force
+      - run: shorebird patch --platforms ios
     env:
       SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
