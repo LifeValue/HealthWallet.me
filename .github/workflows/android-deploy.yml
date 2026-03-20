@@ -101,6 +101,8 @@ jobs:
           SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
 
       - name: Deploy to Google Play
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
         run: |
           cd android
           if [ "${{ inputs.track }}" = "production" ]; then
