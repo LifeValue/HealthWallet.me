@@ -426,7 +426,8 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
     String sourceId;
     List<IFhirResource> resourcesToSave = [];
     final availableSources = await syncRepository.getSources();
-    if (activeSession.patient.existing != null) {
+    if (activeSession.patient.mode == ImportMode.linkExisting &&
+        activeSession.patient.existing != null) {
       Patient existingPatient = activeSession.patient.existing!;
       final walletSource =
           await sourceTypeService.ensureWalletSourceForPatient(
