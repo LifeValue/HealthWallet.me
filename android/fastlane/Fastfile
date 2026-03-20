@@ -22,7 +22,7 @@ platform :android do
     UI.message("Building version #{version_name} (#{version_code})")
 
     Dir.chdir("../..") do
-      sh("flutter", "build", "appbundle", "--release",
+      sh("shorebird", "release", "android", "--force", "--",
          "--build-number=#{version_code}",
          "--build-name=#{version_name}")
     end
@@ -51,7 +51,7 @@ platform :android do
     UI.message("Building version #{version_name} (#{version_code})")
 
     Dir.chdir("../..") do
-      sh("flutter", "build", "appbundle", "--release",
+      sh("shorebird", "release", "android", "--force", "--",
          "--build-number=#{version_code}",
          "--build-name=#{version_name}")
     end
