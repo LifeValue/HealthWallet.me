@@ -359,6 +359,8 @@
     "regionAndUnits": "Sprache & Einheiten",
     "country": "Land",
     "patientModifiedNewWillBeCreated": "Geändert — ein neuer Patient wird erstellt",
+    "dropModificationsTitle": "Änderungen verwerfen?",
+    "dropModificationsMessage": "Ihre Änderungen an den Patientenfeldern werden verworfen.",
     "scanIdCard": "Ausweis oder Reisepass scannen",
     "scanIdCardDescription": "Automatisch aus Ihrem Dokument ausfüllen. Daten bleiben auf Ihrem Gerät.",
     "patientMatchFound": "Bestehenden Patienten gefunden: {name}",

@@ -2016,6 +2016,18 @@ abstract class AppLocalizations {
   /// **'Modified — a new patient will be created'**
   String get patientModifiedNewWillBeCreated;
 
+  /// No description provided for @dropModificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop modifications?'**
+  String get dropModificationsTitle;
+
+  /// No description provided for @dropModificationsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes to the patient fields will be discarded.'**
+  String get dropModificationsMessage;
+
   /// No description provided for @scanIdCard.
   ///
   /// In en, this message translates to:

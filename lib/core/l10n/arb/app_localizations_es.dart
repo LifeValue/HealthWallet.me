@@ -1057,6 +1057,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Modificado — se creará un nuevo paciente';
 
   @override
+  String get dropModificationsTitle => '¿Descartar modificaciones?';
+
+  @override
+  String get dropModificationsMessage =>
+      'Los cambios realizados en los campos del paciente se descartarán.';
+
+  @override
   String get scanIdCard => 'Escanear DNI o Pasaporte';
 
   @override

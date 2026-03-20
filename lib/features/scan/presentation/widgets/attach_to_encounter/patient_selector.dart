@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -61,20 +62,12 @@ class PatientSelector extends StatelessWidget {
     if (patient.draft != null) {
       items.add(patient.draft);
     }
-    if (patient.mode == ImportMode.createNew && patient.existing != null) {
-      items.addAll(state.existingPatients
-          .where((p) => p.id != patient.existing!.id));
-    } else {
-      items.addAll(state.existingPatients);
-    }
+    items.addAll(state.existingPatients);
 
     String getDisplayText(dynamic item) {
       if (item is MappingPatient) {
         final name = "${item.familyName.value}, ${item.givenName.value}";
-        if (patient.mode == ImportMode.createNew) {
-          return "${context.l10n.patient} (new): $name";
-        }
-        return name;
+        return "${context.l10n.patient} (new): $name";
       } else if (item is Patient) {
         return item.displayTitle;
       }
@@ -101,11 +94,27 @@ class PatientSelector extends StatelessWidget {
           items: items,
           getDisplayText: getDisplayText,
           onChanged: (dynamic newValue) {
-            if (newValue != null) {
-              context.read<AttachToEncounterBloc>().add(
-                    AttachToEncounterPatientChanged(newValue),
-                  );
+            if (newValue == null) return;
+            if (patient.mode == ImportMode.createNew &&
+                patient.draft != null &&
+                newValue is Patient) {
+              AppSimpleDialog.showDestructiveConfirmation(
+                context: context,
+                title: context.l10n.dropModificationsTitle,
+                message: context.l10n.dropModificationsMessage,
+                confirmText: context.l10n.continueButton,
+                cancelText: context.l10n.cancel,
+                onConfirm: () {
+                  context.read<AttachToEncounterBloc>().add(
+                        AttachToEncounterPatientChanged(newValue),
+                      );
+                },
+              );
+              return;
             }
+            context.read<AttachToEncounterBloc>().add(
+                  AttachToEncounterPatientChanged(newValue),
+                );
           },
         ),
       ],

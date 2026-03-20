@@ -1058,6 +1058,13 @@ class AppLocalizationsRo extends AppLocalizations {
       'Modificat — va fi creat un pacient nou';
 
   @override
+  String get dropModificationsTitle => 'Renunți la modificări?';
+
+  @override
+  String get dropModificationsMessage =>
+      'Modificările aduse câmpurilor pacientului vor fi pierdute.';
+
+  @override
   String get scanIdCard => 'Scanează carte de identitate sau pașaport';
 
   @override

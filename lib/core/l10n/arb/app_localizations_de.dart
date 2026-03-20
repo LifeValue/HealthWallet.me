@@ -1067,6 +1067,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Geändert — ein neuer Patient wird erstellt';
 
   @override
+  String get dropModificationsTitle => 'Änderungen verwerfen?';
+
+  @override
+  String get dropModificationsMessage =>
+      'Ihre Änderungen an den Patientenfeldern werden verworfen.';
+
+  @override
   String get scanIdCard => 'Ausweis oder Reisepass scannen';
 
   @override

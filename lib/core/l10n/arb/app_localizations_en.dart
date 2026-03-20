@@ -1046,6 +1046,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Modified — a new patient will be created';
 
   @override
+  String get dropModificationsTitle => 'Drop modifications?';
+
+  @override
+  String get dropModificationsMessage =>
+      'Your changes to the patient fields will be discarded.';
+
+  @override
   String get scanIdCard => 'Scan ID Card or Passport';
 
   @override

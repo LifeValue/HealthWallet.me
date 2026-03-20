@@ -386,6 +386,8 @@
     "regionAndUnits": "Language & Units",
     "country": "Country",
     "patientModifiedNewWillBeCreated": "Modified — a new patient will be created",
+    "dropModificationsTitle": "Drop modifications?",
+    "dropModificationsMessage": "Your changes to the patient fields will be discarded.",
     "scanIdCard": "Scan ID Card or Passport",
     "scanIdCardDescription": "Auto-fill from your document. Data stays on your device.",
     "patientMatchFound": "Found existing patient: {name}",

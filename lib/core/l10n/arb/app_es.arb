@@ -363,6 +363,8 @@
     "regionAndUnits": "Idioma y Unidades",
     "country": "País",
     "patientModifiedNewWillBeCreated": "Modificado — se creará un nuevo paciente",
+    "dropModificationsTitle": "¿Descartar modificaciones?",
+    "dropModificationsMessage": "Los cambios realizados en los campos del paciente se descartarán.",
     "scanIdCard": "Escanear DNI o Pasaporte",
     "scanIdCardDescription": "Completa automáticamente desde tu documento. Los datos permanecen en tu dispositivo.",
     "patientMatchFound": "Paciente existente encontrado: {name}",
