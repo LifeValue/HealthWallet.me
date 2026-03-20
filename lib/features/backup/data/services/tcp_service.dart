@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -40,14 +42,22 @@ class TcpMessage {
 
 enum ConnectionState { disconnected, connecting, connected }
 
+class _IsolateServerConfig {
+  final SendPort mainPort;
+  final int port;
+
+  _IsolateServerConfig(this.mainPort, this.port);
+}
+
 @lazySingleton
 class TcpService {
   static const defaultPort = 49152;
   static const _pingInterval = Duration(seconds: 10);
   static const _pingTimeout = Duration(seconds: 5);
 
-  ServerSocket? _server;
-  Socket? _socket;
+  Isolate? _serverIsolate;
+  SendPort? _isolateSendPort;
+  Socket? _clientSocket;
   Timer? _pingTimer;
   Timer? _pingTimeoutTimer;
 
@@ -65,22 +75,133 @@ class TcpService {
   ConnectionState get currentState => _state;
   bool get isConnected => _state == ConnectionState.connected;
 
-  Future<String> startServer({
+  Future<({String ip, int port})> startServer({
     required String pairingKey,
     int port = defaultPort,
   }) async {
     await stopServer();
     _pairingKey = pairingKey;
 
-    _server = await ServerSocket.bind(InternetAddress.anyIPv4, port);
-    debugPrint('[TCP] Server listening on port $port');
+    final receivePort = ReceivePort();
+    final config = _IsolateServerConfig(receivePort.sendPort, port);
 
-    _server!.listen(
-      _handleClientConnection,
-      onError: (e) => debugPrint('[TCP] Server error: $e'),
+    _serverIsolate = await Isolate.spawn(_isolateServer, config);
+
+    final completer = Completer<({String ip, int port})>();
+
+    receivePort.listen((message) {
+      if (message is Map) {
+        final type = message['type'] as String;
+
+        if (type == 'listening') {
+          final actualPort = message['port'] as int;
+          final ip = message['ip'] as String;
+          debugPrint('[TCP] Server listening on port $actualPort (isolate)');
+          completer.complete((ip: ip, port: actualPort));
+        } else if (type == 'sendPort') {
+          _isolateSendPort = message['sendPort'] as SendPort;
+        } else if (type == 'clientConnected') {
+          debugPrint('[TCP] Client connected: ${message['address']}');
+        } else if (type == 'data') {
+          final data = Uint8List.fromList(
+              (message['bytes'] as List).cast<int>());
+          debugPrint('[TCP] Received ${data.length} bytes from isolate');
+          _onData(data);
+        } else if (type == 'clientDisconnected') {
+          debugPrint('[TCP] Client disconnected (isolate)');
+          _handleDisconnect();
+        } else if (type == 'error') {
+          debugPrint('[TCP] Isolate error: ${message['error']}');
+        }
+      }
+    });
+
+    return completer.future;
+  }
+
+  static Future<void> _isolateServer(_IsolateServerConfig config) async {
+    final commandPort = ReceivePort();
+    config.mainPort.send({
+      'type': 'sendPort',
+      'sendPort': commandPort.sendPort,
+    });
+
+    ServerSocket server;
+    try {
+      server = await ServerSocket.bind(InternetAddress.anyIPv4, config.port);
+    } on SocketException {
+      server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+    }
+
+    final ip = await _getLocalIpStatic();
+    config.mainPort.send({
+      'type': 'listening',
+      'port': server.port,
+      'ip': ip,
+    });
+
+    Socket? clientSocket;
+
+    server.listen((client) {
+      String address;
+      try {
+        address = client.remoteAddress.address;
+      } catch (_) {
+        address = 'unknown';
+      }
+      config.mainPort.send({'type': 'clientConnected', 'address': address});
+
+      clientSocket?.destroy();
+      clientSocket = client;
+
+      client.listen(
+        (data) {
+          config.mainPort.send({
+            'type': 'data',
+            'bytes': data,
+          });
+        },
+        onError: (e) {
+          config.mainPort.send({
+            'type': 'clientDisconnected',
+            'reason': e.toString(),
+          });
+          clientSocket = null;
+        },
+        onDone: () {
+          config.mainPort.send({
+            'type': 'clientDisconnected',
+            'reason': 'done',
+          });
+          clientSocket = null;
+        },
+      );
+    });
+
+    commandPort.listen((message) {
+      if (message is Map && message['type'] == 'send') {
+        final bytes = Uint8List.fromList(
+            (message['bytes'] as List).cast<int>());
+        clientSocket?.add(bytes);
+      } else if (message == 'stop') {
+        clientSocket?.destroy();
+        server.close();
+        Isolate.exit();
+      }
+    });
+  }
+
+  static Future<String> _getLocalIpStatic() async {
+    final interfaces = await NetworkInterface.list(
+      type: InternetAddressType.IPv4,
+      includeLoopback: false,
     );
-
-    return _getLocalIp();
+    for (final interface_ in interfaces) {
+      for (final address in interface_.addresses) {
+        if (!address.isLoopback) return address.address;
+      }
+    }
+    return '127.0.0.1';
   }
 
   Future<void> connectToServer({
@@ -92,18 +213,19 @@ class TcpService {
     _updateState(ConnectionState.connecting);
 
     try {
-      _socket = await Socket.connect(ip, port,
+      _clientSocket = await Socket.connect(ip, port,
           timeout: const Duration(seconds: 5));
-      _setupSocket(_socket!);
+      _setupClientSocket(_clientSocket!);
       _updateState(ConnectionState.connected);
+      debugPrint('[TCP] Connected to $ip:$port');
 
       await sendMessage(TcpMessage.fromString(
         type: MessageType.hello,
         data: jsonEncode({'pairing_key_hash': _hashKey(pairingKey)}),
       ));
+      debugPrint('[TCP] HELLO sent');
 
       _startPingTimer();
-      debugPrint('[TCP] Connected to $ip:$port');
     } catch (e) {
       _updateState(ConnectionState.disconnected);
       debugPrint('[TCP] Connection failed: $e');
@@ -111,30 +233,26 @@ class TcpService {
     }
   }
 
-  void _handleClientConnection(Socket client) {
-    debugPrint('[TCP] Client connected: ${client.remoteAddress.address}');
-    _socket?.destroy();
-    _socket = client;
-    _setupSocket(client);
-    _updateState(ConnectionState.connected);
-    _startPingTimer();
-  }
-
-  void _setupSocket(Socket socket) {
+  void _setupClientSocket(Socket socket) {
     _buffer = Uint8List(0);
-
     socket.listen(
-      (data) => _onData(Uint8List.fromList(data)),
+      (data) {
+        debugPrint('[TCP] Received ${data.length} bytes');
+        _onData(Uint8List.fromList(data));
+      },
       onError: (e) {
         debugPrint('[TCP] Socket error: $e');
         _handleDisconnect();
       },
-      onDone: _handleDisconnect,
+      onDone: () {
+        debugPrint('[TCP] Socket closed');
+        _handleDisconnect();
+      },
     );
   }
 
   void _onData(Uint8List data) {
-    final combined = Uint8List((_buffer.length) + data.length);
+    final combined = Uint8List(_buffer.length + data.length);
     combined.setAll(0, _buffer);
     combined.setAll(_buffer.length, data);
     _buffer = combined;
@@ -150,11 +268,12 @@ class TcpService {
         final decrypted = _decrypt(encrypted);
         final type = MessageType.fromCode(decrypted[0]);
         final payload = decrypted.sublist(1);
+        debugPrint('[TCP] Received: ${type.name}');
 
         final message = TcpMessage(type: type, payload: payload);
         _handleMessage(message);
       } catch (e) {
-        debugPrint('[TCP] Decrypt/parse error: $e');
+        debugPrint('[TCP] Decrypt error: $e');
       }
     }
   }
@@ -174,6 +293,7 @@ class TcpService {
         _handleDisconnect();
         return;
       case MessageType.hello:
+        _updateState(ConnectionState.connected);
         sendMessage(
             TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
         _messageController.add(message);
@@ -184,20 +304,24 @@ class TcpService {
   }
 
   Future<void> sendMessage(TcpMessage message) async {
-    if (_socket == null) return;
-
     final typeAndPayload = Uint8List(1 + message.payload.length);
     typeAndPayload[0] = message.type.code;
     typeAndPayload.setAll(1, message.payload);
 
     final encrypted = _encrypt(typeAndPayload);
-
     final frame = Uint8List(4 + encrypted.length);
     ByteData.sublistView(frame, 0, 4).setUint32(0, encrypted.length);
     frame.setAll(4, encrypted);
 
-    _socket!.add(frame);
-    await _socket!.flush();
+    if (_isolateSendPort != null) {
+      _isolateSendPort!.send({
+        'type': 'send',
+        'bytes': frame.toList(),
+      });
+    } else if (_clientSocket != null) {
+      _clientSocket!.add(frame);
+      await _clientSocket!.flush();
+    }
   }
 
   Future<void> sendData(String type, Map<String, dynamic> payload) async {
@@ -217,9 +341,10 @@ class TcpService {
     final cipher = GCMBlockCipher(AESEngine())
       ..init(true, AEADParameters(KeyParameter(key), 128, nonce, Uint8List(0)));
 
-    final ciphertext = Uint8List(cipher.getOutputSize(plaintext.length));
-    final len = cipher.processBytes(plaintext, 0, plaintext.length, ciphertext, 0);
-    cipher.doFinal(ciphertext, len);
+    final output = Uint8List(cipher.getOutputSize(plaintext.length));
+    final len = cipher.processBytes(plaintext, 0, plaintext.length, output, 0);
+    final finalLen = cipher.doFinal(output, len);
+    final ciphertext = output.sublist(0, len + finalLen);
 
     final result = Uint8List(nonce.length + ciphertext.length);
     result.setAll(0, nonce);
@@ -241,9 +366,9 @@ class TcpService {
     final plaintext = Uint8List(cipher.getOutputSize(ciphertext.length));
     final len =
         cipher.processBytes(ciphertext, 0, ciphertext.length, plaintext, 0);
-    cipher.doFinal(plaintext, len);
+    final finalLen = cipher.doFinal(plaintext, len);
 
-    return plaintext.sublist(0, len + cipher.doFinal(plaintext, len));
+    return plaintext.sublist(0, len + finalLen);
   }
 
   Uint8List _deriveKey(String pairingKey) {
@@ -255,11 +380,10 @@ class TcpService {
   }
 
   Uint8List _generateNonce() {
-    final random = SecureRandom('Fortuna');
-    random.seed(KeyParameter(Uint8List.fromList(
-      List.generate(32, (_) => DateTime.now().microsecondsSinceEpoch % 256),
-    )));
-    return random.nextBytes(12);
+    final random = Random.secure();
+    return Uint8List.fromList(
+      List.generate(12, (_) => random.nextInt(256)),
+    );
   }
 
   String _hashKey(String key) {
@@ -271,11 +395,9 @@ class TcpService {
   void _startPingTimer() {
     _pingTimer?.cancel();
     _pingTimer = Timer.periodic(_pingInterval, (_) {
-      if (_socket != null) {
-        sendMessage(
-            TcpMessage(type: MessageType.ping, payload: Uint8List(0)));
-        _pingTimeoutTimer = Timer(_pingTimeout, _handleDisconnect);
-      }
+      sendMessage(
+          TcpMessage(type: MessageType.ping, payload: Uint8List(0)));
+      _pingTimeoutTimer = Timer(_pingTimeout, _handleDisconnect);
     });
   }
 
@@ -283,8 +405,8 @@ class TcpService {
     debugPrint('[TCP] Disconnected');
     _pingTimer?.cancel();
     _pingTimeoutTimer?.cancel();
-    _socket?.destroy();
-    _socket = null;
+    _clientSocket?.destroy();
+    _clientSocket = null;
     _updateState(ConnectionState.disconnected);
   }
 
@@ -294,36 +416,23 @@ class TcpService {
     _connectionStateController.add(state);
   }
 
-  Future<String> _getLocalIp() async {
-    final interfaces = await NetworkInterface.list(
-      type: InternetAddressType.IPv4,
-      includeLoopback: false,
-    );
-    for (final interface_ in interfaces) {
-      for (final address in interface_.addresses) {
-        if (!address.isLoopback) return address.address;
-      }
-    }
-    return '127.0.0.1';
-  }
-
   Future<void> stopServer() async {
     _pingTimer?.cancel();
     _pingTimeoutTimer?.cancel();
-    _socket?.destroy();
-    _socket = null;
-    await _server?.close();
-    _server = null;
+    _clientSocket?.destroy();
+    _clientSocket = null;
+    _isolateSendPort?.send('stop');
+    _isolateSendPort = null;
+    _serverIsolate?.kill();
+    _serverIsolate = null;
     _updateState(ConnectionState.disconnected);
   }
 
   Future<void> disconnect() async {
-    if (_socket != null) {
-      try {
-        await sendMessage(
-            TcpMessage(type: MessageType.kill, payload: Uint8List(0)));
-      } catch (_) {}
-    }
+    try {
+      await sendMessage(
+          TcpMessage(type: MessageType.kill, payload: Uint8List(0)));
+    } catch (_) {}
     _handleDisconnect();
   }
 

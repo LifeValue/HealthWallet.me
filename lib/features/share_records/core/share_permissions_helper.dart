@@ -4,6 +4,10 @@ import 'package:permission_handler/permission_handler.dart';
 
 class SharePermissionsHelper {
   static Future<PermissionResult> requestSharePermissions() async {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      return const PermissionGranted();
+    }
+
     if (Platform.isIOS) {
       final bluetoothStatus = await Permission.bluetooth.status;
 
@@ -75,6 +79,10 @@ class SharePermissionsHelper {
   }
 
   static Future<bool> hasRequiredPermissions() async {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      return true;
+    }
+
     if (Platform.isIOS) {
       final bluetoothStatus = await Permission.bluetooth.status;
       return bluetoothStatus.isGranted;
