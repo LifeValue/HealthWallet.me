@@ -1063,7 +1063,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get country => 'Land';
 
   @override
-  String get patientModifiedNewWillBeCreated => 'Geändert — ein neuer Patient wird erstellt';
+  String get patientModifiedNewWillBeCreated =>
+      'Geändert — ein neuer Patient wird erstellt';
 
   @override
   String get scanIdCard => 'Ausweis oder Reisepass scannen';

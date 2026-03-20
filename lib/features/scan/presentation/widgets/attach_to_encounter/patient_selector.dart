@@ -5,6 +5,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
 
 class PatientSelector extends StatelessWidget {
@@ -60,11 +61,16 @@ class PatientSelector extends StatelessWidget {
     if (patient.draft != null) {
       items.add(patient.draft);
     }
-    items.addAll(state.existingPatients);
+    if (patient.mode == ImportMode.createNew && patient.existing != null) {
+      items.addAll(state.existingPatients
+          .where((p) => p.id != patient.existing!.id));
+    } else {
+      items.addAll(state.existingPatients);
+    }
 
     String getDisplayText(dynamic item) {
       if (item is MappingPatient) {
-        return "New Patient: ${item.givenName.value} ${item.familyName.value}";
+        return "${item.familyName.value}, ${item.givenName.value}";
       } else if (item is Patient) {
         return item.displayTitle;
       }

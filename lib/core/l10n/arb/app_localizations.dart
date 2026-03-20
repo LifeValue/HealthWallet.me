@@ -2010,6 +2010,10 @@ abstract class AppLocalizations {
   /// **'Country'**
   String get country;
 
+  /// No description provided for @patientModifiedNewWillBeCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified — a new patient will be created'**
   String get patientModifiedNewWillBeCreated;
 
   /// No description provided for @scanIdCard.

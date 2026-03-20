@@ -1054,7 +1054,8 @@ class AppLocalizationsRo extends AppLocalizations {
   String get country => 'Țara';
 
   @override
-  String get patientModifiedNewWillBeCreated => 'Modificat — va fi creat un pacient nou';
+  String get patientModifiedNewWillBeCreated =>
+      'Modificat — va fi creat un pacient nou';
 
   @override
   String get scanIdCard => 'Scanează carte de identitate sau pașaport';

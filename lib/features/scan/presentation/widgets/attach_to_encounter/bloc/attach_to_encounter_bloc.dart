@@ -54,9 +54,11 @@ class AttachToEncounterBloc
 
       dynamic selectedPatient = event.patient.draft ?? uniquePatients.first;
 
-      if (event.patient.existing != null) {
+      if (event.patient.mode == ImportMode.linkExisting &&
+          event.patient.existing != null) {
         selectedPatient = uniquePatients
-            .firstWhere((patient) => patient.id == event.patient.existing!.id);
+            .firstWhere((patient) => patient.id == event.patient.existing!.id,
+                orElse: () => uniquePatients.first);
       }
 
       emit(state.copyWith(
