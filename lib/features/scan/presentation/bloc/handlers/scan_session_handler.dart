@@ -264,6 +264,7 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
           existing: activeSession.patient.existing,
           mode: newMode,
         ),
+        updateDb: true,
       );
       return;
     }

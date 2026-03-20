@@ -54,9 +54,8 @@ class ResourcesForm extends StatelessWidget {
             if (patient?.hasSelection == true)
               _buildResourceForm(
                 context,
-                resource: patient!.mode == ImportMode.createNew
-                    ? patient!.draft!
-                    : MappingPatient.fromFhirResource(patient!.existing!),
+                resource: patient!.draft ??
+                    MappingPatient.fromFhirResource(patient!.existing!),
                 canRemove: false,
                 isStagedResource: true,
                 isReadOnly: isAttachmentLocked,
@@ -546,9 +545,11 @@ class ResourcesForm extends StatelessWidget {
 
   Widget _buildPatientMatchBanner(BuildContext context, StagedPatient patient) {
     final isModified = patient.mode == ImportMode.createNew && patient.existing != null;
-    final color = isModified
-        ? AppColors.warning
-        : context.colorScheme.primary;
+    final color = isModified ? AppColors.warning : context.colorScheme.primary;
+    final icon = isModified ? Icons.person_add : Icons.check_circle;
+    final text = isModified
+        ? context.l10n.patientModifiedNewWillBeCreated
+        : context.l10n.patientMatchFound(patient.existing!.displayTitle);
 
     return Padding(
       padding: const EdgeInsets.only(top: Insets.small),
@@ -565,16 +566,14 @@ class ResourcesForm extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              isModified ? Icons.person_add : Icons.check_circle,
+              icon,
               size: 16,
               color: color,
             ),
             const SizedBox(width: Insets.small),
             Expanded(
               child: Text(
-                isModified
-                    ? context.l10n.patientModifiedNewWillBeCreated
-                    : context.l10n.patientMatchFound(patient.existing!.displayTitle),
+                text,
                 style: AppTextStyle.labelSmall.copyWith(
                   color: color,
                   fontWeight: FontWeight.w500,
