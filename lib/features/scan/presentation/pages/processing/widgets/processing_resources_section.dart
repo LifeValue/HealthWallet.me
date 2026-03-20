@@ -277,7 +277,8 @@ class _ScannedBasicButtons extends StatelessWidget {
       return;
     }
 
-    if (session.patient.hasSelection &&
+    if (session.patient.mode == ImportMode.linkExisting &&
+        session.patient.hasSelection &&
         (session.encounter.hasSelection ||
             session.isDiagnosticReportContainer)) {
       context.read<ScanBloc>().add(
