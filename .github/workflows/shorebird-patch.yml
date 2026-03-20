@@ -42,7 +42,7 @@ jobs:
 
       - run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
-      - run: shorebird patch --platforms android
+      - run: shorebird patch --platforms android --flutter-version=3.38.7
     env:
       SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
 
@@ -65,6 +65,6 @@ jobs:
         with:
           cache: true
 
-      - run: shorebird patch --platforms ios
+      - run: shorebird patch --platforms ios --flutter-version=3.38.7
     env:
       SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}

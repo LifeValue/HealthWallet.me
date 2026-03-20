@@ -24,6 +24,7 @@ platform :android do
     Dir.chdir("../..") do
       begin
         sh("shorebird", "release", "--platforms", "android",
+           "--flutter-version=3.38.7",
            "--build-number=#{version_code}",
            "--build-name=#{version_name}")
       rescue => e
@@ -60,6 +61,7 @@ platform :android do
     Dir.chdir("../..") do
       begin
         sh("shorebird", "release", "--platforms", "android",
+           "--flutter-version=3.38.7",
            "--build-number=#{version_code}",
            "--build-name=#{version_name}")
       rescue => e
