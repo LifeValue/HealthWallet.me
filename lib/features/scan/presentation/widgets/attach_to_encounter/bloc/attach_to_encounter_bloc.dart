@@ -99,7 +99,6 @@ class AttachToEncounterBloc
       emit(state.copyWith(
         patient: state.patient.copyWith(
           mode: ImportMode.createNew,
-          existing: null,
         ),
         encounter: state.encounter.copyWith(existing: null),
         existingEncounters: [],

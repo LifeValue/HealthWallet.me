@@ -187,11 +187,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
           );
-          if (dialogResult == null && context.mounted) {
-            navController.jumpToPage(1);
-            scanBloc.add(ScanSessionCleared(session: sessionToClear));
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          }
+          if (dialogResult == null) {}
         }
       },
       builder: (context, state) {

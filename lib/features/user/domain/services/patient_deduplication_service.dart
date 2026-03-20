@@ -106,7 +106,22 @@ class PatientDeduplicationService {
   }
 
   String _normalizeValue(String value) {
-    return value.trim().toLowerCase().replaceAll(RegExp(r'[-\s]'), '');
+    return _removeDiacritics(
+        value.trim().toLowerCase().replaceAll(RegExp(r'[-\s]'), ''));
+  }
+
+  static String _removeDiacritics(String text) {
+    const diacritics =
+        'àáâãäåăâæçèéêëìíîïđñòóôõöøùúûüýþÿșşțţ';
+    const replacements =
+        'aaaaaaaaaceeeeiiiidnoooooouuuuybysstt';
+    final buffer = StringBuffer();
+    for (final char in text.runes) {
+      final c = String.fromCharCode(char);
+      final index = diacritics.indexOf(c);
+      buffer.write(index >= 0 ? replacements[index] : c);
+    }
+    return buffer.toString();
   }
 
   Future<Map<String, PatientGroup>> enhancePatientGroupsWithSubjectId(

@@ -166,7 +166,7 @@ class IdCardExtractor {
           !line.contains('prenume') && !line.contains('prenom') && !line.contains('first')) {
         final nextLine = lines[i + 1].trim();
         if (nextLine.isNotEmpty &&
-            RegExp(r'^[A-ZÀÂĂÎȘȚ\-\s]{2,}$').hasMatch(nextLine) &&
+            RegExp(r'^[A-ZÀ-Ž\-\s]{2,}$').hasMatch(nextLine) &&
             !nextLine.contains('PRENUME') && !nextLine.contains('CARTE')) {
           familyName = nextLine;
         }
@@ -175,7 +175,7 @@ class IdCardExtractor {
           (line.contains('prenume') || line.contains('prenom') || line.contains('first name') || line.contains('given'))) {
         final nextLine = lines[i + 1].trim();
         if (nextLine.isNotEmpty &&
-            RegExp(r'^[A-ZÀÂĂÎȘȚ\-\s]{2,}$').hasMatch(nextLine) &&
+            RegExp(r'^[A-ZÀ-Ž\-\s]{2,}$').hasMatch(nextLine) &&
             !nextLine.contains('CETAT') && !nextLine.contains('NATION')) {
           givenName = nextLine;
         }
@@ -1137,7 +1137,7 @@ class IdCardExtractor {
     for (int i = countryIdx + 1; i < lines.length && i < countryIdx + 12; i++) {
       final line = lines[i].trim();
       if (line.isEmpty || line.length < 2) continue;
-      if (RegExp(r'^[A-ZÀÂĂÎȘȚÄÖÜÅÉÈÊËÏÎÔŒÙÛÜŸÁÍÓÚÑĄĆĘŁŃÓŚŹŻÆØ\- ]{2,}$')
+      if (RegExp(r'^[A-ZÀ-Ž\- ]{2,}$')
               .hasMatch(line) &&
           !RegExp(
             r'^(ROMÂNĂ|ROU|ROMANĂ|CARTE|PASAPORT|PASSPORT|PASSEPORT|IDENTITY|CARD|PE|BULETIN|REISEPASS|PERSONALAUSWEIS|REPUBLICA|REPUBLIC|FEDERATION|DOCUMENT|NATIONAL|EUROPÄISCHE|UNION|EUROPEENNE|EUROPEA|TYPE|TIPO|TIPO|NOV|DEC|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT)$',

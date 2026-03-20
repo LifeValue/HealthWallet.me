@@ -307,24 +307,48 @@ class _ScanIdCardButton extends StatelessWidget {
               ),
             ),
           ],
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onTap,
-              icon: const Icon(Icons.camera_alt_outlined, size: 14),
-              label: Text(context.l10n.retry),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
-                padding: const EdgeInsets.symmetric(vertical: Insets.small),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                textStyle: AppTextStyle.labelSmall.copyWith(
-                  fontWeight: FontWeight.w600,
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onTap,
+                  icon: const Icon(Icons.camera_alt_outlined, size: 14),
+                  label: Text(context.l10n.retry),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: AppTextStyle.labelSmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              if (onPickFromGallery != null) ...[
+                const SizedBox(width: Insets.small),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onPickFromGallery,
+                    icon: const Icon(Icons.photo_library_outlined, size: 14),
+                    label: Text(context.l10n.retry),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                      padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      textStyle: AppTextStyle.labelSmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       );

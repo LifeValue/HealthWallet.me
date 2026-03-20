@@ -54,8 +54,7 @@ class ResourcesForm extends StatelessWidget {
             if (patient?.hasSelection == true)
               _buildResourceForm(
                 context,
-                resource: patient!.draft ??
-                    MappingPatient.fromFhirResource(patient!.existing!),
+                resource: _resolvePatient(patient!),
                 canRemove: false,
                 isStagedResource: true,
                 isReadOnly: isAttachmentLocked,
@@ -541,6 +540,16 @@ class ResourcesForm extends StatelessWidget {
       return formattedDate;
     }
     return null;
+  }
+
+  MappingPatient _resolvePatient(StagedPatient patient) {
+    if (patient.mode == ImportMode.createNew) {
+      return patient.draft!;
+    }
+    if (patient.existing != null) {
+      return MappingPatient.fromFhirResource(patient.existing!);
+    }
+    return patient.draft!;
   }
 
   Widget _buildPatientMatchBanner(BuildContext context, StagedPatient patient) {
