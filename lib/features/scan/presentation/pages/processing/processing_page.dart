@@ -98,9 +98,11 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
     final result = await showDialog<AttachToEncounterResult>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AttachToEncounterWidget(
         patient: activeSession.patient,
         encounter: activeSession.encounter,
+        confirmText: context.l10n.attachToEncounter,
       ),
     );
 

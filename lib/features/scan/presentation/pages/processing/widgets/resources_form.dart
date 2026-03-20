@@ -188,9 +188,11 @@ class ResourcesForm extends StatelessWidget {
                             final result =
                                 await showDialog<AttachToEncounterResult>(
                               context: context,
+                              barrierDismissible: false,
                               builder: (context) => AttachToEncounterWidget(
                                 patient: this.patient,
                                 encounter: this.encounter,
+                                confirmText: context.l10n.continueButton,
                               ),
                             );
                             if (result == null || !context.mounted) return;

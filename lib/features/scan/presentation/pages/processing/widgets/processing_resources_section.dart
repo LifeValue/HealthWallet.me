@@ -291,6 +291,7 @@ class _ScannedBasicButtons extends StatelessWidget {
 
     final result = await showDialog<AttachToEncounterResult>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AttachToEncounterWidget(
         patient: session.patient,
         encounter: session.encounter,
