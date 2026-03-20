@@ -160,7 +160,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ScanBloc, ScanState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         final displayedSession =
             state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
         if (displayedSession == null) return;
@@ -170,12 +170,13 @@ class _ProcessingPageState extends State<ProcessingPage> {
           final scanBloc = context.read<ScanBloc>();
           final navController = getIt<PageViewNavigationController>();
           final router = context.router;
-          AppSimpleDialog.showConfirmation(
+          final dialogResult = await AppSimpleDialog.showConfirmation(
             context: context,
             title: context.l10n.recordsSavedTitle,
             message: context.l10n.recordsSavedMessage,
             confirmText: context.l10n.continueScanning,
             cancelText: context.l10n.recordsTitle,
+            barrierDismissible: true,
             onConfirm: () {
               scanBloc.add(ScanSessionCleared(session: sessionToClear));
               Navigator.of(context).popUntil((route) => route.isFirst);
@@ -186,6 +187,11 @@ class _ProcessingPageState extends State<ProcessingPage> {
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
           );
+          if (dialogResult == null && context.mounted) {
+            navController.jumpToPage(1);
+            scanBloc.add(ScanSessionCleared(session: sessionToClear));
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
         }
       },
       builder: (context, state) {

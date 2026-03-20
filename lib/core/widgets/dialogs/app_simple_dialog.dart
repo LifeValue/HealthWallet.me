@@ -18,10 +18,11 @@ class AppSimpleDialog {
     required VoidCallback onConfirm,
     VoidCallback? onCancel,
     Color? confirmColor,
+    bool barrierDismissible = false,
   }) {
     return showDialog<bool>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: barrierDismissible,
       builder: (dialogContext) {
         final textColor = context.isDarkMode
             ? AppColors.textPrimaryDark
