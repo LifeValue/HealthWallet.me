@@ -1,14 +1,20 @@
 import 'dart:convert';
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/backup/data/models/device_pairing.dart';
+import 'package:health_wallet/features/backup/data/services/discovery_service.dart';
+import 'package:health_wallet/features/backup/data/services/pairing_storage_service.dart';
+import 'package:health_wallet/features/backup/data/services/tcp_service.dart';
 import 'package:health_wallet/features/sync/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
@@ -79,7 +85,7 @@ class _SyncPageState extends State<SyncPage> {
             child: QRScannerWidget(
               cancelButtonText: 'Cancel',
               onQRCodeDetected: (qrData) {
-                context.read<SyncBloc>().add(SyncData(qrData: qrData));
+                _handleQRCodeDetected(context, qrData);
               },
               onCancel: () {
                 context.read<SyncBloc>().add(const SyncCancel());
@@ -410,6 +416,57 @@ class _SyncPageState extends State<SyncPage> {
         ),
       ],
     );
+  }
+
+  void _handleQRCodeDetected(BuildContext context, String qrData) {
+    try {
+      final json = jsonDecode(qrData) as Map<String, dynamic>;
+      if (json.containsKey('pairing_key') && json.containsKey('device_id')) {
+        final pairing = DevicePairing(
+          deviceId: json['device_id'] as String,
+          deviceName: json['device_name'] as String,
+          pairingKey: json['pairing_key'] as String,
+          lastIp: json['ip'] as String,
+          lastPort: json['port'] as int,
+          pairedAt: DateTime.now(),
+          os: json['os'] as String?,
+        );
+
+        _handleBackupPairing(context, pairing);
+        return;
+      }
+    } catch (_) {}
+
+    context.read<SyncBloc>().add(SyncData(qrData: qrData));
+  }
+
+  Future<void> _handleBackupPairing(
+    BuildContext context,
+    DevicePairing pairing,
+  ) async {
+    final pairingStorage = getIt<PairingStorageService>();
+    final tcpService = getIt<TcpService>();
+    final discoveryService = getIt<DiscoveryService>();
+
+    await pairingStorage.savePairing(pairing);
+    context.read<SyncBloc>().add(const SyncCancel());
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Paired with ${pairing.deviceName}')),
+    );
+
+    final result = await discoveryService.discover();
+    if (result == null) return;
+
+    try {
+      await tcpService.connectToServer(
+        ip: result.ip,
+        port: result.port,
+        pairingKey: pairing.pairingKey,
+      );
+    } catch (e) {
+      debugPrint('[Sync] Backup connection failed: $e');
+    }
   }
 
   Future<void> _handleSyncCompletion(BuildContext context) async {
