@@ -110,16 +110,27 @@ class PatientDeduplicationService {
         value.trim().toLowerCase().replaceAll(RegExp(r'[-\s]'), ''));
   }
 
+  static final _diacriticsMap = {
+    'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', 'ă': 'a',
+    'æ': 'ae',
+    'ç': 'c',
+    'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e',
+    'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i',
+    'đ': 'd',
+    'ñ': 'n',
+    'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o', 'ø': 'o',
+    'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u',
+    'ý': 'y', 'ÿ': 'y',
+    'þ': 'th',
+    'ș': 's', 'ş': 's',
+    'ț': 't', 'ţ': 't',
+  };
+
   static String _removeDiacritics(String text) {
-    const diacritics =
-        'àáâãäåăâæçèéêëìíîïđñòóôõöøùúûüýþÿșşțţ';
-    const replacements =
-        'aaaaaaaaaceeeeiiiidnoooooouuuuybysstt';
     final buffer = StringBuffer();
     for (final char in text.runes) {
       final c = String.fromCharCode(char);
-      final index = diacritics.indexOf(c);
-      buffer.write(index >= 0 ? replacements[index] : c);
+      buffer.write(_diacriticsMap[c] ?? c);
     }
     return buffer.toString();
   }
@@ -192,10 +203,6 @@ class PatientDeduplicationService {
       final walletSourceIds = allSources
           .where((source) {
             if (source.platformType == 'wallet') {
-              if (patientId == 'default_wallet_holder' ||
-                  patientId == 'wallet_default_wallet_holder') {
-                return source.id == 'wallet';
-              }
               return source.id == 'wallet-$patientId';
             }
             return false;

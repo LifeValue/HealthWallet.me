@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -248,7 +249,9 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
           activeSession.patient.existing != null) {
         draftPatient = activeSession.patient.draft ??
             MappingPatient.fromFhirResource(activeSession.patient.existing!);
-        newMode = ImportMode.createNew;
+        newMode = ImportMode.linkExisting;
+        ScanLogBuffer.instance.log(
+          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] patient modified: ${event.propertyKey} changed, will create new patient');
       } else {
         draftPatient = activeSession.patient.draft ?? const MappingPatient();
         newMode = activeSession.patient.mode;
@@ -314,6 +317,25 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
         sessionId: event.sessionId,
         resources: newResources,
         updateDb: true);
+  }
+
+  void onScanPatientReverted(
+    ScanPatientReverted event,
+    Emitter<ScanState> emit,
+  ) {
+    final activeSession =
+        state.sessions.firstWhere((s) => s.id == event.sessionId);
+    if (activeSession.patient.existing == null) return;
+
+    updateSession(
+      emit,
+      sessionId: event.sessionId,
+      patient: StagedPatient(
+        existing: activeSession.patient.existing,
+        mode: ImportMode.linkExisting,
+      ),
+      updateDb: true,
+    );
   }
 
   void onScanResourceRemoved(

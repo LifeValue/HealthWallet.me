@@ -386,11 +386,30 @@
     "regionAndUnits": "Language & Units",
     "country": "Country",
     "patientModifiedNewWillBeCreated": "Modified — a new patient will be created",
+    "patientModifiedUpdating": "Modifying existing patient: {name}",
+    "@patientModifiedUpdating": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "patientSavingModified": "Saving with modified patient: {name}",
+    "@patientSavingModified": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
     "dropModificationsTitle": "Drop modifications?",
     "dropModificationsMessage": "Your changes to the patient fields will be discarded.",
+    "modifyPatientTitle": "Modify patient?",
+    "modifyPatientMessage": "This will update the existing patient record with your changes.",
     "scanIdCard": "Scan ID Card or Passport",
     "scanIdCardDescription": "Auto-fill from your document. Data stays on your device.",
-    "patientMatchFound": "Found existing patient: {name}",
+    "newPatient": "New patient",
+    "patientMatchFound": "Existing patient: {name}",
     "@patientMatchFound": {
         "placeholders": {
             "name": {

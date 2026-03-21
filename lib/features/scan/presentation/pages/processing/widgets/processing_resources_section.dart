@@ -295,6 +295,7 @@ class _ScannedBasicButtons extends StatelessWidget {
       builder: (context) => AttachToEncounterWidget(
         patient: session.patient,
         encounter: session.encounter,
+        confirmText: context.l10n.attachToEncounter,
       ),
     );
 
@@ -318,20 +319,41 @@ class _ScannedBasicButtons extends StatelessWidget {
   }
 
   void _finishSession(BuildContext context) {
-    AppSimpleDialog.showDestructiveConfirmation(
-      context: context,
-      title: context.l10n.finishProcessing,
-      message: context.l10n.finishProcessingMessage,
-      confirmText: context.l10n.done,
-      cancelText: context.l10n.cancel,
-      warningText: context.l10n.finishProcessingWarning,
-      confirmButtonColor: context.colorScheme.primary,
-      onConfirm: () {
-        context.read<ScanBloc>().add(
-              ScanResourceCreationInitiated(sessionId: sessionId),
-            );
-      },
-    );
+    final isPatientModified =
+        session.patient.draft != null && session.patient.existing != null;
+
+    if (isPatientModified) {
+      AppSimpleDialog.showDestructiveConfirmation(
+        context: context,
+        title: context.l10n.patient,
+        message: context.l10n.patientModifiedUpdating(
+            session.patient.existing!.displayTitle),
+        warningText: context.l10n.actionCannotBeUndone,
+        confirmText: context.l10n.save,
+        cancelText: context.l10n.cancel,
+        confirmButtonColor: context.colorScheme.primary,
+        onConfirm: () {
+          context.read<ScanBloc>().add(
+                ScanResourceCreationInitiated(sessionId: sessionId),
+              );
+        },
+      );
+    } else {
+      AppSimpleDialog.showDestructiveConfirmation(
+        context: context,
+        title: context.l10n.finishProcessing,
+        message: context.l10n.finishProcessingMessage,
+        confirmText: context.l10n.done,
+        cancelText: context.l10n.cancel,
+        warningText: context.l10n.finishProcessingWarning,
+        confirmButtonColor: context.colorScheme.primary,
+        onConfirm: () {
+          context.read<ScanBloc>().add(
+                ScanResourceCreationInitiated(sessionId: sessionId),
+              );
+        },
+      );
+    }
   }
 }
 

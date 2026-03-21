@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/patient_modified_banner.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -20,7 +21,7 @@ import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encou
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:intl/intl.dart';
 
-class ResourcesForm extends StatelessWidget {
+class ResourcesForm extends StatefulWidget {
   const ResourcesForm({
     required this.resources,
     required this.sessionId,
@@ -43,12 +44,36 @@ class ResourcesForm extends StatelessWidget {
   final bool isAttachmentLocked;
 
   @override
+  State<ResourcesForm> createState() => _ResourcesFormState();
+}
+
+class _ResourcesFormState extends State<ResourcesForm> {
+  int _patientVersion = 0;
+  bool _hadDraft = false;
+
+  @override
+  void didUpdateWidget(ResourcesForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final hasDraft = widget.patient?.draft != null;
+    if (_hadDraft && !hasDraft) {
+      _patientVersion++;
+    }
+    _hadDraft = hasDraft;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final patient = widget.patient;
+    final encounter = widget.encounter;
+    final diagnosticReport = widget.diagnosticReport;
+    final resources = widget.resources;
+    final sessionId = widget.sessionId;
+
     return GestureDetector(
       onTap: () => context.closeKeyboard(),
       behavior: HitTestBehavior.opaque,
       child: Form(
-        key: formKey,
+        key: widget.formKey,
         child: Column(
           children: [
             if (patient?.hasSelection == true)
@@ -57,7 +82,8 @@ class ResourcesForm extends StatelessWidget {
                 resource: _resolvePatient(patient!),
                 canRemove: false,
                 isStagedResource: true,
-                isReadOnly: isAttachmentLocked,
+                isLocked: widget.isAttachmentLocked,
+                patientVersion: _patientVersion,
                 onPropertyChanged: (propertyKey, newValue) =>
                     context.read<ScanBloc>().add(
                           ScanResourceChanged(
@@ -71,13 +97,13 @@ class ResourcesForm extends StatelessWidget {
               ),
             if (diagnosticReport?.hasSelection == true)
               KeyedSubtree(
-                key: encounterSectionKey,
+                key: widget.encounterSectionKey,
                 child: _buildResourceForm(
                   context,
                   canRemove: false,
                   resource: diagnosticReport!.draft!,
                   isStagedResource: true,
-                  isReadOnly: isAttachmentLocked,
+                  isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
                       context.read<ScanBloc>().add(
                             ScanResourceChanged(
@@ -92,7 +118,7 @@ class ResourcesForm extends StatelessWidget {
               )
             else if (encounter?.hasSelection == true)
               KeyedSubtree(
-                key: encounterSectionKey,
+                key: widget.encounterSectionKey,
                 child: _buildResourceForm(
                   context,
                   canRemove: false,
@@ -100,8 +126,7 @@ class ResourcesForm extends StatelessWidget {
                       ? encounter!.draft!
                       : MappingEncounter.fromFhirResource(encounter!.existing!),
                   isStagedResource: true,
-                  isReadOnly: isAttachmentLocked ||
-                      encounter!.mode == ImportMode.linkExisting,
+                  isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
                       context.read<ScanBloc>().add(
                             ScanResourceChanged(
@@ -154,17 +179,25 @@ class ResourcesForm extends StatelessWidget {
     Function(String, String)? onPropertyChanged,
     bool canRemove = true,
     Function? onResourceRemoved,
+    int patientVersion = 0,
     bool isStagedResource = false,
-    bool isReadOnly = false,
+    bool isLocked = false,
   }) {
     Map<String, TextFieldDescriptor> textFields =
         resource.getFieldDescriptors();
 
     return Container(
-      key: ValueKey(resource.id),
+      key: ValueKey('${resource.id}_v$patientVersion'),
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.theme.dividerColor)),
+          border: Border.all(
+            color: isLocked
+                ? context.colorScheme.primary.withValues(alpha: 0.4)
+                : context.theme.dividerColor,
+          ),
+          color: isLocked
+              ? context.colorScheme.primary.withValues(alpha: 0.04)
+              : null),
       margin: const EdgeInsets.only(bottom: 24),
       child: Padding(
         padding: const EdgeInsets.all(Insets.normal),
@@ -178,7 +211,7 @@ class ResourcesForm extends StatelessWidget {
                 Row(
                   children: [
                     if (isStagedResource &&
-                        !isAttachmentLocked &&
+                        !widget.isAttachmentLocked &&
                         resource is! MappingEncounter &&
                         resource is! MappingDiagnosticReport)
                       Padding(
@@ -190,9 +223,9 @@ class ResourcesForm extends StatelessWidget {
                               context: context,
                               barrierDismissible: false,
                               builder: (context) => AttachToEncounterWidget(
-                                patient: this.patient,
-                                encounter: this.encounter,
-                                confirmText: context.l10n.continueButton,
+                                patient: widget.patient,
+                                encounter: widget.encounter,
+                                confirmText: context.l10n.save,
                               ),
                             );
                             if (result == null || !context.mounted) return;
@@ -200,7 +233,7 @@ class ResourcesForm extends StatelessWidget {
                             final (patient, encounter) = result;
                             context.read<ScanBloc>().add(
                                   ScanEncounterAttached(
-                                    sessionId: sessionId,
+                                    sessionId: widget.sessionId,
                                     patient: patient,
                                     encounter: encounter,
                                   ),
@@ -213,14 +246,13 @@ class ResourcesForm extends StatelessWidget {
                         ),
                       ),
                     if (isStagedResource &&
-                        !isAttachmentLocked &&
                         (resource is MappingEncounter ||
                             resource is MappingDiagnosticReport))
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(
                           onTap: () => context.read<ScanBloc>().add(
-                                ScanContainerTypeSwitched(sessionId: sessionId),
+                                ScanContainerTypeSwitched(sessionId: widget.sessionId),
                               ),
                           child: Tooltip(
                             message: resource is MappingEncounter
@@ -250,8 +282,8 @@ class ResourcesForm extends StatelessWidget {
                 ),
               ],
             ),
-            if (resource is MappingPatient && patient?.existing != null)
-              _buildPatientMatchBanner(context, patient!),
+            if (resource is MappingPatient && widget.patient != null)
+              _buildPatientMatchBanner(context, widget.patient!),
             const SizedBox(height: 24),
             ...textFields.entries.map((entry) {
               final propertyKey = entry.key;
@@ -291,25 +323,7 @@ class ResourcesForm extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  if (isReadOnly)
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: confidenceLevel.getColor(context)),
-                        borderRadius: BorderRadius.circular(8),
-                        color: confidenceLevel
-                            .getColor(context)
-                            .withValues(alpha: 0.08),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      child: Text(
-                        descriptor.value,
-                        style: AppTextStyle.labelLarge,
-                      ),
-                    )
-                  else if (descriptor.fieldType == FieldType.date)
+                  if (descriptor.fieldType == FieldType.date)
                     FormField<String>(
                       key: ValueKey(
                           '${resource.id}_${propertyKey}_form_${descriptor.value}'),
@@ -417,9 +431,7 @@ class ResourcesForm extends StatelessWidget {
                         context.l10n.preferNotToSay,
                       ],
                       getDisplayText: (item) => item,
-                      onChanged: isReadOnly
-                          ? null
-                          : (String newValue) {
+                      onChanged: (String newValue) {
                               final fhirValue =
                                   _mapDisplayGenderToFhir(newValue, context);
                               onPropertyChanged?.call(propertyKey, fhirValue);
@@ -545,30 +557,93 @@ class ResourcesForm extends StatelessWidget {
   }
 
   MappingPatient _resolvePatient(StagedPatient patient) {
-    if (patient.mode == ImportMode.createNew) {
+    if (patient.draft != null) {
       return patient.draft!;
     }
     if (patient.existing != null) {
       return MappingPatient.fromFhirResource(patient.existing!);
     }
-    return patient.draft!;
+    return const MappingPatient();
   }
 
   Widget _buildPatientMatchBanner(BuildContext context, StagedPatient patient) {
-    final isModified = patient.mode == ImportMode.createNew && patient.existing != null;
-    final color = isModified ? AppColors.warning : context.colorScheme.primary;
-    final icon = isModified ? Icons.person_add : Icons.check_circle;
-    final text = isModified
-        ? context.l10n.patientModifiedNewWillBeCreated
-        : context.l10n.patientMatchFound(patient.existing!.displayTitle);
+    final isModified = patient.draft != null && patient.existing != null;
+    final isNewPatient = patient.existing == null;
 
+    if (isNewPatient) {
+      final draftName = patient.draft != null
+          ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'
+              .trim()
+          : '';
+      return _buildBanner(
+        context,
+        icon: Icons.person_add_outlined,
+        color: context.colorScheme.tertiary,
+        text: draftName.isNotEmpty
+            ? '${context.l10n.newPatient}: $draftName'
+            : context.l10n.newPatient,
+      );
+    }
+
+    final displayName = patient.existing!.displayTitle;
+
+    if (widget.isAttachmentLocked && isModified) {
+      return _buildBanner(
+        context,
+        icon: Icons.save_outlined,
+        color: AppColors.success,
+        text: context.l10n.patientSavingModified(displayName),
+        onRevert: () => context.read<ScanBloc>().add(
+              ScanPatientReverted(sessionId: widget.sessionId),
+            ),
+      );
+    }
+
+    if (isModified) {
+      return Padding(
+        padding: const EdgeInsets.only(top: Insets.small),
+        child: PatientModifiedBanner(
+          patientName: displayName,
+          onRevert: () => context.read<ScanBloc>().add(
+                ScanPatientReverted(sessionId: widget.sessionId),
+              ),
+        ),
+      );
+    }
+
+    if (widget.isAttachmentLocked) {
+      return _buildBanner(
+        context,
+        icon: Icons.check_circle,
+        color: AppColors.success,
+        text: context.l10n.patientMatchFound(displayName),
+      );
+    }
+
+    return _buildBanner(
+      context,
+      icon: Icons.check_circle,
+      color: context.colorScheme.primary,
+      text: context.l10n.patientMatchFound(displayName),
+    );
+  }
+
+  Widget _buildBanner(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String text,
+    VoidCallback? onRevert,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(top: Insets.small),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: Insets.smallNormal,
-          vertical: Insets.small,
+        padding: EdgeInsets.only(
+          left: Insets.smallNormal,
+          top: Insets.extraSmall,
+          bottom: Insets.extraSmall,
+          right: onRevert != null ? Insets.extraSmall : Insets.smallNormal,
         ),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
@@ -576,11 +651,7 @@ class ResourcesForm extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: color,
-            ),
+            Icon(icon, size: 16, color: color),
             const SizedBox(width: Insets.small),
             Expanded(
               child: Text(
@@ -591,6 +662,14 @@ class ResourcesForm extends StatelessWidget {
                 ),
               ),
             ),
+            if (onRevert != null)
+              GestureDetector(
+                onTap: onRevert,
+                child: Padding(
+                  padding: const EdgeInsets.all(Insets.extraSmall),
+                  child: Icon(Icons.close, size: 14, color: color),
+                ),
+              ),
           ],
         ),
       ),

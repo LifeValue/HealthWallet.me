@@ -93,6 +93,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState>
     on<ScanMappingInitiated>(onScanMappingInitiated,
         transformer: restartable());
     on<ScanResourceChanged>(onScanResourceChanged);
+    on<ScanPatientReverted>(onScanPatientReverted);
     on<ScanResourceRemoved>(onScanResourceRemoved);
     on<ScanResourceCreationInitiated>(onScanResourceCreationInitiated);
     on<ScanNotificationAcknowledged>(onScanNotificationAcknowledged);
@@ -362,8 +363,10 @@ class ScanBloc extends Bloc<ScanEvent, ScanState>
         diagnosticReport: const StagedDiagnosticReport(),
         updateDb: true,
       );
-    } else if (session.encounter?.draft != null) {
-      final enc = session.encounter!.draft!;
+    } else if (session.encounter?.draft != null ||
+        session.encounter?.existing != null) {
+      final enc = session.encounter!.draft ??
+          MappingEncounter.fromFhirResource(session.encounter!.existing!);
       final report = MappingDiagnosticReport(
         id: enc.id,
         reportName: MappedProperty(

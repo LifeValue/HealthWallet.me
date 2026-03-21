@@ -1067,11 +1067,28 @@ class AppLocalizationsDe extends AppLocalizations {
       'Geändert — ein neuer Patient wird erstellt';
 
   @override
+  String patientModifiedUpdating(String name) {
+    return 'Bestehenden Patienten ändern: $name';
+  }
+
+  @override
+  String patientSavingModified(String name) {
+    return 'Speichern mit geändertem Patient: $name';
+  }
+
+  @override
   String get dropModificationsTitle => 'Änderungen verwerfen?';
 
   @override
   String get dropModificationsMessage =>
       'Ihre Änderungen an den Patientenfeldern werden verworfen.';
+
+  @override
+  String get modifyPatientTitle => 'Patient ändern?';
+
+  @override
+  String get modifyPatientMessage =>
+      'Die bestehenden Patientendaten werden mit Ihren Änderungen aktualisiert.';
 
   @override
   String get scanIdCard => 'Ausweis oder Reisepass scannen';
@@ -1081,8 +1098,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Automatisch aus Ihrem Dokument ausfüllen. Daten bleiben auf Ihrem Gerät.';
 
   @override
+  String get newPatient => 'Neuer Patient';
+
+  @override
   String patientMatchFound(String name) {
-    return 'Bestehenden Patienten gefunden: $name';
+    return 'Bestehender Patient: $name';
   }
 
   @override

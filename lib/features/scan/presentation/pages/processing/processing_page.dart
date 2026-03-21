@@ -90,6 +90,24 @@ class _ProcessingPageState extends State<ProcessingPage> {
     if (activeSession.patient.hasSelection &&
         (activeSession.encounter.hasSelection ||
             activeSession.isDiagnosticReportContainer)) {
+      final isPatientModified = activeSession.patient.draft != null &&
+          activeSession.patient.existing != null;
+
+      if (isPatientModified) {
+        final confirmed = await AppSimpleDialog.showDestructiveConfirmation(
+          context: context,
+          title: context.l10n.patient,
+          message: context.l10n.patientModifiedUpdating(
+              activeSession.patient.existing!.displayTitle),
+          warningText: context.l10n.actionCannotBeUndone,
+          confirmText: context.l10n.save,
+          cancelText: context.l10n.cancel,
+          confirmButtonColor: context.colorScheme.primary,
+          onConfirm: () {},
+        );
+        if (confirmed != true || !mounted) return;
+      }
+
       context
           .read<ScanBloc>()
           .add(ScanResourceCreationInitiated(sessionId: widget.sessionId));

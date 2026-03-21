@@ -1058,11 +1058,28 @@ class AppLocalizationsRo extends AppLocalizations {
       'Modificat — va fi creat un pacient nou';
 
   @override
+  String patientModifiedUpdating(String name) {
+    return 'Modificare pacient existent: $name';
+  }
+
+  @override
+  String patientSavingModified(String name) {
+    return 'Salvare cu pacient modificat: $name';
+  }
+
+  @override
   String get dropModificationsTitle => 'Renunți la modificări?';
 
   @override
   String get dropModificationsMessage =>
       'Modificările aduse câmpurilor pacientului vor fi pierdute.';
+
+  @override
+  String get modifyPatientTitle => 'Modifici pacientul?';
+
+  @override
+  String get modifyPatientMessage =>
+      'Datele pacientului existent vor fi actualizate cu modificările tale.';
 
   @override
   String get scanIdCard => 'Scanează carte de identitate sau pașaport';
@@ -1072,8 +1089,11 @@ class AppLocalizationsRo extends AppLocalizations {
       'Completare automată din document. Datele rămân pe dispozitivul tău.';
 
   @override
+  String get newPatient => 'Pacient nou';
+
+  @override
   String patientMatchFound(String name) {
-    return 'Pacient existent găsit: $name';
+    return 'Pacient existent: $name';
   }
 
   @override

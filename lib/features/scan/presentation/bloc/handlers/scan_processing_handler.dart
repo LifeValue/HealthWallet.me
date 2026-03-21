@@ -208,7 +208,8 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
         if (patient.identifier == null) continue;
         for (final id in patient.identifier!) {
           final value = id.value?.valueString;
-          if (value != null && value.length >= 5 && ocrText.contains(value)) {
+          if (value == null || value.length < 5) continue;
+          if (ocrText.contains(value) || _fuzzyIdentifierMatch(value, ocrText)) {
             ScanLogBuffer.instance.log(
               '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value');
             return patient;
@@ -217,6 +218,20 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
       }
     } catch (_) {}
     return null;
+  }
+
+  bool _fuzzyIdentifierMatch(String identifier, String ocrText) {
+    final digitsOnly = identifier.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.length < 5) return false;
+
+    if (ocrText.contains(digitsOnly)) return true;
+
+    if (digitsOnly.length > 10) {
+      final trimmed = digitsOnly.substring(0, digitsOnly.length - 1);
+      if (ocrText.contains(trimmed)) return true;
+    }
+
+    return false;
   }
 
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {
@@ -365,17 +380,15 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);
       }
-      if (!activeSession.isDocumentAttached) {
-        final encounterForDoc =
-            finalContainer is Encounter ? finalContainer : null;
-        await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
-          filePaths: activeSession.filePaths,
-          patientId: subjectId,
-          encounter: encounterForDoc,
-          sourceId: sourceId,
-          title: finalContainer.displayTitle,
-        );
-      }
+      final encounterForDoc =
+          finalContainer is Encounter ? finalContainer : null;
+      await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
+        filePaths: activeSession.filePaths,
+        patientId: subjectId,
+        encounter: encounterForDoc,
+        sourceId: sourceId,
+        title: finalContainer.displayTitle,
+      );
       emit(state.copyWith(status: const ScanStatus.success()));
     } catch (e) {
       logger.e('[ScanBloc] resource creation failed: $e');
@@ -386,37 +399,15 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
   void onScanDocumentAttached(
     ScanDocumentAttached event,
     Emitter<ScanState> emit,
-  ) async {
+  ) {
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
-    try {
-      final (subjectId, sourceId, finalContainer, finalPatient) =
-          await _persistPrimaryResources(session);
-      final encounterForDoc =
-          finalContainer is Encounter ? finalContainer : null;
-      await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
-        filePaths: session.filePaths,
-        patientId: subjectId,
-        encounter: encounterForDoc,
-        sourceId: sourceId,
-        title: finalContainer.displayTitle,
-      );
-      updateSession(emit,
-          sessionId: event.sessionId,
-          isDocumentAttached: true,
-          patient: StagedPatient(
-              existing: finalPatient, mode: ImportMode.linkExisting),
-          encounter: finalContainer is Encounter
-              ? StagedEncounter(
-                  existing: finalContainer, mode: ImportMode.linkExisting)
-              : null,
-          updateDb: true);
-    } catch (e) {
-      if (!emit.isDone) {
-        emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
-      }
-    }
+
+    updateSession(emit,
+        sessionId: event.sessionId,
+        isDocumentAttached: true,
+        updateDb: true);
   }
 
   Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
@@ -436,6 +427,15 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
               availableSources: availableSources);
       subjectId = existingPatient.id;
       sourceId = walletSource.id;
+
+      if (activeSession.patient.draft != null) {
+        final draftWithExistingId = activeSession.patient.draft!
+            .copyWith(id: existingPatient.id);
+        resourcesToSave.add(draftWithExistingId.toFhirResource(
+            sourceId: existingPatient.sourceId,
+            subjectId: '',
+            encounterId: ''));
+      }
     } else {
       MappingPatient draftPatient = activeSession.patient.draft!;
       final walletSource =
@@ -471,12 +471,18 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
     if (resourcesToSave.isNotEmpty) {
       await syncRepository.saveResources(resourcesToSave);
     }
-    return (
-      subjectId,
-      sourceId,
-      finalContainer,
-      activeSession.patient.existing ??
-          (resourcesToSave.firstWhere((r) => r is Patient) as Patient)
-    );
+
+    final Patient finalPatient;
+    final savedPatient = resourcesToSave.whereType<Patient>().firstOrNull;
+    if (savedPatient != null) {
+      finalPatient = savedPatient;
+    } else if (activeSession.patient.existing != null) {
+      finalPatient = activeSession.patient.existing!;
+    } else {
+      finalPatient =
+          resourcesToSave.firstWhere((r) => r is Patient) as Patient;
+    }
+
+    return (subjectId, sourceId, finalContainer, finalPatient);
   }
 }

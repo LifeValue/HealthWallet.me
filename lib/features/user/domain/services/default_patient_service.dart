@@ -7,6 +7,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
+import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 
@@ -14,8 +15,13 @@ import 'package:uuid/uuid.dart';
 class DefaultPatientService {
   final RecordsRepository _recordsRepository;
   final SyncLocalDataSource _syncLocalDataSource;
+  final WalletPatientService _walletPatientService;
 
-  DefaultPatientService(this._recordsRepository, this._syncLocalDataSource);
+  DefaultPatientService(
+    this._recordsRepository,
+    this._syncLocalDataSource,
+    this._walletPatientService,
+  );
 
   Future<Patient> createDefaultWalletHolder() async {
     final resourceId = const Uuid().v4();
@@ -25,7 +31,8 @@ class DefaultPatientService {
         ? CountryIdentifier.forCountry(savedCountry)
         : CountryIdentifier.forCurrentLocale();
 
-    final dbId = 'wallet_default_wallet_holder';
+    final dbId = 'default_patient';
+    final walletSourceId = 'wallet-$dbId';
 
     final identifier = fhir_r4.Identifier(
       type: fhir_r4.CodeableConcept(
@@ -41,12 +48,12 @@ class DefaultPatientService {
         text: fhir_r4.FhirString(profile.identifierDisplayName),
       ),
       system: fhir_r4.FhirUri(profile.fhirIdentifierSystem),
-      value: fhir_r4.FhirString('default_wallet_holder'),
+      value: fhir_r4.FhirString('default_patient'),
     );
 
     return Patient(
       id: dbId,
-      sourceId: 'wallet',
+      sourceId: walletSourceId,
       resourceId: resourceId,
       title: 'Health Wallet Holder',
       name: [
@@ -82,7 +89,7 @@ class DefaultPatientService {
               'text': profile.identifierDisplayName,
             },
             'system': profile.fhirIdentifierSystem,
-            'value': 'default_wallet_holder',
+            'value': 'default_patient',
           }
         ],
       },
@@ -101,6 +108,13 @@ class DefaultPatientService {
       }
 
       final defaultPatient = await createDefaultWalletHolder();
+
+      final walletSource =
+          await _walletPatientService.createWalletSourceForPatient(
+        defaultPatient.id,
+        defaultPatient.displayTitle,
+      );
+      await _syncLocalDataSource.cacheSources([walletSource]);
 
       final fhirResourceDto = FhirResourceDto(
         id: defaultPatient.id,

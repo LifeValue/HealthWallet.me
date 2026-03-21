@@ -21,6 +21,7 @@ import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
+import 'package:health_wallet/features/scan/presentation/widgets/import_actions.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/form_fields.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,12 +29,18 @@ class SyncPlaceholderWidget extends StatefulWidget {
   final PageController? pageController;
   final VoidCallback? onSyncPressed;
   final String? recordTypeName;
+  final VoidCallback? onImportDocument;
+  final VoidCallback? onPickImage;
+  final VoidCallback? onScanDocument;
 
   const SyncPlaceholderWidget({
     super.key,
     this.pageController,
     this.onSyncPressed,
     this.recordTypeName,
+    this.onImportDocument,
+    this.onPickImage,
+    this.onScanDocument,
   });
 
   @override
@@ -204,6 +211,10 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
   }
 
   Widget _buildActionButtons(BuildContext context, bool hasAnyMeaningfulData) {
+    final hasImportActions = widget.onImportDocument != null ||
+        widget.onPickImage != null ||
+        widget.onScanDocument != null;
+
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 400),
@@ -277,61 +288,40 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
             ),
             const SizedBox(height: Insets.small),
           ],
-          SizedBox(
-            key: _highlightController.syncDataButtonKey,
-            width: double.infinity,
-            child: hasAnyMeaningfulData
-                ? ElevatedButton.icon(
-                    onPressed: widget.onSyncPressed ??
-                        () => _handleSyncRecords(context),
-                    icon: Assets.icons.renewSync.svg(
-                      width: 16,
-                      height: 16,
-                      colorFilter:
-                          const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                    ),
-                    label: Text(
-                      context.l10n.syncTitle,
-                      style: AppTextStyle.buttonMedium.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Insets.medium,
-                        vertical: Insets.smallNormal,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(Insets.small),
-                      ),
-                      elevation: 0,
-                    ),
-                  )
-                : TextButton.icon(
-                    onPressed: widget.onSyncPressed ??
-                        () => _handleSyncRecords(context),
-                    icon: Assets.icons.renewSync.svg(
-                      width: 16,
-                      height: 16,
-                      colorFilter: ColorFilter.mode(
-                        context.isDarkMode
-                            ? Colors.white
-                            : context.colorScheme.primary,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    label: Text(
-                      context.l10n.syncTitle,
-                      style: AppTextStyle.buttonMedium.copyWith(
-                        color: context.isDarkMode
-                            ? Colors.white
-                            : context.colorScheme.primary,
-                      ),
-                    ),
+          if (hasAnyMeaningfulData && hasImportActions) ...[
+            ImportActions(
+              onImportDocument: widget.onImportDocument,
+              onPickImage: widget.onPickImage,
+              onScanDocument: widget.onScanDocument,
+            ),
+          ],
+          if (!hasAnyMeaningfulData || !hasImportActions)
+            SizedBox(
+              key: _highlightController.syncDataButtonKey,
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: widget.onSyncPressed ??
+                    () => _handleSyncRecords(context),
+                icon: Assets.icons.renewSync.svg(
+                  width: 16,
+                  height: 16,
+                  colorFilter: ColorFilter.mode(
+                    context.isDarkMode
+                        ? Colors.white
+                        : context.colorScheme.primary,
+                    BlendMode.srcIn,
                   ),
-          ),
+                ),
+                label: Text(
+                  context.l10n.syncTitle,
+                  style: AppTextStyle.buttonMedium.copyWith(
+                    color: context.isDarkMode
+                        ? Colors.white
+                        : context.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
           ],
           ),
         ),
@@ -443,13 +433,10 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     final pageController = widget.pageController;
 
     try {
-      syncBloc.add(const CreateWalletSource());
-      await Future.delayed(const Duration(milliseconds: 100));
-
       final defaultPatientService = getIt<DefaultPatientService>();
       await defaultPatientService.createAndSetAsMain();
 
-      homeBloc.add(const HomeSourceChanged('wallet'));
+      homeBloc.add(const HomeSourceChanged('wallet-default_patient'));
       patientBloc.add(const PatientInitialised());
 
       final walletPatient = await _waitForWalletPatient(patientBloc);

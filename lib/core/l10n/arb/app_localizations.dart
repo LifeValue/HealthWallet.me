@@ -2016,6 +2016,18 @@ abstract class AppLocalizations {
   /// **'Modified — a new patient will be created'**
   String get patientModifiedNewWillBeCreated;
 
+  /// No description provided for @patientModifiedUpdating.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifying existing patient: {name}'**
+  String patientModifiedUpdating(String name);
+
+  /// No description provided for @patientSavingModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving with modified patient: {name}'**
+  String patientSavingModified(String name);
+
   /// No description provided for @dropModificationsTitle.
   ///
   /// In en, this message translates to:
@@ -2027,6 +2039,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your changes to the patient fields will be discarded.'**
   String get dropModificationsMessage;
+
+  /// No description provided for @modifyPatientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Modify patient?'**
+  String get modifyPatientTitle;
+
+  /// No description provided for @modifyPatientMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will update the existing patient record with your changes.'**
+  String get modifyPatientMessage;
 
   /// No description provided for @scanIdCard.
   ///
@@ -2040,10 +2064,16 @@ abstract class AppLocalizations {
   /// **'Auto-fill from your document. Data stays on your device.'**
   String get scanIdCardDescription;
 
+  /// No description provided for @newPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'New patient'**
+  String get newPatient;
+
   /// No description provided for @patientMatchFound.
   ///
   /// In en, this message translates to:
-  /// **'Found existing patient: {name}'**
+  /// **'Existing patient: {name}'**
   String patientMatchFound(String name);
 
   /// No description provided for @language.

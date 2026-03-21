@@ -1046,11 +1046,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Modified — a new patient will be created';
 
   @override
+  String patientModifiedUpdating(String name) {
+    return 'Modifying existing patient: $name';
+  }
+
+  @override
+  String patientSavingModified(String name) {
+    return 'Saving with modified patient: $name';
+  }
+
+  @override
   String get dropModificationsTitle => 'Drop modifications?';
 
   @override
   String get dropModificationsMessage =>
       'Your changes to the patient fields will be discarded.';
+
+  @override
+  String get modifyPatientTitle => 'Modify patient?';
+
+  @override
+  String get modifyPatientMessage =>
+      'This will update the existing patient record with your changes.';
 
   @override
   String get scanIdCard => 'Scan ID Card or Passport';
@@ -1060,8 +1077,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Auto-fill from your document. Data stays on your device.';
 
   @override
+  String get newPatient => 'New patient';
+
+  @override
   String patientMatchFound(String name) {
-    return 'Found existing patient: $name';
+    return 'Existing patient: $name';
   }
 
   @override

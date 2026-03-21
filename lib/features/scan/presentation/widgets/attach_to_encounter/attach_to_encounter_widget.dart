@@ -115,17 +115,17 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                 Container(height: 1, color: borderColor),
 
                 // Content
-                const Expanded(
+                Expanded(
                   child: Padding(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        PatientSelector(
+                        const PatientSelector(
                           title: 'Current Patient & Source',
                         ),
-                        SizedBox(height: 24),
-                        Expanded(child: EncounterSelector()),
+                        const SizedBox(height: 24),
+                        const Expanded(child: EncounterSelector()),
                       ],
                     ),
                   ),
