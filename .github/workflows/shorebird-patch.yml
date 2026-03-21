@@ -36,15 +36,23 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.7"
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
       - uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
 
       - run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
-      - run: shorebird patch --platforms android
-    env:
-      SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+      - run: shorebird patch --platforms android --release-version=latest
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
 
   patch-ios:
     if: inputs.platform == 'ios' || inputs.platform == 'both'
@@ -61,12 +69,20 @@ jobs:
           ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.7"
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
       - uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
 
       - run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
-      - run: shorebird patch --platforms ios
-    env:
-      SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+      - run: shorebird patch --platforms ios --release-version=latest
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
