@@ -66,7 +66,7 @@ jobs:
           cache: true
 
       - name: Patch Android
-        run: shorebird patch --platforms android --release-version=latest
+        run: shorebird patch --platforms android --release-version=latest --allow-asset-diffs
         env:
           SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
 
@@ -110,6 +110,6 @@ jobs:
           cache: true
 
       - name: Patch iOS
-        run: shorebird patch --platforms ios --release-version=latest --no-codesign
+        run: shorebird patch --platforms ios --release-version=latest --no-codesign --allow-asset-diffs
         env:
           SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
