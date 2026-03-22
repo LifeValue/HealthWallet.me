@@ -1,8 +1,17 @@
 name: Master Deploy
 
 on:
-  push:
-    branches: [master]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platform to deploy"
+        required: true
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+        default: both
 
 concurrency:
   group: master-deploy
@@ -10,6 +19,7 @@ concurrency:
 
 jobs:
   deploy-ios:
+    if: inputs.platform == 'ios' || inputs.platform == 'both'
     name: Deploy to TestFlight
     runs-on: [self-hosted, macOS]
 
@@ -93,6 +103,7 @@ jobs:
           rm -rf ios/fastlane/private_keys
 
   deploy-android:
+    if: inputs.platform == 'android' || inputs.platform == 'both'
     name: Deploy to Play Store
     runs-on: ubuntu-latest
 
