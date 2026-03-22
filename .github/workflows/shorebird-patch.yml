@@ -61,6 +61,21 @@ jobs:
           mkdir -p assets/certs/android
           echo "${{ secrets.GOOGLE_WALLET_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > assets/certs/android/service-account.json
 
+      - name: Decode keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Write key.properties
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Reduce Gradle heap for CI
+        run: sed -i 's/-Xmx8G/-Xmx4G/' android/gradle.properties
+
       - uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
@@ -69,6 +84,13 @@ jobs:
         run: shorebird patch --platforms android --release-version=latest --allow-asset-diffs
         env:
           SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+
+      - name: Cleanup sensitive files
+        if: always()
+        run: |
+          rm -f android/app/upload-keystore.jks
+          rm -f android/key.properties
+          rm -f assets/certs/android/service-account.json
 
   patch-ios:
     if: inputs.platform == 'ios' || inputs.platform == 'both'
