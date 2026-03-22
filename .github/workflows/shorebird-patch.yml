@@ -1,4 +1,4 @@
-name: Shorebird Patch (OTA Hotfix)
+name: Shorebird Patch
 
 on:
   workflow_dispatch:
