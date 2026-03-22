@@ -44,6 +44,9 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
@@ -69,6 +72,13 @@ jobs:
           ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
+      - name: Restore API key from secret
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+        run: |
+          mkdir -p ios/fastlane/private_keys
+          printf '%s\n' "$ASC_KEY_CONTENT" > ios/fastlane/private_keys/AuthKey.p8
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.38.7"
@@ -77,12 +87,46 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Install CocoaPods dependencies
+        run: cd ios && rm -rf Podfile.lock Pods && pod install --repo-update
+
+      - name: Install Fastlane dependencies
+        run: cd ios && bundle install
+
+      - name: Setup CI keychain
+        run: |
+          security create-keychain -p "ci" ci_build.keychain-db || true
+          security unlock-keychain -p "ci" ci_build.keychain-db
+          security set-keychain-settings -t 3600 -u ci_build.keychain-db
+          security list-keychains -d user -s ci_build.keychain-db login.keychain-db
+          security default-keychain -s ci_build.keychain-db
+
+      - name: Download signing certificates
+        env:
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_KEYCHAIN_NAME: ci_build.keychain-db
+          MATCH_KEYCHAIN_PASSWORD: ci
+        run: cd ios && bundle exec fastlane match appstore --readonly
+
       - uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
 
       - run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
-      - run: shorebird patch --platforms ios --release-version=latest
+      - name: Patch iOS
         env:
           SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+        run: shorebird patch --platforms ios --release-version=latest
+
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain ci_build.keychain-db || true
+          security list-keychains -d user -s login.keychain-db
+          security default-keychain -s login.keychain-db
+          rm -rf ios/fastlane/private_keys
