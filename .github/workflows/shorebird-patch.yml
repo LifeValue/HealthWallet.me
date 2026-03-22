@@ -47,13 +47,26 @@ jobs:
       - name: Run code generation
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Restore Apple Wallet certificates
+        run: |
+          mkdir -p assets/certs
+          echo "${{ secrets.APPLE_PASS_CERTIFICATE_BASE64 }}" | base64 --decode > assets/certs/pass_certificate.pem
+          echo "${{ secrets.APPLE_PASS_PRIVATE_KEY_BASE64 }}" | base64 --decode > assets/certs/private_key.pem
+
+      - name: Restore Google Wallet service account
+        run: |
+          mkdir -p assets/certs/android
+          echo "${{ secrets.GOOGLE_WALLET_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > assets/certs/android/service-account.json
+
       - uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
 
-      - run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
-
-      - run: shorebird patch --platforms android --release-version=latest
+      - name: Patch Android
+        run: shorebird patch --platforms android --release-version=latest
         env:
           SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
 
@@ -72,13 +85,6 @@ jobs:
           ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Restore API key from secret
-        env:
-          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
-        run: |
-          mkdir -p ios/fastlane/private_keys
-          printf '%s\n' "$ASC_KEY_CONTENT" > ios/fastlane/private_keys/AuthKey.p8
-
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.38.7"
@@ -90,43 +96,20 @@ jobs:
       - name: Run code generation
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Install CocoaPods dependencies
-        run: cd ios && rm -rf Podfile.lock Pods && pod install --repo-update
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
 
-      - name: Install Fastlane dependencies
-        run: cd ios && bundle install
-
-      - name: Setup CI keychain
+      - name: Restore Apple Wallet certificates
         run: |
-          security create-keychain -p "ci" ci_build.keychain-db || true
-          security unlock-keychain -p "ci" ci_build.keychain-db
-          security set-keychain-settings -t 3600 -u ci_build.keychain-db
-          security list-keychains -d user -s ci_build.keychain-db login.keychain-db
-          security default-keychain -s ci_build.keychain-db
-
-      - name: Download signing certificates
-        env:
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          MATCH_KEYCHAIN_NAME: ci_build.keychain-db
-          MATCH_KEYCHAIN_PASSWORD: ci
-        run: cd ios && bundle exec fastlane match appstore --readonly
+          mkdir -p assets/certs
+          echo "${{ secrets.APPLE_PASS_CERTIFICATE_BASE64 }}" | base64 --decode > assets/certs/pass_certificate.pem
+          echo "${{ secrets.APPLE_PASS_PRIVATE_KEY_BASE64 }}" | base64 --decode > assets/certs/private_key.pem
 
       - uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
 
-      - run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
-
       - name: Patch iOS
+        run: shorebird patch --platforms ios --release-version=latest --no-codesign
         env:
           SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
-        run: shorebird patch --platforms ios --release-version=latest
-
-      - name: Cleanup
-        if: always()
-        run: |
-          security delete-keychain ci_build.keychain-db || true
-          security list-keychains -d user -s login.keychain-db
-          security default-keychain -s login.keychain-db
-          rm -rf ios/fastlane/private_keys
