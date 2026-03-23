@@ -41,6 +41,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     _connectionSub = _tcpService.connectionState.listen((tcpState) {
       switch (tcpState) {
         case ConnectionState.connected:
+          add(const BackupConnected(ip: '', port: 0));
           break;
         case ConnectionState.disconnected:
           add(const BackupDisconnected());
@@ -90,13 +91,23 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     Emitter<BackupState> emit,
     DevicePairing pairing,
   ) async {
-    final ip = await _tcpService.startServer(
+    final server = await _tcpService.startServer(
       pairingKey: pairing.pairingKey,
       port: pairing.lastPort,
     );
+
+    if (server.port != pairing.lastPort) {
+      final updated = pairing.copyWith(
+        lastPort: server.port,
+        lastIp: server.ip,
+      );
+      await _pairingStorage.savePairing(updated);
+      emit(state.copyWith(pairedDevice: updated));
+    }
+
     await _discoveryService.startDesktopAdvertising(
-      ip: ip,
-      port: pairing.lastPort,
+      ip: server.ip,
+      port: server.port,
       deviceId: pairing.deviceId,
     );
   }
@@ -198,8 +209,6 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
   @override
   Future<void> close() {
     _connectionSub?.cancel();
-    _discoveryService.stopDesktopAdvertising();
-    _tcpService.stopServer();
     return super.close();
   }
 }

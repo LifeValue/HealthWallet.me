@@ -21,12 +21,14 @@ void main() async {
 
   await configureDependencies();
 
-  getIt.registerFactory<BackupBloc>(() => BackupBloc(
-        getIt<AppPlatform>(),
-        getIt<PairingStorageService>(),
-        getIt<TcpService>(),
-        getIt<DiscoveryService>(),
-      ));
+  getIt.registerFactory<BackupBloc>(
+    () => BackupBloc(
+      getIt<AppPlatform>(),
+      getIt<PairingStorageService>(),
+      getIt<TcpService>(),
+      getIt<DiscoveryService>(),
+    ),
+  );
 
   getIt<ShareIntentService>().initialize();
   getIt<DeepLinkService>().initialize();
