@@ -33,6 +33,7 @@
     "homeRecentRecords": "Registros recientes",
     "homeViewAll": "Ver todo",
     "homeNA": "N/A",
+    "bluetoothRequired": "Active el Bluetooth para usar la función de Compartir en proximidad",
     "dashboardTitle": "Tablero",
     "recordsTitle": "Registros",
     "goToRecords": "Ir a Registros",

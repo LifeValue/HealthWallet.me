@@ -46,6 +46,7 @@
     "homeRecentRecords": "Recent Records",
     "homeViewAll": "View All",
     "homeNA": "N/A",
+    "bluetoothRequired": "Please turn on Bluetooth to use Share Proximity",
     "dashboardTitle": "Dashboard",
     "recordsTitle": "Records",
     "goToRecords": "Go to Records",

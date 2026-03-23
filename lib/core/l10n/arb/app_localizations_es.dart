@@ -114,6 +114,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeNA => 'N/A';
 
   @override
+  String get bluetoothRequired =>
+      'Active el Bluetooth para usar la función de Compartir en proximidad';
+
+  @override
   String get dashboardTitle => 'Tablero';
 
   @override

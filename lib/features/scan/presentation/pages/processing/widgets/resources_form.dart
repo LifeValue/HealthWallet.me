@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/patient_modified_banner.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -639,14 +638,14 @@ class _ResourcesFormState extends State<ResourcesForm> {
       }
 
       if (isSamePerson) {
-        return Padding(
-          padding: const EdgeInsets.only(top: Insets.small),
-          child: PatientModifiedBanner(
-            patientName: displayName,
-            onRevert: () => context.read<ScanBloc>().add(
-                  ScanPatientReverted(sessionId: widget.sessionId),
-                ),
-          ),
+        return _buildBanner(
+          context,
+          icon: Icons.edit_outlined,
+          color: AppColors.warning,
+          text: context.l10n.patientModifiedUpdating(displayName),
+          onAction: () => context.read<ScanBloc>().add(
+                ScanPatientReverted(sessionId: widget.sessionId),
+              ),
         );
       }
 

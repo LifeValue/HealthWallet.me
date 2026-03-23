@@ -294,6 +294,12 @@ abstract class AppLocalizations {
   /// **'N/A'**
   String get homeNA;
 
+  /// No description provided for @bluetoothRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please turn on Bluetooth to use Share Proximity'**
+  String get bluetoothRequired;
+
   /// No description provided for @dashboardTitle.
   ///
   /// In en, this message translates to:

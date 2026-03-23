@@ -1,7 +1,7 @@
 name: health_wallet
 description: "Open-source, patient-controlled health record app with on-device AI. Aggregates medical data from 52K+ providers via FHIR R4. Offline-first."
 publish_to: 'none'
-version: 1.2.1+60
+version: 1.2.1+69
 
 environment:
   sdk: '>=3.10.7 <4.0.0'
@@ -78,7 +78,7 @@ dependencies:
   google_mlkit_text_recognition: ^0.15.0
   pdfx: ^2.9.2
   printing: ^5.13.4
-  llamadart: ^0.6.6
+  llamadart: ^0.6.7
   image: ^4.0.0
   background_downloader: ^9.5.4
   flutter_pdfview: ^1.4.3

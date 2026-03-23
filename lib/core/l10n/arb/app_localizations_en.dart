@@ -114,6 +114,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNA => 'N/A';
 
   @override
+  String get bluetoothRequired =>
+      'Please turn on Bluetooth to use Share Proximity';
+
+  @override
   String get dashboardTitle => 'Dashboard';
 
   @override

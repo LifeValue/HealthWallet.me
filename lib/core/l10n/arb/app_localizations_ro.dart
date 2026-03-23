@@ -114,6 +114,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get homeNA => 'N/A';
 
   @override
+  String get bluetoothRequired =>
+      'Activează Bluetooth pentru a utiliza Partajarea în proximitate';
+
+  @override
   String get dashboardTitle => 'Panou';
 
   @override

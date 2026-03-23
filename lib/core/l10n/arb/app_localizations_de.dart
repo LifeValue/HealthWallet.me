@@ -114,6 +114,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get homeNA => 'N/A';
 
   @override
+  String get bluetoothRequired =>
+      'Bitte schalten Sie Bluetooth ein, um die Nahbereichsfreigabe zu nutzen';
+
+  @override
   String get dashboardTitle => 'Instrumententafel';
 
   @override
