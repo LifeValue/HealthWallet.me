@@ -120,6 +120,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordsTitle => 'Records';
 
   @override
+  String get goToRecords => 'Go to Records';
+
+  @override
   String get syncTitle => 'Sync';
 
   @override
@@ -601,11 +604,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueProcessing => 'Continue Processing';
 
   @override
-  String get recordsSavedTitle => 'Records Saved';
+  String get recordsSavedTitle => 'Successfully Saved';
 
   @override
   String get recordsSavedMessage =>
-      'Your health records have been saved successfully. What would you like to do next?';
+      'Your health records have been saved successfully.';
+
+  @override
+  String get whatNextQuestion => 'What would you like to do next?';
 
   @override
   String get continueScanning => 'Continue Scanning';
@@ -1052,7 +1058,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String patientSavingModified(String name) {
-    return 'Saving with modified patient: $name';
+    return 'Saving modified patient: $name';
   }
 
   @override
@@ -1077,7 +1083,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Auto-fill from your document. Data stays on your device.';
 
   @override
+  String get newLabel => 'New';
+
+  @override
   String get newPatient => 'New patient';
+
+  @override
+  String patientChangedTo(String name) {
+    return 'Changed to: $name';
+  }
 
   @override
   String patientMatchFound(String name) {

@@ -60,10 +60,6 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
     if (session.isProcessing || session.status == ProcessingStatus.draft) {
       return;
     }
-    if (session.status == ProcessingStatus.patientExtracted &&
-        session.patient.hasSelection) {
-      return;
-    }
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
     );
@@ -382,6 +378,10 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
       }
       final encounterForDoc =
           finalContainer is Encounter ? finalContainer : null;
+      await documentReferenceService.deleteDocumentReferences(
+        sourceId: sourceId,
+        encounterId: finalContainer.id,
+      );
       await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: activeSession.filePaths,
         patientId: subjectId,

@@ -193,9 +193,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
           final dialogResult = await AppSimpleDialog.showConfirmation(
             context: context,
             title: context.l10n.recordsSavedTitle,
-            message: context.l10n.recordsSavedMessage,
+            subtitle: context.l10n.whatNextQuestion,
             confirmText: context.l10n.continueScanning,
-            cancelText: context.l10n.recordsTitle,
+            cancelText: context.l10n.goToRecords,
             barrierDismissible: true,
             onConfirm: () {
               scanBloc.add(ScanSessionCleared(session: sessionToClear));

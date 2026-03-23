@@ -120,6 +120,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get recordsTitle => 'Înregistrări';
 
   @override
+  String get goToRecords => 'Mergi la Înregistrări';
+
+  @override
   String get syncTitle => 'Sincronizare';
 
   @override
@@ -607,11 +610,14 @@ class AppLocalizationsRo extends AppLocalizations {
   String get continueProcessing => 'Continuă Procesarea';
 
   @override
-  String get recordsSavedTitle => 'Înregistrări Salvate';
+  String get recordsSavedTitle => 'Salvat cu succes';
 
   @override
   String get recordsSavedMessage =>
-      'Înregistrările tale de sănătate au fost salvate cu succes. Ce ai dori să faci în continuare?';
+      'Înregistrările tale de sănătate au fost salvate cu succes.';
+
+  @override
+  String get whatNextQuestion => 'Ce ai dori să faci în continuare?';
 
   @override
   String get continueScanning => 'Continuă Scanarea';
@@ -1064,7 +1070,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String patientSavingModified(String name) {
-    return 'Salvare cu pacient modificat: $name';
+    return 'Salvare pacient modificat: $name';
   }
 
   @override
@@ -1089,7 +1095,15 @@ class AppLocalizationsRo extends AppLocalizations {
       'Completare automată din document. Datele rămân pe dispozitivul tău.';
 
   @override
+  String get newLabel => 'Nou';
+
+  @override
   String get newPatient => 'Pacient nou';
+
+  @override
+  String patientChangedTo(String name) {
+    return 'Schimbat la: $name';
+  }
 
   @override
   String patientMatchFound(String name) {

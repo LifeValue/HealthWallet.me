@@ -145,6 +145,20 @@ abstract class MappingResource {
       }
     }
 
+    final partial = RegExp(r'^(\d{1,2})[-/.](\d{1,2})$').firstMatch(trimmed);
+    if (partial != null) {
+      final a = int.tryParse(partial.group(1)!);
+      final b = int.tryParse(partial.group(2)!);
+      if (a != null && b != null) {
+        final month = a <= 12 ? a : b;
+        final day = a <= 12 ? b : a;
+        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          final year = DateTime.now().year;
+          return '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+        }
+      }
+    }
+
     return value;
   }
 }

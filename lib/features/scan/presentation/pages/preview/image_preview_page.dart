@@ -286,27 +286,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           key: ValueKey(
               '${file.path}_${file.lastModifiedSync().millisecondsSinceEpoch}'),
           errorBuilder: (context, error, stackTrace) {
-            return Container(
-              padding: const EdgeInsets.all(20),
-              color: Colors.black,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white, size: 64),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Failed to load image',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Path: $path',
-                    style:
-                        const TextStyle(color: Colors.white54, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+            return const Center(
+              child: Icon(Icons.image_not_supported_outlined,
+                  size: 40, color: Colors.grey),
             );
           },
         ),

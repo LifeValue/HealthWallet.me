@@ -120,6 +120,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recordsTitle => 'Aufzeichnungen';
 
   @override
+  String get goToRecords => 'Zu Aufzeichnungen';
+
+  @override
   String get syncTitle => 'Synchronisieren';
 
   @override
@@ -613,11 +616,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get continueProcessing => 'Verarbeitung fortsetzen';
 
   @override
-  String get recordsSavedTitle => 'Aufzeichnungen Gespeichert';
+  String get recordsSavedTitle => 'Erfolgreich gespeichert';
 
   @override
   String get recordsSavedMessage =>
-      'Ihre Gesundheitsdaten wurden erfolgreich gespeichert. Was möchten Sie als Nächstes tun?';
+      'Ihre Gesundheitsdaten wurden erfolgreich gespeichert.';
+
+  @override
+  String get whatNextQuestion => 'Was möchten Sie als Nächstes tun?';
 
   @override
   String get continueScanning => 'Weiter Scannen';
@@ -1073,7 +1079,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String patientSavingModified(String name) {
-    return 'Speichern mit geändertem Patient: $name';
+    return 'Geänderten Patienten speichern: $name';
   }
 
   @override
@@ -1098,7 +1104,15 @@ class AppLocalizationsDe extends AppLocalizations {
       'Automatisch aus Ihrem Dokument ausfüllen. Daten bleiben auf Ihrem Gerät.';
 
   @override
+  String get newLabel => 'Neu';
+
+  @override
   String get newPatient => 'Neuer Patient';
+
+  @override
+  String patientChangedTo(String name) {
+    return 'Geändert zu: $name';
+  }
 
   @override
   String patientMatchFound(String name) {

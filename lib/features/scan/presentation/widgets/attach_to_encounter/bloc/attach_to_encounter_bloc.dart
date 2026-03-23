@@ -97,10 +97,10 @@ class AttachToEncounterBloc
   ) async {
     if (event.patient is MappingPatient) {
       emit(state.copyWith(
-        patient: state.patient.copyWith(
+        patient: StagedPatient(
+          draft: state.patient.draft,
           mode: ImportMode.createNew,
         ),
-        encounter: state.encounter.copyWith(existing: null),
         existingEncounters: [],
         selectedPatient: event.patient,
       ));
@@ -113,7 +113,6 @@ class AttachToEncounterBloc
           existing: event.patient,
           mode: ImportMode.linkExisting,
         ),
-        encounter: state.encounter.copyWith(existing: null),
         status: AttachToEncounterStatus.loading,
       ));
       await _loadEncounters(emit, event.patient);

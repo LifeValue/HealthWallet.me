@@ -48,6 +48,7 @@
     "homeNA": "N/A",
     "dashboardTitle": "Dashboard",
     "recordsTitle": "Records",
+    "goToRecords": "Go to Records",
     "syncTitle": "Sync",
     "syncSuccessful": "Sync successful!",
     "syncDataLoadedSuccessfully": "Your medical records have been synchronized. You will be redirected to the home page.",
@@ -219,8 +220,9 @@
     "selectDate": "Select date",
     "attachToEncounter": "Attach to Encounter",
     "continueProcessing": "Continue Processing",
-    "recordsSavedTitle": "Records Saved",
-    "recordsSavedMessage": "Your health records have been saved successfully. What would you like to do next?",
+    "recordsSavedTitle": "Successfully Saved",
+    "recordsSavedMessage": "Your health records have been saved successfully.",
+    "whatNextQuestion": "What would you like to do next?",
     "continueScanning": "Continue Scanning",
 
     "effectiveDate": "Effective Date",
@@ -394,7 +396,7 @@
             }
         }
     },
-    "patientSavingModified": "Saving with modified patient: {name}",
+    "patientSavingModified": "Saving modified patient: {name}",
     "@patientSavingModified": {
         "placeholders": {
             "name": {
@@ -408,7 +410,16 @@
     "modifyPatientMessage": "This will update the existing patient record with your changes.",
     "scanIdCard": "Scan ID Card or Passport",
     "scanIdCardDescription": "Auto-fill from your document. Data stays on your device.",
+    "newLabel": "New",
     "newPatient": "New patient",
+    "patientChangedTo": "Changed to: {name}",
+    "@patientChangedTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
     "patientMatchFound": "Existing patient: {name}",
     "@patientMatchFound": {
         "placeholders": {
