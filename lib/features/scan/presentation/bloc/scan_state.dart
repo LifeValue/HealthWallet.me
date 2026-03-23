@@ -33,6 +33,7 @@ class ScanState with _$ScanState {
     final session = sessions.firstWhereOrNull((s) => s.id == sessionId);
     return session != null &&
         (session.status == ProcessingStatus.draft ||
+            session.status == ProcessingStatus.patientExtracted ||
             session.status == ProcessingStatus.cancelled ||
             status is Failure ||
             status is CapacityFailure);

@@ -19,6 +19,18 @@ class DocumentReferenceService {
   DocumentReferenceService(
       this._database, this._pdfGenerationService, this._pathResolver);
 
+  Future<void> deleteDocumentReferences({
+    required String sourceId,
+    required String encounterId,
+  }) async {
+    await (_database.delete(_database.fhirResource)
+          ..where((t) =>
+              t.sourceId.equals(sourceId) &
+              t.resourceType.equals('DocumentReference') &
+              t.encounterId.equals(encounterId)))
+        .go();
+  }
+
   Future<List<String>> saveGroupedDocumentsAsFhirRecords({
     required List<String> filePaths,
     required String patientId,

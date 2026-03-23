@@ -306,6 +306,12 @@ abstract class AppLocalizations {
   /// **'Records'**
   String get recordsTitle;
 
+  /// No description provided for @goToRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Records'**
+  String get goToRecords;
+
   /// No description provided for @syncTitle.
   ///
   /// In en, this message translates to:
@@ -1209,14 +1215,20 @@ abstract class AppLocalizations {
   /// No description provided for @recordsSavedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Records Saved'**
+  /// **'Successfully Saved'**
   String get recordsSavedTitle;
 
   /// No description provided for @recordsSavedMessage.
   ///
   /// In en, this message translates to:
-  /// **'Your health records have been saved successfully. What would you like to do next?'**
+  /// **'Your health records have been saved successfully.'**
   String get recordsSavedMessage;
+
+  /// No description provided for @whatNextQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to do next?'**
+  String get whatNextQuestion;
 
   /// No description provided for @continueScanning.
   ///
@@ -2025,7 +2037,7 @@ abstract class AppLocalizations {
   /// No description provided for @patientSavingModified.
   ///
   /// In en, this message translates to:
-  /// **'Saving with modified patient: {name}'**
+  /// **'Saving modified patient: {name}'**
   String patientSavingModified(String name);
 
   /// No description provided for @dropModificationsTitle.
@@ -2064,11 +2076,23 @@ abstract class AppLocalizations {
   /// **'Auto-fill from your document. Data stays on your device.'**
   String get scanIdCardDescription;
 
+  /// No description provided for @newLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newLabel;
+
   /// No description provided for @newPatient.
   ///
   /// In en, this message translates to:
   /// **'New patient'**
   String get newPatient;
+
+  /// No description provided for @patientChangedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed to: {name}'**
+  String patientChangedTo(String name);
 
   /// No description provided for @patientMatchFound.
   ///

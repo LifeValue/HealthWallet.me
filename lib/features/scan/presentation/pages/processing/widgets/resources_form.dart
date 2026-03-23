@@ -18,8 +18,10 @@ import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 class ResourcesForm extends StatefulWidget {
   const ResourcesForm({
@@ -211,34 +213,12 @@ class _ResourcesFormState extends State<ResourcesForm> {
                 Row(
                   children: [
                     if (isStagedResource &&
-                        !widget.isAttachmentLocked &&
                         resource is! MappingEncounter &&
                         resource is! MappingDiagnosticReport)
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(
-                          onTap: () async {
-                            final result =
-                                await showDialog<AttachToEncounterResult>(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (context) => AttachToEncounterWidget(
-                                patient: widget.patient,
-                                encounter: widget.encounter,
-                                confirmText: context.l10n.save,
-                              ),
-                            );
-                            if (result == null || !context.mounted) return;
-
-                            final (patient, encounter) = result;
-                            context.read<ScanBloc>().add(
-                                  ScanEncounterAttached(
-                                    sessionId: widget.sessionId,
-                                    patient: patient,
-                                    encounter: encounter,
-                                  ),
-                                );
-                          },
+                          onTap: () => _openAttachDialog(context),
                           child: Assets.icons.attachment.svg(
                               width: 20,
                               color: context.theme.iconTheme.color ??
@@ -284,7 +264,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
             ),
             if (resource is MappingPatient && widget.patient != null)
               _buildPatientMatchBanner(context, widget.patient!),
-            const SizedBox(height: 24),
+            const SizedBox(height: Insets.normal),
             ...textFields.entries.map((entry) {
               final propertyKey = entry.key;
               final descriptor = entry.value;
@@ -380,7 +360,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                                     Expanded(
                                       child: Text(
                                         descriptor.value.isNotEmpty
-                                            ? descriptor.value
+                                            ? _formatDateForDisplay(
+                                                descriptor.value, context)
                                             : context.l10n.selectDate,
                                         style: AppTextStyle.labelLarge.copyWith(
                                           color: descriptor.value.isNotEmpty
@@ -508,27 +489,19 @@ class _ResourcesFormState extends State<ResourcesForm> {
     }
   }
 
+  String _formatDateForDisplay(String isoDate, BuildContext context) {
+    final region = context.read<UserBloc>().state.regionPreset;
+    return DateFormatUtils.formatIsoForDisplay(isoDate, region);
+  }
+
   Future<String?> _showDatePicker(
     BuildContext context,
     String propertyKey,
     String currentValue,
     Function(String, String)? onPropertyChanged,
   ) async {
-    DateTime? initialDate;
-    if (currentValue.isNotEmpty) {
-      initialDate = DateTime.tryParse(currentValue);
-      if (initialDate == null) {
-        try {
-          final dateFormat = DateFormat('yyyy-MM-dd');
-          initialDate = dateFormat.parse(currentValue);
-        } catch (e) {
-          initialDate = null;
-        }
-      }
-    }
-    if (initialDate == null) {
-      initialDate = DateTime.now();
-    }
+    final initialDate =
+        DateFormatUtils.tryParseIso(currentValue) ?? DateTime.now();
 
     DateTime? firstDate;
     DateTime? lastDate;
@@ -549,14 +522,58 @@ class _ResourcesFormState extends State<ResourcesForm> {
     );
 
     if (pickedDate != null && onPropertyChanged != null) {
-      final formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+      final formattedDate = DateFormatUtils.isoCompact(pickedDate);
       onPropertyChanged(propertyKey, formattedDate);
       return formattedDate;
     }
     return null;
   }
 
+  void _swapPatient(
+      BuildContext context, StagedPatient patient, ImportMode targetMode) {
+    context.read<ScanBloc>().add(
+          ScanEncounterAttached(
+            sessionId: widget.sessionId,
+            patient: StagedPatient(
+              draft: patient.draft,
+              existing: patient.existing,
+              mode: targetMode,
+            ),
+            encounter: widget.encounter ?? const StagedEncounter(),
+          ),
+        );
+  }
+
+  Future<void> _openAttachDialog(BuildContext context) async {
+    final result = await showDialog<AttachToEncounterResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AttachToEncounterWidget(
+        patient: widget.patient,
+        encounter: widget.encounter,
+        confirmText: context.l10n.save,
+      ),
+    );
+    if (result == null || !context.mounted) return;
+
+    final (patient, encounter) = result;
+    context.read<ScanBloc>().add(
+          ScanEncounterAttached(
+            sessionId: widget.sessionId,
+            patient: patient,
+            encounter: encounter,
+          ),
+        );
+  }
+
   MappingPatient _resolvePatient(StagedPatient patient) {
+    if (patient.draft != null && patient.existing != null) {
+      final isSamePerson = patient.draft!.id == patient.existing!.id;
+      if (isSamePerson || patient.mode == ImportMode.createNew) {
+        return patient.draft!;
+      }
+      return MappingPatient.fromFhirResource(patient.existing!);
+    }
     if (patient.draft != null) {
       return patient.draft!;
     }
@@ -567,8 +584,10 @@ class _ResourcesFormState extends State<ResourcesForm> {
   }
 
   Widget _buildPatientMatchBanner(BuildContext context, StagedPatient patient) {
-    final isModified = patient.draft != null && patient.existing != null;
-    final isNewPatient = patient.existing == null;
+    final hasBoth = patient.draft != null && patient.existing != null;
+    final isNewPatient = patient.existing == null && patient.draft != null;
+    final isNewWithExisting = hasBoth && patient.mode == ImportMode.createNew;
+    final isModified = hasBoth && patient.mode == ImportMode.linkExisting;
 
     if (isNewPatient) {
       final draftName = patient.draft != null
@@ -585,38 +604,66 @@ class _ResourcesFormState extends State<ResourcesForm> {
       );
     }
 
+    if (isNewWithExisting) {
+      final draftName = patient.draft != null
+          ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'
+              .trim()
+          : '';
+      return _buildBanner(
+        context,
+        icon: Icons.person_add_outlined,
+        color: context.colorScheme.tertiary,
+        text: draftName.isNotEmpty
+            ? '${context.l10n.newPatient}: $draftName'
+            : context.l10n.newPatient,
+        onAction: () => _swapPatient(context, patient, ImportMode.linkExisting),
+        actionIcon: Icons.swap_horiz,
+      );
+    }
+
     final displayName = patient.existing!.displayTitle;
 
-    if (widget.isAttachmentLocked && isModified) {
-      return _buildBanner(
-        context,
-        icon: Icons.save_outlined,
-        color: AppColors.success,
-        text: context.l10n.patientSavingModified(displayName),
-        onRevert: () => context.read<ScanBloc>().add(
-              ScanPatientReverted(sessionId: widget.sessionId),
-            ),
-      );
-    }
-
     if (isModified) {
-      return Padding(
-        padding: const EdgeInsets.only(top: Insets.small),
-        child: PatientModifiedBanner(
-          patientName: displayName,
-          onRevert: () => context.read<ScanBloc>().add(
+      final isSamePerson = patient.draft!.id == patient.existing!.id;
+
+      if (isSamePerson && widget.isAttachmentLocked) {
+        return _buildBanner(
+          context,
+          icon: Icons.save_outlined,
+          color: AppColors.success,
+          text: context.l10n.patientSavingModified(displayName),
+          onAction: () => context.read<ScanBloc>().add(
                 ScanPatientReverted(sessionId: widget.sessionId),
               ),
-        ),
-      );
-    }
+        );
+      }
 
-    if (widget.isAttachmentLocked) {
+      if (isSamePerson) {
+        return Padding(
+          padding: const EdgeInsets.only(top: Insets.small),
+          child: PatientModifiedBanner(
+            patientName: displayName,
+            onRevert: () => context.read<ScanBloc>().add(
+                  ScanPatientReverted(sessionId: widget.sessionId),
+                ),
+          ),
+        );
+      }
+
       return _buildBanner(
         context,
-        icon: Icons.check_circle,
-        color: AppColors.success,
-        text: context.l10n.patientMatchFound(displayName),
+        leadingIcon: Assets.icons.information.svg(
+          width: 16,
+          height: 16,
+          colorFilter: ColorFilter.mode(
+            context.colorScheme.secondary,
+            BlendMode.srcIn,
+          ),
+        ),
+        color: context.colorScheme.secondary,
+        text: context.l10n.patientChangedTo(displayName),
+        onAction: () => _swapPatient(context, patient, ImportMode.createNew),
+        actionIcon: Icons.swap_horiz,
       );
     }
 
@@ -630,49 +677,54 @@ class _ResourcesFormState extends State<ResourcesForm> {
 
   Widget _buildBanner(
     BuildContext context, {
-    required IconData icon,
+    IconData? icon,
+    Widget? leadingIcon,
     required Color color,
     required String text,
-    VoidCallback? onRevert,
+    VoidCallback? onAction,
+    IconData? actionIcon,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(top: Insets.small),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.only(
-          left: Insets.smallNormal,
-          top: Insets.extraSmall,
-          bottom: Insets.extraSmall,
-          right: onRevert != null ? Insets.extraSmall : Insets.smallNormal,
-        ),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: Insets.small),
-            Expanded(
-              child: Text(
-                text,
-                style: AppTextStyle.labelSmall.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w500,
-                ),
+    final trailingIcon = actionIcon ?? Icons.close;
+    final leading = leadingIcon ?? Icon(icon, size: 16, color: color);
+    final banner = Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        left: Insets.smallNormal,
+        top: Insets.extraSmall,
+        bottom: Insets.extraSmall,
+        right: onAction != null ? Insets.extraSmall : Insets.smallNormal,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          leading,
+          const SizedBox(width: Insets.small),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyle.labelSmall.copyWith(
+                color: color,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            if (onRevert != null)
-              GestureDetector(
-                onTap: onRevert,
-                child: Padding(
-                  padding: const EdgeInsets.all(Insets.extraSmall),
-                  child: Icon(Icons.close, size: 14, color: color),
-                ),
-              ),
-          ],
-        ),
+          ),
+          if (onAction != null)
+            Padding(
+              padding: const EdgeInsets.all(Insets.extraSmall),
+              child: Icon(trailingIcon, size: 14, color: color),
+            ),
+        ],
       ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: Insets.small),
+      child: onAction != null
+          ? GestureDetector(onTap: onAction, child: banner)
+          : banner,
     );
   }
 }

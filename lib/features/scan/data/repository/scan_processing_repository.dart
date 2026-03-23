@@ -250,8 +250,8 @@ Use DiagnosticReport ONLY for standalone lab test results (blood tests, urine te
 
 Rules:
 - encounterType = the document HEADING at the top (e.g. "Bilet de iesire din spital", "Foaie de observatie", "Scrisoare medicala", "Consult cardiologie"). NOT the diagnosis. NOT "Admission" or "Visit".
-- "Diagnostic externare" is a SECTION inside a discharge letter, not the document type. The document is still an Encounter.
-- periodStart/issuedDate = the visit or document date, NOT birth date.
+- "Diagnostic externare", "Diagnostic", "Epicriza" are SECTIONS inside a discharge letter, not the document type. Use "Bilet de iesire din spital" instead.
+- periodStart/issuedDate MUST be full date with year: YYYY-MM-DD (e.g. 2025-09-02). Never omit the year.
 - Empty string for missing fields.''';
 
     ScanLogBuffer.instance.log('[$_ts][ScanAI] running container-only inference, prompt ${prompt.length} chars...');
