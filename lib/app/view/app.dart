@@ -61,23 +61,27 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   Future<void> _startSymmetricDiscovery() async {
     if (getIt<AppPlatform>().isDesktop) return;
 
-    final userRepository = getIt<UserRepository>();
-    final user = await userRepository.getCurrentUser();
-    if (!user.isReceiveModeEnabled) {
-      debugPrint('[App] Receive mode disabled, skipping discovery');
-      return;
-    }
+    try {
+      final userRepository = getIt<UserRepository>();
+      final user = await userRepository.getCurrentUser();
+      if (!user.isReceiveModeEnabled) {
+        debugPrint('[App] Receive mode disabled, skipping discovery');
+        return;
+      }
 
-    final hasPermissions =
-        await SharePermissionsHelper.hasRequiredPermissions();
-    if (!hasPermissions) {
-      debugPrint('[App] Share permissions not granted, skipping discovery');
-      return;
-    }
+      final hasPermissions =
+          await SharePermissionsHelper.hasRequiredPermissions();
+      if (!hasPermissions) {
+        debugPrint('[App] Share permissions not granted, skipping discovery');
+        return;
+      }
 
-    final manager = getIt<ReceiveModeService>();
-    if (!manager.isListening) {
-      await manager.startListening();
+      final manager = getIt<ReceiveModeService>();
+      if (!manager.isListening) {
+        await manager.startListening();
+      }
+    } catch (e) {
+      debugPrint('[App] Discovery skipped: $e');
     }
   }
 

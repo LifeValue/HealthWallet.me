@@ -216,17 +216,28 @@ class TcpService {
       _clientSocket = await Socket.connect(ip, port,
           timeout: const Duration(seconds: 5));
       _setupClientSocket(_clientSocket!);
-      _updateState(ConnectionState.connected);
-      debugPrint('[TCP] Connected to $ip:$port');
+
+      final ackCompleter = Completer<void>();
+      late StreamSubscription<TcpMessage> sub;
+      sub = messages.listen((msg) {
+        if (msg.type == MessageType.ack && !ackCompleter.isCompleted) {
+          ackCompleter.complete();
+          sub.cancel();
+        }
+      });
 
       await sendMessage(TcpMessage.fromString(
         type: MessageType.hello,
         data: jsonEncode({'pairing_key_hash': _hashKey(pairingKey)}),
       ));
-      debugPrint('[TCP] HELLO sent');
 
+      await ackCompleter.future.timeout(const Duration(seconds: 5));
+      _updateState(ConnectionState.connected);
       _startPingTimer();
+      debugPrint('[TCP] Connected to $ip:$port');
     } catch (e) {
+      _clientSocket?.destroy();
+      _clientSocket = null;
       _updateState(ConnectionState.disconnected);
       debugPrint('[TCP] Connection failed: $e');
       rethrow;
