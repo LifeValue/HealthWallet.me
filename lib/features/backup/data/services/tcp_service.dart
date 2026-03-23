@@ -196,12 +196,26 @@ class TcpService {
       type: InternetAddressType.IPv4,
       includeLoopback: false,
     );
+
+    // Skip virtual adapters (Hyper-V, WSL, Docker, VirtualBox)
+    const virtualPrefixes = ['vEthernet', 'VMware', 'VirtualBox', 'docker', 'WSL'];
+
+    // Prefer real network interfaces (WiFi, Ethernet) with a default gateway
+    String? fallback;
     for (final interface_ in interfaces) {
+      final isVirtual = virtualPrefixes.any(
+        (p) => interface_.name.toLowerCase().contains(p.toLowerCase()),
+      );
       for (final address in interface_.addresses) {
-        if (!address.isLoopback) return address.address;
+        if (address.isLoopback) continue;
+        if (isVirtual) {
+          fallback ??= address.address;
+          continue;
+        }
+        return address.address;
       }
     }
-    return '127.0.0.1';
+    return fallback ?? '127.0.0.1';
   }
 
   Future<void> connectToServer({
