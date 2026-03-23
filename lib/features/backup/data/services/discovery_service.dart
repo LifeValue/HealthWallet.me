@@ -46,12 +46,26 @@ class DiscoveryService {
     final pairing = _pairingStorage.loadPairing();
     if (pairing == null) return null;
 
-    debugPrint('[Discovery] Using saved IP ${pairing.lastIp}:${pairing.lastPort}');
-    return DiscoveryResult(
-      ip: pairing.lastIp,
-      port: pairing.lastPort,
-      method: 'saved-ip',
-    );
+    debugPrint('[Discovery] Trying saved IP ${pairing.lastIp}:${pairing.lastPort}');
+
+    try {
+      final socket = await Socket.connect(
+        pairing.lastIp,
+        pairing.lastPort,
+        timeout: const Duration(seconds: 2),
+      );
+      socket.destroy();
+
+      debugPrint('[Discovery] Saved IP reachable');
+      return DiscoveryResult(
+        ip: pairing.lastIp,
+        port: pairing.lastPort,
+        method: 'saved-ip',
+      );
+    } catch (_) {
+      debugPrint('[Discovery] Saved IP unreachable, trying network discovery');
+      return null;
+    }
   }
 
   Future<DiscoveryResult?> _tryNetworkDiscovery() async {
