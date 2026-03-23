@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -95,16 +96,28 @@ class TcpService {
       _socket = await Socket.connect(ip, port,
           timeout: const Duration(seconds: 5));
       _setupSocket(_socket!);
-      _updateState(ConnectionState.connected);
+
+      final ackCompleter = Completer<void>();
+      late StreamSubscription<TcpMessage> sub;
+      sub = messages.listen((msg) {
+        if (msg.type == MessageType.ack && !ackCompleter.isCompleted) {
+          ackCompleter.complete();
+          sub.cancel();
+        }
+      });
 
       await sendMessage(TcpMessage.fromString(
         type: MessageType.hello,
         data: jsonEncode({'pairing_key_hash': _hashKey(pairingKey)}),
       ));
 
+      await ackCompleter.future.timeout(const Duration(seconds: 5));
+      _updateState(ConnectionState.connected);
       _startPingTimer();
       debugPrint('[TCP] Connected to $ip:$port');
     } catch (e) {
+      _socket?.destroy();
+      _socket = null;
       _updateState(ConnectionState.disconnected);
       debugPrint('[TCP] Connection failed: $e');
       rethrow;
@@ -241,9 +254,9 @@ class TcpService {
     final plaintext = Uint8List(cipher.getOutputSize(ciphertext.length));
     final len =
         cipher.processBytes(ciphertext, 0, ciphertext.length, plaintext, 0);
-    cipher.doFinal(plaintext, len);
+    final finalLen = cipher.doFinal(plaintext, len);
 
-    return plaintext.sublist(0, len + cipher.doFinal(plaintext, len));
+    return plaintext.sublist(0, len + finalLen);
   }
 
   Uint8List _deriveKey(String pairingKey) {
@@ -256,9 +269,12 @@ class TcpService {
 
   Uint8List _generateNonce() {
     final random = SecureRandom('Fortuna');
-    random.seed(KeyParameter(Uint8List.fromList(
-      List.generate(32, (_) => DateTime.now().microsecondsSinceEpoch % 256),
-    )));
+    final seed = Uint8List(32);
+    final dartRandom = Random.secure();
+    for (var i = 0; i < 32; i++) {
+      seed[i] = dartRandom.nextInt(256);
+    }
+    random.seed(KeyParameter(seed));
     return random.nextBytes(12);
   }
 
