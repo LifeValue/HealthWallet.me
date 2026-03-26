@@ -5,6 +5,7 @@
 import FlutterMacOS
 import Foundation
 
+import airdrop
 import app_links
 import battery_plus
 import bonsoir_darwin
@@ -25,6 +26,7 @@ import sqlite3_flutter_libs
 import url_launcher_macos
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+  AirdropPlugin.register(with: registry.registrar(forPlugin: "AirdropPlugin"))
   AppLinksMacosPlugin.register(with: registry.registrar(forPlugin: "AppLinksMacosPlugin"))
   BatteryPlusMacosPlugin.register(with: registry.registrar(forPlugin: "BatteryPlusMacosPlugin"))
   SwiftBonsoirPlugin.register(with: registry.registrar(forPlugin: "SwiftBonsoirPlugin"))

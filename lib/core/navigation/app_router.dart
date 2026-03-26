@@ -1,12 +1,12 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/features/dashboard/presentation/dashboard_page.dart';
-import 'package:health_wallet/features/scan/presentation/pages/processing/processing_page.dart';
-import 'package:health_wallet/features/scan/presentation/pages/focus_mode/focus_mode_page.dart';
-import 'package:health_wallet/features/scan/presentation/pages/import_page.dart';
-import 'package:health_wallet/features/scan/presentation/pages/load_model/load_model_page.dart';
-import 'package:health_wallet/features/scan/presentation/pages/scan_page.dart';
-import 'package:health_wallet/features/sync/desktop/communication/presentation/pages/backup_page.dart';
+import 'package:health_wallet/features/processing/presentation/pages/processing/processing_page.dart';
+import 'package:health_wallet/features/capture/scan/presentation/pages/focus_mode/focus_mode_page.dart';
+import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/load_model_page.dart';
+import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/pages/sync_desktop_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
 
 import 'package:health_wallet/features/onboarding/presentation/pages/onboarding_page.dart';
@@ -38,7 +38,7 @@ class AppRouter extends _$AppRouter {
             AutoRoute(page: RecordsRoute.page),
             AutoRoute(page: ScanRoute.page),
             AutoRoute(page: ImportRoute.page),
-            AutoRoute(page: BackupRoute.page),
+            AutoRoute(page: SyncDesktopRoute.page),
           ],
         ),
         AutoRoute(page: RecordDetailsRoute.page),

@@ -12,11 +12,9 @@ packages:
   airdrop:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: fec492cb10881eb000345e759182d9e3e422ec86
-      url: "ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git"
-    source: git
+      path: "../packages/airdrop"
+      relative: true
+    source: path
     version: "1.0.0"
   analyzer:
     dependency: transitive
@@ -1027,10 +1025,10 @@ packages:
     dependency: "direct main"
     description:
       name: llamadart
-      sha256: e2bdcb4947ae54aaa0c53d63d5b26c8b44721c53a8a5142ee4d920bc82d0c7a4
+      sha256: "1fa139d41173d64123e3bfea7b32768a5667c88bfab39b49046b074bb52c92a3"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.7"
+    version: "0.6.8"
   local_auth:
     dependency: "direct main"
     description:

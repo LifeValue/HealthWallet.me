@@ -1,4 +1,6 @@
 PODS:
+  - airdrop (0.0.1):
+    - FlutterMacOS
   - app_links (6.4.1):
     - FlutterMacOS
   - battery_plus (0.0.1):
@@ -66,6 +68,7 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - airdrop (from `Flutter/ephemeral/.symlinks/plugins/airdrop/macos`)
   - app_links (from `Flutter/ephemeral/.symlinks/plugins/app_links/macos`)
   - battery_plus (from `Flutter/ephemeral/.symlinks/plugins/battery_plus/macos`)
   - bonsoir_darwin (from `Flutter/ephemeral/.symlinks/plugins/bonsoir_darwin/darwin`)
@@ -91,6 +94,8 @@ SPEC REPOS:
     - sqlite3
 
 EXTERNAL SOURCES:
+  airdrop:
+    :path: Flutter/ephemeral/.symlinks/plugins/airdrop/macos
   app_links:
     :path: Flutter/ephemeral/.symlinks/plugins/app_links/macos
   battery_plus:
@@ -131,6 +136,7 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos
 
 SPEC CHECKSUMS:
+  airdrop: 2b61cb067433574a152ba15bd0c3061ac1cf7651
   app_links: c3185399a5cabc2e610ee5ad52fb7269b84ff869
   battery_plus: 906cd081df7f2274f5235581515b59a628dcaec7
   bonsoir_darwin: e3b8526c42ca46a885142df84229131dfabea842
@@ -152,6 +158,6 @@ SPEC CHECKSUMS:
   sqlite3_flutter_libs: c7b32a4d17d2cbad19895873ccc815f276b1f125
   url_launcher_macos: c82c93949963e55b228a30115bd219499a6fe404
 
-PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
+PODFILE CHECKSUM: 1e95c36afbfd1cb6423ceca4de7a8e1b256fb6ac
 
 COCOAPODS: 1.16.2

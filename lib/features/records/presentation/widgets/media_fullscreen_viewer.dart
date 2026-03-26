@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
-import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';

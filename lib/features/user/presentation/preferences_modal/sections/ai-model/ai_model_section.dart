@@ -11,10 +11,10 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_settings/ai_settings_dialog.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/model_management_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

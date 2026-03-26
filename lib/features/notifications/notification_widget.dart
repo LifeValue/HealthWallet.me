@@ -12,7 +12,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class NotificationWidget extends StatefulWidget {

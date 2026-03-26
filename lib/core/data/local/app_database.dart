@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:health_wallet/core/data/local/app_database.steps.dart';
 import 'package:health_wallet/features/records/data/data_source/tables/record_notes.dart';
-import 'package:health_wallet/features/scan/data/data_source/local/tables/processing_sessions.dart';
+import 'package:health_wallet/features/processing/data/data_source/local/tables/processing_sessions.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/fhir_resource_table.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/source_table.dart';
 import 'package:path/path.dart' as p;

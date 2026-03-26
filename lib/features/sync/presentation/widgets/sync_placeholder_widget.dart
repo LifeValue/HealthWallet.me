@@ -21,7 +21,7 @@ import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/import_actions.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/import_actions.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/form_fields.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

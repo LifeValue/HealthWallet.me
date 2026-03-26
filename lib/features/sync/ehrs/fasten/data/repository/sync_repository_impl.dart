@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/remote/sync_remote_data_source.dart';
 import 'package:health_wallet/features/sync/ehrs/fasten/data/remote/source_remote_data_source.dart';

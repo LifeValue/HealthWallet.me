@@ -10,7 +10,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
