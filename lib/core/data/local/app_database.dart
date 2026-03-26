@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -70,6 +70,10 @@ class AppDatabase extends _$AppDatabase {
           if (from <= 8 && to >= 9) {
             await _migrateWalletSourceToPerPatient();
           }
+
+          if (from <= 9 && to >= 10) {
+            await _migrateToV10();
+          }
         },
       );
 
@@ -104,20 +108,41 @@ class AppDatabase extends _$AppDatabase {
     await customStatement("DELETE FROM sources WHERE id = 'wallet'");
   }
 
-  /// Create performance optimization indexes
+  Future<void> _migrateToV10() async {
+    await customStatement(
+        'ALTER TABLE fhir_resource ADD COLUMN updated_at INTEGER');
+    await customStatement(
+        'ALTER TABLE fhir_resource ADD COLUMN deleted_at INTEGER');
+    await customStatement(
+        'ALTER TABLE fhir_resource ADD COLUMN device_id TEXT');
+
+    await customStatement(
+        'ALTER TABLE sources ADD COLUMN deleted_at INTEGER');
+
+    await customStatement(
+        'ALTER TABLE processing_sessions ADD COLUMN updated_at INTEGER');
+    await customStatement(
+        'ALTER TABLE processing_sessions ADD COLUMN deleted_at INTEGER');
+    await customStatement(
+        'ALTER TABLE processing_sessions ADD COLUMN device_id TEXT');
+
+    await customStatement(
+        'ALTER TABLE record_notes ADD COLUMN updated_at INTEGER');
+    await customStatement(
+        'ALTER TABLE record_notes ADD COLUMN deleted_at INTEGER');
+  }
+
+
   Future<void> _createOptimizationIndexes() async {
-    await customStatement(
-        'PRAGMA journal_mode=WAL'); // Enable WAL mode for better performance
-    await customStatement('PRAGMA synchronous=NORMAL'); // Optimize sync mode
-    await customStatement('PRAGMA cache_size=10000'); // Increase cache size
-    await customStatement(
-        'PRAGMA temp_store=MEMORY'); // Use memory for temp storage
+    await customStatement('PRAGMA journal_mode=WAL');
+    await customStatement('PRAGMA synchronous=NORMAL');
+    await customStatement('PRAGMA cache_size=10000');
+    await customStatement('PRAGMA temp_store=MEMORY');
   }
 
   Stream<List<Source>> watchSources() => select(sources).watch();
   Future<void> addSource(SourcesCompanion entry) => into(sources).insert(entry);
 
-  /// Optimized method to get encounter with references using indexed queries
   Future<List<FhirResourceLocalDto>> getEncounterWithReferences(
       String encounterId) {
     return customSelect(
@@ -136,7 +161,6 @@ class AppDatabase extends _$AppDatabase {
     ).map((row) => fhirResource.map(row.data)).get();
   }
 
-  /// Get paginated resources by type with proper database-level pagination
   Future<List<FhirResourceLocalDto>> getPaginatedResourcesByType(
     String resourceType, {
     int offset = 0,
@@ -162,7 +186,6 @@ class AppDatabase extends _$AppDatabase {
     ).map((row) => fhirResource.map(row.data)).get();
   }
 
-  /// Get resource count by type efficiently
   Future<int> getResourceCountByType(String resourceType) async {
     final result = await customSelect(
       'SELECT COUNT(*) as count FROM fhir_resource WHERE resource_type = ?',
@@ -173,7 +196,6 @@ class AppDatabase extends _$AppDatabase {
     return result.data['count'] as int;
   }
 
-  /// Get all available resource types efficiently
   Future<List<String>> getAvailableResourceTypes() async {
     final results = await customSelect(
       'SELECT DISTINCT resource_type FROM fhir_resource ORDER BY resource_type',
@@ -189,7 +211,6 @@ LazyDatabase _openConnection() {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
     return NativeDatabase(file, setup: (database) {
-      // Enable foreign key constraints and other optimizations
       database.execute('PRAGMA foreign_keys = ON');
       database.execute('PRAGMA journal_mode = WAL');
       database.execute('PRAGMA synchronous = NORMAL');
