@@ -2,6 +2,9 @@ targets:
   $default:
     builders:
       drift_dev:
+        generate_for:
+          exclude:
+            - lib/features/backup/data/services/transport/**
         options:
           databases:
             my_database: lib/core/data/local/app_database.dart
