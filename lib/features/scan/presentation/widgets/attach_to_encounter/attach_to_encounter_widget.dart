@@ -16,11 +16,13 @@ class AttachToEncounterWidget extends StatelessWidget {
   const AttachToEncounterWidget({
     this.patient,
     this.encounter,
+    this.confirmText,
     super.key,
   });
 
   final StagedPatient? patient;
   final StagedEncounter? encounter;
+  final String? confirmText;
 
   @override
   Widget build(BuildContext context) {
@@ -30,13 +32,14 @@ class AttachToEncounterWidget extends StatelessWidget {
           patient: patient ?? const StagedPatient(),
           encounter: encounter ?? const StagedEncounter(),
         )),
-      child: const _AttachToEncounterView(),
+      child: _AttachToEncounterView(confirmText: confirmText),
     );
   }
 }
 
 class _AttachToEncounterView extends StatefulWidget {
-  const _AttachToEncounterView();
+  final String? confirmText;
+  const _AttachToEncounterView({this.confirmText});
 
   @override
   State<_AttachToEncounterView> createState() => _AttachToEncounterViewState();
@@ -112,17 +115,17 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                 Container(height: 1, color: borderColor),
 
                 // Content
-                const Expanded(
+                Expanded(
                   child: Padding(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        PatientSelector(
+                        const PatientSelector(
                           title: 'Current Patient & Source',
                         ),
-                        SizedBox(height: 24),
-                        Expanded(child: EncounterSelector()),
+                        const SizedBox(height: 24),
+                        const Expanded(child: EncounterSelector()),
                       ],
                     ),
                   ),
@@ -174,7 +177,7 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                             ),
                           ),
                           child:
-                              Text('Attach', style: AppTextStyle.buttonSmall),
+                              Text(widget.confirmText ?? context.l10n.save, style: AppTextStyle.buttonSmall),
                         ),
                       ),
                     ],

@@ -1,0 +1,137 @@
+name: Shorebird Patch
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platform to patch"
+        required: true
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+        default: both
+
+concurrency:
+  group: shorebird-patch
+  cancel-in-progress: false
+
+jobs:
+  patch-android:
+    if: inputs.platform == 'android' || inputs.platform == 'both'
+    name: Patch Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - run: ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.7"
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Restore Apple Wallet certificates
+        run: |
+          mkdir -p assets/certs
+          echo "${{ secrets.APPLE_PASS_CERTIFICATE_BASE64 }}" | base64 --decode > assets/certs/pass_certificate.pem
+          echo "${{ secrets.APPLE_PASS_PRIVATE_KEY_BASE64 }}" | base64 --decode > assets/certs/private_key.pem
+
+      - name: Restore Google Wallet service account
+        run: |
+          mkdir -p assets/certs/android
+          echo "${{ secrets.GOOGLE_WALLET_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > assets/certs/android/service-account.json
+
+      - name: Decode keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Write key.properties
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Reduce Gradle heap for CI
+        run: sed -i 's/-Xmx8G/-Xmx4G/' android/gradle.properties
+
+      - uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+
+      - name: Patch Android
+        run: shorebird patch --platforms android --release-version=latest --allow-asset-diffs
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+
+      - name: Cleanup sensitive files
+        if: always()
+        run: |
+          rm -f android/app/upload-keystore.jks
+          rm -f android/key.properties
+          rm -f assets/certs/android/service-account.json
+
+  patch-ios:
+    if: inputs.platform == 'ios' || inputs.platform == 'both'
+    name: Patch iOS
+    runs-on: [self-hosted, macOS]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - run: |
+          ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.7"
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Restore Apple Wallet certificates
+        run: |
+          mkdir -p assets/certs
+          echo "${{ secrets.APPLE_PASS_CERTIFICATE_BASE64 }}" | base64 --decode > assets/certs/pass_certificate.pem
+          echo "${{ secrets.APPLE_PASS_PRIVATE_KEY_BASE64 }}" | base64 --decode > assets/certs/private_key.pem
+
+      - uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+
+      - name: Patch iOS
+        run: shorebird patch --platforms ios --release-version=latest --no-codesign --allow-asset-diffs
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}

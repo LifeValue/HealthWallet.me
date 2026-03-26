@@ -7,6 +7,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -20,6 +21,7 @@ import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encou
 import 'package:health_wallet/features/scan/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/summary_card.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @RoutePage()
@@ -88,6 +90,24 @@ class _ProcessingPageState extends State<ProcessingPage> {
     if (activeSession.patient.hasSelection &&
         (activeSession.encounter.hasSelection ||
             activeSession.isDiagnosticReportContainer)) {
+      final isPatientModified = activeSession.patient.draft != null &&
+          activeSession.patient.existing != null;
+
+      if (isPatientModified) {
+        final confirmed = await AppSimpleDialog.showDestructiveConfirmation(
+          context: context,
+          title: context.l10n.patient,
+          message: context.l10n.patientModifiedUpdating(
+              activeSession.patient.existing!.displayTitle),
+          warningText: context.l10n.actionCannotBeUndone,
+          confirmText: context.l10n.save,
+          cancelText: context.l10n.cancel,
+          confirmButtonColor: context.colorScheme.primary,
+          onConfirm: () {},
+        );
+        if (confirmed != true || !mounted) return;
+      }
+
       context
           .read<ScanBloc>()
           .add(ScanResourceCreationInitiated(sessionId: widget.sessionId));
@@ -96,9 +116,11 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
     final result = await showDialog<AttachToEncounterResult>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AttachToEncounterWidget(
         patient: activeSession.patient,
         encounter: activeSession.encounter,
+        confirmText: context.l10n.attachToEncounter,
       ),
     );
 
@@ -158,16 +180,34 @@ class _ProcessingPageState extends State<ProcessingPage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ScanBloc, ScanState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         final displayedSession =
             state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
         if (displayedSession == null) return;
 
         if (state.status == const ScanStatus.success()) {
-          context
-              .read<ScanBloc>()
-              .add(ScanSessionCleared(session: displayedSession));
-          context.router.replaceAll([const DashboardRoute()]);
+          final sessionToClear = displayedSession;
+          final scanBloc = context.read<ScanBloc>();
+          final navController = getIt<PageViewNavigationController>();
+          final router = context.router;
+          final dialogResult = await AppSimpleDialog.showConfirmation(
+            context: context,
+            title: context.l10n.recordsSavedTitle,
+            subtitle: context.l10n.whatNextQuestion,
+            confirmText: context.l10n.continueScanning,
+            cancelText: context.l10n.goToRecords,
+            barrierDismissible: true,
+            onConfirm: () {
+              scanBloc.add(ScanSessionCleared(session: sessionToClear));
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+            onCancel: () {
+              navController.jumpToPage(1);
+              scanBloc.add(ScanSessionCleared(session: sessionToClear));
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+          );
+          if (dialogResult == null) {}
         }
       },
       builder: (context, state) {

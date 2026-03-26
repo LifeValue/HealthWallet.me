@@ -354,7 +354,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         family: event.family,
         birthDate: event.birthDate,
         gender: event.gender,
-        mrn: event.mrn,
+        identifierValue: event.identifierValue,
         contactPhone: event.contactPhone,
         availableSources: availableSources,
       );

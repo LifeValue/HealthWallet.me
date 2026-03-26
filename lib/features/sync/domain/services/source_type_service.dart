@@ -46,7 +46,7 @@ class SourceTypeService {
   }
 
   bool canDeleteSource(Source source) {
-    return isSourceWritable(source.platformType) && source.id != 'wallet';
+    return isSourceWritable(source.platformType) && source.id != 'demo_data';
   }
 
   bool canAddDataToSource(Source source) {
@@ -58,25 +58,10 @@ class SourceTypeService {
     String? patientName,
     required List<Source> availableSources,
   }) async {
-    // Check if this is the default wallet holder by ID or identifier value
-    if (_isDefaultWalletHolder(patientId)) {
-      final genericWallet = availableSources
-          .where((s) => s.id == 'wallet' && s.platformType == 'wallet')
-          .firstOrNull;
-
-      if (genericWallet != null) {
-        return genericWallet;
-      }
-
-      await _syncRepository.createWalletSource();
-
-      final updatedSources = await _syncRepository.getSources();
-      return updatedSources.firstWhere((s) => s.id == 'wallet');
-    }
-
+    final walletId = 'wallet-$patientId';
     final existingWallet = availableSources
         .where(
-          (s) => s.platformType == 'wallet' && s.id == 'wallet-$patientId',
+          (s) => s.platformType == 'wallet' && s.id == walletId,
         )
         .firstOrNull;
 
@@ -93,11 +78,6 @@ class SourceTypeService {
     await _syncRepository.cacheSources([walletSource]);
 
     return walletSource;
-  }
-
-  bool _isDefaultWalletHolder(String patientId) {
-    return patientId == 'default_wallet_holder' ||
-        patientId == 'wallet_default_wallet_holder';
   }
 
   Future<Source> getWritableSourceForPatient({

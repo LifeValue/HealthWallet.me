@@ -38,7 +38,7 @@ class PeerSearchStatusView extends StatelessWidget {
     return Column(
       children: [
         _DiscoveryHintHeader(
-          title: 'Searching for nearby devices...',
+          title: context.l10n.shareSearchingForDevices,
         ),
         Divider(
           height: 1,
@@ -80,7 +80,7 @@ class PeerSearchStatusView extends StatelessWidget {
                 ),
                 const SizedBox(height: 48),
                 Text(
-                  'Search for devices...',
+                  context.l10n.shareSearchForDevices,
                   style: AppTextStyle.bodyLarge.copyWith(
                     color: context.colorScheme.onSurface,
                   ),
@@ -98,7 +98,7 @@ class PeerSearchStatusView extends StatelessWidget {
     return Column(
       children: [
         _DiscoveryHintHeader(
-          title: 'No Devices Found',
+          title: context.l10n.shareNoDevicesFound,
         ),
         Divider(
           height: 1,
@@ -121,7 +121,7 @@ class PeerSearchStatusView extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: Insets.normal),
                   child: AppButton(
                     onPressed: onRetry,
-                    label: 'Retry',
+                    label: context.l10n.retry,
                   ),
                 ),
               ],
@@ -147,7 +147,7 @@ class PeerSearchStatusView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Connection Issue',
+                context.l10n.shareConnectionIssue,
                 style: AppTextStyle.titleMedium.copyWith(
                   color: context.colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
@@ -155,7 +155,7 @@ class PeerSearchStatusView extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'WiFi Direct is unresponsive on this device.',
+                context.l10n.shareWifiDirectUnresponsive,
                 style: AppTextStyle.bodyMedium.copyWith(
                   color:
                       context.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -192,7 +192,7 @@ class PeerSearchStatusView extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'WiFi Direct unresponsive. Toggle WiFi off/on, then tap Retry.',
+                            context.l10n.shareWifiToggleHint,
                             style: AppTextStyle.bodySmall.copyWith(
                               color: context.colorScheme.onSurface,
                             ),
@@ -204,7 +204,7 @@ class PeerSearchStatusView extends StatelessWidget {
                   const SizedBox(height: 24),
                   AppButton(
                     onPressed: onRetry,
-                    label: 'Retry',
+                    label: context.l10n.retry,
                   ),
                 ],
               ),
@@ -242,20 +242,11 @@ class _DiscoveryHintHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          RichText(
-            text: TextSpan(
-              style: AppTextStyle.bodyMedium.copyWith(
-                color:
-                    context.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-              children: [
-                const TextSpan(text: 'Make sure the other device has the '),
-                TextSpan(
-                  text: 'HealthWallet.me',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const TextSpan(text: ' opened'),
-              ],
+          Text(
+            context.l10n.shareDiscoveryHint,
+            style: AppTextStyle.bodyMedium.copyWith(
+              color:
+                  context.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: Insets.small),
@@ -280,39 +271,10 @@ class _DiscoveryHintHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      style: AppTextStyle.labelLarge.copyWith(
-                        color: context.colorScheme.onSurface,
-                      ),
-                      children: [
-                        const TextSpan(text: 'The '),
-                        TextSpan(
-                          text: 'receiving device',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: context.colorScheme.onSurface,
-                          ),
-                        ),
-                        const TextSpan(text: ' must have '),
-                        TextSpan(
-                          text: 'Share Proximity',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: context.colorScheme.onSurface,
-                          ),
-                        ),
-                        const TextSpan(text: ' '),
-                        TextSpan(
-                          text: 'ON',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: context.colorScheme.onSurface,
-                          ),
-                        ),
-                        const TextSpan(
-                            text: ' in Preferences to be discoverable.'),
-                      ],
+                  child: Text(
+                    context.l10n.shareProximityHint,
+                    style: AppTextStyle.labelLarge.copyWith(
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                 ),

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -12,7 +14,6 @@ import 'package:health_wallet/features/share_records/domain/services/receive_mod
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/receive_mode_toggle_button.dart';
 import 'package:permission_handler/permission_handler.dart';
-
 
 class ShareProximityRow extends StatefulWidget {
   const ShareProximityRow({super.key});
@@ -26,16 +27,19 @@ class _ShareProximityRowState extends State<ShareProximityRow>
   bool _permissionsGranted = false;
   bool _checking = true;
   bool _waitingForSettings = false;
+  StreamSubscription<bool>? _bluetoothSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkPermissions();
+    _listenBluetoothState();
   }
 
   @override
   void dispose() {
+    _bluetoothSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -46,6 +50,15 @@ class _ShareProximityRowState extends State<ShareProximityRow>
       _waitingForSettings = false;
       _checkPermissions();
     }
+  }
+
+  void _listenBluetoothState() {
+    final service = getIt<BluetoothStateService>();
+    _bluetoothSubscription = service.onStateChanged.listen((isOn) {
+      if (!isOn && mounted) {
+        context.read<UserBloc>().add(const UserReceiveModeToggled(false));
+      }
+    });
   }
 
   Future<void> _checkPermissions() async {
@@ -121,17 +134,38 @@ class _ShareProximityRowState extends State<ShareProximityRow>
     await _checkPermissions();
   }
 
+  Future<void> _toggleReceiveMode(BuildContext context) async {
+    final isEnabled =
+        context.read<UserBloc>().state.user.isReceiveModeEnabled;
+
+    if (!isEnabled) {
+      final service = getIt<BluetoothStateService>();
+      final bluetoothOn = await service.isEnabled();
+      if (!bluetoothOn) {
+        await service.requestEnable();
+        if (!mounted) return;
+        for (int i = 0; i < 20; i++) {
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (!mounted) return;
+          final on = await service.isEnabled();
+          if (on) break;
+        }
+        final nowOn = await service.isEnabled();
+        if (!nowOn) return;
+      }
+    }
+
+    if (!mounted) return;
+    context.read<UserBloc>().add(UserReceiveModeToggled(!isEnabled));
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_checking) return const SizedBox.shrink();
 
     return InkWell(
       onTap: _permissionsGranted
-          ? () {
-              final isEnabled =
-                  context.read<UserBloc>().state.user.isReceiveModeEnabled;
-              context.read<UserBloc>().add(UserReceiveModeToggled(!isEnabled));
-            }
+          ? () => _toggleReceiveMode(context)
           : _requestPermissions,
       borderRadius: BorderRadius.circular(8),
       child: Padding(

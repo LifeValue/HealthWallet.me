@@ -89,14 +89,16 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       maxHeight: 52.0 *
-                          (widget.items.length > 3 ? 3 : widget.items.length),
+                          (widget.items.length > 7 ? 7 : widget.items.length),
                     ),
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      shrinkWrap: true,
-                      children: widget.items
-                          .map((item) => _buildMenuItem(item))
-                          .toList(),
+                    child: _MenuList(
+                      items: widget.items,
+                      selectedValue: widget.value,
+                      getDisplayText: widget.getDisplayText,
+                      onSelected: (item) {
+                        widget.onChanged?.call(item);
+                        _hideMenu();
+                      },
                     ),
                   ),
                 ),
@@ -108,43 +110,6 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
     );
 
     overlay.insert(_overlayEntry!);
-  }
-
-  Widget _buildMenuItem(T item) {
-    final itemText = widget.getDisplayText(item);
-    final isSelected = itemText == widget.value;
-    return InkWell(
-      onTap: widget.onChanged != null
-          ? () {
-              widget.onChanged!(item);
-              _hideMenu();
-            }
-          : null,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.only(
-            left: Insets.small, right: Insets.small, top: Insets.small),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: Insets.smallNormal, vertical: Insets.small),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? context.colorScheme.primary.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            itemText,
-            style: AppTextStyle.labelLarge.copyWith(
-              color: isSelected
-                  ? context.colorScheme.primary
-                  : context.colorScheme.onSurface,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -163,9 +128,9 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           width: double.infinity,
-          height: 36,
+          height: 42,
           padding: const EdgeInsets.symmetric(
-              horizontal: Insets.small, vertical: Insets.small),
+              horizontal: Insets.smallNormal, vertical: Insets.small),
           decoration: BoxDecoration(
             border: Border.all(
               color: _isOpen
@@ -201,3 +166,98 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
   }
 }
 
+class _MenuList<T> extends StatefulWidget {
+  final List<T> items;
+  final String selectedValue;
+  final String Function(T) getDisplayText;
+  final ValueChanged<T> onSelected;
+
+  const _MenuList({
+    required this.items,
+    required this.selectedValue,
+    required this.getDisplayText,
+    required this.onSelected,
+  });
+
+  @override
+  State<_MenuList<T>> createState() => _MenuListState<T>();
+}
+
+class _MenuListState<T> extends State<_MenuList<T>> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToSelected();
+    });
+  }
+
+  void _scrollToSelected() {
+    final index = widget.items.indexWhere(
+      (item) => widget.getDisplayText(item) == widget.selectedValue,
+    );
+    if (index > 0 && _scrollController.hasClients) {
+      final offset = (index * 52.0).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      );
+      _scrollController.jumpTo(offset);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      shrinkWrap: true,
+      itemCount: widget.items.length,
+      itemBuilder: (context, index) {
+        final item = widget.items[index];
+        final itemText = widget.getDisplayText(item);
+        final isSelected = itemText == widget.selectedValue;
+
+        return InkWell(
+          onTap: () => widget.onSelected(item),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: Insets.small,
+              right: Insets.small,
+              top: Insets.small,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Insets.smallNormal,
+                vertical: Insets.small,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? context.colorScheme.primary.withValues(alpha: 0.1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                itemText,
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: isSelected
+                      ? context.colorScheme.primary
+                      : context.colorScheme.onSurface,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

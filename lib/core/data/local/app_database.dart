@@ -22,55 +22,87 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
-          // Create custom indexes after table creation
           await _createOptimizationIndexes();
         },
-        onUpgrade: stepByStep(
-          from1To2: (m, schema) async {
-            await _createOptimizationIndexes();
-            await m.createTable(schema.recordAttachments);
-          },
-          from2To3: (m, schema) async {
-            await m.createTable(schema.recordNotes);
-          },
-          from3To5: (m, schema) async {
-            // Drop the record_attachments table (removed in v5)
-            await m.deleteTable('record_attachments');
-            // Rename 'name' column to 'platform_name' on sources
-            await customStatement(
-                'ALTER TABLE sources RENAME COLUMN name TO platform_name');
-            // Add new columns to sources
-            await m.addColumn(schema.sources, schema.sources.labelSource);
-            await m.addColumn(schema.sources, schema.sources.platformType);
-            await m.addColumn(schema.sources, schema.sources.createdAt);
-            await m.addColumn(schema.sources, schema.sources.updatedAt);
-            // Recreate record_notes to update column constraints
-            // (resource_id FK removed, source_id column added)
-            await m.alterTable(TableMigration(schema.recordNotes));
-            // Create processing_sessions table
-            await m.createTable(schema.processingSessions);
-          },
-          from5To6: (m, schema) async {
-            // No schema changes between v5 and v6
-          },
-          from6To7: (m, schema) async {
-            await m.addColumn(
-                schema.processingSessions, schema.processingSessions.patient);
-            await m.addColumn(
-                schema.processingSessions, schema.processingSessions.encounter);
-          },
-          from7To8: (m, schema) async {
-            await m.addColumn(schema.processingSessions,
-                schema.processingSessions.isDocumentAttached);
-          },
-        ),
+        onUpgrade: (m, from, to) async {
+          final schemaSteps = stepByStep(
+            from1To2: (m, schema) async {
+              await _createOptimizationIndexes();
+              await m.createTable(schema.recordAttachments);
+            },
+            from2To3: (m, schema) async {
+              await m.createTable(schema.recordNotes);
+            },
+            from3To5: (m, schema) async {
+              await m.deleteTable('record_attachments');
+              await customStatement(
+                  'ALTER TABLE sources RENAME COLUMN name TO platform_name');
+              await m.addColumn(schema.sources, schema.sources.labelSource);
+              await m.addColumn(schema.sources, schema.sources.platformType);
+              await m.addColumn(schema.sources, schema.sources.createdAt);
+              await m.addColumn(schema.sources, schema.sources.updatedAt);
+              await m.alterTable(TableMigration(schema.recordNotes));
+              await m.createTable(schema.processingSessions);
+            },
+            from5To6: (m, schema) async {},
+            from6To7: (m, schema) async {
+              await m.addColumn(
+                  schema.processingSessions, schema.processingSessions.patient);
+              await m.addColumn(schema.processingSessions,
+                  schema.processingSessions.encounter);
+            },
+            from7To8: (m, schema) async {
+              await m.addColumn(schema.processingSessions,
+                  schema.processingSessions.isDocumentAttached);
+            },
+          );
+
+          if (from < 8) {
+            await schemaSteps(m, from, to < 8 ? to : 8);
+          }
+
+          if (from <= 8 && to >= 9) {
+            await _migrateWalletSourceToPerPatient();
+          }
+        },
       );
+
+  Future<void> _migrateWalletSourceToPerPatient() async {
+    final walletPatient = await customSelect(
+      "SELECT id FROM fhir_resource WHERE source_id = 'wallet' AND resource_type = 'Patient' LIMIT 1",
+    ).getSingleOrNull();
+
+    if (walletPatient == null) {
+      await customStatement("DELETE FROM sources WHERE id = 'wallet'");
+      return;
+    }
+
+    final patientId = walletPatient.read<String>('id');
+    final newSourceId = 'wallet-$patientId';
+
+    await customStatement(
+      "INSERT OR IGNORE INTO sources (id, platform_name, label_source, platform_type, created_at, updated_at) "
+      "SELECT '$newSourceId', platform_name, "
+      "CASE WHEN label_source = 'Wallet' THEN 'Wallet' ELSE label_source END, "
+      "platform_type, created_at, updated_at FROM sources WHERE id = 'wallet'",
+    );
+
+    await customStatement(
+      "UPDATE fhir_resource SET source_id = '$newSourceId' WHERE source_id = 'wallet'",
+    );
+
+    await customStatement(
+      "UPDATE record_notes SET source_id = '$newSourceId' WHERE source_id = 'wallet'",
+    );
+
+    await customStatement("DELETE FROM sources WHERE id = 'wallet'");
+  }
 
   /// Create performance optimization indexes
   Future<void> _createOptimizationIndexes() async {

@@ -296,7 +296,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   String? _resolveSourceId(String? input) {
     if (input == null || input == 'All') return null;
     if (input == HomeDataHandler.demoSourceId) return HomeDataHandler.demoSourceId;
-    if (input == 'wallet') return 'wallet';
+    if (input.startsWith('wallet-')) return input;
     return input;
   }
 
@@ -329,8 +329,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
         (source) => source.id == event.sourceId,
         orElse: () => throw Exception('Source not found: ${event.sourceId}'),
       );
-      final isWalletSource = deletedSource.platformType == 'wallet' ||
-          deletedSource.id == 'wallet';
+      final isWalletSource = deletedSource.platformType == 'wallet';
 
       await _syncRepository.deleteSource(event.sourceId);
 

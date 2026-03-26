@@ -37,14 +37,14 @@ class PeerInvitationView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Incoming Transfer',
+              context.l10n.shareIncomingTransfer,
               style: AppTextStyle.titleLarge.copyWith(
                 color: context.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              '${state.pendingInvitationDeviceName ?? "A device"} wants to share records with you',
+              context.l10n.shareDeviceWantsToShare(state.pendingInvitationDeviceName ?? context.l10n.shareUnknownDevice),
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
@@ -65,7 +65,7 @@ class PeerInvitationView extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Records will be view-only and automatically deleted when you exit',
+                      context.l10n.shareViewOnlyWarning,
                       style: AppTextStyle.bodySmall.copyWith(
                         color: context.colorScheme.onSurface,
                       ),
@@ -88,7 +88,7 @@ class PeerInvitationView extends StatelessWidget {
                             );
                       }
                     },
-                    child: const Text('Decline'),
+                    child: Text(context.l10n.shareDecline),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -103,7 +103,7 @@ class PeerInvitationView extends StatelessWidget {
                             );
                       }
                     },
-                    child: const Text('Accept'),
+                    child: Text(context.l10n.shareAccept),
                   ),
                 ),
               ],

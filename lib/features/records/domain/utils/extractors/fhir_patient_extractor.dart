@@ -1,3 +1,4 @@
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
@@ -156,9 +157,39 @@ class FhirPatientExtractor {
             return 'MRN';
           case 'SS':
             final displayText = id.type?.text?.toString().toUpperCase() ?? '';
-            if (displayText.contains('CNP')) return 'CNP';
-            if (displayText.contains('NHS')) return 'NHS';
-            return 'SSN';
+            final codingDisplay =
+                coding.first.display?.toString().toUpperCase() ?? '';
+            final combined = '$displayText $codingDisplay';
+            if (combined.contains('CNP') ||
+                combined.contains('COD NUMERIC PERSONAL')) return 'CNP';
+            if (combined.contains('SVNR') ||
+                combined.contains('SOZIALVERSICHERUNGSNUMMER')) return 'SVNr';
+            if (combined.contains('KVNR') ||
+                combined.contains('KRANKENVERSICHERTENNUMMER')) return 'KVNR';
+            if (combined.contains('NHS')) return 'NHS';
+            if (combined.contains('CIP') ||
+                combined.contains('CÓDIGO DE IDENTIFICACIÓN PERSONAL')) return 'CIP';
+            if (combined.contains('NIR') ||
+                combined.contains('SÉCURITÉ SOCIALE')) return 'NIR';
+            if (combined.contains('CODICE FISCALE') ||
+                combined.contains(' CF')) return 'CF';
+            if (combined.contains('BSN') ||
+                combined.contains('BURGERSERVICENUMMER')) return 'BSN';
+            if (combined.contains('PESEL')) return 'PESEL';
+            if (combined.contains('PERSONNUMMER') ||
+                combined.contains('PNR')) return 'PNR';
+            if (combined.contains('AHV') ||
+                combined.contains('HINTERLASSENENVERSICHERUNG')) return 'AHV';
+            final system = id.system?.toString() ?? '';
+            final systemLabel = CountryIdentifier.labelFromSystem(system);
+            if (systemLabel != null) return systemLabel;
+            final profile = CountryIdentifier.forCurrentLocale();
+            if (profile.identifierFhirCode == 'SS') return profile.identifierLabel;
+            return 'ID';
+          case 'NI':
+            final displayText = id.type?.text?.toString().toUpperCase() ?? '';
+            if (displayText.contains('DNI')) return 'DNI';
+            return 'NI';
           case 'NH':
             return 'NHS';
           case 'DL':
@@ -179,9 +210,25 @@ class FhirPatientExtractor {
     return 'ID';
   }
 
-  static String extractPatientMRN(Patient patient) {
+  static String extractPatientIdentifierValue(Patient patient) {
     if (patient.identifier == null || patient.identifier!.isEmpty) {
       return '';
+    }
+
+    final label = extractPatientIdentifierLabel(patient);
+    final targetCode = _labelToFhirCode(label);
+
+    if (targetCode != null) {
+      try {
+        final match = patient.identifier!.firstWhere(
+          (id) =>
+              id.type?.coding?.any(
+                (coding) => coding.code?.toString() == targetCode,
+              ) ??
+              false,
+        );
+        if (match.value != null) return match.value!.toString();
+      } catch (_) {}
     }
 
     try {
@@ -212,6 +259,31 @@ class FhirPatientExtractor {
         .where((id) => id.value != null && id.value!.toString().isNotEmpty)
         .firstOrNull;
     return first?.value?.toString() ?? '';
+  }
+
+  static String? _labelToFhirCode(String label) {
+    switch (label) {
+      case 'MRN':
+        return 'MR';
+      case 'CNP':
+      case 'SSN':
+      case 'KVNR':
+      case 'SVNr':
+      case 'CIP':
+      case 'NIR':
+      case 'CF':
+      case 'BSN':
+      case 'PESEL':
+      case 'PNR':
+      case 'AHV':
+        return 'SS';
+      case 'NHS':
+        return 'NH';
+      case 'DNI':
+        return 'NI';
+      default:
+        return null;
+    }
   }
 
   static String? extractMultipleBirth(dynamic multipleBirthX) {

@@ -1,3 +1,4 @@
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_patient.dart';
@@ -5,8 +6,12 @@ import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapp
 class PatientPostProcessor {
   static String get _ts => DateTime.now().toIso8601String().substring(11, 23);
 
-  static MappingPatient postProcess(MappingPatient patient, String ocrText) {
-    ScanLogBuffer.instance.log('[$_ts][PostProcessor] patient: ${patient.givenName.value} ${patient.familyName.value}, mrn=${patient.patientMRN.value}, label=${patient.identifierLabel}');
+  static MappingPatient postProcess(
+    MappingPatient patient,
+    String ocrText, {
+    String? regionDefaultLabel,
+  }) {
+    ScanLogBuffer.instance.log('[$_ts][PostProcessor] patient: ${patient.givenName.value} ${patient.familyName.value}, mrn=${patient.patientIdentifier.value}, label=${patient.identifierLabel}');
 
     var result = patient;
 
@@ -16,6 +21,14 @@ class PatientPostProcessor {
     result = _validateNames(result);
     result = _recoverNamesFromOcr(result, ocrText);
 
+    final defaultLabel = regionDefaultLabel ??
+        CountryIdentifier.forCurrentLocale().identifierLabel;
+    if (defaultLabel != 'ID' &&
+        (result.identifierLabel == 'ID' || result.identifierLabel == 'MRN') &&
+        result.patientIdentifier.value.isEmpty) {
+      result = result.copyWith(identifierLabel: defaultLabel);
+    }
+
     if (result != patient) {
       ScanLogBuffer.instance.log('[$_ts][PostProcessor] corrected: label=${result.identifierLabel}, dob=${result.dateOfBirth.value}, gender=${result.gender.value}');
     }
@@ -23,12 +36,12 @@ class PatientPostProcessor {
     return result;
   }
 
-  static final _knownLabels = {'CNP', 'MRN', 'SSN', 'NHS', 'Identifier'};
+  static final _knownLabels = {'CNP', 'MRN', 'SSN', 'NHS', 'KVNR', 'SVNr', 'DNI', 'CIP', 'NIR', 'CF', 'BSN', 'PESEL', 'PNR', 'AHV', 'Identifier'};
   static final _numericPattern = RegExp(r'^\d[\d\s\-\.]+$');
 
   static MappingPatient _fixSwappedIdentifierFields(MappingPatient patient) {
     final label = patient.identifierLabel.trim();
-    final mrn = patient.patientMRN.value.trim();
+    final mrn = patient.patientIdentifier.value.trim();
 
     final labelLooksNumeric = _numericPattern.hasMatch(label);
     final mrnLooksLikeLabel = _knownLabels.contains(mrn) ||
@@ -37,7 +50,7 @@ class PatientPostProcessor {
     if (labelLooksNumeric && (mrn.isEmpty || mrnLooksLikeLabel)) {
       ScanLogBuffer.instance.log('[$_ts][PostProcessor] swapped fields: moving "$label" from label to MRN box');
       return patient.copyWith(
-        patientMRN: MappedProperty(value: label, confidenceLevel: patient.patientMRN.confidenceLevel),
+        patientIdentifier: MappedProperty(value: label, confidenceLevel: patient.patientIdentifier.confidenceLevel),
         identifierLabel: mrn.isNotEmpty && _knownLabels.contains(mrn) ? mrn : 'Identifier',
       );
     }
@@ -54,7 +67,7 @@ class PatientPostProcessor {
     MappingPatient patient,
     String ocrText,
   ) {
-    final mrnValue = patient.patientMRN.value.trim();
+    final mrnValue = patient.patientIdentifier.value.trim();
     final isValidCnp = _tryParseCnp(mrnValue) != null;
 
     if (patient.identifierLabel == 'CNP' && !isValidCnp) {
@@ -63,7 +76,7 @@ class PatientPostProcessor {
         final parsed = _tryParseCnp(realCnp)!;
         ScanLogBuffer.instance.log('[$_ts][PostProcessor] CNP recovered from OCR: $realCnp (model had wrong value: $mrnValue)');
         return patient.copyWith(
-          patientMRN: MappedProperty(value: realCnp, confidenceLevel: 0.9),
+          patientIdentifier: MappedProperty(value: realCnp, confidenceLevel: 0.9),
           identifierLabel: 'CNP',
           dateOfBirth: MappedProperty(value: parsed.dob, confidenceLevel: 1.0),
           gender: MappedProperty(value: parsed.gender, confidenceLevel: 1.0),
@@ -79,7 +92,7 @@ class PatientPostProcessor {
         final parsed = _tryParseCnp(realCnp)!;
         ScanLogBuffer.instance.log('[$_ts][PostProcessor] CNP found in OCR: $realCnp (model had: label=${patient.identifierLabel}, mrn=$mrnValue)');
         return patient.copyWith(
-          patientMRN: MappedProperty(value: realCnp, confidenceLevel: 0.9),
+          patientIdentifier: MappedProperty(value: realCnp, confidenceLevel: 0.9),
           identifierLabel: 'CNP',
           dateOfBirth: MappedProperty(value: parsed.dob, confidenceLevel: 1.0),
           gender: MappedProperty(value: parsed.gender, confidenceLevel: 1.0),
@@ -98,7 +111,7 @@ class PatientPostProcessor {
   static MappingPatient _validateCnp(MappingPatient patient, String ocrText) {
     if (patient.identifierLabel != 'CNP') return patient;
 
-    final cnpValue = patient.patientMRN.value.trim();
+    final cnpValue = patient.patientIdentifier.value.trim();
     final parsed = _tryParseCnp(cnpValue);
 
     if (parsed == null) {
@@ -108,7 +121,7 @@ class PatientPostProcessor {
         if (foundParsed != null) {
           ScanLogBuffer.instance.log('[$_ts][PostProcessor] CNP recovered from OCR: $foundCnp');
           return patient.copyWith(
-            patientMRN: MappedProperty(value: foundCnp, confidenceLevel: 0.9),
+            patientIdentifier: MappedProperty(value: foundCnp, confidenceLevel: 0.9),
             dateOfBirth: MappedProperty(
               value: foundParsed.dob,
               confidenceLevel: 1.0,

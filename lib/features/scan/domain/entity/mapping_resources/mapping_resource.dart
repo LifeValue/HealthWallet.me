@@ -93,6 +93,7 @@ abstract class MappingResource {
   static final _slashDateDmy = RegExp(r'^(\d{1,2})/(\d{1,2})/(\d{4})$');
   static final _slashDateYmd = RegExp(r'^(\d{4})/(\d{1,2})/(\d{1,2})$');
   static final _dotDateDmy = RegExp(r'^(\d{1,2})\.(\d{1,2})\.(\d{4})$');
+  static final _dashDateDmy = RegExp(r'^(\d{1,2})-(\d{1,2})-(\d{4})$');
 
   static String normalizeDateValue(String value) {
     if (value.isEmpty) return value;
@@ -131,6 +132,30 @@ abstract class MappingResource {
       final y = int.tryParse(dmyDot.group(3)!);
       if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
         return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
+      }
+    }
+
+    final dmyDash = _dashDateDmy.firstMatch(trimmed);
+    if (dmyDash != null) {
+      final d = int.tryParse(dmyDash.group(1)!);
+      final m = int.tryParse(dmyDash.group(2)!);
+      final y = int.tryParse(dmyDash.group(3)!);
+      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
+      }
+    }
+
+    final partial = RegExp(r'^(\d{1,2})[-/.](\d{1,2})$').firstMatch(trimmed);
+    if (partial != null) {
+      final a = int.tryParse(partial.group(1)!);
+      final b = int.tryParse(partial.group(2)!);
+      if (a != null && b != null) {
+        final month = a <= 12 ? a : b;
+        final day = a <= 12 ? b : a;
+        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          final year = DateTime.now().year;
+          return '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+        }
       }
     }
 

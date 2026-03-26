@@ -179,7 +179,7 @@ mixin ScanProcessingRepository {
   bool _isUsableResult(MappingPatient patient) {
     return patient.familyName.value.isNotEmpty ||
         patient.givenName.value.isNotEmpty ||
-        patient.patientMRN.value.isNotEmpty;
+        patient.patientIdentifier.value.isNotEmpty;
   }
 
   Future<(MappingPatient, MappingResource)> processMapBasicInfo(
@@ -220,6 +220,70 @@ mixin ScanProcessingRepository {
     }
 
     return _visionBasicInfo(imagePaths, ocrText, maxTokens, gpuLayers, threads, contextSize);
+  }
+
+  Future<MappingResource> mapContainerOnly(
+    String ocrText, {
+    int? maxTokens,
+    int? threads,
+    int? contextSize,
+  }) async {
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] === CONTAINER-ONLY EXTRACTION (pre-matched patient) ===');
+
+    final textCtx = (contextSize == null || contextSize < 2048) ? 2048 : contextSize;
+    await networkDataSource.initModel(
+      withVision: false,
+      threads: threads,
+      contextSize: textCtx,
+    );
+
+    final truncated = ocrText.length > 1500 ? ocrText.substring(0, 1500) : ocrText;
+    final prompt = '''What type of medical document is this? Return ONLY a single JSON object.
+Text:
+$truncated
+---
+Most documents are hospital visits. Use Encounter for: discharge letters, admission notes, consultation notes, observation sheets, referrals, prescriptions, any hospital/clinic visit document.
+{"resourceType":"Encounter","encounterType":"<the document heading/title>","periodStart":"YYYY-MM-DD"}
+
+Use DiagnosticReport ONLY for standalone lab test results (blood tests, urine tests, imaging reports):
+{"resourceType":"DiagnosticReport","reportName":"<test name>","conclusion":"","issuedDate":"YYYY-MM-DD"}
+
+Rules:
+- encounterType = the document HEADING at the top (e.g. "Bilet de iesire din spital", "Foaie de observatie", "Scrisoare medicala", "Consult cardiologie"). NOT the diagnosis. NOT "Admission" or "Visit".
+- "Diagnostic externare", "Diagnostic", "Epicriza" are SECTIONS inside a discharge letter, not the document type. Use "Bilet de iesire din spital" instead.
+- periodStart/issuedDate MUST be full date with year: YYYY-MM-DD (e.g. 2025-09-02). Never omit the year.
+- Empty string for missing fields.''';
+
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] running container-only inference, prompt ${prompt.length} chars...');
+
+    final response = await networkDataSource.runTextPrompt(
+      prompt: prompt,
+      maxTokens: maxTokens ?? 256,
+    );
+
+    await disposeModel();
+
+    if (response == null || response.isEmpty) {
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only: empty response');
+      return MappingEncounter.empty();
+    }
+
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only response: ${response.length > 200 ? response.substring(0, 200) : response}');
+
+    try {
+      final cleaned = response.replaceAll(_markdownFenceRegex, '').trim();
+      final json = jsonDecode(cleaned.startsWith('[') ? cleaned : '[$cleaned]') as List;
+      if (json.isEmpty) return MappingEncounter.empty();
+
+      final first = json.first as Map<String, dynamic>;
+      if (first['resourceType'] == 'DiagnosticReport') {
+        return MappingDiagnosticReport.fromJson(first);
+      }
+      return MappingEncounter.fromJson(first);
+    } catch (e) {
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only parse failed: $e');
+      return MappingEncounter.empty();
+    }
   }
 
   Future<(MappingPatient, MappingResource, String)?> _tryTextOnlyBasicInfo(

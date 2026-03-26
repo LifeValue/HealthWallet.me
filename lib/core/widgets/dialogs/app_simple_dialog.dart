@@ -13,15 +13,17 @@ class AppSimpleDialog {
     required BuildContext context,
     required String title,
     String? message,
+    String? subtitle,
     required String confirmText,
     required String cancelText,
     required VoidCallback onConfirm,
     VoidCallback? onCancel,
     Color? confirmColor,
+    bool barrierDismissible = false,
   }) {
     return showDialog<bool>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: barrierDismissible,
       builder: (dialogContext) {
         final textColor = context.isDarkMode
             ? AppColors.textPrimaryDark
@@ -34,10 +36,50 @@ class AppSimpleDialog {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  message ?? title,
-                  style: AppTextStyle.labelLarge.copyWith(color: textColor),
-                ),
+                if (message != null)
+                  Text(
+                    message,
+                    style: AppTextStyle.labelLarge.copyWith(
+                      color: subtitle != null
+                          ? textColor.withValues(alpha: 0.4)
+                          : textColor,
+                    ),
+                  )
+                else if (subtitle != null)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyle.bodyLarge.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.of(dialogContext).pop(),
+                        child: Icon(
+                          Icons.close,
+                          size: 18,
+                          color: textColor.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Text(
+                    title,
+                    style: AppTextStyle.labelLarge.copyWith(color: textColor),
+                  ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: Insets.normal),
+                  Text(
+                    subtitle,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: textColor.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: Insets.normal),
                 _ActionButtons(
                   cancelText: cancelText,

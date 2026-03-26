@@ -12,7 +12,11 @@ import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/dialog_content.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';
 
 class PatientSetupDialog extends StatefulWidget {
   final Patient patient;
@@ -59,16 +63,60 @@ class PatientSetupDialog extends StatefulWidget {
   State<PatientSetupDialog> createState() => _PatientSetupDialogState();
 }
 
-class _PatientSetupDialogState extends State<PatientSetupDialog> {
+class _PatientSetupDialogState extends State<PatientSetupDialog>
+    with IdCardScanMixin {
   DateTime? _selectedBirthDate;
   String _selectedGender = 'Prefer not to say';
   String _selectedBloodType = 'N/A';
+  String _selectedContactPhone = '';
   bool _isLoading = false;
+  bool _isScanning = false;
+  bool _scanCompleted = false;
+  String? _scanMessage;
+  String? _lastScannedImagePath;
   Patient? _currentPatient;
+  late String _selectedCountryCode;
 
   late TextEditingController _givenController;
   late TextEditingController _familyController;
-  late TextEditingController _mrnController;
+  late TextEditingController _identifierController;
+
+  @override
+  TextEditingController get givenController => _givenController;
+  @override
+  TextEditingController get familyController => _familyController;
+  @override
+  TextEditingController get identifierController => _identifierController;
+
+  @override
+  bool get isScanning => _isScanning;
+  @override
+  set isScanning(bool value) => _isScanning = value;
+  @override
+  bool get scanCompleted => _scanCompleted;
+  @override
+  set scanCompleted(bool value) => _scanCompleted = value;
+  @override
+  String? get scanMessage => _scanMessage;
+  @override
+  set scanMessage(String? value) => _scanMessage = value;
+  @override
+  String? get lastScannedImagePath => _lastScannedImagePath;
+  @override
+  set lastScannedImagePath(String? value) => _lastScannedImagePath = value;
+  @override
+  String? get scanCountryCode => _selectedCountryCode;
+
+  @override
+  void onScanResultApplied(IdCardExtractionResult result) {
+    if (result.dateOfBirth != null) {
+      _selectedBirthDate = DateTime.tryParse(result.dateOfBirth!);
+    }
+    if (result.gender != null) {
+      _selectedGender = GenderMapper.mapFhirGenderToDisplay(
+          result.gender!, context.l10n);
+    }
+  }
 
   List<String> _getGenderOptions(AppLocalizations l10n) =>
       [l10n.male, l10n.female, l10n.preferNotToSay];
@@ -83,8 +131,12 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
 
     _givenController = TextEditingController();
     _familyController = TextEditingController();
-    _mrnController = TextEditingController();
+    _identifierController = TextEditingController();
     _selectedBloodType = 'N/A';
+    _selectedCountryCode = WidgetsBinding
+            .instance.platformDispatcher.locale.countryCode
+            ?.toUpperCase() ??
+        'US';
 
     _initializeCurrentPatient();
   }
@@ -120,7 +172,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
   void dispose() {
     _givenController.dispose();
     _familyController.dispose();
-    _mrnController.dispose();
+    _identifierController.dispose();
     super.dispose();
   }
 
@@ -132,7 +184,7 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
     try {
       final currentGivenValue = _givenController.text;
       final currentFamilyValue = _familyController.text;
-      final currentMRNValue = _mrnController.text;
+      final currentIdentifierValue = _identifierController.text;
 
       final givenChanged = currentGivenValue.isNotEmpty;
       final familyChanged = currentFamilyValue.isNotEmpty;
@@ -140,13 +192,13 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
       final birthDateChanged = _selectedBirthDate != null;
       final genderChanged = _selectedGender != context.l10n.preferNotToSay;
       final bloodTypeChanged = _selectedBloodType != 'N/A';
-      final mrnChanged = currentMRNValue.isNotEmpty;
+      final identifierChanged = currentIdentifierValue.isNotEmpty;
 
       if (mounted) {
         final patientFieldsChanged = nameChanged ||
             birthDateChanged ||
             genderChanged ||
-            mrnChanged ||
+            identifierChanged ||
             bloodTypeChanged;
 
         if (patientFieldsChanged) {
@@ -166,7 +218,8 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
                   birthDate: _selectedBirthDate,
                   gender: _selectedGender,
                   bloodType: _selectedBloodType,
-                  mrn: currentMRNValue.isNotEmpty ? currentMRNValue : null,
+                  identifierValue: currentIdentifierValue.isNotEmpty ? currentIdentifierValue : null,
+                  contactPhone: _selectedContactPhone.isNotEmpty ? _selectedContactPhone : null,
                   availableSources: homeState.sources,
                 ),
               );
@@ -224,9 +277,28 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
             patient: _currentPatient!,
             showNameField: true,
             isSetupMode: true,
+            isScanning: _isScanning,
+            scanCompleted: _scanCompleted,
+            scanMessage: _scanMessage,
+            onScanIdCard: () {
+              setState(() => _scanMessage = null);
+              handleScanIdCard();
+            },
+            onPickFromGallery: handlePickFromGallery,
+            onRetryOcr: _scanCompleted ? handleRetryOcr : null,
+            identifierLabel: CountryIdentifier.forCountry(
+              _selectedCountryCode,
+            ).identifierLabel,
+            selectedCountryCode: _selectedCountryCode,
+            onCountryChanged: (code) {
+              setState(() {
+                _selectedCountryCode = code;
+                _selectedContactPhone = '';
+              });
+            },
             selectedGiven: '',
             selectedFamily: '',
-            selectedMRN: '',
+            selectedIdentifier: '',
             selectedBirthDate: _selectedBirthDate,
             selectedGender: _selectedGender,
             selectedBloodType: _selectedBloodType,
@@ -235,10 +307,14 @@ class _PatientSetupDialogState extends State<PatientSetupDialog> {
             iconColor: iconColor,
             onGivenChanged: (String value) {},
             onFamilyChanged: (String value) {},
-            onMRNChanged: (String value) {},
+            onIdentifierChanged: (String value) {},
+            onContactPhoneChanged: (String value) {
+              _selectedContactPhone = value;
+            },
+            selectedContactPhone: _selectedContactPhone,
             givenController: _givenController,
             familyController: _familyController,
-            mrnController: _mrnController,
+            identifierController: _identifierController,
             onBirthDateChanged: (DateTime? date) =>
                 setState(() => _selectedBirthDate = date),
             onGenderChanged: (String value) =>

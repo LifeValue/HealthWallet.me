@@ -342,8 +342,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
             id: notifId,
             type: NotificationType.error,
             text: 'Download Failed',
-            description:
-                serviceState.errorMessage ?? 'An error occurred during download.',
+            description: 'AI model download failed. Please check your connection and try again.',
           ));
         }
         break;

@@ -54,6 +54,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       if (result == false) {
         final result = await showDialog<AttachToEncounterResult>(
           context: context,
+          barrierDismissible: false,
           builder: (context) => const AttachToEncounterWidget(),
         );
 

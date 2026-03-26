@@ -112,7 +112,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                         ),
                         const SizedBox(height: 16),
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 80.0),
+                          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
                           child: ImportActions(
                             onImportDocument: () =>
                                 _handleImportDocument(context),

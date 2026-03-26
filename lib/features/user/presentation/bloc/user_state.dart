@@ -8,6 +8,7 @@ class UserState with _$UserState {
     @Default(false) bool isBiometricAuthEnabled,
     @Default(false) bool shouldShowBiometricsSetup,
     @Default(RegionPreset.europe) RegionPreset regionPreset,
+    String? countryCode,
     Locale? appLocale,
   }) = _UserState;
 }

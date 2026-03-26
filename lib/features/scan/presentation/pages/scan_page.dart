@@ -77,9 +77,7 @@ class _ScanViewState extends State<ScanView>
   }
 
   Future<void> _autoStartScanning() async {
-    if (_hasAutoScanned || _isAttachingDocuments) {
-      return;
-    }
+    if (_hasAutoScanned || _isAttachingDocuments) return;
 
     _hasAutoScanned = true;
 
@@ -223,7 +221,6 @@ class _ScanViewState extends State<ScanView>
                 previous.status != current.status,
             listener: (context, state) {
               if (state.status case SessionCreated(:final session)) {
-                // Check if the session is from scan origin before navigating
                 if (session.origin == ProcessingOrigin.scan) {
                   navigateToFhirMapper(context, session);
                 }
@@ -301,7 +298,7 @@ class _ScanViewState extends State<ScanView>
                   ),
                   const SizedBox(height: 16),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 80.0),
+                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
                     child: AppButton(
                       label: 'Scan Document',
                       icon: Assets.icons.scan.svg(),
@@ -357,6 +354,7 @@ class _ScanViewState extends State<ScanView>
               onPressed: () => _handleDirectScan(context),
             ),
           ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 76),
         ],
       ),
     );

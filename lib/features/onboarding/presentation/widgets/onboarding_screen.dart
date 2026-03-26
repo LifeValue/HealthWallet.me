@@ -89,9 +89,6 @@ class OnboardingScreen extends StatelessWidget {
                           _buildRichSubtitle(context, subtitle),
                           const SizedBox(height: Insets.large),
                           if (content != null) ...[
-                            SizedBox(
-                              height: (availableHeight - 600).clamp(0.0, 200.0),
-                            ),
                             _buildRichDescription(
                                 context, content!, TextAlign.left),
                             if (bottom != null) ...[
