@@ -42,6 +42,10 @@ class DiscoveryService {
     return null;
   }
 
+  Future<DiscoveryResult?> discoverViaNetwork() async {
+    return _tryNetworkDiscovery();
+  }
+
   Future<DiscoveryResult?> _trySavedIp() async {
     final pairing = _pairingStorage.loadPairing();
     if (pairing == null) return null;

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -9,13 +10,14 @@ import 'package:health_wallet/features/sync/desktop/communication/data/models/de
 import 'package:health_wallet/features/sync/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/sync/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/sync/desktop/communication/data/services/tcp_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/transport/communication_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/transport/mpc_transport.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/transport/transport_selector.dart';
 
 part 'backup_event.dart';
 part 'backup_state.dart';
 part 'backup_bloc.freezed.dart';
 
-// Not @injectable -- AppPlatform is registered manually in main.dart/main_desktop.dart
-// BackupBloc is provided manually in desktop DI setup
 class BackupBloc extends Bloc<BackupEvent, BackupState> {
   final AppPlatform _platform;
   final PairingStorageService _pairingStorage;
@@ -23,6 +25,8 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
   final DiscoveryService _discoveryService;
 
   StreamSubscription? _connectionSub;
+  StreamSubscription? _mpcStateSub;
+  MpcTransport? _mpcTransport;
 
   BackupBloc(
     this._platform,
@@ -50,6 +54,19 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
           break;
       }
     });
+
+    if (TransportSelector.isMpcAvailable()) {
+      _mpcTransport = MpcTransport();
+      _mpcStateSub = _mpcTransport!.stateStream.listen((mpcState) {
+        if (mpcState == CommunicationState.connected) {
+          add(const BackupConnected(ip: 'mpc', port: 0));
+        } else if (mpcState == CommunicationState.disconnected) {
+          if (state.connectionTransport == ConnectionTransport.multipeerConnectivity) {
+            add(const BackupDisconnected());
+          }
+        }
+      });
+    }
   }
 
   Future<void> _onInitialised(
@@ -110,6 +127,11 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       port: server.port,
       deviceId: pairing.deviceId,
     );
+
+    if (_mpcTransport != null) {
+      await _mpcTransport!.startServer(port: server.port);
+      debugPrint('[BackupBloc] MPC advertising started alongside TCP');
+    }
   }
 
   Future<void> _onPairingCompleted(
@@ -135,39 +157,75 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       error: null,
     ));
 
-    final result = await _discoveryService.discover();
-    if (result == null) {
+    if (_mpcTransport != null) {
+      debugPrint('[BackupBloc] Step 1: MPC (Apple direct, no network needed)');
+      _mpcTransport!.connect(address: '', port: 0);
+
+      for (var i = 0; i < 10; i++) {
+        await Future.delayed(const Duration(seconds: 1));
+        if (_mpcTransport!.currentState == CommunicationState.connected) {
+          debugPrint('[BackupBloc] MPC connected after ${i + 1}s');
+          return;
+        }
+      }
+      debugPrint('[BackupBloc] MPC not connected after 10s, trying TCP');
+    }
+
+    final pairing = _pairingStorage.loadPairing();
+    if (pairing == null) {
       emit(state.copyWith(
         connectionStatus: BackupConnectionStatus.disconnected,
-        error: 'Desktop not found',
+        error: 'Not paired',
       ));
       return;
     }
 
+    debugPrint('[BackupBloc] Step 2: TCP saved IP ${pairing.lastIp}:${pairing.lastPort}');
     try {
-      final pairing = _pairingStorage.loadPairing();
-      if (pairing == null) return;
-
       await _tcpService.connectToServer(
-        ip: result.ip,
-        port: result.port,
+        ip: pairing.lastIp,
+        port: pairing.lastPort,
         pairingKey: pairing.pairingKey,
       );
-
-      add(BackupConnected(ip: result.ip, port: result.port));
+      add(BackupConnected(ip: pairing.lastIp, port: pairing.lastPort));
+      return;
     } catch (e) {
-      add(BackupConnectionFailed(error: e.toString()));
+      debugPrint('[BackupBloc] Saved IP failed: $e');
     }
+
+    debugPrint('[BackupBloc] Step 3: Network discovery (mDNS + SSDP)');
+    final result = await _discoveryService.discoverViaNetwork();
+    if (result != null) {
+      try {
+        await _tcpService.connectToServer(
+          ip: result.ip,
+          port: result.port,
+          pairingKey: pairing.pairingKey,
+        );
+        add(BackupConnected(ip: result.ip, port: result.port));
+        return;
+      } catch (e) {
+        debugPrint('[BackupBloc] Network discovery connect failed: $e');
+      }
+    }
+
+    debugPrint('[BackupBloc] All connection methods failed');
+    add(const BackupConnectionFailed(error: 'Desktop not found. Try scanning QR again.'));
   }
 
   void _onConnected(
     BackupConnected event,
     Emitter<BackupState> emit,
   ) {
+    final transport = event.ip == 'mpc'
+        ? ConnectionTransport.multipeerConnectivity
+        : ConnectionTransport.tcp;
+
     emit(state.copyWith(
       connectionStatus: BackupConnectionStatus.connected,
-      connectedIp: event.ip,
-      connectedPort: event.port,
+      connectionTransport: transport,
+      connectedIp: event.ip == 'mpc' ? null : event.ip,
+      connectedPort: event.port == 0 ? null : event.port,
       error: null,
     ));
   }
@@ -176,11 +234,22 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     BackupDisconnected event,
     Emitter<BackupState> emit,
   ) {
+    final wasConnected = state.connectionStatus == BackupConnectionStatus.connected;
     emit(state.copyWith(
       connectionStatus: BackupConnectionStatus.disconnected,
+      connectionTransport: ConnectionTransport.unknown,
       connectedIp: null,
       connectedPort: null,
     ));
+
+    if (wasConnected && state.pairedDevice != null) {
+      debugPrint('[BackupBloc] Connection lost, auto-reconnecting in 3s...');
+      Future.delayed(const Duration(seconds: 3), () {
+        if (!isClosed && state.connectionStatus == BackupConnectionStatus.disconnected) {
+          add(const BackupConnectionRequested());
+        }
+      });
+    }
   }
 
   void _onConnectionFailed(
@@ -209,6 +278,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
   @override
   Future<void> close() {
     _connectionSub?.cancel();
+    _mpcStateSub?.cancel();
     return super.close();
   }
 }
