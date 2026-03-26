@@ -417,7 +417,7 @@ class ScanNetworkDataSourceImpl
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
     ScanLogBuffer.instance.log('[$ts][ScanAI] --- INIT MODEL ---');
     ScanLogBuffer.instance.log(
-        '[$ts][ScanAI] model: ${_activeConfig.modelId} (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)');
+        '[$ts][ScanAI] model loaded (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)');
     ScanLogBuffer.instance.log(
         '[$ts][ScanAI] config: ctx=$ctx, gpu_layers=${config.gpuLayers}, threads=${config.threads}, ram=${ramMB}MB, available=${availableMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, required~${requiredMB}MB, platform=${Platform.operatingSystem}');
 

@@ -65,7 +65,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _prefs.remove(_downloadInProgressKey);
       _updateState(_state.copyWith(
         status: AiModelDownloadStatus.cancelled,
-        errorMessage: 'AI Model download was cancelled',
+        errorMessage: 'AI model download was cancelled',
       ));
     }
   }
@@ -138,9 +138,10 @@ class AiModelDownloadService with WidgetsBindingObserver {
         },
         onError: (error) async {
           await _prefs.remove(_downloadInProgressKey);
+          debugPrint('AI model download error: $error');
           _updateState(_state.copyWith(
             status: AiModelDownloadStatus.error,
-            errorMessage: 'Download failed: ${error.toString()}',
+            errorMessage: 'AI model download failed. Please check your connection and try again.',
           ));
         },
         cancelOnError: true,
@@ -148,9 +149,10 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _variantSubscriptions[AiModelVariant.qwen] = sub;
     } catch (e) {
       await _prefs.remove(_downloadInProgressKey);
+      debugPrint('AI model download start error: $e');
       _updateState(_state.copyWith(
         status: AiModelDownloadStatus.error,
-        errorMessage: 'Failed to start download: ${e.toString()}',
+        errorMessage: 'AI model download failed. Please check your connection and try again.',
       ));
     }
   }
@@ -214,26 +216,28 @@ class AiModelDownloadService with WidgetsBindingObserver {
           ));
         },
         onError: (error) async {
+          debugPrint('AI model download error for ${variant.name}: $error');
           _variantSubscriptions.remove(variant);
           if (!isAnyDownloading) {
             await _prefs.remove(_downloadInProgressKey);
           }
           _updateState(AiModelDownloadState(
             status: AiModelDownloadStatus.error,
-            errorMessage: 'Download failed: ${error.toString()}',
+            errorMessage: 'AI model download failed. Please check your connection and try again.',
             variant: variant,
           ));
         },
         cancelOnError: true,
       );
     } catch (e) {
+      debugPrint('AI model download start error for ${variant.name}: $e');
       _variantSubscriptions.remove(variant);
       if (!isAnyDownloading) {
         await _prefs.remove(_downloadInProgressKey);
       }
       _updateState(AiModelDownloadState(
         status: AiModelDownloadStatus.error,
-        errorMessage: 'Failed to start download: ${e.toString()}',
+        errorMessage: 'AI model download failed. Please check your connection and try again.',
         variant: variant,
       ));
     }
@@ -326,22 +330,24 @@ class AiModelDownloadService with WidgetsBindingObserver {
           ));
         },
         onError: (error) {
+          debugPrint('AI model component download error: $error');
           _mmprojSubscription = null;
           _updateState(AiModelDownloadState(
             status: AiModelDownloadStatus.error,
             isMmprojDownload: true,
-            errorMessage: 'Download failed: ${error.toString()}',
+            errorMessage: 'AI model download failed. Please check your connection and try again.',
             variant: variant,
           ));
         },
         cancelOnError: true,
       );
     } catch (e) {
+      debugPrint('AI model component download start error: $e');
       _mmprojSubscription = null;
       _updateState(AiModelDownloadState(
         status: AiModelDownloadStatus.error,
         isMmprojDownload: true,
-        errorMessage: 'Failed to start download: ${e.toString()}',
+        errorMessage: 'AI model download failed. Please check your connection and try again.',
         variant: variant,
       ));
     }

@@ -181,6 +181,7 @@ class RegionDialog extends StatelessWidget {
       'English',
       'Deutsch',
       'Español',
+      'Română',
     ];
 
     final currentDisplay = _localeToDisplayName(context, currentLocale);
@@ -205,6 +206,8 @@ class RegionDialog extends StatelessWidget {
         return 'Deutsch';
       case 'es':
         return 'Español';
+      case 'ro':
+        return 'Română';
       default:
         return context.l10n.systemDefault;
     }
@@ -219,6 +222,8 @@ class RegionDialog extends StatelessWidget {
         return const Locale('de');
       case 'Español':
         return const Locale('es');
+      case 'Română':
+        return const Locale('ro');
       default:
         return null;
     }

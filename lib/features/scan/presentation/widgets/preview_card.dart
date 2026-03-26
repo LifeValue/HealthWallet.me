@@ -281,34 +281,63 @@ class _ImagePageView extends StatelessWidget {
             margin: const EdgeInsets.all(Insets.normal),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                File(imagePaths[index]),
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[200],
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error, size: 40, color: Colors.red),
-                          const SizedBox(height: 8),
-                          const Text('Failed to load image'),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Index: $index',
-                            style: const TextStyle(fontSize: 10),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+              child: _ImageWithRetry(path: imagePaths[index]),
             ),
           );
         },
       ),
     );
+  }
+}
+
+class _ImageWithRetry extends StatefulWidget {
+  final String path;
+  const _ImageWithRetry({required this.path});
+
+  @override
+  State<_ImageWithRetry> createState() => _ImageWithRetryState();
+}
+
+class _ImageWithRetryState extends State<_ImageWithRetry> {
+  int _retryCount = 0;
+  static const _maxRetries = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    final file = File(widget.path);
+
+    return FutureBuilder<bool>(
+      future: file.exists(),
+      builder: (context, snapshot) {
+        if (snapshot.data != true) {
+          _scheduleRetry();
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Image.file(
+          file,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            if (_retryCount < _maxRetries) {
+              _scheduleRetry();
+              return const Center(child: CircularProgressIndicator());
+            }
+            return const Center(
+              child: Icon(Icons.image_not_supported_outlined,
+                  size: 40, color: Colors.grey),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _scheduleRetry() {
+    if (_retryCount >= _maxRetries) return;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() => _retryCount++);
+      }
+    });
   }
 }

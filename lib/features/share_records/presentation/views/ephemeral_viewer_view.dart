@@ -111,7 +111,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView> {
 
     final receivedData = widget.state.receivedData;
     if (receivedData == null) {
-      return const Center(child: Text('No data received'));
+      return Center(child: Text(context.l10n.shareNoDataReceived));
     }
 
     return Column(
@@ -124,7 +124,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView> {
                 records: receivedData.records,
                 initialFilters: _initialFilters,
                 initiallyExpanded: _initialFilters.isNotEmpty,
-                hintText: 'Search records',
+                hintText: context.l10n.shareSearchRecords,
                 onFilterChanged: (filters) {
                   setState(() {
                     _filterTypes
@@ -169,8 +169,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView> {
             const SizedBox(height: 16),
             Text(
               _filterTypes.isNotEmpty || _searchQuery.isNotEmpty
-                  ? 'No records match the filters'
-                  : 'No records available',
+                  ? context.l10n.shareNoRecordsMatchFilters
+                  : context.l10n.shareNoRecordsAvailable,
               style: AppTextStyle.titleMedium.copyWith(
                 color: context.colorScheme.onSurface,
               ),

@@ -144,8 +144,8 @@ class FhirFieldExtractor {
   static String extractPatientIdentifierLabel(Patient patient) =>
       FhirPatientExtractor.extractPatientIdentifierLabel(patient);
 
-  static String extractPatientMRN(Patient patient) =>
-      FhirPatientExtractor.extractPatientMRN(patient);
+  static String extractPatientIdentifierValue(Patient patient) =>
+      FhirPatientExtractor.extractPatientIdentifierValue(patient);
 
   static String? extractMultipleBirth(dynamic multipleBirthX) =>
       FhirPatientExtractor.extractMultipleBirth(multipleBirthX);

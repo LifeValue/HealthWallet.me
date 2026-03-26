@@ -7,6 +7,9 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/utils/blood_observation_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/services/patient_name_builder.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:injectable/injectable.dart';
@@ -16,6 +19,8 @@ import 'package:uuid/uuid.dart';
 class PatientEditService {
   final RecordsRepository _recordsRepository;
   final SourceTypeService _sourceTypeService;
+
+  CountryIdentifier _countryProfile = CountryIdentifier.forCurrentLocale();
 
   PatientEditService(
     this._recordsRepository,
@@ -28,10 +33,16 @@ class PatientEditService {
     String? family,
     DateTime? birthDate,
     String? gender,
-    String? mrn,
+    String? identifierValue,
     String? contactPhone,
     required List<Source> availableSources,
   }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedCountry = prefs.getString(SharedPrefsConstants.countryCode);
+    _countryProfile = savedCountry != null
+        ? CountryIdentifier.forCountry(savedCountry)
+        : CountryIdentifier.forCurrentLocale();
+
     final source = availableSources.firstWhere(
       (s) => s.id == currentPatient.sourceId,
       orElse: () =>
@@ -47,7 +58,7 @@ class PatientEditService {
         family: family,
         birthDate: birthDate,
         gender: gender,
-        mrn: mrn,
+        identifierValue: identifierValue,
         contactPhone: contactPhone,
       );
     } else {
@@ -57,7 +68,7 @@ class PatientEditService {
         family: family,
         birthDate: birthDate,
         gender: gender,
-        mrn: mrn,
+        identifierValue: identifierValue,
         contactPhone: contactPhone,
         availableSources: availableSources,
       );
@@ -70,7 +81,7 @@ class PatientEditService {
     String? family,
     DateTime? birthDate,
     String? gender,
-    String? mrn,
+    String? identifierValue,
     String? contactPhone,
   }) async {
     final fhirPatient = fhir_r4.Patient.fromJson(patient.rawResource);
@@ -82,8 +93,8 @@ class PatientEditService {
     );
 
     List<fhir_r4.Identifier>? updatedIdentifiers;
-    if (mrn != null) {
-      updatedIdentifiers = _updateMRNIdentifier(fhirPatient.identifier, mrn);
+    if (identifierValue != null) {
+      updatedIdentifiers = _updatePrimaryIdentifier(fhirPatient.identifier, identifierValue);
     } else {
       updatedIdentifiers = fhirPatient.identifier;
     }
@@ -138,7 +149,7 @@ class PatientEditService {
     String? family,
     DateTime? birthDate,
     String? gender,
-    String? mrn,
+    String? identifierValue,
     String? contactPhone,
     required List<Source> availableSources,
   }) async {
@@ -165,7 +176,7 @@ class PatientEditService {
         family: family,
         birthDate: birthDate,
         gender: gender,
-        mrn: mrn,
+        identifierValue: identifierValue,
         contactPhone: contactPhone,
       );
     } else {
@@ -176,7 +187,7 @@ class PatientEditService {
         family: family,
         birthDate: birthDate,
         gender: gender,
-        mrn: mrn,
+        identifierValue: identifierValue,
         contactPhone: contactPhone,
       );
     }
@@ -189,7 +200,7 @@ class PatientEditService {
     String? family,
     DateTime? birthDate,
     String? gender,
-    String? mrn,
+    String? identifierValue,
     String? contactPhone,
   }) async {
     final walletResourceId = const Uuid().v4();
@@ -203,8 +214,8 @@ class PatientEditService {
     );
 
     List<fhir_r4.Identifier>? updatedIdentifiers;
-    if (mrn != null) {
-      updatedIdentifiers = _updateMRNIdentifier(fhirPatient.identifier, mrn);
+    if (identifierValue != null) {
+      updatedIdentifiers = _updatePrimaryIdentifier(fhirPatient.identifier, identifierValue);
     } else {
       updatedIdentifiers = fhirPatient.identifier;
     }
@@ -327,77 +338,57 @@ class PatientEditService {
     return false;
   }
 
-  List<fhir_r4.Identifier>? _updateMRNIdentifier(
+  List<fhir_r4.Identifier>? _updatePrimaryIdentifier(
     List<fhir_r4.Identifier>? currentIdentifiers,
-    String? mrn,
+    String? value,
   ) {
-    if ((mrn == null || mrn.isEmpty) && currentIdentifiers == null) {
+    if ((value == null || value.isEmpty) && currentIdentifiers == null) {
       return null;
     }
 
+    final targetCode = _countryProfile.identifierFhirCode;
+
     final identifiers = List<fhir_r4.Identifier>.from(currentIdentifiers ?? []);
 
-    final mrnIndex = identifiers.indexWhere(
+    const knownCodes = {'MR', 'SS', 'NH', 'NI', 'DL', 'PPN'};
+    final primaryIndex = identifiers.indexWhere(
       (id) =>
           id.type?.coding?.any(
-            (coding) => coding.code?.toString() == 'MR',
+            (coding) => knownCodes.contains(coding.code?.toString()),
           ) ??
           false,
     );
 
-    if (mrn != null && mrn.isNotEmpty) {
-      final mrnIdentifier = fhir_r4.Identifier(
+    if (value != null && value.isNotEmpty) {
+      final identifier = fhir_r4.Identifier(
         type: fhir_r4.CodeableConcept(
           coding: [
             fhir_r4.Coding(
               system: fhir_r4.FhirUri(
                 'http://terminology.hl7.org/CodeSystem/v2-0203',
               ),
-              code: fhir_r4.FhirCode('MR'),
-              display: fhir_r4.FhirString('Medical Record Number'),
+              code: fhir_r4.FhirCode(targetCode),
+              display: fhir_r4.FhirString(_countryProfile.identifierDisplayName),
             ),
           ],
-          text: fhir_r4.FhirString('Medical Record Number'),
+          text: fhir_r4.FhirString(_countryProfile.identifierDisplayName),
         ),
-        system: _getMRNSystem(currentIdentifiers),
-        value: fhir_r4.FhirString(mrn),
+        system: fhir_r4.FhirUri(_countryProfile.fhirIdentifierSystem),
+        value: fhir_r4.FhirString(value),
       );
 
-      if (mrnIndex >= 0) {
-        identifiers[mrnIndex] = mrnIdentifier;
+      if (primaryIndex >= 0) {
+        identifiers[primaryIndex] = identifier;
       } else {
-        identifiers.add(mrnIdentifier);
+        identifiers.add(identifier);
       }
     } else {
-      if (mrnIndex >= 0) {
-        identifiers.removeAt(mrnIndex);
+      if (primaryIndex >= 0) {
+        identifiers.removeAt(primaryIndex);
       }
     }
 
     return identifiers.isEmpty ? null : identifiers;
-  }
-
-  fhir_r4.FhirUri _getMRNSystem(List<fhir_r4.Identifier>? identifiers) {
-    if (identifiers != null && identifiers.isNotEmpty) {
-      final existingMRN = identifiers.firstWhere(
-        (id) =>
-            id.type?.coding?.any(
-              (coding) => coding.code?.toString() == 'MR',
-            ) ??
-            false,
-        orElse: () => identifiers.first,
-      );
-
-      if (existingMRN.system != null) {
-        return existingMRN.system!;
-      }
-
-      if (identifiers.first.system != null) {
-        return identifiers.first.system!;
-      }
-    }
-
-    return fhir_r4.FhirUri('http://healthwallet.me/mrn');
   }
 
   bool _hasSameIdentifiers(Patient p1, Patient p2) {
@@ -500,7 +491,7 @@ class PatientEditService {
     required DateTime? newBirthDate,
     required String newGender,
     required String newBloodType,
-    String? newMRN,
+    String? newIdentifierValue,
     required AppLocalizations l10n,
   }) async {
     final currentBirthDate =
@@ -508,15 +499,15 @@ class PatientEditService {
     final currentGender =
         FhirFieldExtractor.extractPatientGender(currentPatient);
     final currentBloodType = await getCurrentBloodType(currentPatient);
-    final currentMRN = FhirFieldExtractor.extractPatientMRN(currentPatient);
+    final currentIdentifier = FhirFieldExtractor.extractPatientIdentifierValue(currentPatient);
 
     final birthDateChanged = currentBirthDate != newBirthDate;
     final genderChanged =
         GenderMapper.mapFhirGenderToDisplay(currentGender, l10n) != newGender;
     final bloodTypeChanged = currentBloodType != newBloodType;
-    final mrnChanged = currentMRN != (newMRN ?? '');
+    final identifierChanged = currentIdentifier != (newIdentifierValue ?? '');
 
-    return birthDateChanged || genderChanged || bloodTypeChanged || mrnChanged;
+    return birthDateChanged || genderChanged || bloodTypeChanged || identifierChanged;
   }
 
   bool validatePatientData({

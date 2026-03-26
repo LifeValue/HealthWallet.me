@@ -92,12 +92,12 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
         String durationText;
         if (hours > 0) {
           if (minutes > 0) {
-            durationText = '${hours}h ${minutes} min';
+            durationText = context.l10n.shareDurationHoursMinutes(hours, minutes);
           } else {
-            durationText = '${hours}h';
+            durationText = context.l10n.shareDurationHours(hours);
           }
         } else {
-          durationText = '$minutes min';
+          durationText = context.l10n.shareDurationMinutes(minutes);
         }
 
         return GestureDetector(
@@ -114,7 +114,7 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Session time',
+                      context.l10n.shareSessionTime,
                       style: AppTextStyle.bodyMedium.copyWith(
                         color: context.colorScheme.onSurface,
                       ),
@@ -137,7 +137,7 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
                               _isDurationPickerExpanded = false;
                             });
                           },
-                    label: 'Set as default',
+                    label: context.l10n.shareSetAsDefault,
                     variant: AppButtonVariant.transparent,
                     fullWidth: false,
                     fontSize: 14,
@@ -201,7 +201,7 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
                     );
               }
             : null,
-        label: canContinue ? 'Share Records' : 'Select records to share',
+        label: canContinue ? context.l10n.shareRecordsButton : context.l10n.shareSelectRecordsToShare,
       ),
     );
   }

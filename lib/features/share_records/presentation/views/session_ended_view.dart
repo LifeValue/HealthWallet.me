@@ -38,7 +38,7 @@ class SessionEndedView extends StatelessWidget {
               : Assets.images.completeCheck.svg(width: 64, height: 64),
           const SizedBox(height: Insets.large),
           Text(
-            isRejected ? 'Invitation Declined' : 'Session Complete',
+            isRejected ? context.l10n.shareInvitationDeclined : context.l10n.shareSessionComplete,
             style: AppTextStyle.titleMedium.copyWith(
               color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w600,
@@ -48,8 +48,8 @@ class SessionEndedView extends StatelessWidget {
           const SizedBox(height: Insets.small),
           Text(
             isRejected
-                ? 'The receiver declined your invitation to view the records.'
-                : 'All shared data has been securely removed from this device',
+                ? context.l10n.shareInvitationDeclinedMessage
+                : context.l10n.shareSessionCompleteMessage,
             style: AppTextStyle.bodyMedium.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
@@ -57,7 +57,7 @@ class SessionEndedView extends StatelessWidget {
           ),
           const SizedBox(height: Insets.large),
           AppButton(
-            label: 'Back Home',
+            label: context.l10n.shareBackHome,
             onPressed: () => context.maybePop(),
           ),
           const Spacer(flex: 3),
@@ -87,7 +87,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: Insets.large),
             Text(
-              'Connection Failed',
+              context.l10n.shareConnectionFailed,
               style: AppTextStyle.titleMedium.copyWith(
                 color: context.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
@@ -96,7 +96,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: Insets.small),
             Text(
-              state.errorMessage ?? 'Unable to connect. Please try again.',
+              state.errorMessage ?? context.l10n.shareUnableToConnect,
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
@@ -104,7 +104,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: Insets.large),
             AppButton(
-              label: 'Retry',
+              label: context.l10n.retry,
               variant: AppButtonVariant.primary,
               fullWidth: true,
               onPressed: () {
@@ -115,7 +115,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: Insets.small),
             AppButton(
-              label: 'Cancel',
+              label: context.l10n.cancel,
               variant: AppButtonVariant.outlined,
               fullWidth: true,
               onPressed: () {

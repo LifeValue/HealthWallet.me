@@ -1,12 +1,19 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:auto_route/auto_route.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_active_filters_bar.dart';
@@ -169,6 +176,71 @@ class _RecordsViewState extends State<RecordsView> {
     _scrollController.dispose();
     _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _handleImportDocument() async {
+    try {
+      await Future.delayed(const Duration(milliseconds: 100));
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        allowCompression: false,
+        withData: false,
+        withReadStream: false,
+        type: FileType.custom,
+        allowedExtensions: [
+          'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff'
+        ],
+      );
+      if (result != null && result.files.isNotEmpty) {
+        final validPaths = <String>[];
+        for (final file in result.files) {
+          if (file.path == null || file.path!.isEmpty) continue;
+          if (await File(file.path!).exists()) {
+            validPaths.add(file.path!);
+          }
+        }
+        if (validPaths.isNotEmpty && mounted) {
+          context
+              .read<ScanBloc>()
+              .add(DocumentImported(filePaths: validPaths));
+          getIt<PageViewNavigationController>().navigateToPage(3);
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _handlePickImage() async {
+    try {
+      await Future.delayed(const Duration(milliseconds: 100));
+      final picker = ImagePicker();
+      final images = await picker.pickMultiImage();
+      if (images.isEmpty) return;
+      final validPaths = <String>[];
+      for (final image in images) {
+        if (await File(image.path).exists()) {
+          validPaths.add(image.path);
+        }
+      }
+      if (validPaths.isNotEmpty && mounted) {
+        context
+            .read<ScanBloc>()
+            .add(DocumentImported(filePaths: validPaths));
+        getIt<PageViewNavigationController>().navigateToPage(3);
+      }
+    } catch (_) {}
+  }
+
+  void _handleScanDocument() {
+    final navController = getIt<PageViewNavigationController>();
+    navController.navigateToPage(2);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 100), () async {
+        final cameraStatus = await Permission.camera.request();
+        if (cameraStatus.isGranted && mounted) {
+          context.read<ScanBloc>().add(const ScanButtonPressed());
+        }
+      });
+    });
   }
 
   @override
@@ -484,6 +556,9 @@ class _RecordsViewState extends State<RecordsView> {
                       .map((f) => f.display)
                       .join(', ')
               : null,
+          onImportDocument: _handleImportDocument,
+          onPickImage: _handlePickImage,
+          onScanDocument: _handleScanDocument,
         );
 
         return SingleChildScrollView(

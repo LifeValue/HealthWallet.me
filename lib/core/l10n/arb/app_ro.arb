@@ -1,0 +1,617 @@
+{
+    "appTitle": "HealthWallet.me",
+    "homeTitle": "Acasă",
+    "profileTitle": "Profil",
+    "settingsTitle": "Setări",
+    "welcomeMessage": "Bine ați venit la HealthWallet.me!",
+    "onboardingBack": "Înapoi",
+    "onboardingGetStarted": "Începe",
+    "onboardingNext": "Următorul",
+    "onboardingWelcomeTitle": "un Portofel de Sănătate pentru Tine!",
+    "onboardingWelcomeSubtitle": "<link>HealthWallet.me</link> se conectează deja la peste 100.000 de furnizori de servicii medicale din SUA și ne extindem în noi țări.",
+    "onboardingWelcomeDescription": "Adaugă înregistrări de la orice furnizor, importă documente manual sau solicită suport pentru țara ta.",
+    "onboardingRecordsTitle": "Sănătatea Ta, Mereu Sincronizată",
+    "onboardingRecordsSubtitle": "<link>HealthWallet.me</link> îți oferă modalități flexibile de a aduna tot istoricul tău medical:",
+    "onboardingRecordsDescription": "• Scanează documente cu camera telefonului\n• Încarcă PDF-uri, imagini sau fișiere de laborator direct\n• Importă înregistrări partajând direct cu <link>HealthWallet.me</link> din orice aplicație de pe smartphone.\n• Scanează codul QR al Fasten Health OnPrem și obține toate înregistrările din sistemele de sănătate din SUA în portofelul tău.",
+    "onboardingRecordsContent": "• Scanează documente cu camera telefonului\n• Încarcă PDF-uri, imagini sau fișiere de laborator direct\n• Importă înregistrări partajând direct cu <link>HealthWallet.me</link> din orice aplicație de pe smartphone.\n• Scanează codul QR al <link>Fasten Health OnPrem</link> și obține toate înregistrările din sistemele de sănătate din SUA în portofelul tău.",
+    "onboardingRecordsBottom": "Totul este organizat în siguranță pe dispozitivul tău.",
+    "onboardingRequestIntegration": "Solicită o integrare",
+    "onboardingScanButton": "Scanare",
+    "onboardingSyncTitle": "Securitate și Confidențialitate",
+    "onboardingSyncSubtitle": "<link>HealthWallet.me</link> este construit cu confidențialitatea în centru. Datele tale medicale sunt criptate și stocate doar pe telefonul tău, niciodată pe servere cloud.",
+    "onboardingSyncDescription": "Vizualizează istoricul medical în modul avion, în străinătate sau fără internet — înregistrările tale rămân cu tine oriunde mergi. Adaugă un nivel suplimentar de securitate activând autentificarea biometrică.",
+    "onboardingBiometricText": "Poți bloca HealthWallet cu securitate biometrică precum Face ID sau scanare de amprentă.",
+    "homeHi": "Salut, ",
+    "homeLastSynced": "Ultima sincronizare: ",
+    "homeNever": "Niciodată",
+    "homeVitalSigns": "Semne vitale",
+    "homeOverview": "Înregistrări Medicale",
+    "homeSource": "Sursă:",
+    "homeAll": "Toate",
+    "homeRecentRecords": "Înregistrări Recente",
+    "homeViewAll": "Vezi Tot",
+    "homeNA": "N/A",
+    "bluetoothRequired": "Activează Bluetooth pentru a utiliza Partajarea în proximitate",
+    "dashboardTitle": "Panou",
+    "recordsTitle": "Înregistrări",
+    "goToRecords": "Mergi la Înregistrări",
+    "syncTitle": "Sincronizare",
+    "syncSuccessful": "Sincronizare reușită!",
+    "syncDataLoadedSuccessfully": "Înregistrările tale medicale au fost sincronizate. Vei fi redirecționat către pagina principală.",
+    "cancelSyncTitle": "Anulezi Sincronizarea?",
+    "cancelSyncMessage": "Ești sigur că vrei să anulezi sincronizarea? Aceasta va opri procesul curent de sincronizare.",
+    "yesCancel": "Da, Anulează",
+    "continueSync": "Continuă Sincronizarea",
+    "syncAgain": "Sincronizează Din Nou",
+    "syncFailed": "Sincronizare eșuată: ",
+    "tryAgain": "Încearcă Din Nou",
+    "syncedAt": "Sincronizat la: ",
+    "pasteSyncData": "Lipește Date de Sincronizare",
+    "submit": "Trimite",
+    "hideManualEntry": "Ascunde Introducerea Manuală",
+    "enterDataManually": "Introdu datele manual",
+    "medicalRecords": "Înregistrări Medicale",
+    "searchRecordsHint": "Caută înregistrări, doctori, locații...",
+    "detailsFor": "Detalii pentru ",
+    "patientId": "CNP: ",
+    "age": "Vârstă",
+    "sex": "Sex",
+    "bloodType": "Grupa Sanguină",
+    "lastSyncedProfile": "Ultima sincronizare: acum 2 ore",
+    "syncLatestRecords": "Sincronizează cele mai recente înregistrări medicale de la furnizorul tău de servicii de sănătate.",
+    "scanToSync": "Scanează pentru Sincronizare",
+    "theme": "Temă",
+    "pleaseAuthenticate": "Te rugăm să te autentifici pentru a continua",
+    "authenticate": "Autentifică-te",
+    "bypass": "Ocolește",
+    "onboardingAuthTitle": "Activează Autentificarea Biometrică",
+    "onboardingAuthDescription": "Adaugă un nivel suplimentar de securitate contului tău activând autentificarea biometrică.",
+    "onboardingAuthEnable": "Activează Acum",
+    "onboardingAuthSkip": "Omite Deocamdată",
+    "biometricAuthentication": "Autentificare Biometrică",
+    "privacyPolicy": "Politica de Confidențialitate",
+    "setupDeviceSecurity": "Configurează Securitatea Dispozitivului",
+    "deviceSecurityMessage": "Dispozitivul tău nu are configurată securitatea. Pentru siguranța ta, te rugăm să configurezi securitatea dispozitivului înainte de a folosi această aplicație:",
+    "deviceSettingsStep1": "Mergi la Setările dispozitivului",
+    "deviceSettingsStep2": "Navighează la Securitate sau Ecran de blocare",
+    "deviceSettingsStep3": "Configurează o blocare a ecranului (PIN, model sau parolă)",
+    "deviceSettingsStep4": "Opțional, adaugă deblocare cu amprentă sau recunoaștere facială",
+    "deviceSecurityReturnMessage": "După configurarea securității dispozitivului, revino la această aplicație și încearcă din nou.",
+    "cancel": "Anulează",
+    "openSettings": "Deschide Setările",
+    "settingsNotAvailable": "Setări Indisponibile",
+    "settingsNotAvailableMessage": "Nu s-au putut deschide setările dispozitivului automat. Te rugăm manual:\n\n1. Deschide Setările\n2. Mergi la Securitate → Biometrie\n3. Adaugă deblocare cu amprentă sau recunoaștere facială\n4. Revino la această aplicație și încearcă din nou",
+    "ok": "OK",
+    "scanCode": "Scanează codul",
+    "or": "sau",
+    "manualSyncMessage": "Cod QR brut",
+    "pasteSyncDataHint": "Lipește codul QR brut",
+    "connect": "Conectare",
+    "scanNewQRCode": "Scanează Cod QR Nou",
+    "loadDemoData": "Încarcă Date Demo",
+    "syncData": "Sincronizează Date",
+    "noMedicalRecordsYet": "Nu există înregistrări medicale încă",
+    "noRecordTypeYet": "Nu există {recordType} încă",
+    "@noRecordTypeYet": {
+        "placeholders": {
+            "recordType": {
+                "type": "Object"
+            }
+        }
+    },
+    "loadDemoDataMessage": "Încarcă date demo pentru a explora aplicația sau sincronizează înregistrările tale medicale reale",
+    "syncDataMessage": "Sincronizează sau actualizează datele pentru a vizualiza înregistrările {recordType}",
+    "@syncDataMessage": {
+        "placeholders": {
+            "recordType": {
+                "type": "Object"
+            }
+        }
+    },
+    "retry": "Reîncearcă",
+    "pleaseEnterSourceName": "Te rugăm să introduci un nume de sursă",
+    "selectBirthDate": "Selectează data nașterii",
+    "years": "ani",
+    "male": "Masculin",
+    "female": "Feminin",
+    "preferNotToSay": "Prefer să nu spun",
+    "errorUpdatingSourceLabel": "Eroare la actualizarea etichetei sursei",
+    "noChangesDetected": "Nu s-au detectat modificări",
+    "pleaseSelectBirthDate": "Te rugăm să selectezi data nașterii",
+    "errorSavingPatientData": "Eroare la salvarea datelor pacientului",
+    "walletHolder": "Deținător Portofel",
+    "walletHolderDescription": "Acest pacient este proprietarul principal al acestui portofel de sănătate",
+    "getStarted": "Începe",
+    "failedToUpdateDisplayName": "Nu s-a putut actualiza numele afișat",
+    "actionCannotBeUndone": "Această acțiune nu poate fi anulată.",
+    "deleteRecordConfirm": "Ești sigur că vrei să ștergi această înregistrare?",
+    "deleteNoteConfirm": "Ești sigur că vrei să ștergi această notă?",
+    "deleteAttachmentConfirm": "Ești sigur că vrei să ștergi acest atașament?",
+    "deleteRecordsConfirm": "Ești sigur că vrei să ștergi {count} elemente?",
+    "confirmDeleteFile": "Ești sigur că vrei să ștergi \"{filename}\"?",
+    "@confirmDeleteFile": {
+        "placeholders": {
+            "filename": {
+                "type": "Object"
+            }
+        }
+    },
+    "selectAtLeastOne": "Selectează cel puțin un {type} pentru a continua.",
+    "@selectAtLeastOne": {
+        "placeholders": {
+            "type": {
+                "type": "Object"
+            }
+        }
+    },
+    "editSourceLabel": "Editează eticheta sursei",
+    "saveDetails": "Salvează detaliile",
+    "editDetails": "Editează detaliile",
+    "done": "Gata",
+    "page": "Pagina",
+    "reorderPages": "Reordonează Paginile",
+    "attachments": "Atașamente",
+    "noFilesAttached": "Această înregistrare nu are fișiere atașate",
+    "attachFile": "Atașează fișier",
+    "overview": "Privire de ansamblu",
+    "recentRecords": "Înregistrări recente",
+    "chooseToDisplay": "Alege ce {type} vrei să vezi pe panoul tău.",
+    "@chooseToDisplay": {
+        "placeholders": {
+            "type": {
+                "type": "Object"
+            }
+        }
+    },
+    "displayName": "Nume afișat",
+    "bloodTypeAPositive": "A pozitiv",
+    "bloodTypeANegative": "A negativ",
+    "bloodTypeBPositive": "B pozitiv",
+    "bloodTypeBNegative": "B negativ",
+    "bloodTypeABPositive": "AB pozitiv",
+    "bloodTypeABNegative": "AB negativ",
+    "bloodTypeOPositive": "O pozitiv",
+    "bloodTypeONegative": "O negativ",
+    "serverError": "Ceva nu a funcționat pe server",
+    "serverTimeout": "Timeout server",
+    "connectionError": "Eroare de conexiune",
+    "unknownSource": "Sursă Necunoscută",
+    "synchronization": "Sincronizare",
+    "syncMedicalRecords": "Sincronizează Înregistrări Medicale",
+    "syncLatestMedicalRecords": "Sincronizează cele mai recente înregistrări medicale de la furnizorul tău de servicii de sănătate folosind un token JWT securizat.",
+    "neverSynced": "Niciodată sincronizat",
+    "lastSynced": "Ultima sincronizare",
+    "tapToSelectPatient": "Apasă pentru a selecta pacientul",
+    "preferences": "Preferințe",
+    "version": "Versiune",
+    "on": "ACTIVAT",
+    "off": "DEZACTIVAT",
+    "confirmDisableBiometric": "Ești sigur că vrei să dezactivezi autentificarea biometrică (FaceID / Cod de acces)?",
+    "disable": "Dezactivează",
+    "continueButton": "Continuă",
+    "enableBiometricAuth": "Activează Autentificarea Biometrică (FaceID / Cod de acces)",
+    "disableBiometricAuth": "Dezactivează Autentificarea Biometrică (FaceID / Cod de acces)",
+    "patient": "Pacient",
+    "noPatientsFound": "Nu s-au găsit pacienți",
+    "id": "ID",
+    "gender": "Gen",
+    "loading": "Se încarcă...",
+    "source": "Sursă",
+    "showAll": "Arată Tot",
+    "records": "Înregistrări",
+    "vitals": "Semne Vitale",
+    "selectAll": "Selectează tot",
+    "clearAll": "Șterge tot",
+    "save": "Salvează",
+    "noRecordsFound": "Nu s-au găsit înregistrări",
+    "noRecords": "Fără înregistrări",
+    "tryDifferentKeywords": "Încearcă să cauți cu cuvinte cheie diferite",
+    "clearAllFilters": "Șterge tot",
+    "syncingData": "Se sincronizează datele",
+    "syncingMessage": "Poate dura puțin. Te rugăm să aștepți.",
+    "scanQRMessage": "Scanează codul QR de pe serverul tău Fasten Health pentru a crea o nouă conexiune de sincronizare.",
+    "viewAll": "Vezi tot",
+    "vitalSigns": "Semne Vitale",
+    "longPressToReorder": "Apasă lung pentru a muta și reordona cardurile, sau filtrează pentru a selecta care apar pe panoul tău.",
+    "finishProcessing": "Finalizează Procesarea",
+    "finishProcessingMessage": "Ești sigur că vrei să finalizezi această sesiune de procesare?",
+    "finishProcessingWarning": "Aceasta va șterge sesiunea curentă.",
+    "fieldCannotBeEmpty": "Acest câmp nu poate fi gol",
+    "selectDate": "Selectează data",
+    "attachToEncounter": "Atașează la Consultație",
+    "continueProcessing": "Continuă Procesarea",
+    "recordsSavedTitle": "Salvat cu succes",
+    "recordsSavedMessage": "Înregistrările tale de sănătate au fost salvate cu succes.",
+    "whatNextQuestion": "Ce ai dori să faci în continuare?",
+    "continueScanning": "Continuă Scanarea",
+    "effectiveDate": "Data Efectivă",
+    "privacyIntro": "Confidențialitatea ta este prioritatea noastră principală.",
+    "privacyDescription": "este un instrument simplu și securizat conceput pentru a te ajuta să îți organizezi înregistrările de sănătate cu ușurință, direct pe dispozitivul tău. Această politică explică angajamentul nostru față de confidențialitatea ta: nu colectăm datele tale și nu te urmărim. Ai control complet.",
+    "corePrinciple": "Principiul Nostru Fundamental: Datele Tale Rămân pe Dispozitivul Tău",
+    "whatInformationHandled": "Ce Informații Sunt Gestionate?",
+    "informationWeDoNotCollect": "Informații Pe Care Nu Le Colectăm sau Accesăm",
+    "informationYouManage": "Informații Pe Care Le Gestionezi",
+    "importingDocuments": "Importarea Documentelor de pe Dispozitivul Tău",
+    "connectingFastenHealth": "Conectare la FastenHealth OnPrem",
+    "howInformationUsed": "Cum Sunt Folosite Informațiile Tale",
+    "dataStorageSecurity": "Stocarea Datelor, Securitate și Partajare",
+    "childrensPrivacy": "Confidențialitatea Copiilor",
+    "changesToPolicy": "Modificări ale Acestei Politici de Confidențialitate",
+    "contactUs": "Contactează-ne",
+    "builtWithLove": "Construit cu dragoste de Life Value!",
+    "sourceName": "Nume sursă",
+    "provideCustomLabel": "Furnizează o etichetă personalizată pentru:",
+    "success": "Succes",
+    "demoDataLoadedSuccessfully": "Datele demo au fost încărcate cu succes. Vei fi redirecționat către pagina principală.",
+    "documentScanTitle": "Scanare",
+    "onboardingAiModelTitle": "Activează Modelul AI",
+    "onboardingAiModelDescription": "Descarcă un model AI securizat, pe dispozitiv, pentru a analiza și organiza automat înregistrările tale de sănătate. Alege între două opțiuni în funcție de nevoile și capacitatea dispozitivului tău. Aceasta este o configurare unică.\n\n**Datele tale rămân private pe dispozitivul tău.**",
+    "onboardingAiModelSubtitle": "Deblochează scanarea cu AI",
+    "aiModelReady": "AI pregătit! Poți începe scanarea.",
+    "aiModelDownloading": "Se descarcă...",
+    "aiModelEnableDownload": "Alege și Descarcă",
+    "aiModelError": "Nu s-a putut verifica. Încearcă din nou.",
+    "aiModelMissing": "Nu este descărcat.",
+    "aiModelTitle": "Încarcă Modelul AI",
+    "aiModelUnlockTitle": "Deblochează Scanarea cu AI",
+    "aiModelUnlockDescription": "Pentru a citi și organiza automat documentele tale medicale, această funcție folosește un model AI securizat, pe dispozitiv.\n\n**Datele tale rămân private pe dispozitivul tău.**",
+    "aiModelDownloadInfo": "Pentru a începe, alege și descarcă una din cele două opțiuni AI disponibile. Aceasta este o configurare unică.",
+    "setup": "Configurare",
+    "patientSetupTitle": "Configurează-ți Profilul",
+    "patientSetupSubtitle": "Personalizează portofelul tău de sănătate cu informațiile tale",
+    "onboardingSetupTitle": "Configurează Portofelul de Sănătate",
+    "onboardingSetupBody": "Creează-ți profilul personal de sănătate pentru a începe cu HealthWallet",
+    "onboardingDemoTitle": "Încearcă Date Demo",
+    "onboardingDemoBody": "Explorează aplicația cu înregistrări medicale de exemplu pentru a vedea cum funcționează",
+    "onboardingSyncTitle2": "Sincronizează Înregistrările",
+    "onboardingSyncBody": "Conectează-te la furnizorii tăi de servicii de sănătate pentru a importa înregistrările medicale reale",
+    "givenName": "Prenume",
+    "familyName": "Nume de Familie",
+    "skipForNow": "Omite deocamdată",
+    "setUpProfile": "Configurează",
+    "useDefaults": "Implicit",
+    "syncPlaceholderTutorialStep1": "Completează-ți profilul pentru a debloca toate funcțiile.",
+    "syncPlaceholderTutorialStep2": "Nu ești pregătit să importi? Încarcă date demo pentru a vedea cum arată aplicația în acțiune.",
+    "syncPlaceholderTutorialStep3": "Menține portofelul de pe desktop și mobil actualizat.",
+    "tapToContinue": "Apasă pentru a continua",
+    "homeOnboardingReorderMessage": "Apasă lung pentru a le reordona conform preferinței tale.",
+    "processing": "Procesare",
+    "sessionNotFound": "Sesiune negăsită!",
+    "preparingPreview": "Se pregătește previzualizarea...",
+    "processingFailed": "Procesare eșuată",
+    "processingCancelled": "Procesarea a fost anulată",
+    "processingBasicDetails": "Se procesează detaliile de bază...",
+    "processingPages": "Se procesează paginile...",
+    "extractingPatientInfo": "Se extrag informațiile pacientului și ale consultației.",
+    "pleaseWait": "Poate dura puțin. Te rugăm să aștepți.",
+    "focusMode": "Mod Focus",
+    "onlyOneSessionAtTime": "Doar o sesiune de procesare poate rula la un moment dat",
+    "aiModelNotAvailable": "Scanarea inteligentă nu este disponibilă",
+    "addResources": "Adaugă resurse",
+    "addResourcesTitle": "Adaugă Resurse",
+    "chooseResourcesDescription": "Alege resursele pe care vrei să le adaugi pentru procesare.",
+    "add": "Adaugă",
+    "allergyIntolerance": "Intoleranță Alergică",
+    "condition": "Condiție",
+    "diagnosticReport": "Raport Diagnostic",
+    "medicationStatement": "Declarație Medicament",
+    "observation": "Observație",
+    "organization": "Organizație",
+    "practitioner": "Practician",
+    "procedure": "Procedură",
+    "tapToViewProgress": "Apasă oriunde pentru a vedea progresul",
+    "screenWillDarkenInSeconds": "Ecranul se va întuneca în {remainingSeconds} secunde.",
+    "@screenWillDarkenInSeconds": {
+        "placeholders": {
+            "remainingSeconds": {
+                "type": "int"
+            }
+        }
+    },
+    "screenWillDarkenInZeroSeconds": "Ecranul se va întuneca în 0 secunde.",
+    "whileDocumentsProcessed": "În timp ce documentele tale sunt procesate:",
+    "doNotLockScreen": "Nu bloca ecranul și nu ieși din aplicație.",
+    "plugInCharger": "Conectează încărcătorul.",
+    "exitFocusMode": "Ieși din Modul Focus",
+    "chargerPluggedIn": "Încărcătorul este conectat.",
+    "plugInChargerEllipsis": "Conectează încărcătorul...",
+    "processingFailedCapacity": "Documentul este prea mare pentru dimensiunea curentă a contextului AI.",
+    "processingFailedCapacitySuggestion": "Apasă pe pictograma de setări de mai sus și crește Dimensiunea Contextului la 2048 sau mai mare, apoi reîncearcă.",
+    "increaseAiModelCapacity": "Crește Capacitatea AI",
+    "goBack": "Înapoi",
+    "aiModelManage": "Gestionează Opțiunile AI",
+    "aiModelNotSelected": "Nicio opțiune selectată",
+    "aiModelSelect": "Selectează Opțiune",
+    "aiSettings": "Setări AI",
+    "aiSettingsDescription": "Ajustează performanța AI pentru dispozitivul tău. Valorile recomandate sunt preselectate.",
+    "setAiTokensUsage": "Setează Utilizarea Token-urilor AI",
+    "tokenUsageDescription": "Controlează cât de multă putere de procesare poate folosi AI-ul. Capacitate mai mare permite fișiere mai mari și sarcini mai complexe, dar folosește mai multe resurse și durează mai mult.",
+    "gpuLayersLabel": "Straturi GPU",
+    "gpuLayersDescription": "Transferă straturile modelului pe GPU pentru procesare mai rapidă a imaginilor. Mai multe straturi = mai rapid, dar folosește mai multă memorie. Setează la 0 dacă aplicația se blochează.",
+    "threadsLabel": "Fire CPU",
+    "threadsDescription": "Numărul de fire CPU pentru inferență. Mai multe fire = mai rapid, dar consumă mai multă baterie.",
+    "recommended": "Recomandat",
+    "tokenPresetLow": "Scăzut",
+    "tokenPresetLowDescription": "Cel mai bun pentru fișiere mici și sarcini rapide.\nFolosește cele mai puține resurse și procesează cel mai rapid.",
+    "tokenPresetMedium": "Mediu",
+    "tokenPresetMediumDescription": "Bun pentru majoritatea cazurilor.\nEchilibrează dimensiunea fișierului, timpul de procesare și utilizarea resurselor.",
+    "tokenPresetHigh": "Ridicat",
+    "tokenPresetHighDescription": "Cel mai bun pentru fișiere mari și procesare complexă.\nFolosește mai multe resurse și baterie, și durează mai mult.",
+    "tokenPresetCustom": "Personalizat",
+    "tokenPresetCustomDescription": "Setează cantitatea personalizată de token-uri pe care vrei să o folosești.",
+    "setTokens": "Setează",
+    "tokens": "token-uri",
+    "contextSizeLabel": "Dimensiune Context",
+    "contextSizeDescription": "Cantitatea de text pe care AI-ul o poate procesa deodată. Un context mai mare gestionează documente mai mari, dar folosește mai multă memorie.",
+    "useVisionLabel": "Scanare Profundă",
+    "useVisionDescription": "Citește imagini pentru analiză mai profundă (ex. scriere de mână). Folosește mai multă memorie și necesită un dispozitiv mai performant.",
+    "aiModelNotAvailableForDevice": "Nu este disponibil pentru acest telefon",
+    "aiModelNotAvailableForDeviceDescription": "Ne pare rău, dispozitivul tău nu are suficientă memorie pentru a rula modelul AI. Poți folosi în continuare aplicația fără scanare inteligentă.",
+    "noInternetConnectionTitle": "Fără Conexiune la Internet",
+    "noInternetConnectionDescription": "Te rugăm să verifici conexiunea la internet și să încerci din nou.",
+    "processingStep2NotAvailableTitle": "Scanare Profundă indisponibilă pe acest dispozitiv",
+    "processingStep2NotEnoughRam": "Acest dispozitiv nu are suficientă memorie pentru Scanare Profundă. Procesarea bazată pe text este încă disponibilă și funcționează bine pentru majoritatea documentelor.",
+    "emergencyContact": "Contact Telefonic de Urgență",
+    "emergencyContactHint": "Număr de telefon",
+    "searchCountry": "Caută țara...",
+    "rotatePage": "Rotește",
+    "deletePage": "Șterge",
+    "deletePageConfirmTitle": "Șterge Pagina",
+    "deletePageConfirmMessage": "Această pagină va fi eliminată din document.",
+    "cannotDeleteLastPage": "Nu se poate șterge ultima pagină",
+    "pageRotated": "Pagină rotită",
+    "regionAndUnits": "Limbă și Unități",
+    "country": "Țara",
+    "patientModifiedNewWillBeCreated": "Modificat — va fi creat un pacient nou",
+    "patientModifiedUpdating": "Modificare pacient existent: {name}",
+    "patientSavingModified": "Salvare pacient modificat: {name}",
+    "dropModificationsTitle": "Renunți la modificări?",
+    "dropModificationsMessage": "Modificările aduse câmpurilor pacientului vor fi pierdute.",
+    "modifyPatientTitle": "Modifici pacientul?",
+    "modifyPatientMessage": "Datele pacientului existent vor fi actualizate cu modificările tale.",
+    "scanIdCard": "Scanează carte de identitate sau pașaport",
+    "scanIdCardDescription": "Completare automată din document. Datele rămân pe dispozitivul tău.",
+    "newLabel": "Nou",
+    "newPatient": "Pacient nou",
+    "patientChangedTo": "Schimbat la: {name}",
+    "patientMatchFound": "Pacient existent: {name}",
+    "@patientMatchFound": { "placeholders": { "name": { "type": "String" } } },
+    "language": "Limbă",
+    "systemDefault": "Implicit Sistem",
+    "regionUS": "SUA",
+    "regionEurope": "Europa",
+    "regionUK": "Marea Britanie",
+    "medGemmaIncompatibleDevice": "Acest model necesită mai multă memorie decât are dispozitivul tău disponibil. Folosește modelul Standard în schimb.",
+    "deepScanDownloadTitle": "Descarcă Modelul de Viziune",
+    "deepScanDownloadMessage": "Scanarea Profundă necesită o descărcare suplimentară (~{size} MB). Descarci acum?",
+    "@deepScanDownloadMessage": {
+        "placeholders": {
+            "size": {
+                "type": "int"
+            }
+        }
+    },
+    "downloadingVisionModel": "Se descarcă modelul de viziune...",
+
+    "shareUnknownDevice": "Dispozitiv Necunoscut",
+    "shareViewOnlyBanner": "DOAR VIZUALIZARE - Datele vor fi șterse când închideți sesiunea sau părăsiți zona de proximitate",
+    "shareViewOnlyBannerViewing": "DOAR VIZUALIZARE - Datele vor fi șterse la ieșire",
+    "shareInfoBannerMessage": "Înregistrările partajate sunt doar pentru vizualizare. Toate datele sunt șterse automat când sesiunea se termină sau limita de timp expiră.",
+    "shareTitle": "Partajare",
+    "shareFindDevices": "Găsește Dispozitive",
+    "shareWaiting": "Se așteaptă...",
+    "shareConnectingTitle": "Conectare",
+    "shareSending": "Trimitere",
+    "shareReceiving": "Primire",
+    "shareSessionActive": "Sesiune Activă",
+    "shareViewingRecords": "Vizualizare Înregistrări",
+    "shareComplete": "Finalizat",
+    "shareError": "Eroare",
+    "sharePermissionsRequired": "Permisiuni Necesare",
+    "shareHealthWalletDevice": "Dispozitiv HealthWallet",
+    "shareInvitationDeclined": "Invitație Refuzată",
+    "shareSessionComplete": "Sesiune Finalizată",
+    "shareInvitationDeclinedMessage": "Receptorul a refuzat invitația de a vizualiza înregistrările.",
+    "shareSessionCompleteMessage": "Toate datele partajate au fost eliminate în siguranță de pe acest dispozitiv",
+    "shareBackHome": "Înapoi Acasă",
+    "shareConnectionFailed": "Conexiune Eșuată",
+    "shareUnableToConnect": "Nu s-a putut conecta. Vă rugăm încercați din nou.",
+    "shareNoDataReceived": "Nu s-au primit date",
+    "shareSearchRecords": "Caută înregistrări",
+    "shareNoRecordsMatchFilters": "Nicio înregistrare nu corespunde filtrelor",
+    "shareNoRecordsAvailable": "Nu sunt disponibile înregistrări",
+    "shareReceiverViewingRecords": "Receptorul vizualizează înregistrările",
+    "shareSessionAutoExpire": "Sesiunea va expira automat când cronometrul ajunge la zero",
+    "shareRecordsDelivered": "Înregistrări livrate cu succes",
+    "shareConnecting": "Se conectează...",
+    "shareConnectionInterrupted": "Conexiune întreruptă, se reconectează",
+    "shareSendingRecords": "Se trimit înregistrările...",
+    "shareReceivingRecords": "Se primesc înregistrările...",
+    "shareConfirmExit": "Confirmă Ieșirea",
+    "shareDeleteSharedRecords": "Ștergeți Înregistrările Partajate?",
+    "shareDeleteWarning": "Înregistrarea partajată va fi ștearsă permanent de pe acest dispozitiv. Acțiunea nu poate fi anulată",
+    "shareDeleteAndExit": "Șterge și Ieși",
+    "shareIncomingTransfer": "Transfer Primit",
+    "shareViewOnlyWarning": "Înregistrările vor fi doar pentru vizualizare și vor fi șterse automat la ieșire",
+    "shareDecline": "Refuză",
+    "shareAccept": "Acceptă",
+    "shareSearchingForDevices": "Se caută dispozitive în apropiere...",
+    "shareSearchForDevices": "Caută dispozitive...",
+    "shareNoDevicesFound": "Nu s-au Găsit Dispozitive",
+    "shareConnectionIssue": "Problemă de Conexiune",
+    "shareWifiDirectUnresponsive": "WiFi Direct nu răspunde pe acest dispozitiv.",
+    "shareWifiToggleHint": "WiFi Direct nu răspunde. Dezactivați/activați WiFi, apoi apăsați Reîncercați.",
+    "shareDiscoveryHint": "Asigurați-vă că celălalt dispozitiv are aplicația HealthWallet.me deschisă",
+    "shareProximityHint": "Dispozitivul receptor trebuie să aibă Proximitate Partajare ACTIVATĂ în Preferințe pentru a fi detectabil.",
+    "shareNoRecordsMatchSelectedFilters": "Nicio înregistrare nu corespunde filtrelor selectate",
+    "shareNoRecordsForAppliedFilters": "Nu s-au găsit înregistrări pentru filtrele aplicate",
+    "shareTryClearingFilters": "Încercați să ștergeți câteva filtre",
+    "shareRecordsPageFiltersNoResults": "Filtrele paginii de Înregistrări nu au returnat rezultate",
+    "shareImportOrSyncRecords": "Importați sau sincronizați înregistrări pentru a le partaja",
+    "shareSessionTime": "Durata sesiunii",
+    "shareSetAsDefault": "Setează ca implicit",
+    "shareRecordsButton": "Partajează Înregistrări",
+    "shareSelectRecordsToShare": "Selectează înregistrări de partajat",
+    "shareEndSession": "Închide Sesiunea",
+    "shareRequestTenMin": "Solicită +10 min",
+    "shareWaitingForResponse": "Se așteaptă răspunsul...",
+    "shareAddMoreTime": "Adaugă mai mult timp",
+    "shareSessionExpiresIn": "Sesiunea expiră în",
+    "shareExtensionRequestedTitle": "Extensie Solicitată",
+    "shareHoursLabel": "ore",
+    "shareMinLabel": "min",
+    "shareSelectedCount": "{count} selectate",
+    "@shareSelectedCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "shareRecordCount": "{recordCount} înregistrare/înregistrări",
+    "@shareRecordCount": {
+        "placeholders": {
+            "recordCount": {
+                "type": "int"
+            }
+        }
+    },
+    "shareSharedFrom": "partajate de la {source}",
+    "@shareSharedFrom": {
+        "placeholders": {
+            "source": {
+                "type": "String"
+            }
+        }
+    },
+    "shareFoundDevices": "S-au găsit {count} dispozitiv(e)",
+    "@shareFoundDevices": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "shareRetryingCount": "Se reîncearcă ({retryCount}/3)...",
+    "@shareRetryingCount": {
+        "placeholders": {
+            "retryCount": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDeviceWantsToShare": "{deviceName} dorește să partajeze înregistrări cu dvs.",
+    "@shareDeviceWantsToShare": {
+        "placeholders": {
+            "deviceName": {
+                "type": "String"
+            }
+        }
+    },
+    "shareExtensionsUsed": "{used}/{max} extensii utilizate",
+    "@shareExtensionsUsed": {
+        "placeholders": {
+            "used": {
+                "type": "int"
+            },
+            "max": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationHoursMinutes": "{hours}h {minutes} min",
+    "@shareDurationHoursMinutes": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            },
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationHours": "{hours}h",
+    "@shareDurationHours": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            }
+        }
+    },
+    "shareDurationMinutes": "{minutes} min",
+    "@shareDurationMinutes": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerHoursMinutesSeconds": "{hours}h {minutes}min {seconds}s",
+    "@shareTimerHoursMinutesSeconds": {
+        "placeholders": {
+            "hours": {
+                "type": "int"
+            },
+            "minutes": {
+                "type": "int"
+            },
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerMinutesSeconds": "{minutes}min {seconds}s",
+    "@shareTimerMinutesSeconds": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            },
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareTimerSeconds": "{seconds}s",
+    "@shareTimerSeconds": {
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareMinuteCount": "{minutes} minut(e)",
+    "@shareMinuteCount": {
+        "placeholders": {
+            "minutes": {
+                "type": "int"
+            }
+        }
+    },
+    "shareSecondsCount": "{seconds} secunde",
+    "@shareSecondsCount": {
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "shareExtensionRequestMessage": "{peerRole} dorește să extindă sesiunea cu {duration}",
+    "@shareExtensionRequestMessage": {
+        "placeholders": {
+            "peerRole": {
+                "type": "String"
+            },
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "shareExtensionDurationRequested": "{duration} solicitat",
+    "@shareExtensionDurationRequested": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    }
+}

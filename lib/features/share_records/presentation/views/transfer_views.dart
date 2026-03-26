@@ -50,7 +50,7 @@ class ConnectingView extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Text(
-            isRetrying ? 'Retrying ($retryCount/3)...' : 'Connecting...',
+            isRetrying ? context.l10n.shareRetryingCount(retryCount) : context.l10n.shareConnecting,
             style: AppTextStyle.bodyLarge.copyWith(
               color: context.colorScheme.onSurface,
             ),
@@ -58,7 +58,7 @@ class ConnectingView extends StatelessWidget {
           if (isRetrying) ...[
             const SizedBox(height: 8),
             Text(
-              'Connection interrupted, reconnecting',
+              context.l10n.shareConnectionInterrupted,
               style: AppTextStyle.bodySmall.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
@@ -108,7 +108,7 @@ class TransferProgressView extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              state.isSending ? 'Sending records...' : 'Receiving records...',
+              state.isSending ? context.l10n.shareSendingRecords : context.l10n.shareReceivingRecords,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             if (state.statusMessage != null) ...[

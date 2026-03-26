@@ -77,10 +77,6 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       final qrDataJson = jsonDecode(event.qrData) as Map<String, dynamic>;
       final syncQrData = SyncQrData.fromJson(qrDataJson);
 
-      // Create Wallet source first
-      await _syncRepository.createWalletSource();
-
-      // Create default patient owner (wallet holder) if needed
       await _defaultPatientService.createAndSetAsMain();
 
       await _recordsRepository.clearDemoData();
@@ -175,10 +171,6 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   Future<void> _onLoadDemoData(
       LoadDemoData event, Emitter<SyncState> emit) async {
     try {
-      // Create Wallet source to ensure it exists
-      await _syncRepository.createWalletSource();
-
-      // Create default patient for wallet
       await _defaultPatientService.createAndSetAsMain();
 
       // Load demo data - it includes demo patient with source 'demo_data'
@@ -246,7 +238,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   Future<void> _onCreateWalletSource(
       CreateWalletSource event, Emitter<SyncState> emit) async {
     try {
-      await _syncRepository.createWalletSource();
+      await _defaultPatientService.createAndSetAsMain();
     } catch (e) {
       logger.e('Error creating wallet source: $e');
     }

@@ -23,8 +23,8 @@ class ExtendRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final minutes = durationSeconds ~/ 60;
     final label = minutes > 0
-        ? '$minutes minute${minutes == 1 ? '' : 's'}'
-        : '$durationSeconds seconds';
+        ? context.l10n.shareMinuteCount(minutes)
+        : context.l10n.shareSecondsCount(durationSeconds);
 
     const accentColor = AppColors.primary;
 
@@ -39,14 +39,14 @@ class ExtendRequestCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Extension Requested',
+            context.l10n.shareExtensionRequestedTitle,
             style: AppTextStyle.titleSmall.copyWith(
               color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'The $peerRole wants to extend the session by $label',
+            context.l10n.shareExtensionRequestMessage(peerRole, label),
             style: AppTextStyle.bodySmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
@@ -56,7 +56,7 @@ class ExtendRequestCard extends StatelessWidget {
             children: [
               Expanded(
                 child: AppButton(
-                  label: 'Decline',
+                  label: context.l10n.shareDecline,
                   onPressed: () {
                     context.read<ShareRecordsBloc>().add(
                           const ShareRecordsEvent.extendRejected(),
@@ -74,7 +74,7 @@ class ExtendRequestCard extends StatelessWidget {
               const SizedBox(width: Insets.small),
               Expanded(
                 child: AppButton(
-                  label: 'Accept',
+                  label: context.l10n.shareAccept,
                   onPressed: () {
                     context.read<ShareRecordsBloc>().add(
                           ShareRecordsEvent.extendAccepted(durationSeconds),

@@ -12,7 +12,7 @@ class DateFormatUtils {
   static String isoCompact(DateTime dateTime) {
     return DateFormat('yyyy-MM-dd').format(dateTime);
   }
-  
+
   static String formatDate(DateTime? dateTime, RegionPreset region) {
     if (dateTime == null) return '';
     return DateFormat(region.dateFormat).format(dateTime);
@@ -21,6 +21,24 @@ class DateFormatUtils {
   static String formatDateTime(DateTime? dateTime, RegionPreset region) {
     if (dateTime == null) return '';
     return DateFormat(region.dateTimeFormat).format(dateTime);
+  }
+
+  static String formatIsoForDisplay(String isoDate, RegionPreset region) {
+    if (isoDate.isEmpty) return isoDate;
+    final parsed = DateTime.tryParse(isoDate);
+    if (parsed == null) return isoDate;
+    return DateFormat(region.dateFormat).format(parsed);
+  }
+
+  static DateTime? tryParseIso(String value) {
+    if (value.isEmpty) return null;
+    final parsed = DateTime.tryParse(value);
+    if (parsed != null) return parsed;
+    try {
+      return DateFormat('yyyy-MM-dd').parse(value);
+    } catch (_) {
+      return null;
+    }
   }
 
   static String getSincePretty(DateTime dateTime) {

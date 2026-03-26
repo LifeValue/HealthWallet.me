@@ -8,6 +8,7 @@ import 'package:intl/intl.dart' as intl;
 import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
+import 'app_localizations_ro.dart';
 
 // ignore_for_file: type=lint
 
@@ -98,6 +99,7 @@ abstract class AppLocalizations {
     Locale('en'),
     Locale('es'),
     Locale('de'),
+    Locale('ro'),
   ];
 
   /// The title of the application
@@ -292,6 +294,12 @@ abstract class AppLocalizations {
   /// **'N/A'**
   String get homeNA;
 
+  /// No description provided for @bluetoothRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please turn on Bluetooth to use Share Proximity'**
+  String get bluetoothRequired;
+
   /// No description provided for @dashboardTitle.
   ///
   /// In en, this message translates to:
@@ -303,6 +311,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Records'**
   String get recordsTitle;
+
+  /// No description provided for @goToRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Records'**
+  String get goToRecords;
 
   /// No description provided for @syncTitle.
   ///
@@ -754,6 +768,30 @@ abstract class AppLocalizations {
   /// **'This action cannot be undone.'**
   String get actionCannotBeUndone;
 
+  /// No description provided for @deleteRecordConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this record?'**
+  String get deleteRecordConfirm;
+
+  /// No description provided for @deleteNoteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this note?'**
+  String get deleteNoteConfirm;
+
+  /// No description provided for @deleteAttachmentConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this attachment?'**
+  String get deleteAttachmentConfirm;
+
+  /// No description provided for @deleteRecordsConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} items?'**
+  String deleteRecordsConfirm(int count);
+
   /// No description provided for @confirmDeleteFile.
   ///
   /// In en, this message translates to:
@@ -1179,6 +1217,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue Processing'**
   String get continueProcessing;
+
+  /// No description provided for @recordsSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully Saved'**
+  String get recordsSavedTitle;
+
+  /// No description provided for @recordsSavedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your health records have been saved successfully.'**
+  String get recordsSavedMessage;
+
+  /// No description provided for @whatNextQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to do next?'**
+  String get whatNextQuestion;
+
+  /// No description provided for @continueScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Scanning'**
+  String get continueScanning;
 
   /// No description provided for @effectiveDate.
   ///
@@ -1960,6 +2022,90 @@ abstract class AppLocalizations {
   /// **'Language & Units'**
   String get regionAndUnits;
 
+  /// No description provided for @country.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get country;
+
+  /// No description provided for @patientModifiedNewWillBeCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified — a new patient will be created'**
+  String get patientModifiedNewWillBeCreated;
+
+  /// No description provided for @patientModifiedUpdating.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifying existing patient: {name}'**
+  String patientModifiedUpdating(String name);
+
+  /// No description provided for @patientSavingModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving modified patient: {name}'**
+  String patientSavingModified(String name);
+
+  /// No description provided for @dropModificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop modifications?'**
+  String get dropModificationsTitle;
+
+  /// No description provided for @dropModificationsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes to the patient fields will be discarded.'**
+  String get dropModificationsMessage;
+
+  /// No description provided for @modifyPatientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Modify patient?'**
+  String get modifyPatientTitle;
+
+  /// No description provided for @modifyPatientMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will update the existing patient record with your changes.'**
+  String get modifyPatientMessage;
+
+  /// No description provided for @scanIdCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan ID Card or Passport'**
+  String get scanIdCard;
+
+  /// No description provided for @scanIdCardDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-fill from your document. Data stays on your device.'**
+  String get scanIdCardDescription;
+
+  /// No description provided for @newLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newLabel;
+
+  /// No description provided for @newPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'New patient'**
+  String get newPatient;
+
+  /// No description provided for @patientChangedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed to: {name}'**
+  String patientChangedTo(String name);
+
+  /// No description provided for @patientMatchFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing patient: {name}'**
+  String patientMatchFound(String name);
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:
@@ -2013,6 +2159,510 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Downloading vision model...'**
   String get downloadingVisionModel;
+
+  /// No description provided for @shareUnknownDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Device'**
+  String get shareUnknownDevice;
+
+  /// No description provided for @shareViewOnlyBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'VIEW ONLY - Data will be deleted when you close the session or leave proximity area'**
+  String get shareViewOnlyBanner;
+
+  /// No description provided for @shareViewOnlyBannerViewing.
+  ///
+  /// In en, this message translates to:
+  /// **'VIEW ONLY - Data will be deleted when you exit'**
+  String get shareViewOnlyBannerViewing;
+
+  /// No description provided for @shareInfoBannerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared records are view-only. All data is automatically deleted when the session ends or the time limit expires.'**
+  String get shareInfoBannerMessage;
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareTitle;
+
+  /// No description provided for @shareFindDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Devices'**
+  String get shareFindDevices;
+
+  /// No description provided for @shareWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting...'**
+  String get shareWaiting;
+
+  /// No description provided for @shareConnectingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting'**
+  String get shareConnectingTitle;
+
+  /// No description provided for @shareSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending'**
+  String get shareSending;
+
+  /// No description provided for @shareReceiving.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving'**
+  String get shareReceiving;
+
+  /// No description provided for @shareSessionActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Session Active'**
+  String get shareSessionActive;
+
+  /// No description provided for @shareViewingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewing Records'**
+  String get shareViewingRecords;
+
+  /// No description provided for @shareComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get shareComplete;
+
+  /// No description provided for @shareError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get shareError;
+
+  /// No description provided for @sharePermissionsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions Required'**
+  String get sharePermissionsRequired;
+
+  /// No description provided for @shareHealthWalletDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'HealthWallet Device'**
+  String get shareHealthWalletDevice;
+
+  /// No description provided for @shareInvitationDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation Declined'**
+  String get shareInvitationDeclined;
+
+  /// No description provided for @shareSessionComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Session Complete'**
+  String get shareSessionComplete;
+
+  /// No description provided for @shareInvitationDeclinedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The receiver declined your invitation to view the records.'**
+  String get shareInvitationDeclinedMessage;
+
+  /// No description provided for @shareSessionCompleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All shared data has been securely removed from this device'**
+  String get shareSessionCompleteMessage;
+
+  /// No description provided for @shareBackHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back Home'**
+  String get shareBackHome;
+
+  /// No description provided for @shareConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Failed'**
+  String get shareConnectionFailed;
+
+  /// No description provided for @shareUnableToConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to connect. Please try again.'**
+  String get shareUnableToConnect;
+
+  /// No description provided for @shareNoDataReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'No data received'**
+  String get shareNoDataReceived;
+
+  /// No description provided for @shareSearchRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Search records'**
+  String get shareSearchRecords;
+
+  /// No description provided for @shareNoRecordsMatchFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'No records match the filters'**
+  String get shareNoRecordsMatchFilters;
+
+  /// No description provided for @shareNoRecordsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No records available'**
+  String get shareNoRecordsAvailable;
+
+  /// No description provided for @shareReceiverViewingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiver is viewing records'**
+  String get shareReceiverViewingRecords;
+
+  /// No description provided for @shareSessionAutoExpire.
+  ///
+  /// In en, this message translates to:
+  /// **'Session will auto-expire when timer reaches zero'**
+  String get shareSessionAutoExpire;
+
+  /// No description provided for @shareRecordsDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Records delivered successfully'**
+  String get shareRecordsDelivered;
+
+  /// No description provided for @shareConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get shareConnecting;
+
+  /// No description provided for @shareConnectionInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection interrupted, reconnecting'**
+  String get shareConnectionInterrupted;
+
+  /// No description provided for @shareSendingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending records...'**
+  String get shareSendingRecords;
+
+  /// No description provided for @shareReceivingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving records...'**
+  String get shareReceivingRecords;
+
+  /// No description provided for @shareConfirmExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Exit'**
+  String get shareConfirmExit;
+
+  /// No description provided for @shareDeleteSharedRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Shared Records?'**
+  String get shareDeleteSharedRecords;
+
+  /// No description provided for @shareDeleteWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The shared record will be permanently deleted from this device. Action cannot be undone'**
+  String get shareDeleteWarning;
+
+  /// No description provided for @shareDeleteAndExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete & Exit'**
+  String get shareDeleteAndExit;
+
+  /// No description provided for @shareIncomingTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming Transfer'**
+  String get shareIncomingTransfer;
+
+  /// No description provided for @shareViewOnlyWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Records will be view-only and automatically deleted when you exit'**
+  String get shareViewOnlyWarning;
+
+  /// No description provided for @shareDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get shareDecline;
+
+  /// No description provided for @shareAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get shareAccept;
+
+  /// No description provided for @shareSearchingForDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching for nearby devices...'**
+  String get shareSearchingForDevices;
+
+  /// No description provided for @shareSearchForDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for devices...'**
+  String get shareSearchForDevices;
+
+  /// No description provided for @shareNoDevicesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No Devices Found'**
+  String get shareNoDevicesFound;
+
+  /// No description provided for @shareConnectionIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Issue'**
+  String get shareConnectionIssue;
+
+  /// No description provided for @shareWifiDirectUnresponsive.
+  ///
+  /// In en, this message translates to:
+  /// **'WiFi Direct is unresponsive on this device.'**
+  String get shareWifiDirectUnresponsive;
+
+  /// No description provided for @shareWifiToggleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'WiFi Direct unresponsive. Toggle WiFi off/on, then tap Retry.'**
+  String get shareWifiToggleHint;
+
+  /// No description provided for @shareDiscoveryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure the other device has the HealthWallet.me app opened'**
+  String get shareDiscoveryHint;
+
+  /// No description provided for @shareProximityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The receiving device must have Share Proximity ON in Preferences to be discoverable.'**
+  String get shareProximityHint;
+
+  /// No description provided for @shareNoRecordsMatchSelectedFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'No records match the selected filters'**
+  String get shareNoRecordsMatchSelectedFilters;
+
+  /// No description provided for @shareNoRecordsForAppliedFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'No records found for the applied filters'**
+  String get shareNoRecordsForAppliedFilters;
+
+  /// No description provided for @shareTryClearingFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Try clearing some filters'**
+  String get shareTryClearingFilters;
+
+  /// No description provided for @shareRecordsPageFiltersNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'The Records page filters returned no results'**
+  String get shareRecordsPageFiltersNoResults;
+
+  /// No description provided for @shareImportOrSyncRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Import or sync records to share them'**
+  String get shareImportOrSyncRecords;
+
+  /// No description provided for @shareSessionTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Session time'**
+  String get shareSessionTime;
+
+  /// No description provided for @shareSetAsDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as default'**
+  String get shareSetAsDefault;
+
+  /// No description provided for @shareRecordsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Records'**
+  String get shareRecordsButton;
+
+  /// No description provided for @shareSelectRecordsToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Select records to share'**
+  String get shareSelectRecordsToShare;
+
+  /// No description provided for @shareEndSession.
+  ///
+  /// In en, this message translates to:
+  /// **'End Session'**
+  String get shareEndSession;
+
+  /// No description provided for @shareRequestTenMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Request +10 min'**
+  String get shareRequestTenMin;
+
+  /// No description provided for @shareWaitingForResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for response...'**
+  String get shareWaitingForResponse;
+
+  /// No description provided for @shareAddMoreTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Add more time'**
+  String get shareAddMoreTime;
+
+  /// No description provided for @shareSessionExpiresIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expires in'**
+  String get shareSessionExpiresIn;
+
+  /// No description provided for @shareExtensionRequestedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extension Requested'**
+  String get shareExtensionRequestedTitle;
+
+  /// No description provided for @shareHoursLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'hours'**
+  String get shareHoursLabel;
+
+  /// No description provided for @shareMinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get shareMinLabel;
+
+  /// No description provided for @shareSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String shareSelectedCount(int count);
+
+  /// No description provided for @shareRecordCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{recordCount} record(s)'**
+  String shareRecordCount(int recordCount);
+
+  /// No description provided for @shareSharedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'shared from {source}'**
+  String shareSharedFrom(String source);
+
+  /// No description provided for @shareFoundDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Found {count} device(s)'**
+  String shareFoundDevices(int count);
+
+  /// No description provided for @shareRetryingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying ({retryCount}/3)...'**
+  String shareRetryingCount(int retryCount);
+
+  /// No description provided for @shareDeviceWantsToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'{deviceName} wants to share records with you'**
+  String shareDeviceWantsToShare(String deviceName);
+
+  /// No description provided for @shareExtensionsUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{used}/{max} extensions used'**
+  String shareExtensionsUsed(int used, int max);
+
+  /// No description provided for @shareDurationHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes} min'**
+  String shareDurationHoursMinutes(int hours, int minutes);
+
+  /// No description provided for @shareDurationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h'**
+  String shareDurationHours(int hours);
+
+  /// No description provided for @shareDurationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String shareDurationMinutes(int minutes);
+
+  /// No description provided for @shareTimerHoursMinutesSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}min {seconds}s'**
+  String shareTimerHoursMinutesSeconds(int hours, int minutes, int seconds);
+
+  /// No description provided for @shareTimerMinutesSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}min {seconds}s'**
+  String shareTimerMinutesSeconds(int minutes, int seconds);
+
+  /// No description provided for @shareTimerSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s'**
+  String shareTimerSeconds(int seconds);
+
+  /// No description provided for @shareMinuteCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} minute(s)'**
+  String shareMinuteCount(int minutes);
+
+  /// No description provided for @shareSecondsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} seconds'**
+  String shareSecondsCount(int seconds);
+
+  /// No description provided for @shareExtensionRequestMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The {peerRole} wants to extend the session by {duration}'**
+  String shareExtensionRequestMessage(String peerRole, String duration);
+
+  /// No description provided for @shareExtensionDurationRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} requested'**
+  String shareExtensionDurationRequested(String duration);
 }
 
 class _AppLocalizationsDelegate
@@ -2026,7 +2676,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['de', 'en', 'es'].contains(locale.languageCode);
+      <String>['de', 'en', 'es', 'ro'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -2041,6 +2691,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'ro':
+      return AppLocalizationsRo();
   }
 
   throw FlutterError(
