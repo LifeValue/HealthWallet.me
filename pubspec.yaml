@@ -78,7 +78,7 @@ dependencies:
   google_mlkit_text_recognition: ^0.15.0
   pdfx: ^2.9.2
   printing: ^5.13.4
-  llamadart: ^0.6.7
+  llamadart: ^0.6.8
   image: ^4.0.0
   background_downloader: ^9.5.4
   flutter_pdfview: ^1.4.3
