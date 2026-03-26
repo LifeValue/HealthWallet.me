@@ -71,7 +71,7 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
                         ),
                         const SizedBox(height: Insets.large),
                         Text(
-                          'Receiver is viewing records',
+                          context.l10n.shareReceiverViewingRecords,
                           style: AppTextStyle.titleMedium.copyWith(
                             color: context.colorScheme.onSurface,
                             fontWeight: FontWeight.w600,
@@ -79,7 +79,7 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
                         ),
                         const SizedBox(height: Insets.small),
                         Text(
-                          'Session will auto-expire when timer reaches zero',
+                          context.l10n.shareSessionAutoExpire,
                           style: AppTextStyle.bodyMedium.copyWith(
                             color: context.colorScheme.onSurface
                                 .withValues(alpha: 0.6),
@@ -147,7 +147,7 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
                   const SizedBox(width: Insets.small),
                   Expanded(
                     child: Text(
-                      'Records delivered successfully',
+                      context.l10n.shareRecordsDelivered,
                       style: AppTextStyle.bodyMedium.copyWith(
                         color: AppColors.success,
                       ),

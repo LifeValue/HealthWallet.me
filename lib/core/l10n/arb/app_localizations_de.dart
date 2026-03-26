@@ -114,10 +114,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get homeNA => 'N/A';
 
   @override
+  String get bluetoothRequired =>
+      'Bitte schalten Sie Bluetooth ein, um die Nahbereichsfreigabe zu nutzen';
+
+  @override
   String get dashboardTitle => 'Instrumententafel';
 
   @override
   String get recordsTitle => 'Aufzeichnungen';
+
+  @override
+  String get goToRecords => 'Zu Aufzeichnungen';
 
   @override
   String get syncTitle => 'Synchronisieren';
@@ -367,6 +374,23 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Aktion kann nicht rückgängig gemacht werden.';
 
   @override
+  String get deleteRecordConfirm =>
+      'Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?';
+
+  @override
+  String get deleteNoteConfirm =>
+      'Sind Sie sicher, dass Sie diese Notiz löschen möchten?';
+
+  @override
+  String get deleteAttachmentConfirm =>
+      'Sind Sie sicher, dass Sie diesen Anhang löschen möchten?';
+
+  @override
+  String deleteRecordsConfirm(int count) {
+    return 'Sind Sie sicher, dass Sie $count Einträge löschen möchten?';
+  }
+
+  @override
   String confirmDeleteFile(Object filename) {
     return 'Sind Sie sicher, dass Sie \"$filename\" löschen möchten?';
   }
@@ -594,6 +618,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get continueProcessing => 'Verarbeitung fortsetzen';
+
+  @override
+  String get recordsSavedTitle => 'Erfolgreich gespeichert';
+
+  @override
+  String get recordsSavedMessage =>
+      'Ihre Gesundheitsdaten wurden erfolgreich gespeichert.';
+
+  @override
+  String get whatNextQuestion => 'Was möchten Sie als Nächstes tun?';
+
+  @override
+  String get continueScanning => 'Weiter Scannen';
 
   @override
   String get effectiveDate => 'Gültigkeitsdatum';
@@ -1033,6 +1070,60 @@ class AppLocalizationsDe extends AppLocalizations {
   String get regionAndUnits => 'Sprache & Einheiten';
 
   @override
+  String get country => 'Land';
+
+  @override
+  String get patientModifiedNewWillBeCreated =>
+      'Geändert — ein neuer Patient wird erstellt';
+
+  @override
+  String patientModifiedUpdating(String name) {
+    return 'Bestehenden Patienten ändern: $name';
+  }
+
+  @override
+  String patientSavingModified(String name) {
+    return 'Geänderten Patienten speichern: $name';
+  }
+
+  @override
+  String get dropModificationsTitle => 'Änderungen verwerfen?';
+
+  @override
+  String get dropModificationsMessage =>
+      'Ihre Änderungen an den Patientenfeldern werden verworfen.';
+
+  @override
+  String get modifyPatientTitle => 'Patient ändern?';
+
+  @override
+  String get modifyPatientMessage =>
+      'Die bestehenden Patientendaten werden mit Ihren Änderungen aktualisiert.';
+
+  @override
+  String get scanIdCard => 'Ausweis oder Reisepass scannen';
+
+  @override
+  String get scanIdCardDescription =>
+      'Automatisch aus Ihrem Dokument ausfüllen. Daten bleiben auf Ihrem Gerät.';
+
+  @override
+  String get newLabel => 'Neu';
+
+  @override
+  String get newPatient => 'Neuer Patient';
+
+  @override
+  String patientChangedTo(String name) {
+    return 'Geändert zu: $name';
+  }
+
+  @override
+  String patientMatchFound(String name) {
+    return 'Bestehender Patient: $name';
+  }
+
+  @override
   String get language => 'Sprache';
 
   @override
@@ -1061,4 +1152,312 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get downloadingVisionModel => 'Visionsmodell wird heruntergeladen...';
+
+  @override
+  String get shareUnknownDevice => 'Unbekanntes Gerät';
+
+  @override
+  String get shareViewOnlyBanner =>
+      'NUR ANSICHT - Daten werden gelöscht, wenn Sie die Sitzung schließen oder den Näherungsbereich verlassen';
+
+  @override
+  String get shareViewOnlyBannerViewing =>
+      'NUR ANSICHT - Daten werden beim Verlassen gelöscht';
+
+  @override
+  String get shareInfoBannerMessage =>
+      'Geteilte Aufzeichnungen sind schreibgeschützt. Alle Daten werden automatisch gelöscht, wenn die Sitzung endet oder das Zeitlimit abläuft.';
+
+  @override
+  String get shareTitle => 'Teilen';
+
+  @override
+  String get shareFindDevices => 'Geräte suchen';
+
+  @override
+  String get shareWaiting => 'Warten...';
+
+  @override
+  String get shareConnectingTitle => 'Verbinden';
+
+  @override
+  String get shareSending => 'Senden';
+
+  @override
+  String get shareReceiving => 'Empfangen';
+
+  @override
+  String get shareSessionActive => 'Sitzung Aktiv';
+
+  @override
+  String get shareViewingRecords => 'Aufzeichnungen ansehen';
+
+  @override
+  String get shareComplete => 'Abgeschlossen';
+
+  @override
+  String get shareError => 'Fehler';
+
+  @override
+  String get sharePermissionsRequired => 'Berechtigungen Erforderlich';
+
+  @override
+  String get shareHealthWalletDevice => 'HealthWallet-Gerät';
+
+  @override
+  String get shareInvitationDeclined => 'Einladung Abgelehnt';
+
+  @override
+  String get shareSessionComplete => 'Sitzung Abgeschlossen';
+
+  @override
+  String get shareInvitationDeclinedMessage =>
+      'Der Empfänger hat Ihre Einladung zur Ansicht der Aufzeichnungen abgelehnt.';
+
+  @override
+  String get shareSessionCompleteMessage =>
+      'Alle geteilten Daten wurden sicher von diesem Gerät entfernt';
+
+  @override
+  String get shareBackHome => 'Zurück zum Start';
+
+  @override
+  String get shareConnectionFailed => 'Verbindung Fehlgeschlagen';
+
+  @override
+  String get shareUnableToConnect =>
+      'Verbindung nicht möglich. Bitte versuchen Sie es erneut.';
+
+  @override
+  String get shareNoDataReceived => 'Keine Daten empfangen';
+
+  @override
+  String get shareSearchRecords => 'Aufzeichnungen suchen';
+
+  @override
+  String get shareNoRecordsMatchFilters =>
+      'Keine Aufzeichnungen entsprechen den Filtern';
+
+  @override
+  String get shareNoRecordsAvailable => 'Keine Aufzeichnungen verfügbar';
+
+  @override
+  String get shareReceiverViewingRecords =>
+      'Empfänger sieht sich Aufzeichnungen an';
+
+  @override
+  String get shareSessionAutoExpire =>
+      'Die Sitzung läuft automatisch ab, wenn der Timer Null erreicht';
+
+  @override
+  String get shareRecordsDelivered => 'Aufzeichnungen erfolgreich zugestellt';
+
+  @override
+  String get shareConnecting => 'Verbinden...';
+
+  @override
+  String get shareConnectionInterrupted =>
+      'Verbindung unterbrochen, Neuverbindung';
+
+  @override
+  String get shareSendingRecords => 'Aufzeichnungen werden gesendet...';
+
+  @override
+  String get shareReceivingRecords => 'Aufzeichnungen werden empfangen...';
+
+  @override
+  String get shareConfirmExit => 'Ausgang Bestätigen';
+
+  @override
+  String get shareDeleteSharedRecords => 'Geteilte Aufzeichnungen Löschen?';
+
+  @override
+  String get shareDeleteWarning =>
+      'Die geteilte Aufzeichnung wird dauerhaft von diesem Gerät gelöscht. Die Aktion kann nicht rückgängig gemacht werden';
+
+  @override
+  String get shareDeleteAndExit => 'Löschen & Beenden';
+
+  @override
+  String get shareIncomingTransfer => 'Eingehende Übertragung';
+
+  @override
+  String get shareViewOnlyWarning =>
+      'Aufzeichnungen sind schreibgeschützt und werden beim Verlassen automatisch gelöscht';
+
+  @override
+  String get shareDecline => 'Ablehnen';
+
+  @override
+  String get shareAccept => 'Akzeptieren';
+
+  @override
+  String get shareSearchingForDevices => 'Suche nach Geräten in der Nähe...';
+
+  @override
+  String get shareSearchForDevices => 'Nach Geräten suchen...';
+
+  @override
+  String get shareNoDevicesFound => 'Keine Geräte Gefunden';
+
+  @override
+  String get shareConnectionIssue => 'Verbindungsproblem';
+
+  @override
+  String get shareWifiDirectUnresponsive =>
+      'WiFi Direct reagiert auf diesem Gerät nicht.';
+
+  @override
+  String get shareWifiToggleHint =>
+      'WiFi Direct reagiert nicht. Schalten Sie WiFi aus/ein und tippen Sie auf Wiederholen.';
+
+  @override
+  String get shareDiscoveryHint =>
+      'Stellen Sie sicher, dass auf dem anderen Gerät die HealthWallet.me App geöffnet ist';
+
+  @override
+  String get shareProximityHint =>
+      'Das empfangende Gerät muss Näherungsfreigabe in den Einstellungen AKTIVIERT haben, um erkennbar zu sein.';
+
+  @override
+  String get shareNoRecordsMatchSelectedFilters =>
+      'Keine Aufzeichnungen entsprechen den ausgewählten Filtern';
+
+  @override
+  String get shareNoRecordsForAppliedFilters =>
+      'Keine Aufzeichnungen für die angewendeten Filter gefunden';
+
+  @override
+  String get shareTryClearingFilters =>
+      'Versuchen Sie, einige Filter zu löschen';
+
+  @override
+  String get shareRecordsPageFiltersNoResults =>
+      'Die Filter der Aufzeichnungsseite ergaben keine Ergebnisse';
+
+  @override
+  String get shareImportOrSyncRecords =>
+      'Importieren oder synchronisieren Sie Aufzeichnungen, um sie zu teilen';
+
+  @override
+  String get shareSessionTime => 'Sitzungszeit';
+
+  @override
+  String get shareSetAsDefault => 'Als Standard festlegen';
+
+  @override
+  String get shareRecordsButton => 'Aufzeichnungen Teilen';
+
+  @override
+  String get shareSelectRecordsToShare =>
+      'Wählen Sie Aufzeichnungen zum Teilen';
+
+  @override
+  String get shareEndSession => 'Sitzung Beenden';
+
+  @override
+  String get shareRequestTenMin => '+10 Min anfordern';
+
+  @override
+  String get shareWaitingForResponse => 'Warte auf Antwort...';
+
+  @override
+  String get shareAddMoreTime => 'Mehr Zeit hinzufügen';
+
+  @override
+  String get shareSessionExpiresIn => 'Sitzung läuft ab in';
+
+  @override
+  String get shareExtensionRequestedTitle => 'Verlängerung Angefordert';
+
+  @override
+  String get shareHoursLabel => 'Stunden';
+
+  @override
+  String get shareMinLabel => 'Min';
+
+  @override
+  String shareSelectedCount(int count) {
+    return '$count ausgewählt';
+  }
+
+  @override
+  String shareRecordCount(int recordCount) {
+    return '$recordCount Aufzeichnung(en)';
+  }
+
+  @override
+  String shareSharedFrom(String source) {
+    return 'geteilt von $source';
+  }
+
+  @override
+  String shareFoundDevices(int count) {
+    return '$count Gerät(e) gefunden';
+  }
+
+  @override
+  String shareRetryingCount(int retryCount) {
+    return 'Wiederholung ($retryCount/3)...';
+  }
+
+  @override
+  String shareDeviceWantsToShare(String deviceName) {
+    return '$deviceName möchte Aufzeichnungen mit Ihnen teilen';
+  }
+
+  @override
+  String shareExtensionsUsed(int used, int max) {
+    return '$used/$max Verlängerungen verwendet';
+  }
+
+  @override
+  String shareDurationHoursMinutes(int hours, int minutes) {
+    return '${hours}h $minutes Min';
+  }
+
+  @override
+  String shareDurationHours(int hours) {
+    return '${hours}h';
+  }
+
+  @override
+  String shareDurationMinutes(int minutes) {
+    return '$minutes Min';
+  }
+
+  @override
+  String shareTimerHoursMinutesSeconds(int hours, int minutes, int seconds) {
+    return '${hours}h ${minutes}Min ${seconds}s';
+  }
+
+  @override
+  String shareTimerMinutesSeconds(int minutes, int seconds) {
+    return '${minutes}Min ${seconds}s';
+  }
+
+  @override
+  String shareTimerSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String shareMinuteCount(int minutes) {
+    return '$minutes Minute(n)';
+  }
+
+  @override
+  String shareSecondsCount(int seconds) {
+    return '$seconds Sekunden';
+  }
+
+  @override
+  String shareExtensionRequestMessage(String peerRole, String duration) {
+    return 'Der $peerRole möchte die Sitzung um $duration verlängern';
+  }
+
+  @override
+  String shareExtensionDurationRequested(String duration) {
+    return '$duration angefordert';
+  }
 }

@@ -6,6 +6,7 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
@@ -40,6 +41,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _startSymmetricDiscovery();
+    _listenBluetoothState();
   }
 
   @override
@@ -47,6 +49,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _stopSymmetricDiscovery();
     super.dispose();
+  }
+
+  void _listenBluetoothState() {
+    getIt<BluetoothStateService>().startListening();
   }
 
   @override
@@ -64,15 +70,16 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     try {
       final userRepository = getIt<UserRepository>();
       final user = await userRepository.getCurrentUser();
-      if (!user.isReceiveModeEnabled) {
-        debugPrint('[App] Receive mode disabled, skipping discovery');
-        return;
-      }
+      if (!user.isReceiveModeEnabled) return;
 
       final hasPermissions =
           await SharePermissionsHelper.hasRequiredPermissions();
-      if (!hasPermissions) {
-        debugPrint('[App] Share permissions not granted, skipping discovery');
+      if (!hasPermissions) return;
+
+      final bluetoothOn = await getIt<BluetoothStateService>().isEnabled();
+      if (!bluetoothOn) {
+        await userRepository
+            .updateUser(user.copyWith(isReceiveModeEnabled: false));
         return;
       }
 
@@ -136,6 +143,18 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 current.status == const ScanStatus.success(),
             listener: (context, state) {
               _handleScanSuccess(context);
+            },
+          ),
+          BlocListener<RecordsBloc, RecordsState>(
+            listenWhen: (previous, current) =>
+                current.status == const RecordsStatus.deleted(),
+            listener: (context, state) {
+              context
+                  .read<PatientBloc>()
+                  .add(const PatientPatientsLoaded());
+              context
+                  .read<HomeBloc>()
+                  .add(const HomeRefreshPreservingOrder());
             },
           ),
         ],

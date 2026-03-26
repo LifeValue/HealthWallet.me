@@ -1,8 +1,17 @@
 name: Master Deploy
 
 on:
-  push:
-    branches: [master]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platform to deploy"
+        required: true
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+        default: both
 
 concurrency:
   group: master-deploy
@@ -10,6 +19,7 @@ concurrency:
 
 jobs:
   deploy-ios:
+    if: inputs.platform == 'ios' || inputs.platform == 'both'
     name: Deploy to TestFlight
     runs-on: [self-hosted, macOS]
 
@@ -63,8 +73,16 @@ jobs:
           security list-keychains -d user -s ci_build.keychain-db login.keychain-db
           security default-keychain -s ci_build.keychain-db
 
+      - name: Setup Shorebird
+        uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+
       - name: Deploy to TestFlight
         env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_PATH: ./private_keys/AuthKey.p8
@@ -85,6 +103,7 @@ jobs:
           rm -rf ios/fastlane/private_keys
 
   deploy-android:
+    if: inputs.platform == 'android' || inputs.platform == 'both'
     name: Deploy to Play Store
     runs-on: ubuntu-latest
 
@@ -157,7 +176,16 @@ jobs:
           bundler-cache: true
           working-directory: android
 
+      - name: Setup Shorebird
+        uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+
       - name: Deploy to Google Play
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
         run: |
           cd android
           bundle exec fastlane beta

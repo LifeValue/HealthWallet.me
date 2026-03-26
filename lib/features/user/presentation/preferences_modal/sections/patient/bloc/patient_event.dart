@@ -48,7 +48,7 @@ class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
     DateTime? birthDate,
     String? gender,
     required String bloodType,
-    String? mrn,
+    String? identifierValue,
     String? contactPhone,
     required List<dynamic> availableSources,
   }) = _PatientEditSaved;

@@ -11,6 +11,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 class ModelManagementDialog extends StatefulWidget {
   const ModelManagementDialog({super.key});
@@ -256,8 +257,14 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 GestureDetector(
                   onTap: () =>
                       _bloc.add(LoadModelDeleteRequested(config.variant)),
-                  child: Icon(Icons.delete_outline,
-                      size: 18, color: AppColors.error.withOpacity(0.7)),
+                  child: Assets.icons.trashCan.svg(
+                    width: 18,
+                    height: 18,
+                    colorFilter: ColorFilter.mode(
+                      AppColors.error.withOpacity(0.7),
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
             ],
           ),

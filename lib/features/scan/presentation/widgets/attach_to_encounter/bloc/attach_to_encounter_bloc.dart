@@ -54,9 +54,11 @@ class AttachToEncounterBloc
 
       dynamic selectedPatient = event.patient.draft ?? uniquePatients.first;
 
-      if (event.patient.existing != null) {
+      if (event.patient.mode == ImportMode.linkExisting &&
+          event.patient.existing != null) {
         selectedPatient = uniquePatients
-            .firstWhere((patient) => patient.id == event.patient.existing!.id);
+            .firstWhere((patient) => patient.id == event.patient.existing!.id,
+                orElse: () => uniquePatients.first);
       }
 
       emit(state.copyWith(
@@ -95,11 +97,10 @@ class AttachToEncounterBloc
   ) async {
     if (event.patient is MappingPatient) {
       emit(state.copyWith(
-        patient: state.patient.copyWith(
+        patient: StagedPatient(
+          draft: state.patient.draft,
           mode: ImportMode.createNew,
-          existing: null,
         ),
-        encounter: state.encounter.copyWith(existing: null),
         existingEncounters: [],
         selectedPatient: event.patient,
       ));
@@ -112,7 +113,6 @@ class AttachToEncounterBloc
           existing: event.patient,
           mode: ImportMode.linkExisting,
         ),
-        encounter: state.encounter.copyWith(existing: null),
         status: AttachToEncounterStatus.loading,
       ));
       await _loadEncounters(emit, event.patient);

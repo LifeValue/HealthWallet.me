@@ -6,6 +6,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
@@ -42,6 +43,10 @@ class ProcessingResourcesSection extends StatelessWidget {
         displayedSession.status != ProcessingStatus.patientExtracted) {
       return const SizedBox();
     }
+
+    final isPatientMatched =
+        displayedSession.patient.mode == ImportMode.linkExisting &&
+            displayedSession.patient.existing != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +277,8 @@ class _ScannedBasicButtons extends StatelessWidget {
       return;
     }
 
-    if (session.patient.hasSelection &&
+    if (session.patient.mode == ImportMode.linkExisting &&
+        session.patient.hasSelection &&
         (session.encounter.hasSelection ||
             session.isDiagnosticReportContainer)) {
       context.read<ScanBloc>().add(
@@ -285,9 +291,11 @@ class _ScannedBasicButtons extends StatelessWidget {
 
     final result = await showDialog<AttachToEncounterResult>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AttachToEncounterWidget(
         patient: session.patient,
         encounter: session.encounter,
+        confirmText: context.l10n.attachToEncounter,
       ),
     );
 
@@ -311,20 +319,41 @@ class _ScannedBasicButtons extends StatelessWidget {
   }
 
   void _finishSession(BuildContext context) {
-    AppSimpleDialog.showDestructiveConfirmation(
-      context: context,
-      title: context.l10n.finishProcessing,
-      message: context.l10n.finishProcessingMessage,
-      confirmText: context.l10n.done,
-      cancelText: context.l10n.cancel,
-      warningText: context.l10n.finishProcessingWarning,
-      confirmButtonColor: context.colorScheme.primary,
-      onConfirm: () {
-        context.read<ScanBloc>().add(
-              ScanResourceCreationInitiated(sessionId: sessionId),
-            );
-      },
-    );
+    final isPatientModified =
+        session.patient.draft != null && session.patient.existing != null;
+
+    if (isPatientModified) {
+      AppSimpleDialog.showDestructiveConfirmation(
+        context: context,
+        title: context.l10n.patient,
+        message: context.l10n.patientModifiedUpdating(
+            session.patient.existing!.displayTitle),
+        warningText: context.l10n.actionCannotBeUndone,
+        confirmText: context.l10n.save,
+        cancelText: context.l10n.cancel,
+        confirmButtonColor: context.colorScheme.primary,
+        onConfirm: () {
+          context.read<ScanBloc>().add(
+                ScanResourceCreationInitiated(sessionId: sessionId),
+              );
+        },
+      );
+    } else {
+      AppSimpleDialog.showDestructiveConfirmation(
+        context: context,
+        title: context.l10n.finishProcessing,
+        message: context.l10n.finishProcessingMessage,
+        confirmText: context.l10n.done,
+        cancelText: context.l10n.cancel,
+        warningText: context.l10n.finishProcessingWarning,
+        confirmButtonColor: context.colorScheme.primary,
+        onConfirm: () {
+          context.read<ScanBloc>().add(
+                ScanResourceCreationInitiated(sessionId: sessionId),
+              );
+        },
+      );
+    }
   }
 }
 

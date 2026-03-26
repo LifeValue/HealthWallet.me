@@ -6,8 +6,10 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_encounter.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
 class CreateEncounterDialog extends StatefulWidget {
@@ -213,7 +215,9 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                           children: [
                             Expanded(
                               child: Text(
-                                DateFormat('dd.MM.yyyy').format(_selectedDate),
+                                DateFormatUtils.formatDate(
+                                    _selectedDate,
+                                    context.read<UserBloc>().state.regionPreset),
                                 style: AppTextStyle.labelLarge,
                               ),
                             ),

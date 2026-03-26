@@ -23,11 +23,14 @@ class MappingDiagnosticReport
   }) = _MappingDiagnosticReport;
 
   factory MappingDiagnosticReport.fromJson(Map<String, dynamic> json) {
+    final rawIssuedDate = MappedProperty.fromJson(json['issuedDate']);
     return MappingDiagnosticReport(
       id: json["id"] ?? const Uuid().v4(),
       reportName: MappedProperty.fromJson(json['reportName']),
       conclusion: MappedProperty.fromJson(json['conclusion']),
-      issuedDate: MappedProperty.fromJson(json['issuedDate']),
+      issuedDate: rawIssuedDate.copyWith(
+        value: MappingResource.normalizeDateValue(rawIssuedDate.value),
+      ),
     );
   }
 

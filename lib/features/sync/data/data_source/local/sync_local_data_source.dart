@@ -142,11 +142,7 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
           platformName: _getSourcePlatformName(sourceId),
           logo: null,
           labelSource: sourceLabelMap[sourceId] ??
-              (sourceId == 'demo_data'
-                  ? 'Demo'
-                  : sourceId == 'wallet'
-                      ? 'Wallet'
-                      : null),
+              (sourceId == 'demo_data' ? 'Demo' : null),
           platformType: _getSourcePlatformType(sourceId, dbSource),
           createdAt: dbSource?.createdAt,
           updatedAt: dbSource?.updatedAt,
@@ -158,15 +154,9 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   }
 
   String? _getSourcePlatformName(String sourceId) {
-    switch (sourceId) {
-      case 'wallet':
-        return 'wallet';
-      case 'demo_data':
-        return 'wallet-manual';
-      default:
-        // For external sources, use the sourceId as platformName
-        return sourceId;
-    }
+    if (sourceId.startsWith('wallet-')) return 'wallet';
+    if (sourceId == 'demo_data') return 'wallet-manual';
+    return sourceId;
   }
 
   /// Determines the platform type based on source ID and database record
@@ -179,15 +169,10 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
       return dbSource!.platformType;
     }
 
-    // Fallback to source ID-based logic
-    switch (sourceId) {
-      case 'wallet':
-      case 'demo_data':
-        return 'wallet'; // WALLET sources
-      default:
-        // All other sources (from Fasten API) are fasten type
-        return 'fasten';
+    if (sourceId.startsWith('wallet-') || sourceId == 'demo_data') {
+      return 'wallet';
     }
+    return 'fasten';
   }
 
   @override
@@ -277,9 +262,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
   @override
   Future<void> deleteSource(String sourceId) async {
-    // Don't allow deletion of wallet source
-    if (sourceId == 'wallet') {
-      throw Exception('Cannot delete the Wallet source');
+    if (sourceId == 'demo_data') {
+      throw Exception('Cannot delete the demo data source');
     }
 
     // Delete from sources table

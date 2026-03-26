@@ -1,11 +1,11 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
-import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 part 'mapping_encounter.freezed.dart';
@@ -47,9 +47,7 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
         confidenceLevel: 1,
       ),
       periodStart: MappedProperty(
-        value: DateFormat('yyyy-MM-dd').format(
-          encounter.date ?? DateTime.now(),
-        ),
+        value: DateFormatUtils.isoCompact(encounter.date ?? DateTime.now()),
         confidenceLevel: 1,
       ),
     );

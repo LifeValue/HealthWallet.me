@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
@@ -10,7 +9,7 @@ import 'package:health_wallet/features/records/presentation/widgets/record_notes
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 
 class RecordNotesWidget extends StatefulWidget {
   const RecordNotesWidget({
@@ -311,9 +310,13 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
   }
 
   void _showDeleteConfirmationDialog(BuildContext context, RecordNote note) {
-    DeleteConfirmationDialog.show(
+    AppSimpleDialog.showDestructiveConfirmation(
       context: context,
-      title: 'Are you sure you want to delete this note?',
+      title: context.l10n.deletePage,
+      message: context.l10n.deleteNoteConfirm,
+      warningText: context.l10n.actionCannotBeUndone,
+      confirmText: context.l10n.deletePage,
+      cancelText: context.l10n.cancel,
       onConfirm: () {
         _bloc.add(RecordNotesNoteDeleted(note: note));
       },

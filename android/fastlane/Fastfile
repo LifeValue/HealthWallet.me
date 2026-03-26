@@ -22,9 +22,17 @@ platform :android do
     UI.message("Building version #{version_name} (#{version_code})")
 
     Dir.chdir("../..") do
-      sh("flutter", "build", "appbundle", "--release",
-         "--build-number=#{version_code}",
-         "--build-name=#{version_name}")
+      begin
+        sh("shorebird", "release", "--platforms", "android",
+           "--flutter-version=3.38.7",
+           "--build-number=#{version_code}",
+           "--build-name=#{version_name}")
+      rescue => e
+        UI.important("Shorebird release failed (#{e.message}), falling back to flutter build")
+        sh("flutter", "build", "appbundle", "--release",
+           "--build-number=#{version_code}",
+           "--build-name=#{version_name}")
+      end
     end
 
     supply(
@@ -51,9 +59,17 @@ platform :android do
     UI.message("Building version #{version_name} (#{version_code})")
 
     Dir.chdir("../..") do
-      sh("flutter", "build", "appbundle", "--release",
-         "--build-number=#{version_code}",
-         "--build-name=#{version_name}")
+      begin
+        sh("shorebird", "release", "--platforms", "android",
+           "--flutter-version=3.38.7",
+           "--build-number=#{version_code}",
+           "--build-name=#{version_name}")
+      rescue => e
+        UI.important("Shorebird release failed (#{e.message}), falling back to flutter build")
+        sh("flutter", "build", "appbundle", "--release",
+           "--build-number=#{version_code}",
+           "--build-name=#{version_name}")
+      end
     end
 
     supply(
