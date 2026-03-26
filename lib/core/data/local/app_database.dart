@@ -29,6 +29,7 @@ class AppDatabase extends _$AppDatabase {
         onCreate: (m) async {
           await m.createAll();
           await _createOptimizationIndexes();
+          await _createSyncTriggers();
         },
         onUpgrade: (m, from, to) async {
           final schemaSteps = stepByStep(
@@ -73,6 +74,7 @@ class AppDatabase extends _$AppDatabase {
 
           if (from <= 9 && to >= 10) {
             await _migrateToV10();
+            await _createSyncTriggers();
           }
         },
       );
@@ -138,6 +140,35 @@ class AppDatabase extends _$AppDatabase {
     await customStatement('PRAGMA synchronous=NORMAL');
     await customStatement('PRAGMA cache_size=10000');
     await customStatement('PRAGMA temp_store=MEMORY');
+  }
+
+  Future<void> _createSyncTriggers() async {
+    final tables = ['fhir_resource', 'sources', 'record_notes', 'processing_sessions'];
+
+    for (final table in tables) {
+      final hasUpdatedAt = await customSelect(
+        "SELECT COUNT(*) as cnt FROM pragma_table_info('$table') WHERE name='updated_at'",
+      ).getSingle();
+      if ((hasUpdatedAt.data['cnt'] as int? ?? 0) == 0) continue;
+
+      await customStatement(
+        'CREATE TRIGGER IF NOT EXISTS ${table}_insert_updated_at '
+        'AFTER INSERT ON $table '
+        'WHEN NEW.updated_at IS NULL '
+        'BEGIN UPDATE $table SET updated_at = '
+        "CAST(strftime('%s', 'now') * 1000 AS INTEGER) "
+        'WHERE rowid = NEW.rowid; END',
+      );
+
+      await customStatement(
+        'CREATE TRIGGER IF NOT EXISTS ${table}_update_updated_at '
+        'AFTER UPDATE ON $table '
+        'WHEN NEW.updated_at = OLD.updated_at OR NEW.updated_at IS NULL '
+        'BEGIN UPDATE $table SET updated_at = '
+        "CAST(strftime('%s', 'now') * 1000 AS INTEGER) "
+        'WHERE rowid = NEW.rowid; END',
+      );
+    }
   }
 
   Stream<List<Source>> watchSources() => select(sources).watch();

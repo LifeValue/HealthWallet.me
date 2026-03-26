@@ -145,7 +145,10 @@ class RecordAttachmentsBloc
       String? filePath;
       if (url?.startsWith('file://') == true) {
         final rawPath = url!.substring(7);
-        filePath = await _pathResolver.toAbsolute(rawPath);
+        final resolved = await _pathResolver.toAbsolute(rawPath);
+        if (await File(resolved).exists()) {
+          filePath = resolved;
+        }
       }
 
       return AttachmentInfo(

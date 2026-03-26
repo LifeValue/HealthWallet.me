@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import 'package:health_wallet/features/processing/domain/services/document_refer
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:path_provider/path_provider.dart';
 
 class MediaFullscreenViewer extends StatelessWidget {
@@ -74,11 +74,17 @@ class MediaFullscreenViewer extends StatelessWidget {
       return _buildPlaceholder(
           context, Icons.picture_as_pdf, 'No PDF data available');
     }
+
     return FutureBuilder<File>(
       future: _createTempPdfFile(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasData) {
+            final isDesktop =
+                Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+            if (isDesktop) {
+              return _DesktopPdfBody(filePath: snapshot.data!.path);
+            }
             return PDFView(
               filePath: snapshot.data!.path,
               enableSwipe: true,
@@ -86,7 +92,6 @@ class MediaFullscreenViewer extends StatelessWidget {
               autoSpacing: true,
               pageFling: true,
               onError: (error) {
-                debugPrint('PDFView error: $error');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error loading PDF: $error')),
@@ -94,7 +99,6 @@ class MediaFullscreenViewer extends StatelessWidget {
                 }
               },
               onPageError: (page, error) {
-                debugPrint('PDFView page error ($page): $error');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error on page $page: $error')),
@@ -114,20 +118,15 @@ class MediaFullscreenViewer extends StatelessWidget {
   }
 
   Future<File> _createTempPdfFile() async {
-    try {
-      final bytes = base64Decode(media.content!.data!.valueString!);
-      final dir = await getTemporaryDirectory();
-      final file =
-          File('${dir.path}/${media.displayTitle.replaceAll(' ', '_')}.pdf');
-      await file.writeAsBytes(bytes, flush: true);
-      if (!await file.exists()) {
-        throw Exception('Failed to create PDF file on disk');
-      }
-      return file;
-    } catch (e) {
-      debugPrint('Error creating temp PDF file: $e');
-      rethrow;
+    final bytes = base64Decode(media.content!.data!.valueString!);
+    final dir = await getTemporaryDirectory();
+    final file =
+        File('${dir.path}/${media.displayTitle.replaceAll(' ', '_')}.pdf');
+    await file.writeAsBytes(bytes, flush: true);
+    if (!await file.exists()) {
+      throw Exception('Failed to create PDF file on disk');
     }
+    return file;
   }
 
   Widget _buildPlaceholder(
@@ -293,5 +292,36 @@ class MediaFullscreenViewer extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _DesktopPdfBody extends StatefulWidget {
+  final String filePath;
+  const _DesktopPdfBody({required this.filePath});
+
+  @override
+  State<_DesktopPdfBody> createState() => _DesktopPdfBodyState();
+}
+
+class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
+  late final pdfx.PdfController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = pdfx.PdfController(
+      document: pdfx.PdfDocument.openFile(widget.filePath),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return pdfx.PdfView(controller: _controller);
   }
 }

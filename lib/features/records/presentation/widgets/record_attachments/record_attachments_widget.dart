@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -151,7 +152,16 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     );
   }
 
-  void _viewFile(BuildContext context, String filePath, String? contentType) {
+  void _viewFile(BuildContext context, String filePath, String? contentType) async {
+    if (!await File(filePath).exists()) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File not available on this device')),
+        );
+      }
+      return;
+    }
+
     final ext = extension(filePath).toLowerCase();
     final isImage = contentType?.startsWith('image/') == true ||
         {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}.contains(ext);
@@ -326,6 +336,9 @@ class _PdfViewer extends StatelessWidget {
 
   const _PdfViewer({required this.filePath});
 
+  static bool get _isDesktop =>
+      Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -335,27 +348,60 @@ class _PdfViewer extends StatelessWidget {
         foregroundColor: Colors.white,
         title: Text(basename(filePath)),
       ),
-      body: PDFView(
-        filePath: filePath,
-        enableSwipe: true,
-        swipeHorizontal: true,
-        autoSpacing: true,
-        pageFling: true,
-        onError: (error) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error loading PDF: $error')),
-            );
-          }
-        },
-        onPageError: (page, error) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error on page $page: $error')),
-            );
-          }
-        },
-      ),
+      body: _isDesktop
+          ? _DesktopPdfBody(filePath: filePath)
+          : PDFView(
+              filePath: filePath,
+              enableSwipe: true,
+              swipeHorizontal: true,
+              autoSpacing: true,
+              pageFling: true,
+              onError: (error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error loading PDF: $error')),
+                  );
+                }
+              },
+              onPageError: (page, error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error on page $page: $error')),
+                  );
+                }
+              },
+            ),
     );
+  }
+}
+
+class _DesktopPdfBody extends StatefulWidget {
+  final String filePath;
+  const _DesktopPdfBody({required this.filePath});
+
+  @override
+  State<_DesktopPdfBody> createState() => _DesktopPdfBodyState();
+}
+
+class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
+  late final pdfx.PdfController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = pdfx.PdfController(
+      document: pdfx.PdfDocument.openFile(widget.filePath),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return pdfx.PdfView(controller: _controller);
   }
 }

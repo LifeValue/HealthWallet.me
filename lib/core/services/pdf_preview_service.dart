@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
@@ -32,7 +33,8 @@ class PdfPreviewService {
     final url = attachment?['url'] as String?;
     if (url == null) return null;
     final rawPath = url.startsWith('file://') ? url.substring(7) : url;
-    return _pathResolver.toAbsolute(rawPath);
+    final resolved = await _pathResolver.toAbsolute(rawPath);
+    return resolved;
   }
 
   Future<String?> _extractMediaPath(
@@ -116,6 +118,11 @@ class PdfPreviewService {
         return;
       }
 
+      if (!await File(filePath).exists()) {
+        _showErrorSnackBar(context, 'File not available on this device');
+        return;
+      }
+
       if (!context.mounted) return;
 
       final extension = path.extension(filePath).toLowerCase();
@@ -194,6 +201,9 @@ class _InAppPdfViewer extends StatelessWidget {
 
   const _InAppPdfViewer({required this.filePath});
 
+  static bool get _isDesktop =>
+      Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,27 +213,60 @@ class _InAppPdfViewer extends StatelessWidget {
         foregroundColor: Colors.white,
         title: Text(path.basename(filePath)),
       ),
-      body: PDFView(
-        filePath: filePath,
-        enableSwipe: true,
-        swipeHorizontal: true,
-        autoSpacing: true,
-        pageFling: true,
-        onError: (error) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error loading PDF: $error')),
-            );
-          }
-        },
-        onPageError: (page, error) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error on page $page: $error')),
-            );
-          }
-        },
-      ),
+      body: _isDesktop
+          ? _DesktopPdfBody(filePath: filePath)
+          : PDFView(
+              filePath: filePath,
+              enableSwipe: true,
+              swipeHorizontal: true,
+              autoSpacing: true,
+              pageFling: true,
+              onError: (error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error loading PDF: $error')),
+                  );
+                }
+              },
+              onPageError: (page, error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error on page $page: $error')),
+                  );
+                }
+              },
+            ),
     );
+  }
+}
+
+class _DesktopPdfBody extends StatefulWidget {
+  final String filePath;
+  const _DesktopPdfBody({required this.filePath});
+
+  @override
+  State<_DesktopPdfBody> createState() => _DesktopPdfBodyState();
+}
+
+class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
+  late final pdfx.PdfController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = pdfx.PdfController(
+      document: pdfx.PdfDocument.openFile(widget.filePath),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return pdfx.PdfView(controller: _controller);
   }
 }

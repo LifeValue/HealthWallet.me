@@ -10,6 +10,7 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 void main() async {
@@ -33,6 +34,8 @@ void main() async {
   getIt<ShareIntentService>().initialize();
   getIt<DeepLinkService>().initialize();
   getIt<ProcessingBloc>().add(const ProcessingInitialised());
+
+  getIt<LwwSyncBloc>().add(const LwwSyncInitialised());
 
   FlutterNativeSplash.remove();
 

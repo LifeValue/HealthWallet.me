@@ -169,24 +169,33 @@
 
 **YouTrack:** HM-161
 **Phase:** 3c — Features
+**Status:** DONE
 
 **As a** user, **I want** changes on one device to appear on the other automatically **so that** both devices always have the latest records.
 
 **Acceptance Criteria:**
 
-- Given a record is created/modified on one device, when the other device is connected, then the change appears within 2 seconds
-- Given delta computation, when sync runs, then only rows modified since `last_sync_timestamp` are sent
-- Given a record is deleted on one device, when sync runs, then it is soft-deleted on the other device
-- Given devices are disconnected, when they reconnect, then all queued changes sync automatically
-- Given the app is closed and reopened, when reconnection happens, then the offline queue is preserved and sent
-- Given 30 days have passed since soft delete, when tombstone cleanup runs, then deleted records are permanently removed
-- Given both devices, when sync is active, then sync status indicator shows (synced / syncing / offline)
+- [x] Given a record is created/modified on one device, when the other device is connected, then the change appears within 2 seconds
+- [x] Given delta computation, when sync runs, then only rows modified since `last_sync_timestamp` are sent
+- [x] Given a record is deleted on one device, when sync runs, then it is soft-deleted on the other device
+- [x] Given devices are disconnected, when they reconnect, then all queued changes sync automatically
+- [x] Given the app is closed and reopened, when reconnection happens, then the offline queue is preserved and sent
+- [x] Given 30 days have passed since soft delete, when tombstone cleanup runs, then deleted records are permanently removed
+- [x] Given both devices, when sync is active, then sync status indicator shows (synced / syncing / offline)
+- [x] Given DocumentReference attachments (PDFs, images), when sync runs, then file data is embedded as base64 and restored on the receiving device
+- [x] Given a device has broken file paths (from backup restore), when sync connects, then missing files are requested from the peer and URLs are fixed
 
-**Technical Notes:**
-- LWW merge: compare `updated_at` timestamps, latest wins
-- Delta serialized as JSON (table, id, action: upsert/delete, data) over TCP
-- Watch local DB changes via Drift streams → compute delta → send
-- Depends on schema v9 (`updated_at`, `deleted_at`, `device_id`)
+**Implementation:**
+- `LwwSyncService`: core LWW engine — delta computation (`>= last_sync_timestamp`), conflict resolution (timestamp + device_id tiebreak), upsert with ON CONFLICT
+- `AttachmentSyncService`: embeds DocumentReference file data as base64 before sending, restores files on receive with unique names and proper extensions
+- `ChangeWatcherService`: watches Drift table streams with 500ms debounce, auto-sends deltas
+- `OfflineQueueService`: persists unsent deltas in SharedPreferences, flushes on reconnect
+- `LwwSyncBloc` (`@lazySingleton`): orchestrates sync lifecycle — table status exchange, full sync for differing tables, `sync.verify` for bidirectional confirmation, file request protocol for missing attachments
+- Schema v10: added `updated_at`, `deleted_at`, `device_id` columns; SQLite triggers auto-set `updated_at` on INSERT/UPDATE
+- Synced tables: `fhir_resource`, `sources`, `record_notes`, `processing_sessions`
+- LWW override: incoming rows preferred when local has broken file path (unresolvable `file://` URL)
+- TCP write lock prevents concurrent socket writes (`StreamSink` serialization)
+- UI: SyncStatusCard shows per-table progress, sent/received counts, "In Sync" badge with bidirectional verification
 
 ### Story 1.9: Desktop UI Polish
 
