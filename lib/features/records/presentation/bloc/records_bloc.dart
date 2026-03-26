@@ -19,6 +19,7 @@ part 'records_bloc.freezed.dart';
 @injectable
 class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   final RecordsRepository _recordsRepository;
+  RecordsRepository get recordsRepository => _recordsRepository;
   Timer? _searchDebounceTimer;
   bool _isSearching = false;
 
@@ -38,6 +39,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsSelectionCleared>(_onSelectionCleared);
     on<RecordsSelectionModeToggled>(_onSelectionModeToggled);
     on<RecordsDateRangeCleared>(_onDateRangeCleared);
+    on<RecordsResourceDeleted>(_onResourceDeleted);
   }
 
   @override
@@ -375,5 +377,45 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     ));
 
     await _loadResources(emit);
+  }
+
+  Future<void> _onResourceDeleted(
+    RecordsResourceDeleted event,
+    Emitter<RecordsState> emit,
+  ) async {
+    emit(state.copyWith(status: const RecordsStatus.loading()));
+
+    try {
+      if (event.selectedRelatedIds.isNotEmpty) {
+        final allIds = <String>[event.resourceId, ...event.selectedRelatedIds];
+        await _recordsRepository.deleteResourcesByIds(allIds);
+      } else if (event.deleteRelated) {
+        await _recordsRepository.deleteResourceWithRelated(event.resourceId);
+      } else {
+        await _recordsRepository.deleteResource(event.resourceId);
+      }
+
+      emit(state.copyWith(
+        status: const RecordsStatus.deleted(),
+        resources: [],
+      ));
+
+      final remainingPatients = await _recordsRepository.getResources(
+        resourceTypes: [FhirType.Patient],
+        limit: 1,
+      );
+
+      if (remainingPatients.isEmpty) {
+        emit(state.copyWith(
+          status: const RecordsStatus.success(),
+          resources: [],
+          hasMorePages: false,
+        ));
+      } else {
+        await _loadResources(emit);
+      }
+    } catch (e) {
+      emit(state.copyWith(status: RecordsStatus.failure(e)));
+    }
   }
 }

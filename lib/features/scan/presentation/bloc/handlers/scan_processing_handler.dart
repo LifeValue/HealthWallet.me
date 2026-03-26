@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/scan/domain/services/scan_log_buffer.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -59,10 +60,6 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
     if (session.isProcessing || session.status == ProcessingStatus.draft) {
       return;
     }
-    if (session.status == ProcessingStatus.patientExtracted &&
-        session.patient.hasSelection) {
-      return;
-    }
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
     );
@@ -93,6 +90,51 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
             sessionId: event.sessionId, status: ProcessingStatus.draft);
         return;
       }
+      final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
+      if (ocrPreMatch != null) {
+        ScanLogBuffer.instance.log(
+          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: ${ocrPreMatch.displayTitle}, running container-only AI');
+        final stagedPatient = StagedPatient(
+          existing: ocrPreMatch,
+          mode: ImportMode.linkExisting,
+        );
+        final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
+        final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
+        final savedContextSize = prefs.getInt(SharedPrefsConstants.aiContextSize);
+        final container = await scanRepository.mapContainerOnly(
+          medicalText,
+          maxTokens: savedMaxTokens,
+          threads: savedThreads,
+          contextSize: savedContextSize,
+        );
+        final finalSession =
+            state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+        if (container is MappingDiagnosticReport) {
+          updateSession(emit,
+              sessionId: event.sessionId,
+              status: ProcessingStatus.patientExtracted,
+              patient: stagedPatient,
+              diagnosticReport: StagedDiagnosticReport(draft: container),
+              updateDb: true);
+        } else {
+          updateSession(emit,
+              sessionId: event.sessionId,
+              status: ProcessingStatus.patientExtracted,
+              patient: stagedPatient,
+              encounter: StagedEncounter(draft: container as MappingEncounter),
+              updateDb: true);
+        }
+        emit(state.copyWith(
+          notification: Notification(
+            text: "${finalSession?.origin ?? 'Document'} patient matched",
+            route: ProcessingRoute(sessionId: event.sessionId),
+            time: DateTime.now(),
+          ),
+        ));
+        startNextPendingSession();
+        return;
+      }
+
       final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
       final savedGpuLayers = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
       final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
@@ -104,8 +146,6 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
         threads: savedThreads,
         contextSize: savedContextSize,
       );
-      debugPrint(
-          '[ScanAI] bloc: container type=${container.runtimeType}, isDiagnosticReport=${container is MappingDiagnosticReport}');
       final stagedPatient = await _matchOrCreatePatient(patient);
       final finalSession =
           state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
@@ -131,27 +171,63 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
           time: DateTime.now(),
         ),
       ));
+
       startNextPendingSession();
     } on Exception catch (e) {
-      debugPrint('[ScanAI] _onScanMappingInitiated ERROR: $e');
-      debugPrint('[ScanAI] isCapacityError: ${isCapacityError(e.toString())}');
-      debugPrint('[ScanAI] emit.isDone: ${emit.isDone}');
       updateSession(emit,
           sessionId: event.sessionId,
           status: ProcessingStatus.pending,
           updateDb: true);
       if (!emit.isDone) {
         if (isCapacityError(e.toString())) {
-          debugPrint('[ScanAI] emitting capacityFailure');
           emit(state.copyWith(
             status: ScanStatus.capacityFailure(sessionId: event.sessionId),
           ));
         } else {
-          debugPrint('[ScanAI] emitting generic failure');
           emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
         }
       }
     }
+  }
+
+  Future<Patient?> _tryMatchPatientFromOcr(String ocrText) async {
+    if (ocrText.isEmpty) return null;
+    try {
+      final allPatientsResources = await recordsRepository.getResources(
+        resourceTypes: [FhirType.Patient],
+        limit: 1000,
+      );
+      final allPatients = allPatientsResources.whereType<Patient>().toList();
+      if (allPatients.isEmpty) return null;
+
+      for (final patient in allPatients) {
+        if (patient.identifier == null) continue;
+        for (final id in patient.identifier!) {
+          final value = id.value?.valueString;
+          if (value == null || value.length < 5) continue;
+          if (ocrText.contains(value) || _fuzzyIdentifierMatch(value, ocrText)) {
+            ScanLogBuffer.instance.log(
+              '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value');
+            return patient;
+          }
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  bool _fuzzyIdentifierMatch(String identifier, String ocrText) {
+    final digitsOnly = identifier.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.length < 5) return false;
+
+    if (ocrText.contains(digitsOnly)) return true;
+
+    if (digitsOnly.length > 10) {
+      final trimmed = digitsOnly.substring(0, digitsOnly.length - 1);
+      if (ocrText.contains(trimmed)) return true;
+    }
+
+    return false;
   }
 
   Future<StagedPatient> _matchOrCreatePatient(MappingPatient patient) async {
@@ -300,17 +376,19 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);
       }
-      if (!activeSession.isDocumentAttached) {
-        final encounterForDoc =
-            finalContainer is Encounter ? finalContainer : null;
-        await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
-          filePaths: activeSession.filePaths,
-          patientId: subjectId,
-          encounter: encounterForDoc,
-          sourceId: sourceId,
-          title: finalContainer.displayTitle,
-        );
-      }
+      final encounterForDoc =
+          finalContainer is Encounter ? finalContainer : null;
+      await documentReferenceService.deleteDocumentReferences(
+        sourceId: sourceId,
+        encounterId: finalContainer.id,
+      );
+      await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
+        filePaths: activeSession.filePaths,
+        patientId: subjectId,
+        encounter: encounterForDoc,
+        sourceId: sourceId,
+        title: finalContainer.displayTitle,
+      );
       emit(state.copyWith(status: const ScanStatus.success()));
     } catch (e) {
       logger.e('[ScanBloc] resource creation failed: $e');
@@ -321,37 +399,15 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
   void onScanDocumentAttached(
     ScanDocumentAttached event,
     Emitter<ScanState> emit,
-  ) async {
+  ) {
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
-    try {
-      final (subjectId, sourceId, finalContainer, finalPatient) =
-          await _persistPrimaryResources(session);
-      final encounterForDoc =
-          finalContainer is Encounter ? finalContainer : null;
-      await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
-        filePaths: session.filePaths,
-        patientId: subjectId,
-        encounter: encounterForDoc,
-        sourceId: sourceId,
-        title: finalContainer.displayTitle,
-      );
-      updateSession(emit,
-          sessionId: event.sessionId,
-          isDocumentAttached: true,
-          patient: StagedPatient(
-              existing: finalPatient, mode: ImportMode.linkExisting),
-          encounter: finalContainer is Encounter
-              ? StagedEncounter(
-                  existing: finalContainer, mode: ImportMode.linkExisting)
-              : null,
-          updateDb: true);
-    } catch (e) {
-      if (!emit.isDone) {
-        emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
-      }
-    }
+
+    updateSession(emit,
+        sessionId: event.sessionId,
+        isDocumentAttached: true,
+        updateDb: true);
   }
 
   Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
@@ -361,7 +417,8 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
     String sourceId;
     List<IFhirResource> resourcesToSave = [];
     final availableSources = await syncRepository.getSources();
-    if (activeSession.patient.existing != null) {
+    if (activeSession.patient.mode == ImportMode.linkExisting &&
+        activeSession.patient.existing != null) {
       Patient existingPatient = activeSession.patient.existing!;
       final walletSource =
           await sourceTypeService.ensureWalletSourceForPatient(
@@ -370,6 +427,15 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
               availableSources: availableSources);
       subjectId = existingPatient.id;
       sourceId = walletSource.id;
+
+      if (activeSession.patient.draft != null) {
+        final draftWithExistingId = activeSession.patient.draft!
+            .copyWith(id: existingPatient.id);
+        resourcesToSave.add(draftWithExistingId.toFhirResource(
+            sourceId: existingPatient.sourceId,
+            subjectId: '',
+            encounterId: ''));
+      }
     } else {
       MappingPatient draftPatient = activeSession.patient.draft!;
       final walletSource =
@@ -405,12 +471,18 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
     if (resourcesToSave.isNotEmpty) {
       await syncRepository.saveResources(resourcesToSave);
     }
-    return (
-      subjectId,
-      sourceId,
-      finalContainer,
-      activeSession.patient.existing ??
-          (resourcesToSave.firstWhere((r) => r is Patient) as Patient)
-    );
+
+    final Patient finalPatient;
+    final savedPatient = resourcesToSave.whereType<Patient>().firstOrNull;
+    if (savedPatient != null) {
+      finalPatient = savedPatient;
+    } else if (activeSession.patient.existing != null) {
+      finalPatient = activeSession.patient.existing!;
+    } else {
+      finalPatient =
+          resourcesToSave.firstWhere((r) => r is Patient) as Patient;
+    }
+
+    return (subjectId, sourceId, finalContainer, finalPatient);
   }
 }

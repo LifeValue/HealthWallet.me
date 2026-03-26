@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
@@ -64,7 +65,7 @@ class ShareRecordsPage extends StatelessWidget {
         } else if (pendingInvitationId != null) {
           bloc.add(ShareRecordsEvent.receiverInitializedWithInvitation(
             invitationId: pendingInvitationId!,
-            deviceName: pendingInvitationDeviceName ?? 'Unknown Device',
+            deviceName: pendingInvitationDeviceName ?? context.l10n.shareUnknownDevice,
             preAccepted: invitationPreAccepted,
           ));
         } else {
@@ -180,7 +181,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
                                     },
                                   ),
                                   titleWidget: Text(
-                                    _getTitle(state),
+                                    _getTitle(context, state),
                                     style: AppTextStyle.bodyLarge,
                                   ),
                                 )
@@ -198,13 +199,13 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
                                         },
                                       ),
                                       titleWidget: Text(
-                                        _getTitle(state),
+                                        _getTitle(context, state),
                                         style: AppTextStyle.bodyLarge,
                                       ),
                                     )
                                   : CustomAppBar(
                                       titleWidget: Text(
-                                        _getTitle(state),
+                                        _getTitle(context, state),
                                         style: AppTextStyle.bodyLarge,
                                       ),
                                     ),
@@ -231,7 +232,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
     return Row(
       children: [
         Text(
-          '$count selected',
+          context.l10n.shareSelectedCount(count),
           style: AppTextStyle.bodyLarge.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -243,7 +244,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
             CustomArrowTooltip.show(
               context: context,
               buttonKey: _appBarInfoIconKey,
-              message: 'VIEW ONLY - Data will be deleted when you close the session or leave proximity area',
+              message: context.l10n.shareViewOnlyBanner,
               backgroundColor: const Color(0xFFE37A3C),
               alignment: TooltipAlignment.alignRight,
               width: 240,
@@ -286,7 +287,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text('Select All', style: TextStyle(fontSize: 12)),
+          child: Text(context.l10n.selectAll, style: const TextStyle(fontSize: 12)),
         ),
         if (hasSelection)
           TextButton(
@@ -300,7 +301,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('Clear', style: TextStyle(fontSize: 12)),
+            child: Text(context.l10n.clearAll, style: const TextStyle(fontSize: 12)),
           ),
       ],
     );
@@ -310,7 +311,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
       BuildContext context, ShareRecordsState state) {
     final receivedData = state.receivedData;
     final recordCount = receivedData?.recordCount ?? 0;
-    final deviceName = receivedData?.senderDeviceName ?? 'Unknown Device';
+    final deviceName = receivedData?.senderDeviceName ?? context.l10n.shareUnknownDevice;
 
     return Row(
       children: [
@@ -336,20 +337,14 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
               ),
               children: [
                 TextSpan(
-                  text: '$recordCount record${recordCount == 1 ? '' : 's'}',
+                  text: context.l10n.shareRecordCount(recordCount),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const TextSpan(text: ' shared from '),
-                TextSpan(
-                  text: deviceName,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                TextSpan(text: ' '),
+                TextSpan(text: context.l10n.shareSharedFrom(deviceName)),
               ],
             ),
           ),
@@ -361,7 +356,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
             CustomArrowTooltip.show(
               context: context,
               buttonKey: _viewingInfoIconKey,
-              message: 'VIEW ONLY - Data will be deleted when you exit',
+              message: context.l10n.shareViewOnlyBannerViewing,
               backgroundColor: const Color(0xFFE37A3C),
               alignment: TooltipAlignment.alignRight,
               width: 240,
@@ -418,7 +413,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Shared records are view-only. All data is automatically deleted when the session ends or the time limit expires.',
+              context.l10n.shareInfoBannerMessage,
               style: TextStyle(
                 color: AppColors.warning,
                 fontWeight: FontWeight.w500,
@@ -434,7 +429,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              'OK',
+              context.l10n.ok,
               style: TextStyle(
                 color: AppColors.warning,
                 fontWeight: FontWeight.w700,
@@ -446,24 +441,24 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
     );
   }
 
-  String _getTitle(ShareRecordsState state) {
+  String _getTitle(BuildContext context, ShareRecordsState state) {
     switch (state.phase) {
       case SharePhase.selectingRecords:
-        return 'Share';
+        return context.l10n.shareTitle;
       case SharePhase.discoveringPeers:
-        return state.isSending ? 'Find Devices' : 'Waiting...';
+        return state.isSending ? context.l10n.shareFindDevices : context.l10n.shareWaiting;
       case SharePhase.connecting:
-        return 'Connecting';
+        return context.l10n.shareConnectingTitle;
       case SharePhase.transferring:
-        return state.isSending ? 'Sending' : 'Receiving';
+        return state.isSending ? context.l10n.shareSending : context.l10n.shareReceiving;
       case SharePhase.monitoringSession:
-        return 'Session Active';
+        return context.l10n.shareSessionActive;
       case SharePhase.viewingRecords:
-        return 'Viewing Records';
+        return context.l10n.shareViewingRecords;
       case SharePhase.sessionEnded:
-        return 'Complete';
+        return context.l10n.shareComplete;
       case SharePhase.error:
-        return 'Error';
+        return context.l10n.shareError;
     }
   }
 
@@ -514,19 +509,19 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Permissions Required'),
+        title: Text(context.l10n.sharePermissionsRequired),
         content: Text(SharePermissionsHelper.getPermissionExplanation()),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
               SharePermissionsHelper.openSettings();
             },
-            child: const Text('Open Settings'),
+            child: Text(context.l10n.openSettings),
           ),
         ],
       ),

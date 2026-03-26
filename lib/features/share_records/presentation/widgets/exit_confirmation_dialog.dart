@@ -61,7 +61,7 @@ class ExitConfirmationDialog extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Confirm Exit',
+                      context.l10n.shareConfirmExit,
                       style: AppTextStyle.bodyMedium.copyWith(color: textColor),
                     ),
                     IconButton(
@@ -96,7 +96,7 @@ class ExitConfirmationDialog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Delete Shared Records?',
+                            context.l10n.shareDeleteSharedRecords,
                             style: AppTextStyle.bodyMedium.copyWith(
                               color: context.colorScheme.onSurface,
                               fontWeight: FontWeight.w600,
@@ -117,7 +117,7 @@ class ExitConfirmationDialog extends StatelessWidget {
                               const SizedBox(width: Insets.small),
                               Expanded(
                                 child: Text(
-                                  'The shared record will be permanently deleted from this device. Action cannot be undone',
+                                  context.l10n.shareDeleteWarning,
                                   style: AppTextStyle.labelLarge.copyWith(
                                     color: AppColors.error,
                                   ),
@@ -143,7 +143,7 @@ class ExitConfirmationDialog extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              'Cancel',
+                              context.l10n.cancel,
                               style: AppTextStyle.buttonSmall.copyWith(
                                 color: AppColors.primary,
                               ),
@@ -166,7 +166,7 @@ class ExitConfirmationDialog extends StatelessWidget {
                               elevation: 0,
                             ),
                             child: Text(
-                              'Delete & Exit',
+                              context.l10n.shareDeleteAndExit,
                               style: AppTextStyle.buttonSmall.copyWith(
                                 color: Colors.white,
                               ),

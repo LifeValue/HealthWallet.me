@@ -129,7 +129,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
                 itemBuilder: (context, index) {
                   final source = _getSortedSources()[index];
                   final isSelected = source.id == widget.selectedSource;
-                  final isWallet = source.id == 'wallet';
+                  final isWallet = source.id.startsWith('wallet-');
                   final isAll = source.id == 'All';
 
                   return InkWell(
@@ -258,20 +258,12 @@ class _SourceListDialogState extends State<SourceListDialog> {
 
     final allSource = sources.where((s) => s.id == 'All').toList();
 
-    List<Source> walletSource = [];
-    final genericWalletList = sources
-        .where((s) => s.id == 'wallet' && s.platformType == 'wallet')
+    final walletSource = sources
+        .where((s) =>
+            s.platformType == 'wallet' &&
+            s.id != 'All' &&
+            s.id != 'demo_data')
         .toList();
-    if (genericWalletList.isNotEmpty) {
-      walletSource = [genericWalletList.first];
-    } else {
-      final walletList = sources
-          .where((s) => s.platformType == 'wallet' && s.id != 'All')
-          .toList();
-      if (walletList.isNotEmpty) {
-        walletSource = [walletList.first];
-      }
-    }
 
     final walletIds = walletSource.map((s) => s.id).toSet();
     final otherSources = sources

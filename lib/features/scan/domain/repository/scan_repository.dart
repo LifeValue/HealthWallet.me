@@ -43,6 +43,13 @@ abstract class ScanRepository {
 
   Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant);
 
+  Future<MappingResource> mapContainerOnly(
+    String ocrText, {
+    int? maxTokens,
+    int? threads,
+    int? contextSize,
+  });
+
   Future<(MappingPatient, MappingResource)> mapBasicInfo(
     List<String> imagePaths, {
     int? maxTokens,

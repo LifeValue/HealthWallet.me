@@ -71,6 +71,12 @@ class ScanResourceChanged extends ScanEvent with _$ScanResourceChanged {
 }
 
 @freezed
+class ScanPatientReverted extends ScanEvent with _$ScanPatientReverted {
+  const factory ScanPatientReverted({required String sessionId}) =
+      _ScanPatientReverted;
+}
+
+@freezed
 class ScanResourceRemoved extends ScanEvent with _$ScanResourceRemoved {
   const factory ScanResourceRemoved(
       {required String sessionId, required int index}) = _ScanResourceRemoved;
@@ -148,4 +154,12 @@ class ScanPagesReordered extends ScanEvent with _$ScanPagesReordered {
     required String sessionId,
     required List<String> reorderedPaths,
   }) = _ScanPagesReordered;
+}
+
+@freezed
+class ScanContainerTypeSwitched extends ScanEvent
+    with _$ScanContainerTypeSwitched {
+  const factory ScanContainerTypeSwitched({
+    required String sessionId,
+  }) = _ScanContainerTypeSwitched;
 }

@@ -88,7 +88,7 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
         Padding(
           padding: const EdgeInsets.all(Insets.normal),
           child: Text(
-            'Found ${widget.state.discoveredPeers.length} device(s)',
+            context.l10n.shareFoundDevices(widget.state.discoveredPeers.length),
             style: AppTextStyle.titleSmall.copyWith(
               color: context.colorScheme.onSurface,
             ),
@@ -137,7 +137,7 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
                   const ShareRecordsEvent.sendModeSelected(),
                 );
           },
-          label: 'Cancel',
+          label: context.l10n.cancel,
           variant: AppButtonVariant.outlined,
         ),
       ),
@@ -195,7 +195,7 @@ class _PeerDeviceTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'HealthWallet Device',
+                      context.l10n.shareHealthWalletDevice,
                       style: AppTextStyle.labelMedium.copyWith(
                         color: context.colorScheme.onSurface
                             .withValues(alpha: 0.6),

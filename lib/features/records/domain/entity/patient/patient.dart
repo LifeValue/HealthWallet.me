@@ -308,13 +308,14 @@ class Patient with _$Patient implements IFhirResource {
           prefix: 'Medical Record Number'),
     );
 
-    // SSN
-    final ssn = FhirFieldExtractor.extractIdentifierByType(identifier, 'SS') ??
-        FhirFieldExtractor.extractIdentifierByType(identifier, 'SSN');
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createIdentificationLine(ssn, prefix: 'SSN'),
-    );
+    final nationalId = FhirFieldExtractor.extractIdentifierByType(identifier, 'SS');
+    if (nationalId != null) {
+      final label = FhirFieldExtractor.extractPatientIdentifierLabel(this);
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        ResourceFieldMapper.createIdentificationLine(nationalId, prefix: label),
+      );
+    }
 
     // Driver's License
     final driversLicense =
@@ -336,7 +337,7 @@ class Patient with _$Patient implements IFhirResource {
 
     // Other Identifiers (show remaining ones)
     if (identifier != null) {
-      final displayedTypes = {'MR', 'SS', 'SSN', 'DL', 'PPN'};
+      final displayedTypes = {'MR', 'SS', 'DL', 'PPN'};
       for (final id in identifier!) {
         final typeCode = id.type?.coding?.firstOrNull?.code?.valueString;
         if (typeCode != null && !displayedTypes.contains(typeCode)) {

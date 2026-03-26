@@ -50,10 +50,10 @@ class SelectableRecordsList extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               hasActiveFilters
-                  ? 'No records match the selected filters'
+                  ? context.l10n.shareNoRecordsMatchSelectedFilters
                   : hasAppliedFilters
-                      ? 'No records found for the applied filters'
-                      : 'No records available',
+                      ? context.l10n.shareNoRecordsForAppliedFilters
+                      : context.l10n.shareNoRecordsAvailable,
               style: AppTextStyle.titleMedium.copyWith(
                 color: context.colorScheme.onSurface,
               ),
@@ -62,10 +62,10 @@ class SelectableRecordsList extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               hasActiveFilters
-                  ? 'Try clearing some filters'
+                  ? context.l10n.shareTryClearingFilters
                   : hasAppliedFilters
-                      ? 'The Records page filters returned no results'
-                      : 'Import or sync records to share them',
+                      ? context.l10n.shareRecordsPageFiltersNoResults
+                      : context.l10n.shareImportOrSyncRecords,
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.6),
               ),

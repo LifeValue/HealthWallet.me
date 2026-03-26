@@ -17,10 +17,12 @@ import 'package:health_wallet/features/scan/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/scan/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 import 'package:health_wallet/features/scan/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
+import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
-class ResourcesForm extends StatelessWidget {
+class ResourcesForm extends StatefulWidget {
   const ResourcesForm({
     required this.resources,
     required this.sessionId,
@@ -43,24 +45,46 @@ class ResourcesForm extends StatelessWidget {
   final bool isAttachmentLocked;
 
   @override
+  State<ResourcesForm> createState() => _ResourcesFormState();
+}
+
+class _ResourcesFormState extends State<ResourcesForm> {
+  int _patientVersion = 0;
+  bool _hadDraft = false;
+
+  @override
+  void didUpdateWidget(ResourcesForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final hasDraft = widget.patient?.draft != null;
+    if (_hadDraft && !hasDraft) {
+      _patientVersion++;
+    }
+    _hadDraft = hasDraft;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final patient = widget.patient;
+    final encounter = widget.encounter;
+    final diagnosticReport = widget.diagnosticReport;
+    final resources = widget.resources;
+    final sessionId = widget.sessionId;
+
     return GestureDetector(
       onTap: () => context.closeKeyboard(),
       behavior: HitTestBehavior.opaque,
       child: Form(
-        key: formKey,
+        key: widget.formKey,
         child: Column(
           children: [
             if (patient?.hasSelection == true)
               _buildResourceForm(
                 context,
-                resource: patient!.mode == ImportMode.createNew
-                    ? patient!.draft!
-                    : MappingPatient.fromFhirResource(patient!.existing!),
+                resource: _resolvePatient(patient!),
                 canRemove: false,
                 isStagedResource: true,
-                isReadOnly: isAttachmentLocked ||
-                    patient!.mode == ImportMode.linkExisting,
+                isLocked: widget.isAttachmentLocked,
+                patientVersion: _patientVersion,
                 onPropertyChanged: (propertyKey, newValue) =>
                     context.read<ScanBloc>().add(
                           ScanResourceChanged(
@@ -74,13 +98,13 @@ class ResourcesForm extends StatelessWidget {
               ),
             if (diagnosticReport?.hasSelection == true)
               KeyedSubtree(
-                key: encounterSectionKey,
+                key: widget.encounterSectionKey,
                 child: _buildResourceForm(
                   context,
                   canRemove: false,
                   resource: diagnosticReport!.draft!,
                   isStagedResource: true,
-                  isReadOnly: isAttachmentLocked,
+                  isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
                       context.read<ScanBloc>().add(
                             ScanResourceChanged(
@@ -95,7 +119,7 @@ class ResourcesForm extends StatelessWidget {
               )
             else if (encounter?.hasSelection == true)
               KeyedSubtree(
-                key: encounterSectionKey,
+                key: widget.encounterSectionKey,
                 child: _buildResourceForm(
                   context,
                   canRemove: false,
@@ -103,8 +127,7 @@ class ResourcesForm extends StatelessWidget {
                       ? encounter!.draft!
                       : MappingEncounter.fromFhirResource(encounter!.existing!),
                   isStagedResource: true,
-                  isReadOnly: isAttachmentLocked ||
-                      encounter!.mode == ImportMode.linkExisting,
+                  isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
                       context.read<ScanBloc>().add(
                             ScanResourceChanged(
@@ -157,17 +180,25 @@ class ResourcesForm extends StatelessWidget {
     Function(String, String)? onPropertyChanged,
     bool canRemove = true,
     Function? onResourceRemoved,
+    int patientVersion = 0,
     bool isStagedResource = false,
-    bool isReadOnly = false,
+    bool isLocked = false,
   }) {
     Map<String, TextFieldDescriptor> textFields =
         resource.getFieldDescriptors();
 
     return Container(
-      key: ValueKey(resource.id),
+      key: ValueKey('${resource.id}_v$patientVersion'),
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.theme.dividerColor)),
+          border: Border.all(
+            color: isLocked
+                ? context.colorScheme.primary.withValues(alpha: 0.4)
+                : context.theme.dividerColor,
+          ),
+          color: isLocked
+              ? context.colorScheme.primary.withValues(alpha: 0.04)
+              : null),
       margin: const EdgeInsets.only(bottom: 24),
       child: Padding(
         padding: const EdgeInsets.all(Insets.normal),
@@ -181,36 +212,38 @@ class ResourcesForm extends StatelessWidget {
                 Row(
                   children: [
                     if (isStagedResource &&
-                        !isAttachmentLocked &&
                         resource is! MappingEncounter &&
                         resource is! MappingDiagnosticReport)
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(
-                          onTap: () async {
-                            final result =
-                                await showDialog<AttachToEncounterResult>(
-                              context: context,
-                              builder: (context) => AttachToEncounterWidget(
-                                patient: this.patient,
-                                encounter: this.encounter,
-                              ),
-                            );
-                            if (result == null || !context.mounted) return;
-
-                            final (patient, encounter) = result;
-                            context.read<ScanBloc>().add(
-                                  ScanEncounterAttached(
-                                    sessionId: sessionId,
-                                    patient: patient,
-                                    encounter: encounter,
-                                  ),
-                                );
-                          },
+                          onTap: () => _openAttachDialog(context),
                           child: Assets.icons.attachment.svg(
                               width: 20,
                               color: context.theme.iconTheme.color ??
                                   context.colorScheme.onSurface),
+                        ),
+                      ),
+                    if (isStagedResource &&
+                        (resource is MappingEncounter ||
+                            resource is MappingDiagnosticReport))
+                      Padding(
+                        padding: const EdgeInsetsGeometry.all(6),
+                        child: GestureDetector(
+                          onTap: () => context.read<ScanBloc>().add(
+                                ScanContainerTypeSwitched(sessionId: widget.sessionId),
+                              ),
+                          child: Tooltip(
+                            message: resource is MappingEncounter
+                                ? 'Switch to Diagnostic Report'
+                                : 'Switch to Encounter',
+                            child: Icon(
+                              Icons.swap_horiz,
+                              size: 20,
+                              color: context.theme.iconTheme.color ??
+                                  context.colorScheme.onSurface,
+                            ),
+                          ),
                         ),
                       ),
                     if (canRemove)
@@ -228,7 +261,9 @@ class ResourcesForm extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            if (resource is MappingPatient && widget.patient != null)
+              _buildPatientMatchBanner(context, widget.patient!),
+            const SizedBox(height: Insets.normal),
             ...textFields.entries.map((entry) {
               final propertyKey = entry.key;
               final descriptor = entry.value;
@@ -267,25 +302,7 @@ class ResourcesForm extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  if (isReadOnly)
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: confidenceLevel.getColor(context)),
-                        borderRadius: BorderRadius.circular(8),
-                        color: confidenceLevel
-                            .getColor(context)
-                            .withValues(alpha: 0.08),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      child: Text(
-                        descriptor.value,
-                        style: AppTextStyle.labelLarge,
-                      ),
-                    )
-                  else if (descriptor.fieldType == FieldType.date)
+                  if (descriptor.fieldType == FieldType.date)
                     FormField<String>(
                       key: ValueKey(
                           '${resource.id}_${propertyKey}_form_${descriptor.value}'),
@@ -342,7 +359,8 @@ class ResourcesForm extends StatelessWidget {
                                     Expanded(
                                       child: Text(
                                         descriptor.value.isNotEmpty
-                                            ? descriptor.value
+                                            ? _formatDateForDisplay(
+                                                descriptor.value, context)
                                             : context.l10n.selectDate,
                                         style: AppTextStyle.labelLarge.copyWith(
                                           color: descriptor.value.isNotEmpty
@@ -393,9 +411,7 @@ class ResourcesForm extends StatelessWidget {
                         context.l10n.preferNotToSay,
                       ],
                       getDisplayText: (item) => item,
-                      onChanged: isReadOnly
-                          ? null
-                          : (String newValue) {
+                      onChanged: (String newValue) {
                               final fhirValue =
                                   _mapDisplayGenderToFhir(newValue, context);
                               onPropertyChanged?.call(propertyKey, fhirValue);
@@ -472,27 +488,19 @@ class ResourcesForm extends StatelessWidget {
     }
   }
 
+  String _formatDateForDisplay(String isoDate, BuildContext context) {
+    final region = context.read<UserBloc>().state.regionPreset;
+    return DateFormatUtils.formatIsoForDisplay(isoDate, region);
+  }
+
   Future<String?> _showDatePicker(
     BuildContext context,
     String propertyKey,
     String currentValue,
     Function(String, String)? onPropertyChanged,
   ) async {
-    DateTime? initialDate;
-    if (currentValue.isNotEmpty) {
-      initialDate = DateTime.tryParse(currentValue);
-      if (initialDate == null) {
-        try {
-          final dateFormat = DateFormat('yyyy-MM-dd');
-          initialDate = dateFormat.parse(currentValue);
-        } catch (e) {
-          initialDate = null;
-        }
-      }
-    }
-    if (initialDate == null) {
-      initialDate = DateTime.now();
-    }
+    final initialDate =
+        DateFormatUtils.tryParseIso(currentValue) ?? DateTime.now();
 
     DateTime? firstDate;
     DateTime? lastDate;
@@ -513,10 +521,209 @@ class ResourcesForm extends StatelessWidget {
     );
 
     if (pickedDate != null && onPropertyChanged != null) {
-      final formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+      final formattedDate = DateFormatUtils.isoCompact(pickedDate);
       onPropertyChanged(propertyKey, formattedDate);
       return formattedDate;
     }
     return null;
+  }
+
+  void _swapPatient(
+      BuildContext context, StagedPatient patient, ImportMode targetMode) {
+    context.read<ScanBloc>().add(
+          ScanEncounterAttached(
+            sessionId: widget.sessionId,
+            patient: StagedPatient(
+              draft: patient.draft,
+              existing: patient.existing,
+              mode: targetMode,
+            ),
+            encounter: widget.encounter ?? const StagedEncounter(),
+          ),
+        );
+  }
+
+  Future<void> _openAttachDialog(BuildContext context) async {
+    final result = await showDialog<AttachToEncounterResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AttachToEncounterWidget(
+        patient: widget.patient,
+        encounter: widget.encounter,
+        confirmText: context.l10n.save,
+      ),
+    );
+    if (result == null || !context.mounted) return;
+
+    final (patient, encounter) = result;
+    context.read<ScanBloc>().add(
+          ScanEncounterAttached(
+            sessionId: widget.sessionId,
+            patient: patient,
+            encounter: encounter,
+          ),
+        );
+  }
+
+  MappingPatient _resolvePatient(StagedPatient patient) {
+    if (patient.draft != null && patient.existing != null) {
+      final isSamePerson = patient.draft!.id == patient.existing!.id;
+      if (isSamePerson || patient.mode == ImportMode.createNew) {
+        return patient.draft!;
+      }
+      return MappingPatient.fromFhirResource(patient.existing!);
+    }
+    if (patient.draft != null) {
+      return patient.draft!;
+    }
+    if (patient.existing != null) {
+      return MappingPatient.fromFhirResource(patient.existing!);
+    }
+    return const MappingPatient();
+  }
+
+  Widget _buildPatientMatchBanner(BuildContext context, StagedPatient patient) {
+    final hasBoth = patient.draft != null && patient.existing != null;
+    final isNewPatient = patient.existing == null && patient.draft != null;
+    final isNewWithExisting = hasBoth && patient.mode == ImportMode.createNew;
+    final isModified = hasBoth && patient.mode == ImportMode.linkExisting;
+
+    if (isNewPatient) {
+      final draftName = patient.draft != null
+          ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'
+              .trim()
+          : '';
+      return _buildBanner(
+        context,
+        icon: Icons.person_add_outlined,
+        color: context.colorScheme.tertiary,
+        text: draftName.isNotEmpty
+            ? '${context.l10n.newPatient}: $draftName'
+            : context.l10n.newPatient,
+      );
+    }
+
+    if (isNewWithExisting) {
+      final draftName = patient.draft != null
+          ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'
+              .trim()
+          : '';
+      return _buildBanner(
+        context,
+        icon: Icons.person_add_outlined,
+        color: context.colorScheme.tertiary,
+        text: draftName.isNotEmpty
+            ? '${context.l10n.newPatient}: $draftName'
+            : context.l10n.newPatient,
+        onAction: () => _swapPatient(context, patient, ImportMode.linkExisting),
+        actionIcon: Icons.swap_horiz,
+      );
+    }
+
+    final displayName = patient.existing!.displayTitle;
+
+    if (isModified) {
+      final isSamePerson = patient.draft!.id == patient.existing!.id;
+
+      if (isSamePerson && widget.isAttachmentLocked) {
+        return _buildBanner(
+          context,
+          icon: Icons.save_outlined,
+          color: AppColors.success,
+          text: context.l10n.patientSavingModified(displayName),
+          onAction: () => context.read<ScanBloc>().add(
+                ScanPatientReverted(sessionId: widget.sessionId),
+              ),
+        );
+      }
+
+      if (isSamePerson) {
+        return _buildBanner(
+          context,
+          icon: Icons.edit_outlined,
+          color: AppColors.warning,
+          text: context.l10n.patientModifiedUpdating(displayName),
+          onAction: () => context.read<ScanBloc>().add(
+                ScanPatientReverted(sessionId: widget.sessionId),
+              ),
+        );
+      }
+
+      return _buildBanner(
+        context,
+        leadingIcon: Assets.icons.information.svg(
+          width: 16,
+          height: 16,
+          colorFilter: ColorFilter.mode(
+            context.colorScheme.secondary,
+            BlendMode.srcIn,
+          ),
+        ),
+        color: context.colorScheme.secondary,
+        text: context.l10n.patientChangedTo(displayName),
+        onAction: () => _swapPatient(context, patient, ImportMode.createNew),
+        actionIcon: Icons.swap_horiz,
+      );
+    }
+
+    return _buildBanner(
+      context,
+      icon: Icons.check_circle,
+      color: context.colorScheme.primary,
+      text: context.l10n.patientMatchFound(displayName),
+    );
+  }
+
+  Widget _buildBanner(
+    BuildContext context, {
+    IconData? icon,
+    Widget? leadingIcon,
+    required Color color,
+    required String text,
+    VoidCallback? onAction,
+    IconData? actionIcon,
+  }) {
+    final trailingIcon = actionIcon ?? Icons.close;
+    final leading = leadingIcon ?? Icon(icon, size: 16, color: color);
+    final banner = Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        left: Insets.smallNormal,
+        top: Insets.extraSmall,
+        bottom: Insets.extraSmall,
+        right: onAction != null ? Insets.extraSmall : Insets.smallNormal,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          leading,
+          const SizedBox(width: Insets.small),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyle.labelSmall.copyWith(
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (onAction != null)
+            Padding(
+              padding: const EdgeInsets.all(Insets.extraSmall),
+              child: Icon(trailingIcon, size: 14, color: color),
+            ),
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: Insets.small),
+      child: onAction != null
+          ? GestureDetector(onTap: onAction, child: banner)
+          : banner,
+    );
   }
 }

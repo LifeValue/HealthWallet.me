@@ -29,11 +29,11 @@ class SessionTimerWidget extends StatelessWidget {
     final seconds = remaining.inSeconds % 60;
     String timeText;
     if (hours > 0) {
-      timeText = '${hours}h ${minutes}min ${seconds}s';
+      timeText = context.l10n.shareTimerHoursMinutesSeconds(hours, minutes, seconds);
     } else if (minutes > 0) {
-      timeText = '${minutes}min ${seconds}s';
+      timeText = context.l10n.shareTimerMinutesSeconds(minutes, seconds);
     } else {
-      timeText = '${seconds}s';
+      timeText = context.l10n.shareTimerSeconds(seconds);
     }
 
     final timerColor = isWarning ? AppColors.error : context.colorScheme.onSurface;
@@ -55,7 +55,7 @@ class SessionTimerWidget extends StatelessWidget {
             ),
             const SizedBox(width: Insets.small),
             Text(
-              'Session expires in',
+              context.l10n.shareSessionExpiresIn,
               style: AppTextStyle.bodyMedium.copyWith(
                 color: isWarning
                     ? AppColors.error

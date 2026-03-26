@@ -101,6 +101,27 @@ class FhirResourceDatasource {
     );
   }
 
+  Future<int> deleteResourceById(String id) async {
+    return (db.delete(db.fhirResource)
+          ..where((f) => f.id.equals(id)))
+        .go();
+  }
+
+  Future<int> deleteResourcesByIds(List<String> ids) async {
+    return (db.delete(db.fhirResource)
+          ..where((f) => f.id.isIn(ids)))
+        .go();
+  }
+
+  Future<int> getRelatedResourceCount(String encounterId) async {
+    final count = db.fhirResource.id.count();
+    final query = db.selectOnly(db.fhirResource)
+      ..addColumns([count])
+      ..where(db.fhirResource.encounterId.equals(encounterId));
+    final result = await query.getSingle();
+    return result.read(count) ?? 0;
+  }
+
   Future<int> deleteResourcesBySourceId(String sourceId) async {
     return (db.delete(db.fhirResource)
           ..where((f) => f.sourceId.equals(sourceId)))

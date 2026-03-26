@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +7,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -267,125 +267,16 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
   void _showDeleteConfirmationDialog(
       BuildContext context, AttachmentInfo attachmentInfo) {
-    final textColor = context.primaryTextColor;
-    final borderColor = context.borderColor;
-
-    showDialog(
+    AppSimpleDialog.showDestructiveConfirmation(
       context: context,
-      builder: (BuildContext context) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.all(Insets.normal),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: borderColor, width: 1),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(Insets.normal),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Are you sure you want to delete "${attachmentInfo.title}"?',
-                      style: AppTextStyle.labelLarge.copyWith(color: textColor),
-                    ),
-
-                    const SizedBox(height: Insets.small),
-
-                    Container(
-                      padding: const EdgeInsets.all(Insets.small),
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color:
-                              context.colorScheme.error.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            color: context.colorScheme.error,
-                            size: 20,
-                          ),
-                          const SizedBox(width: Insets.small),
-                          Expanded(
-                            child: Text(
-                              context.l10n.actionCannotBeUndone,
-                              style: AppTextStyle.bodySmall.copyWith(
-                                color: context.colorScheme.error,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: Insets.normal),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                              side: BorderSide.none,
-                              padding: const EdgeInsets.all(8),
-                              fixedSize: const Size.fromHeight(36),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                            ),
-                            child: Text(
-                              'Cancel',
-                              style: AppTextStyle.buttonSmall.copyWith(
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              _bloc.add(RecordAttachmentsFileDeleted(
-                                  attachmentInfo.documentReference));
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: context.colorScheme.error,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.all(8),
-                              fixedSize: const Size.fromHeight(36),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              'Delete',
-                              style: AppTextStyle.buttonSmall
-                                  .copyWith(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
+      title: context.l10n.deletePage,
+      message: context.l10n.deleteAttachmentConfirm,
+      warningText: context.l10n.actionCannotBeUndone,
+      confirmText: context.l10n.deletePage,
+      cancelText: context.l10n.cancel,
+      onConfirm: () {
+        _bloc.add(RecordAttachmentsFileDeleted(
+            attachmentInfo.documentReference));
       },
     );
   }
