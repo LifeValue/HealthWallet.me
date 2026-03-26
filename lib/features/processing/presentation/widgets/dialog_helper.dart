@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 
@@ -63,7 +63,7 @@ class DialogHelper {
   }
 
   static Widget buildAttachmentSuccessDialog(
-      BuildContext context, int count, Encounter encounter, ScanBloc bloc) {
+      BuildContext context, int count, Encounter encounter, ProcessingBloc bloc) {
     return AlertDialog(
       title: const Row(
         children: [
@@ -105,7 +105,7 @@ class DialogHelper {
   }
 
   static void showAttachmentSuccessDialog(
-      BuildContext context, int count, Encounter encounter, ScanBloc bloc) {
+      BuildContext context, int count, Encounter encounter, ProcessingBloc bloc) {
     showDialog(
       context: context,
       builder: (context) =>

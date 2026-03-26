@@ -28,6 +28,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   StreamSubscription? _mpcStateSub;
   MpcTransport? _mpcTransport;
 
+  static const _mpcTimeout = Duration(seconds: 10);
+  static const _reconnectDelay = Duration(seconds: 3);
+
   CommunicationBloc(
     this._platform,
     this._pairingStorage,
@@ -42,6 +45,11 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     on<CommunicationDisconnected>(_onDisconnected);
     on<CommunicationConnectionFailed>(_onConnectionFailed);
 
+    _listenToTcp();
+    _initMpcIfAvailable();
+  }
+
+  void _listenToTcp() {
     _connectionSub = _tcpService.connectionState.listen((tcpState) {
       switch (tcpState) {
         case ConnectionState.connected:
@@ -54,19 +62,21 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
           break;
       }
     });
+  }
 
-    if (TransportSelector.isMpcAvailable()) {
-      _mpcTransport = MpcTransport();
-      _mpcStateSub = _mpcTransport!.stateStream.listen((mpcState) {
-        if (mpcState == CommunicationState.connected) {
-          add(const CommunicationConnected(ip: 'mpc', port: 0));
-        } else if (mpcState == CommunicationState.disconnected) {
-          if (state.connectionTransport == ConnectionTransport.multipeerConnectivity) {
-            add(const CommunicationDisconnected());
-          }
+  void _initMpcIfAvailable() {
+    if (!TransportSelector.isMpcAvailable()) return;
+
+    _mpcTransport = MpcTransport();
+    _mpcStateSub = _mpcTransport!.stateStream.listen((mpcState) {
+      if (mpcState == CommunicationState.connected) {
+        add(const CommunicationConnected(ip: 'mpc', port: 0));
+      } else if (mpcState == CommunicationState.disconnected) {
+        if (state.connectionTransport == ConnectionTransport.multipeerConnectivity) {
+          add(const CommunicationDisconnected());
         }
-      });
-    }
+      }
+    });
   }
 
   Future<void> _onInitialised(
@@ -74,14 +84,14 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     Emitter<DesktopSyncState> emit,
   ) async {
     final pairing = _pairingStorage.loadPairing();
-    if (pairing != null) {
-      emit(state.copyWith(pairedDevice: pairing));
+    if (pairing == null) return;
 
-      if (_platform.isDesktop) {
-        await _startDesktopServer(emit, pairing);
-      } else {
-        add(const CommunicationConnectionRequested());
-      }
+    emit(state.copyWith(pairedDevice: pairing));
+
+    if (_platform.isDesktop) {
+      await _startDesktopServer(emit, pairing);
+    } else {
+      add(const CommunicationConnectionRequested());
     }
   }
 
@@ -100,7 +110,6 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
     await _pairingStorage.savePairing(pairing);
     emit(state.copyWith(pairedDevice: pairing));
-
     await _startDesktopServer(emit, pairing);
   }
 
@@ -130,7 +139,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
     if (_mpcTransport != null) {
       await _mpcTransport!.startServer(port: server.port);
-      debugPrint('[CommunicationBloc] MPC advertising started alongside TCP');
+      debugPrint('[Communication] MPC advertising started alongside TCP');
     }
   }
 
@@ -157,30 +166,36 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       error: null,
     ));
 
-    if (_mpcTransport != null) {
-      debugPrint('[CommunicationBloc] Step 1: MPC (Apple direct, no network needed)');
-      _mpcTransport!.connect(address: '', port: 0);
+    if (await _tryMpc()) return;
+    if (await _trySavedIp()) return;
+    if (await _tryNetworkDiscovery()) return;
 
-      for (var i = 0; i < 10; i++) {
-        await Future.delayed(const Duration(seconds: 1));
-        if (_mpcTransport!.currentState == CommunicationState.connected) {
-          debugPrint('[CommunicationBloc] MPC connected after ${i + 1}s');
-          return;
-        }
+    add(const CommunicationConnectionFailed(
+        error: 'Desktop not found. Try scanning QR again.'));
+  }
+
+  Future<bool> _tryMpc() async {
+    if (_mpcTransport == null) return false;
+
+    debugPrint('[Communication] Step 1: MPC (Apple direct)');
+    _mpcTransport!.connect(address: '', port: 0);
+
+    for (var i = 0; i < _mpcTimeout.inSeconds; i++) {
+      await Future.delayed(const Duration(seconds: 1));
+      if (_mpcTransport!.currentState == CommunicationState.connected) {
+        debugPrint('[Communication] MPC connected after ${i + 1}s');
+        return true;
       }
-      debugPrint('[CommunicationBloc] MPC not connected after 10s, trying TCP');
     }
+    debugPrint('[Communication] MPC timeout, trying TCP');
+    return false;
+  }
 
+  Future<bool> _trySavedIp() async {
     final pairing = _pairingStorage.loadPairing();
-    if (pairing == null) {
-      emit(state.copyWith(
-        connectionStatus: ConnectionStatus.disconnected,
-        error: 'Not paired',
-      ));
-      return;
-    }
+    if (pairing == null) return false;
 
-    debugPrint('[CommunicationBloc] Step 2: TCP saved IP ${pairing.lastIp}:${pairing.lastPort}');
+    debugPrint('[Communication] Step 2: TCP saved IP ${pairing.lastIp}:${pairing.lastPort}');
     try {
       await _tcpService.connectToServer(
         ip: pairing.lastIp,
@@ -188,29 +203,33 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         pairingKey: pairing.pairingKey,
       );
       add(CommunicationConnected(ip: pairing.lastIp, port: pairing.lastPort));
-      return;
+      return true;
     } catch (e) {
-      debugPrint('[CommunicationBloc] Saved IP failed: $e');
+      debugPrint('[Communication] Saved IP failed: $e');
+      return false;
     }
+  }
 
-    debugPrint('[CommunicationBloc] Step 3: Network discovery (mDNS + SSDP)');
+  Future<bool> _tryNetworkDiscovery() async {
+    final pairing = _pairingStorage.loadPairing();
+    if (pairing == null) return false;
+
+    debugPrint('[Communication] Step 3: mDNS + SSDP');
     final result = await _discoveryService.discoverViaNetwork();
-    if (result != null) {
-      try {
-        await _tcpService.connectToServer(
-          ip: result.ip,
-          port: result.port,
-          pairingKey: pairing.pairingKey,
-        );
-        add(CommunicationConnected(ip: result.ip, port: result.port));
-        return;
-      } catch (e) {
-        debugPrint('[CommunicationBloc] Network discovery connect failed: $e');
-      }
-    }
+    if (result == null) return false;
 
-    debugPrint('[CommunicationBloc] All connection methods failed');
-    add(const CommunicationConnectionFailed(error: 'Desktop not found. Try scanning QR again.'));
+    try {
+      await _tcpService.connectToServer(
+        ip: result.ip,
+        port: result.port,
+        pairingKey: pairing.pairingKey,
+      );
+      add(CommunicationConnected(ip: result.ip, port: result.port));
+      return true;
+    } catch (e) {
+      debugPrint('[Communication] Network discovery failed: $e');
+      return false;
+    }
   }
 
   void _onConnected(
@@ -235,6 +254,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     Emitter<DesktopSyncState> emit,
   ) {
     final wasConnected = state.connectionStatus == ConnectionStatus.connected;
+
     emit(state.copyWith(
       connectionStatus: ConnectionStatus.disconnected,
       connectionTransport: ConnectionTransport.unknown,
@@ -243,8 +263,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     ));
 
     if (wasConnected && state.pairedDevice != null) {
-      debugPrint('[CommunicationBloc] Connection lost, auto-reconnecting in 3s...');
-      Future.delayed(const Duration(seconds: 3), () {
+      debugPrint('[Communication] Lost connection, reconnecting in ${_reconnectDelay.inSeconds}s');
+      Future.delayed(_reconnectDelay, () {
         if (!isClosed && state.connectionStatus == ConnectionStatus.disconnected) {
           add(const CommunicationConnectionRequested());
         }

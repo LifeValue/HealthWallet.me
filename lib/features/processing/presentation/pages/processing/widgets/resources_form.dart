@@ -15,7 +15,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
@@ -86,8 +86,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                 isLocked: widget.isAttachmentLocked,
                 patientVersion: _patientVersion,
                 onPropertyChanged: (propertyKey, newValue) =>
-                    context.read<ScanBloc>().add(
-                          ScanResourceChanged(
+                    context.read<ProcessingBloc>().add(
+                          ResourceChanged(
                             sessionId: sessionId,
                             index: 0,
                             propertyKey: propertyKey,
@@ -106,8 +106,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   isStagedResource: true,
                   isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
-                      context.read<ScanBloc>().add(
-                            ScanResourceChanged(
+                      context.read<ProcessingBloc>().add(
+                            ResourceChanged(
                               sessionId: sessionId,
                               index: 0,
                               propertyKey: propertyKey,
@@ -129,8 +129,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   isStagedResource: true,
                   isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
-                      context.read<ScanBloc>().add(
-                            ScanResourceChanged(
+                      context.read<ProcessingBloc>().add(
+                            ResourceChanged(
                               sessionId: sessionId,
                               index: 0,
                               propertyKey: propertyKey,
@@ -149,8 +149,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   context,
                   resource: resource,
                   onPropertyChanged: (propertyKey, newValue) =>
-                      context.read<ScanBloc>().add(
-                            ScanResourceChanged(
+                      context.read<ProcessingBloc>().add(
+                            ResourceChanged(
                               sessionId: sessionId,
                               index: index,
                               propertyKey: propertyKey,
@@ -161,7 +161,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
                     context: context,
                     title: 'Delete Resources',
                     onConfirm: () {
-                      context.read<ScanBloc>().add(ScanResourceRemoved(
+                      context.read<ProcessingBloc>().add(ResourceRemoved(
                           sessionId: sessionId, index: index));
                     },
                   ),
@@ -230,8 +230,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                       Padding(
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(
-                          onTap: () => context.read<ScanBloc>().add(
-                                ScanContainerTypeSwitched(sessionId: widget.sessionId),
+                          onTap: () => context.read<ProcessingBloc>().add(
+                                ContainerTypeSwitched(sessionId: widget.sessionId),
                               ),
                           child: Tooltip(
                             message: resource is MappingEncounter
@@ -530,8 +530,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
 
   void _swapPatient(
       BuildContext context, StagedPatient patient, ImportMode targetMode) {
-    context.read<ScanBloc>().add(
-          ScanEncounterAttached(
+    context.read<ProcessingBloc>().add(
+          EncounterAttached(
             sessionId: widget.sessionId,
             patient: StagedPatient(
               draft: patient.draft,
@@ -556,8 +556,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
     if (result == null || !context.mounted) return;
 
     final (patient, encounter) = result;
-    context.read<ScanBloc>().add(
-          ScanEncounterAttached(
+    context.read<ProcessingBloc>().add(
+          EncounterAttached(
             sessionId: widget.sessionId,
             patient: patient,
             encounter: encounter,
@@ -631,8 +631,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
           icon: Icons.save_outlined,
           color: AppColors.success,
           text: context.l10n.patientSavingModified(displayName),
-          onAction: () => context.read<ScanBloc>().add(
-                ScanPatientReverted(sessionId: widget.sessionId),
+          onAction: () => context.read<ProcessingBloc>().add(
+                PatientReverted(sessionId: widget.sessionId),
               ),
         );
       }
@@ -643,8 +643,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
           icon: Icons.edit_outlined,
           color: AppColors.warning,
           text: context.l10n.patientModifiedUpdating(displayName),
-          onAction: () => context.read<ScanBloc>().add(
-                ScanPatientReverted(sessionId: widget.sessionId),
+          onAction: () => context.read<ProcessingBloc>().add(
+                PatientReverted(sessionId: widget.sessionId),
               ),
         );
       }

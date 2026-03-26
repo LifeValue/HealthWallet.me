@@ -10,13 +10,13 @@ import 'package:health_wallet/features/processing/domain/entity/staged_resource.
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/resources_form.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class ProcessingResourcesSection extends StatelessWidget {
-  final ScanState state;
+  final ProcessingState state;
   final ProcessingSession displayedSession;
   final String sessionId;
   final GlobalKey<FormState> formKey;
@@ -84,7 +84,7 @@ class ProcessingResourcesSection extends StatelessWidget {
 }
 
 class _SaveButton extends StatelessWidget {
-  final ScanState state;
+  final ProcessingState state;
   final VoidCallback onSaveResources;
 
   const _SaveButton({
@@ -106,7 +106,7 @@ class _SaveButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadiusGeometry.circular(8)),
         ),
-        onPressed: state.status == const ScanStatus.savingResources()
+        onPressed: state.status == const PipelineStatus.savingResources()
             ? null
             : onSaveResources,
         child: Text(context.l10n.done),
@@ -184,7 +184,7 @@ class _AddResourceButton extends StatelessWidget {
     if (selectedResourceIds != null &&
         selectedResourceIds.isNotEmpty &&
         context.mounted) {
-      context.read<ScanBloc>().add(ScanResourcesAdded(
+      context.read<ProcessingBloc>().add(ResourcesAdded(
             sessionId: sessionId,
             resourceTypes: selectedResourceIds,
           ));
@@ -193,7 +193,7 @@ class _AddResourceButton extends StatelessWidget {
 }
 
 class _ScannedBasicButtons extends StatelessWidget {
-  final ScanState state;
+  final ProcessingState state;
   final ProcessingSession session;
   final String sessionId;
   final GlobalKey<FormState> formKey;
@@ -255,8 +255,8 @@ class _ScannedBasicButtons extends StatelessWidget {
                 variant: AppButtonVariant.primary,
                 onPressed: isStep2Blocked
                     ? null
-                    : () => context.read<ScanBloc>().add(
-                          ScanProcessRemainingResources(
+                    : () => context.read<ProcessingBloc>().add(
+                          ProcessRemainingResources(
                             sessionId: sessionId,
                           ),
                         ),
@@ -281,8 +281,8 @@ class _ScannedBasicButtons extends StatelessWidget {
         session.patient.hasSelection &&
         (session.encounter.hasSelection ||
             session.isDiagnosticReportContainer)) {
-      context.read<ScanBloc>().add(
-            ScanDocumentAttached(
+      context.read<ProcessingBloc>().add(
+            DocumentAttached(
               sessionId: sessionId,
             ),
           );
@@ -303,16 +303,16 @@ class _ScannedBasicButtons extends StatelessWidget {
 
     final (patient, encounter) = result;
 
-    context.read<ScanBloc>().add(
-          ScanEncounterAttached(
+    context.read<ProcessingBloc>().add(
+          EncounterAttached(
             sessionId: sessionId,
             patient: patient,
             encounter: encounter,
           ),
         );
 
-    context.read<ScanBloc>().add(
-          ScanDocumentAttached(
+    context.read<ProcessingBloc>().add(
+          DocumentAttached(
             sessionId: sessionId,
           ),
         );
@@ -333,8 +333,8 @@ class _ScannedBasicButtons extends StatelessWidget {
         cancelText: context.l10n.cancel,
         confirmButtonColor: context.colorScheme.primary,
         onConfirm: () {
-          context.read<ScanBloc>().add(
-                ScanResourceCreationInitiated(sessionId: sessionId),
+          context.read<ProcessingBloc>().add(
+                ResourceCreationInitiated(sessionId: sessionId),
               );
         },
       );
@@ -348,8 +348,8 @@ class _ScannedBasicButtons extends StatelessWidget {
         warningText: context.l10n.finishProcessingWarning,
         confirmButtonColor: context.colorScheme.primary,
         onConfirm: () {
-          context.read<ScanBloc>().add(
-                ScanResourceCreationInitiated(sessionId: sessionId),
+          context.read<ProcessingBloc>().add(
+                ResourceCreationInitiated(sessionId: sessionId),
               );
         },
       );

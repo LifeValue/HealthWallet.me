@@ -7,7 +7,7 @@ import 'package:health_wallet/features/records/domain/entity/encounter/encounter
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
@@ -105,11 +105,11 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         try {
           await attachToEncounter(context, session.filePaths, finalEncounter);
           if (context.mounted) {
-            context.read<ScanBloc>().add(ScanSessionCleared(session: session));
+            context.read<ProcessingBloc>().add(SessionCleared(session: session));
           }
         } catch (e) {
           if (context.mounted) {
-            context.read<ScanBloc>().add(ScanSessionCleared(session: session));
+            context.read<ProcessingBloc>().add(SessionCleared(session: session));
           }
           rethrow;
         }

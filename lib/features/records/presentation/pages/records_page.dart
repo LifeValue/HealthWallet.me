@@ -10,7 +10,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -201,7 +201,7 @@ class _RecordsViewState extends State<RecordsView> {
         }
         if (validPaths.isNotEmpty && mounted) {
           context
-              .read<ScanBloc>()
+              .read<ProcessingBloc>()
               .add(DocumentImported(filePaths: validPaths));
           getIt<PageViewNavigationController>().navigateToPage(3);
         }
@@ -223,7 +223,7 @@ class _RecordsViewState extends State<RecordsView> {
       }
       if (validPaths.isNotEmpty && mounted) {
         context
-            .read<ScanBloc>()
+            .read<ProcessingBloc>()
             .add(DocumentImported(filePaths: validPaths));
         getIt<PageViewNavigationController>().navigateToPage(3);
       }
@@ -237,7 +237,7 @@ class _RecordsViewState extends State<RecordsView> {
       Future.delayed(const Duration(milliseconds: 100), () async {
         final cameraStatus = await Permission.camera.request();
         if (cameraStatus.isGranted && mounted) {
-          context.read<ScanBloc>().add(const ScanButtonPressed());
+          context.read<ProcessingBloc>().add(const CaptureButtonPressed());
         }
       });
     });

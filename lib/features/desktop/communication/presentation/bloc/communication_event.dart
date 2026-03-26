@@ -1,4 +1,4 @@
-part of 'backup_bloc.dart';
+part of 'communication_bloc.dart';
 
 @freezed
 class CommunicationEvent with _$CommunicationEvent {

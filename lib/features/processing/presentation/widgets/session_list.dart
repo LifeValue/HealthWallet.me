@@ -5,7 +5,7 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:intl/intl.dart';
@@ -21,7 +21,7 @@ class SessionList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     sessions.sort();
-    return BlocBuilder<ScanBloc, ScanState>(
+    return BlocBuilder<ProcessingBloc, ProcessingState>(
       builder: (context, state) {
         return ListView.builder(
           shrinkWrap: true,
@@ -156,7 +156,7 @@ class SessionList extends StatelessWidget {
 
   void _showDeleteConfirmation(
       BuildContext context, ProcessingSession session) {
-    final scanBloc = context.read<ScanBloc>();
+    final scanBloc = context.read<ProcessingBloc>();
 
     AppSimpleDialog.showDestructiveConfirmation(
       context: context,
@@ -167,7 +167,7 @@ class SessionList extends StatelessWidget {
       warningText: 'This action cannot be undone.',
       confirmButtonColor: context.colorScheme.error,
       onConfirm: () {
-        scanBloc.add(ScanSessionCleared(session: session));
+        scanBloc.add(SessionCleared(session: session));
       },
     );
   }

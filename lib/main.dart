@@ -10,7 +10,7 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +32,7 @@ void main() async {
 
   getIt<ShareIntentService>().initialize();
   getIt<DeepLinkService>().initialize();
-  getIt<ScanBloc>().add(const ScanInitialised());
+  getIt<ProcessingBloc>().add(const ProcessingInitialised());
 
   FlutterNativeSplash.remove();
 

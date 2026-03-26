@@ -18,7 +18,7 @@ import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -109,7 +109,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         BlocProvider(
             create: (_) => getIt<SyncBloc>()..add(const SyncInitialised())),
         BlocProvider(create: (_) => getIt<RecordsBloc>()),
-        BlocProvider.value(value: getIt<ScanBloc>()),
+        BlocProvider.value(value: getIt<ProcessingBloc>()),
         BlocProvider(
           create: (_) => HomeBloc(
             getIt<GetSourcesUseCase>(),
@@ -133,10 +133,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               _handleSyncBlocStateChange(context, state);
             },
           ),
-          BlocListener<ScanBloc, ScanState>(
+          BlocListener<ProcessingBloc, ProcessingState>(
             listenWhen: (previous, current) =>
                 previous.status != current.status &&
-                current.status == const ScanStatus.success(),
+                current.status == const PipelineStatus.success(),
             listener: (context, state) {
               _handleScanSuccess(context);
             },

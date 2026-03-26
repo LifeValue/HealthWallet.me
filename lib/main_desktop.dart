@@ -7,7 +7,7 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +25,7 @@ void main() async {
     ),
   );
 
-  getIt<ScanBloc>().add(const ScanInitialised());
+  getIt<ProcessingBloc>().add(const ProcessingInitialised());
 
   await bootstrap(() => const App());
 }

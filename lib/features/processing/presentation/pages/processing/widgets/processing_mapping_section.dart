@@ -4,14 +4,14 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 
 class ProcessingMappingSection extends StatelessWidget {
-  final ScanState state;
+  final ProcessingState state;
   final ProcessingSession displayedSession;
   final String sessionId;
   final VoidCallback onShowAiSettings;

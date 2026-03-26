@@ -12,7 +12,7 @@ import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/import_actions.dart';
 import 'package:health_wallet/features/processing/presentation/helpers/document_handler.dart';
@@ -54,7 +54,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
       final paths = externalFileService.consumeFilePaths();
       if (paths.isNotEmpty) {
         context
-            .read<ScanBloc>()
+            .read<ProcessingBloc>()
             .add(DocumentImported(filePaths: paths.toList()));
       }
     }
@@ -68,7 +68,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
         automaticallyImplyLeading: false,
         extraTopPadding: context.isTablet ? 16 : 0,
       ),
-      body: BlocConsumer<ScanBloc, ScanState>(
+      body: BlocConsumer<ProcessingBloc, ProcessingState>(
         listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
           if (state.status case SessionCreated(:final session)) {
@@ -192,7 +192,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
 
     if (cameraStatus.isGranted) {
       if (context.mounted) {
-        context.read<ScanBloc>().add(const ScanButtonPressed());
+        context.read<ProcessingBloc>().add(const CaptureButtonPressed());
       }
     } else if (cameraStatus.isPermanentlyDenied) {
       if (context.mounted) {
@@ -241,7 +241,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
         }
 
         if (validPaths.isNotEmpty && context.mounted) {
-          context.read<ScanBloc>().add(
+          context.read<ProcessingBloc>().add(
                 DocumentImported(filePaths: validPaths),
               );
         }
@@ -268,7 +268,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
       }
 
       if (validPaths.isNotEmpty && context.mounted) {
-        context.read<ScanBloc>().add(
+        context.read<ProcessingBloc>().add(
               DocumentImported(filePaths: validPaths),
             );
       }

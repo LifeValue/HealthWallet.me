@@ -11,16 +11,16 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
+mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   OcrProcessingHelper get ocrProcessingHelper;
   ScanRepository get scanRepository;
 
   void updateSession(
-    Emitter<ScanState> emit, {
+    Emitter<ProcessingState> emit, {
     required String sessionId,
     double? progress,
     ProcessingStatus? status,
@@ -36,9 +36,9 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
 
   Future<void> onDocumentImported(
     DocumentImported event,
-    Emitter<ScanState> emit,
+    Emitter<ProcessingState> emit,
   ) async {
-    emit(state.copyWith(status: const ScanStatus.loading()));
+    emit(state.copyWith(status: const PipelineStatus.loading()));
     try {
       final persistedPaths = <String>[];
 
@@ -52,7 +52,7 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
 
       if (persistedPaths.isEmpty) {
         emit(state.copyWith(
-          status: const ScanStatus.failure(error: 'No valid files found'),
+          status: const PipelineStatus.failure(error: 'No valid files found'),
         ));
         return;
       }
@@ -65,13 +65,13 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
           filePaths: orderedPaths, origin: ProcessingOrigin.import);
     } catch (e) {
       emit(state.copyWith(
-        status: ScanStatus.failure(error: 'Failed to import document: $e'),
+        status: PipelineStatus.failure(error: 'Failed to import document: $e'),
       ));
     }
   }
 
   Future createSession(
-    Emitter<ScanState> emit, {
+    Emitter<ProcessingState> emit, {
     required List<String> filePaths,
     required ProcessingOrigin origin,
   }) async {
@@ -79,14 +79,14 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
         filePaths: filePaths, origin: origin);
 
     emit(state.copyWith(
-      status: ScanStatus.sessionCreated(session: session),
+      status: PipelineStatus.sessionCreated(session: session),
       sessions: [session, ...state.sessions],
     ));
   }
 
-  void onScanSessionChangedProgress(
-    ScanSessionChangedProgress event,
-    Emitter<ScanState> emit,
+  void onSessionChangedProgress(
+    SessionChangedProgress event,
+    Emitter<ProcessingState> emit,
   ) {
     final newSessions = [...state.sessions]
       ..removeWhere((session) => session.id == event.session.id);
@@ -98,14 +98,14 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
     }
   }
 
-  void onScanSessionCleared(
-    ScanSessionCleared event,
-    Emitter<ScanState> emit,
+  void onSessionCleared(
+    SessionCleared event,
+    Emitter<ProcessingState> emit,
   ) async {
     try {
       if (event.session.isProcessing) {
         emit(state.copyWith(
-          status: const ScanStatus.loading(),
+          status: const PipelineStatus.loading(),
           deletingSessionId: event.session.id,
         ));
 
@@ -126,7 +126,7 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
       emit(state.copyWith(
         sessions: newSessions,
         sessionImagePaths: updatedImageMap,
-        status: const ScanStatus.initial(),
+        status: const PipelineStatus.initial(),
         deletingSessionId: null,
       ));
 
@@ -142,15 +142,15 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
       }
     } on Exception catch (e) {
       emit(state.copyWith(
-        status: ScanStatus.failure(error: e.toString()),
+        status: PipelineStatus.failure(error: e.toString()),
         deletingSessionId: null,
       ));
     }
   }
 
-  Future<void> onScanSessionActivated(
-    ScanSessionActivated event,
-    Emitter<ScanState> emit,
+  Future<void> onSessionActivated(
+    SessionActivated event,
+    Emitter<ProcessingState> emit,
   ) async {
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
@@ -166,7 +166,7 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
         allImages = cachedImages;
       } else {
         if (!anotherSessionProcessing) {
-          emit(state.copyWith(status: const ScanStatus.convertingPdfs()));
+          emit(state.copyWith(status: const PipelineStatus.convertingPdfs()));
         }
         allImages = await ocrProcessingHelper.prepareAllImages(
           filePaths: session.filePaths,
@@ -196,22 +196,22 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
           final isModelLoaded = await scanRepository.checkModelExistence();
 
           if (isModelLoaded) {
-            add(ScanMappingInitiated(sessionId: event.sessionId));
+            add(MappingInitiated(sessionId: event.sessionId));
           } else {
-            emit(state.copyWith(status: const ScanStatus.initial()));
+            emit(state.copyWith(status: const PipelineStatus.initial()));
           }
         } catch (e) {
-          emit(state.copyWith(status: const ScanStatus.initial()));
+          emit(state.copyWith(status: const PipelineStatus.initial()));
         }
       }
     } catch (e) {
-      emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+      emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
     }
   }
 
-  Future<void> onScanPagesReordered(
-    ScanPagesReordered event,
-    Emitter<ScanState> emit,
+  Future<void> onPagesReordered(
+    PagesReordered event,
+    Emitter<ProcessingState> emit,
   ) async {
     final sessionIndex =
         state.sessions.indexWhere((s) => s.id == event.sessionId);
@@ -234,9 +234,9 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
     await scanRepository.editProcessingSession(updatedSession);
   }
 
-  void onScanResourceChanged(
-    ScanResourceChanged event,
-    Emitter<ScanState> emit,
+  void onResourceChanged(
+    ResourceChanged event,
+    Emitter<ProcessingState> emit,
   ) {
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
@@ -319,9 +319,9 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
         updateDb: true);
   }
 
-  void onScanPatientReverted(
-    ScanPatientReverted event,
-    Emitter<ScanState> emit,
+  void onPatientReverted(
+    PatientReverted event,
+    Emitter<ProcessingState> emit,
   ) {
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
@@ -338,9 +338,9 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
     );
   }
 
-  void onScanResourceRemoved(
-    ScanResourceRemoved event,
-    Emitter<ScanState> emit,
+  void onResourceRemoved(
+    ResourceRemoved event,
+    Emitter<ProcessingState> emit,
   ) {
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
@@ -353,9 +353,9 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
         updateDb: true);
   }
 
-  void onScanResourcesAdded(
-    ScanResourcesAdded event,
-    Emitter<ScanState> emit,
+  void onResourcesAdded(
+    ResourcesAdded event,
+    Emitter<ProcessingState> emit,
   ) {
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
@@ -376,9 +376,9 @@ mixin ScanSessionHandler on Bloc<ScanEvent, ScanState> {
     );
   }
 
-  void onScanEncounterAttached(
-    ScanEncounterAttached event,
-    Emitter<ScanState> emit,
+  void onEncounterAttached(
+    EncounterAttached event,
+    Emitter<ProcessingState> emit,
   ) {
     updateSession(
       emit,

@@ -13,7 +13,7 @@ import 'package:health_wallet/features/processing/presentation/widgets/session_l
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/processing/presentation/helpers/document_handler.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
@@ -81,12 +81,12 @@ class _ScanViewState extends State<ScanView>
 
     _hasAutoScanned = true;
 
-    final currentState = context.read<ScanBloc>().state;
+    final currentState = context.read<ProcessingBloc>().state;
     final hasAnySessions = currentState.sessions
         .any((session) => session.origin == ProcessingOrigin.scan);
 
     if (!hasAnySessions) {
-      await _handleScanButtonPressed(context);
+      await _handleCaptureButtonPressed(context);
     }
   }
 
@@ -99,19 +99,19 @@ class _ScanViewState extends State<ScanView>
     }
   }
 
-  Future<void> _handleScanButtonPressed(BuildContext context) async {
+  Future<void> _handleCaptureButtonPressed(BuildContext context) async {
     final cameraStatus = await Permission.camera.request();
 
     if (cameraStatus.isGranted) {
       if (context.mounted) {
-        context.read<ScanBloc>().add(const ScanButtonPressed());
+        context.read<ProcessingBloc>().add(const CaptureButtonPressed());
       }
     } else if (cameraStatus.isPermanentlyDenied) {
       DialogHelper.showPermissionDeniedDialog(context);
     } else {
       DialogHelper.showPermissionRequiredDialog(
         context,
-        () => _handleScanButtonPressed(context),
+        () => _handleCaptureButtonPressed(context),
       );
     }
   }
@@ -200,7 +200,7 @@ class _ScanViewState extends State<ScanView>
       ),
       body: MultiBlocListener(
         listeners: [
-          BlocListener<ScanBloc, ScanState>(
+          BlocListener<ProcessingBloc, ProcessingState>(
             listenWhen: (previous, current) {
               return previous.sessions.isNotEmpty && current.sessions.isEmpty;
             },
@@ -216,7 +216,7 @@ class _ScanViewState extends State<ScanView>
               }
             },
           ),
-          BlocListener<ScanBloc, ScanState>(
+          BlocListener<ProcessingBloc, ProcessingState>(
             listenWhen: (previous, current) =>
                 previous.status != current.status,
             listener: (context, state) {
@@ -228,7 +228,7 @@ class _ScanViewState extends State<ScanView>
             },
           ),
         ],
-        child: BlocBuilder<ScanBloc, ScanState>(
+        child: BlocBuilder<ProcessingBloc, ProcessingState>(
           builder: (context, state) {
             final scanSessions = state.sessions
                 .where((element) => element.origin == ProcessingOrigin.scan)
@@ -263,7 +263,7 @@ class _ScanViewState extends State<ScanView>
     );
   }
 
-  Widget _buildMainView(BuildContext context, ScanState state) {
+  Widget _buildMainView(BuildContext context, ProcessingState state) {
     List<ProcessingSession> scanSessions = state.sessions
         .where((element) => element.origin == ProcessingOrigin.scan)
         .toList();
@@ -365,7 +365,7 @@ class _ScanViewState extends State<ScanView>
 
     if (cameraStatus.isGranted) {
       if (context.mounted) {
-        context.read<ScanBloc>().add(const ScanButtonPressed());
+        context.read<ProcessingBloc>().add(const CaptureButtonPressed());
       }
     } else if (cameraStatus.isPermanentlyDenied) {
       DialogHelper.showPermissionDeniedDialog(context);

@@ -1,25 +1,25 @@
-part of 'scan_bloc.dart';
+part of 'processing_bloc.dart';
 
 @freezed
-class ScanStatus with _$ScanStatus {
-  const factory ScanStatus.initial() = Initial;
-  const factory ScanStatus.loading() = Loading;
-  const factory ScanStatus.sessionCreated(
+class PipelineStatus with _$PipelineStatus {
+  const factory PipelineStatus.initial() = Initial;
+  const factory PipelineStatus.loading() = Loading;
+  const factory PipelineStatus.sessionCreated(
       {required ProcessingSession session}) = SessionCreated;
-  const factory ScanStatus.failure({required String error}) = Failure;
-  const factory ScanStatus.capacityFailure({required String sessionId}) =
+  const factory PipelineStatus.failure({required String error}) = Failure;
+  const factory PipelineStatus.capacityFailure({required String sessionId}) =
       CapacityFailure;
-  const factory ScanStatus.convertingPdfs() = ConvertingPdfs;
-  const factory ScanStatus.savingResources() = SavingResources;
-  const factory ScanStatus.success() = Success;
+  const factory PipelineStatus.convertingPdfs() = ConvertingPdfs;
+  const factory PipelineStatus.savingResources() = SavingResources;
+  const factory PipelineStatus.success() = Success;
 }
 
 @freezed
-class ScanState with _$ScanState {
-  const ScanState._();
+class ProcessingState with _$ProcessingState {
+  const ProcessingState._();
 
-  const factory ScanState({
-    @Default(ScanStatus.initial()) ScanStatus status,
+  const factory ProcessingState({
+    @Default(PipelineStatus.initial()) PipelineStatus status,
     @Default([]) List<ProcessingSession> sessions,
     String? displayedSessionId,
     String? deletingSessionId,
@@ -27,7 +27,7 @@ class ScanState with _$ScanState {
     @Default({}) Map<String, List<String>> sessionImagePaths,
     Notification? notification,
     @Default(false) bool useVision,
-  }) = _ScanState;
+  }) = _ProcessingState;
 
   bool canRetrySession(String sessionId) {
     final session = sessions.firstWhereOrNull((s) => s.id == sessionId);

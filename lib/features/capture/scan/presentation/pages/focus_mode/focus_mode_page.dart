@@ -12,7 +12,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/focus_mode/bloc/focus_mode_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -136,7 +136,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
             _handleScreenDarkened(state.isScreenDarkened);
           },
         ),
-        BlocListener<ScanBloc, ScanState>(
+        BlocListener<ProcessingBloc, ProcessingState>(
           listener: (context, state) {
             final focusModeState = context.read<FocusModeBloc>().state;
 
@@ -167,8 +167,8 @@ class _FocusModeViewState extends State<_FocusModeView> {
               );
 
               context
-                  .read<ScanBloc>()
-                  .add(const ScanNotificationAcknowledged());
+                  .read<ProcessingBloc>()
+                  .add(const NotificationAcknowledged());
               return;
             }
 
@@ -343,7 +343,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
   }
 
   Widget _buildProgressIndicator() {
-    return BlocBuilder<ScanBloc, ScanState>(
+    return BlocBuilder<ProcessingBloc, ProcessingState>(
       builder: (context, state) {
         ProcessingSession? processingSession;
         if (state.sessions.isNotEmpty) {

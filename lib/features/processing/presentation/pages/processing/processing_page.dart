@@ -13,7 +13,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_resources_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
@@ -47,8 +47,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
   @override
   void initState() {
     context
-        .read<ScanBloc>()
-        .add(ScanSessionActivated(sessionId: widget.sessionId));
+        .read<ProcessingBloc>()
+        .add(SessionActivated(sessionId: widget.sessionId));
     _checkDeviceCapability();
     super.initState();
   }
@@ -78,7 +78,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
     });
   }
 
-  void _saveResources(ScanState state) async {
+  void _saveResources(ProcessingState state) async {
     if (!_formKey.currentState!.validate()) {
       _scrollToFormErrors();
       return;
@@ -109,8 +109,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
       }
 
       context
-          .read<ScanBloc>()
-          .add(ScanResourceCreationInitiated(sessionId: widget.sessionId));
+          .read<ProcessingBloc>()
+          .add(ResourceCreationInitiated(sessionId: widget.sessionId));
       return;
     }
 
@@ -128,8 +128,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
     final (patient, encounter) = result;
 
-    context.read<ScanBloc>().add(
-          ScanEncounterAttached(
+    context.read<ProcessingBloc>().add(
+          EncounterAttached(
             sessionId: widget.sessionId,
             patient: patient,
             encounter: encounter,
@@ -137,8 +137,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
         );
 
     context
-        .read<ScanBloc>()
-        .add(ScanResourceCreationInitiated(sessionId: widget.sessionId));
+        .read<ProcessingBloc>()
+        .add(ResourceCreationInitiated(sessionId: widget.sessionId));
   }
 
   void _showAiSettingsDialog() async {
@@ -160,8 +160,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
       await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
       await prefs.setInt(SharedPrefsConstants.aiContextSize, result.contextSize);
 
-      final bloc = context.read<ScanBloc>();
-      bloc.add(ScanVisionToggled(useVision: result.useVision));
+      final bloc = context.read<ProcessingBloc>();
+      bloc.add(VisionToggled(useVision: result.useVision));
 
       final modelSettingsChanged = result.maxTokens != previousTokens ||
           result.gpuLayers != previousGpu ||
@@ -169,7 +169,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           result.contextSize != previousCtx;
 
       if (modelSettingsChanged) {
-        bloc.add(ScanTokenCapacityUpdated(
+        bloc.add(TokenCapacityUpdated(
           newMaxTokens: result.maxTokens,
           sessionId: widget.sessionId,
         ));
@@ -179,15 +179,15 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ScanBloc, ScanState>(
+    return BlocConsumer<ProcessingBloc, ProcessingState>(
       listener: (context, state) async {
         final displayedSession =
             state.sessions.firstWhereOrNull((s) => s.id == widget.sessionId);
         if (displayedSession == null) return;
 
-        if (state.status == const ScanStatus.success()) {
+        if (state.status == const PipelineStatus.success()) {
           final sessionToClear = displayedSession;
-          final scanBloc = context.read<ScanBloc>();
+          final scanBloc = context.read<ProcessingBloc>();
           final navController = getIt<PageViewNavigationController>();
           final router = context.router;
           final dialogResult = await AppSimpleDialog.showConfirmation(
@@ -198,12 +198,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
             cancelText: context.l10n.goToRecords,
             barrierDismissible: true,
             onConfirm: () {
-              scanBloc.add(ScanSessionCleared(session: sessionToClear));
+              scanBloc.add(SessionCleared(session: sessionToClear));
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
             onCancel: () {
               navController.jumpToPage(1);
-              scanBloc.add(ScanSessionCleared(session: sessionToClear));
+              scanBloc.add(SessionCleared(session: sessionToClear));
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
           );
@@ -229,7 +229,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 state.allImagePathsForOCR;
 
             final isConverting =
-                state.status == const ScanStatus.convertingPdfs() &&
+                state.status == const PipelineStatus.convertingPdfs() &&
                     sessionImages.isEmpty;
 
             final isQueuedAndPreparing =
@@ -254,7 +254,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                     pageController: _pageController,
                     isEditable: true,
                     onPagesChanged: (reordered) {
-                      context.read<ScanBloc>().add(ScanPagesReordered(
+                      context.read<ProcessingBloc>().add(PagesReordered(
                             sessionId: widget.sessionId,
                             reorderedPaths: reordered,
                           ));
@@ -268,16 +268,16 @@ class _ProcessingPageState extends State<ProcessingPage> {
                   displayedSession: displayedSession,
                   sessionId: widget.sessionId,
                   onShowAiSettings: _showAiSettingsDialog,
-                  onRetryStep1: () => context.read<ScanBloc>().add(
-                        ScanMappingInitiated(sessionId: widget.sessionId),
+                  onRetryStep1: () => context.read<ProcessingBloc>().add(
+                        MappingInitiated(sessionId: widget.sessionId),
                       ),
-                  onRetryStep2: () => context.read<ScanBloc>().add(
-                        ScanProcessRemainingResources(
+                  onRetryStep2: () => context.read<ProcessingBloc>().add(
+                        ProcessRemainingResources(
                           sessionId: widget.sessionId,
                         ),
                       ),
-                  onCancel: () => context.read<ScanBloc>().add(
-                        ScanMappingCancelled(sessionId: widget.sessionId),
+                  onCancel: () => context.read<ProcessingBloc>().add(
+                        MappingCancelled(sessionId: widget.sessionId),
                       ),
                   checkModelExistence: () => getIt<ScanRepository>().checkModelExistence(),
                 ),
@@ -327,14 +327,14 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 : '${context.l10n.retry} (Step 1)',
             onPressed: () {
               if (isStep2Retry) {
-                context.read<ScanBloc>().add(
-                      ScanProcessRemainingResources(
+                context.read<ProcessingBloc>().add(
+                      ProcessRemainingResources(
                         sessionId: widget.sessionId,
                       ),
                     );
               } else {
-                context.read<ScanBloc>().add(
-                      ScanMappingInitiated(sessionId: widget.sessionId),
+                context.read<ProcessingBloc>().add(
+                      MappingInitiated(sessionId: widget.sessionId),
                     );
               }
             },

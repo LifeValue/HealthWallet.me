@@ -5,10 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/desktop/communication/presentation/pages/sync_desktop_page.dart';
+import 'package:health_wallet/features/desktop/presentation/pages/desktop_page.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
@@ -79,7 +79,7 @@ class _DashboardPageState extends State<DashboardPage> {
             }
           },
         ),
-        BlocListener<ScanBloc, ScanState>(
+        BlocListener<ProcessingBloc, ProcessingState>(
           listenWhen: (previous, current) =>
               current.notification != null &&
               previous.notification != current.notification,
@@ -99,7 +99,7 @@ class _DashboardPageState extends State<DashboardPage> {
               showProcessingDoneNotification(context, notification);
             }
 
-            context.read<ScanBloc>().add(const ScanNotificationAcknowledged());
+            context.read<ProcessingBloc>().add(const NotificationAcknowledged());
           },
         ),
       ],
@@ -126,7 +126,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     case 2:
                       return const ImportPage();
                     case 3:
-                      return const SyncDesktopPage();
+                      return const DesktopPage();
                     default:
                       return const SizedBox.shrink();
                   }

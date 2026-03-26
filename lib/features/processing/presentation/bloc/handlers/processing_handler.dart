@@ -17,13 +17,13 @@ import 'package:health_wallet/features/processing/domain/entity/staged_resource.
 import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
+mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   ScanRepository get scanRepository;
   OcrProcessingHelper get ocrProcessingHelper;
   RecordsRepository get recordsRepository;
@@ -34,7 +34,7 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
   SharedPreferences get prefs;
 
   void updateSession(
-    Emitter<ScanState> emit, {
+    Emitter<ProcessingState> emit, {
     required String sessionId,
     double? progress,
     ProcessingStatus? status,
@@ -49,11 +49,11 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
   bool isCapacityError(String errorString);
   void startNextPendingSession();
 
-  void onScanMappingInitiated(
-    ScanMappingInitiated event,
-    Emitter<ScanState> emit,
+  void onMappingInitiated(
+    MappingInitiated event,
+    Emitter<ProcessingState> emit,
   ) async {
-    emit(state.copyWith(status: const ScanStatus.loading()));
+    emit(state.copyWith(status: const PipelineStatus.loading()));
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
@@ -77,7 +77,7 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
             status: ProcessingStatus.pending,
             progress: 0.0);
         emit(state.copyWith(
-          status: const ScanStatus.failure(
+          status: const PipelineStatus.failure(
             error: 'No images were generated from the scan. Please try scanning again.',
           ),
         ));
@@ -181,10 +181,10 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
       if (!emit.isDone) {
         if (isCapacityError(e.toString())) {
           emit(state.copyWith(
-            status: ScanStatus.capacityFailure(sessionId: event.sessionId),
+            status: PipelineStatus.capacityFailure(sessionId: event.sessionId),
           ));
         } else {
-          emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+          emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
         }
       }
     }
@@ -250,11 +250,11 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
     }
   }
 
-  void onScanProcessRemainingResources(
-    ScanProcessRemainingResources event,
-    Emitter<ScanState> emit,
+  void onProcessRemainingResources(
+    ProcessRemainingResources event,
+    Emitter<ProcessingState> emit,
   ) async {
-    emit(state.copyWith(status: const ScanStatus.loading()));
+    emit(state.copyWith(status: const PipelineStatus.loading()));
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
@@ -325,18 +325,18 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
       if (!emit.isDone) {
         if (isCapacityError(e.toString())) {
           emit(state.copyWith(
-            status: ScanStatus.capacityFailure(sessionId: event.sessionId),
+            status: PipelineStatus.capacityFailure(sessionId: event.sessionId),
           ));
         } else {
-          emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+          emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
         }
       }
     }
   }
 
-  void onScanMappingCancelled(
-    ScanMappingCancelled event,
-    Emitter<ScanState> emit,
+  void onMappingCancelled(
+    MappingCancelled event,
+    Emitter<ProcessingState> emit,
   ) async {
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
@@ -352,11 +352,11 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
     await scanRepository.disposeModel();
   }
 
-  void onScanResourceCreationInitiated(
-    ScanResourceCreationInitiated event,
-    Emitter<ScanState> emit,
+  void onResourceCreationInitiated(
+    ResourceCreationInitiated event,
+    Emitter<ProcessingState> emit,
   ) async {
-    emit(state.copyWith(status: const ScanStatus.savingResources()));
+    emit(state.copyWith(status: const PipelineStatus.savingResources()));
     final activeSession =
         state.sessions.firstWhere((s) => s.id == event.sessionId);
     try {
@@ -389,16 +389,16 @@ mixin ScanProcessingHandler on Bloc<ScanEvent, ScanState> {
         sourceId: sourceId,
         title: finalContainer.displayTitle,
       );
-      emit(state.copyWith(status: const ScanStatus.success()));
+      emit(state.copyWith(status: const PipelineStatus.success()));
     } catch (e) {
-      logger.e('[ScanBloc] resource creation failed: $e');
-      emit(state.copyWith(status: ScanStatus.failure(error: e.toString())));
+      logger.e('[ProcessingBloc] resource creation failed: $e');
+      emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
     }
   }
 
-  void onScanDocumentAttached(
-    ScanDocumentAttached event,
-    Emitter<ScanState> emit,
+  void onDocumentAttached(
+    DocumentAttached event,
+    Emitter<ProcessingState> emit,
   ) {
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
