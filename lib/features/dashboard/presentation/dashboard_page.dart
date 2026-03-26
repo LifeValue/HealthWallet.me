@@ -269,7 +269,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     child: _buildNavItem(
                                       context: context,
                                       icon: Icon(
-                                        Icons.backup_outlined,
+                                        Icons.sync,
                                         size: 24,
                                         color:
                                             _navigationController.currentPage == 3
@@ -278,7 +278,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     : context.colorScheme.surface)
                                                 : context.colorScheme.onSurface,
                                       ),
-                                      label: 'Backup',
+                                      label: 'Sync',
                                       isSelected:
                                           _navigationController.currentPage == 3,
                                       pageIndex: 3,
