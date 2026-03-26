@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/backup/presentation/pages/backup_page.dart';
+import 'package:health_wallet/features/sync/desktop/communication/presentation/pages/backup_page.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';

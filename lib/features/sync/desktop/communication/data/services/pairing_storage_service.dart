@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:health_wallet/features/backup/data/models/device_pairing.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/models/device_pairing.dart';
 
 @lazySingleton
 class PairingStorageService {

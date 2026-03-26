@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:health_wallet/features/backup/data/services/mdns_service.dart';
-import 'package:health_wallet/features/backup/data/services/ssdp_service.dart';
-import 'package:health_wallet/features/backup/data/services/pairing_storage_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/mdns_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/ssdp_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/pairing_storage_service.dart';
 
 class DiscoveryResult {
   final String ip;

@@ -10,8 +10,8 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/features/backup/data/models/device_pairing.dart';
-import 'package:health_wallet/features/backup/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/models/device_pairing.dart';
+import 'package:health_wallet/features/sync/desktop/communication/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 

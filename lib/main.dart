@@ -6,10 +6,10 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/deep_link_service.dart';
 import 'package:health_wallet/core/services/share_intent_service.dart';
-import 'package:health_wallet/features/backup/presentation/bloc/backup_bloc.dart';
-import 'package:health_wallet/features/backup/data/services/discovery_service.dart';
-import 'package:health_wallet/features/backup/data/services/pairing_storage_service.dart';
-import 'package:health_wallet/features/backup/data/services/tcp_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/discovery_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/pairing_storage_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
 
 void main() async {

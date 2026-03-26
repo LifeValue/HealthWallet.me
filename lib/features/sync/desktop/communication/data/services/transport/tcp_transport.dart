@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:health_wallet/features/backup/data/services/tcp_service.dart'
+import 'package:health_wallet/features/sync/desktop/communication/data/services/tcp_service.dart'
     as tcp;
-import 'package:health_wallet/features/backup/data/services/transport/communication_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/transport/communication_service.dart';
 
 class TcpTransport implements CommunicationService {
   final tcp.TcpService _tcpService;

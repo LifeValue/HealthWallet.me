@@ -5,10 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
-import 'package:health_wallet/features/backup/data/models/device_pairing.dart';
-import 'package:health_wallet/features/backup/data/services/discovery_service.dart';
-import 'package:health_wallet/features/backup/data/services/pairing_storage_service.dart';
-import 'package:health_wallet/features/backup/data/services/tcp_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/models/device_pairing.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/discovery_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/pairing_storage_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/tcp_service.dart';
 
 part 'backup_event.dart';
 part 'backup_state.dart';

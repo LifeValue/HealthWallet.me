@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:health_wallet/features/backup/data/services/transport/communication_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/transport/communication_service.dart';
 
 class MpcTransport implements CommunicationService {
   static const _channel = MethodChannel('dev.lifevalue.healthwallet/mpc');

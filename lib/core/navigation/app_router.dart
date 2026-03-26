@@ -6,7 +6,7 @@ import 'package:health_wallet/features/scan/presentation/pages/focus_mode/focus_
 import 'package:health_wallet/features/scan/presentation/pages/import_page.dart';
 import 'package:health_wallet/features/scan/presentation/pages/load_model/load_model_page.dart';
 import 'package:health_wallet/features/scan/presentation/pages/scan_page.dart';
-import 'package:health_wallet/features/backup/presentation/pages/backup_page.dart';
+import 'package:health_wallet/features/sync/desktop/communication/presentation/pages/backup_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
 
 import 'package:health_wallet/features/onboarding/presentation/pages/onboarding_page.dart';

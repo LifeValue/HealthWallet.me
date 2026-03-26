@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:health_wallet/features/backup/data/services/transport/communication_service.dart';
+import 'package:health_wallet/features/sync/desktop/communication/data/services/transport/communication_service.dart';
 
 class TransportSelector {
   static TransportType selectPrimary() {

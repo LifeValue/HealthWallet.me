@@ -4,11 +4,11 @@ import 'dart:developer';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/scan/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
-import 'package:health_wallet/features/sync/data/data_source/remote/sync_remote_data_source.dart';
-import 'package:health_wallet/features/sync/data/data_source/remote/source_remote_data_source.dart';
+import 'package:health_wallet/features/sync/data/remote/sync_remote_data_source.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/data/remote/source_remote_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart'
     as entity;
-import 'package:health_wallet/features/sync/domain/entities/sync_qr_data.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
