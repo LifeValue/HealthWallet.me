@@ -15,13 +15,12 @@ class LwwSyncService {
   static const _lastSyncKey = 'lww_last_sync_timestamp';
   static const _deviceIdKey = 'lww_local_device_id';
   static const _tombstoneRetentionDays = 30;
-  static const _tablesWithDeviceId = ['fhir_resource', 'processing_sessions'];
+  static const _tablesWithDeviceId = ['fhir_resource'];
 
   static const syncedTables = [
     'fhir_resource',
     'sources',
     'record_notes',
-    'processing_sessions',
   ];
 
   final AppDatabase _db;
