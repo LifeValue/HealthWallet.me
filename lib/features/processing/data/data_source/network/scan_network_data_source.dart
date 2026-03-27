@@ -98,16 +98,21 @@ class ScanNetworkDataSourceImpl
   Future<int> _getDeviceRamMB() async {
     if (_deviceRamMB != null) return _deviceRamMB!;
     try {
-      final deviceInfo = DeviceInfoPlugin();
       if (Platform.isIOS) {
+        final deviceInfo = DeviceInfoPlugin();
         final ios = await deviceInfo.iosInfo;
         _deviceRamMB = estimateIosRam(ios.utsname.machine);
       } else if (Platform.isAndroid) {
         _deviceRamMB = await _readAndroidRamMB();
         if (_deviceRamMB == null) {
+          final deviceInfo = DeviceInfoPlugin();
           final android = await deviceInfo.androidInfo;
           _deviceRamMB = android.isLowRamDevice ? 2048 : 4096;
         }
+      } else if (Platform.isMacOS) {
+        _deviceRamMB = await _readMacOsRamMB();
+      } else if (Platform.isLinux) {
+        _deviceRamMB = await _readLinuxRamMB();
       }
     } catch (_) {}
     _deviceRamMB ??= 4096;
@@ -123,12 +128,46 @@ class ScanNetworkDataSourceImpl
     return null;
   }
 
+  static Future<int?> _readMacOsRamMB() async {
+    try {
+      final result = await Process.run('sysctl', ['-n', 'hw.memsize']);
+      if (result.exitCode == 0) {
+        final bytes = int.tryParse(result.stdout.toString().trim());
+        if (bytes != null) return bytes ~/ (1024 * 1024);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static Future<int?> _readLinuxRamMB() async {
+    try {
+      final memInfo = await File('/proc/meminfo').readAsString();
+      final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
+      if (match != null) return int.parse(match.group(1)!) ~/ 1024;
+    } catch (_) {}
+    return null;
+  }
+
   static Future<int> _getAvailableRamMB() async {
-    if (Platform.isAndroid) {
+    if (Platform.isAndroid || Platform.isLinux) {
       try {
         final memInfo = await File('/proc/meminfo').readAsString();
         final match = RegExp(r'MemAvailable:\s+(\d+)').firstMatch(memInfo);
         if (match != null) return int.parse(match.group(1)!) ~/ 1024;
+      } catch (_) {}
+    } else if (Platform.isMacOS) {
+      try {
+        final result = await Process.run('sysctl', ['-n', 'vm.page_free_count', 'vm.pagesize']);
+        if (result.exitCode == 0) {
+          final lines = result.stdout.toString().trim().split('\n');
+          if (lines.length == 2) {
+            final freePages = int.tryParse(lines[0].trim());
+            final pageSize = int.tryParse(lines[1].trim());
+            if (freePages != null && pageSize != null) {
+              return (freePages * pageSize) ~/ (1024 * 1024);
+            }
+          }
+        }
       } catch (_) {}
     }
     return -1;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -175,8 +176,9 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     try {
       final sessions = await _repository.getProcessingSessions();
 
+      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
       final useVision =
-          _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? false;
+          _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
       emit(state.copyWith(
         sessions: sessions,
         status: const PipelineStatus.initial(),

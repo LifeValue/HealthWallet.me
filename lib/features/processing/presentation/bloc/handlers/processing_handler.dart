@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -277,8 +278,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final savedGpuLayers = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
       final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
       final savedContextSize = prefs.getInt(SharedPrefsConstants.aiContextSize);
+      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
       final useVision =
-          prefs.getBool(SharedPrefsConstants.aiUseVision) ?? false;
+          prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
       Stream<MappingResourcesWithProgress> stream =
           scanRepository.mapRemainingResources(sessionImages,
               documentCategory: docCategory,

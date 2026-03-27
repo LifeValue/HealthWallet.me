@@ -12,9 +12,8 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
@@ -445,8 +444,6 @@ class _SyncPageState extends State<SyncPage> {
     DevicePairing pairing,
   ) async {
     final pairingStorage = getIt<PairingStorageService>();
-    final tcpService = getIt<TcpService>();
-    final discoveryService = getIt<DiscoveryService>();
 
     await pairingStorage.savePairing(pairing);
     context.read<SyncBloc>().add(const SyncCancel());
@@ -455,18 +452,8 @@ class _SyncPageState extends State<SyncPage> {
       SnackBar(content: Text('Paired with ${pairing.deviceName}')),
     );
 
-    final result = await discoveryService.discover();
-    if (result == null) return;
-
-    try {
-      await tcpService.connectToServer(
-        ip: result.ip,
-        port: result.port,
-        pairingKey: pairing.pairingKey,
-      );
-    } catch (e) {
-      debugPrint('[Sync] Backup connection failed: $e');
-    }
+    final commBloc = getIt<CommunicationBloc>();
+    commBloc.add(CommunicationPairingCompleted(pairing: pairing));
   }
 
   Future<void> _handleSyncCompletion(BuildContext context) async {
