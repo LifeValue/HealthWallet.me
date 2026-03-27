@@ -16,7 +16,8 @@ mixin ScanInferenceHandler {
   set hasVisionProjector(bool value);
   String get ts;
 
-  static const int maxImageDimension = 560;
+  static final int maxImageDimension =
+      (Platform.isMacOS || Platform.isLinux || Platform.isWindows) ? 1120 : 560;
 
   bool isGenerating = false;
   bool pendingDisposal = false;
@@ -39,6 +40,8 @@ mixin ScanInferenceHandler {
   }
 
   Future<String> resizeImageIfNeeded(String imagePath) async {
+    if (maxImageDimension <= 0) return imagePath;
+
     final file = File(imagePath);
     final bytes = await file.readAsBytes();
     final decoded = img.decodeImage(bytes);
@@ -59,7 +62,8 @@ mixin ScanInferenceHandler {
     final dir = await getTemporaryDirectory();
     final resizedPath =
         path.join(dir.path, 'resized_${path.basename(imagePath)}');
-    await File(resizedPath).writeAsBytes(img.encodeJpg(resized, quality: 85));
+    final quality = (Platform.isMacOS || Platform.isLinux || Platform.isWindows) ? 95 : 85;
+    await File(resizedPath).writeAsBytes(img.encodeJpg(resized, quality: quality));
 
     return resizedPath;
   }
