@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/scan_network_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_prompt.dart';
@@ -191,6 +192,13 @@ mixin ScanProcessingRepository {
   }) async {
     ScanLogBuffer.instance.log('[$_ts][ScanAI] === BASIC INFO EXTRACTION ===');
 
+    final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+
+    if (isDesktop) {
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] desktop: using vision directly (no OCR)');
+      return _visionBasicInfo(imagePaths, '', maxTokens, gpuLayers, threads, contextSize);
+    }
+
     final ocrSw = Stopwatch()..start();
     final ocrText = await _runOcrOnImages(imagePaths);
     ocrSw.stop();
@@ -361,15 +369,17 @@ Rules:
     int? threads,
     int? contextSize,
   }) async* {
-    final ocrText = await _runOcrOnImages(imagePaths);
+    final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+    final effectiveUseVision = isDesktop ? true : useVision;
+    final ocrText = isDesktop ? '' : await _runOcrOnImages(imagePaths);
 
     ScanLogBuffer.instance.log('[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$useVision');
+    ScanLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$effectiveUseVision');
 
     List<MappingResource> allResources = [];
     final confidenceText = ocrText.isNotEmpty ? ocrText : null;
 
-    if (useVision) {
+    if (effectiveUseVision) {
       await networkDataSource.initModel(
         gpuLayers: gpuLayers,
         threads: threads,
@@ -431,7 +441,7 @@ Rules:
         }
       }
     } else {
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] vision disabled by user, using text-only');
+      ScanLogBuffer.instance.log('[$_ts][ScanAI] vision disabled, using text-only');
     }
 
     if (allResources.isEmpty && ocrText.trim().isNotEmpty) {
