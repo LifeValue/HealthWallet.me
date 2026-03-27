@@ -104,7 +104,7 @@ mixin ScanInferenceHandler {
 
     final content = <LlamaContentPart>[
       for (final imgPath in resizedPaths) LlamaImageContent(path: imgPath),
-      LlamaTextContent('$prompt\n\nJSON:\n'),
+      LlamaTextContent(prompt),
     ];
 
     final messages = [
