@@ -84,56 +84,60 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         ));
         return;
       }
-      final medicalText =
-          await ocrProcessingHelper.processOcrForImages(sessionImages);
-      if (medicalText.isEmpty || medicalText.trim().isEmpty) {
-        updateSession(emit,
-            sessionId: event.sessionId, status: ProcessingStatus.draft);
-        return;
-      }
-      final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
-      if (ocrPreMatch != null) {
-        ScanLogBuffer.instance.log(
-          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: ${ocrPreMatch.displayTitle}, running container-only AI');
-        final stagedPatient = StagedPatient(
-          existing: ocrPreMatch,
-          mode: ImportMode.linkExisting,
-        );
-        final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
-        final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
-        final savedContextSize = prefs.getInt(SharedPrefsConstants.aiContextSize);
-        final container = await scanRepository.mapContainerOnly(
-          medicalText,
-          maxTokens: savedMaxTokens,
-          threads: savedThreads,
-          contextSize: savedContextSize,
-        );
-        final finalSession =
-            state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
-        if (container is MappingDiagnosticReport) {
+      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+
+      if (!isDesktop) {
+        final medicalText =
+            await ocrProcessingHelper.processOcrForImages(sessionImages);
+        if (medicalText.isEmpty || medicalText.trim().isEmpty) {
           updateSession(emit,
-              sessionId: event.sessionId,
-              status: ProcessingStatus.patientExtracted,
-              patient: stagedPatient,
-              diagnosticReport: StagedDiagnosticReport(draft: container),
-              updateDb: true);
-        } else {
-          updateSession(emit,
-              sessionId: event.sessionId,
-              status: ProcessingStatus.patientExtracted,
-              patient: stagedPatient,
-              encounter: StagedEncounter(draft: container as MappingEncounter),
-              updateDb: true);
+              sessionId: event.sessionId, status: ProcessingStatus.draft);
+          return;
         }
-        emit(state.copyWith(
-          notification: Notification(
-            text: "${finalSession?.origin ?? 'Document'} patient matched",
-            route: ProcessingRoute(sessionId: event.sessionId),
-            time: DateTime.now(),
-          ),
-        ));
-        startNextPendingSession();
-        return;
+        final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
+        if (ocrPreMatch != null) {
+          ScanLogBuffer.instance.log(
+            '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: ${ocrPreMatch.displayTitle}, running container-only AI');
+          final stagedPatient = StagedPatient(
+            existing: ocrPreMatch,
+            mode: ImportMode.linkExisting,
+          );
+          final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
+          final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
+          final savedContextSize = prefs.getInt(SharedPrefsConstants.aiContextSize);
+          final container = await scanRepository.mapContainerOnly(
+            medicalText,
+            maxTokens: savedMaxTokens,
+            threads: savedThreads,
+            contextSize: savedContextSize,
+          );
+          final finalSession =
+              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+          if (container is MappingDiagnosticReport) {
+            updateSession(emit,
+                sessionId: event.sessionId,
+                status: ProcessingStatus.patientExtracted,
+                patient: stagedPatient,
+                diagnosticReport: StagedDiagnosticReport(draft: container),
+                updateDb: true);
+          } else {
+            updateSession(emit,
+                sessionId: event.sessionId,
+                status: ProcessingStatus.patientExtracted,
+                patient: stagedPatient,
+                encounter: StagedEncounter(draft: container as MappingEncounter),
+                updateDb: true);
+          }
+          emit(state.copyWith(
+            notification: Notification(
+              text: "${finalSession?.origin ?? 'Document'} patient matched",
+              route: ProcessingRoute(sessionId: event.sessionId),
+              time: DateTime.now(),
+            ),
+          ));
+          startNextPendingSession();
+          return;
+        }
       }
 
       final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
