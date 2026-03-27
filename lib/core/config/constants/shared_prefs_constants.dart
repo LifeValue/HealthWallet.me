@@ -15,4 +15,5 @@ class SharedPrefsConstants {
   static const regionPreset = 'regionPreset';
   static const countryCode = 'countryCode';
   static const appLocale = 'appLocale';
+  static const backupDirectory = 'backupDirectory';
 }
