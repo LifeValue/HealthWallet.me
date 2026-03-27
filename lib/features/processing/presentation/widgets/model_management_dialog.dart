@@ -38,6 +38,28 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     _bloc.add(const LoadModelInitialized());
   }
 
+  bool _isIncompatible(AiModelConfig config, DeviceAiCapability capability) {
+    if (config.variant == AiModelVariant.medGemma) {
+      return capability != DeviceAiCapability.full;
+    }
+    if (config.variant == AiModelVariant.qwen) {
+      return capability == DeviceAiCapability.unsupported;
+    }
+    return false;
+  }
+
+  String? _incompatibleMessage(
+    BuildContext context,
+    AiModelConfig config,
+    DeviceAiCapability capability,
+  ) {
+    if (config.variant == AiModelVariant.medGemma &&
+        capability == DeviceAiCapability.basicOnly) {
+      return context.l10n.medGemmaIncompatibleDevice;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final borderColor = context.borderColor;
@@ -122,42 +144,33 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         ),
                       ],
                       const SizedBox(height: Insets.smallNormal),
-                      _buildModelCard(
-                        context: context,
-                        config: AiModelConfig.medGemma,
-                        isDownloaded: state.medGemmaDownloaded,
-                        isActive:
-                            state.selectedVariant == AiModelVariant.medGemma,
-                        isDownloading: state.medGemmaDownloading,
-                        progress: state.medGemmaProgress,
-                        borderColor: borderColor,
-                        textColor: textColor,
-                        badge: null,
-                        incompatible: state.deviceCapability !=
-                            DeviceAiCapability.full,
-                        incompatibleMessage: state.deviceCapability ==
-                                DeviceAiCapability.basicOnly
-                            ? context.l10n.medGemmaIncompatibleDevice
-                            : null,
-                      ),
-                      const SizedBox(height: Insets.small),
-                      _buildModelCard(
-                        context: context,
-                        config: AiModelConfig.qwen,
-                        isDownloaded: state.qwenDownloaded,
-                        isActive:
-                            state.selectedVariant == AiModelVariant.qwen,
-                        isDownloading: state.qwenDownloading,
-                        progress: state.qwenProgress,
-                        borderColor: borderColor,
-                        textColor: textColor,
-                        incompatible: state.deviceCapability ==
-                            DeviceAiCapability.unsupported,
-                      ),
+                      ...AiModelConfig.availableVariants.map((config) {
+                        final variant = config.variant;
+                        final incompatible =
+                            _isIncompatible(config, state.deviceCapability);
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: Insets.small),
+                          child: _buildModelCard(
+                            context: context,
+                            config: config,
+                            isDownloaded: state.isVariantDownloaded(variant),
+                            isActive: state.selectedVariant == variant,
+                            isDownloading: state.isVariantDownloading(variant),
+                            progress: state.variantProgressOf(variant),
+                            borderColor: borderColor,
+                            textColor: textColor,
+                            incompatible: incompatible,
+                            incompatibleMessage: _incompatibleMessage(
+                              context,
+                              config,
+                              state.deviceCapability,
+                            ),
+                          ),
+                        );
+                      }),
                       if (state.status == LoadModelStatus.error &&
                           state.errorMessage != null &&
                           state.errorMessage != kNoInternetErrorKey) ...[
-                        const SizedBox(height: Insets.small),
                         Text(
                           state.errorMessage!,
                           style: AppTextStyle.labelSmall

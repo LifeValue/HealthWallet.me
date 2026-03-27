@@ -2,7 +2,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:injectable/injectable.dart';
 
-abstract class ScanLocalDataSource {
+abstract class ProcessingLocalDataSource {
   Future<int> cacheProcessingSession(ProcessingSessionsCompanion entity);
   Future<List<ProcessingSessionDto>> getProcessingSessions();
   Future<int> updateProcessingSession(
@@ -12,11 +12,11 @@ abstract class ScanLocalDataSource {
   Future<int> deleteProcessingSession(String id);
 }
 
-@LazySingleton(as: ScanLocalDataSource)
-class ScanLocalDataSourceImpl implements ScanLocalDataSource {
+@LazySingleton(as: ProcessingLocalDataSource)
+class ProcessingLocalDataSourceImpl implements ProcessingLocalDataSource {
   final AppDatabase appDatabase;
 
-  const ScanLocalDataSourceImpl(this.appDatabase);
+  const ProcessingLocalDataSourceImpl(this.appDatabase);
 
   @override
   Future<int> cacheProcessingSession(ProcessingSessionsCompanion entity) async {

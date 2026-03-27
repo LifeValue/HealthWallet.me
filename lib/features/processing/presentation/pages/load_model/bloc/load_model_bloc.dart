@@ -69,25 +69,27 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         ? AiModelConfig.getActive(_prefs).variant
         : null;
 
-    final medGemmaExists = await _downloadService
-        .checkModelExistsForVariant(AiModelVariant.medGemma);
-    final qwenExists = await _downloadService
-        .checkModelExistsForVariant(AiModelVariant.qwen);
+    final downloaded = <AiModelVariant, bool>{};
+    for (final config in AiModelConfig.availableVariants) {
+      downloaded[config.variant] =
+          await _downloadService.checkModelExistsForVariant(config.variant);
+    }
 
     final capability = await _deviceCapabilityService.getCapability();
 
-    final autoSelected = selectedVariant ?? _autoSelectSingleModel(
-      medGemmaExists: medGemmaExists,
-      qwenExists: qwenExists,
-    );
+    final autoSelected = selectedVariant ?? _autoSelectSingleModel(downloaded);
+
+    final downloading = <AiModelVariant, bool>{};
+    for (final config in AiModelConfig.availableVariants) {
+      downloading[config.variant] =
+          _downloadService.isVariantDownloading(config.variant);
+    }
 
     emit(state.copyWith(
       selectedVariant: autoSelected,
-      medGemmaDownloaded: medGemmaExists,
-      qwenDownloaded: qwenExists,
+      downloadedVariants: downloaded,
       deviceCapability: capability,
-      medGemmaDownloading: _downloadService.isVariantDownloading(AiModelVariant.medGemma),
-      qwenDownloading: _downloadService.isVariantDownloading(AiModelVariant.qwen),
+      downloadingVariants: downloading,
     ));
 
     if (_downloadService.isAnyDownloading) {
@@ -111,9 +113,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
 
     if (serviceState.status == AiModelDownloadStatus.completed) {
       final activeLoaded = autoSelected != null &&
-          (autoSelected == AiModelVariant.medGemma
-              ? medGemmaExists
-              : qwenExists);
+          (downloaded[autoSelected] ?? false);
       emit(state.copyWith(
         status: activeLoaded
             ? LoadModelStatus.modelLoaded
@@ -155,19 +155,18 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     ));
   }
 
-  AiModelVariant? _autoSelectSingleModel({
-    required bool medGemmaExists,
-    required bool qwenExists,
-  }) {
-    if (medGemmaExists && !qwenExists) {
+  AiModelVariant? _autoSelectSingleModel(
+    Map<AiModelVariant, bool> downloadedMap,
+  ) {
+    final downloaded = downloadedMap.entries
+        .where((e) => e.value)
+        .map((e) => e.key)
+        .toList();
+
+    if (downloaded.length == 1) {
       _prefs.setString(
-          SharedPrefsConstants.aiSelectedModel, AiModelVariant.medGemma.name);
-      return AiModelVariant.medGemma;
-    }
-    if (qwenExists && !medGemmaExists) {
-      _prefs.setString(
-          SharedPrefsConstants.aiSelectedModel, AiModelVariant.qwen.name);
-      return AiModelVariant.qwen;
+          SharedPrefsConstants.aiSelectedModel, downloaded.first.name);
+      return downloaded.first;
     }
     return null;
   }
@@ -203,17 +202,13 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       return;
     }
 
-    final isMedGemma = variant == AiModelVariant.medGemma;
-
     emit(state.copyWith(
       status: LoadModelStatus.loading,
       isBackgroundDownload: true,
       downloadProgress: 0.0,
       downloadingVariant: variant,
-      medGemmaDownloading: isMedGemma ? true : state.medGemmaDownloading,
-      qwenDownloading: !isMedGemma ? true : state.qwenDownloading,
-      medGemmaProgress: isMedGemma ? 0.0 : state.medGemmaProgress,
-      qwenProgress: !isMedGemma ? 0.0 : state.qwenProgress,
+      downloadingVariants: {...state.downloadingVariants, variant: true},
+      variantProgress: {...state.variantProgress, variant: 0.0},
     ));
 
     final modelName = AiModelConfig.fromVariant(variant).displayName;
@@ -247,16 +242,17 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         break;
 
       case AiModelDownloadStatus.downloading:
-        final isMedGemma = variant == AiModelVariant.medGemma;
         emit(state.copyWith(
           status: LoadModelStatus.loading,
           downloadProgress: serviceState.progress,
           isBackgroundDownload: true,
           downloadingVariant: variant,
-          medGemmaDownloading: isMedGemma ? true : state.medGemmaDownloading,
-          qwenDownloading: !isMedGemma ? true : state.qwenDownloading,
-          medGemmaProgress: isMedGemma ? serviceState.progress : state.medGemmaProgress,
-          qwenProgress: !isMedGemma ? serviceState.progress : state.qwenProgress,
+          downloadingVariants: variant != null
+              ? {...state.downloadingVariants, variant: true}
+              : state.downloadingVariants,
+          variantProgress: variant != null
+              ? {...state.variantProgress, variant: serviceState.progress ?? 0.0}
+              : state.variantProgress,
         ));
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
@@ -268,27 +264,31 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         break;
 
       case AiModelDownloadStatus.completed:
-        final isMedGemma = variant == AiModelVariant.medGemma;
-        final otherStillDownloading =
-            isMedGemma ? state.qwenDownloading : state.medGemmaDownloading;
+        final updatedDownloaded = variant != null
+            ? {...state.downloadedVariants, variant: true}
+            : state.downloadedVariants;
 
-        final updatedMedGemma = isMedGemma ? true : state.medGemmaDownloaded;
-        final updatedQwen = !isMedGemma ? true : state.qwenDownloaded;
+        final updatedDownloading = variant != null
+            ? {...state.downloadingVariants, variant: false}
+            : state.downloadingVariants;
+
+        final updatedProgress = variant != null
+            ? (Map<AiModelVariant, double>.from(state.variantProgress)
+                ..remove(variant))
+            : state.variantProgress;
+
+        final anyStillDownloading = updatedDownloading.entries
+            .any((e) => e.value && e.key != variant);
 
         var effectiveSelected = state.selectedVariant;
         if (effectiveSelected == null) {
-          effectiveSelected = _autoSelectSingleModel(
-            medGemmaExists: updatedMedGemma,
-            qwenExists: updatedQwen,
-          );
+          effectiveSelected = _autoSelectSingleModel(updatedDownloaded);
         }
 
         final selectedIsLoaded = effectiveSelected != null &&
-            (effectiveSelected == AiModelVariant.medGemma
-                ? updatedMedGemma
-                : updatedQwen);
+            (updatedDownloaded[effectiveSelected] ?? false);
 
-        final newStatus = otherStillDownloading
+        final newStatus = anyStillDownloading
             ? LoadModelStatus.loading
             : (selectedIsLoaded
                 ? LoadModelStatus.modelLoaded
@@ -297,16 +297,11 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         emit(state.copyWith(
           status: newStatus,
           selectedVariant: effectiveSelected,
-          downloadProgress: otherStillDownloading
-              ? (isMedGemma ? state.qwenProgress : state.medGemmaProgress)
-              : 100.0,
-          isBackgroundDownload: otherStillDownloading,
-          medGemmaDownloaded: updatedMedGemma,
-          qwenDownloaded: updatedQwen,
-          medGemmaDownloading: isMedGemma ? false : state.medGemmaDownloading,
-          qwenDownloading: !isMedGemma ? false : state.qwenDownloading,
-          medGemmaProgress: isMedGemma ? null : state.medGemmaProgress,
-          qwenProgress: !isMedGemma ? null : state.qwenProgress,
+          downloadProgress: anyStillDownloading ? state.downloadProgress : 100.0,
+          isBackgroundDownload: anyStillDownloading,
+          downloadedVariants: updatedDownloaded,
+          downloadingVariants: updatedDownloading,
+          variantProgress: updatedProgress,
         ));
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
@@ -321,20 +316,26 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         break;
 
       case AiModelDownloadStatus.error:
-        final isMedGemma = variant == AiModelVariant.medGemma;
-        final otherStillDownloading =
-            isMedGemma ? state.qwenDownloading : state.medGemmaDownloading;
+        final updatedDownloading = variant != null
+            ? {...state.downloadingVariants, variant: false}
+            : state.downloadingVariants;
+
+        final updatedProgress = variant != null
+            ? (Map<AiModelVariant, double>.from(state.variantProgress)
+                ..remove(variant))
+            : state.variantProgress;
+
+        final anyStillDownloading = updatedDownloading.entries
+            .any((e) => e.value && e.key != variant);
 
         emit(state.copyWith(
-          status: otherStillDownloading
+          status: anyStillDownloading
               ? LoadModelStatus.loading
               : LoadModelStatus.error,
           errorMessage: serviceState.errorMessage ?? 'Download failed',
-          isBackgroundDownload: otherStillDownloading,
-          medGemmaDownloading: isMedGemma ? false : state.medGemmaDownloading,
-          qwenDownloading: !isMedGemma ? false : state.qwenDownloading,
-          medGemmaProgress: isMedGemma ? null : state.medGemmaProgress,
-          qwenProgress: !isMedGemma ? null : state.qwenProgress,
+          isBackgroundDownload: anyStillDownloading,
+          downloadingVariants: updatedDownloading,
+          variantProgress: updatedProgress,
         ));
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
@@ -348,19 +349,25 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         break;
 
       case AiModelDownloadStatus.cancelled:
-        final isMedGemma = variant == AiModelVariant.medGemma;
-        final otherStillDownloading =
-            isMedGemma ? state.qwenDownloading : state.medGemmaDownloading;
+        final updatedDownloading = variant != null
+            ? {...state.downloadingVariants, variant: false}
+            : state.downloadingVariants;
+
+        final updatedProgress = variant != null
+            ? (Map<AiModelVariant, double>.from(state.variantProgress)
+                ..remove(variant))
+            : state.variantProgress;
+
+        final anyStillDownloading = updatedDownloading.entries
+            .any((e) => e.value && e.key != variant);
 
         emit(state.copyWith(
-          status: otherStillDownloading
+          status: anyStillDownloading
               ? LoadModelStatus.loading
               : LoadModelStatus.modelAbsent,
-          isBackgroundDownload: otherStillDownloading,
-          medGemmaDownloading: isMedGemma ? false : state.medGemmaDownloading,
-          qwenDownloading: !isMedGemma ? false : state.qwenDownloading,
-          medGemmaProgress: isMedGemma ? null : state.medGemmaProgress,
-          qwenProgress: !isMedGemma ? null : state.qwenProgress,
+          isBackgroundDownload: anyStillDownloading,
+          downloadingVariants: updatedDownloading,
+          variantProgress: updatedProgress,
         ));
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
@@ -393,10 +400,8 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       status: LoadModelStatus.modelAbsent,
       isBackgroundDownload: false,
       downloadProgress: null,
-      medGemmaDownloading: false,
-      qwenDownloading: false,
-      medGemmaProgress: null,
-      qwenProgress: null,
+      downloadingVariants: {},
+      variantProgress: {},
     ));
     _addCancelledNotification();
   }
@@ -417,10 +422,8 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
   ) async {
     await _downloadService.deleteModelForVariant(event.variant);
 
-    final isMedGemma = event.variant == AiModelVariant.medGemma;
     emit(state.copyWith(
-      medGemmaDownloaded: isMedGemma ? false : state.medGemmaDownloaded,
-      qwenDownloaded: isMedGemma ? state.qwenDownloaded : false,
+      downloadedVariants: {...state.downloadedVariants, event.variant: false},
     ));
 
     if (state.selectedVariant == event.variant) {

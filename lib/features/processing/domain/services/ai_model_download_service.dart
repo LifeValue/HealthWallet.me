@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,7 +31,7 @@ class AiModelDownloadState with _$AiModelDownloadState {
 
 @LazySingleton()
 class AiModelDownloadService with WidgetsBindingObserver {
-  final ScanRepository _repository;
+  final ProcessingRepository _repository;
   final SharedPreferences _prefs;
 
   static const String _downloadInterruptedKey = 'ai_model_download_interrupted';

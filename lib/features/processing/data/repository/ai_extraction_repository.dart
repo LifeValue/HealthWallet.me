@@ -1,21 +1,22 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:collection/collection.dart';
-import 'package:health_wallet/features/processing/data/data_source/network/scan_network_data_source.dart';
+import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_vision_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/remaining_resources_vision_prompt.dart';
+import 'package:health_wallet/features/processing/data/utils/image_preprocessor.dart';
 import 'package:health_wallet/features/processing/data/utils/observation_ocr_validator.dart';
 import 'package:health_wallet/features/processing/data/utils/patient_post_processor.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
-import 'package:health_wallet/features/processing/domain/services/scan_log_buffer.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/data/model/grammar/gbnf_grammars.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 
-mixin ScanProcessingRepository {
+mixin AiExtractionRepository {
   static final _markdownFenceRegex = RegExp(r'```(?:json)?\s*');
 
   static const int _minOcrCharsForTextOnly = 200;
@@ -32,7 +33,7 @@ mixin ScanProcessingRepository {
     'true', 'false', 'yes', 'no', 'oui', 'non', 'vrai', 'faux',
   };
 
-  ScanNetworkDataSource get networkDataSource;
+  AiInferenceDataSource get networkDataSource;
   TextRecognitionService get textRecognitionService;
   bool get shouldCancelGeneration;
   Future<void> disposeModel();
@@ -86,7 +87,7 @@ mixin ScanProcessingRepository {
 
     if (lastCompleteObjectEnd > 0) {
       final repaired = '${trimmed.substring(0, lastCompleteObjectEnd + 1)}]';
-      ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] repaired truncated JSON array (cut at char $lastCompleteObjectEnd of ${trimmed.length})');
+      ProcessingLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] repaired truncated JSON array (cut at char $lastCompleteObjectEnd of ${trimmed.length})');
       return repaired;
     }
 
@@ -155,7 +156,7 @@ mixin ScanProcessingRepository {
 
     final documentCategory = aiCategory ?? '';
     final resourceTypes = resources.map((r) => r.runtimeType.toString().replaceAll(r'_$', '').replaceAll('Impl', '')).join(', ');
-    ScanLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] parsed ${jsonList.length} JSON objects -> ${resources.length} valid resources [$resourceTypes], category=${documentCategory.isEmpty ? '(empty)' : documentCategory}');
+    ProcessingLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] parsed ${jsonList.length} JSON objects -> ${resources.length} valid resources [$resourceTypes], category=${documentCategory.isEmpty ? '(empty)' : documentCategory}');
 
     final container = _selectContainer(
       resources: resources,
@@ -171,8 +172,11 @@ mixin ScanProcessingRepository {
   }
 
   Future<String> _runOcrOnImages(List<String> imagePaths) async {
+    final preprocessed = await Future.wait(
+      imagePaths.map(ImagePreprocessor.preprocessForOcr),
+    );
     final results = await Future.wait(
-      imagePaths.map((p) => textRecognitionService.recognizeTextFromImage(p)),
+      preprocessed.map((p) => textRecognitionService.recognizeTextFromImage(p)),
     );
     return results.join('\n');
   }
@@ -190,22 +194,15 @@ mixin ScanProcessingRepository {
     int? threads,
     int? contextSize,
   }) async {
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] === BASIC INFO EXTRACTION ===');
-
-    final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
-
-    if (isDesktop) {
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] desktop: using vision directly (no OCR)');
-      return _visionBasicInfo(imagePaths, '', maxTokens, gpuLayers, threads, contextSize);
-    }
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] === BASIC INFO EXTRACTION ===');
 
     final ocrSw = Stopwatch()..start();
     final ocrText = await _runOcrOnImages(imagePaths);
     ocrSw.stop();
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] OCR: ${ocrText.length} chars in ${(ocrSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] OCR: ${ocrText.length} chars in ${(ocrSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
 
     if (ocrText.trim().length >= _minOcrCharsForTextOnly) {
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] OCR has enough text, trying text-only (fast path)...');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] OCR has enough text, trying text-only (fast path)...');
       try {
         final textResult = await _tryTextOnlyBasicInfo(ocrText, maxTokens, threads, contextSize);
         if (textResult != null) {
@@ -213,18 +210,18 @@ mixin ScanProcessingRepository {
           final postProcessed = PatientPostProcessor.postProcess(patient, ocrText);
           if (_isUsableResult(postProcessed)) {
             final containerType = container is MappingDiagnosticReport ? 'DiagnosticReport' : 'Encounter';
-            ScanLogBuffer.instance.log('[$_ts][ScanAI] text-only succeeded: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory');
+            ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text-only succeeded: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory');
             return (postProcessed, container);
           }
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] text-only result was empty, falling back to vision...');
+          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text-only result was empty, falling back to vision...');
         }
       } catch (e) {
-        ScanLogBuffer.instance.log('[$_ts][ScanAI] text-only failed: $e, falling back to vision...');
+        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text-only failed: $e, falling back to vision...');
       } finally {
         await disposeModel();
       }
     } else {
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] OCR too short (${ocrText.trim().length} < $_minOcrCharsForTextOnly chars), using vision directly...');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] OCR too short (${ocrText.trim().length} < $_minOcrCharsForTextOnly chars), using vision directly...');
     }
 
     return _visionBasicInfo(imagePaths, ocrText, maxTokens, gpuLayers, threads, contextSize);
@@ -236,7 +233,7 @@ mixin ScanProcessingRepository {
     int? threads,
     int? contextSize,
   }) async {
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] === CONTAINER-ONLY EXTRACTION (pre-matched patient) ===');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] === CONTAINER-ONLY EXTRACTION (pre-matched patient) ===');
 
     final textCtx = (contextSize == null || contextSize < 2048) ? 2048 : contextSize;
     await networkDataSource.initModel(
@@ -262,21 +259,22 @@ Rules:
 - periodStart/issuedDate MUST be full date with year: YYYY-MM-DD (e.g. 2025-09-02). Never omit the year.
 - Empty string for missing fields.''';
 
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] running container-only inference, prompt ${prompt.length} chars...');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running container-only inference, prompt ${prompt.length} chars...');
 
     final response = await networkDataSource.runTextPrompt(
       prompt: prompt,
       maxTokens: maxTokens ?? 256,
+      grammar: GbnfGrammars.jsonArray,
     );
 
     await disposeModel();
 
     if (response == null || response.isEmpty) {
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only: empty response');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] container-only: empty response');
       return MappingEncounter.empty();
     }
 
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only response: ${response.length > 200 ? response.substring(0, 200) : response}');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] container-only response: ${response.length > 200 ? response.substring(0, 200) : response}');
 
     try {
       final cleaned = response.replaceAll(_markdownFenceRegex, '').trim();
@@ -289,7 +287,7 @@ Rules:
       }
       return MappingEncounter.fromJson(first);
     } catch (e) {
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] container-only parse failed: $e');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] container-only parse failed: $e');
       return MappingEncounter.empty();
     }
   }
@@ -301,7 +299,7 @@ Rules:
     int? contextSize,
   ) async {
     final textCtx = (contextSize == null || contextSize < 2048) ? 2048 : contextSize;
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] loading model (text-only, no vision projector)...');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] loading model (text-only, no vision projector)...');
     await networkDataSource.initModel(
       withVision: false,
       threads: threads,
@@ -309,14 +307,15 @@ Rules:
     );
 
     final prompt = BasicInfoPrompt().buildPrompt(ocrText);
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] running text inference, prompt ${prompt.length} chars...');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running text inference, prompt ${prompt.length} chars...');
 
     final response = await networkDataSource.runTextPrompt(
       prompt: prompt,
       maxTokens: maxTokens,
+      grammar: GbnfGrammars.jsonArray,
     );
 
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] parsing text-only response...');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] parsing text-only response...');
     return _parseBasicInfoResponse(response, ocrText);
   }
 
@@ -328,32 +327,32 @@ Rules:
     int? threads,
     int? contextSize,
   ) async {
-    final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] --- VISION FALLBACK ---');
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] loading model + vision projector...');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] --- VISION FALLBACK ---');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] loading model + vision projector...');
     await networkDataSource.initModel(
-      gpuLayers: isDesktop ? null : gpuLayers,
-      threads: isDesktop ? null : threads,
-      contextSize: isDesktop ? null : contextSize,
+      gpuLayers: gpuLayers,
+      threads: threads,
+      contextSize: contextSize,
     );
 
     try {
       final prompt = BasicInfoVisionPrompt(ocrText: ocrText).buildPrompt();
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] running vision inference...');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running vision inference...');
 
       final response = await networkDataSource.runVisionPrompt(
         prompt: prompt,
         imagePaths: imagePaths,
         maxTokens: maxTokens,
+        grammar: GbnfGrammars.jsonArray,
       );
 
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] parsing vision response...');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] parsing vision response...');
       final (patient, container, docCategory) = _parseBasicInfoResponse(response, ocrText);
 
       final postProcessed = PatientPostProcessor.postProcess(patient, ocrText);
 
       final containerType = container is MappingDiagnosticReport ? 'DiagnosticReport' : 'Encounter';
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] vision result: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision result: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory');
 
       return (postProcessed, container);
     } finally {
@@ -370,21 +369,19 @@ Rules:
     int? threads,
     int? contextSize,
   }) async* {
-    final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
-    final effectiveUseVision = isDesktop ? true : useVision;
-    final ocrText = isDesktop ? '' : await _runOcrOnImages(imagePaths);
+    final ocrText = await _runOcrOnImages(imagePaths);
 
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
-    ScanLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$effectiveUseVision');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$useVision');
 
     List<MappingResource> allResources = [];
     final confidenceText = ocrText.isNotEmpty ? ocrText : null;
 
-    if (effectiveUseVision) {
+    if (useVision) {
       await networkDataSource.initModel(
-        gpuLayers: isDesktop ? null : gpuLayers,
-        threads: isDesktop ? null : threads,
-        contextSize: isDesktop ? null : contextSize,
+        gpuLayers: gpuLayers,
+        threads: threads,
+        contextSize: contextSize,
       );
 
       final promptBuilder = await RemainingResourcesVisionPrompt.create(
@@ -407,7 +404,7 @@ Rules:
         );
       }
 
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $_visionBatchSize images, OCR trimmed to $_visionOcrMaxLength chars, no few-shot');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $_visionBatchSize images, OCR trimmed to $_visionOcrMaxLength chars, no few-shot');
 
       for (var batchIdx = 0; batchIdx < batches.length; batchIdx++) {
         if (shouldCancelGeneration) return;
@@ -417,36 +414,37 @@ Rules:
           contextSize: contextSize,
         );
         if (!health.canProceed) {
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] memory too low (${health.availableMB}MB < ${health.requiredMB}MB), switching to text fallback');
+          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] memory too low (${health.availableMB}MB < ${health.requiredMB}MB), switching to text fallback');
           break;
         }
 
         final batch = batches[batchIdx];
         try {
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
+          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
 
           final response = await networkDataSource.runVisionPrompt(
             prompt: prompt,
             imagePaths: batch,
             maxTokens: maxTokens,
+            grammar: GbnfGrammars.jsonArray,
           );
 
           final parsed = _parseResourcesFromResponse(response, confidenceText);
           allResources.addAll(parsed);
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] batch ${batchIdx + 1}: ${parsed.length} resources');
+          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] batch ${batchIdx + 1}: ${parsed.length} resources');
 
           final progress = (batchIdx + 1) / (batches.length + 1);
           yield (allResources.toSet().toList(), progress);
         } catch (e) {
-          ScanLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1} failed: $e');
+          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1} failed: $e');
         }
       }
     } else {
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] vision disabled, using text-only');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision disabled, using text-only');
     }
 
     if (allResources.isEmpty && ocrText.trim().isNotEmpty) {
-      ScanLogBuffer.instance.log('[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---');
       await disposeModel();
 
       final fallbackPromptBuilder = await RemainingResourcesVisionPrompt.create(
@@ -465,16 +463,17 @@ Rules:
       );
 
       try {
-        ScanLogBuffer.instance.log('[$_ts][ScanAI] running text-only inference, prompt ${fallbackPrompt.length} chars...');
+        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running text-only inference, prompt ${fallbackPrompt.length} chars...');
         final response = await networkDataSource.runTextPrompt(
           prompt: fallbackPrompt,
           maxTokens: maxTokens,
+          grammar: GbnfGrammars.jsonArray,
         );
 
         allResources = _parseResourcesFromResponse(response, confidenceText);
-        ScanLogBuffer.instance.log('[$_ts][ScanAI] text fallback: ${allResources.length} resources');
+        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text fallback: ${allResources.length} resources');
       } catch (e) {
-        ScanLogBuffer.instance.log('[$_ts][ScanAI] text fallback failed: $e');
+        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text fallback failed: $e');
         final msg = e.toString().toLowerCase();
         if (msg.contains('tokenization') || msg.contains('prompt too long')) {
           rethrow;
@@ -540,7 +539,7 @@ Rules:
     List<MappingResource> resources = [];
     for (final json in deduplicated) {
       if (_shouldSkipResource(json)) {
-        ScanLogBuffer.instance.log('[ScanAI] skipped ${json['resourceType']}: ${json['conditionName'] ?? json['observationName'] ?? json['value'] ?? ''}');
+        ProcessingLogBuffer.instance.log('[ScanAI] skipped ${json['resourceType']}: ${json['conditionName'] ?? json['observationName'] ?? json['value'] ?? ''}');
         continue;
       }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:health_wallet/features/processing/domain/services/scan_log_buffer.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 
 class DebugLogSheet extends StatefulWidget {
   const DebugLogSheet({super.key});
@@ -30,12 +30,12 @@ class _DebugLogSheetState extends State<DebugLogSheet> {
   @override
   void initState() {
     super.initState();
-    ScanLogBuffer.instance.addListener(_onLogsChanged);
+    ProcessingLogBuffer.instance.addListener(_onLogsChanged);
     _loadPersistedLogs();
   }
 
   Future<void> _loadPersistedLogs() async {
-    final logs = await ScanLogBuffer.instance.readPersistedLogs();
+    final logs = await ProcessingLogBuffer.instance.readPersistedLogs();
     if (mounted && logs.isNotEmpty) {
       setState(() => _persistedLogs = logs);
     }
@@ -43,7 +43,7 @@ class _DebugLogSheetState extends State<DebugLogSheet> {
 
   @override
   void dispose() {
-    ScanLogBuffer.instance.removeListener(_onLogsChanged);
+    ProcessingLogBuffer.instance.removeListener(_onLogsChanged);
     _scrollController.dispose();
     super.dispose();
   }
@@ -66,7 +66,7 @@ class _DebugLogSheetState extends State<DebugLogSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final logs = ScanLogBuffer.instance.getAll();
+    final logs = ProcessingLogBuffer.instance.getAll();
     final hasPersistedLogs = _persistedLogs.isNotEmpty;
 
     return DraggableScrollableSheet(
@@ -150,8 +150,8 @@ class _DebugLogSheetState extends State<DebugLogSheet> {
                   ),
                   TextButton(
                     onPressed: () async {
-                      ScanLogBuffer.instance.clear();
-                      await ScanLogBuffer.instance.clearPersistedLogs();
+                      ProcessingLogBuffer.instance.clear();
+                      await ProcessingLogBuffer.instance.clearPersistedLogs();
                       setState(() => _persistedLogs = '');
                     },
                     child: const Text(

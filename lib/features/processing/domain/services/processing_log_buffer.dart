@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-class ScanLogBuffer extends ChangeNotifier {
-  ScanLogBuffer._();
+class ProcessingLogBuffer extends ChangeNotifier {
+  ProcessingLogBuffer._();
 
-  static final ScanLogBuffer instance = ScanLogBuffer._();
+  static final ProcessingLogBuffer instance = ProcessingLogBuffer._();
 
   static const int _maxEntries = 500;
 

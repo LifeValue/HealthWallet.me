@@ -1,5 +1,5 @@
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
-import 'package:health_wallet/features/processing/domain/services/scan_log_buffer.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 
@@ -11,7 +11,7 @@ class PatientPostProcessor {
     String ocrText, {
     String? regionDefaultLabel,
   }) {
-    ScanLogBuffer.instance.log('[$_ts][PostProcessor] patient: ${patient.givenName.value} ${patient.familyName.value}, mrn=${patient.patientIdentifier.value}, label=${patient.identifierLabel}');
+    ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] patient: ${patient.givenName.value} ${patient.familyName.value}, mrn=${patient.patientIdentifier.value}, label=${patient.identifierLabel}');
 
     var result = patient;
 
@@ -30,7 +30,7 @@ class PatientPostProcessor {
     }
 
     if (result != patient) {
-      ScanLogBuffer.instance.log('[$_ts][PostProcessor] corrected: label=${result.identifierLabel}, dob=${result.dateOfBirth.value}, gender=${result.gender.value}');
+      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] corrected: label=${result.identifierLabel}, dob=${result.dateOfBirth.value}, gender=${result.gender.value}');
     }
 
     return result;
@@ -48,7 +48,7 @@ class PatientPostProcessor {
         (mrn.isNotEmpty && RegExp(r'^[A-Za-z]+$').hasMatch(mrn));
 
     if (labelLooksNumeric && (mrn.isEmpty || mrnLooksLikeLabel)) {
-      ScanLogBuffer.instance.log('[$_ts][PostProcessor] swapped fields: moving "$label" from label to MRN box');
+      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] swapped fields: moving "$label" from label to MRN box');
       return patient.copyWith(
         patientIdentifier: MappedProperty(value: label, confidenceLevel: patient.patientIdentifier.confidenceLevel),
         identifierLabel: mrn.isNotEmpty && _knownLabels.contains(mrn) ? mrn : 'Identifier',
@@ -56,7 +56,7 @@ class PatientPostProcessor {
     }
 
     if (labelLooksNumeric && mrn.isNotEmpty) {
-      ScanLogBuffer.instance.log('[$_ts][PostProcessor] label contains number "$label", resetting to Identifier');
+      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] label contains number "$label", resetting to Identifier');
       return patient.copyWith(identifierLabel: 'Identifier');
     }
 
@@ -74,7 +74,7 @@ class PatientPostProcessor {
       final realCnp = _findCnpInText(ocrText);
       if (realCnp != null) {
         final parsed = _tryParseCnp(realCnp)!;
-        ScanLogBuffer.instance.log('[$_ts][PostProcessor] CNP recovered from OCR: $realCnp (model had wrong value: $mrnValue)');
+        ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] CNP recovered from OCR: $realCnp (model had wrong value: $mrnValue)');
         return patient.copyWith(
           patientIdentifier: MappedProperty(value: realCnp, confidenceLevel: 0.9),
           identifierLabel: 'CNP',
@@ -82,7 +82,7 @@ class PatientPostProcessor {
           gender: MappedProperty(value: parsed.gender, confidenceLevel: 1.0),
         );
       }
-      ScanLogBuffer.instance.log('[$_ts][PostProcessor] label CNP -> Identifier (not a valid CNP, none found in OCR)');
+      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] label CNP -> Identifier (not a valid CNP, none found in OCR)');
       return patient.copyWith(identifierLabel: 'Identifier');
     }
 
@@ -90,7 +90,7 @@ class PatientPostProcessor {
       final realCnp = _findCnpInText(ocrText);
       if (realCnp != null) {
         final parsed = _tryParseCnp(realCnp)!;
-        ScanLogBuffer.instance.log('[$_ts][PostProcessor] CNP found in OCR: $realCnp (model had: label=${patient.identifierLabel}, mrn=$mrnValue)');
+        ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] CNP found in OCR: $realCnp (model had: label=${patient.identifierLabel}, mrn=$mrnValue)');
         return patient.copyWith(
           patientIdentifier: MappedProperty(value: realCnp, confidenceLevel: 0.9),
           identifierLabel: 'CNP',
@@ -101,7 +101,7 @@ class PatientPostProcessor {
     }
 
     if (isValidCnp && patient.identifierLabel != 'CNP') {
-      ScanLogBuffer.instance.log('[$_ts][PostProcessor] label ${patient.identifierLabel} -> CNP (valid 13-digit CNP detected)');
+      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] label ${patient.identifierLabel} -> CNP (valid 13-digit CNP detected)');
       return patient.copyWith(identifierLabel: 'CNP');
     }
 
@@ -119,7 +119,7 @@ class PatientPostProcessor {
       if (foundCnp != null) {
         final foundParsed = _tryParseCnp(foundCnp);
         if (foundParsed != null) {
-          ScanLogBuffer.instance.log('[$_ts][PostProcessor] CNP recovered from OCR: $foundCnp');
+          ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] CNP recovered from OCR: $foundCnp');
           return patient.copyWith(
             patientIdentifier: MappedProperty(value: foundCnp, confidenceLevel: 0.9),
             dateOfBirth: MappedProperty(
@@ -136,7 +136,7 @@ class PatientPostProcessor {
       return patient;
     }
 
-    ScanLogBuffer.instance.log('[$_ts][PostProcessor] CNP derived: dob=${parsed.dob}, gender=${parsed.gender}');
+    ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] CNP derived: dob=${parsed.dob}, gender=${parsed.gender}');
     return patient.copyWith(
       dateOfBirth: MappedProperty(
         value: parsed.dob,
@@ -174,14 +174,14 @@ class PatientPostProcessor {
     var result = patient;
 
     if (_isLikelyAddress(result.familyName.value)) {
-      ScanLogBuffer.instance.log('[$_ts][PostProcessor] cleared familyName (address detected)');
+      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] cleared familyName (address detected)');
       result = result.copyWith(
         familyName: const MappedProperty(value: '', confidenceLevel: 0.0),
       );
     }
 
     if (_isLikelyAddress(result.givenName.value)) {
-      ScanLogBuffer.instance.log('[$_ts][PostProcessor] cleared givenName (address detected)');
+      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] cleared givenName (address detected)');
       result = result.copyWith(
         givenName: const MappedProperty(value: '', confidenceLevel: 0.0),
       );
@@ -191,7 +191,7 @@ class PatientPostProcessor {
     final givenIsPlaceholder = _isPlaceholder(result.givenName.value);
 
     if (familyIsPlaceholder || givenIsPlaceholder) {
-      ScanLogBuffer.instance.log('[$_ts][PostProcessor] placeholder detected: family="${result.familyName.value}", given="${result.givenName.value}"');
+      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] placeholder detected: family="${result.familyName.value}", given="${result.givenName.value}"');
       if (familyIsPlaceholder) {
         result = result.copyWith(
           familyName: const MappedProperty(value: '', confidenceLevel: 0.0),
@@ -301,7 +301,7 @@ class PatientPostProcessor {
       if (match != null) {
         final surname = match.group(1)!.trim();
         final firstName = match.group(2)!.trim();
-        ScanLogBuffer.instance.log('[$_ts][PostProcessor] names recovered from OCR: "$surname" "$firstName"');
+        ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] names recovered from OCR: "$surname" "$firstName"');
         var result = patient;
         if (needsFamily) {
           result = result.copyWith(
@@ -317,7 +317,7 @@ class PatientPostProcessor {
       }
     }
 
-    ScanLogBuffer.instance.log('[$_ts][PostProcessor] could not recover names from OCR');
+    ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] could not recover names from OCR');
     return patient;
   }
 

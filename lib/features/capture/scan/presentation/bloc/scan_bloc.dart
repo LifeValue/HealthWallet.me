@@ -4,9 +4,9 @@ import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
-import 'package:health_wallet/features/processing/presentation/helpers/scan_path_helper.dart';
+import 'package:health_wallet/features/processing/presentation/helpers/processing_path_helper.dart';
 import 'package:injectable/injectable.dart';
 
 part 'scan_event.dart';
@@ -16,12 +16,12 @@ part 'scan_bloc.freezed.dart';
 @injectable
 class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final PdfStorageService _pdfStorageService;
-  final ScanRepository _scanRepository;
+  final ProcessingRepository _processingRepository;
   final ProcessingBloc _processingBloc;
 
   ScanBloc(
     this._pdfStorageService,
-    this._scanRepository,
+    this._processingRepository,
     this._processingBloc,
   ) : super(const ScanState()) {
     on<ScanPressed>(_onScanPressed);
@@ -79,9 +79,9 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
 
     if (imagePaths.isEmpty || !_isValidResult(imagePaths.first)) return null;
 
-    final persistedPaths = await ScanPathHelper.persistScanFiles(
+    final persistedPaths = await ProcessingPathHelper.persistScanFiles(
       sourcePaths: imagePaths,
-      repository: _scanRepository,
+      repository: _processingRepository,
     );
 
     return persistedPaths.isNotEmpty ? persistedPaths : imagePaths;

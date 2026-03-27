@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
-import 'package:health_wallet/features/processing/data/data_source/local/scan_local_data_source.dart';
-import 'package:health_wallet/features/processing/data/data_source/network/scan_network_data_source.dart';
-import 'package:health_wallet/features/processing/data/repository/scan_processing_repository.dart';
+import 'package:health_wallet/features/processing/data/data_source/local/processing_local_data_source.dart';
+import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
+import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
@@ -17,19 +17,19 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
-@LazySingleton(as: ScanRepository)
-class ScanRepositoryImpl extends Object
-    with ScanProcessingRepository
-    implements ScanRepository {
-  ScanRepositoryImpl(
+@LazySingleton(as: ProcessingRepository)
+class ProcessingRepositoryImpl extends Object
+    with AiExtractionRepository
+    implements ProcessingRepository {
+  ProcessingRepositoryImpl(
     this._networkDataSource,
     this._localDataSource,
     this._textRecognitionService,
     this._pathResolver,
   );
 
-  final ScanNetworkDataSource _networkDataSource;
-  final ScanLocalDataSource _localDataSource;
+  final AiInferenceDataSource _networkDataSource;
+  final ProcessingLocalDataSource _localDataSource;
   final TextRecognitionService _textRecognitionService;
   final PathResolver _pathResolver;
 
@@ -38,7 +38,7 @@ class ScanRepositoryImpl extends Object
   bool _shouldCancelGeneration = false;
 
   @override
-  ScanNetworkDataSource get networkDataSource => _networkDataSource;
+  AiInferenceDataSource get networkDataSource => _networkDataSource;
 
   @override
   TextRecognitionService get textRecognitionService => _textRecognitionService;

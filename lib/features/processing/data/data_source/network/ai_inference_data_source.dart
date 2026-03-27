@@ -3,18 +3,18 @@ import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:health_wallet/features/processing/domain/services/scan_log_buffer.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/core/config/env/env.dart';
-import 'package:health_wallet/features/processing/data/data_source/network/scan_inference_handler.dart';
+import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_handler.dart';
 import 'package:injectable/injectable.dart';
 import 'package:llamadart/llamadart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 
-abstract class ScanNetworkDataSource {
+abstract class AiInferenceDataSource {
   Future<void> downloadModel({
     required void Function(int) onProgress,
   });
@@ -49,11 +49,13 @@ abstract class ScanNetworkDataSource {
     required String prompt,
     required List<String> imagePaths,
     int? maxTokens,
+    String? grammar,
   });
 
   Future<String?> runTextPrompt({
     required String prompt,
     int? maxTokens,
+    String? grammar,
   });
 
   Future<void> initModel({
@@ -72,13 +74,13 @@ abstract class ScanNetworkDataSource {
   });
 }
 
-@LazySingleton(as: ScanNetworkDataSource)
-class ScanNetworkDataSourceImpl
-    with ScanInferenceHandler
-    implements ScanNetworkDataSource {
+@LazySingleton(as: AiInferenceDataSource)
+class AiInferenceDataSourceImpl
+    with AiInferenceHandler
+    implements AiInferenceDataSource {
   final SharedPreferences _prefs;
 
-  ScanNetworkDataSourceImpl(this._prefs);
+  AiInferenceDataSourceImpl(this._prefs);
 
   LlamaEngine? _engine;
   bool _hasVisionProjector = false;
@@ -170,7 +172,7 @@ class ScanNetworkDataSourceImpl
     final safeLimit = (deviceRam * _iosMemoryCeiling).round();
     final headroom = safeLimit - currentRssMB;
     final available = headroom > 0 ? headroom : 0;
-    ScanLogBuffer.instance.log(
+    ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] iOS memory: RSS=${currentRssMB}MB, deviceRAM=${deviceRam}MB, ceiling=${(_iosMemoryCeiling * 100).toInt()}%, safeLimit=${safeLimit}MB, headroom=${available}MB');
     return available;
   }
@@ -443,21 +445,21 @@ class ScanNetworkDataSourceImpl
         ? await _getAvailableRamMBForIos()
         : await _getAvailableRamMB();
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
-    ScanLogBuffer.instance.log('[$ts][ScanAI] --- INIT MODEL ---');
-    ScanLogBuffer.instance.log(
+    ProcessingLogBuffer.instance.log('[$ts][ScanAI] --- INIT MODEL ---');
+    ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] model loaded (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)');
-    ScanLogBuffer.instance.log(
+    ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] config: ctx=$ctx, gpu_layers=${config.gpuLayers}, threads=${config.threads}, ram=${ramMB}MB, available=${availableMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, required~${requiredMB}MB, platform=${Platform.operatingSystem}');
 
     if (availableMB >= 0 && availableMB < requiredMB) {
-      ScanLogBuffer.instance.log(
+      ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] ABORT: only ${availableMB}MB available, need ~${requiredMB}MB');
       throw Exception(
           'Not enough memory to load the AI model. Available: ${availableMB}MB, required: ~${requiredMB}MB. Close other apps and try again.');
     }
 
     if (!await _isValidGgufFile(modelPath)) {
-      ScanLogBuffer.instance.log(
+      ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] ERROR: corrupt GGUF header, deleting file');
       await modelFile.delete();
       throw Exception(
@@ -465,7 +467,7 @@ class ScanNetworkDataSourceImpl
     }
 
     final backend = Platform.isAndroid ? GpuBackend.cpu : GpuBackend.auto;
-    ScanLogBuffer.instance
+    ProcessingLogBuffer.instance
         .log('[$ts][ScanAI] creating engine with backend=$backend');
 
     _engine = LlamaEngine(LlamaBackend());
@@ -477,18 +479,18 @@ class ScanNetworkDataSourceImpl
       numberOfThreads: config.threads,
       numberOfThreadsBatch: config.threads,
     );
-    ScanLogBuffer.instance.log(
+    ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] loadModel: ctx=${params.contextSize}, gpuLayers=${params.gpuLayers}, backend=${params.preferredBackend}, threads=${params.numberOfThreads}');
 
     final loadSw = Stopwatch()..start();
     try {
       await _engine!.loadModel(modelPath, modelParams: params);
       loadSw.stop();
-      ScanLogBuffer.instance.log(
+      ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] model loaded in ${(loadSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
     } catch (e) {
       loadSw.stop();
-      ScanLogBuffer.instance.log(
+      ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] model load FAILED after ${loadSw.elapsedMilliseconds}ms: $e');
       await _engine?.dispose();
       _engine = null;
@@ -499,7 +501,7 @@ class ScanNetworkDataSourceImpl
       final mmprojPath = await _getMmprojFilePath();
       if (File(mmprojPath).existsSync()) {
         if (!await _isValidGgufFile(mmprojPath)) {
-          ScanLogBuffer.instance.log(
+          ProcessingLogBuffer.instance.log(
               '[$ts][ScanAI] ERROR: corrupt mmproj GGUF, deleting');
           await File(mmprojPath).delete();
           return;
@@ -509,15 +511,15 @@ class ScanNetworkDataSourceImpl
           await _engine!.loadMultimodalProjector(mmprojPath);
           _hasVisionProjector = true;
           mmprojSw.stop();
-          ScanLogBuffer.instance.log(
+          ProcessingLogBuffer.instance.log(
               '[$ts][ScanAI] vision projector loaded in ${(mmprojSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
         } catch (e) {
           mmprojSw.stop();
-          ScanLogBuffer.instance
+          ProcessingLogBuffer.instance
               .log('[$ts][ScanAI] vision projector FAILED: $e');
         }
       } else {
-        ScanLogBuffer.instance.log(
+        ProcessingLogBuffer.instance.log(
             '[$ts][ScanAI] WARNING: mmproj file not found, vision disabled');
       }
     }
@@ -538,7 +540,7 @@ class ScanNetworkDataSourceImpl
         : await _getAvailableRamMB();
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
     final canProceed = (availableMB < 0) || availableMB >= requiredMB;
-    ScanLogBuffer.instance.log(
+    ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] health check: available=${availableMB}MB, required~=${requiredMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, canProceed=$canProceed');
     return (
       availableMB: availableMB,
@@ -552,14 +554,20 @@ class ScanNetworkDataSourceImpl
     required String prompt,
     required List<String> imagePaths,
     int? maxTokens,
+    String? grammar,
   }) =>
       runVisionPromptImpl(
-          prompt: prompt, imagePaths: imagePaths, maxTokens: maxTokens);
+          prompt: prompt,
+          imagePaths: imagePaths,
+          maxTokens: maxTokens,
+          grammar: grammar);
 
   @override
   Future<String?> runTextPrompt({
     required String prompt,
     int? maxTokens,
+    String? grammar,
   }) =>
-      runTextPromptImpl(prompt: prompt, maxTokens: maxTokens);
+      runTextPromptImpl(
+          prompt: prompt, maxTokens: maxTokens, grammar: grammar);
 }

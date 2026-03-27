@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:health_wallet/features/processing/domain/services/scan_log_buffer.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -9,7 +9,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:path/path.dart' as p;
@@ -17,7 +17,7 @@ import 'package:path_provider/path_provider.dart';
 
 mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   OcrProcessingHelper get ocrProcessingHelper;
-  ScanRepository get scanRepository;
+  ProcessingRepository get processingRepository;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -75,7 +75,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     required List<String> filePaths,
     required ProcessingOrigin origin,
   }) async {
-    final session = await scanRepository.createProcessingSession(
+    final session = await processingRepository.createProcessingSession(
         filePaths: filePaths, origin: origin);
 
     emit(state.copyWith(
@@ -94,7 +94,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     emit(state.copyWith(sessions: [event.session, ...newSessions]));
 
     if (event.session.status == ProcessingStatus.draft) {
-      scanRepository.editProcessingSession(event.session);
+      processingRepository.editProcessingSession(event.session);
     }
   }
 
@@ -110,8 +110,8 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         ));
 
         try {
-          await scanRepository.cancelGeneration();
-          await scanRepository.waitForStreamCompletion();
+          await processingRepository.cancelGeneration();
+          await processingRepository.waitForStreamCompletion();
         } catch (e) {
         }
       }
@@ -130,7 +130,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         deletingSessionId: null,
       ));
 
-      await scanRepository.deleteProcessingSession(event.session);
+      await processingRepository.deleteProcessingSession(event.session);
 
       final hasPendingSessions = newSessions.any(
         (s) => s.status == ProcessingStatus.pending,
@@ -193,7 +193,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       if (session.status == ProcessingStatus.pending) {
         try {
-          final isModelLoaded = await scanRepository.checkModelExistence();
+          final isModelLoaded = await processingRepository.checkModelExistence();
 
           if (isModelLoaded) {
             add(MappingInitiated(sessionId: event.sessionId));
@@ -231,7 +231,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       sessionImagePaths: updatedImageMap,
     ));
 
-    await scanRepository.editProcessingSession(updatedSession);
+    await processingRepository.editProcessingSession(updatedSession);
   }
 
   void onResourceChanged(
@@ -250,7 +250,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         draftPatient = activeSession.patient.draft ??
             MappingPatient.fromFhirResource(activeSession.patient.existing!);
         newMode = ImportMode.linkExisting;
-        ScanLogBuffer.instance.log(
+        ProcessingLogBuffer.instance.log(
           '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] patient modified: ${event.propertyKey} changed, will create new patient');
       } else {
         draftPatient = activeSession.patient.draft ?? const MappingPatient();

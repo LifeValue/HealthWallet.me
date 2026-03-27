@@ -14,12 +14,12 @@ import 'package:health_wallet/features/records/domain/entity/record_note/record_
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
-import 'package:health_wallet/features/scan/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/scan/domain/repository/scan_repository.dart';
-import 'package:health_wallet/features/scan/domain/services/document_reference_service.dart';
-import 'package:health_wallet/features/scan/domain/services/text_recognition_service.dart';
-import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
-import 'package:health_wallet/features/scan/domain/services/ocr_processing_service.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
+import 'package:health_wallet/features/capture/scan/presentation/bloc/scan_bloc.dart';
+import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/sync/domain/entities/sync_qr_data.dart';
@@ -196,7 +196,7 @@ class FakeSyncRepository extends Fake implements SyncRepository {
   Future saveResources(List<IFhirResource> resources) async {}
 }
 
-class FakeScanRepository extends Fake implements ScanRepository {
+class FakeProcessingRepository extends Fake implements ProcessingRepository {
   @override
   Future<List<ProcessingSession>> getProcessingSessions() async => [];
 
@@ -259,7 +259,7 @@ void main() {
     final fakeBiometricAuth = FakeBiometricAuthService();
     final fakeRecordsRepo = FakeRecordsRepository();
     final fakeSyncRepo = FakeSyncRepository();
-    final fakeScanRepo = FakeScanRepository();
+    final fakeScanRepo = FakeProcessingRepository();
 
     final deduplicationService =
         PatientDeduplicationService(fakeRecordsRepo, fakeSyncRepo);

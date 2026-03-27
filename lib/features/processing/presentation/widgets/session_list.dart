@@ -156,7 +156,7 @@ class SessionList extends StatelessWidget {
 
   void _showDeleteConfirmation(
       BuildContext context, ProcessingSession session) {
-    final scanBloc = context.read<ProcessingBloc>();
+    final processingBloc = context.read<ProcessingBloc>();
 
     AppSimpleDialog.showDestructiveConfirmation(
       context: context,
@@ -167,7 +167,7 @@ class SessionList extends StatelessWidget {
       warningText: 'This action cannot be undone.',
       confirmButtonColor: context.colorScheme.error,
       onConfirm: () {
-        scanBloc.add(SessionCleared(session: session));
+        processingBloc.add(SessionCleared(session: session));
       },
     );
   }

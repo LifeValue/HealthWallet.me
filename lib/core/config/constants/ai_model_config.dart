@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum AiModelVariant { medGemma, qwen }
+enum AiModelVariant { medGemma, qwen, qwen7b }
 
 class AiModelConfig {
   final AiModelVariant variant;
@@ -58,10 +60,34 @@ class AiModelConfig {
     skipDeviceCheck: false,
   );
 
+  static const qwen7b = AiModelConfig._(
+    variant: AiModelVariant.qwen7b,
+    displayName: 'Desktop Advanced',
+    description: 'Best accuracy for desktop (~5 GB)',
+    modelUrl:
+        'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q4_K_M.gguf',
+    modelId: 'Qwen3VL-8B-Instruct-Q4_K_M.gguf',
+    mmprojUrl:
+        'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-F16.gguf',
+    mmprojId: 'mmproj-Qwen3VL-8B-Instruct-F16.gguf',
+    modelSizeMB: 4560,
+    mmprojSizeMB: 815,
+    skipDeviceCheck: true,
+  );
+
+  static List<AiModelConfig> get availableVariants {
+    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+      return [qwen, medGemma, qwen7b];
+    }
+    return [qwen, medGemma];
+  }
+
   static AiModelConfig getActive(SharedPreferences prefs) {
     final name = prefs.getString(SharedPrefsConstants.aiSelectedModel);
     if (name == AiModelVariant.medGemma.name) return medGemma;
     if (name == AiModelVariant.qwen.name) return qwen;
+    if (name == AiModelVariant.qwen7b.name) return qwen7b;
+    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) return qwen7b;
     return qwen;
   }
 
@@ -71,6 +97,8 @@ class AiModelConfig {
         return medGemma;
       case AiModelVariant.qwen:
         return qwen;
+      case AiModelVariant.qwen7b:
+        return qwen7b;
     }
   }
 }

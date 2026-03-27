@@ -149,7 +149,7 @@ class _AiModelSectionState extends State<AiModelSection> {
   }
 
   Widget _buildModelSetupContent(BuildContext context, LoadModelState state) {
-    final hasDownloadedModel = state.medGemmaDownloaded || state.qwenDownloaded;
+    final hasDownloadedModel = state.downloadedVariants.values.any((v) => v);
 
     return Column(
       children: [
@@ -196,7 +196,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           width: 140,
           height: 140,
         ),
-        if (!state.medGemmaDownloaded && !state.qwenDownloaded) ...[
+        if (!state.downloadedVariants.values.any((v) => v)) ...[
           const SizedBox(height: Insets.small),
           _buildRichDescription(context, context.l10n.onboardingAiModelDescription),
         ],
@@ -248,10 +248,10 @@ class _AiModelSectionState extends State<AiModelSection> {
             )
           else
             AppButton(
-              label: (state.medGemmaDownloaded || state.qwenDownloaded)
+              label: state.downloadedVariants.values.any((v) => v)
                   ? context.l10n.aiModelSelect
                   : context.l10n.aiModelEnableDownload,
-              icon: Icon((state.medGemmaDownloaded || state.qwenDownloaded)
+              icon: Icon(state.downloadedVariants.values.any((v) => v)
                   ? Icons.swap_horiz
                   : Icons.download),
               variant: AppButtonVariant.primary,
@@ -451,7 +451,7 @@ class _AiModelSectionState extends State<AiModelSection> {
       case LoadModelStatus.modelLoaded:
         return context.l10n.aiModelReady;
       case LoadModelStatus.modelAbsent:
-        if (state.medGemmaDownloaded || state.qwenDownloaded) {
+        if (state.downloadedVariants.values.any((v) => v)) {
           return context.l10n.aiModelNotSelected;
         }
         return context.l10n.aiModelMissing;

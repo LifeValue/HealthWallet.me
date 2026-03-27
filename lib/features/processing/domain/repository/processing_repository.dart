@@ -3,7 +3,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 
-abstract class ScanRepository {
+abstract class ProcessingRepository {
   Future<List<String>> scanDocuments();
 
   Future<List<String>> scanDocumentsAsPdf({int maxPages = 5});

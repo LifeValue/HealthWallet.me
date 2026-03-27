@@ -1,4 +1,4 @@
-import 'package:health_wallet/features/processing/domain/services/scan_log_buffer.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_observation.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
@@ -75,7 +75,7 @@ class ObservationOcrValidator {
 
         if (normalizedAi != normalizedOcr) {
           corrections++;
-          ScanLogBuffer.instance.log(
+          ProcessingLogBuffer.instance.log(
             '[$_ts][OcrValidator] CORRECTED "${obs.observationName.value}": '
             '"${obs.value.value}" -> "${ocrMatch.value}"',
           );
@@ -118,7 +118,7 @@ class ObservationOcrValidator {
       if (alreadyExtracted) continue;
 
       added++;
-      ScanLogBuffer.instance.log(
+      ProcessingLogBuffer.instance.log(
         '[$_ts][OcrValidator] ADDED missing "${ocrMatch.name}": '
         '${ocrMatch.value} ${ocrMatch.unit}',
       );
@@ -144,7 +144,7 @@ class ObservationOcrValidator {
     }
 
     if (corrections > 0 || added > 0) {
-      ScanLogBuffer.instance.log(
+      ProcessingLogBuffer.instance.log(
         '[$_ts][OcrValidator] summary: $corrections corrected, $added added '
         '(${ocrObs.length} OCR obs, ${observations.length} AI obs)',
       );

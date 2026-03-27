@@ -16,12 +16,12 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/processing_handler.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/session_handler.dart';
-import 'package:health_wallet/features/processing/presentation/helpers/scan_path_helper.dart';
+import 'package:health_wallet/features/processing/presentation/helpers/processing_path_helper.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
@@ -37,7 +37,7 @@ part 'processing_bloc.freezed.dart';
 class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     with SessionHandler, ProcessingHandler {
   final PdfStorageService _pdfStorageService;
-  final ScanRepository _repository;
+  final ProcessingRepository _repository;
   final OcrProcessingHelper _ocrProcessingHelper;
   final SyncRepository _syncRepository;
   final DocumentReferenceService _documentReferenceService;
@@ -47,7 +47,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final SharedPreferences _prefs;
 
   @override
-  ScanRepository get scanRepository => _repository;
+  ProcessingRepository get processingRepository => _repository;
 
   @override
   OcrProcessingHelper get ocrProcessingHelper => _ocrProcessingHelper;

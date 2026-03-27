@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 
-class ScanPathHelper {
+class ProcessingPathHelper {
   static final RegExp _uriPattern =
       RegExp(r'(?:file|content)://[^\s,\]\}]+', caseSensitive: false);
 
-  const ScanPathHelper._();
+  const ProcessingPathHelper._();
 
   static List<String> normalizePaths(dynamic scannedDocuments) {
     if (scannedDocuments == null) {
@@ -44,7 +44,7 @@ class ScanPathHelper {
 
   static Future<List<String>> persistScanFiles({
     required List<String> sourcePaths,
-    required ScanRepository repository,
+    required ProcessingRepository repository,
   }) async {
     if (sourcePaths.isEmpty) {
       return [];
@@ -136,6 +136,3 @@ class ScanPathHelper {
     return candidate;
   }
 }
-
-
-

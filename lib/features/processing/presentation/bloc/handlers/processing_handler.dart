@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/features/processing/domain/services/scan_log_buffer.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -15,7 +15,7 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -25,7 +25,7 @@ import 'package:health_wallet/features/user/domain/services/patient_deduplicatio
 import 'package:shared_preferences/shared_preferences.dart';
 
 mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
-  ScanRepository get scanRepository;
+  ProcessingRepository get processingRepository;
   OcrProcessingHelper get ocrProcessingHelper;
   RecordsRepository get recordsRepository;
   SyncRepository get syncRepository;
@@ -70,6 +70,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       updateSession(emit,
           sessionId: event.sessionId,
           status: ProcessingStatus.processingPatient);
+      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
       final sessionImages =
           state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
       if (sessionImages.isEmpty) {
@@ -84,72 +85,61 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         ));
         return;
       }
-      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
-
-      if (!isDesktop) {
-        final medicalText =
-            await ocrProcessingHelper.processOcrForImages(sessionImages);
-        if (medicalText.isEmpty || medicalText.trim().isEmpty) {
+      final medicalText =
+          await ocrProcessingHelper.processOcrForImages(sessionImages);
+      if (medicalText.isEmpty || medicalText.trim().isEmpty) {
+        updateSession(emit,
+            sessionId: event.sessionId, status: ProcessingStatus.draft);
+        return;
+      }
+      final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
+      if (ocrPreMatch != null) {
+        ProcessingLogBuffer.instance.log(
+          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: ${ocrPreMatch.displayTitle}, running container-only AI');
+        final stagedPatient = StagedPatient(
+          existing: ocrPreMatch,
+          mode: ImportMode.linkExisting,
+        );
+        final container = await processingRepository.mapContainerOnly(
+          medicalText,
+          maxTokens: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiMaxTokens),
+          threads: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads),
+          contextSize: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize),
+        );
+        final finalSession =
+            state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+        if (container is MappingDiagnosticReport) {
           updateSession(emit,
-              sessionId: event.sessionId, status: ProcessingStatus.draft);
-          return;
+              sessionId: event.sessionId,
+              status: ProcessingStatus.patientExtracted,
+              patient: stagedPatient,
+              diagnosticReport: StagedDiagnosticReport(draft: container),
+              updateDb: true);
+        } else {
+          updateSession(emit,
+              sessionId: event.sessionId,
+              status: ProcessingStatus.patientExtracted,
+              patient: stagedPatient,
+              encounter: StagedEncounter(draft: container as MappingEncounter),
+              updateDb: true);
         }
-        final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
-        if (ocrPreMatch != null) {
-          ScanLogBuffer.instance.log(
-            '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: ${ocrPreMatch.displayTitle}, running container-only AI');
-          final stagedPatient = StagedPatient(
-            existing: ocrPreMatch,
-            mode: ImportMode.linkExisting,
-          );
-          final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
-          final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
-          final savedContextSize = prefs.getInt(SharedPrefsConstants.aiContextSize);
-          final container = await scanRepository.mapContainerOnly(
-            medicalText,
-            maxTokens: savedMaxTokens,
-            threads: savedThreads,
-            contextSize: savedContextSize,
-          );
-          final finalSession =
-              state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
-          if (container is MappingDiagnosticReport) {
-            updateSession(emit,
-                sessionId: event.sessionId,
-                status: ProcessingStatus.patientExtracted,
-                patient: stagedPatient,
-                diagnosticReport: StagedDiagnosticReport(draft: container),
-                updateDb: true);
-          } else {
-            updateSession(emit,
-                sessionId: event.sessionId,
-                status: ProcessingStatus.patientExtracted,
-                patient: stagedPatient,
-                encounter: StagedEncounter(draft: container as MappingEncounter),
-                updateDb: true);
-          }
-          emit(state.copyWith(
-            notification: Notification(
-              text: "${finalSession?.origin ?? 'Document'} patient matched",
-              route: ProcessingRoute(sessionId: event.sessionId),
-              time: DateTime.now(),
-            ),
-          ));
-          startNextPendingSession();
-          return;
-        }
+        emit(state.copyWith(
+          notification: Notification(
+            text: "${finalSession?.origin ?? 'Document'} patient matched",
+            route: ProcessingRoute(sessionId: event.sessionId),
+            time: DateTime.now(),
+          ),
+        ));
+        startNextPendingSession();
+        return;
       }
 
-      final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
-      final savedGpuLayers = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
-      final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
-      final savedContextSize = prefs.getInt(SharedPrefsConstants.aiContextSize);
-      final (patient, container) = await scanRepository.mapBasicInfo(
+      final (patient, container) = await processingRepository.mapBasicInfo(
         sessionImages,
-        maxTokens: savedMaxTokens,
-        gpuLayers: savedGpuLayers,
-        threads: savedThreads,
-        contextSize: savedContextSize,
+        maxTokens: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiMaxTokens),
+        gpuLayers: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiGpuLayers),
+        threads: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads),
+        contextSize: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize),
       );
       final stagedPatient = await _matchOrCreatePatient(patient);
       final finalSession =
@@ -211,7 +201,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           final value = id.value?.valueString;
           if (value == null || value.length < 5) continue;
           if (ocrText.contains(value) || _fuzzyIdentifierMatch(value, ocrText)) {
-            ScanLogBuffer.instance.log(
+            ProcessingLogBuffer.instance.log(
               '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value');
             return patient;
           }
@@ -278,15 +268,15 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final docCategory =
           activeSession?.isDiagnosticReportContainer == true
               ? 'lab_report' : 'visit';
-      final savedMaxTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens);
-      final savedGpuLayers = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
-      final savedThreads = prefs.getInt(SharedPrefsConstants.aiThreads);
-      final savedContextSize = prefs.getInt(SharedPrefsConstants.aiContextSize);
       final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+      final savedMaxTokens = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiMaxTokens);
+      final savedGpuLayers = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiGpuLayers);
+      final savedThreads = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads);
+      final savedContextSize = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize);
       final useVision =
           prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
       Stream<MappingResourcesWithProgress> stream =
-          scanRepository.mapRemainingResources(sessionImages,
+          processingRepository.mapRemainingResources(sessionImages,
               documentCategory: docCategory,
               useVision: useVision,
               maxTokens: savedMaxTokens,
@@ -355,7 +345,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     updateSession(emit,
         sessionId: event.sessionId,
         status: newStatus, resources: [], progress: 0.0);
-    await scanRepository.disposeModel();
+    await processingRepository.disposeModel();
   }
 
   void onResourceCreationInitiated(

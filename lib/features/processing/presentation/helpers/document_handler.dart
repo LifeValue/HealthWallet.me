@@ -5,7 +5,7 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/scan_repository.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
@@ -21,9 +21,9 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     ProcessingSession session,
   ) async {
     try {
-      final scanRepository = getIt<ScanRepository>();
+      final processingRepository = getIt<ProcessingRepository>();
 
-      final isModelLoaded = await scanRepository.checkModelExistence();
+      final isModelLoaded = await processingRepository.checkModelExistence();
 
       if (!context.mounted) return;
 
