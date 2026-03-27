@@ -149,25 +149,14 @@ class ScanNetworkDataSourceImpl
   }
 
   static Future<int> _getAvailableRamMB() async {
-    if (Platform.isAndroid || Platform.isLinux) {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      return -1;
+    }
+    if (Platform.isAndroid) {
       try {
         final memInfo = await File('/proc/meminfo').readAsString();
         final match = RegExp(r'MemAvailable:\s+(\d+)').firstMatch(memInfo);
         if (match != null) return int.parse(match.group(1)!) ~/ 1024;
-      } catch (_) {}
-    } else if (Platform.isMacOS) {
-      try {
-        final result = await Process.run('sysctl', ['-n', 'vm.page_free_count', 'vm.pagesize']);
-        if (result.exitCode == 0) {
-          final lines = result.stdout.toString().trim().split('\n');
-          if (lines.length == 2) {
-            final freePages = int.tryParse(lines[0].trim());
-            final pageSize = int.tryParse(lines[1].trim());
-            if (freePages != null && pageSize != null) {
-              return (freePages * pageSize) ~/ (1024 * 1024);
-            }
-          }
-        }
       } catch (_) {}
     }
     return -1;
