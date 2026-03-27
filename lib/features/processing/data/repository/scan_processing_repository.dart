@@ -328,12 +328,13 @@ Rules:
     int? threads,
     int? contextSize,
   ) async {
+    final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
     ScanLogBuffer.instance.log('[$_ts][ScanAI] --- VISION FALLBACK ---');
     ScanLogBuffer.instance.log('[$_ts][ScanAI] loading model + vision projector...');
     await networkDataSource.initModel(
-      gpuLayers: gpuLayers,
-      threads: threads,
-      contextSize: contextSize,
+      gpuLayers: isDesktop ? null : gpuLayers,
+      threads: isDesktop ? null : threads,
+      contextSize: isDesktop ? null : contextSize,
     );
 
     try {
@@ -381,9 +382,9 @@ Rules:
 
     if (effectiveUseVision) {
       await networkDataSource.initModel(
-        gpuLayers: gpuLayers,
-        threads: threads,
-        contextSize: contextSize,
+        gpuLayers: isDesktop ? null : gpuLayers,
+        threads: isDesktop ? null : threads,
+        contextSize: isDesktop ? null : contextSize,
       );
 
       final promptBuilder = await RemainingResourcesVisionPrompt.create(
