@@ -96,11 +96,15 @@ class DiscoveryService {
     required int port,
     required String deviceId,
   }) async {
-    await _ssdpService.startAdvertising(
-      ip: ip,
-      port: port,
-      deviceId: deviceId,
-    );
+    try {
+      await _ssdpService.startAdvertising(
+        ip: ip,
+        port: port,
+        deviceId: deviceId,
+      );
+    } catch (e) {
+      debugPrint('[Discovery] SSDP advertising failed (non-fatal): $e');
+    }
     await _mdnsService.startAdvertising(port: port);
     debugPrint('[Discovery] Desktop advertising started on $ip:$port');
   }

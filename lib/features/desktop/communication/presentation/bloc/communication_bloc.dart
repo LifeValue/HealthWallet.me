@@ -103,7 +103,21 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     emit(state.copyWith(pairedDevice: pairing));
 
     if (_platform.isDesktop) {
-      await _startDesktopServer(emit, pairing);
+      final (:ip, :vpnDetected) = await _getLocalIp();
+      if (vpnDetected) {
+        debugPrint('[Communication] VPN detected — connection issues may occur');
+      }
+      final updated = pairing.lastIp != ip
+          ? pairing.copyWith(lastIp: ip)
+          : pairing;
+      if (updated != pairing) {
+        await _pairingStorage.savePairing(updated);
+      }
+      emit(state.copyWith(
+        pairedDevice: updated,
+        vpnDetected: vpnDetected,
+      ));
+      await _startDesktopServer(emit, updated);
     } else {
       add(const CommunicationConnectionRequested());
     }
@@ -115,7 +129,10 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   ) async {
     if (!_platform.isDesktop) return;
 
-    final localIp = await _getLocalIp();
+    final (:ip, :vpnDetected) = await _getLocalIp();
+    if (vpnDetected) {
+      debugPrint('[Communication] VPN detected — connection issues may occur');
+    }
     var hostname = Platform.localHostname;
     if (hostname.endsWith('.local')) {
       hostname = hostname.substring(0, hostname.length - 6);
@@ -124,12 +141,12 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
     final pairing = DevicePairing.generate(
       deviceName: hostname,
-      localIp: localIp,
+      localIp: ip,
       os: Platform.operatingSystem,
     );
 
     await _pairingStorage.savePairing(pairing);
-    emit(state.copyWith(pairedDevice: pairing));
+    emit(state.copyWith(pairedDevice: pairing, vpnDetected: vpnDetected));
     await _startDesktopServer(emit, pairing);
   }
 
@@ -309,17 +326,61 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     emit(state.copyWith(connectedDeviceName: event.name));
   }
 
-  Future<String> _getLocalIp() async {
+  Future<({String ip, bool vpnDetected})> _getLocalIp() async {
     final interfaces = await NetworkInterface.list(
       type: InternetAddressType.IPv4,
       includeLoopback: false,
     );
-    for (final interface_ in interfaces) {
-      for (final address in interface_.addresses) {
-        if (!address.isLoopback) return address.address;
+    if (interfaces.isEmpty) return (ip: '127.0.0.1', vpnDetected: false);
+
+    final activeIps = <String>{
+      for (final iface in interfaces)
+        for (final addr in iface.addresses)
+          if (!addr.isLoopback) addr.address,
+    };
+
+    try {
+      if (Platform.isWindows) {
+        final result = await Process.run('route', ['print', '0.0.0.0']);
+        final matchedIps = <String>[];
+        for (final line in result.stdout.toString().split('\n')) {
+          final parts = line.trim().split(RegExp(r'\s+'));
+          if (parts.length >= 5 &&
+              parts[0] == '0.0.0.0' &&
+              parts[1] == '0.0.0.0') {
+            final ifaceIp = parts[3];
+            if (activeIps.contains(ifaceIp)) matchedIps.add(ifaceIp);
+          }
+        }
+        if (matchedIps.isNotEmpty) {
+          return (
+            ip: matchedIps.first,
+            vpnDetected: matchedIps.length > 1,
+          );
+        }
+      } else if (Platform.isMacOS) {
+        final result = await Process.run('route', ['get', '8.8.8.8']);
+        final match =
+            RegExp(r'interface:\s*(\S+)').firstMatch(result.stdout.toString());
+        if (match != null) {
+          final ifName = match.group(1)!;
+          for (final iface in interfaces) {
+            if (iface.name == ifName && iface.addresses.isNotEmpty) {
+              return (ip: iface.addresses.first.address, vpnDetected: false);
+            }
+          }
+        }
+      } else {
+        final result = await Process.run('ip', ['route', 'get', '8.8.8.8']);
+        final match =
+            RegExp(r'src\s+(\S+)').firstMatch(result.stdout.toString());
+        if (match != null && activeIps.contains(match.group(1))) {
+          return (ip: match.group(1)!, vpnDetected: false);
+        }
       }
-    }
-    return '127.0.0.1';
+    } catch (_) {}
+
+    return (ip: interfaces.first.addresses.first.address, vpnDetected: false);
   }
 
   @override

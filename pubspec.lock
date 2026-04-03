@@ -12,7 +12,7 @@ packages:
   airdrop:
     dependency: "direct main"
     description:
-      path: "../packages/airdrop"
+      path: "../packages/flutter-airdrop"
       relative: true
     source: path
     version: "1.0.0"

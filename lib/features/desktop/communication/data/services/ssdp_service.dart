@@ -25,7 +25,7 @@ class SsdpService {
       InternetAddress.anyIPv4,
       _multicastPort,
       reuseAddress: true,
-      reusePort: true,
+      reusePort: !Platform.isWindows,
     );
 
     _socket!.joinMulticast(InternetAddress(_multicastAddress));

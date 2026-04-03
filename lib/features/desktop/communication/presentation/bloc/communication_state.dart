@@ -15,6 +15,7 @@ class DesktopSyncState with _$DesktopSyncState {
     int? connectedPort,
     String? connectedDeviceName,
     String? error,
+    @Default(false) bool vpnDetected,
   }) = _DesktopSyncState;
 
   factory DesktopSyncState.initial() => const DesktopSyncState();

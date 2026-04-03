@@ -191,12 +191,49 @@ class TcpService {
       type: InternetAddressType.IPv4,
       includeLoopback: false,
     );
-    for (final interface_ in interfaces) {
-      for (final address in interface_.addresses) {
-        if (!address.isLoopback) return address.address;
+    if (interfaces.isEmpty) return '127.0.0.1';
+
+    final activeIps = <String>{
+      for (final iface in interfaces)
+        for (final addr in iface.addresses)
+          if (!addr.isLoopback) addr.address,
+    };
+
+    try {
+      if (Platform.isWindows) {
+        final result = await Process.run('route', ['print', '0.0.0.0']);
+        for (final line in result.stdout.toString().split('\n')) {
+          final parts = line.trim().split(RegExp(r'\s+'));
+          if (parts.length >= 5 &&
+              parts[0] == '0.0.0.0' &&
+              parts[1] == '0.0.0.0') {
+            final ifaceIp = parts[3];
+            if (activeIps.contains(ifaceIp)) return ifaceIp;
+          }
+        }
+      } else if (Platform.isMacOS) {
+        final result = await Process.run('route', ['get', '8.8.8.8']);
+        final match =
+            RegExp(r'interface:\s*(\S+)').firstMatch(result.stdout.toString());
+        if (match != null) {
+          final ifName = match.group(1)!;
+          for (final iface in interfaces) {
+            if (iface.name == ifName && iface.addresses.isNotEmpty) {
+              return iface.addresses.first.address;
+            }
+          }
+        }
+      } else {
+        final result = await Process.run('ip', ['route', 'get', '8.8.8.8']);
+        final match =
+            RegExp(r'src\s+(\S+)').firstMatch(result.stdout.toString());
+        if (match != null && activeIps.contains(match.group(1))) {
+          return match.group(1)!;
+        }
       }
-    }
-    return '127.0.0.1';
+    } catch (_) {}
+
+    return interfaces.first.addresses.first.address;
   }
 
   Future<void> connectToServer({

@@ -100,7 +100,7 @@ dependencies:
 
   # P2P file transfer (local package)
   airdrop:
-    path: ../packages/airdrop
+    path: ../packages/flutter-airdrop
 
 dev_dependencies:
   flutter_test:
