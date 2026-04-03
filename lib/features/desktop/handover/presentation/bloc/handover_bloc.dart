@@ -11,7 +11,7 @@ part 'handover_event.dart';
 part 'handover_state.dart';
 part 'handover_bloc.freezed.dart';
 
-@injectable
+@lazySingleton
 class HandoverBloc extends Bloc<HandoverEvent, HandoverState> {
   final HandoverService _handoverService;
 

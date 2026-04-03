@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
@@ -10,10 +12,10 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/desktop_card.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
 
-class BackupCard extends StatelessWidget {
+class BackupCard extends StatefulWidget {
   final DesktopSyncState syncState;
   final BackupState backupState;
 
@@ -24,14 +26,45 @@ class BackupCard extends StatelessWidget {
   });
 
   @override
+  State<BackupCard> createState() => _BackupCardState();
+}
+
+class _BackupCardState extends State<BackupCard> {
+  final _nameController = TextEditingController();
+  bool _syncFirst = true;
+  bool _showForm = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _create() {
+    final name = _nameController.text.trim();
+    final effectiveName = name.isNotEmpty
+        ? name
+        : 'Backup ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
+
+    if (_syncFirst && widget.syncState.connectionStatus == ConnectionStatus.connected) {
+      try { context.read<LwwSyncBloc>().add(const SyncTriggered()); } catch (_) {}
+    }
+
+    try { context.read<BackupBloc>().add(BackupRequested(name: effectiveName)); } catch (_) {}
+    _nameController.clear();
+    setState(() => _showForm = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isConnected =
-        syncState.connectionStatus == ConnectionStatus.connected;
-    final isWorking = backupState.isBackingUp || backupState.isRestoring;
-    final selected = backupState.selectedBackup;
+        widget.syncState.connectionStatus == ConnectionStatus.connected;
+    final isWorking = widget.backupState.isBackingUp || widget.backupState.isRestoring;
+    final selected = widget.backupState.selectedBackup;
+    final defaultName = 'Backup ${DateFormat('MMM d, yyyy').format(DateTime.now())}';
 
-    return DesktopCard(
-      title: 'Backup',
+    return Padding(
+      padding: const EdgeInsets.all(Insets.medium),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -39,23 +72,20 @@ class BackupCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: Insets.small),
               child: LinearProgressIndicator(
-                value: backupState.progress > 0 ? backupState.progress : null,
+                value: widget.backupState.progress > 0 ? widget.backupState.progress : null,
                 minHeight: 3,
               ),
             ),
-          if (backupState.error != null)
+          if (widget.backupState.error != null)
             Padding(
               padding: const EdgeInsets.only(bottom: Insets.small),
               child: Text(
-                backupState.error!,
-                style: TextStyle(
-                  color: context.colorScheme.error,
-                  fontSize: 12,
-                ),
+                widget.backupState.error!,
+                style: TextStyle(color: context.colorScheme.error, fontSize: 12),
               ),
             ),
           _BackupLocationRow(
-            path: backupState.backupPath,
+            path: widget.backupState.backupPath,
             isWorking: isWorking,
           ),
           const SizedBox(height: Insets.small),
@@ -67,20 +97,143 @@ class BackupCard extends StatelessWidget {
             ),
           ] else ...[
             _BackupList(
-              backups: backupState.backupHistory,
+              backups: widget.backupState.backupHistory,
               isWorking: isWorking,
             ),
           ],
           const SizedBox(height: Insets.normal),
-          AppButton(
-            label: backupState.isBackingUp ? 'Backing up...' : 'Backup Now',
-            onPressed: isConnected && !isWorking
-                ? () => context
-                    .read<BackupBloc>()
-                    .add(const BackupRequested())
-                : null,
-            height: 36,
-          ),
+          if (!_showForm) ...[
+            Center(
+              child: SizedBox(
+                width: 200,
+                child: AppButton(
+                  label: isWorking ? 'Backing up...' : 'Create Backup',
+                  onPressed: !isWorking
+                      ? () => setState(() => _showForm = true)
+                      : null,
+                  height: 36,
+                ),
+              ),
+            ),
+          ] else ...[
+            Center(
+              child: SizedBox(
+                width: 300,
+                child: TextField(
+                  controller: _nameController,
+                  autofocus: true,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyle.bodyMedium.copyWith(
+                    color: context.colorScheme.onSurface,
+                    fontSize: 13,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: defaultName,
+                    hintStyle: AppTextStyle.bodyMedium.copyWith(
+                      color: context.colorScheme.onSurface.withValues(alpha: 0.2),
+                      fontSize: 13,
+                    ),
+                    alignLabelWithHint: true,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.08),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.08),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: context.colorScheme.primary),
+                    ),
+                  ),
+                  onSubmitted: (_) => _create(),
+                ),
+              ),
+            ),
+            const SizedBox(height: Insets.small),
+            Center(
+              child: GestureDetector(
+                onTap: isConnected
+                    ? () => setState(() => _syncFirst = !_syncFirst)
+                    : null,
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: Checkbox(
+                        value: isConnected ? _syncFirst : false,
+                        onChanged: isConnected
+                            ? (v) => setState(() => _syncFirst = v ?? false)
+                            : null,
+                        activeColor: context.colorScheme.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Sync with phone first',
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: isConnected
+                            ? context.colorScheme.onSurface.withValues(alpha: 0.5)
+                            : context.colorScheme.onSurface.withValues(alpha: 0.2),
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (!isConnected) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '(not connected)',
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: context.colorScheme.onSurface.withValues(alpha: 0.15),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: Insets.normal),
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _showForm = false;
+                      _nameController.clear();
+                    }),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 160,
+                    child: AppButton(
+                      label: 'Start Backup',
+                      onPressed: _create,
+                      height: 36,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -98,10 +251,32 @@ class _BackupList extends StatelessWidget {
     if (backups.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: Insets.normal),
-        child: Text(
-          'No backups yet',
-          style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.shield_outlined,
+                size: 32,
+                color: context.colorScheme.onSurface.withValues(alpha: 0.15),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'No backups yet',
+                style: AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Create your first backup to keep your health data safe',
+                style: AppTextStyle.labelSmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.25),
+                  fontSize: 11,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       );
@@ -146,6 +321,10 @@ class _BackupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayName = backup.name.isNotEmpty
+        ? backup.name
+        : DateFormat.yMMMd().add_Hm().format(backup.timestamp);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -169,12 +348,20 @@ class _BackupTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    DateFormat.yMMMd().add_Hm().format(backup.timestamp),
+                    displayName,
                     style: AppTextStyle.labelSmall.copyWith(
                       color: context.colorScheme.onSurface,
                       fontWeight: isLatest ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
+                  if (backup.name.isNotEmpty)
+                    Text(
+                      DateFormat.yMMMd().add_Hm().format(backup.timestamp),
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.4),
+                        fontSize: 11,
+                      ),
+                    ),
                   Text(
                     '${backup.recordCount} records \u2022 ${_formatBytes(backup.sizeBytes)}',
                     style: AppTextStyle.labelSmall.copyWith(
@@ -210,6 +397,10 @@ class _BackupPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayName = backup.name.isNotEmpty
+        ? backup.name
+        : 'Backup from ${DateFormat.yMMMd().format(backup.timestamp)}';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -223,11 +414,7 @@ class _BackupPreview extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.arrow_back,
-                    size: 16,
-                    color: context.colorScheme.primary,
-                  ),
+                  Icon(Icons.arrow_back, size: 16, color: context.colorScheme.primary),
                   const SizedBox(width: 4),
                   Text(
                     'All backups',
@@ -241,6 +428,14 @@ class _BackupPreview extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Insets.normal),
+        Text(
+          displayName,
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: context.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: Insets.small),
         InfoRow(
           label: 'Date',
           value: DateFormat.yMMMd().add_Hm().format(backup.timestamp),
@@ -264,11 +459,9 @@ class _BackupPreview extends StatelessWidget {
           children: [
             Expanded(
               child: AppButton(
-                label: 'Restore',
-                onPressed: isConnected && !isWorking
-                    ? () => context
-                        .read<BackupBloc>()
-                        .add(RestoreRequested(backupId: backup.id))
+                label: 'Restore this backup',
+                onPressed: !isWorking
+                    ? () => _confirmRestore(context, backup)
                     : null,
                 height: 36,
               ),
@@ -285,7 +478,6 @@ class _BackupPreview extends StatelessWidget {
                     ? context.colorScheme.onSurface.withValues(alpha: 0.3)
                     : AppColors.error,
               ),
-              tooltip: 'Delete backup',
             ),
           ],
         ),
@@ -293,13 +485,48 @@ class _BackupPreview extends StatelessWidget {
     );
   }
 
+  void _confirmRestore(BuildContext context, BackupEntry backup) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Restore Backup?'),
+        content: Text(
+          'This will replace all current data on this device with "${backup.name.isNotEmpty ? backup.name : 'backup from ${DateFormat.yMMMd().format(backup.timestamp)}'}".\n\n'
+          '${backup.recordCount} records will be restored.\n\n'
+          'Your data on the paired phone will not be affected.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<BackupBloc>()
+                  .add(RestoreRequested(backupId: backup.id));
+            },
+            child: Text(
+              'Restore',
+              style: TextStyle(
+                color: AppColors.warning,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmDelete(BuildContext context, BackupEntry backup) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Backup'),
+        title: const Text('Delete Backup?'),
         content: Text(
-          'Delete backup from ${DateFormat.yMMMd().add_Hm().format(backup.timestamp)}?\n\nThis cannot be undone.',
+          'Delete "${backup.name.isNotEmpty ? backup.name : 'backup from ${DateFormat.yMMMd().format(backup.timestamp)}'}"?\n\nThis cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -344,7 +571,7 @@ class _BackupLocationRow extends StatelessWidget {
           size: 16,
           color: context.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
-        const SizedBox(width: Insets.extraSmall),
+        SizedBox(width: Insets.extraSmall),
         Expanded(
           child: Tooltip(
             message: displayPath,
@@ -358,7 +585,7 @@ class _BackupLocationRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: Insets.extraSmall),
+        SizedBox(width: Insets.extraSmall),
         InkWell(
           onTap: isWorking ? null : () => _pickDirectory(context),
           borderRadius: BorderRadius.circular(4),
@@ -379,11 +606,28 @@ class _BackupLocationRow extends StatelessWidget {
     );
   }
 
+  static const _fsChannel = MethodChannel('dev.lifevalue.healthwallet/fs');
+
   Future<void> _pickDirectory(BuildContext context) async {
-    final result = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'Choose Backup Location',
-      initialDirectory: path,
-    );
+    var initialPath = path ?? Platform.environment['HOME'] ?? '';
+    final dir = Directory(initialPath);
+    if (!await dir.exists()) {
+      initialPath = Platform.environment['HOME'] ?? '';
+    }
+
+    String? result;
+    if (Platform.isMacOS) {
+      result = await _fsChannel.invokeMethod<String>('pickDirectory', {
+        'initialDirectory': initialPath,
+        'title': 'Choose Backup Location',
+      });
+    } else {
+      result = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Choose Backup Location',
+        initialDirectory: initialPath,
+      );
+    }
+
     if (result != null && context.mounted) {
       context.read<BackupBloc>().add(BackupLocationChanged(result));
     }

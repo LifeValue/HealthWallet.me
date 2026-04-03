@@ -1,23 +1,30 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:intl/intl.dart';
 
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 
 part 'backup_event.dart';
 part 'backup_state.dart';
 part 'backup_bloc.freezed.dart';
 
-@injectable
+@lazySingleton
 class BackupBloc extends Bloc<BackupEvent, BackupState> {
   final BackupService _backupService;
   final TcpService _tcpService;
 
+  StreamSubscription? _messageSub;
   static const _chunkSize = 64 * 1024;
 
   BackupBloc(this._backupService, this._tcpService)
@@ -29,6 +36,23 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     on<BackupDeleted>(_onBackupDeleted);
     on<BackupLocationChanged>(_onLocationChanged);
     on<BackupLocationReset>(_onLocationReset);
+    on<RemoteBackupRequested>(_onRemoteBackupRequested);
+
+    _listenForRemoteRequests();
+  }
+
+  void _listenForRemoteRequests() {
+    if (getIt<AppPlatform>().isMobile) return;
+
+    _messageSub = _tcpService.messages.listen((message) {
+      if (message.type != MessageType.data) return;
+      try {
+        final decoded = jsonDecode(message.payloadString) as Map<String, dynamic>;
+        if (decoded['type'] == 'backup.request') {
+          add(const RemoteBackupRequested());
+        }
+      } catch (_) {}
+    });
   }
 
   Future<void> _onBackupRequested(
@@ -38,7 +62,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     emit(state.copyWith(isBackingUp: true, progress: 0.0, error: null));
 
     try {
-      final entry = await _backupService.createSnapshot();
+      final entry = await _backupService.createSnapshot(name: event.name);
 
       emit(state.copyWith(progress: 0.3));
 
@@ -204,5 +228,27 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
+  }
+
+  Future<void> _onRemoteBackupRequested(
+    RemoteBackupRequested event,
+    Emitter<BackupState> emit,
+  ) async {
+    if (state.isBackingUp) return;
+
+    try {
+      getIt<LwwSyncBloc>().add(const SyncTriggered());
+    } catch (_) {}
+
+    await Future<void>.delayed(const Duration(seconds: 2));
+
+    final name = 'Remote ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
+    add(BackupRequested(name: name));
+  }
+
+  @override
+  Future<void> close() {
+    _messageSub?.cancel();
+    return super.close();
   }
 }

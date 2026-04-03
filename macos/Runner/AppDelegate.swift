@@ -14,13 +14,45 @@ class AppDelegate: FlutterAppDelegate {
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
     let controller = mainFlutterWindow?.contentViewController as! FlutterViewController
-    let channel = FlutterMethodChannel(
-      name: "dev.lifevalue.healthwallet/ocr",
-      binaryMessenger: controller.engine.binaryMessenger
-    )
-    channel.setMethodCallHandler { [weak self] (call, result) in
+    let messenger = controller.engine.binaryMessenger
+
+    let ocrChannel = FlutterMethodChannel(name: "dev.lifevalue.healthwallet/ocr", binaryMessenger: messenger)
+    ocrChannel.setMethodCallHandler { [weak self] (call, result) in
       self?.handleMethodCall(call, result: result)
     }
+
+    let fsChannel = FlutterMethodChannel(name: "dev.lifevalue.healthwallet/fs", binaryMessenger: messenger)
+    fsChannel.setMethodCallHandler { (call, result) in
+      if call.method == "pickDirectory" {
+        let args = call.arguments as? [String: Any]
+        let initialPath = args?["initialDirectory"] as? String
+        let title = args?["title"] as? String ?? "Choose Folder"
+
+        DispatchQueue.main.async {
+          let panel = NSOpenPanel()
+          panel.canChooseDirectories = true
+          panel.canChooseFiles = false
+          panel.canCreateDirectories = true
+          panel.allowsMultipleSelection = false
+          panel.title = title
+          panel.prompt = "Choose"
+
+          if let path = initialPath {
+            panel.directoryURL = URL(fileURLWithPath: path)
+          }
+
+          let response = panel.runModal()
+          if response == .OK, let url = panel.url {
+            result(url.path)
+          } else {
+            result(nil)
+          }
+        }
+      } else {
+        result(FlutterMethodNotImplemented)
+      }
+    }
+
     super.applicationDidFinishLaunching(notification)
   }
 

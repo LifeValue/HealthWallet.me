@@ -13,6 +13,7 @@ class DesktopSyncState with _$DesktopSyncState {
     DevicePairing? pairedDevice,
     String? connectedIp,
     int? connectedPort,
+    String? connectedDeviceName,
     String? error,
   }) = _DesktopSyncState;
 

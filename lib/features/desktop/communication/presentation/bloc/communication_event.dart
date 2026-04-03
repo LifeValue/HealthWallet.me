@@ -15,4 +15,7 @@ class CommunicationEvent with _$CommunicationEvent {
   const factory CommunicationEvent.disconnected() = CommunicationDisconnected;
   const factory CommunicationEvent.connectionFailed({required String error}) =
       CommunicationConnectionFailed;
+  const factory CommunicationEvent.remoteDeviceNameReceived({
+    required String name,
+  }) = CommunicationRemoteDeviceNameReceived;
 }

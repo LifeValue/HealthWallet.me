@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/desktop/presentation/pages/desktop_page.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -111,7 +110,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onPageChanged: (index) {
                 FocusScope.of(context).unfocus();
               },
-              itemCount: 4,
+              itemCount: _isDesktop ? 3 : 4,
               itemBuilder: (context, index) {
                 if (_isDesktop) {
                   switch (index) {
@@ -125,8 +124,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       );
                     case 2:
                       return const ImportPage();
-                    case 3:
-                      return const DesktopPage();
                     default:
                       return const SizedBox.shrink();
                   }
@@ -201,49 +198,49 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                Expanded(
-                                  child: _buildNavItem(
-                                    context: context,
-                                    icon: Assets.icons.dashboard.svg(
-                                      width: 24,
-                                      height: 24,
-                                      colorFilter: ColorFilter.mode(
-                                        _navigationController.currentPage == 0
-                                            ? (context.isDarkMode
-                                                ? Colors.white
-                                                : context.colorScheme.surface)
-                                            : context.colorScheme.onSurface,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                    label: context.l10n.dashboardTitle,
-                                    isSelected:
-                                        _navigationController.currentPage == 0,
-                                    pageIndex: 0,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _buildNavItem(
-                                    context: context,
-                                    icon: Assets.icons.timeline.svg(
-                                      width: 24,
-                                      height: 24,
-                                      colorFilter: ColorFilter.mode(
-                                        _navigationController.currentPage == 1
-                                            ? (context.isDarkMode
-                                                ? Colors.white
-                                                : context.colorScheme.surface)
-                                            : context.colorScheme.onSurface,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                    label: context.l10n.recordsTitle,
-                                    isSelected:
-                                        _navigationController.currentPage == 1,
-                                    pageIndex: 1,
-                                  ),
-                                ),
                                 if (_isDesktop) ...[
+                                  Expanded(
+                                    child: _buildNavItem(
+                                      context: context,
+                                      icon: Assets.icons.dashboard.svg(
+                                        width: 24,
+                                        height: 24,
+                                        colorFilter: ColorFilter.mode(
+                                          _navigationController.currentPage == 0
+                                              ? (context.isDarkMode
+                                                  ? Colors.white
+                                                  : context.colorScheme.surface)
+                                              : context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      label: context.l10n.dashboardTitle,
+                                      isSelected:
+                                          _navigationController.currentPage == 0,
+                                      pageIndex: 0,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _buildNavItem(
+                                      context: context,
+                                      icon: Assets.icons.timeline.svg(
+                                        width: 24,
+                                        height: 24,
+                                        colorFilter: ColorFilter.mode(
+                                          _navigationController.currentPage == 1
+                                              ? (context.isDarkMode
+                                                  ? Colors.white
+                                                  : context.colorScheme.surface)
+                                              : context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      label: context.l10n.recordsTitle,
+                                      isSelected:
+                                          _navigationController.currentPage == 1,
+                                      pageIndex: 1,
+                                    ),
+                                  ),
                                   Expanded(
                                     child: _buildNavItem(
                                       context: context,
@@ -265,26 +262,49 @@ class _DashboardPageState extends State<DashboardPage> {
                                       pageIndex: 2,
                                     ),
                                   ),
+                                ] else ...[
                                   Expanded(
                                     child: _buildNavItem(
                                       context: context,
-                                      icon: Icon(
-                                        Icons.sync,
-                                        size: 24,
-                                        color:
-                                            _navigationController.currentPage == 3
-                                                ? (context.isDarkMode
-                                                    ? Colors.white
-                                                    : context.colorScheme.surface)
-                                                : context.colorScheme.onSurface,
+                                      icon: Assets.icons.dashboard.svg(
+                                        width: 24,
+                                        height: 24,
+                                        colorFilter: ColorFilter.mode(
+                                          _navigationController.currentPage == 0
+                                              ? (context.isDarkMode
+                                                  ? Colors.white
+                                                  : context.colorScheme.surface)
+                                              : context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
                                       ),
-                                      label: 'Sync',
+                                      label: context.l10n.dashboardTitle,
                                       isSelected:
-                                          _navigationController.currentPage == 3,
-                                      pageIndex: 3,
+                                          _navigationController.currentPage == 0,
+                                      pageIndex: 0,
                                     ),
                                   ),
-                                ] else ...[
+                                  Expanded(
+                                    child: _buildNavItem(
+                                      context: context,
+                                      icon: Assets.icons.timeline.svg(
+                                        width: 24,
+                                        height: 24,
+                                        colorFilter: ColorFilter.mode(
+                                          _navigationController.currentPage == 1
+                                              ? (context.isDarkMode
+                                                  ? Colors.white
+                                                  : context.colorScheme.surface)
+                                              : context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      label: context.l10n.recordsTitle,
+                                      isSelected:
+                                          _navigationController.currentPage == 1,
+                                      pageIndex: 1,
+                                    ),
+                                  ),
                                   Expanded(
                                     child: _buildNavItem(
                                       context: context,

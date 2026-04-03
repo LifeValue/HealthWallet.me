@@ -2,7 +2,22 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
+import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/sync_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/backup_card.dart';
+import 'package:health_wallet/features/notifications/notification_widget.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/preference_modal.dart';
+import 'package:health_wallet/features/home/presentation/widgets/share_options_sheet.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
@@ -13,6 +28,8 @@ import 'package:health_wallet/features/home/presentation/widgets/home_greeting_t
 import 'package:health_wallet/features/home/presentation/widgets/home_patient_bar.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
@@ -169,6 +186,16 @@ class HomeViewState extends State<HomeView> {
             );
           }
 
+          final isDesktop = getIt<AppPlatform>() == AppPlatform.desktop;
+
+          if (isDesktop) {
+            return Scaffold(
+              backgroundColor: context.colorScheme.surface,
+              extendBody: true,
+              body: _buildDesktopLayout(context, state),
+            );
+          }
+
           return Scaffold(
             backgroundColor: context.colorScheme.surface,
             extendBody: true,
@@ -194,7 +221,7 @@ class HomeViewState extends State<HomeView> {
       final placeholder = SyncPlaceholderWidget(
         pageController: widget.pageController,
         onSyncPressed: () {
-          context.router.push(const SyncRoute());
+          SyncDialog.show(context);
         },
         recordTypeName: null,
       );
@@ -223,13 +250,54 @@ class HomeViewState extends State<HomeView> {
     return _buildDashboardLayout(context, state);
   }
 
+  Widget _buildDesktopLayout(BuildContext context, HomeState state) {
+    return AnimatedStickyHeader(
+      children: [
+        Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                HomeGreetingTitle(homeState: state),
+                const SizedBox(height: 6),
+                _PatientRow(homeState: state),
+              ],
+            ),
+            Positioned.fill(
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _SyncMiniCard(),
+                    const SizedBox(width: 8),
+                    const _BackupMiniCard(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+      body: CustomScrollView(
+        slivers: [
+          HomeDashboardSections(
+            state: state,
+            editMode: state.editMode,
+            highlightController: _highlightController,
+            pageController: widget.pageController,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDashboardLayout(BuildContext context, HomeState state) {
     return Stack(
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (state.hasDataLoaded)
+            if (state.hasDataLoaded && getIt<AppPlatform>() != AppPlatform.desktop)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOut,
@@ -259,7 +327,7 @@ class HomeViewState extends State<HomeView> {
             ),
           ],
         ),
-        if (state.hasDataLoaded)
+        if (state.hasDataLoaded && getIt<AppPlatform>() != AppPlatform.desktop)
           HomePatientBar(
             state: state,
             isScrolled: _isScrolled,
@@ -271,6 +339,304 @@ class HomeViewState extends State<HomeView> {
             },
           ),
       ],
+    );
+  }
+}
+
+class _PatientRow extends StatefulWidget {
+  final HomeState homeState;
+
+  const _PatientRow({required this.homeState});
+
+  @override
+  State<_PatientRow> createState() => _PatientRowState();
+}
+
+class _PatientRowState extends State<_PatientRow> {
+  final GlobalKey _tapKey = GlobalKey();
+  bool _isMenuOpen = false;
+
+  void _onTap() {
+    if (_isMenuOpen) return;
+    final box = _tapKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final pos = box.localToGlobal(Offset.zero, ancestor: overlay);
+
+    setState(() => _isMenuOpen = true);
+
+    final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
+        widget.homeState.patient?.name?.first);
+
+    showShareOptionsMenu(
+      context,
+      position: RelativeRect.fromLTRB(
+        pos.dx,
+        pos.dy + box.size.height + 4,
+        pos.dx + box.size.width,
+        0,
+      ),
+      patientName: patientName,
+      patientId: widget.homeState.patient?.id,
+    ).then((_) {
+      if (mounted) setState(() => _isMenuOpen = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
+            widget.homeState.patient?.name?.first) ??
+        'Loading...';
+
+    return GestureDetector(
+      key: _tapKey,
+      behavior: HitTestBehavior.opaque,
+      onTap: _onTap,
+      child: Row(
+        children: [
+          Text(
+            'Patient: ',
+            style: AppTextStyle.bodyMedium.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              patientName,
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 4),
+          AnimatedRotation(
+            turns: _isMenuOpen ? 0.5 : 0,
+            duration: const Duration(milliseconds: 200),
+            child: Assets.icons.chevronDown.svg(
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(
+                context.colorScheme.primary,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SyncMiniCard extends StatelessWidget {
+  const _SyncMiniCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: getIt<LwwSyncBloc>(),
+      child: BlocBuilder<LwwSyncBloc, LwwSyncState>(
+        builder: (context, syncState) {
+          final isSyncing = syncState.syncStatus == LwwSyncStatus.syncing;
+          final color = isSyncing
+              ? AppColors.primary
+              : syncState.isSynced
+                  ? AppColors.success
+                  : syncState.pendingChangeCount > 0
+                      ? AppColors.warning
+                      : AppColors.error;
+
+          final subtitle = isSyncing
+              ? 'Syncing...'
+              : syncState.lastSyncTime != null
+                  ? DateFormatUtils.getSincePretty(syncState.lastSyncTime!)
+                  : 'Not synced';
+
+          return _MiniStatusCard(
+            icon: Icons.sync,
+            label: 'Sync',
+            subtitle: subtitle,
+            color: color,
+            onTap: () => _showSyncDialog(context),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _BackupMiniCard extends StatelessWidget {
+  const _BackupMiniCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: getIt<BackupBloc>(),
+      child: BlocBuilder<BackupBloc, BackupState>(
+        builder: (context, backupState) {
+          final hasBackup = backupState.backupHistory.isNotEmpty;
+          final color = backupState.isBackingUp
+              ? AppColors.primary
+              : hasBackup
+                  ? AppColors.success
+                  : AppColors.warning;
+
+          String subtitle;
+          if (backupState.isBackingUp) {
+            subtitle = 'Working...';
+          } else if (hasBackup) {
+            subtitle = DateFormatUtils.getSincePretty(backupState.backupHistory.first.timestamp);
+          } else {
+            subtitle = 'No backup';
+          }
+
+          return _MiniStatusCard(
+            icon: Icons.shield_outlined,
+            label: 'Backup',
+            onTap: () => _showBackupDialog(context),
+            subtitle: subtitle,
+            color: color,
+          );
+        },
+      ),
+    );
+  }
+}
+
+void _showSyncDialog(BuildContext context) {
+  SyncDialog.show(context);
+}
+
+void _showBackupDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: getIt<CommunicationBloc>()),
+            BlocProvider.value(value: getIt<BackupBloc>()),
+            BlocProvider.value(value: getIt<LwwSyncBloc>()),
+          ],
+          child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
+            builder: (context, commState) {
+              return BlocBuilder<BackupBloc, BackupState>(
+                builder: (context, backupState) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(
+                              left: Insets.medium,
+                              right: Insets.medium,
+                              top: Insets.normal,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Backup',
+                                  style: AppTextStyle.bodyMedium.copyWith(
+                                    color: context.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const Spacer(),
+                                GestureDetector(
+                                  onTap: () => Navigator.of(context).pop(),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 20,
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.4),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          BackupCard(
+                            syncState: commState,
+                            backupState: backupState,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _MiniStatusCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _MiniStatusCard({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 130,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: 6),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyle.labelSmall.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: AppTextStyle.labelSmall.copyWith(
+                    fontSize: 11,
+                    color: color.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

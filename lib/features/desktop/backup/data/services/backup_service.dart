@@ -49,11 +49,15 @@ class BackupService {
     await prefs.remove(SharedPrefsConstants.backupDirectory);
   }
 
-  Future<BackupEntry> createSnapshot() async {
+  Future<BackupEntry> createSnapshot({String? name}) async {
     final backupDir = await getBackupDirectory();
     final timestamp = DateTime.now();
     final id = timestamp.millisecondsSinceEpoch.toString();
-    final fileName = 'healthwallet_backup_$id.db';
+    final safeName = (name != null && name.trim().isNotEmpty)
+        ? name.trim().replaceAll(RegExp(r'[^\w\s\-.]'), '_')
+        : '';
+    final prefix = safeName.isNotEmpty ? '${safeName}_' : 'healthwallet_backup_';
+    final fileName = '$prefix$id.db';
     final snapshotPath = p.join(backupDir.path, fileName);
 
     await _database.customStatement("VACUUM INTO ?", [snapshotPath]);
@@ -70,6 +74,7 @@ class BackupService {
       recordCount: recordCount,
       checksum: checksum,
       filePath: snapshotPath,
+      name: safeName,
     );
 
     await saveBackupMetadata(entry);

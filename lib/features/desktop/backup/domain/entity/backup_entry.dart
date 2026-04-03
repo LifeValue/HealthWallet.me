@@ -12,6 +12,7 @@ class BackupEntry with _$BackupEntry {
     required int recordCount,
     required String checksum,
     required String filePath,
+    @Default('') String name,
   }) = _BackupEntry;
 
   factory BackupEntry.fromJson(Map<String, dynamic> json) =>

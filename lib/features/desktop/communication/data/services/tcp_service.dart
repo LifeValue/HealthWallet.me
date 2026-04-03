@@ -215,7 +215,10 @@ class TcpService {
 
       await sendMessage(TcpMessage.fromString(
         type: MessageType.hello,
-        data: jsonEncode({'pairing_key_hash': _hashKey(pairingKey)}),
+        data: jsonEncode({
+          'pairing_key_hash': _hashKey(pairingKey),
+          'device_name': Platform.localHostname.replaceAll('.local', '').replaceAll('-', ' '),
+        }),
       ));
 
       _startPingTimer();

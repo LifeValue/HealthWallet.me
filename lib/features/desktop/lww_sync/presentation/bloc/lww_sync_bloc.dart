@@ -117,6 +117,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       error: null,
       isSynced: false,
       sentRows: 0,
+      receivedRows: 0,
       completedTables: 0,
       totalTables: LwwSyncService.syncedTables.length,
     ));
@@ -144,23 +145,21 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         }
       }
 
-      if (totalSent > 0) {
-        final now = DateTime.now();
-        await _syncService.setLastSyncTimestamp(now);
-        emit(state.copyWith(
-          syncStatus: LwwSyncStatus.idle,
-          lastSyncTime: now,
-          pendingChangeCount: _offlineQueue.pendingCount,
-          currentTable: null,
-          completedTables: LwwSyncService.syncedTables.length,
-        ));
-      } else {
-        emit(state.copyWith(
-          syncStatus: LwwSyncStatus.idle,
-          pendingChangeCount: _offlineQueue.pendingCount,
-          currentTable: null,
-          completedTables: LwwSyncService.syncedTables.length,
-        ));
+      final now = DateTime.now();
+      await _syncService.setLastSyncTimestamp(now);
+
+      emit(state.copyWith(
+        syncStatus: LwwSyncStatus.idle,
+        lastSyncTime: now,
+        isSynced: totalSent == 0,
+        pendingChangeCount: _offlineQueue.pendingCount,
+        currentTable: null,
+        completedTables: LwwSyncService.syncedTables.length,
+      ));
+
+      if (_tcpService.isConnected) {
+        final counts = await _syncService.getTableRowCounts();
+        await _tcpService.sendData('sync.status', counts);
       }
     } catch (e) {
       emit(state.copyWith(

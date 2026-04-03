@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -44,6 +45,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     on<CommunicationConnected>(_onConnected);
     on<CommunicationDisconnected>(_onDisconnected);
     on<CommunicationConnectionFailed>(_onConnectionFailed);
+    on<CommunicationRemoteDeviceNameReceived>(_onRemoteDeviceName);
 
     _listenToTcp();
     _initMpcIfAvailable();
@@ -60,6 +62,18 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
           break;
         case ConnectionState.connecting:
           break;
+      }
+    });
+
+    _tcpService.messages.listen((message) {
+      if (message.type == MessageType.hello) {
+        try {
+          final json = jsonDecode(message.payloadString) as Map<String, dynamic>;
+          final remoteName = json['device_name'] as String?;
+          if (remoteName != null && remoteName.isNotEmpty) {
+            add(CommunicationRemoteDeviceNameReceived(name: remoteName));
+          }
+        } catch (_) {}
       }
     });
   }
@@ -102,8 +116,14 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     if (!_platform.isDesktop) return;
 
     final localIp = await _getLocalIp();
+    var hostname = Platform.localHostname;
+    if (hostname.endsWith('.local')) {
+      hostname = hostname.substring(0, hostname.length - 6);
+    }
+    hostname = hostname.replaceAll('-', ' ');
+
     final pairing = DevicePairing.generate(
-      deviceName: Platform.localHostname,
+      deviceName: hostname,
       localIp: localIp,
       os: Platform.operatingSystem,
     );
@@ -280,6 +300,13 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       connectionStatus: ConnectionStatus.disconnected,
       error: event.error,
     ));
+  }
+
+  void _onRemoteDeviceName(
+    CommunicationRemoteDeviceNameReceived event,
+    Emitter<DesktopSyncState> emit,
+  ) {
+    emit(state.copyWith(connectedDeviceName: event.name));
   }
 
   Future<String> _getLocalIp() async {

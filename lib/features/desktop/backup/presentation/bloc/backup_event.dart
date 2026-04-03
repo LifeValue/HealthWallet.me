@@ -2,7 +2,7 @@ part of 'backup_bloc.dart';
 
 @freezed
 class BackupEvent with _$BackupEvent {
-  const factory BackupEvent.backupRequested() = BackupRequested;
+  const factory BackupEvent.backupRequested({String? name}) = BackupRequested;
   const factory BackupEvent.restoreRequested({required String backupId}) =
       RestoreRequested;
   const factory BackupEvent.historyLoaded() = BackupHistoryLoaded;
@@ -13,4 +13,5 @@ class BackupEvent with _$BackupEvent {
   const factory BackupEvent.backupLocationChanged(String path) =
       BackupLocationChanged;
   const factory BackupEvent.backupLocationReset() = BackupLocationReset;
+  const factory BackupEvent.remoteBackupRequested() = RemoteBackupRequested;
 }

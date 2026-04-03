@@ -22,7 +22,7 @@ void main() async {
 
   await configureDependencies();
 
-  getIt.registerFactory<CommunicationBloc>(
+  getIt.registerLazySingleton<CommunicationBloc>(
     () => CommunicationBloc(
       getIt<AppPlatform>(),
       getIt<PairingStorageService>(),
@@ -30,6 +30,8 @@ void main() async {
       getIt<DiscoveryService>(),
     ),
   );
+
+  getIt<CommunicationBloc>().add(const CommunicationInitialised());
 
   getIt<ShareIntentService>().initialize();
   getIt<DeepLinkService>().initialize();
