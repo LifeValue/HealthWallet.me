@@ -13,6 +13,7 @@ class CommunicationEvent with _$CommunicationEvent {
     required int port,
   }) = CommunicationConnected;
   const factory CommunicationEvent.disconnected() = CommunicationDisconnected;
+  const factory CommunicationEvent.manualDisconnect() = CommunicationManualDisconnect;
   const factory CommunicationEvent.connectionFailed({required String error}) =
       CommunicationConnectionFailed;
   const factory CommunicationEvent.remoteDeviceNameReceived({

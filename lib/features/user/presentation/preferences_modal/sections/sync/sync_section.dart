@@ -180,10 +180,10 @@ class SyncSection extends StatelessWidget {
                                         onPressed: () {
                                           try {
                                             context.read<CommunicationBloc>()
-                                                .add(const CommunicationDisconnected());
+                                                .add(const CommunicationManualDisconnect());
                                           } catch (_) {
                                             getIt<CommunicationBloc>()
-                                                .add(const CommunicationDisconnected());
+                                                .add(const CommunicationManualDisconnect());
                                           }
                                         },
                                         style: TextButton.styleFrom(
@@ -278,14 +278,10 @@ class SyncSection extends StatelessWidget {
       getIt<LwwSyncBloc>().add(const SyncTriggered());
     }
 
-    getIt<TcpService>().sendData('backup.request', {});
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Backup requested — syncing & backing up on desktop'),
-        duration: Duration(seconds: 3),
-      ),
+    getIt<BackupBloc>().add(
+      const RemoteBackupStatusChanged(isBackingUp: true),
     );
+    getIt<TcpService>().sendData('backup.request', {});
   }
 }
 
@@ -391,10 +387,13 @@ class _BackupLocationRow extends StatelessWidget {
   }
 
   Future<void> _pickDirectory(BuildContext context) async {
-    var initialPath = path ?? Platform.environment['HOME'] ?? '';
+    final home = Platform.environment['HOME'] ??
+        Platform.environment['USERPROFILE'] ??
+        '';
+    var initialPath = path ?? home;
     final dir = Directory(initialPath);
-    if (!await dir.exists()) {
-      initialPath = Platform.environment['HOME'] ?? '';
+    if (initialPath.isEmpty || !await dir.exists()) {
+      initialPath = home;
     }
 
     String? result;

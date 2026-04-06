@@ -30,7 +30,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   MpcTransport? _mpcTransport;
 
   static const _mpcTimeout = Duration(seconds: 10);
-  static const _reconnectDelay = Duration(seconds: 3);
+  static const _initialReconnectDelay = Duration(seconds: 3);
+  static const _maxReconnectAttempts = 5;
+  int _reconnectAttempts = 0;
 
   CommunicationBloc(
     this._platform,
@@ -44,6 +46,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     on<CommunicationConnectionRequested>(_onConnectionRequested);
     on<CommunicationConnected>(_onConnected);
     on<CommunicationDisconnected>(_onDisconnected);
+    on<CommunicationManualDisconnect>(_onManualDisconnect);
     on<CommunicationConnectionFailed>(_onConnectionFailed);
     on<CommunicationRemoteDeviceNameReceived>(_onRemoteDeviceName);
 
@@ -273,6 +276,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     CommunicationConnected event,
     Emitter<DesktopSyncState> emit,
   ) {
+    _reconnectAttempts = 0;
+
     final transport = event.ip == 'mpc'
         ? ConnectionTransport.multipeerConnectivity
         : ConnectionTransport.tcp;
@@ -300,13 +305,37 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     ));
 
     if (wasConnected && state.pairedDevice != null) {
-      debugPrint('[Communication] Lost connection, reconnecting in ${_reconnectDelay.inSeconds}s');
-      Future.delayed(_reconnectDelay, () {
+      _reconnectAttempts++;
+      if (_reconnectAttempts > _maxReconnectAttempts) {
+        debugPrint('[Communication] Max reconnect attempts reached ($_maxReconnectAttempts), giving up');
+        _reconnectAttempts = 0;
+        add(const CommunicationConnectionFailed(
+            error: 'Desktop not reachable. Open the desktop app and try again.'));
+        return;
+      }
+      final delay = _initialReconnectDelay * (1 << (_reconnectAttempts - 1));
+      debugPrint('[Communication] Lost connection, reconnecting in ${delay.inSeconds}s (attempt $_reconnectAttempts/$_maxReconnectAttempts)');
+      Future.delayed(delay, () {
         if (!isClosed && state.connectionStatus == ConnectionStatus.disconnected) {
           add(const CommunicationConnectionRequested());
         }
       });
     }
+  }
+
+  Future<void> _onManualDisconnect(
+    CommunicationManualDisconnect event,
+    Emitter<DesktopSyncState> emit,
+  ) async {
+    _reconnectAttempts = 0;
+    await _tcpService.disconnect();
+
+    emit(state.copyWith(
+      connectionStatus: ConnectionStatus.disconnected,
+      connectionTransport: ConnectionTransport.unknown,
+      connectedIp: null,
+      connectedPort: null,
+    ));
   }
 
   void _onConnectionFailed(

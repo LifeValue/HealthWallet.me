@@ -193,9 +193,9 @@ class _SyncDialogState extends State<SyncDialog> {
           GestureDetector(
             onTap: () {
               try {
-                context.read<CommunicationBloc>().add(const CommunicationDisconnected());
+                context.read<CommunicationBloc>().add(const CommunicationManualDisconnect());
               } catch (_) {
-                getIt<CommunicationBloc>().add(const CommunicationDisconnected());
+                getIt<CommunicationBloc>().add(const CommunicationManualDisconnect());
               }
             },
             child: Icon(
