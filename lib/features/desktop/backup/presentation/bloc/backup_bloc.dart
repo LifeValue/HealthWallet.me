@@ -37,19 +37,27 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     on<BackupLocationChanged>(_onLocationChanged);
     on<BackupLocationReset>(_onLocationReset);
     on<RemoteBackupRequested>(_onRemoteBackupRequested);
+    on<RemoteBackupStatusChanged>(_onRemoteBackupStatusChanged);
 
-    _listenForRemoteRequests();
+    _listenForMessages();
   }
 
-  void _listenForRemoteRequests() {
-    if (getIt<AppPlatform>().isMobile) return;
+  void _listenForMessages() {
+    final isMobile = getIt<AppPlatform>().isMobile;
 
     _messageSub = _tcpService.messages.listen((message) {
       if (message.type != MessageType.data) return;
       try {
-        final decoded = jsonDecode(message.payloadString) as Map<String, dynamic>;
-        if (decoded['type'] == 'backup.request') {
+        final decoded =
+            jsonDecode(message.payloadString) as Map<String, dynamic>;
+        final type = decoded['type'] as String?;
+
+        if (!isMobile && type == 'backup.request') {
           add(const RemoteBackupRequested());
+        }
+
+        if (isMobile && type == 'backup_complete') {
+          add(const RemoteBackupStatusChanged(isBackingUp: false));
         }
       } catch (_) {}
     });
@@ -244,6 +252,16 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
 
     final name = 'Remote ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
     add(BackupRequested(name: name));
+  }
+
+  void _onRemoteBackupStatusChanged(
+    RemoteBackupStatusChanged event,
+    Emitter<BackupState> emit,
+  ) {
+    emit(state.copyWith(
+      isBackingUp: event.isBackingUp,
+      progress: event.isBackingUp ? 0.0 : 1.0,
+    ));
   }
 
   @override

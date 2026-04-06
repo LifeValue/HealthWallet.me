@@ -14,4 +14,7 @@ class BackupEvent with _$BackupEvent {
       BackupLocationChanged;
   const factory BackupEvent.backupLocationReset() = BackupLocationReset;
   const factory BackupEvent.remoteBackupRequested() = RemoteBackupRequested;
+  const factory BackupEvent.remoteBackupStatusChanged({
+    required bool isBackingUp,
+  }) = RemoteBackupStatusChanged;
 }

@@ -609,10 +609,13 @@ class _BackupLocationRow extends StatelessWidget {
   static const _fsChannel = MethodChannel('dev.lifevalue.healthwallet/fs');
 
   Future<void> _pickDirectory(BuildContext context) async {
-    var initialPath = path ?? Platform.environment['HOME'] ?? '';
+    final home = Platform.environment['HOME'] ??
+        Platform.environment['USERPROFILE'] ??
+        '';
+    var initialPath = path ?? home;
     final dir = Directory(initialPath);
-    if (!await dir.exists()) {
-      initialPath = Platform.environment['HOME'] ?? '';
+    if (initialPath.isEmpty || !await dir.exists()) {
+      initialPath = home;
     }
 
     String? result;
