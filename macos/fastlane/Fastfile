@@ -47,6 +47,13 @@ platform :mac do
 
     UI.message("Building macOS version #{version_name} (#{build_number})")
 
+    update_code_signing_settings(
+      use_automatic_signing: true,
+      path: "Runner.xcodeproj",
+      team_id: CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
+      targets: ["Runner"]
+    )
+
     Dir.chdir("../..") do
       Bundler.with_unbundled_env do
         sh("fvm", "flutter", "build", "macos", "--release",
@@ -55,17 +62,14 @@ platform :mac do
       end
     end
 
-    update_code_signing_settings(
-      use_automatic_signing: true,
-      path: "Runner.xcodeproj",
-      team_id: CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
-      targets: ["Runner"]
-    )
-
     build_mac_app(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
       export_method: "app-store",
+      export_options: {
+        signingStyle: "automatic",
+        teamID: CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
+      }
     )
 
     upload_to_testflight(
