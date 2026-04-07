@@ -36,6 +36,13 @@ platform :mac do
   lane :beta do
     api_key = get_asc_api_key
 
+    match_nuke(
+      type: "appstore",
+      platform: "macos",
+      api_key: api_key,
+      skip_confirmation: true
+    )
+
     match(
       type: "appstore",
       platform: "macos",
