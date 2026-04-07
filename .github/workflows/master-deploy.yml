@@ -235,6 +235,9 @@ jobs:
       - name: Run code generation
         run: fvm dart run build_runner build --delete-conflicting-outputs
 
+      - name: Precache macOS engine
+        run: fvm flutter precache --macos
+
       - name: Install CocoaPods dependencies
         run: cd macos && rm -rf Podfile.lock Pods && pod install --repo-update
 
