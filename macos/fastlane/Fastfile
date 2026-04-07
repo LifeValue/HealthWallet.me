@@ -43,7 +43,7 @@ platform :mac do
       api_key: api_key,
       readonly: false,
       generate_apple_certs: true,
-      force_for_new_certificates: true
+      force: true
     )
 
     appstore_profile = ENV["sigh_com.techstackapps.healthwallet_appstore_macos_profile-name"]
