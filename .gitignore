@@ -75,6 +75,8 @@ app.*.map.json
 **/*.config.dart
 **/*.gr.dart
 
+pubspec_overrides.yaml
+
 # FVM Version Cache
 .fvm/
 .fvmrc

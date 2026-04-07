@@ -98,9 +98,10 @@ dependencies:
   flutter_google_wallet: ^0.2.1
 
 
-  # P2P file transfer (local package)
   airdrop:
-    path: ../packages/flutter-airdrop
+    git:
+      url: ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git
+      ref: dev/desktop
 
 dev_dependencies:
   flutter_test:
