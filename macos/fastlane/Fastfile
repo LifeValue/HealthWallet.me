@@ -41,9 +41,8 @@ platform :mac do
       platform: "macos",
       app_identifier: ["com.techstackapps.healthwallet"],
       api_key: api_key,
-      readonly: is_ci,
-      skip_certificate_matching: !is_ci,
-      generate_apple_certs: false
+      readonly: false,
+      generate_apple_certs: true
     )
   end
 
