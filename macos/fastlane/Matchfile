@@ -1,11 +1,12 @@
 git_url("https://github.com/ciagent-lifevalue/app-store-certs.git")
-git_branch("mobile")
+git_branch("macos")
 
 storage_mode("git")
 
 type("appstore")
 
+platform("macos")
+
 app_identifier([
-  "com.techstackapps.healthwallet",
-  "com.techstackapps.healthwallet.Share-Extension"
+  "com.techstackapps.healthwallet"
 ])

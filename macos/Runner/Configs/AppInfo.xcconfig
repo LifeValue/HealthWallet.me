@@ -8,7 +8,7 @@
 PRODUCT_NAME = health_wallet
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.techstackapps.healthWallet
+PRODUCT_BUNDLE_IDENTIFIER = com.techstackapps.healthwallet
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.techstackapps. All rights reserved.
