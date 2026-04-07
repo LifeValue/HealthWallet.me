@@ -246,7 +246,8 @@ jobs:
 
       - name: Setup CI keychain
         run: |
-          security create-keychain -p "ci" ci_build.keychain-db || true
+          security delete-keychain ci_build.keychain-db || true
+          security create-keychain -p "ci" ci_build.keychain-db
           security unlock-keychain -p "ci" ci_build.keychain-db
           security set-keychain-settings -t 3600 -u ci_build.keychain-db
           security list-keychains -d user -s ci_build.keychain-db login.keychain-db
