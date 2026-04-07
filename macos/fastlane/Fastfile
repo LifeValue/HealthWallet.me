@@ -44,6 +44,16 @@ platform :mac do
       readonly: false,
       generate_apple_certs: true
     )
+
+    match(
+      type: "mac_installer_distribution",
+      platform: "macos",
+      app_identifier: ["com.techstackapps.healthwallet"],
+      api_key: api_key,
+      readonly: false,
+      generate_apple_certs: true,
+      skip_provisioning_profiles: true
+    )
   end
 
   desc "Build and upload to TestFlight"
