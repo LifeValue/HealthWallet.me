@@ -77,7 +77,7 @@ if (-not $SkipCodegen) {
 # --- Build ---
 Write-Host "`n[6/6] Building Windows release..." -ForegroundColor Yellow
 Set-Location $ProjectRoot
-flutter build windows --release
+flutter build windows --release --target lib/main_desktop.dart
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Build failed" -ForegroundColor Red
     exit 1
