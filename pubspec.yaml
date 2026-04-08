@@ -122,6 +122,9 @@ dev_dependencies:
   golden_toolkit: ^0.15.0
   envied_generator: ^1.1.1
 
+  # Windows Packaging
+  msix: ^3.16.8
+
 flutter:
   uses-material-design: true
   generate: true
@@ -176,3 +179,10 @@ flutter_gen:
 
   integrations:
     flutter_svg: true
+
+msix_config:
+  display_name: Health Wallet
+  publisher_display_name: Life Value
+  identity_name: com.techstackapps.healthwallet
+  logo_path: assets/icons/app-icon.png
+  capabilities: internetClient, privateNetworkClientServer

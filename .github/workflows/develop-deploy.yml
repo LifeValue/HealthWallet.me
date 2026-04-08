@@ -325,17 +325,30 @@ jobs:
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Package build output
+      - name: Package portable zip
         shell: pwsh
         run: |
-          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "HealthWallet-Windows-v${{ steps.version.outputs.version }}.zip"
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "HealthWallet-Windows-v${{ steps.version.outputs.version }}-portable.zip"
+
+      - name: Create MSIX installer
+        run: dart run msix:create --version ${{ steps.version.outputs.version }}.0
+
+      - name: Copy MSIX to workspace root
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem -Path "build\windows\x64\runner\Release" -Filter "*.msix" -Recurse | Select-Object -First 1
+          if ($msix) {
+            Copy-Item $msix.FullName "HealthWallet-Windows-v${{ steps.version.outputs.version }}-setup.msix"
+          }
 
       - name: Upload to GitHub Pre-release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v${{ steps.version.outputs.version }}-dev.${{ github.run_number }}"
           name: "v${{ steps.version.outputs.version }}-dev.${{ github.run_number }}"
-          files: "HealthWallet-Windows-v${{ steps.version.outputs.version }}.zip"
+          files: |
+            HealthWallet-Windows-v${{ steps.version.outputs.version }}-portable.zip
+            HealthWallet-Windows-v${{ steps.version.outputs.version }}-setup.msix
           prerelease: true
           generate_release_notes: false
           body: |
@@ -343,7 +356,9 @@ jobs:
             **Branch:** `${{ github.ref_name }}`
             **Commit:** `${{ github.sha }}`
 
-            This is a development build for testing purposes.
+            ### Downloads
+            - **Portable (.zip):** Extract and run `health_wallet.exe`
+            - **Installer (.msix):** Double-click to install (Windows 10+)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

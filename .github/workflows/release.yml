@@ -114,16 +114,29 @@ jobs:
       - name: Build Windows release
         run: flutter build windows --release --target lib/main_desktop.dart
 
-      - name: Package build output
+      - name: Package portable zip
         shell: pwsh
         run: |
-          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "HealthWallet-Windows-v${{ needs.version.outputs.version }}.zip"
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "HealthWallet-Windows-v${{ needs.version.outputs.version }}-portable.zip"
 
-      - name: Upload artifact
+      - name: Create MSIX installer
+        run: dart run msix:create --version ${{ needs.version.outputs.version }}.0
+
+      - name: Copy MSIX to workspace root
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem -Path "build\windows\x64\runner\Release" -Filter "*.msix" -Recurse | Select-Object -First 1
+          if ($msix) {
+            Copy-Item $msix.FullName "HealthWallet-Windows-v${{ needs.version.outputs.version }}-setup.msix"
+          }
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: "HealthWallet-Windows-v${{ needs.version.outputs.version }}.zip"
+          path: |
+            HealthWallet-Windows-v${{ needs.version.outputs.version }}-portable.zip
+            HealthWallet-Windows-v${{ needs.version.outputs.version }}-setup.msix
           retention-days: 1
 
       - name: Cleanup
@@ -162,7 +175,8 @@ jobs:
             ## HealthWallet v${{ needs.version.outputs.version }}
 
             ### Downloads
-            - **Windows**: `HealthWallet-Windows-v${{ needs.version.outputs.version }}.zip` — Unzip and run `health_wallet.exe`
+            - **Windows Installer (.msix):** Double-click to install (Windows 10+)
+            - **Windows Portable (.zip):** Extract and run `health_wallet.exe`
             - **iOS**: Available on [TestFlight / App Store]
             - **Android**: Available on [Google Play Store]
             - **macOS**: Available on [TestFlight / Mac App Store]
