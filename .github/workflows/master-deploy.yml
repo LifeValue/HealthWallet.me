@@ -279,6 +279,9 @@ jobs:
     if: inputs.platform == 'windows' || inputs.platform == 'all'
     name: Build Windows Release
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
@@ -291,8 +294,9 @@ jobs:
 
       - name: Add hosts to known_hosts
         run: |
-          ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -317,7 +321,6 @@ jobs:
 
       - name: Get version from pubspec
         id: version
-        shell: bash
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -341,6 +344,4 @@ jobs:
 
       - name: Cleanup
         if: always()
-        shell: pwsh
-        run: |
-          Remove-Item -Force .env -ErrorAction SilentlyContinue
+        run: rm -f .env
