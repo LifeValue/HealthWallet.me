@@ -11,6 +11,7 @@ on:
           - android
           - ios
           - macos
+          - windows
           - both
           - all
         default: both
@@ -273,3 +274,68 @@ jobs:
           security list-keychains -d user -s login.keychain-db
           security default-keychain -s login.keychain-db
           rm -rf macos/fastlane/private_keys
+
+  deploy-windows:
+    if: inputs.platform == 'windows' || inputs.platform == 'all'
+    name: Build Windows Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH for private dependency
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add hosts to known_hosts
+        run: |
+          ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.7"
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Get version from pubspec
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Package build output
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "HealthWallet-Windows-v${{ steps.version.outputs.version }}.zip"
+
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "HealthWallet-Windows-v${{ steps.version.outputs.version }}"
+          path: "HealthWallet-Windows-v${{ steps.version.outputs.version }}.zip"
+          retention-days: 30
+
+      - name: Cleanup
+        if: always()
+        shell: pwsh
+        run: |
+          Remove-Item -Force .env -ErrorAction SilentlyContinue
