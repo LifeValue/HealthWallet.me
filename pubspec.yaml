@@ -186,3 +186,4 @@ msix_config:
   identity_name: com.techstackapps.healthwallet
   logo_path: assets/icons/app-icon.png
   capabilities: internetClient, privateNetworkClientServer
+  install_certificate: false
