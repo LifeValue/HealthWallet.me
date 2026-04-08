@@ -330,12 +330,22 @@ jobs:
         run: |
           Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "HealthWallet-Windows-v${{ steps.version.outputs.version }}.zip"
 
-      - name: Upload as workflow artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload to GitHub Pre-release
+        uses: softprops/action-gh-release@v2
         with:
-          name: "HealthWallet-Windows-v${{ steps.version.outputs.version }}"
-          path: "HealthWallet-Windows-v${{ steps.version.outputs.version }}.zip"
-          retention-days: 30
+          tag_name: "v${{ steps.version.outputs.version }}-dev.${{ github.run_number }}"
+          name: "v${{ steps.version.outputs.version }}-dev.${{ github.run_number }}"
+          files: "HealthWallet-Windows-v${{ steps.version.outputs.version }}.zip"
+          prerelease: true
+          generate_release_notes: false
+          body: |
+            ## Dev Build (Windows)
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** `${{ github.sha }}`
+
+            This is a development build for testing purposes.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cleanup
         if: always()
