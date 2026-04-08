@@ -10,6 +10,9 @@
 *.pem
 assets/certs/*
 !assets/certs/.gitkeep
+!assets/certs/android/
+assets/certs/android/*
+!assets/certs/android/.gitkeep
 *.jks
 *.keystore
 **/key.properties
