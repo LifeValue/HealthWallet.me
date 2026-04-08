@@ -14,6 +14,7 @@ import 'package:health_wallet/features/desktop/backup/data/services/backup_servi
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 
 part 'backup_event.dart';
 part 'backup_state.dart';
@@ -148,6 +149,10 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       await _backupService.restoreFromFile(target.filePath);
 
       emit(state.copyWith(progress: 1.0));
+
+      try {
+        getIt<HomeBloc>().add(const HomeInitialised());
+      } catch (_) {}
 
       emit(state.copyWith(
         isRestoring: false,

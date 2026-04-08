@@ -433,101 +433,107 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                         ),
                       ),
                       const SizedBox(height: Insets.small),
-                      ...relatedResources.map((resource) {
-                        final isSelected = selectedIds.contains(resource.id);
-                        return Padding(
-                          padding:
-                              const EdgeInsets.only(bottom: Insets.extraSmall),
-                          child: InkWell(
-                            onTap: () {
-                              setDialogState(() {
-                                if (isSelected) {
-                                  selectedIds.remove(resource.id);
-                                } else {
-                                  selectedIds.add(resource.id);
-                                }
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: Insets.smallNormal,
-                                vertical: Insets.small,
-                              ),
-                              decoration: BoxDecoration(
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: relatedResources.length,
+                          itemBuilder: (_, index) {
+                            final resource = relatedResources[index];
+                            final isSelected = selectedIds.contains(resource.id);
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: Insets.extraSmall),
+                              child: InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    if (isSelected) {
+                                      selectedIds.remove(resource.id);
+                                    } else {
+                                      selectedIds.add(resource.id);
+                                    }
+                                  });
+                                },
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? context.colorScheme.error
-                                          .withValues(alpha: 0.5)
-                                      : borderColor,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: Insets.smallNormal,
+                                    vertical: Insets.small,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? context.colorScheme.error
+                                              .withValues(alpha: 0.5)
+                                          : borderColor,
+                                    ),
+                                    color: isSelected
+                                        ? context.colorScheme.error
+                                            .withValues(alpha: 0.05)
+                                        : null,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Checkbox(
+                                          value: isSelected,
+                                          onChanged: (value) {
+                                            setDialogState(() {
+                                              if (value == true) {
+                                                selectedIds.add(resource.id);
+                                              } else {
+                                                selectedIds.remove(resource.id);
+                                              }
+                                            });
+                                          },
+                                          activeColor: context.colorScheme.error,
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                      ),
+                                      const SizedBox(width: Insets.small),
+                                      resource.fhirType.icon.svg(
+                                        width: 16,
+                                        color: context.colorScheme.onSurface
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                      const SizedBox(width: Insets.small),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              resource.displayTitle,
+                                              style:
+                                                  AppTextStyle.labelLarge.copyWith(
+                                                color: textColor,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              resource.fhirType.display,
+                                              style:
+                                                  AppTextStyle.labelSmall.copyWith(
+                                                color: context
+                                                    .colorScheme.onSurface
+                                                    .withValues(alpha: 0.5),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                color: isSelected
-                                    ? context.colorScheme.error
-                                        .withValues(alpha: 0.05)
-                                    : null,
                               ),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      onChanged: (value) {
-                                        setDialogState(() {
-                                          if (value == true) {
-                                            selectedIds.add(resource.id);
-                                          } else {
-                                            selectedIds.remove(resource.id);
-                                          }
-                                        });
-                                      },
-                                      activeColor: context.colorScheme.error,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ),
-                                  const SizedBox(width: Insets.small),
-                                  resource.fhirType.icon.svg(
-                                    width: 16,
-                                    color: context.colorScheme.onSurface
-                                        .withValues(alpha: 0.6),
-                                  ),
-                                  const SizedBox(width: Insets.small),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          resource.displayTitle,
-                                          style:
-                                              AppTextStyle.labelLarge.copyWith(
-                                            color: textColor,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          resource.fhirType.display,
-                                          style:
-                                              AppTextStyle.labelSmall.copyWith(
-                                            color: context
-                                                .colorScheme.onSurface
-                                                .withValues(alpha: 0.5),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
+                            );
+                          },
+                        ),
+                      ),
                     ],
                     if (selectedIds.isNotEmpty) ...[
                       const SizedBox(height: Insets.small),

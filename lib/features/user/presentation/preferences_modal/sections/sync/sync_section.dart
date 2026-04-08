@@ -387,19 +387,14 @@ class _BackupLocationRow extends StatelessWidget {
   }
 
   Future<void> _pickDirectory(BuildContext context) async {
-    final home = Platform.environment['HOME'] ??
-        Platform.environment['USERPROFILE'] ??
-        '';
-    var initialPath = path ?? home;
-    final dir = Directory(initialPath);
-    if (initialPath.isEmpty || !await dir.exists()) {
-      initialPath = home;
-    }
+    final initialPath = path != null && await Directory(path!).exists()
+        ? path!
+        : null;
 
     String? result;
     if (Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
-        'initialDirectory': initialPath,
+        if (initialPath != null) 'initialDirectory': initialPath,
         'title': 'Choose Backup Location',
       });
     } else {

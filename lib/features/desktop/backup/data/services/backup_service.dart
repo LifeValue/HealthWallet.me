@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 
 @lazySingleton
@@ -19,7 +20,9 @@ class BackupService {
   BackupService(this._database);
 
   Future<String> _defaultBackupPath() async {
-    final home = Platform.environment['HOME'] ?? '';
+    final home = Platform.environment['HOME'] ??
+        Platform.environment['USERPROFILE'] ??
+        '';
     return p.join(home, 'Documents', 'HealthWallet', 'Backups');
   }
 
@@ -100,27 +103,32 @@ class BackupService {
       }
     }
 
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final dbPath = p.join(dbFolder.path, 'db.sqlite');
+    await _database.customStatement('PRAGMA wal_checkpoint(TRUNCATE)');
 
-    await _database.close();
+    final tables = await _database.customSelect(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    ).get();
 
-    final dbFile = File(dbPath);
-    if (await dbFile.exists()) {
-      await dbFile.delete();
+    for (final row in tables) {
+      final name = row.data['name'] as String;
+      await _database.customStatement('DELETE FROM "$name"');
     }
 
-    final walFile = File('$dbPath-wal');
-    if (await walFile.exists()) {
-      await walFile.delete();
+    final escaped = backupPath.replaceAll("'", "''");
+    await _database.customStatement("ATTACH DATABASE '$escaped' AS backup_db");
+
+    final backupTables = await _database.customSelect(
+      "SELECT name FROM backup_db.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    ).get();
+
+    for (final row in backupTables) {
+      final name = row.data['name'] as String;
+      await _database.customStatement(
+        'INSERT OR REPLACE INTO main."$name" SELECT * FROM backup_db."$name"',
+      );
     }
 
-    final shmFile = File('$dbPath-shm');
-    if (await shmFile.exists()) {
-      await shmFile.delete();
-    }
-
-    await backupFile.copy(dbPath);
+    await _database.customStatement('DETACH DATABASE backup_db');
   }
 
   Future<List<BackupEntry>> listBackups() async {
@@ -177,6 +185,18 @@ class BackupService {
 
     final metaFile = File(_metadataPathFor(target.filePath));
     if (await metaFile.exists()) await metaFile.delete();
+  }
+
+  Future<void> _deleteWithRetry(File file, {int attempts = 5}) async {
+    for (var i = 0; i < attempts; i++) {
+      try {
+        await file.delete();
+        return;
+      } on FileSystemException {
+        if (i == attempts - 1) rethrow;
+        await Future<void>.delayed(Duration(milliseconds: 200 * (i + 1)));
+      }
+    }
   }
 
   String _metadataPathFor(String dbPath) => '$dbPath.meta.json';
