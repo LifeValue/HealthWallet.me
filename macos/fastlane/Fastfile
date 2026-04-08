@@ -32,8 +32,25 @@ platform :mac do
     end
   end
 
+  desc "Sync certificates and provisioning profiles via Match"
+  lane :sync_certificates do
+    api_key = get_asc_api_key
+
+    match(
+      type: "appstore",
+      platform: "macos",
+      app_identifier: ["com.techstackapps.healthwallet"],
+      api_key: api_key,
+      readonly: is_ci,
+      generate_apple_certs: false,
+      additional_cert_types: ["mac_installer_distribution"]
+    )
+  end
+
   desc "Build and upload to TestFlight"
   lane :beta do
+    sync_certificates
+
     api_key = get_asc_api_key
 
     version_name = get_version_name
@@ -48,10 +65,12 @@ platform :mac do
     UI.message("Building macOS version #{version_name} (#{build_number})")
 
     update_code_signing_settings(
-      use_automatic_signing: true,
+      use_automatic_signing: false,
       path: "Runner.xcodeproj",
       team_id: CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
-      targets: ["Runner"]
+      targets: ["Runner"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: ENV["sigh_com.techstackapps.healthwallet_appstore_macos_profile-name"]
     )
 
     Dir.chdir("../..") do
@@ -62,15 +81,142 @@ platform :mac do
       end
     end
 
+    # Fix malformed frameworks in the Flutter build output BEFORE Xcode archives.
+    # llamadart.framework is built as a flat bundle by Flutter's native assets;
+    # macOS App Store requires versioned bundle structure with Resources symlink.
+    build_app_path = File.expand_path("../../build/macos/Build/Products/Release/health_wallet.app", __dir__)
+    fw_dir = File.join(build_app_path, "Contents", "Frameworks")
+    if Dir.exist?(fw_dir)
+      UI.message("Checking frameworks in build output: #{fw_dir}")
+      Dir.glob("#{fw_dir}/*.framework").each do |fw|
+        fw_name = File.basename(fw, ".framework")
+        resources_link = File.join(fw, "Resources")
+
+        # Log current state
+        has_versions = File.exist?(File.join(fw, "Versions"))
+        has_resources_symlink = File.symlink?(resources_link)
+        UI.message("  #{fw_name}: Versions=#{has_versions}, Resources symlink=#{has_resources_symlink}")
+
+        # Fix if Resources symlink is missing or points to wrong target
+        if has_resources_symlink
+          symlink_target = File.readlink(resources_link)
+          if symlink_target != "Versions/Current/Resources"
+            UI.message("  Fixing #{fw_name}.framework — wrong symlink target: #{symlink_target}")
+            FileUtils.rm(resources_link)
+            File.symlink("Versions/Current/Resources", resources_link)
+          end
+        end
+        unless has_resources_symlink || File.symlink?(resources_link)
+          UI.message("  Fixing #{fw_name}.framework — adding Resources symlink")
+
+          if has_versions
+            # Has Versions/ but no Resources symlink — just create the symlink
+            versioned_resources = File.join(fw, "Versions", "Current", "Resources")
+            FileUtils.mkdir_p(versioned_resources) unless File.exist?(versioned_resources)
+            File.symlink("Versions/Current/Resources", resources_link)
+          else
+            # Completely flat — restructure into versioned layout
+            versions_a = File.join(fw, "Versions", "A")
+            FileUtils.mkdir_p(versions_a)
+
+            # Move everything into Versions/A/
+            Dir.entries(fw).each do |entry|
+              next if entry == "." || entry == ".." || entry == "Versions"
+              src = File.join(fw, entry)
+              next if File.symlink?(src)
+              FileUtils.mv(src, File.join(versions_a, entry))
+            end
+
+            # Create Current -> A
+            File.symlink("A", File.join(fw, "Versions", "Current"))
+
+            # Create top-level symlinks
+            Dir.entries(versions_a).each do |entry|
+              next if entry == "." || entry == ".."
+              link = File.join(fw, entry)
+              File.symlink("Versions/Current/#{entry}", link) unless File.exist?(link)
+            end
+
+            # Ensure Resources exists
+            resources_in_a = File.join(versions_a, "Resources")
+            FileUtils.mkdir_p(resources_in_a) unless File.exist?(resources_in_a)
+            File.symlink("Versions/Current/Resources", resources_link) unless File.exist?(resources_link)
+          end
+
+          UI.message("  Fixed #{fw_name}.framework")
+        end
+      end
+    else
+      UI.important("Build output Frameworks dir not found at #{fw_dir}")
+    end
+
+    # Archive (no export yet)
+    build_mac_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      skip_package_pkg: true
+    )
+
+    # Fix frameworks in the archive before export
+    archive_path = lane_context[SharedValues::XCODEBUILD_ARCHIVE]
+    archive_app = File.join(archive_path, "Products", "Applications", "health_wallet.app", "Contents", "Frameworks")
+    UI.message("Checking archive frameworks at: #{archive_app}")
+    if Dir.exist?(archive_app)
+      Dir.glob("#{archive_app}/*.framework").each do |fw|
+        fw_name = File.basename(fw, ".framework")
+        resources_link = File.join(fw, "Resources")
+        has_versions = File.exist?(File.join(fw, "Versions"))
+        is_symlink = File.symlink?(resources_link)
+        target = is_symlink ? File.readlink(resources_link) : "N/A"
+        UI.message("  ARCHIVE #{fw_name}: Versions=#{has_versions}, Resources symlink=#{is_symlink}, target=#{target}")
+
+        # Fix: ensure Resources symlink points to Versions/Current/Resources (not Versions/A/Resources)
+        if is_symlink && target != "Versions/Current/Resources"
+          UI.message("  Fixing #{fw_name} symlink: #{target} → Versions/Current/Resources")
+          FileUtils.rm(resources_link)
+          File.symlink("Versions/Current/Resources", resources_link)
+        elsif !is_symlink
+          UI.message("  Fixing #{fw_name} — adding Resources symlink")
+          if has_versions
+            versioned_res = File.join(fw, "Versions", "Current", "Resources")
+            FileUtils.mkdir_p(versioned_res) unless File.exist?(versioned_res)
+            FileUtils.rm_rf(resources_link) if File.exist?(resources_link)
+            File.symlink("Versions/Current/Resources", resources_link)
+          end
+        end
+      end
+    end
+
+    # Export the archive into a .pkg
     build_mac_app(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
       export_method: "app-store",
+      skip_build_archive: true,
+      archive_path: archive_path,
       export_options: {
-        signingStyle: "automatic",
-        teamID: CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
+        provisioningProfiles: {
+          "com.techstackapps.healthwallet" => ENV["sigh_com.techstackapps.healthwallet_appstore_macos_profile-name"]
+        }
       }
     )
+
+    # Verify the exported .pkg frameworks
+    pkg_path = lane_context[SharedValues::PKG_OUTPUT_PATH]
+    UI.message("Exported .pkg at: #{pkg_path}")
+
+    # Check the exported .app (should be next to the .pkg)
+    exported_app = File.join(File.dirname(pkg_path), "health_wallet.app")
+    if Dir.exist?(exported_app)
+      exp_fw_dir = File.join(exported_app, "Contents", "Frameworks")
+      Dir.glob("#{exp_fw_dir}/*.framework").each do |fw|
+        fw_name = File.basename(fw, ".framework")
+        resources_link = File.join(fw, "Resources")
+        is_symlink = File.symlink?(resources_link)
+        target = is_symlink ? File.readlink(resources_link) : "N/A"
+        UI.message("  EXPORTED #{fw_name}: Resources symlink=#{is_symlink}, target=#{target}")
+      end
+    end
 
     upload_to_testflight(
       api_key: api_key,
