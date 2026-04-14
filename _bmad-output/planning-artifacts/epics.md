@@ -14,7 +14,8 @@
 ### Story 1.1: Validate Desktop Builds
 
 **YouTrack:** HM-187
-**Phase:** 0 — Build Validation (starting point)
+**Phase:** 0 — Build Validation
+**Status:** DONE (starting point)
 
 **As a** developer, **I want to** verify the existing codebase compiles and runs on macOS, Windows, and Linux **so that** I can identify dependency compatibility issues before starting desktop-specific work.
 
@@ -35,6 +36,7 @@
 
 **YouTrack:** HM-158
 **Phase:** 1 — Desktop Shell
+**Status:** DONE
 
 **As a** user, **I want to** launch HealthWallet.me as a desktop application **so that** I can access my health records on a bigger screen with a desktop-optimized layout.
 
@@ -57,6 +59,7 @@
 
 **YouTrack:** HM-186
 **Phase:** 1 — Desktop Shell
+**Status:** DONE
 
 **As a** developer, **I need** the database schema updated to support multi-device sync **so that** every record tracks its origin device and supports soft delete for LWW sync.
 
@@ -79,6 +82,7 @@
 
 **YouTrack:** HM-159
 **Phase:** 2 — Communication
+**Status:** DONE
 
 **As a** user, **I want to** pair my phone with my desktop via QR code and have them find each other automatically **so that** I can transfer health data securely without internet or cloud.
 
@@ -105,6 +109,7 @@
 
 **YouTrack:** HM-160
 **Phase:** 3a — Features
+**Status:** DONE
 
 **As a** user, **I want to** backup my health data to my desktop and restore it to a new phone **so that** my records are safe even if my phone is lost or damaged.
 
@@ -128,6 +133,7 @@
 
 **YouTrack:** HM-43
 **Phase:** 3b — Features
+**Status:** IN PROGRESS — Desktop receiver complete, mobile sender not yet implemented
 
 **As a** user, **I want to** send scanned documents from my phone to my desktop for AI processing **so that** I get faster and more accurate extraction using the desktop's bigger model.
 
@@ -145,10 +151,23 @@
 - Same `llamadart` code, bigger model (7B+), always-on vision
 - Reuse existing `ScanRepository` pipeline on desktop
 
+**Implementation (desktop receiver — complete):**
+- `HandoverService`: listens for `handover.offer` + `handover.file` chunks, base64-decodes files, triggers ProcessingBloc
+- `HandoverBloc` (`@lazySingleton`): session tracking with status enum (receiving → processing → sendingResults → complete)
+- Sends `handover.progress` updates and `handover.result` (FHIR resources + patient) back to mobile
+- Integrates with same AI pipeline as local desktop import (Qwen vision via llamadart)
+
+**Remaining (mobile sender):**
+- "Process on Desktop" button in scan/processing UI (visible when desktop connected)
+- TCP client code to send `handover.offer` + stream file chunks
+- Listen for `handover.progress` / `handover.result` messages
+- Import returned FHIR resources into mobile database
+
 ### Story 1.7: Desktop Independent Import & Processing
 
 **YouTrack:** HM-185
 **Phase:** 3b — Features
+**Status:** BACKLOG
 
 **As a** user, **I want to** drag and drop PDF or image files onto the desktop Import tab **so that** I can process documents directly on my computer without needing my phone.
 
@@ -201,6 +220,7 @@
 
 **YouTrack:** HM-162
 **Phase:** 3d — Features
+**Status:** IN PROGRESS — Unified sync/backup dialogs, mini status cards, greeting refactor done; keyboard shortcuts and onboarding not yet
 
 **As a** user, **I want** the desktop app to feel native and comfortable **so that** I can efficiently browse and manage health records on a bigger screen.
 
