@@ -17,12 +17,12 @@ on:
         default: both
 
 concurrency:
-  group: develop-deploy
+  group: develop-deploy-${{ inputs.platform }}
   cancel-in-progress: false
 
 jobs:
   deploy-ios:
-    if: inputs.platform == 'ios' || inputs.platform == 'both'
+    if: inputs.platform == 'ios' || inputs.platform == 'both' || inputs.platform == 'all'
     name: Deploy to TestFlight
     runs-on: [self-hosted, macOS]
 
@@ -106,7 +106,7 @@ jobs:
           rm -rf ios/fastlane/private_keys
 
   deploy-android:
-    if: inputs.platform == 'android' || inputs.platform == 'both'
+    if: inputs.platform == 'android' || inputs.platform == 'both' || inputs.platform == 'all'
     name: Deploy to Play Store
     runs-on: ubuntu-latest
 
