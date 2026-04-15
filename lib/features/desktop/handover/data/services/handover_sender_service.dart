@@ -7,9 +7,13 @@ import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 @lazySingleton
 class HandoverSenderService {
@@ -19,16 +23,24 @@ class HandoverSenderService {
   final _sessionUpdateController = StreamController<HandoverSession>.broadcast();
   final Map<String, HandoverSession> _activeSessions = {};
   final Map<String, bool> _cancelled = {};
+  Map<String, dynamic>? _resultPayload;
+  final _resultController = StreamController<Map<String, dynamic>>.broadcast();
+  final Set<String> _processedResultIds = {};
+
+  Stream<Map<String, dynamic>> get resultReceived => _resultController.stream;
+  Map<String, dynamic>? get lastResult => _resultPayload;
 
   StreamSubscription? _acceptSub;
   StreamSubscription? _progressSub;
   StreamSubscription? _resultSub;
+  StreamSubscription? _step1Sub;
 
   Stream<HandoverSession> get sessionUpdates => _sessionUpdateController.stream;
 
   HandoverSenderService(this._tcpService, this._messageRouter) {
     _progressSub = _messageRouter.on('handover.progress').listen(_handleProgress);
     _resultSub = _messageRouter.on('handover.result').listen(_handleResult);
+    _step1Sub = _messageRouter.on('handover.step1_complete').listen(_handleStep1Complete);
   }
 
   Future<void> sendHandover(List<String> filePaths) async {
@@ -132,8 +144,52 @@ class HandoverSenderService {
   void _handleResult(Map<String, dynamic> payload) {
     final sessionId = payload['session_id'] as String?;
     if (sessionId == null) return;
+    if (_processedResultIds.contains(sessionId)) return;
+    _processedResultIds.add(sessionId);
 
     _updateSession(sessionId, HandoverStatus.complete, progress: 1.0);
+    _resultPayload = payload;
+    _resultController.add(payload);
+
+    try {
+      final processingBloc = getIt<ProcessingBloc>();
+      final sessions = processingBloc.state.sessions;
+      final pendingSessions = sessions.where(
+          (s) => s.status == ProcessingStatus.pending &&
+              s.filePaths.isNotEmpty);
+      for (final session in pendingSessions) {
+        processingBloc.add(SessionCleared(session: session));
+      }
+    } catch (_) {}
+
+    try {
+      getIt<LwwSyncBloc>().add(const SyncTriggered());
+    } catch (_) {}
+  }
+
+  void _handleStep1Complete(Map<String, dynamic> payload) {
+    final sessionId = payload['session_id'] as String?;
+    if (sessionId == null) return;
+    if (_processedResultIds.contains(sessionId)) return;
+    _processedResultIds.add(sessionId);
+
+    _updateSession(sessionId, HandoverStatus.complete, progress: 1.0);
+    _resultController.add(payload);
+
+    try {
+      final processingBloc = getIt<ProcessingBloc>();
+      final sessions = processingBloc.state.sessions;
+      final pendingSessions = sessions.where(
+          (s) => s.status == ProcessingStatus.pending &&
+              s.filePaths.isNotEmpty);
+      for (final session in pendingSessions) {
+        processingBloc.add(SessionCleared(session: session));
+      }
+    } catch (_) {}
+
+    try {
+      getIt<LwwSyncBloc>().add(const SyncTriggered());
+    } catch (_) {}
   }
 
   void _updateSession(
@@ -158,6 +214,7 @@ class HandoverSenderService {
     _acceptSub?.cancel();
     _progressSub?.cancel();
     _resultSub?.cancel();
+    _step1Sub?.cancel();
     _sessionUpdateController.close();
   }
 }

@@ -5,6 +5,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
@@ -13,6 +14,10 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
+import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
+import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart'
+    as notification_entity;
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/pages/handover_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
@@ -39,6 +44,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final bool _isDesktop = getIt<AppPlatform>().isDesktop;
   bool _isKeyboardVisible = false;
   StreamSubscription? _handoverSub;
+  StreamSubscription? _handoverResultSub;
   bool _hasHandover = false;
 
   @override
@@ -47,6 +53,44 @@ class _DashboardPageState extends State<DashboardPage> {
     _navigationController = getIt<PageViewNavigationController>();
     _navigationController.currentPageNotifier.addListener(_onPageChanged);
     if (_isDesktop) _listenForHandover();
+    _listenForHandoverResults();
+  }
+
+  void _listenForHandoverResults() {
+    if (_isDesktop) {
+      try {
+        final handoverBloc = getIt<HandoverBloc>();
+        var lastCompletedCount = 0;
+        handoverBloc.stream.listen((state) {
+          final completedCount = state.activeSessions.values
+              .where((s) => s.status == HandoverStatus.complete).length;
+          if (completedCount > lastCompletedCount && mounted) {
+            lastCompletedCount = completedCount;
+            _showHandoverNotification('Handover patient matched');
+          }
+        });
+      } catch (_) {}
+    } else {
+      try {
+        final senderService = getIt<HandoverSenderService>();
+        _handoverResultSub = senderService.resultReceived.listen((_) {
+          if (!mounted) return;
+          _showHandoverNotification('Desktop finished processing');
+        });
+      } catch (_) {}
+    }
+  }
+
+  void _showHandoverNotification(String text) {
+    final notification = notification_entity.Notification(
+      id: 'handover_${DateTime.now().millisecondsSinceEpoch}',
+      text: text,
+      type: notification_entity.NotificationType.success,
+      time: DateTime.now(),
+    );
+
+    getIt<NotificationBloc>().add(NotificationAdded(notification: notification));
+    showProcessingDoneNotification(context, notification);
   }
 
   void _listenForHandover() {
@@ -102,6 +146,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void dispose() {
     _navigationController.currentPageNotifier.removeListener(_onPageChanged);
     _handoverSub?.cancel();
+    _handoverResultSub?.cancel();
     super.dispose();
   }
 

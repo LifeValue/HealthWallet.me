@@ -7,6 +7,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
@@ -73,7 +76,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         try {
           final json = jsonDecode(message.payloadString) as Map<String, dynamic>;
           var remoteName = json['device_name'] as String?;
-          if (remoteName == 'localhost' || remoteName == 'unknown') {
+          debugPrint('[Communication] Remote device name from hello: "$remoteName"');
+          if (remoteName == null || remoteName.isEmpty || remoteName == 'localhost' || remoteName == 'unknown') {
             remoteName = 'Mobile Device';
           }
           if (remoteName != null && remoteName.isNotEmpty) {
@@ -103,6 +107,13 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     CommunicationInitialised event,
     Emitter<DesktopSyncState> emit,
   ) async {
+    if (_platform.isDesktop) {
+      final (:ip, :vpnDetected) = await _getLocalIp();
+      if (vpnDetected) {
+        emit(state.copyWith(vpnDetected: true));
+      }
+    }
+
     final pairing = _pairingStorage.loadPairing();
     if (pairing == null) return;
 
@@ -363,6 +374,15 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   ) {
     _reconnectAttempts = 0;
     emit(state.copyWith(connectedDeviceName: event.name));
+
+    if (_platform.isDesktop) {
+      try {
+        getIt<BackupBloc>().sendBackupStatus();
+      } catch (_) {}
+      try {
+        getIt<HandoverService>().resendPendingResults();
+      } catch (_) {}
+    }
   }
 
   Future<({String ip, bool vpnDetected})> _getLocalIp() async {

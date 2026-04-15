@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:another_flushbar/flushbar.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -10,6 +9,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -38,7 +38,7 @@ class _FocusModeView extends StatefulWidget {
 
 class _FocusModeViewState extends State<_FocusModeView> {
   bool _isHiding = false;
-  Flushbar? _currentFlushbar;
+  bool _notificationShowing = false;
 
   void _handleScreenDarkened(bool isDarkened) {
     if (isDarkened) {
@@ -113,7 +113,6 @@ class _FocusModeViewState extends State<_FocusModeView> {
 
   @override
   void dispose() {
-    _currentFlushbar?.dismiss();
     super.dispose();
   }
 
@@ -142,19 +141,24 @@ class _FocusModeViewState extends State<_FocusModeView> {
 
             if (focusModeState.waitingForNotification &&
                 state.notification != null &&
-                _currentFlushbar == null) {
+                !_notificationShowing) {
+              _notificationShowing = true;
               final notification = state.notification!;
 
-              _currentFlushbar = showProcessingDoneNotification(
+              context.read<NotificationBloc>().add(
+                    NotificationAdded(notification: notification),
+                  );
+              context
+                  .read<ProcessingBloc>()
+                  .add(const NotificationAcknowledged());
+
+              showProcessingDoneNotification(
                 context,
                 notification,
-                disableTap: true,
-                onStatusChanged: (status) {
-                  if (status == FlushbarStatus.DISMISSED && mounted) {
-                    _currentFlushbar = null;
-                    setState(() {
-                      _isHiding = true;
-                    });
+                onDismissed: () {
+                  if (mounted) {
+                    _notificationShowing = false;
+                    setState(() => _isHiding = true);
                     Timer(const Duration(milliseconds: 500), () {
                       if (mounted) {
                         context
@@ -165,10 +169,6 @@ class _FocusModeViewState extends State<_FocusModeView> {
                   }
                 },
               );
-
-              context
-                  .read<ProcessingBloc>()
-                  .add(const NotificationAcknowledged());
               return;
             }
 

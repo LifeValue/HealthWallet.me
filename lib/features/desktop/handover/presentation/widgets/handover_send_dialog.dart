@@ -8,15 +8,25 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:collection/collection.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 
 class HandoverSendDialog extends StatefulWidget {
   final List<String> filePaths;
+  final String? continueLabel;
+  final String? sourceSessionId;
 
-  const HandoverSendDialog({super.key, required this.filePaths});
+  const HandoverSendDialog({
+    super.key,
+    required this.filePaths,
+    this.continueLabel,
+    this.sourceSessionId,
+  });
 
-  static void show(BuildContext context, List<String> filePaths) {
+  static void show(BuildContext context, List<String> filePaths, {String? continueLabel, String? sourceSessionId}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -24,7 +34,7 @@ class HandoverSendDialog extends StatefulWidget {
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Dialog(
           backgroundColor: Colors.transparent,
-          child: HandoverSendDialog(filePaths: filePaths),
+          child: HandoverSendDialog(filePaths: filePaths, continueLabel: continueLabel, sourceSessionId: sourceSessionId),
         ),
       ),
     );
@@ -51,6 +61,18 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
     _startSending();
   }
 
+  void _clearSourceSession() {
+    if (widget.sourceSessionId == null) return;
+    try {
+      final processingBloc = getIt<ProcessingBloc>();
+      final session = processingBloc.state.sessions
+          .firstWhereOrNull((s) => s.id == widget.sourceSessionId);
+      if (session != null) {
+        processingBloc.add(SessionCleared(session: session));
+      }
+    } catch (_) {}
+  }
+
   Future<void> _startSending() async {
     if (_started) return;
     _started = true;
@@ -65,7 +87,12 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
 
   bool get _isTerminal =>
       _session?.status == HandoverStatus.complete ||
+      _session?.status == HandoverStatus.waitingForResults ||
       _session?.status == HandoverStatus.error;
+
+  bool get _isSent =>
+      _session?.status == HandoverStatus.complete ||
+      _session?.status == HandoverStatus.waitingForResults;
 
   String get _statusText {
     if (_session == null) return 'Preparing...';
@@ -129,7 +156,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
               ),
             ),
             const SizedBox(height: Insets.normal),
-            if (_session?.status == HandoverStatus.complete) ...[
+            if (_isSent) ...[
               Icon(
                 Icons.check_circle_outline,
                 size: 48,
@@ -137,7 +164,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
               ),
               const SizedBox(height: Insets.small),
               Text(
-                'Results received',
+                'Handed over to Desktop',
                 style: AppTextStyle.bodySmall.copyWith(
                   color: AppColors.success,
                 ),
@@ -176,7 +203,29 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
                   height: 36,
                 ),
               ),
-            if (_isTerminal)
+            if (_isTerminal && _isSent) ...[
+              AppButton(
+                label: widget.continueLabel ?? context.l10n.continueScanning,
+                variant: AppButtonVariant.outlined,
+                height: 36,
+                onPressed: () {
+                  _clearSourceSession();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+              ),
+              const SizedBox(height: Insets.small),
+              AppButton(
+                label: context.l10n.goToRecords,
+                variant: AppButtonVariant.primary,
+                height: 36,
+                onPressed: () {
+                  _clearSourceSession();
+                  final navController = getIt<PageViewNavigationController>();
+                  navController.jumpToPage(1);
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+              ),
+            ] else if (_isTerminal) ...[
               SizedBox(
                 width: 160,
                 child: AppButton(
@@ -185,6 +234,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
                   height: 36,
                 ),
               ),
+            ],
           ],
         ),
       ),

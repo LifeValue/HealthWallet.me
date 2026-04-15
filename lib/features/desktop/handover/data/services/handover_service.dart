@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 
@@ -22,6 +23,7 @@ class HandoverService {
   final Map<String, HandoverSession> _sessions = {};
   final Map<String, List<String>> _receivedFiles = {};
   final _sessionUpdateController = StreamController<HandoverSession>.broadcast();
+  final Map<String, ({String type, Map<String, dynamic> payload})> _pendingResults = {};
 
   StreamSubscription? _offerSub;
   StreamSubscription? _fileSub;
@@ -124,6 +126,8 @@ class HandoverService {
     _sessions[sessionId] = processingSession;
     _sessionUpdateController.add(processingSession);
 
+    _step1Notified = false;
+
     final filePaths = _receivedFiles[sessionId]!;
     _processingBloc.add(DocumentImported(
       filePaths: filePaths,
@@ -132,6 +136,14 @@ class HandoverService {
 
     _processingBlocSub?.cancel();
     _processingBlocSub = _processingBloc.stream.listen((processingState) {
+      final newSession = processingState.sessions.firstOrNull;
+      if (newSession != null &&
+          newSession.status == ProcessingStatus.pending &&
+          newSession.origin == ProcessingOrigin.handover &&
+          processingState.status is SessionCreated) {
+        _processingBloc.add(SessionActivated(sessionId: newSession.id));
+      }
+
       _handleProcessingStateChange(
         sessionId,
         processingState,
@@ -139,6 +151,8 @@ class HandoverService {
       );
     });
   }
+
+  bool _step1Notified = false;
 
   void _handleProcessingStateChange(
     String sessionId,
@@ -148,7 +162,9 @@ class HandoverService {
     final session = _sessions[sessionId];
     if (session == null || session.status == HandoverStatus.complete) return;
 
-    final activeProcessingSession = processingState.sessions.lastOrNull;
+    final activeProcessingSession = processingState.sessions.firstWhereOrNull(
+      (s) => s.origin == ProcessingOrigin.handover,
+    );
     if (activeProcessingSession == null) return;
 
     if (activeProcessingSession.status == ProcessingStatus.processing ||
@@ -163,6 +179,25 @@ class HandoverService {
         'progress': progress,
         'status': 'processing',
       });
+    }
+
+    if (activeProcessingSession.status == ProcessingStatus.patientExtracted &&
+        !_step1Notified) {
+      _step1Notified = true;
+      final updated = session.copyWith(
+        status: HandoverStatus.complete,
+        progress: 1.0,
+      );
+      _sessions[sessionId] = updated;
+      _sessionUpdateController.add(updated);
+
+      final step1Payload = {'session_id': sessionId};
+      _pendingResults[sessionId] = (type: 'handover.step1_complete', payload: step1Payload);
+      _tcpService.sendData('handover.step1_complete', step1Payload);
+
+      _processingBlocSub?.cancel();
+      _processingBlocSub = null;
+      onProcessingComplete(sessionId);
     }
 
     if (activeProcessingSession.status == ProcessingStatus.draft) {
@@ -195,12 +230,16 @@ class HandoverService {
       final patientJson = processingSession.patient.draft?.toJson();
       final encounterJson = processingSession.encounter.draft?.toJson();
 
-      await _tcpService.sendData('handover.result', {
+      final resultPayload = {
         'session_id': sessionId,
         'resources': resources,
         if (patientJson != null) 'patient': patientJson,
         if (encounterJson != null) 'encounter': encounterJson,
-      });
+      };
+
+      _pendingResults[sessionId] = (type: 'handover.result', payload: resultPayload);
+
+      await _tcpService.sendData('handover.result', resultPayload);
 
       final completedSession = HandoverSession(
         sessionId: sessionId,
@@ -263,6 +302,14 @@ class HandoverService {
         await dir.delete(recursive: true);
       }
     } catch (_) {}
+  }
+
+  Future<void> resendPendingResults() async {
+    for (final entry in _pendingResults.entries) {
+      try {
+        await _tcpService.sendData(entry.value.type, entry.value.payload);
+      } catch (_) {}
+    }
   }
 
   void stopListening() {

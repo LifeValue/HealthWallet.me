@@ -5,27 +5,35 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart'
     as notification_entity;
 
-Flushbar showProcessingDoneNotification(
+void showProcessingDoneNotification(
   BuildContext context,
   notification_entity.Notification notification, {
-  FlushbarStatusCallback? onStatusChanged,
-  bool disableTap = false,
+  VoidCallback? onDismissed,
 }) {
-  final flushbar = Flushbar(
-    title: "Processing done",
-    message: notification.text,
-    duration: const Duration(seconds: 3),
-    flushbarPosition: FlushbarPosition.TOP,
-    titleColor: Colors.white,
-    messageColor: Colors.white,
-    backgroundColor: AppColors.primary,
-    borderRadius: BorderRadius.circular(12),
-    padding: const EdgeInsets.all(12),
-    margin: const EdgeInsets.all(20),
-    onTap:
-        disableTap ? null : (_) => context.appRouter.push(notification.route),
-    onStatusChanged: onStatusChanged,
-  )..show(context);
+  if (!context.mounted) return;
 
-  return flushbar;
+  try {
+    Flushbar(
+      title: "Processing done",
+      message: notification.text,
+      duration: const Duration(seconds: 3),
+      flushbarPosition: FlushbarPosition.TOP,
+      titleColor: Colors.white,
+      messageColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      borderRadius: BorderRadius.circular(12),
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(20),
+      onTap: (_) {
+        if (context.mounted) {
+          context.appRouter.push(notification.route);
+        }
+      },
+      onStatusChanged: (status) {
+        if (status == FlushbarStatus.DISMISSED) {
+          onDismissed?.call();
+        }
+      },
+    ).show(context).catchError((_) {});
+  } catch (_) {}
 }
