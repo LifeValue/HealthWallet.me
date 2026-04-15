@@ -1,6 +1,8 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -10,6 +12,7 @@ import 'package:health_wallet/features/notifications/utils/notification_utils.da
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/pages/handover_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
@@ -34,12 +37,76 @@ class _DashboardPageState extends State<DashboardPage> {
   late final PageViewNavigationController _navigationController;
   final bool _isDesktop = getIt<AppPlatform>().isDesktop;
   bool _isKeyboardVisible = false;
+  StreamSubscription? _handoverSub;
+  bool _handoverDialogShown = false;
 
   @override
   void initState() {
     super.initState();
     _navigationController = getIt<PageViewNavigationController>();
     _navigationController.currentPageNotifier.addListener(_onPageChanged);
+    if (_isDesktop) _listenForHandover();
+  }
+
+  void _listenForHandover() {
+    final handoverBloc = getIt<HandoverBloc>();
+    _handoverSub = handoverBloc.stream.listen((state) {
+      if (state.activeSessions.isNotEmpty && !_handoverDialogShown && mounted) {
+        _handoverDialogShown = true;
+        showDialog(
+          context: context,
+          builder: (_) => BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600, maxHeight: 500),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: Insets.medium,
+                          right: Insets.medium,
+                          top: Insets.normal,
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Handover',
+                              style: AppTextStyle.bodyMedium.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Icon(
+                                Icons.close,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.onSurface
+                                    .withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Flexible(child: HandoverPage()),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ).then((_) => _handoverDialogShown = false);
+      }
+    });
   }
 
   void _onPageChanged() {
@@ -51,6 +118,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void dispose() {
     _navigationController.currentPageNotifier.removeListener(_onPageChanged);
+    _handoverSub?.cancel();
     super.dispose();
   }
 
@@ -111,7 +179,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onPageChanged: (index) {
                 FocusScope.of(context).unfocus();
               },
-              itemCount: _isDesktop ? 4 : 4,
+              itemCount: _isDesktop ? 3 : 4,
               itemBuilder: (context, index) {
                 if (_isDesktop) {
                   switch (index) {
@@ -125,8 +193,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       );
                     case 2:
                       return const ImportPage();
-                    case 3:
-                      return const HandoverPage();
                     default:
                       return const SizedBox.shrink();
                   }
@@ -263,27 +329,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                       isSelected:
                                           _navigationController.currentPage == 2,
                                       pageIndex: 2,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: _buildNavItem(
-                                      context: context,
-                                      icon: Assets.icons.shareNearby.svg(
-                                        width: 24,
-                                        height: 24,
-                                        colorFilter: ColorFilter.mode(
-                                          _navigationController.currentPage == 3
-                                              ? (context.isDarkMode
-                                                  ? Colors.white
-                                                  : context.colorScheme.surface)
-                                              : context.colorScheme.onSurface,
-                                          BlendMode.srcIn,
-                                        ),
-                                      ),
-                                      label: 'Handover',
-                                      isSelected:
-                                          _navigationController.currentPage == 3,
-                                      pageIndex: 3,
                                     ),
                                   ),
                                 ] else ...[
