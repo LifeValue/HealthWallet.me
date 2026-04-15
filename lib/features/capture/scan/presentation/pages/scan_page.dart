@@ -2,7 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -294,7 +296,10 @@ class _ScanViewState extends State<ScanView>
                   ),
                   const SizedBox(height: 24),
                   Expanded(
-                    child: SessionList(sessions: scanSessions),
+                    child: SessionList(
+                      sessions: scanSessions,
+                      showSendToDesktop: _isDesktopConnected(),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Padding(
@@ -358,6 +363,15 @@ class _ScanViewState extends State<ScanView>
         ],
       ),
     );
+  }
+
+  bool _isDesktopConnected() {
+    try {
+      final commBloc = getIt<CommunicationBloc>();
+      return commBloc.state.connectionStatus == ConnectionStatus.connected;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _handleDirectScan(BuildContext context) async {

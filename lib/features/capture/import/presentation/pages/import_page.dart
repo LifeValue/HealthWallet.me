@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -132,7 +133,10 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                         ),
                         const SizedBox(height: 24),
                         Expanded(
-                          child: SessionList(sessions: importSessions),
+                          child: SessionList(
+                            sessions: importSessions,
+                            showSendToDesktop: _isDesktopConnected(),
+                          ),
                         ),
                         const SizedBox(height: 16),
                         if (_isDesktop)
@@ -310,6 +314,15 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
         ],
       ),
     );
+  }
+
+  bool _isDesktopConnected() {
+    try {
+      final commBloc = getIt<CommunicationBloc>();
+      return commBloc.state.connectionStatus == ConnectionStatus.connected;
+    } catch (_) {
+      return false;
+    }
   }
 
   void _navigateToScanTab(BuildContext context) {
