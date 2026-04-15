@@ -9,6 +9,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
@@ -38,7 +39,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final bool _isDesktop = getIt<AppPlatform>().isDesktop;
   bool _isKeyboardVisible = false;
   StreamSubscription? _handoverSub;
-  bool _handoverDialogShown = false;
+  bool _hasHandover = false;
 
   @override
   void initState() {
@@ -50,63 +51,45 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _listenForHandover() {
     final handoverBloc = getIt<HandoverBloc>();
-    _handoverSub = handoverBloc.stream.listen((state) {
-      if (state.activeSessions.isNotEmpty && !_handoverDialogShown && mounted) {
-        _handoverDialogShown = true;
-        showDialog(
-          context: context,
-          builder: (_) => BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Dialog(
-              backgroundColor: Colors.transparent,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600, maxHeight: 500),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: Insets.medium,
-                          right: Insets.medium,
-                          top: Insets.normal,
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Handover',
-                              style: AppTextStyle.bodyMedium.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const Spacer(),
-                            GestureDetector(
-                              onTap: () => Navigator.of(context).pop(),
-                              child: Icon(
-                                Icons.close,
-                                size: 20,
-                                color: Theme.of(context).colorScheme.onSurface
-                                    .withValues(alpha: 0.4),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Flexible(child: HandoverPage()),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ).then((_) => _handoverDialogShown = false);
-      }
+    final processingBloc = getIt<ProcessingBloc>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateHandoverVisibility(
+        handoverBloc.state.activeSessions.isNotEmpty,
+        processingBloc.state.sessions
+            .any((s) => s.origin == ProcessingOrigin.handover),
+      );
     });
+
+    _handoverSub = handoverBloc.stream.listen((state) {
+      _updateHandoverVisibility(
+        state.activeSessions.isNotEmpty,
+        processingBloc.state.sessions
+            .any((s) => s.origin == ProcessingOrigin.handover),
+      );
+    });
+
+    processingBloc.stream.listen((state) {
+      final hasHandoverSessions =
+          state.sessions.any((s) => s.origin == ProcessingOrigin.handover);
+      _updateHandoverVisibility(
+        handoverBloc.state.activeSessions.isNotEmpty,
+        hasHandoverSessions,
+      );
+    });
+  }
+
+  void _updateHandoverVisibility(bool hasTransfers, bool hasProcessing) {
+    final shouldShow = hasTransfers || hasProcessing;
+    if (shouldShow != _hasHandover && mounted) {
+      final wasHidden = !_hasHandover;
+      setState(() => _hasHandover = shouldShow);
+      if (shouldShow && wasHidden) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _navigationController.navigateToPage(3);
+        });
+      }
+    }
   }
 
   void _onPageChanged() {
@@ -179,7 +162,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onPageChanged: (index) {
                 FocusScope.of(context).unfocus();
               },
-              itemCount: _isDesktop ? 3 : 4,
+              itemCount: _isDesktop ? (_hasHandover ? 4 : 3) : 4,
               itemBuilder: (context, index) {
                 if (_isDesktop) {
                   switch (index) {
@@ -193,6 +176,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       );
                     case 2:
                       return const ImportPage();
+                    case 3:
+                      return const HandoverPage();
                     default:
                       return const SizedBox.shrink();
                   }
@@ -331,6 +316,28 @@ class _DashboardPageState extends State<DashboardPage> {
                                       pageIndex: 2,
                                     ),
                                   ),
+                                  if (_hasHandover)
+                                    Expanded(
+                                      child: _buildNavItem(
+                                        context: context,
+                                        icon: Assets.icons.shareNearby.svg(
+                                          width: 24,
+                                          height: 24,
+                                          colorFilter: ColorFilter.mode(
+                                            _navigationController.currentPage == 3
+                                                ? (context.isDarkMode
+                                                    ? Colors.white
+                                                    : context.colorScheme.surface)
+                                                : context.colorScheme.onSurface,
+                                            BlendMode.srcIn,
+                                          ),
+                                        ),
+                                        label: 'Handover',
+                                        isSelected:
+                                            _navigationController.currentPage == 3,
+                                        pageIndex: 3,
+                                      ),
+                                    ),
                                 ] else ...[
                                   Expanded(
                                     child: _buildNavItem(

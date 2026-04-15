@@ -125,7 +125,10 @@ class HandoverService {
     _sessionUpdateController.add(processingSession);
 
     final filePaths = _receivedFiles[sessionId]!;
-    _processingBloc.add(DocumentImported(filePaths: filePaths));
+    _processingBloc.add(DocumentImported(
+      filePaths: filePaths,
+      origin: ProcessingOrigin.handover,
+    ));
 
     _processingBlocSub?.cancel();
     _processingBlocSub = _processingBloc.stream.listen((processingState) {

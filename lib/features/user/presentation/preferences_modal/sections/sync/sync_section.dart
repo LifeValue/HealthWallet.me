@@ -284,27 +284,25 @@ class SyncSection extends StatelessWidget {
   String _getBackupStatus(BackupState state) {
     if (state.isBackingUp) return 'Backing up...';
     if (state.isRestoring) return 'Restoring...';
-    if (!state.desktopBackupReady) return 'Not configured';
+    if (state.backupHistory.isNotEmpty) {
+      return DateFormatUtils.getSincePretty(state.backupHistory.first.timestamp);
+    }
     if (state.desktopLastBackupTime != null) {
       return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!);
-    }
-    if (state.desktopBackupCount > 0) {
-      return '${state.desktopBackupCount} backups';
     }
     return 'No backups';
   }
 
   Color _getBackupColor(BackupState state) {
     if (state.isBackingUp || state.isRestoring) return AppColors.primary;
-    if (!state.desktopBackupReady) return AppColors.textSecondary;
+    if (state.backupHistory.isNotEmpty) return AppColors.success;
     if (state.desktopLastBackupTime != null) return AppColors.success;
     return AppColors.warning;
   }
 
   bool _canBackup(DesktopSyncState commState, BackupState backupState) {
     return commState.connectionStatus == ConnectionStatus.connected &&
-        !backupState.isBackingUp &&
-        backupState.desktopBackupReady;
+        !backupState.isBackingUp;
   }
 
   void _requestRemoteBackup(BuildContext context, DesktopSyncState commState) {

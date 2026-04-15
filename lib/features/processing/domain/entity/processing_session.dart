@@ -173,12 +173,15 @@ enum ProcessingStatus {
 
 enum ProcessingOrigin {
   scan,
-  import;
+  import,
+  handover;
 
   factory ProcessingOrigin.fromString(String string) {
     switch (string) {
       case "Import":
         return ProcessingOrigin.import;
+      case "Handover":
+        return ProcessingOrigin.handover;
       default:
         return ProcessingOrigin.scan;
     }
@@ -191,6 +194,8 @@ enum ProcessingOrigin {
         return "Scan";
       case ProcessingOrigin.import:
         return "Import";
+      case ProcessingOrigin.handover:
+        return "Handover";
     }
   }
 }

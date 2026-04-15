@@ -72,7 +72,10 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       if (message.type == MessageType.hello) {
         try {
           final json = jsonDecode(message.payloadString) as Map<String, dynamic>;
-          final remoteName = json['device_name'] as String?;
+          var remoteName = json['device_name'] as String?;
+          if (remoteName == 'localhost' || remoteName == 'unknown') {
+            remoteName = 'Mobile Device';
+          }
           if (remoteName != null && remoteName.isNotEmpty) {
             add(CommunicationRemoteDeviceNameReceived(name: remoteName));
           }

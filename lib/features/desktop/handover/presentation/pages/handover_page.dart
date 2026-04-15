@@ -7,6 +7,9 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/session_list.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class HandoverPage extends StatelessWidget {
@@ -14,38 +17,75 @@ class HandoverPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: getIt<HandoverBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: getIt<HandoverBloc>()),
+        BlocProvider.value(value: getIt<ProcessingBloc>()),
+      ],
       child: BlocBuilder<HandoverBloc, HandoverState>(
-        builder: (context, state) {
-          final sessions = state.activeSessions.values.toList();
+        builder: (context, handoverState) {
+          return BlocBuilder<ProcessingBloc, ProcessingState>(
+            builder: (context, processingState) {
+              final transferSessions = handoverState.activeSessions.values
+                  .where((s) =>
+                      s.status == HandoverStatus.receiving)
+                  .toList();
+              final processingSessions = processingState.sessions
+                  .where((s) => s.origin == ProcessingOrigin.handover)
+                  .toList();
+              final hasContent =
+                  transferSessions.isNotEmpty || processingSessions.isNotEmpty;
 
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: Insets.normal,
-                right: Insets.normal,
-                top: Insets.medium,
-                bottom: 80,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Handover',
-                    style: AppTextStyle.titleLarge.copyWith(
-                      color: context.primaryTextColor,
-                    ),
-                  ),
-                  const SizedBox(height: Insets.normal),
-                  Expanded(
-                    child: sessions.isEmpty
-                        ? _HandoverEmptyState()
-                        : _HandoverSessionList(sessions: sessions),
-                  ),
-                ],
-              ),
-            ),
+              return Padding(
+                padding: const EdgeInsets.all(Insets.medium),
+                child: hasContent
+                    ? SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (transferSessions.isNotEmpty) ...[
+                              Text(
+                                'Transfer',
+                                style: AppTextStyle.labelSmall.copyWith(
+                                  color: context.colorScheme.onSurface
+                                      .withValues(alpha: 0.4),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: Insets.small),
+                              ...transferSessions.map(
+                                (s) => Padding(
+                                  padding: const EdgeInsets.only(
+                                      bottom: Insets.small),
+                                  child:
+                                      _HandoverTransferCard(session: s),
+                                ),
+                              ),
+                            ],
+                            if (processingSessions.isNotEmpty) ...[
+                              if (transferSessions.isNotEmpty)
+                                const SizedBox(height: Insets.normal),
+                              Text(
+                                'Processing',
+                                style: AppTextStyle.labelSmall.copyWith(
+                                  color: context.colorScheme.onSurface
+                                      .withValues(alpha: 0.4),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: Insets.small),
+                              SessionList(sessions: processingSessions),
+                            ],
+                          ],
+                        ),
+                      )
+                    : _HandoverEmptyState(),
+              );
+            },
           );
         },
       ),
@@ -84,27 +124,10 @@ class _HandoverEmptyState extends StatelessWidget {
   }
 }
 
-class _HandoverSessionList extends StatelessWidget {
-  final List<HandoverSession> sessions;
-
-  const _HandoverSessionList({required this.sessions});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      itemCount: sessions.length,
-      separatorBuilder: (_, __) => const SizedBox(height: Insets.small),
-      itemBuilder: (context, index) {
-        return _HandoverSessionCard(session: sessions[index]);
-      },
-    );
-  }
-}
-
-class _HandoverSessionCard extends StatelessWidget {
+class _HandoverTransferCard extends StatelessWidget {
   final HandoverSession session;
 
-  const _HandoverSessionCard({required this.session});
+  const _HandoverTransferCard({required this.session});
 
   @override
   Widget build(BuildContext context) {
@@ -160,17 +183,12 @@ class _HandoverSessionCard extends StatelessWidget {
             const SizedBox(height: Insets.small),
             Row(
               children: [
-                Icon(
-                  Icons.check_circle,
-                  size: 16,
-                  color: AppColors.success,
-                ),
+                Icon(Icons.check_circle, size: 16, color: AppColors.success),
                 const SizedBox(width: Insets.extraSmall),
                 Text(
                   'Transfer complete',
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: AppColors.success,
-                  ),
+                  style:
+                      AppTextStyle.labelSmall.copyWith(color: AppColors.success),
                 ),
               ],
             ),
@@ -179,9 +197,7 @@ class _HandoverSessionCard extends StatelessWidget {
             const SizedBox(height: Insets.small),
             Text(
               session.error!,
-              style: AppTextStyle.labelSmall.copyWith(
-                color: AppColors.error,
-              ),
+              style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
             ),
           ],
         ],
@@ -218,17 +234,9 @@ class _StatusIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (status) {
       case HandoverStatus.complete:
-        return Icon(
-          Icons.check_circle,
-          size: 24,
-          color: AppColors.success,
-        );
+        return Icon(Icons.check_circle, size: 24, color: AppColors.success);
       case HandoverStatus.error:
-        return Icon(
-          Icons.error,
-          size: 24,
-          color: AppColors.error,
-        );
+        return Icon(Icons.error, size: 24, color: AppColors.error);
       default:
         return SizedBox(
           width: 24,

@@ -557,15 +557,7 @@ class _SyncMiniCard extends StatelessWidget {
             label: 'Sync',
             subtitle: subtitle,
             color: color,
-            onTap: () {
-              if (isSyncing) return;
-              final commBloc = getIt<CommunicationBloc>();
-              if (commBloc.state.connectionStatus == ConnectionStatus.connected) {
-                getIt<LwwSyncBloc>().add(const SyncTriggered());
-              } else {
-                _showSyncDialog(context);
-              }
-            },
+            onTap: () => _showSyncDialog(context),
           );
         },
       ),
@@ -583,9 +575,11 @@ class _BackupMiniCard extends StatelessWidget {
       child: BlocBuilder<BackupBloc, BackupState>(
         builder: (context, backupState) {
           final hasBackup = backupState.backupHistory.isNotEmpty;
+          final hasRemoteBackup = backupState.desktopLastBackupTime != null;
+          final hasAnyBackup = hasBackup || hasRemoteBackup;
           final color = backupState.isBackingUp
               ? AppColors.primary
-              : hasBackup
+              : hasAnyBackup
                   ? AppColors.success
                   : AppColors.warning;
 
@@ -594,6 +588,8 @@ class _BackupMiniCard extends StatelessWidget {
             subtitle = 'Working...';
           } else if (hasBackup) {
             subtitle = DateFormatUtils.getSincePretty(backupState.backupHistory.first.timestamp);
+          } else if (hasRemoteBackup) {
+            subtitle = DateFormatUtils.getSincePretty(backupState.desktopLastBackupTime!);
           } else {
             subtitle = 'No backup';
           }

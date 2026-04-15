@@ -21,6 +21,7 @@ class CaptureButtonPressed extends ProcessingEvent with _$CaptureButtonPressed {
 class DocumentImported extends ProcessingEvent with _$DocumentImported {
   const factory DocumentImported({
     required List<String> filePaths,
+    @Default(ProcessingOrigin.import) ProcessingOrigin origin,
   }) = _DocumentImported;
 }
 

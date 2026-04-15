@@ -62,7 +62,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           : persistedPaths;
 
       await createSession(emit,
-          filePaths: orderedPaths, origin: ProcessingOrigin.import);
+          filePaths: orderedPaths, origin: event.origin);
     } catch (e) {
       emit(state.copyWith(
         status: PipelineStatus.failure(error: 'Failed to import document: $e'),
