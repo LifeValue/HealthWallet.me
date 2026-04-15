@@ -187,6 +187,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
         if (state.status == const PipelineStatus.success()) {
           final sessionToClear = displayedSession;
+          final isImport = displayedSession.origin == ProcessingOrigin.import ||
+              displayedSession.origin == ProcessingOrigin.handover;
           final scanBloc = context.read<ProcessingBloc>();
           final navController = getIt<PageViewNavigationController>();
           final router = context.router;
@@ -194,7 +196,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
             context: context,
             title: context.l10n.recordsSavedTitle,
             subtitle: context.l10n.whatNextQuestion,
-            confirmText: context.l10n.continueScanning,
+            confirmText: isImport
+                ? context.l10n.continueImporting
+                : context.l10n.continueScanning,
             cancelText: context.l10n.goToRecords,
             barrierDismissible: true,
             onConfirm: () {

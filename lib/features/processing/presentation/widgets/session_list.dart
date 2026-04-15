@@ -2,8 +2,13 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
@@ -13,10 +18,12 @@ import 'package:intl/intl.dart';
 class SessionList extends StatelessWidget {
   const SessionList({
     required this.sessions,
+    this.showSendToDesktop = false,
     super.key,
   });
 
   final List<ProcessingSession> sessions;
+  final bool showSendToDesktop;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +107,38 @@ class SessionList extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  if (!isThisSessionDeleting)
+                                  if (!isThisSessionDeleting) ...[
+                                    if (session.filePaths.isNotEmpty &&
+                                        !getIt<AppPlatform>().isDesktop)
+                                      IconButton(
+                                        onPressed: () {
+                                          try {
+                                            final connected = getIt<CommunicationBloc>()
+                                                .state.connectionStatus == ConnectionStatus.connected;
+                                            if (connected) {
+                                              HandoverSendDialog.show(
+                                                context,
+                                                session.filePaths,
+                                                continueLabel: session.origin == ProcessingOrigin.import
+                                                    ? context.l10n.continueImporting
+                                                    : null,
+                                                sourceSessionId: session.id,
+                                              );
+                                            } else {
+                                              DeviceSyncDialog.show(context);
+                                            }
+                                          } catch (_) {
+                                            DeviceSyncDialog.show(context);
+                                          }
+                                        },
+                                        icon: Icon(
+                                          Icons.computer,
+                                          color: context.colorScheme.primary,
+                                          size: 20,
+                                        ),
+                                        visualDensity: const VisualDensity(
+                                            horizontal: -4, vertical: -4),
+                                      ),
                                     IconButton(
                                       onPressed: () => _showDeleteConfirmation(
                                           context, session),
@@ -113,6 +151,7 @@ class SessionList extends StatelessWidget {
                                       visualDensity: const VisualDensity(
                                           horizontal: -4, vertical: -4),
                                     ),
+                                  ],
                                 ],
                               ),
                               if (session.isProcessing &&

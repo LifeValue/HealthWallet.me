@@ -8,6 +8,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
@@ -16,6 +17,7 @@ import 'package:health_wallet/features/processing/presentation/widgets/dialog_he
 import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -67,6 +69,9 @@ class _LoadModelPageState extends State<LoadModelPage> {
                 style: AppTextStyle.titleMedium,
               ),
               automaticallyImplyLeading: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
             ),
             body: Center(
               child: ConstrainedBox(
@@ -164,7 +169,8 @@ class _LoadModelPageState extends State<LoadModelPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Column(
+    return SingleChildScrollView(
+      child: Column(
       children: [
         const SizedBox(height: 20),
         Assets.onboarding.onboarding3.svg(height: 250),
@@ -216,6 +222,26 @@ class _LoadModelPageState extends State<LoadModelPage> {
           ),
         ] else ...[
           if (state.deviceCapability == DeviceAiCapability.unsupported) ...[
+            AppButton(
+              label: 'Process on Desktop',
+              icon: const Icon(Icons.computer),
+              variant: AppButtonVariant.primary,
+              height: 48,
+              onPressed: () => _handleProcessOnDesktop(context),
+            ),
+            const SizedBox(height: Insets.small),
+            Center(
+              child: TextButton(
+                onPressed: () => context.router.maybePop(false),
+                child: Text(
+                  widget.canAttachToEncounter
+                      ? 'I want to attach the document without processing'
+                      : context.l10n.cancel,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            const SizedBox(height: Insets.normal),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -231,11 +257,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: context.colorScheme.error,
-                        size: 20,
-                      ),
+                      Icon(Icons.error_outline, color: context.colorScheme.error, size: 20),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
@@ -278,34 +300,48 @@ class _LoadModelPageState extends State<LoadModelPage> {
                 child: Text(context.l10n.aiModelEnableDownload),
               ),
             ),
-          ],
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => context.router.maybePop(false),
-              child: Text(widget.canAttachToEncounter
-                  ? 'I want to attach the document without processing'
-                  : context.l10n.cancel),
-            ),
-          ),
-          if (_isDesktopConnected()) ...[
-            const SizedBox(height: Insets.small),
             SizedBox(
               width: double.infinity,
-              child: TextButton.icon(
-                onPressed: () => _sendToDesktop(context),
-                icon: Icon(Icons.computer, size: 18,
-                    color: context.colorScheme.primary),
-                label: Text(
-                  'Process on Desktop',
-                  style: TextStyle(color: context.colorScheme.primary),
-                ),
+              child: TextButton(
+                onPressed: () => context.router.maybePop(false),
+                child: Text(widget.canAttachToEncounter
+                    ? 'I want to attach the document without processing'
+                    : context.l10n.cancel),
+              ),
+            ),
+            const SizedBox(height: Insets.medium),
+            GestureDetector(
+              onTap: () => _handleProcessOnDesktop(context),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.computer, size: 22, color: context.colorScheme.primary),
+                  const SizedBox(width: Insets.small),
+                  Text(
+                    'Process on Desktop',
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: context.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ],
+        const SizedBox(height: Insets.large),
       ],
+    ),
     );
+  }
+
+  void _handleProcessOnDesktop(BuildContext context) {
+    if (_isDesktopConnected()) {
+      _sendToDesktop(context);
+    } else {
+      DeviceSyncDialog.show(context);
+    }
   }
 
   bool _isDesktopConnected() {
@@ -325,9 +361,16 @@ class _LoadModelPageState extends State<LoadModelPage> {
           (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty);
       if (pending.isEmpty) return;
 
-      final filePaths = pending.first.filePaths;
+      final session = pending.first;
       context.router.maybePop();
-      HandoverSendDialog.show(context, filePaths);
+      HandoverSendDialog.show(
+        context,
+        session.filePaths,
+        sourceSessionId: session.id,
+        continueLabel: session.origin == ProcessingOrigin.import
+            ? context.l10n.continueImporting
+            : null,
+      );
     } catch (_) {}
   }
 

@@ -1,8 +1,13 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
@@ -267,8 +272,50 @@ class _ScannedBasicButtons extends StatelessWidget {
             ),
           ],
         ),
+        if (!getIt<AppPlatform>().isDesktop) ...[
+          const SizedBox(height: Insets.medium),
+          GestureDetector(
+            onTap: () => _handleProcessOnDesktop(context),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.computer, size: 20, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: Insets.small),
+                Text(
+                  'Continue processing on Desktop',
+                  style: AppTextStyle.bodySmall.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  void _handleProcessOnDesktop(BuildContext context) {
+    try {
+      final connected = getIt<CommunicationBloc>()
+          .state.connectionStatus == ConnectionStatus.connected;
+      if (connected && session.filePaths.isNotEmpty) {
+        HandoverSendDialog.show(
+          context,
+          session.filePaths,
+          continueLabel: session.origin == ProcessingOrigin.import ||
+                  session.origin == ProcessingOrigin.handover
+              ? 'Continue Importing'
+              : null,
+          sourceSessionId: session.id,
+        );
+      } else {
+        DeviceSyncDialog.show(context);
+      }
+    } catch (_) {
+      DeviceSyncDialog.show(context);
+    }
   }
 
   void _attachToEncounter(BuildContext context) async {
