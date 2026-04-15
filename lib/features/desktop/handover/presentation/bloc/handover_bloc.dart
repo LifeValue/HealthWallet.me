@@ -19,6 +19,7 @@ class HandoverBloc extends Bloc<HandoverEvent, HandoverState> {
 
   HandoverBloc(this._handoverService) : super(HandoverState.initial()) {
     on<HandoverInitialised>(_onInitialised);
+    on<HandoverSessionUpdated>(_onSessionUpdated);
     on<HandoverOfferReceived>(_onOfferReceived);
     on<HandoverFileReceived>(_onFileReceived);
     on<HandoverProcessingComplete>(_onProcessingComplete);
@@ -29,9 +30,7 @@ class HandoverBloc extends Bloc<HandoverEvent, HandoverState> {
     Emitter<HandoverState> emit,
   ) async {
     _sessionUpdateSub = _handoverService.sessionUpdates.listen((session) {
-      final updated = Map<String, HandoverSession>.from(state.activeSessions);
-      updated[session.sessionId] = session;
-      emit(state.copyWith(activeSessions: updated));
+      add(HandoverSessionUpdated(session: session));
     });
 
     _handoverService.startListening(
@@ -40,6 +39,15 @@ class HandoverBloc extends Bloc<HandoverEvent, HandoverState> {
       onProcessingComplete: (sessionId) =>
           add(HandoverProcessingComplete(sessionId: sessionId)),
     );
+  }
+
+  void _onSessionUpdated(
+    HandoverSessionUpdated event,
+    Emitter<HandoverState> emit,
+  ) {
+    final updated = Map<String, HandoverSession>.from(state.activeSessions);
+    updated[event.session.sessionId] = event.session;
+    emit(state.copyWith(activeSessions: updated));
   }
 
   Future<void> _onOfferReceived(

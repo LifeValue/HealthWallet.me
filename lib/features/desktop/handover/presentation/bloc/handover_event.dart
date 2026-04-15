@@ -9,6 +9,9 @@ class HandoverEvent with _$HandoverEvent {
   const factory HandoverEvent.fileReceived({
     required String sessionId,
   }) = HandoverFileReceived;
+  const factory HandoverEvent.sessionUpdated({
+    required HandoverSession session,
+  }) = HandoverSessionUpdated;
   const factory HandoverEvent.processingComplete({
     required String sessionId,
   }) = HandoverProcessingComplete;
