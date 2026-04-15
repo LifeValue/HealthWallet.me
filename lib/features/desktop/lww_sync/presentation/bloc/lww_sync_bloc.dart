@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/change_watcher_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
@@ -160,6 +162,10 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       if (_tcpService.isConnected) {
         final counts = await _syncService.getTableRowCounts();
         await _tcpService.sendData('sync.status', counts);
+
+        try {
+          getIt<BackupBloc>().sendBackupStatus();
+        } catch (_) {}
       }
     } catch (e) {
       emit(state.copyWith(

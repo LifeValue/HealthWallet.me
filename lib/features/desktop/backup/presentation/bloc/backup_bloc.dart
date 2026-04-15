@@ -60,13 +60,19 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         }
 
         if (isMobile && type == 'backup.status') {
-          add(RemoteBackupStatusReceived(
-            ready: payload['ready'] as bool? ?? false,
-            count: payload['count'] as int? ?? 0,
-            lastBackupTime: payload['last_backup'] != null
-                ? DateTime.tryParse(payload['last_backup'] as String)
-                : null,
-          ));
+          debugPrint('[Backup] Received status from desktop: $payload');
+          final backingUp = payload['backing_up'] as bool? ?? false;
+          if (backingUp) {
+            add(const RemoteBackupStatusChanged(isBackingUp: true));
+          } else {
+            add(RemoteBackupStatusReceived(
+              ready: payload['ready'] as bool? ?? false,
+              count: payload['count'] as int? ?? 0,
+              lastBackupTime: payload['last_backup'] != null
+                  ? DateTime.tryParse(payload['last_backup'] as String)
+                  : null,
+            ));
+          }
         }
 
         if (isMobile && type == 'backup.error') {
@@ -93,6 +99,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     if (getIt<AppPlatform>().isMobile) return;
     if (!_tcpService.isConnected) return;
 
+    debugPrint('[Backup] Sending status: ready=${state.hasUserSelectedPath}, count=${state.backupHistory.length}');
     _tcpService.sendData('backup.status', {
       'ready': state.hasUserSelectedPath,
       'count': state.backupHistory.length,
@@ -121,6 +128,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         backupHistory: history,
       ));
 
+      debugPrint('[Backup] Backup complete, sending status to mobile');
       sendBackupStatus();
     } catch (e) {
       emit(state.copyWith(
@@ -312,6 +320,12 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
 
     await Future<void>.delayed(const Duration(seconds: 2));
 
+    _tcpService.sendData('backup.status', {
+      'ready': true,
+      'backing_up': true,
+      'count': state.backupHistory.length,
+    });
+
     final name = 'Remote ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
     add(BackupRequested(name: name));
   }
@@ -332,6 +346,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     Emitter<BackupState> emit,
   ) {
     emit(state.copyWith(
+      isBackingUp: false,
       desktopBackupReady: event.ready,
       desktopBackupCount: event.count,
       desktopLastBackupTime: event.lastBackupTime,

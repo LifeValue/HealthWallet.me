@@ -19,8 +19,8 @@ class DeviceSyncDialog {
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Dialog(
           backgroundColor: Colors.transparent,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
+          child: SizedBox(
+            width: 500,
             child: MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: getIt<CommunicationBloc>()),
@@ -67,18 +67,17 @@ class DeviceSyncDialog {
                               ),
                             ),
                             Flexible(
-                              child: Padding(
-                                padding: const EdgeInsets.all(Insets.medium),
-                                child: SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ConnectionSection(commState: commState),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    ConnectionSection(commState: commState),
+                                    if (commState.pairedDevice != null) ...[
                                       Padding(
                                         padding: const EdgeInsets.symmetric(
-                                            vertical: Insets.normal),
+                                            horizontal: Insets.medium),
                                         child: Divider(
                                           color: context.colorScheme.onSurface
                                               .withValues(alpha: 0.06),
@@ -90,7 +89,7 @@ class DeviceSyncDialog {
                                         syncState: syncState,
                                       ),
                                     ],
-                                  ),
+                                  ],
                                 ),
                               ),
                             ),

@@ -22,8 +22,8 @@ class SyncDialog extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Dialog(
           backgroundColor: Colors.transparent,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
+          child: SizedBox(
+            width: 500,
             child: MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: getIt<CommunicationBloc>()),
@@ -162,10 +162,7 @@ class SyncSection extends StatelessWidget {
               ),
             ],
             const SizedBox(height: Insets.normal),
-            Center(
-              child: SizedBox(
-                width: 200,
-                child: AppButton(
+            AppButton(
                   label: isSyncing ? 'Syncing...' : 'Sync Now',
                   onPressed: isConnected && !isSyncing
                       ? () {
@@ -174,8 +171,6 @@ class SyncSection extends StatelessWidget {
                       : null,
                   height: 36,
                 ),
-              ),
-            ),
             if (syncState.lastSyncTime != null) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: Insets.normal),

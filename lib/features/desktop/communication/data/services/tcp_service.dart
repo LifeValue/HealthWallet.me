@@ -6,6 +6,8 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pointycastle/export.dart';
 
@@ -199,6 +201,31 @@ class TcpService {
     });
   }
 
+  static Future<String> _getDeviceName() async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      if (Platform.isIOS) {
+        final ios = await deviceInfo.iosInfo;
+        return ios.name;
+      } else if (Platform.isAndroid) {
+        final android = await deviceInfo.androidInfo;
+        final brand = android.brand;
+        final model = android.model;
+        if (brand.isEmpty) return model;
+        final words = brand.split(' ').map((w) =>
+            w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w);
+        return '${words.join(' ')} $model';
+      }
+      var hostname = Platform.localHostname;
+      if (hostname.endsWith('.local')) {
+        hostname = hostname.substring(0, hostname.length - 6);
+      }
+      return hostname.replaceAll('-', ' ');
+    } catch (_) {
+      return Platform.localHostname.replaceAll('.local', '').replaceAll('-', ' ');
+    }
+  }
+
   static Future<String> _getLocalIpStatic() async {
     final interfaces = await NetworkInterface.list(
       type: InternetAddressType.IPv4,
@@ -230,6 +257,8 @@ class TcpService {
     return interfaces.first.addresses.first.address;
   }
 
+  String? deviceDisplayName;
+
   Future<void> connectToServer({
     required String ip,
     required int port,
@@ -248,14 +277,18 @@ class TcpService {
       _updateState(ConnectionState.connected);
       debugPrint('[TCP] Connected to $ip:$port, sending hello');
 
+      var name = deviceDisplayName;
+      if (name == null || name.isEmpty || name == 'localhost') {
+        name = await _getDeviceName();
+      }
+      debugPrint('[TCP] Sending hello as: "$name"');
+
       await sendMessage(
         TcpMessage.fromString(
           type: MessageType.hello,
           data: jsonEncode({
             'pairing_key_hash': _hashKey(pairingKey),
-            'device_name': Platform.localHostname
-                .replaceAll('.local', '')
-                .replaceAll('-', ' '),
+            'device_name': name,
           }),
         ),
       );
@@ -301,7 +334,9 @@ class TcpService {
         final payload = decrypted.sublist(1);
 
         final message = TcpMessage(type: type, payload: payload);
-        debugPrint('[TCP] Received message: ${type.name}');
+        if (type != MessageType.ping && type != MessageType.pong) {
+          debugPrint('[TCP] ${type.name}');
+        }
         _handleMessage(message);
       } catch (e) {
         debugPrint('[TCP] Decrypt/parse failed: $e');
@@ -310,7 +345,6 @@ class TcpService {
   }
 
   void _handleMessage(TcpMessage message) {
-    debugPrint('[TCP] Handling: ${message.type.name}');
     switch (message.type) {
       case MessageType.ping:
         sendMessage(TcpMessage(type: MessageType.pong, payload: Uint8List(0)));

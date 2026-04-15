@@ -25,8 +25,8 @@ class ConnectionDialog extends StatefulWidget {
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Dialog(
           backgroundColor: Colors.transparent,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
+          child: SizedBox(
+            width: 500,
             child: BlocProvider.value(
               value: getIt<CommunicationBloc>(),
               child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
@@ -169,21 +169,21 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (isConnected) ...[
-              const SizedBox(width: Insets.small),
+            if (isConnected)
               GestureDetector(
                 onTap: () {
                   getIt<CommunicationBloc>()
                       .add(const CommunicationManualDisconnect());
                 },
-                child: Icon(
-                  Icons.link_off,
-                  size: 18,
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.3),
+                child: Text(
+                  'Disconnect',
+                  style: AppTextStyle.labelSmall.copyWith(
+                    color: AppColors.error,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ],
             if (!isConnected &&
                 widget.commState.pairedDevice != null &&
                 !isDiscovering)
@@ -248,23 +248,19 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
         if (hasPairing && getIt<AppPlatform>().isDesktop) ...[
           const SizedBox(height: Insets.normal),
           Center(
-            child: Container(
-              padding: const EdgeInsets.all(Insets.normal),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: QrImageView(
-                data: jsonEncode({
-                  'device_id': widget.commState.pairedDevice!.deviceId,
-                  'ip': widget.commState.pairedDevice!.lastIp,
-                  'port': widget.commState.pairedDevice!.lastPort,
-                  'pairing_key': widget.commState.pairedDevice!.pairingKey,
-                  'device_name': widget.commState.pairedDevice!.deviceName,
-                  'os': widget.commState.pairedDevice!.os,
-                }),
-                version: QrVersions.auto,
-                size: 200,
+            child: GestureDetector(
+              onTap: () => _showFullScreenQr(context, widget.commState.pairedDevice!),
+              child: Container(
+                padding: const EdgeInsets.all(Insets.normal),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: QrImageView(
+                  data: _qrData(widget.commState.pairedDevice!),
+                  version: QrVersions.auto,
+                  size: 200,
+                ),
               ),
             ),
           ),
@@ -297,6 +293,55 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
             height: 36,
           ),
       ],
+    );
+  }
+
+  String _qrData(DevicePairing pairing) {
+    return jsonEncode({
+      'device_id': pairing.deviceId,
+      'ip': pairing.lastIp,
+      'port': pairing.lastPort,
+      'pairing_key': pairing.pairingKey,
+      'device_name': pairing.deviceName,
+      'os': pairing.os,
+    });
+  }
+
+  void _showFullScreenQr(BuildContext context, DevicePairing pairing) {
+    showDialog(
+      context: context,
+      builder: (_) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(Insets.large),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  QrImageView(
+                    data: _qrData(pairing),
+                    version: QrVersions.auto,
+                    size: 400,
+                  ),
+                  const SizedBox(height: Insets.normal),
+                  Text(
+                    'Scan from your phone to pair',
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -387,16 +432,14 @@ class _FullScreenQRScanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Scan QR Code',
-          style: AppTextStyle.titleMedium.copyWith(color: Colors.white),
+          style: AppTextStyle.titleMedium,
         ),
         centerTitle: true,
         elevation: 0,
