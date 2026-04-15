@@ -8,6 +8,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/disco
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
@@ -31,6 +32,7 @@ void main() async {
   getIt<BackupBloc>().add(const BackupHistoryLoaded());
   getIt<ProcessingBloc>().add(const ProcessingInitialised());
   getIt<LwwSyncBloc>().add(const LwwSyncInitialised());
+  getIt<HandoverBloc>().add(const HandoverInitialised());
 
   await bootstrap(() => const App());
 }

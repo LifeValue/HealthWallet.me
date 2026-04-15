@@ -10,6 +10,7 @@ import 'package:health_wallet/features/notifications/utils/notification_utils.da
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/pages/handover_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
@@ -110,7 +111,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onPageChanged: (index) {
                 FocusScope.of(context).unfocus();
               },
-              itemCount: _isDesktop ? 3 : 4,
+              itemCount: _isDesktop ? 4 : 4,
               itemBuilder: (context, index) {
                 if (_isDesktop) {
                   switch (index) {
@@ -124,6 +125,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       );
                     case 2:
                       return const ImportPage();
+                    case 3:
+                      return const HandoverPage();
                     default:
                       return const SizedBox.shrink();
                   }
@@ -260,6 +263,27 @@ class _DashboardPageState extends State<DashboardPage> {
                                       isSelected:
                                           _navigationController.currentPage == 2,
                                       pageIndex: 2,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _buildNavItem(
+                                      context: context,
+                                      icon: Assets.icons.shareNearby.svg(
+                                        width: 24,
+                                        height: 24,
+                                        colorFilter: ColorFilter.mode(
+                                          _navigationController.currentPage == 3
+                                              ? (context.isDarkMode
+                                                  ? Colors.white
+                                                  : context.colorScheme.surface)
+                                              : context.colorScheme.onSurface,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                      label: 'Handover',
+                                      isSelected:
+                                          _navigationController.currentPage == 3,
+                                      pageIndex: 3,
                                     ),
                                   ),
                                 ] else ...[
