@@ -41,12 +41,7 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(0),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
@@ -149,7 +144,6 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
             ),
           ),
         ],
-      ),
     );
   }
 }

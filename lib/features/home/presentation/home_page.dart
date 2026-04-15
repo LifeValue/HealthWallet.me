@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
@@ -274,9 +275,9 @@ class HomeViewState extends State<HomeView> {
                       children: [
                         const _ConnectionMiniCard(),
                         const SizedBox(width: 8),
-                        const _SyncMiniCard(),
+                        _PeriodicBuilder(builder: (_, tick) => _SyncMiniCard(key: ValueKey('sync_$tick'))),
                         const SizedBox(width: 8),
-                        const _BackupMiniCard(),
+                        _PeriodicBuilder(builder: (_, tick) => _BackupMiniCard(key: ValueKey('backup_$tick'))),
                       ],
                     ),
                   ),
@@ -483,6 +484,24 @@ class _PatientRowState extends State<_PatientRow> {
   }
 }
 
+class _PeriodicBuilder extends StatelessWidget {
+  final Widget Function(BuildContext context, int tick) builder;
+  const _PeriodicBuilder({required this.builder});
+
+  static final _ticker = Stream<int>.periodic(
+    const Duration(seconds: 30),
+    (i) => i,
+  ).asBroadcastStream();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<int>(
+      stream: _ticker,
+      builder: (context, snapshot) => builder(context, snapshot.data ?? 0),
+    );
+  }
+}
+
 class _ConnectionMiniCard extends StatelessWidget {
   const _ConnectionMiniCard();
 
@@ -529,7 +548,7 @@ class _ConnectionMiniCard extends StatelessWidget {
 }
 
 class _SyncMiniCard extends StatelessWidget {
-  const _SyncMiniCard();
+  const _SyncMiniCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -566,7 +585,7 @@ class _SyncMiniCard extends StatelessWidget {
 }
 
 class _BackupMiniCard extends StatelessWidget {
-  const _BackupMiniCard();
+  const _BackupMiniCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -618,8 +637,8 @@ void _showBackupDialog(BuildContext context) {
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
       child: Dialog(
         backgroundColor: Colors.transparent,
-        child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
+        child: SizedBox(
+        width: 500,
         child: MultiBlocProvider(
           providers: [
             BlocProvider.value(value: getIt<CommunicationBloc>()),
@@ -713,30 +732,33 @@ class _MiniStatusCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 15, color: color),
             const SizedBox(width: 6),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTextStyle.labelSmall.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: color,
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: color,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Text(
-                  subtitle,
-                  style: AppTextStyle.labelSmall.copyWith(
-                    fontSize: 11,
-                    color: color.withValues(alpha: 0.7),
+                  Text(
+                    subtitle,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      fontSize: 11,
+                      color: color.withValues(alpha: 0.7),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

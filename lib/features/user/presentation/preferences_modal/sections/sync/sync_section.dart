@@ -8,6 +8,7 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -16,7 +17,7 @@ import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_b
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
-import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/gen/assets.gen.dart' show Assets;
 
 class SyncSection extends StatelessWidget {
   const SyncSection({super.key});
@@ -45,10 +46,40 @@ class SyncSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${context.l10n.synchronization} & Backup',
+                          context.l10n.desktopSyncAndBackup,
                           style: AppTextStyle.bodySmall,
                         ),
                         const SizedBox(height: Insets.small),
+                        if (!isDesktop && commState.connectionStatus != ConnectionStatus.connected && commState.pairedDevice == null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(Insets.smallNormal),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: borderColor),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              children: [
+                                Assets.images.syncScanIlustration.svg(
+                                  width: 140,
+                                  height: 140,
+                                ),
+                                const SizedBox(height: Insets.small),
+                                Text(
+                                  context.l10n.desktopSyncDescription,
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyle.labelLarge,
+                                ),
+                                const SizedBox(height: Insets.normal),
+                                AppButton(
+                                  label: context.l10n.connect,
+                                  icon: const Icon(Icons.link),
+                                  variant: AppButtonVariant.primary,
+                                  onPressed: () => DeviceSyncDialog.show(context),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
                         Container(
                           padding: const EdgeInsets.all(Insets.smallNormal),
                           decoration: BoxDecoration(
@@ -77,8 +108,8 @@ class SyncSection extends StatelessWidget {
                               _StatusRow(
                                 icon: Icons.shield_outlined,
                                 label: 'Backup',
-                                status: _getBackupStatus(backupState),
-                                statusColor: _getBackupColor(backupState),
+                                status: _getBackupStatus(commState, backupState),
+                                statusColor: _getBackupColor(commState, backupState),
                               ),
                               const SizedBox(height: Insets.normal),
                               if (isDesktop)
@@ -111,7 +142,8 @@ class SyncSection extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                              if (!isDesktop) ...[
+                              if (!isDesktop &&
+                                  commState.connectionStatus == ConnectionStatus.connected) ...[
                                 Row(
                                   children: [
                                     Expanded(
@@ -211,6 +243,31 @@ class SyncSection extends StatelessWidget {
                                     ),
                                   ),
                               ],
+                              if (!isDesktop &&
+                                  commState.connectionStatus != ConnectionStatus.connected) ...[
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => DeviceSyncDialog.show(context),
+                                    icon: const Icon(Icons.link, size: 16),
+                                    label: Text(
+                                      'Connect',
+                                      style: AppTextStyle.buttonSmall,
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: Insets.small,
+                                        vertical: Insets.small,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                               if (isDesktop) ...[
                                 const SizedBox(height: Insets.normal),
                                 Divider(height: 1, color: borderColor),
@@ -224,6 +281,7 @@ class SyncSection extends StatelessWidget {
                             ],
                           ),
                         ),
+                        ],
                       ],
                     ),
                   );
@@ -281,7 +339,7 @@ class SyncSection extends StatelessWidget {
     return AppColors.textSecondary;
   }
 
-  String _getBackupStatus(BackupState state) {
+  String _getBackupStatus(DesktopSyncState comm, BackupState state) {
     if (state.isBackingUp) return 'Backing up...';
     if (state.isRestoring) return 'Restoring...';
     if (state.backupHistory.isNotEmpty) {
@@ -290,14 +348,18 @@ class SyncSection extends StatelessWidget {
     if (state.desktopLastBackupTime != null) {
       return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!);
     }
-    return 'No backups';
+    if (comm.connectionStatus == ConnectionStatus.connected) {
+      return 'Waiting...';
+    }
+    return 'Not connected';
   }
 
-  Color _getBackupColor(BackupState state) {
+  Color _getBackupColor(DesktopSyncState comm, BackupState state) {
     if (state.isBackingUp || state.isRestoring) return AppColors.primary;
     if (state.backupHistory.isNotEmpty) return AppColors.success;
     if (state.desktopLastBackupTime != null) return AppColors.success;
-    return AppColors.warning;
+    if (comm.connectionStatus == ConnectionStatus.connected) return AppColors.textSecondary;
+    return AppColors.textSecondary;
   }
 
   bool _canBackup(DesktopSyncState commState, BackupState backupState) {
