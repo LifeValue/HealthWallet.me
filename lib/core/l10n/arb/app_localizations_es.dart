@@ -289,7 +289,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pasteSyncDataHint => 'Pega el código QR sin procesar';
 
   @override
-  String get connect => 'Conectar';
+  String get connect => 'Connect';
 
   @override
   String get scanNewQRCode => 'Escanear Nuevo Código QR';
@@ -475,6 +475,22 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get synchronization => 'Sincronización';
+
+  @override
+  String get desktopSyncAndBackup => 'Desktop Sync & Backup';
+
+  @override
+  String get desktopSyncDescription =>
+      'Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.';
+
+  @override
+  String get processOnDesktop => 'Process on Desktop';
+
+  @override
+  String get sendToDesktop => 'Send to Desktop';
+
+  @override
+  String get continueImporting => 'Continue Importing';
 
   @override
   String get syncMedicalRecords => 'Sincronizar registros médicos';

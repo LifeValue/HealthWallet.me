@@ -473,6 +473,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get synchronization => 'Synchronization';
 
   @override
+  String get desktopSyncAndBackup => 'Desktop Sync & Backup';
+
+  @override
+  String get desktopSyncDescription =>
+      'Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.';
+
+  @override
+  String get processOnDesktop => 'Process on Desktop';
+
+  @override
+  String get sendToDesktop => 'Send to Desktop';
+
+  @override
+  String get continueImporting => 'Continue Importing';
+
+  @override
   String get syncMedicalRecords => 'Sync Medical records';
 
   @override

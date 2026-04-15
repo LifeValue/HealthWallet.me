@@ -291,7 +291,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get pasteSyncDataHint => 'Lipește codul QR brut';
 
   @override
-  String get connect => 'Conectare';
+  String get connect => 'Connect';
 
   @override
   String get scanNewQRCode => 'Scanează Cod QR Nou';
@@ -475,6 +475,22 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get synchronization => 'Sincronizare';
+
+  @override
+  String get desktopSyncAndBackup => 'Desktop Sync & Backup';
+
+  @override
+  String get desktopSyncDescription =>
+      'Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.';
+
+  @override
+  String get processOnDesktop => 'Process on Desktop';
+
+  @override
+  String get sendToDesktop => 'Send to Desktop';
+
+  @override
+  String get continueImporting => 'Continue Importing';
 
   @override
   String get syncMedicalRecords => 'Sincronizează Înregistrări Medicale';

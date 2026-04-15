@@ -145,6 +145,12 @@
     "unknownSource": "Unbekannte Quelle",
     
     "synchronization": "Synchronisierung",
+    "desktopSyncAndBackup": "Desktop Sync & Backup",
+    "desktopSyncDescription": "Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.",
+    "connect": "Connect",
+    "processOnDesktop": "Process on Desktop",
+    "sendToDesktop": "Send to Desktop",
+    "continueImporting": "Continue Importing",
     "syncMedicalRecords": "Medizinische Aufzeichnungen synchronisieren",
     "syncLatestMedicalRecords": "Synchronisieren Sie Ihre neuesten medizinischen Aufzeichnungen von Ihrem Gesundheitsdienstleister mit einem sicheren JWT-Token.",
     "neverSynced": "Nie synchronisiert",

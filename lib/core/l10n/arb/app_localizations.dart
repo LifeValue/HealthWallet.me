@@ -960,6 +960,36 @@ abstract class AppLocalizations {
   /// **'Synchronization'**
   String get synchronization;
 
+  /// No description provided for @desktopSyncAndBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop Sync & Backup'**
+  String get desktopSyncAndBackup;
+
+  /// No description provided for @desktopSyncDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.'**
+  String get desktopSyncDescription;
+
+  /// No description provided for @processOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Process on Desktop'**
+  String get processOnDesktop;
+
+  /// No description provided for @sendToDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to Desktop'**
+  String get sendToDesktop;
+
+  /// No description provided for @continueImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Importing'**
+  String get continueImporting;
+
   /// No description provided for @syncMedicalRecords.
   ///
   /// In en, this message translates to:
