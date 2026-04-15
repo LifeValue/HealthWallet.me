@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +13,8 @@ import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/sync_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/backup_card.dart';
 import 'package:health_wallet/features/notifications/notification_widget.dart';
@@ -221,7 +225,7 @@ class HomeViewState extends State<HomeView> {
       final placeholder = SyncPlaceholderWidget(
         pageController: widget.pageController,
         onSyncPressed: () {
-          SyncDialog.show(context);
+          DeviceSyncDialog.show(context);
         },
         recordTypeName: null,
       );
@@ -251,6 +255,50 @@ class HomeViewState extends State<HomeView> {
   }
 
   Widget _buildDesktopLayout(BuildContext context, HomeState state) {
+    if (state.shouldShowPlaceholder) {
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+            child: SizedBox(
+              height: 52,
+              child: Stack(
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: HomeGreetingTitle(homeState: state),
+                  ),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const _ConnectionMiniCard(),
+                        const SizedBox(width: 8),
+                        const _SyncMiniCard(),
+                        const SizedBox(width: 8),
+                        const _BackupMiniCard(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Center(
+                child: SyncPlaceholderWidget(
+                  pageController: widget.pageController,
+                  onSyncPressed: () => DeviceSyncDialog.show(context),
+                  recordTypeName: null,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return AnimatedStickyHeader(
       children: [
         Stack(
@@ -259,8 +307,10 @@ class HomeViewState extends State<HomeView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 HomeGreetingTitle(homeState: state),
-                const SizedBox(height: 6),
-                _PatientRow(homeState: state),
+                if (state.patient != null) ...[
+                  const SizedBox(height: 6),
+                  _PatientRow(homeState: state),
+                ],
               ],
             ),
             Positioned.fill(
@@ -431,6 +481,51 @@ class _PatientRowState extends State<_PatientRow> {
   }
 }
 
+class _ConnectionMiniCard extends StatelessWidget {
+  const _ConnectionMiniCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: getIt<CommunicationBloc>(),
+      child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
+        builder: (context, commState) {
+          final isConnected =
+              commState.connectionStatus == ConnectionStatus.connected;
+          final isDiscovering =
+              commState.connectionStatus == ConnectionStatus.discovering;
+
+          final Color color;
+          final String subtitle;
+
+          if (isConnected) {
+            color = AppColors.success;
+            subtitle = commState.connectedDeviceName ?? 'Connected';
+          } else if (isDiscovering) {
+            color = AppColors.warning;
+            subtitle = 'Connecting...';
+          } else {
+            color = commState.pairedDevice != null
+                ? AppColors.error
+                : AppColors.textSecondary;
+            subtitle = commState.pairedDevice != null
+                ? 'Disconnected'
+                : 'Not paired';
+          }
+
+          return _MiniStatusCard(
+            icon: isConnected ? Icons.link : Icons.link_off,
+            label: 'Connection',
+            subtitle: subtitle,
+            color: color,
+            onTap: () => ConnectionDialog.show(context),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _SyncMiniCard extends StatelessWidget {
   const _SyncMiniCard();
 
@@ -460,7 +555,15 @@ class _SyncMiniCard extends StatelessWidget {
             label: 'Sync',
             subtitle: subtitle,
             color: color,
-            onTap: () => _showSyncDialog(context),
+            onTap: () {
+              if (isSyncing) return;
+              final commBloc = getIt<CommunicationBloc>();
+              if (commBloc.state.connectionStatus == ConnectionStatus.connected) {
+                getIt<LwwSyncBloc>().add(const SyncTriggered());
+              } else {
+                _showSyncDialog(context);
+              }
+            },
           );
         },
       ),
@@ -513,9 +616,11 @@ void _showSyncDialog(BuildContext context) {
 void _showBackupDialog(BuildContext context) {
   showDialog(
     context: context,
-    builder: (_) => Dialog(
-      backgroundColor: Colors.transparent,
-      child: ConstrainedBox(
+    builder: (_) => BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
         child: MultiBlocProvider(
           providers: [
@@ -578,6 +683,7 @@ void _showBackupDialog(BuildContext context) {
           ),
         ),
       ),
+      ),
     ),
   );
 }
@@ -602,8 +708,8 @@ class _MiniStatusCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 130,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        width: 120,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),

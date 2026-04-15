@@ -1,11 +1,15 @@
 import 'dart:io';
 import 'package:auto_route/auto_route.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/services/external_files_service.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/services/external_files_service.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/session_list.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -18,6 +22,7 @@ import 'package:health_wallet/features/processing/presentation/widgets/import_ac
 import 'package:health_wallet/features/processing/presentation/helpers/document_handler.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 
 @RoutePage()
 class ImportPage extends StatelessWidget {
@@ -38,6 +43,14 @@ class ImportView extends StatefulWidget {
 
 class _ImportViewState extends State<ImportView> with DocumentHandler {
   late final PageViewNavigationController _navigationController;
+  bool _isDragging = false;
+
+  static const _allowedExtensions = [
+    '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff'
+  ];
+
+  bool get _isDesktop => getIt<AppPlatform>().isDesktop;
+
   @override
   void initState() {
     super.initState();
@@ -60,9 +73,20 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
     }
   }
 
+  void _handleDroppedFiles(List<String> paths) {
+    final validPaths = paths.where((path) {
+      final ext = path.toLowerCase().substring(path.lastIndexOf('.'));
+      return _allowedExtensions.contains(ext);
+    }).toList();
+
+    if (validPaths.isEmpty) return;
+
+    context.read<ProcessingBloc>().add(DocumentImported(filePaths: validPaths));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final body = Scaffold(
       appBar: CustomAppBar(
         title: 'Import',
         automaticallyImplyLeading: false,
@@ -111,20 +135,25 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                           child: SessionList(sessions: importSessions),
                         ),
                         const SizedBox(height: 16),
-                        Padding(
-                          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
-                          child: ImportActions(
-                            onImportDocument: () =>
-                                _handleImportDocument(context),
-                            onPickImage: () => _handlePickImage(context),
-                            onScanDocument: () => _navigateToScanTab(context),
+                        if (_isDesktop)
+                          _buildDesktopActions(context)
+                        else
+                          Padding(
+                            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
+                            child: ImportActions(
+                              onImportDocument: () =>
+                                  _handleImportDocument(context),
+                              onPickImage: () => _handlePickImage(context),
+                              onScanDocument: () => _navigateToScanTab(context),
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
                 if (importSessions.isEmpty)
-                  if (context.isTablet)
+                  if (_isDesktop)
+                    Expanded(child: _buildDesktopEmptyState(context))
+                  else if (context.isTablet)
                     Expanded(
                       child: Align(
                         alignment: const Alignment(0, -0.3),
@@ -137,6 +166,114 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
             ),
           );
         },
+      ),
+    );
+
+    if (!_isDesktop) return body;
+
+    return DropTarget(
+      onDragEntered: (_) => setState(() => _isDragging = true),
+      onDragExited: (_) => setState(() => _isDragging = false),
+      onDragDone: (details) {
+        setState(() => _isDragging = false);
+        final paths = details.files.map((f) => f.path).toList();
+        _handleDroppedFiles(paths);
+      },
+      child: Stack(
+        children: [
+          body,
+          if (_isDragging)
+            Positioned.fill(
+              child: Container(
+                color: context.colorScheme.primary.withValues(alpha: 0.08),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Insets.extraLarge,
+                      vertical: Insets.large,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: context.colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.file_download_outlined,
+                          size: 48,
+                          color: context.colorScheme.primary,
+                        ),
+                        const SizedBox(height: Insets.normal),
+                        Text(
+                          'Drop to import',
+                          style: AppTextStyle.titleMedium.copyWith(
+                            color: context.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopEmptyState(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.file_upload_outlined,
+              size: 64,
+              color: context.colorScheme.primary.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: Insets.normal),
+            Text(
+              'Drop files here to import',
+              style: AppTextStyle.titleMedium.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: Insets.small),
+            Text(
+              'PDF, JPG, PNG, TIFF',
+              style: AppTextStyle.bodySmall.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: Insets.large),
+            _buildDesktopActions(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopActions(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        width: 200,
+        child: TextButton.icon(
+          onPressed: () => _handleImportDocument(context),
+          icon: Icon(Icons.folder_open, size: 18, color: context.colorScheme.primary),
+          label: Text(
+            'Browse Files',
+            style: AppTextStyle.buttonSmall.copyWith(
+              color: context.colorScheme.primary,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -177,7 +314,6 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
 
   void _navigateToScanTab(BuildContext context) {
     _navigationController.navigateToPage(2);
-    // Trigger auto-scan after navigation settles
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 100), () {
         if (context.mounted) {
@@ -246,9 +382,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
               );
         }
       }
-    } catch (e) {
-      // Handle error silently
-    }
+    } catch (_) {}
   }
 
   Future<void> _handlePickImage(BuildContext context) async {
@@ -272,8 +406,6 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
               DocumentImported(filePaths: validPaths),
             );
       }
-    } catch (e) {
-      // Handle error silently
-    }
+    } catch (_) {}
   }
 }

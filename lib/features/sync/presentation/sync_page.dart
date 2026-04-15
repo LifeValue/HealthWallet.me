@@ -10,7 +10,8 @@ import 'package:health_wallet/features/desktop/communication/data/models/device_
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/sync_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
+import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_loading_widget.dart';
@@ -100,17 +101,9 @@ class _SyncPageState extends State<SyncPage> {
           );
         }
 
-        return BlocBuilder<CommunicationBloc, DesktopSyncState>(
-          builder: (context, commState) {
-            return BlocBuilder<LwwSyncBloc, LwwSyncState>(
-              builder: (context, lwwState) {
-                return SyncDialog(
-                  commState: commState,
-                  syncState: lwwState,
-                );
-              },
-            );
-          },
+        return SyncPlaceholderWidget(
+          onSyncPressed: () => DeviceSyncDialog.show(context),
+          recordTypeName: null,
         );
       },
     );

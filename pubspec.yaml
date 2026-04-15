@@ -93,6 +93,7 @@ dependencies:
   another_flushbar: ^1.12.32
   dotted_border: ^3.1.0
   device_info_plus: ^10.1.0
+  desktop_drop: ^0.4.4
 
   passkit: ^1.1.0
   flutter_google_wallet: ^0.2.1

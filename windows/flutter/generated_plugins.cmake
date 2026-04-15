@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   battery_plus
   bonsoir_windows
+  desktop_drop
   file_selector_windows
   local_auth_windows
   pdfx

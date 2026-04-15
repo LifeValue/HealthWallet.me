@@ -39,6 +39,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     on<BackupLocationReset>(_onLocationReset);
     on<RemoteBackupRequested>(_onRemoteBackupRequested);
     on<RemoteBackupStatusChanged>(_onRemoteBackupStatusChanged);
+    on<RemoteBackupStatusReceived>(_onRemoteBackupStatusReceived);
 
     _listenForMessages();
   }
@@ -52,15 +53,51 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         final decoded =
             jsonDecode(message.payloadString) as Map<String, dynamic>;
         final type = decoded['type'] as String?;
+        final payload = decoded['payload'] as Map<String, dynamic>? ?? {};
 
         if (!isMobile && type == 'backup.request') {
           add(const RemoteBackupRequested());
         }
 
-        if (isMobile && type == 'backup_complete') {
-          add(const RemoteBackupStatusChanged(isBackingUp: false));
+        if (isMobile && type == 'backup.status') {
+          add(RemoteBackupStatusReceived(
+            ready: payload['ready'] as bool? ?? false,
+            count: payload['count'] as int? ?? 0,
+            lastBackupTime: payload['last_backup'] != null
+                ? DateTime.tryParse(payload['last_backup'] as String)
+                : null,
+          ));
+        }
+
+        if (isMobile && type == 'backup.error') {
+          add(RemoteBackupStatusChanged(
+            isBackingUp: false,
+            error: payload['error'] as String?,
+          ));
+        }
+
+        if (isMobile && type == 'backup.complete') {
+          add(RemoteBackupStatusReceived(
+            ready: true,
+            count: payload['count'] as int? ?? 0,
+            lastBackupTime: payload['last_backup'] != null
+                ? DateTime.tryParse(payload['last_backup'] as String)
+                : null,
+          ));
         }
       } catch (_) {}
+    });
+  }
+
+  void sendBackupStatus() {
+    if (getIt<AppPlatform>().isMobile) return;
+    if (!_tcpService.isConnected) return;
+
+    _tcpService.sendData('backup.status', {
+      'ready': state.hasUserSelectedPath,
+      'count': state.backupHistory.length,
+      if (state.backupHistory.isNotEmpty)
+        'last_backup': state.backupHistory.first.timestamp.toIso8601String(),
     });
   }
 
@@ -83,6 +120,8 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         progress: 1.0,
         backupHistory: history,
       ));
+
+      sendBackupStatus();
     } catch (e) {
       emit(state.copyWith(
         isBackingUp: false,
@@ -174,7 +213,15 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     try {
       final history = await _backupService.listBackups();
       final path = await _backupService.getBackupPath();
-      emit(state.copyWith(backupHistory: history, backupPath: path, error: null));
+      final hasUserPath = await _backupService.hasUserSelectedPath();
+      emit(state.copyWith(
+        backupHistory: history,
+        backupPath: path,
+        hasUserSelectedPath: hasUserPath,
+        error: null,
+      ));
+
+      sendBackupStatus();
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
@@ -216,9 +263,12 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       emit(state.copyWith(
         backupPath: event.path,
         backupHistory: history,
+        hasUserSelectedPath: true,
         selectedBackup: null,
         error: null,
       ));
+
+      sendBackupStatus();
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
@@ -249,6 +299,13 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
   ) async {
     if (state.isBackingUp) return;
 
+    if (!state.hasUserSelectedPath) {
+      _tcpService.sendData('backup.error', {
+        'error': 'No backup location set on desktop. Open the desktop app and choose a backup folder first.',
+      });
+      return;
+    }
+
     try {
       getIt<LwwSyncBloc>().add(const SyncTriggered());
     } catch (_) {}
@@ -266,6 +323,18 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     emit(state.copyWith(
       isBackingUp: event.isBackingUp,
       progress: event.isBackingUp ? 0.0 : 1.0,
+      error: event.error,
+    ));
+  }
+
+  void _onRemoteBackupStatusReceived(
+    RemoteBackupStatusReceived event,
+    Emitter<BackupState> emit,
+  ) {
+    emit(state.copyWith(
+      desktopBackupReady: event.ready,
+      desktopBackupCount: event.count,
+      desktopLastBackupTime: event.lastBackupTime,
     ));
   }
 

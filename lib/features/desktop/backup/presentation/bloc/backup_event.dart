@@ -16,5 +16,11 @@ class BackupEvent with _$BackupEvent {
   const factory BackupEvent.remoteBackupRequested() = RemoteBackupRequested;
   const factory BackupEvent.remoteBackupStatusChanged({
     required bool isBackingUp,
+    String? error,
   }) = RemoteBackupStatusChanged;
+  const factory BackupEvent.remoteBackupStatusReceived({
+    required bool ready,
+    required int count,
+    DateTime? lastBackupTime,
+  }) = RemoteBackupStatusReceived;
 }

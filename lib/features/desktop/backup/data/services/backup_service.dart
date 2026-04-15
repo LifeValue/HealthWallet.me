@@ -26,6 +26,11 @@ class BackupService {
     return p.join(home, 'Documents', 'HealthWallet', 'Backups');
   }
 
+  Future<bool> hasUserSelectedPath() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(SharedPrefsConstants.backupDirectory);
+  }
+
   Future<Directory> getBackupDirectory() async {
     final prefs = await SharedPreferences.getInstance();
     final customPath = prefs.getString(SharedPrefsConstants.backupDirectory);
@@ -38,8 +43,9 @@ class BackupService {
   }
 
   Future<String> getBackupPath() async {
-    final dir = await getBackupDirectory();
-    return dir.path;
+    final prefs = await SharedPreferences.getInstance();
+    final customPath = prefs.getString(SharedPrefsConstants.backupDirectory);
+    return customPath ?? await _defaultBackupPath();
   }
 
   Future<void> setBackupDirectory(String path) async {

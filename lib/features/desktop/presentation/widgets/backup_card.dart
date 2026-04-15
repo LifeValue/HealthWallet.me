@@ -63,6 +63,48 @@ class _BackupCardState extends State<BackupCard> {
     final selected = widget.backupState.selectedBackup;
     final defaultName = 'Backup ${DateFormat('MMM d, yyyy').format(DateTime.now())}';
 
+    if (!widget.backupState.hasUserSelectedPath) {
+      return Padding(
+        padding: const EdgeInsets.all(Insets.medium),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.folder_open,
+              size: 40,
+              color: context.colorScheme.onSurface.withValues(alpha: 0.15),
+            ),
+            const SizedBox(height: Insets.normal),
+            Text(
+              'Choose where to save backups',
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: Insets.small),
+            Text(
+              'Select a folder on your computer to store backup files',
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.4),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: Insets.normal),
+            SizedBox(
+              width: 200,
+              child: AppButton(
+                label: 'Choose Location',
+                onPressed: () => _BackupLocationRow.pickAndSetDirectory(context),
+                height: 36,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(Insets.medium),
       child: Column(
@@ -608,11 +650,7 @@ class _BackupLocationRow extends StatelessWidget {
 
   static const _fsChannel = MethodChannel('dev.lifevalue.healthwallet/fs');
 
-  Future<void> _pickDirectory(BuildContext context) async {
-    final initialPath = path != null && await Directory(path!).exists()
-        ? path!
-        : null;
-
+  static Future<void> pickAndSetDirectory(BuildContext context, {String? initialPath}) async {
     String? result;
     if (Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
@@ -629,6 +667,13 @@ class _BackupLocationRow extends StatelessWidget {
     if (result != null && context.mounted) {
       context.read<BackupBloc>().add(BackupLocationChanged(result));
     }
+  }
+
+  Future<void> _pickDirectory(BuildContext context) async {
+    final initialPath = path != null && await Directory(path!).exists()
+        ? path!
+        : null;
+    await pickAndSetDirectory(context, initialPath: initialPath);
   }
 }
 

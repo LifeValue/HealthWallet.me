@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pointycastle/export.dart';
 
@@ -34,7 +35,7 @@ class TcpMessage {
   const TcpMessage({required this.type, required this.payload});
 
   TcpMessage.fromString({required this.type, required String data})
-      : payload = Uint8List.fromList(utf8.encode(data));
+    : payload = Uint8List.fromList(utf8.encode(data));
 
   String get payloadString => utf8.decode(payload);
 }
@@ -102,12 +103,12 @@ class TcpService {
         } else if (type == 'clientConnected') {
         } else if (type == 'data') {
           final data = Uint8List.fromList(
-              (message['bytes'] as List).cast<int>());
+            (message['bytes'] as List).cast<int>(),
+          );
           _onData(data);
         } else if (type == 'clientDisconnected') {
           _handleDisconnect();
-        } else if (type == 'error') {
-        }
+        } else if (type == 'error') {}
       }
     });
 
@@ -115,25 +116,30 @@ class TcpService {
   }
 
   static Future<void> _isolateServer(_IsolateServerConfig config) async {
+    runZonedGuarded(() => _isolateServerImpl(config), (_, __) {});
+  }
+
+  static Future<void> _isolateServerImpl(_IsolateServerConfig config) async {
     final commandPort = ReceivePort();
     config.mainPort.send({
       'type': 'sendPort',
       'sendPort': commandPort.sendPort,
     });
 
+    final ip = await _getLocalIpStatic();
+    final bindAddress = InternetAddress(ip);
+
     ServerSocket server;
     try {
-      server = await ServerSocket.bind(InternetAddress.anyIPv4, config.port);
+      server = await ServerSocket.bind(bindAddress, config.port);
     } on SocketException {
-      server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+      try {
+        server = await ServerSocket.bind(bindAddress, 0);
+      } on SocketException {
+        server = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+      }
     }
-
-    final ip = await _getLocalIpStatic();
-    config.mainPort.send({
-      'type': 'listening',
-      'port': server.port,
-      'ip': ip,
-    });
+    config.mainPort.send({'type': 'listening', 'port': server.port, 'ip': ip});
 
     Socket? clientSocket;
 
@@ -151,10 +157,7 @@ class TcpService {
 
       client.listen(
         (data) {
-          config.mainPort.send({
-            'type': 'data',
-            'bytes': data,
-          });
+          config.mainPort.send({'type': 'data', 'bytes': data});
         },
         onError: (e) {
           config.mainPort.send({
@@ -176,8 +179,18 @@ class TcpService {
     commandPort.listen((message) {
       if (message is Map && message['type'] == 'send') {
         final bytes = Uint8List.fromList(
-            (message['bytes'] as List).cast<int>());
-        clientSocket?.add(bytes);
+          (message['bytes'] as List).cast<int>(),
+        );
+        try {
+          clientSocket?.add(bytes);
+        } catch (_) {
+          clientSocket?.destroy();
+          clientSocket = null;
+          config.mainPort.send({
+            'type': 'clientDisconnected',
+            'reason': 'write_failed',
+          });
+        }
       } else if (message == 'stop') {
         clientSocket?.destroy();
         server.close();
@@ -193,45 +206,26 @@ class TcpService {
     );
     if (interfaces.isEmpty) return '127.0.0.1';
 
-    final activeIps = <String>{
-      for (final iface in interfaces)
-        for (final addr in iface.addresses)
-          if (!addr.isLoopback) addr.address,
-    };
+    final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
+    final lanPrefixes = ['en', 'eth', 'wlan'];
 
-    try {
-      if (Platform.isWindows) {
-        final result = await Process.run('route', ['print', '0.0.0.0']);
-        for (final line in result.stdout.toString().split('\n')) {
-          final parts = line.trim().split(RegExp(r'\s+'));
-          if (parts.length >= 5 &&
-              parts[0] == '0.0.0.0' &&
-              parts[1] == '0.0.0.0') {
-            final ifaceIp = parts[3];
-            if (activeIps.contains(ifaceIp)) return ifaceIp;
-          }
-        }
-      } else if (Platform.isMacOS) {
-        final result = await Process.run('route', ['get', '8.8.8.8']);
-        final match =
-            RegExp(r'interface:\s*(\S+)').firstMatch(result.stdout.toString());
-        if (match != null) {
-          final ifName = match.group(1)!;
-          for (final iface in interfaces) {
-            if (iface.name == ifName && iface.addresses.isNotEmpty) {
-              return iface.addresses.first.address;
-            }
-          }
-        }
-      } else {
-        final result = await Process.run('ip', ['route', 'get', '8.8.8.8']);
-        final match =
-            RegExp(r'src\s+(\S+)').firstMatch(result.stdout.toString());
-        if (match != null && activeIps.contains(match.group(1))) {
-          return match.group(1)!;
-        }
+    bool isVpn(String name) =>
+        vpnPrefixes.any((p) => name.toLowerCase().startsWith(p));
+    bool isLan(String name) =>
+        lanPrefixes.any((p) => name.toLowerCase().startsWith(p));
+
+    for (final iface in interfaces) {
+      if (isLan(iface.name) && iface.addresses.isNotEmpty) {
+        final addr = iface.addresses.first.address;
+        if (!addr.startsWith('169.254.')) return addr;
       }
-    } catch (_) {}
+    }
+
+    for (final iface in interfaces) {
+      if (!isVpn(iface.name) && iface.addresses.isNotEmpty) {
+        return iface.addresses.first.address;
+      }
+    }
 
     return interfaces.first.addresses.first.address;
   }
@@ -245,18 +239,26 @@ class TcpService {
     _updateState(ConnectionState.connecting);
 
     try {
-      _clientSocket = await Socket.connect(ip, port,
-          timeout: const Duration(seconds: 5));
+      _clientSocket = await Socket.connect(
+        ip,
+        port,
+        timeout: const Duration(seconds: 5),
+      );
       _setupClientSocket(_clientSocket!);
       _updateState(ConnectionState.connected);
+      debugPrint('[TCP] Connected to $ip:$port, sending hello');
 
-      await sendMessage(TcpMessage.fromString(
-        type: MessageType.hello,
-        data: jsonEncode({
-          'pairing_key_hash': _hashKey(pairingKey),
-          'device_name': Platform.localHostname.replaceAll('.local', '').replaceAll('-', ' '),
-        }),
-      ));
+      await sendMessage(
+        TcpMessage.fromString(
+          type: MessageType.hello,
+          data: jsonEncode({
+            'pairing_key_hash': _hashKey(pairingKey),
+            'device_name': Platform.localHostname
+                .replaceAll('.local', '')
+                .replaceAll('-', ' '),
+          }),
+        ),
+      );
 
       _startPingTimer();
     } catch (e) {
@@ -299,29 +301,30 @@ class TcpService {
         final payload = decrypted.sublist(1);
 
         final message = TcpMessage(type: type, payload: payload);
+        debugPrint('[TCP] Received message: ${type.name}');
         _handleMessage(message);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[TCP] Decrypt/parse failed: $e');
+      }
     }
   }
 
   void _handleMessage(TcpMessage message) {
+    debugPrint('[TCP] Handling: ${message.type.name}');
     switch (message.type) {
       case MessageType.ping:
-        sendMessage(TcpMessage(
-            type: MessageType.pong, payload: Uint8List(0)));
+        sendMessage(TcpMessage(type: MessageType.pong, payload: Uint8List(0)));
         return;
       case MessageType.pong:
         _pingTimeoutTimer?.cancel();
         return;
       case MessageType.kill:
-        sendMessage(
-            TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
+        sendMessage(TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
         _handleDisconnect();
         return;
       case MessageType.hello:
         _updateState(ConnectionState.connected);
-        sendMessage(
-            TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
+        sendMessage(TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
         _messageController.add(message);
         return;
       default:
@@ -346,10 +349,7 @@ class TcpService {
       frame.setAll(4, encrypted);
 
       if (_isolateSendPort != null) {
-        _isolateSendPort!.send({
-          'type': 'send',
-          'bytes': frame.toList(),
-        });
+        _isolateSendPort!.send({'type': 'send', 'bytes': frame.toList()});
       } else if (_clientSocket != null) {
         _clientSocket!.add(frame);
         await _clientSocket!.flush();
@@ -363,10 +363,9 @@ class TcpService {
 
   Future<void> sendData(String type, Map<String, dynamic> payload) async {
     final data = jsonEncode({'type': type, 'payload': payload});
-    await sendMessage(TcpMessage.fromString(
-      type: MessageType.data,
-      data: data,
-    ));
+    await sendMessage(
+      TcpMessage.fromString(type: MessageType.data, data: data),
+    );
   }
 
   Uint8List _encrypt(Uint8List plaintext) {
@@ -396,13 +395,18 @@ class TcpService {
     final nonce = data.sublist(0, 12);
     final ciphertext = data.sublist(12);
 
-    final cipher = GCMBlockCipher(AESEngine())
-      ..init(
-          false, AEADParameters(KeyParameter(key), 128, nonce, Uint8List(0)));
+    final cipher = GCMBlockCipher(
+      AESEngine(),
+    )..init(false, AEADParameters(KeyParameter(key), 128, nonce, Uint8List(0)));
 
     final plaintext = Uint8List(cipher.getOutputSize(ciphertext.length));
-    final len =
-        cipher.processBytes(ciphertext, 0, ciphertext.length, plaintext, 0);
+    final len = cipher.processBytes(
+      ciphertext,
+      0,
+      ciphertext.length,
+      plaintext,
+      0,
+    );
     final finalLen = cipher.doFinal(plaintext, len);
 
     return plaintext.sublist(0, len + finalLen);
@@ -410,7 +414,8 @@ class TcpService {
 
   Uint8List _deriveKey(String pairingKey) {
     final keyBytes = base64Url.decode(pairingKey);
-    if (keyBytes.length >= 32) return Uint8List.fromList(keyBytes.sublist(0, 32));
+    if (keyBytes.length >= 32)
+      return Uint8List.fromList(keyBytes.sublist(0, 32));
     final padded = Uint8List(32);
     padded.setAll(0, keyBytes);
     return padded;
@@ -418,9 +423,7 @@ class TcpService {
 
   Uint8List _generateNonce() {
     final random = Random.secure();
-    return Uint8List.fromList(
-      List.generate(12, (_) => random.nextInt(256)),
-    );
+    return Uint8List.fromList(List.generate(12, (_) => random.nextInt(256)));
   }
 
   String _hashKey(String key) {
@@ -432,8 +435,7 @@ class TcpService {
   void _startPingTimer() {
     _pingTimer?.cancel();
     _pingTimer = Timer.periodic(_pingInterval, (_) {
-      sendMessage(
-          TcpMessage(type: MessageType.ping, payload: Uint8List(0)));
+      sendMessage(TcpMessage(type: MessageType.ping, payload: Uint8List(0)));
       _pingTimeoutTimer = Timer(_pingTimeout, _handleDisconnect);
     });
   }
@@ -467,7 +469,8 @@ class TcpService {
   Future<void> disconnect() async {
     try {
       await sendMessage(
-          TcpMessage(type: MessageType.kill, payload: Uint8List(0)));
+        TcpMessage(type: MessageType.kill, payload: Uint8List(0)),
+      );
     } catch (_) {}
     _handleDisconnect();
   }

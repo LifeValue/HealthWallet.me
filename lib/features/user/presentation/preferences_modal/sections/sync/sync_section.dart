@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/sync_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -59,6 +59,15 @@ class SyncSection extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _StatusRow(
+                                icon: commState.connectionStatus == ConnectionStatus.connected
+                                    ? Icons.link
+                                    : Icons.link_off,
+                                label: 'Connection',
+                                status: _getConnectionStatus(commState),
+                                statusColor: _getConnectionColor(commState),
+                              ),
+                              const SizedBox(height: Insets.small),
+                              _StatusRow(
                                 icon: Icons.sync,
                                 label: 'Device Sync',
                                 status: _getSyncStatus(commState, lwwState),
@@ -76,7 +85,7 @@ class SyncSection extends StatelessWidget {
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
-                                    onPressed: () => SyncDialog.show(context),
+                                    onPressed: () => DeviceSyncDialog.show(context),
                                     icon: Assets.icons.renewSync.svg(
                                       width: 16,
                                       height: 16,
@@ -107,7 +116,7 @@ class SyncSection extends StatelessWidget {
                                   children: [
                                     Expanded(
                                       child: ElevatedButton.icon(
-                                        onPressed: () => SyncDialog.show(context),
+                                        onPressed: () => DeviceSyncDialog.show(context),
                                         icon: Assets.icons.renewSync.svg(
                                           width: 16,
                                           height: 16,
@@ -227,6 +236,28 @@ class SyncSection extends StatelessWidget {
     );
   }
 
+  String _getConnectionStatus(DesktopSyncState comm) {
+    if (comm.connectionStatus == ConnectionStatus.connected) {
+      return comm.connectedDeviceName ?? 'Connected';
+    }
+    if (comm.connectionStatus == ConnectionStatus.discovering) {
+      return 'Connecting...';
+    }
+    if (comm.pairedDevice != null) return 'Disconnected';
+    return 'Not paired';
+  }
+
+  Color _getConnectionColor(DesktopSyncState comm) {
+    if (comm.connectionStatus == ConnectionStatus.connected) {
+      return AppColors.success;
+    }
+    if (comm.connectionStatus == ConnectionStatus.discovering) {
+      return AppColors.warning;
+    }
+    if (comm.pairedDevice != null) return AppColors.error;
+    return AppColors.textSecondary;
+  }
+
   String _getSyncStatus(DesktopSyncState comm, LwwSyncState lww) {
     final isConnected =
         comm.connectionStatus == ConnectionStatus.connected;
@@ -253,22 +284,27 @@ class SyncSection extends StatelessWidget {
   String _getBackupStatus(BackupState state) {
     if (state.isBackingUp) return 'Backing up...';
     if (state.isRestoring) return 'Restoring...';
-    if (state.backupHistory.isNotEmpty) {
-      return DateFormatUtils.getSincePretty(
-          state.backupHistory.first.timestamp);
+    if (!state.desktopBackupReady) return 'Not configured';
+    if (state.desktopLastBackupTime != null) {
+      return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!);
+    }
+    if (state.desktopBackupCount > 0) {
+      return '${state.desktopBackupCount} backups';
     }
     return 'No backups';
   }
 
   Color _getBackupColor(BackupState state) {
     if (state.isBackingUp || state.isRestoring) return AppColors.primary;
-    if (state.backupHistory.isNotEmpty) return AppColors.success;
+    if (!state.desktopBackupReady) return AppColors.textSecondary;
+    if (state.desktopLastBackupTime != null) return AppColors.success;
     return AppColors.warning;
   }
 
   bool _canBackup(DesktopSyncState commState, BackupState backupState) {
     return commState.connectionStatus == ConnectionStatus.connected &&
-        !backupState.isBackingUp;
+        !backupState.isBackingUp &&
+        backupState.desktopBackupReady;
   }
 
   void _requestRemoteBackup(BuildContext context, DesktopSyncState commState) {

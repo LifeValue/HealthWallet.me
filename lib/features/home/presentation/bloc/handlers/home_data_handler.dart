@@ -28,7 +28,6 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
       final selectedPatientId = prefs.getString('selected_patient_id');
 
       if (selectedPatientId == null) {
-        logger.w('No selected patient ID found');
         return null;
       }
 

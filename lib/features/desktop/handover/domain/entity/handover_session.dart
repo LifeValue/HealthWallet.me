@@ -8,7 +8,9 @@ enum HandoverStatus {
   processing,
   sendingResults,
   complete,
-  error;
+  error,
+  sending,
+  waitingForResults;
 }
 
 @freezed

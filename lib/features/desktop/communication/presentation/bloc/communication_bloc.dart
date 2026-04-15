@@ -200,6 +200,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     Emitter<DesktopSyncState> emit,
   ) async {
     if (_platform.isDesktop) return;
+    if (state.pairedDevice == null) return;
 
     emit(state.copyWith(
       connectionStatus: ConnectionStatus.discovering,
@@ -276,7 +277,6 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     CommunicationConnected event,
     Emitter<DesktopSyncState> emit,
   ) {
-    _reconnectAttempts = 0;
 
     final transport = event.ip == 'mpc'
         ? ConnectionTransport.multipeerConnectivity
@@ -291,10 +291,10 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     ));
   }
 
-  void _onDisconnected(
+  Future<void> _onDisconnected(
     CommunicationDisconnected event,
     Emitter<DesktopSyncState> emit,
-  ) {
+  ) async {
     final wasConnected = state.connectionStatus == ConnectionStatus.connected;
 
     emit(state.copyWith(
@@ -304,13 +304,19 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       connectedPort: null,
     ));
 
-    if (wasConnected && state.pairedDevice != null) {
+    if (wasConnected && _platform.isDesktop) {
+      debugPrint('[Communication] Client disconnected');
+    }
+
+    if (wasConnected && state.pairedDevice != null && _platform.isMobile) {
       _reconnectAttempts++;
       if (_reconnectAttempts > _maxReconnectAttempts) {
-        debugPrint('[Communication] Max reconnect attempts reached ($_maxReconnectAttempts), giving up');
+        debugPrint('[Communication] Max reconnect attempts reached, clearing pairing');
         _reconnectAttempts = 0;
+        await _pairingStorage.clearPairing();
+        emit(state.copyWith(pairedDevice: null));
         add(const CommunicationConnectionFailed(
-            error: 'Desktop not reachable. Open the desktop app and try again.'));
+            error: 'Could not connect. Scan QR code to pair again.'));
         return;
       }
       final delay = _initialReconnectDelay * (1 << (_reconnectAttempts - 1));
@@ -352,6 +358,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     CommunicationRemoteDeviceNameReceived event,
     Emitter<DesktopSyncState> emit,
   ) {
+    _reconnectAttempts = 0;
     emit(state.copyWith(connectedDeviceName: event.name));
   }
 
@@ -362,54 +369,32 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     );
     if (interfaces.isEmpty) return (ip: '127.0.0.1', vpnDetected: false);
 
-    final activeIps = <String>{
-      for (final iface in interfaces)
-        for (final addr in iface.addresses)
-          if (!addr.isLoopback) addr.address,
-    };
+    final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
+    final lanPrefixes = ['en', 'eth', 'wlan', 'Wi-Fi', 'Ethernet'];
 
-    try {
-      if (Platform.isWindows) {
-        final result = await Process.run('route', ['print', '0.0.0.0']);
-        final matchedIps = <String>[];
-        for (final line in result.stdout.toString().split('\n')) {
-          final parts = line.trim().split(RegExp(r'\s+'));
-          if (parts.length >= 5 &&
-              parts[0] == '0.0.0.0' &&
-              parts[1] == '0.0.0.0') {
-            final ifaceIp = parts[3];
-            if (activeIps.contains(ifaceIp)) matchedIps.add(ifaceIp);
-          }
-        }
-        if (matchedIps.isNotEmpty) {
-          return (
-            ip: matchedIps.first,
-            vpnDetected: matchedIps.length > 1,
-          );
-        }
-      } else if (Platform.isMacOS) {
-        final result = await Process.run('route', ['get', '8.8.8.8']);
-        final match =
-            RegExp(r'interface:\s*(\S+)').firstMatch(result.stdout.toString());
-        if (match != null) {
-          final ifName = match.group(1)!;
-          for (final iface in interfaces) {
-            if (iface.name == ifName && iface.addresses.isNotEmpty) {
-              return (ip: iface.addresses.first.address, vpnDetected: false);
-            }
-          }
-        }
-      } else {
-        final result = await Process.run('ip', ['route', 'get', '8.8.8.8']);
-        final match =
-            RegExp(r'src\s+(\S+)').firstMatch(result.stdout.toString());
-        if (match != null && activeIps.contains(match.group(1))) {
-          return (ip: match.group(1)!, vpnDetected: false);
+    bool isVpnInterface(String name) =>
+        vpnPrefixes.any((p) => name.toLowerCase().startsWith(p));
+    bool isLanInterface(String name) =>
+        lanPrefixes.any((p) => name.toLowerCase().startsWith(p.toLowerCase()));
+
+    final hasVpn = interfaces.any((i) => isVpnInterface(i.name));
+
+    for (final iface in interfaces) {
+      if (isLanInterface(iface.name) && iface.addresses.isNotEmpty) {
+        final addr = iface.addresses.first.address;
+        if (!addr.startsWith('169.254.')) {
+          return (ip: addr, vpnDetected: hasVpn);
         }
       }
-    } catch (_) {}
+    }
 
-    return (ip: interfaces.first.addresses.first.address, vpnDetected: false);
+    for (final iface in interfaces) {
+      if (!isVpnInterface(iface.name) && iface.addresses.isNotEmpty) {
+        return (ip: iface.addresses.first.address, vpnDetected: hasVpn);
+      }
+    }
+
+    return (ip: interfaces.first.addresses.first.address, vpnDetected: hasVpn);
   }
 
   @override

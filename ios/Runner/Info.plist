@@ -42,7 +42,12 @@
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>FlutterDeepLinkingEnabled</key>
 		<false/>
-		<key>LSApplicationQueriesSchemes</key>
+		<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>LSApplicationQueriesSchemes</key>
 		<array>
 			<string>https</string>
 			<string>http</string>
@@ -55,6 +60,7 @@
 		<array>
 			<string>_airdrop-service._tcp</string>
 			<string>_airdrop-service._udp</string>
+			<string>_healthwallet._tcp</string>
 		</array>
 		<key>NSCameraUsageDescription</key>
 		<string>Enable your camera to securely connect to your health provider by scanning their QR code and syncing your health records.</string>

@@ -12,7 +12,7 @@ import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/sync_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
@@ -423,7 +423,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   void _handleSyncRecords(BuildContext context) {
     if (context.mounted) {
-      SyncDialog.show(context);
+      DeviceSyncDialog.show(context);
     }
   }
 
