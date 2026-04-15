@@ -14,6 +14,10 @@ import 'package:health_wallet/features/processing/presentation/pages/load_model/
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 @RoutePage<bool>()
@@ -284,9 +288,47 @@ class _LoadModelPageState extends State<LoadModelPage> {
                   : context.l10n.cancel),
             ),
           ),
+          if (_isDesktopConnected()) ...[
+            const SizedBox(height: Insets.small),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: () => _sendToDesktop(context),
+                icon: Icon(Icons.computer, size: 18,
+                    color: context.colorScheme.primary),
+                label: Text(
+                  'Process on Desktop',
+                  style: TextStyle(color: context.colorScheme.primary),
+                ),
+              ),
+            ),
+          ],
         ],
       ],
     );
+  }
+
+  bool _isDesktopConnected() {
+    try {
+      final commBloc = getIt<CommunicationBloc>();
+      return commBloc.state.connectionStatus == ConnectionStatus.connected;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _sendToDesktop(BuildContext context) {
+    try {
+      final processingBloc = getIt<ProcessingBloc>();
+      final sessions = processingBloc.state.sessions;
+      final pending = sessions.where(
+          (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty);
+      if (pending.isEmpty) return;
+
+      final filePaths = pending.first.filePaths;
+      context.router.maybePop();
+      HandoverSendDialog.show(context, filePaths);
+    } catch (_) {}
   }
 
   Widget _buildRichDescription(BuildContext context, String description) {
