@@ -141,15 +141,16 @@ class HandoverService {
     StagedDiagnosticReport? phase1DiagnosticReport;
 
     if (_hasPhase1Data) {
+      final p1 = phase1!;
       phase1Patient = stagedPatientFromJson(
-          phase1['patient'] as Map<String, dynamic>);
-      if (phase1['encounter'] != null) {
+          p1['patient'] as Map<String, dynamic>);
+      if (p1['encounter'] != null) {
         phase1Encounter = stagedEncounterFromJson(
-            phase1['encounter'] as Map<String, dynamic>);
+            p1['encounter'] as Map<String, dynamic>);
       }
-      if (phase1['diagnosticReport'] != null) {
+      if (p1['diagnosticReport'] != null) {
         phase1DiagnosticReport = stagedDiagnosticReportFromJson(
-            phase1['diagnosticReport'] as Map<String, dynamic>);
+            p1['diagnosticReport'] as Map<String, dynamic>);
       }
     }
 
