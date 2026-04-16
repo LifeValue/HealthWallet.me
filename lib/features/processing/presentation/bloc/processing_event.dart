@@ -22,6 +22,9 @@ class DocumentImported extends ProcessingEvent with _$DocumentImported {
   const factory DocumentImported({
     required List<String> filePaths,
     @Default(ProcessingOrigin.import) ProcessingOrigin origin,
+    StagedPatient? phase1Patient,
+    StagedEncounter? phase1Encounter,
+    StagedDiagnosticReport? phase1DiagnosticReport,
   }) = _DocumentImported;
 }
 

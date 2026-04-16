@@ -58,7 +58,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
-    if (session.isProcessing || session.status == ProcessingStatus.draft) {
+    if (session.isProcessing ||
+        session.status == ProcessingStatus.draft ||
+        session.status == ProcessingStatus.patientExtracted) {
       return;
     }
     final anotherSessionProcessing = state.sessions.any(

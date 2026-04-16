@@ -112,6 +112,17 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       await createSession(emit,
           filePaths: orderedPaths, origin: event.origin);
+
+      if (event.phase1Patient != null) {
+        final session = state.sessions.first;
+        updateSession(emit,
+            sessionId: session.id,
+            status: ProcessingStatus.patientExtracted,
+            patient: event.phase1Patient!,
+            encounter: event.phase1Encounter,
+            diagnosticReport: event.phase1DiagnosticReport,
+            updateDb: true);
+      }
     } catch (e) {
       emit(state.copyWith(
         status: PipelineStatus.failure(error: 'Failed to import document: $e'),

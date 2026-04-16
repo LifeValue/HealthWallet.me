@@ -43,7 +43,7 @@ class HandoverSenderService {
     _step1Sub = _messageRouter.on('handover.step1_complete').listen(_handleStep1Complete);
   }
 
-  Future<void> sendHandover(List<String> filePaths) async {
+  Future<void> sendHandover(List<String> filePaths, {Map<String, dynamic>? phase1Data}) async {
     final sessionId = const Uuid().v4();
 
     _cancelled[sessionId] = false;
@@ -65,6 +65,7 @@ class HandoverSenderService {
       'session_id': sessionId,
       'file_count': filePaths.length,
       'total_bytes': totalBytes,
+      if (phase1Data != null) 'phase1_data': phase1Data,
     });
 
     final acceptCompleter = Completer<void>();

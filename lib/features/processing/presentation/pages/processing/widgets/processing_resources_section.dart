@@ -301,6 +301,18 @@ class _ScannedBasicButtons extends StatelessWidget {
       final connected = getIt<CommunicationBloc>()
           .state.connectionStatus == ConnectionStatus.connected;
       if (connected && session.filePaths.isNotEmpty) {
+        Map<String, dynamic>? phase1Data;
+        if (session.status == ProcessingStatus.patientExtracted &&
+            session.patient.hasSelection) {
+          phase1Data = {
+            'patient': stagedPatientToJson(session.patient),
+            if (session.encounter.draft != null)
+              'encounter': stagedEncounterToJson(session.encounter),
+            if (session.diagnosticReport != null)
+              'diagnosticReport':
+                  stagedDiagnosticReportToJson(session.diagnosticReport!),
+          };
+        }
         HandoverSendDialog.show(
           context,
           session.filePaths,
@@ -309,6 +321,7 @@ class _ScannedBasicButtons extends StatelessWidget {
               ? 'Continue Importing'
               : null,
           sourceSessionId: session.id,
+          phase1Data: phase1Data,
         );
       } else {
         DeviceSyncDialog.show(context);

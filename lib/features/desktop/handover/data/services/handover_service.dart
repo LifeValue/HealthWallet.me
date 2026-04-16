@@ -12,6 +12,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/messa
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 @lazySingleton
@@ -23,6 +24,7 @@ class HandoverService {
 
   final Map<String, HandoverSession> _sessions = {};
   final Map<String, List<String>> _receivedFiles = {};
+  final Map<String, Map<String, dynamic>?> _phase1Data = {};
   final _sessionUpdateController = StreamController<HandoverSession>.broadcast();
   final Map<String, ({String type, Map<String, dynamic> payload})> _pendingResults = {};
 
@@ -69,6 +71,7 @@ class HandoverService {
 
     _sessions[sessionId] = session;
     _receivedFiles[sessionId] = [];
+    _phase1Data[sessionId] = payload['phase1_data'] as Map<String, dynamic>?;
 
     _tcpService.sendData('handover.accept', {
       'session_id': sessionId,
@@ -130,28 +133,61 @@ class HandoverService {
     _step1Notified = false;
 
     final filePaths = _receivedFiles[sessionId]!;
+    final phase1 = _phase1Data[sessionId];
+    _hasPhase1Data = phase1 != null && phase1['patient'] != null;
+
+    StagedPatient? phase1Patient;
+    StagedEncounter? phase1Encounter;
+    StagedDiagnosticReport? phase1DiagnosticReport;
+
+    if (_hasPhase1Data) {
+      phase1Patient = stagedPatientFromJson(
+          phase1['patient'] as Map<String, dynamic>);
+      if (phase1['encounter'] != null) {
+        phase1Encounter = stagedEncounterFromJson(
+            phase1['encounter'] as Map<String, dynamic>);
+      }
+      if (phase1['diagnosticReport'] != null) {
+        phase1DiagnosticReport = stagedDiagnosticReportFromJson(
+            phase1['diagnosticReport'] as Map<String, dynamic>);
+      }
+    }
+
     _processingBloc.add(DocumentImported(
       filePaths: filePaths,
       origin: ProcessingOrigin.handover,
+      phase1Patient: phase1Patient,
+      phase1Encounter: phase1Encounter,
+      phase1DiagnosticReport: phase1DiagnosticReport,
     ));
 
     var sessionActivated = false;
+    var phase2Triggered = false;
 
     _processingBlocSub?.cancel();
     _processingBlocSub = _processingBloc.stream.listen((processingState) {
-      final newSession = processingState.sessions.firstOrNull;
-      if (newSession != null &&
-          newSession.origin == ProcessingOrigin.handover &&
-          !sessionActivated) {
-        if (newSession.status == ProcessingStatus.pending &&
-            processingState.status is SessionCreated) {
-          _processingBloc.add(SessionActivated(sessionId: newSession.id));
-          sessionActivated = true;
+      final newSession = processingState.sessions.firstWhereOrNull(
+        (s) => s.origin == ProcessingOrigin.handover,
+      );
+      if (newSession == null) return;
 
-          Future.delayed(const Duration(milliseconds: 500), () {
-            _processingBloc.add(MappingInitiated(sessionId: newSession.id));
-          });
+      if (!sessionActivated && processingState.status is SessionCreated) {
+        sessionActivated = true;
+        if (!_hasPhase1Data) {
+          _processingBloc.add(SessionActivated(sessionId: newSession.id));
         }
+      }
+
+      if (_hasPhase1Data &&
+          !phase2Triggered &&
+          newSession.status == ProcessingStatus.patientExtracted) {
+        phase2Triggered = true;
+        _processingBloc.add(SessionActivated(sessionId: newSession.id));
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _processingBloc.add(
+            ProcessRemainingResources(sessionId: newSession.id),
+          );
+        });
       }
 
       _handleProcessingStateChange(
@@ -163,6 +199,7 @@ class HandoverService {
   }
 
   bool _step1Notified = false;
+  bool _hasPhase1Data = false;
 
   void _handleProcessingStateChange(
     String sessionId,
@@ -192,7 +229,8 @@ class HandoverService {
     }
 
     if (activeProcessingSession.status == ProcessingStatus.patientExtracted &&
-        !_step1Notified) {
+        !_step1Notified &&
+        !_hasPhase1Data) {
       _step1Notified = true;
       final updated = session.copyWith(
         status: HandoverStatus.complete,

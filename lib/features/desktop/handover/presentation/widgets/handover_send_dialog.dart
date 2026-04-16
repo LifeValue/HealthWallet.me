@@ -18,15 +18,23 @@ class HandoverSendDialog extends StatefulWidget {
   final List<String> filePaths;
   final String? continueLabel;
   final String? sourceSessionId;
+  final Map<String, dynamic>? phase1Data;
 
   const HandoverSendDialog({
     super.key,
     required this.filePaths,
     this.continueLabel,
     this.sourceSessionId,
+    this.phase1Data,
   });
 
-  static void show(BuildContext context, List<String> filePaths, {String? continueLabel, String? sourceSessionId}) {
+  static void show(
+    BuildContext context,
+    List<String> filePaths, {
+    String? continueLabel,
+    String? sourceSessionId,
+    Map<String, dynamic>? phase1Data,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -34,7 +42,12 @@ class HandoverSendDialog extends StatefulWidget {
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Dialog(
           backgroundColor: Colors.transparent,
-          child: HandoverSendDialog(filePaths: filePaths, continueLabel: continueLabel, sourceSessionId: sourceSessionId),
+          child: HandoverSendDialog(
+            filePaths: filePaths,
+            continueLabel: continueLabel,
+            sourceSessionId: sourceSessionId,
+            phase1Data: phase1Data,
+          ),
         ),
       ),
     );
@@ -76,7 +89,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
   Future<void> _startSending() async {
     if (_started) return;
     _started = true;
-    await _senderService.sendHandover(widget.filePaths);
+    await _senderService.sendHandover(widget.filePaths, phase1Data: widget.phase1Data);
   }
 
   @override
