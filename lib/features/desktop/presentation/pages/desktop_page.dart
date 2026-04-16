@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -22,8 +23,8 @@ class DesktopPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => getIt<CommunicationBloc>()
+        BlocProvider.value(
+          value: getIt<CommunicationBloc>()
             ..add(const CommunicationInitialised()),
         ),
         BlocProvider(
@@ -34,8 +35,16 @@ class DesktopPage extends StatelessWidget {
           value: getIt<LwwSyncBloc>(),
         ),
       ],
-      child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
-        builder: (context, commState) {
+      child: BlocListener<CommunicationBloc, DesktopSyncState>(
+        listenWhen: (prev, curr) =>
+            prev.pendingClientAddress == null &&
+            curr.pendingClientAddress != null,
+        listener: (context, state) {
+          debugPrint('[Desktop] Pending dialog triggered for ${state.pendingClientAddress}');
+          _showPendingClientDialog(context, state.pendingClientAddress!);
+        },
+        child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
+          builder: (context, commState) {
           return BlocBuilder<BackupBloc, BackupState>(
             builder: (context, backupState) {
               return BlocBuilder<LwwSyncBloc, LwwSyncState>(
@@ -80,6 +89,41 @@ class DesktopPage extends StatelessWidget {
             },
           );
         },
+      ),
+      ),
+    );
+  }
+
+  void _showPendingClientDialog(BuildContext context, String address) {
+    final commBloc = context.read<CommunicationBloc>();
+    final currentDevice = commBloc.state.connectedDeviceName ?? 'current device';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('New Device Connecting'),
+        content: Text(
+          'A new device ($address) wants to connect.\n\n'
+          'This will disconnect "$currentDevice".\n\n'
+          'Switch to the new device?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              commBloc.add(const CommunicationPendingClientRejected());
+            },
+            child: const Text('Keep Current'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              commBloc.add(const CommunicationPendingClientAccepted());
+            },
+            child: const Text('Switch'),
+          ),
+        ],
       ),
     );
   }

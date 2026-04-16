@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
@@ -33,6 +34,54 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   });
 
   void startNextPendingSession();
+
+  Future<void> onCaptureButtonPressed(
+    CaptureButtonPressed event,
+    Emitter<ProcessingState> emit,
+  ) async {
+    emit(state.copyWith(status: const PipelineStatus.loading()));
+
+    try {
+      final scannedResult = await FlutterDocScanner().getScannedDocumentAsImages(
+        page: event.maxPages,
+      );
+
+      if (scannedResult == null) {
+        emit(state.copyWith(status: const PipelineStatus.initial()));
+        return;
+      }
+
+      final imagePaths = scannedResult.images
+          .where((path) => path.isNotEmpty)
+          .map((path) => path.startsWith('file:///')
+              ? Uri.parse(path).toFilePath()
+              : path)
+          .toList();
+
+      if (imagePaths.isEmpty) {
+        emit(state.copyWith(status: const PipelineStatus.initial()));
+        return;
+      }
+
+      final persistedPaths = <String>[];
+      for (final path in imagePaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          final persisted = await _persistImportedFile(file);
+          persistedPaths.add(persisted);
+        }
+      }
+
+      final sessionPaths = persistedPaths.isNotEmpty ? persistedPaths : imagePaths;
+
+      await createSession(emit,
+          filePaths: sessionPaths, origin: ProcessingOrigin.scan);
+    } catch (e) {
+      emit(state.copyWith(
+        status: PipelineStatus.failure(error: 'Scan failed: $e'),
+      ));
+    }
+  }
 
   Future<void> onDocumentImported(
     DocumentImported event,

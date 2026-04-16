@@ -19,4 +19,11 @@ class CommunicationEvent with _$CommunicationEvent {
   const factory CommunicationEvent.remoteDeviceNameReceived({
     required String name,
   }) = CommunicationRemoteDeviceNameReceived;
+  const factory CommunicationEvent.pendingClientReceived({
+    required String address,
+  }) = CommunicationPendingClientReceived;
+  const factory CommunicationEvent.pendingClientAccepted() =
+      CommunicationPendingClientAccepted;
+  const factory CommunicationEvent.pendingClientRejected() =
+      CommunicationPendingClientRejected;
 }

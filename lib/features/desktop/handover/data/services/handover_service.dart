@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import 'package:health_wallet/features/desktop/communication/data/services/chunk_transfer_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
@@ -134,14 +135,23 @@ class HandoverService {
       origin: ProcessingOrigin.handover,
     ));
 
+    var sessionActivated = false;
+
     _processingBlocSub?.cancel();
     _processingBlocSub = _processingBloc.stream.listen((processingState) {
       final newSession = processingState.sessions.firstOrNull;
       if (newSession != null &&
-          newSession.status == ProcessingStatus.pending &&
           newSession.origin == ProcessingOrigin.handover &&
-          processingState.status is SessionCreated) {
-        _processingBloc.add(SessionActivated(sessionId: newSession.id));
+          !sessionActivated) {
+        if (newSession.status == ProcessingStatus.pending &&
+            processingState.status is SessionCreated) {
+          _processingBloc.add(SessionActivated(sessionId: newSession.id));
+          sessionActivated = true;
+
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _processingBloc.add(MappingInitiated(sessionId: newSession.id));
+          });
+        }
       }
 
       _handleProcessingStateChange(
@@ -282,9 +292,9 @@ class HandoverService {
   }
 
   Future<Directory> _getSessionDirectory(String sessionId) async {
-    final home = Platform.environment['HOME'] ?? '';
+    final appDir = await getApplicationDocumentsDirectory();
     final dir = Directory(
-      p.join(home, 'Library', 'Application Support', 'HealthWallet', 'handover', sessionId),
+      p.join(appDir.path, 'HealthWallet', 'handover', sessionId),
     );
     if (!await dir.exists()) {
       await dir.create(recursive: true);
@@ -294,9 +304,9 @@ class HandoverService {
 
   Future<void> _cleanupSessionDirectory(String sessionId) async {
     try {
-      final home = Platform.environment['HOME'] ?? '';
+      final appDir = await getApplicationDocumentsDirectory();
       final dir = Directory(
-        p.join(home, 'Library', 'Application Support', 'HealthWallet', 'handover', sessionId),
+        p.join(appDir.path, 'HealthWallet', 'handover', sessionId),
       );
       if (await dir.exists()) {
         await dir.delete(recursive: true);

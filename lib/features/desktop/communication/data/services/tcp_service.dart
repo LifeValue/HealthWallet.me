@@ -67,6 +67,7 @@ class TcpService {
   final _messageController = StreamController<TcpMessage>.broadcast();
   final _connectionStateController =
       StreamController<ConnectionState>.broadcast();
+  final _pendingClientController = StreamController<String>.broadcast();
 
   ConnectionState _state = ConnectionState.disconnected;
   Uint8List _buffer = Uint8List(0);
@@ -75,6 +76,7 @@ class TcpService {
   Stream<TcpMessage> get messages => _messageController.stream;
   Stream<ConnectionState> get connectionState =>
       _connectionStateController.stream;
+  Stream<String> get pendingClients => _pendingClientController.stream;
   ConnectionState get currentState => _state;
   bool get isConnected => _state == ConnectionState.connected;
 
@@ -103,6 +105,9 @@ class TcpService {
         } else if (type == 'sendPort') {
           _isolateSendPort = message['sendPort'] as SendPort;
         } else if (type == 'clientConnected') {
+        } else if (type == 'newClientPending') {
+          final address = message['address'] as String? ?? 'unknown';
+          _pendingClientController.add(address);
         } else if (type == 'data') {
           final data = Uint8List.fromList(
             (message['bytes'] as List).cast<int>(),
@@ -144,19 +149,12 @@ class TcpService {
     config.mainPort.send({'type': 'listening', 'port': server.port, 'ip': ip});
 
     Socket? clientSocket;
+    Socket? pendingSocket;
+    var pendingIsActive = false;
+    final pendingBuffer = <List<int>>[];
 
-    server.listen((client) {
-      String address;
-      try {
-        address = client.remoteAddress.address;
-      } catch (_) {
-        address = 'unknown';
-      }
-      config.mainPort.send({'type': 'clientConnected', 'address': address});
-
-      clientSocket?.destroy();
+    void setupClient(Socket client) {
       clientSocket = client;
-
       client.listen(
         (data) {
           config.mainPort.send({'type': 'data', 'bytes': data});
@@ -176,24 +174,103 @@ class TcpService {
           clientSocket = null;
         },
       );
+    }
+
+    server.listen((client) {
+      String address;
+      try {
+        address = client.remoteAddress.address;
+      } catch (_) {
+        address = 'unknown';
+      }
+
+      if (clientSocket == null) {
+        config.mainPort.send({'type': 'clientConnected', 'address': address});
+        setupClient(client);
+        return;
+      }
+
+      pendingSocket?.destroy();
+      pendingSocket = client;
+      pendingIsActive = true;
+      pendingBuffer.clear();
+
+      client.listen(
+        (data) {
+          if (pendingIsActive) {
+            pendingBuffer.add(data);
+          } else {
+            config.mainPort.send({'type': 'data', 'bytes': data});
+          }
+        },
+        onError: (_) {
+          if (pendingSocket == client) {
+            pendingSocket = null;
+            pendingIsActive = false;
+            pendingBuffer.clear();
+          }
+        },
+        onDone: () {
+          if (pendingSocket == client) {
+            pendingSocket = null;
+            pendingIsActive = false;
+            pendingBuffer.clear();
+          }
+        },
+      );
+
+      config.mainPort.send({
+        'type': 'newClientPending',
+        'address': address,
+      });
     });
 
     commandPort.listen((message) {
-      if (message is Map && message['type'] == 'send') {
-        final bytes = Uint8List.fromList(
-          (message['bytes'] as List).cast<int>(),
-        );
-        try {
-          clientSocket?.add(bytes);
-        } catch (_) {
-          clientSocket?.destroy();
-          clientSocket = null;
+      if (message is Map) {
+        final type = message['type'] as String;
+        if (type == 'send') {
+          final bytes = Uint8List.fromList(
+            (message['bytes'] as List).cast<int>(),
+          );
+          try {
+            clientSocket?.add(bytes);
+          } catch (_) {
+            clientSocket?.destroy();
+            clientSocket = null;
+            config.mainPort.send({
+              'type': 'clientDisconnected',
+              'reason': 'write_failed',
+            });
+          }
+        } else if (type == 'acceptPending') {
+          final old = clientSocket;
+          clientSocket = pendingSocket;
+          pendingSocket = null;
+          pendingIsActive = false;
+          old?.destroy();
+
           config.mainPort.send({
             'type': 'clientDisconnected',
-            'reason': 'write_failed',
+            'reason': 'replaced',
           });
+
+          for (final data in pendingBuffer) {
+            config.mainPort.send({'type': 'data', 'bytes': data});
+          }
+          pendingBuffer.clear();
+
+          config.mainPort.send({
+            'type': 'clientConnected',
+            'address': 'pending-accepted',
+          });
+        } else if (type == 'rejectPending') {
+          pendingSocket?.destroy();
+          pendingSocket = null;
+          pendingIsActive = false;
+          pendingBuffer.clear();
         }
       } else if (message == 'stop') {
+        pendingSocket?.destroy();
         clientSocket?.destroy();
         server.close();
         Isolate.exit();
@@ -234,22 +311,43 @@ class TcpService {
     if (interfaces.isEmpty) return '127.0.0.1';
 
     final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
-    final lanPrefixes = ['en', 'eth', 'wlan'];
+    final virtualKeywords = [
+      'vethernet', 'vmware', 'virtualbox', 'docker', 'hyper-v',
+    ];
 
     bool isVpn(String name) =>
         vpnPrefixes.any((p) => name.toLowerCase().startsWith(p));
-    bool isLan(String name) =>
-        lanPrefixes.any((p) => name.toLowerCase().startsWith(p));
+    bool isVirtual(String name) =>
+        virtualKeywords.any((k) => name.toLowerCase().contains(k));
+    bool isUsable(NetworkInterface iface) =>
+        !isVpn(iface.name) && !isVirtual(iface.name) && iface.addresses.isNotEmpty;
+    bool isWifi(String name) {
+      final lower = name.toLowerCase();
+      return lower.startsWith('en') ||
+          lower.startsWith('wlan') ||
+          lower.startsWith('wi-fi');
+    }
+    bool isEthernet(String name) {
+      final lower = name.toLowerCase();
+      return lower.startsWith('eth');
+    }
 
     for (final iface in interfaces) {
-      if (isLan(iface.name) && iface.addresses.isNotEmpty) {
+      if (isWifi(iface.name) && isUsable(iface)) {
         final addr = iface.addresses.first.address;
         if (!addr.startsWith('169.254.')) return addr;
       }
     }
 
     for (final iface in interfaces) {
-      if (!isVpn(iface.name) && iface.addresses.isNotEmpty) {
+      if (isEthernet(iface.name) && isUsable(iface)) {
+        final addr = iface.addresses.first.address;
+        if (!addr.startsWith('169.254.')) return addr;
+      }
+    }
+
+    for (final iface in interfaces) {
+      if (isUsable(iface)) {
         return iface.addresses.first.address;
       }
     }
@@ -500,6 +598,14 @@ class TcpService {
     _updateState(ConnectionState.disconnected);
   }
 
+  void acceptPendingClient() {
+    _isolateSendPort?.send({'type': 'acceptPending'});
+  }
+
+  void rejectPendingClient() {
+    _isolateSendPort?.send({'type': 'rejectPending'});
+  }
+
   Future<void> disconnect() async {
     try {
       await sendMessage(
@@ -513,5 +619,6 @@ class TcpService {
     stopServer();
     _messageController.close();
     _connectionStateController.close();
+    _pendingClientController.close();
   }
 }

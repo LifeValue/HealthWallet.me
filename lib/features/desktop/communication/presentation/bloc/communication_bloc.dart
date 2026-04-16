@@ -29,6 +29,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   final DiscoveryService _discoveryService;
 
   StreamSubscription? _connectionSub;
+  StreamSubscription? _pendingClientSub;
   StreamSubscription? _mpcStateSub;
   MpcTransport? _mpcTransport;
 
@@ -52,6 +53,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     on<CommunicationManualDisconnect>(_onManualDisconnect);
     on<CommunicationConnectionFailed>(_onConnectionFailed);
     on<CommunicationRemoteDeviceNameReceived>(_onRemoteDeviceName);
+    on<CommunicationPendingClientReceived>(_onPendingClient);
+    on<CommunicationPendingClientAccepted>(_onPendingAccepted);
+    on<CommunicationPendingClientRejected>(_onPendingRejected);
 
     _listenToTcp();
     _initMpcIfAvailable();
@@ -69,6 +73,10 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         case ConnectionState.connecting:
           break;
       }
+    });
+
+    _pendingClientSub = _tcpService.pendingClients.listen((address) {
+      add(CommunicationPendingClientReceived(address: address));
     });
 
     _tcpService.messages.listen((message) {
@@ -393,17 +401,31 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     if (interfaces.isEmpty) return (ip: '127.0.0.1', vpnDetected: false);
 
     final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
-    final lanPrefixes = ['en', 'eth', 'wlan', 'Wi-Fi', 'Ethernet'];
+    final virtualKeywords = [
+      'vethernet', 'vmware', 'virtualbox', 'docker', 'hyper-v',
+    ];
 
-    bool isVpnInterface(String name) =>
+    bool isVpn(String name) =>
         vpnPrefixes.any((p) => name.toLowerCase().startsWith(p));
-    bool isLanInterface(String name) =>
-        lanPrefixes.any((p) => name.toLowerCase().startsWith(p.toLowerCase()));
+    bool isVirtual(String name) =>
+        virtualKeywords.any((k) => name.toLowerCase().contains(k));
+    bool isUsable(NetworkInterface iface) =>
+        !isVpn(iface.name) && !isVirtual(iface.name) && iface.addresses.isNotEmpty;
+    bool isWifi(String name) {
+      final lower = name.toLowerCase();
+      return lower.startsWith('en') ||
+          lower.startsWith('wlan') ||
+          lower.startsWith('wi-fi');
+    }
+    bool isEthernet(String name) {
+      final lower = name.toLowerCase();
+      return lower.startsWith('eth');
+    }
 
-    final hasVpn = interfaces.any((i) => isVpnInterface(i.name));
+    final hasVpn = interfaces.any((i) => isVpn(i.name));
 
     for (final iface in interfaces) {
-      if (isLanInterface(iface.name) && iface.addresses.isNotEmpty) {
+      if (isWifi(iface.name) && isUsable(iface)) {
         final addr = iface.addresses.first.address;
         if (!addr.startsWith('169.254.')) {
           return (ip: addr, vpnDetected: hasVpn);
@@ -412,7 +434,16 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     }
 
     for (final iface in interfaces) {
-      if (!isVpnInterface(iface.name) && iface.addresses.isNotEmpty) {
+      if (isEthernet(iface.name) && isUsable(iface)) {
+        final addr = iface.addresses.first.address;
+        if (!addr.startsWith('169.254.')) {
+          return (ip: addr, vpnDetected: hasVpn);
+        }
+      }
+    }
+
+    for (final iface in interfaces) {
+      if (isUsable(iface)) {
         return (ip: iface.addresses.first.address, vpnDetected: hasVpn);
       }
     }
@@ -420,9 +451,36 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     return (ip: interfaces.first.addresses.first.address, vpnDetected: hasVpn);
   }
 
+  void _onPendingClient(
+    CommunicationPendingClientReceived event,
+    Emitter<DesktopSyncState> emit,
+  ) {
+    debugPrint('[Communication] New device pending from ${event.address}');
+    emit(state.copyWith(pendingClientAddress: event.address));
+  }
+
+  void _onPendingAccepted(
+    CommunicationPendingClientAccepted event,
+    Emitter<DesktopSyncState> emit,
+  ) {
+    debugPrint('[Communication] Accepting pending device');
+    _tcpService.acceptPendingClient();
+    emit(state.copyWith(pendingClientAddress: null));
+  }
+
+  void _onPendingRejected(
+    CommunicationPendingClientRejected event,
+    Emitter<DesktopSyncState> emit,
+  ) {
+    debugPrint('[Communication] Rejecting pending device');
+    _tcpService.rejectPendingClient();
+    emit(state.copyWith(pendingClientAddress: null));
+  }
+
   @override
   Future<void> close() {
     _connectionSub?.cancel();
+    _pendingClientSub?.cancel();
     _mpcStateSub?.cancel();
     return super.close();
   }

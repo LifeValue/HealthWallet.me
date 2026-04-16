@@ -15,20 +15,34 @@ class PathResolver {
     return _documentsPath!;
   }
 
+  bool _isAbsolute(String path) {
+    if (path.startsWith('/')) return true;
+    if (path.length >= 3 &&
+        path[1] == ':' &&
+        (path[2] == '\\' || path[2] == '/')) return true;
+    return false;
+  }
+
+  bool _startsWithDocsPath(String path, String docsPath) {
+    final normalized = path.replaceAll('\\', '/');
+    final normalizedDocs = docsPath.replaceAll('\\', '/');
+    return normalized.startsWith(normalizedDocs);
+  }
+
   Future<String> toRelative(String path) async {
     if (path.isEmpty) return path;
-    if (!path.startsWith('/')) return path;
 
     final docsPath = await _getDocumentsPath();
-    final prefix = '$docsPath/';
 
-    if (path.startsWith(prefix)) {
-      return path.substring(prefix.length);
+    if (_startsWithDocsPath(path, docsPath)) {
+      return path.substring(docsPath.length + 1);
     }
 
-    final match = _containerPattern.firstMatch(path);
-    if (match != null) {
-      return path.substring(match.end);
+    if (path.startsWith('/')) {
+      final match = _containerPattern.firstMatch(path);
+      if (match != null) {
+        return path.substring(match.end);
+      }
     }
 
     return path;
@@ -37,9 +51,10 @@ class PathResolver {
   Future<String> toAbsolute(String path) async {
     if (path.isEmpty) return path;
 
-    if (path.startsWith('/')) {
-      final docsPath = await _getDocumentsPath();
-      if (path.startsWith(docsPath)) return path;
+    final docsPath = await _getDocumentsPath();
+
+    if (_isAbsolute(path)) {
+      if (_startsWithDocsPath(path, docsPath)) return path;
 
       final match = _containerPattern.firstMatch(path);
       if (match != null) {
@@ -48,7 +63,6 @@ class PathResolver {
       return path;
     }
 
-    final docsPath = await _getDocumentsPath();
     return '$docsPath/$path';
   }
 

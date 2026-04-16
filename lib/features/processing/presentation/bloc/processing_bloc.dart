@@ -84,6 +84,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._prefs,
   ) : super(const ProcessingState()) {
     on<ProcessingInitialised>(onProcessingInitialised);
+    on<CaptureButtonPressed>(onCaptureButtonPressed);
     on<DocumentImported>(onDocumentImported);
     on<SessionChangedProgress>(onSessionChangedProgress);
     on<SessionCleared>(onSessionCleared);
