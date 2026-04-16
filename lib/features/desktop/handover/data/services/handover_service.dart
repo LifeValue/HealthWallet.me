@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -95,8 +96,12 @@ class HandoverService {
     if (session == null) return;
 
     try {
-      final directory = await _getSessionDirectory(sessionId);
-      final filePath = p.join(directory.path, fileName);
+      final importsDir = await _getImportsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final ext = p.extension(fileName);
+      final baseName = p.basenameWithoutExtension(fileName);
+      final persistedName = '${baseName}_$timestamp$ext';
+      final filePath = p.join(importsDir.path, persistedName);
       final fileBytes = base64Decode(data);
       await File(filePath).writeAsBytes(fileBytes);
 
@@ -133,6 +138,7 @@ class HandoverService {
     _step1Notified = false;
 
     final filePaths = _receivedFiles[sessionId]!;
+    final sessionCountBefore = _processingBloc.state.sessions.length;
     final phase1 = _phase1Data[sessionId];
     _hasPhase1Data = phase1 != null && phase1['patient'] != null;
 
@@ -164,6 +170,7 @@ class HandoverService {
 
     var sessionActivated = false;
     var phase2Triggered = false;
+    var mappingTriggered = false;
 
     _processingBlocSub?.cancel();
     _processingBlocSub = _processingBloc.stream.listen((processingState) {
@@ -177,6 +184,17 @@ class HandoverService {
         if (!_hasPhase1Data) {
           _processingBloc.add(SessionActivated(sessionId: newSession.id));
         }
+      }
+
+      if (!mappingTriggered &&
+          sessionActivated &&
+          !_hasPhase1Data &&
+          processingState.sessions.length > sessionCountBefore &&
+          newSession.status == ProcessingStatus.pending) {
+        mappingTriggered = true;
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _processingBloc.add(MappingInitiated(sessionId: newSession.id));
+        });
       }
 
       if (_hasPhase1Data &&
@@ -304,8 +322,6 @@ class HandoverService {
       _processingBlocSub = null;
 
       onProcessingComplete(sessionId);
-
-      await _cleanupSessionDirectory(sessionId);
     } catch (e) {
       _updateSessionError(sessionId, e.toString());
     }
@@ -330,27 +346,13 @@ class HandoverService {
     });
   }
 
-  Future<Directory> _getSessionDirectory(String sessionId) async {
+  Future<Directory> _getImportsDirectory() async {
     final appDir = await getApplicationDocumentsDirectory();
-    final dir = Directory(
-      p.join(appDir.path, 'HealthWallet', 'handover', sessionId),
-    );
+    final dir = Directory(p.join(appDir.path, 'imports'));
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
     return dir;
-  }
-
-  Future<void> _cleanupSessionDirectory(String sessionId) async {
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final dir = Directory(
-        p.join(appDir.path, 'HealthWallet', 'handover', sessionId),
-      );
-      if (await dir.exists()) {
-        await dir.delete(recursive: true);
-      }
-    } catch (_) {}
   }
 
   Future<void> resendPendingResults() async {

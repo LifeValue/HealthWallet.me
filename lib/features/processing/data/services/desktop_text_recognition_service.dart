@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:health_wallet/features/processing/data/data_source/platform/macos_ocr_channel.dart';
+import 'package:health_wallet/features/processing/data/data_source/platform/windows_ocr_channel.dart';
 import 'package:health_wallet/features/processing/data/services/pdf_conversion_mixin.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,11 +11,16 @@ class DesktopTextRecognitionService
     implements TextRecognitionService {
   final MacOsOcrChannel? _macOsOcr =
       Platform.isMacOS ? MacOsOcrChannel() : null;
+  final WindowsOcrChannel? _windowsOcr =
+      Platform.isWindows ? WindowsOcrChannel() : null;
 
   @override
   Future<String> recognizeTextFromImage(String imagePath) async {
     if (_macOsOcr != null) {
       return _macOsOcr.recognizeText(imagePath);
+    }
+    if (_windowsOcr != null) {
+      return _windowsOcr.recognizeText(imagePath);
     }
     return '';
   }

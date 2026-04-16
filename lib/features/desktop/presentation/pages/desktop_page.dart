@@ -1,5 +1,4 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -40,7 +39,6 @@ class DesktopPage extends StatelessWidget {
             prev.pendingClientAddress == null &&
             curr.pendingClientAddress != null,
         listener: (context, state) {
-          debugPrint('[Desktop] Pending dialog triggered for ${state.pendingClientAddress}');
           _showPendingClientDialog(context, state.pendingClientAddress!);
         },
         child: BlocBuilder<CommunicationBloc, DesktopSyncState>(

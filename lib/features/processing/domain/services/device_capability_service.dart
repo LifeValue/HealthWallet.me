@@ -52,7 +52,7 @@ class DeviceCapabilityService {
       } else {
         contextSize = 512;
       }
-    } else if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+    } else if (Platform.isMacOS) {
       if (ramMB >= 16384) {
         contextSize = 4096;
         gpuLayers = withVision ? 99 : 33;
@@ -62,6 +62,20 @@ class DeviceCapabilityService {
       } else {
         contextSize = 2048;
         gpuLayers = withVision ? 4 : 0;
+      }
+    } else if (Platform.isWindows || Platform.isLinux) {
+      if (ramMB >= 32768) {
+        contextSize = 4096;
+        gpuLayers = withVision ? 99 : 33;
+      } else if (ramMB >= 16384) {
+        contextSize = 4096;
+        gpuLayers = withVision ? 33 : 16;
+      } else if (ramMB >= 8192) {
+        contextSize = 2048;
+        gpuLayers = withVision ? 8 : 4;
+      } else {
+        contextSize = 2048;
+        gpuLayers = 0;
       }
     } else {
       if (ramMB >= 12288) {

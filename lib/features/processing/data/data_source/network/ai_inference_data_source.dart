@@ -113,6 +113,8 @@ class AiInferenceDataSourceImpl
         }
       } else if (Platform.isMacOS) {
         _deviceRamMB = await _readMacOsRamMB();
+      } else if (Platform.isWindows) {
+        _deviceRamMB = await _readWindowsRamMB();
       } else if (Platform.isLinux) {
         _deviceRamMB = await _readLinuxRamMB();
       }
@@ -141,6 +143,20 @@ class AiInferenceDataSourceImpl
     return null;
   }
 
+  static Future<int?> _readWindowsRamMB() async {
+    try {
+      final result = await Process.run('powershell', [
+        '-NoProfile', '-Command',
+        '(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory',
+      ]);
+      if (result.exitCode == 0) {
+        final bytes = int.tryParse(result.stdout.toString().trim());
+        if (bytes != null) return bytes ~/ (1024 * 1024);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   static Future<int?> _readLinuxRamMB() async {
     try {
       final memInfo = await File('/proc/meminfo').readAsString();
@@ -151,7 +167,20 @@ class AiInferenceDataSourceImpl
   }
 
   static Future<int> _getAvailableRamMB() async {
-    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    if (Platform.isWindows) {
+      try {
+        final result = await Process.run('powershell', [
+          '-NoProfile', '-Command',
+          '(Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory',
+        ]);
+        if (result.exitCode == 0) {
+          final kb = int.tryParse(result.stdout.toString().trim());
+          if (kb != null) return kb ~/ 1024;
+        }
+      } catch (_) {}
+      return -1;
+    }
+    if (Platform.isMacOS || Platform.isLinux) {
       return -1;
     }
     if (Platform.isAndroid) {
@@ -451,7 +480,8 @@ class AiInferenceDataSourceImpl
     ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] config: ctx=$ctx, gpu_layers=${config.gpuLayers}, threads=${config.threads}, ram=${ramMB}MB, available=${availableMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, required~${requiredMB}MB, platform=${Platform.operatingSystem}');
 
-    if (availableMB >= 0 && availableMB < requiredMB) {
+    final isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+    if (availableMB >= 0 && availableMB < requiredMB && !isDesktop) {
       ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] ABORT: only ${availableMB}MB available, need ~${requiredMB}MB');
       throw Exception(
@@ -539,7 +569,8 @@ class AiInferenceDataSourceImpl
         ? await _getAvailableRamMBForIos()
         : await _getAvailableRamMB();
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
-    final canProceed = (availableMB < 0) || availableMB >= requiredMB;
+    final isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+    final canProceed = (availableMB < 0) || availableMB >= requiredMB || isDesktop;
     ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] health check: available=${availableMB}MB, required~=${requiredMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, canProceed=$canProceed');
     return (
