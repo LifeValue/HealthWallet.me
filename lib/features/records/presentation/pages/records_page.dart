@@ -11,6 +11,7 @@ import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -245,23 +246,47 @@ class _RecordsViewState extends State<RecordsView> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<HomeBloc, HomeState>(
-          listener: (context, state) {
-            final selectedSourceId =
-                state.selectedSource == 'All' ? null : state.selectedSource;
-            final patientSourceIds =
-                _resolvePatientSourceIds(context, state.selectedSource);
+    return BlocProvider.value(
+      value: getIt<LwwSyncBloc>(),
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<HomeBloc, HomeState>(
+            listener: (context, state) {
+              final selectedSourceId =
+                  state.selectedSource == 'All' ? null : state.selectedSource;
+              final patientSourceIds =
+                  _resolvePatientSourceIds(context, state.selectedSource);
 
-            context.read<RecordsBloc>().add(RecordsSourceChanged(
-                selectedSourceId,
-                sourceIds: patientSourceIds));
-          },
-        ),
-        BlocListener<SyncBloc, SyncState>(
-          listener: (context, state) {
-            if (state.hasDemoData || state.hasSyncedData) {
+              context.read<RecordsBloc>().add(RecordsSourceChanged(
+                  selectedSourceId,
+                  sourceIds: patientSourceIds));
+            },
+          ),
+          BlocListener<SyncBloc, SyncState>(
+            listener: (context, state) {
+              if (state.hasDemoData || state.hasSyncedData) {
+                context.read<RecordsBloc>().add(const RecordsInitialised());
+
+                final homeState = context.read<HomeBloc>().state;
+                final selectedSourceId = homeState.selectedSource == 'All'
+                    ? null
+                    : homeState.selectedSource;
+                final patientSourceIds =
+                    _resolvePatientSourceIds(context, homeState.selectedSource);
+
+                context.read<RecordsBloc>().add(RecordsSourceChanged(
+                    selectedSourceId,
+                    sourceIds: patientSourceIds));
+              }
+            },
+          ),
+          BlocListener<LwwSyncBloc, LwwSyncState>(
+            listenWhen: (previous, current) =>
+                current.receivedRows > previous.receivedRows ||
+                (previous.syncStatus == LwwSyncStatus.syncing &&
+                    current.syncStatus == LwwSyncStatus.idle &&
+                    current.receivedRows > 0),
+            listener: (context, state) {
               context.read<RecordsBloc>().add(const RecordsInitialised());
 
               final homeState = context.read<HomeBloc>().state;
@@ -274,11 +299,10 @@ class _RecordsViewState extends State<RecordsView> {
               context.read<RecordsBloc>().add(RecordsSourceChanged(
                   selectedSourceId,
                   sourceIds: patientSourceIds));
-            }
-          },
-        ),
-      ],
-      child: BlocBuilder<RecordsBloc, RecordsState>(
+            },
+          ),
+        ],
+        child: BlocBuilder<RecordsBloc, RecordsState>(
         buildWhen: (previous, current) =>
             previous.isSelectionMode != current.isSelectionMode ||
             previous.selectedResourceIds != current.selectedResourceIds,
@@ -309,6 +333,7 @@ class _RecordsViewState extends State<RecordsView> {
             ),
           );
         },
+      ),
       ),
     );
   }

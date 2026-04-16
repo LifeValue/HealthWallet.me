@@ -9,6 +9,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:collection/collection.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
@@ -217,16 +218,18 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
                 ),
               ),
             if (_isTerminal && _isSent) ...[
-              AppButton(
-                label: widget.continueLabel ?? context.l10n.continueScanning,
-                variant: AppButtonVariant.outlined,
-                height: 36,
-                onPressed: () {
-                  _clearSourceSession();
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-              ),
-              const SizedBox(height: Insets.small),
+              if (!getIt<AppPlatform>().isDesktop) ...[
+                AppButton(
+                  label: widget.continueLabel ?? context.l10n.continueScanning,
+                  variant: AppButtonVariant.outlined,
+                  height: 36,
+                  onPressed: () {
+                    _clearSourceSession();
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                ),
+                const SizedBox(height: Insets.small),
+              ],
               AppButton(
                 label: context.l10n.goToRecords,
                 variant: AppButtonVariant.primary,

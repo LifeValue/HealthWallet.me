@@ -47,52 +47,65 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<PatientBloc, PatientState>(
-          listenWhen: (previous, current) {
-            final selectionChanged =
-                previous.selectedPatientId != current.selectedPatientId;
+    return BlocProvider.value(
+      value: getIt<LwwSyncBloc>(),
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<PatientBloc, PatientState>(
+            listenWhen: (previous, current) {
+              final selectionChanged =
+                  previous.selectedPatientId != current.selectedPatientId;
 
-            final selectedId = current.selectedPatientId;
-            if (selectedId != null) {
-              final previousPatient = previous.patients
-                  .where((p) => p.id == selectedId)
-                  .firstOrNull;
-              final currentPatient =
-                  current.patients.where((p) => p.id == selectedId).firstOrNull;
-              final dataChanged =
-                  previousPatient?.displayTitle != currentPatient?.displayTitle;
+              final selectedId = current.selectedPatientId;
+              if (selectedId != null) {
+                final previousPatient = previous.patients
+                    .where((p) => p.id == selectedId)
+                    .firstOrNull;
+                final currentPatient =
+                    current.patients.where((p) => p.id == selectedId).firstOrNull;
+                final dataChanged =
+                    previousPatient?.displayTitle != currentPatient?.displayTitle;
 
-              return selectionChanged || dataChanged;
-            }
+                return selectionChanged || dataChanged;
+              }
 
-            return selectionChanged;
-          },
-          listener: (context, patientState) {
-            PatientSourceUtils.handlePatientChange(context, patientState);
-            context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
-          },
-        ),
-        BlocListener<SyncBloc, SyncState>(
-          listenWhen: (previous, current) =>
-              (previous.hasDemoData != current.hasDemoData) ||
-              (previous.hasSyncedData != current.hasSyncedData),
-          listener: (context, state) {
-            if (state.hasDemoData || state.hasSyncedData) {
+              return selectionChanged;
+            },
+            listener: (context, patientState) {
+              PatientSourceUtils.handlePatientChange(context, patientState);
               context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
-            }
-          },
-        ),
-        BlocListener<UserBloc, UserState>(
-          listenWhen: (previous, current) =>
-              previous.regionPreset != current.regionPreset,
-          listener: (context, state) {
-            context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
-          },
-        ),
-      ],
-      child: HomeView(pageController: pageController),
+            },
+          ),
+          BlocListener<SyncBloc, SyncState>(
+            listenWhen: (previous, current) =>
+                (previous.hasDemoData != current.hasDemoData) ||
+                (previous.hasSyncedData != current.hasSyncedData),
+            listener: (context, state) {
+              if (state.hasDemoData || state.hasSyncedData) {
+                context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+              }
+            },
+          ),
+          BlocListener<LwwSyncBloc, LwwSyncState>(
+            listenWhen: (previous, current) =>
+                current.receivedRows > previous.receivedRows ||
+                (previous.syncStatus == LwwSyncStatus.syncing &&
+                    current.syncStatus == LwwSyncStatus.idle &&
+                    current.receivedRows > 0),
+            listener: (context, state) {
+              context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+            },
+          ),
+          BlocListener<UserBloc, UserState>(
+            listenWhen: (previous, current) =>
+                previous.regionPreset != current.regionPreset,
+            listener: (context, state) {
+              context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+            },
+          ),
+        ],
+        child: HomeView(pageController: pageController),
+      ),
     );
   }
 }
@@ -262,7 +275,7 @@ class HomeViewState extends State<HomeView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
             child: SizedBox(
-              height: 52,
+              height: 60,
               child: Stack(
                 children: [
                   Align(
@@ -507,43 +520,54 @@ class _ConnectionMiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: getIt<CommunicationBloc>(),
-      child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
-        builder: (context, commState) {
-          final isConnected =
-              commState.connectionStatus == ConnectionStatus.connected;
-          final isDiscovering =
-              commState.connectionStatus == ConnectionStatus.discovering;
+    try {
+      return BlocProvider.value(
+        value: getIt<CommunicationBloc>(),
+        child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
+          builder: (context, commState) {
+            final isConnected =
+                commState.connectionStatus == ConnectionStatus.connected;
+            final isDiscovering =
+                commState.connectionStatus == ConnectionStatus.discovering;
 
-          final Color color;
-          final String subtitle;
+            final Color color;
+            final String subtitle;
 
-          if (isConnected) {
-            color = AppColors.success;
-            subtitle = commState.connectedDeviceName ?? 'Connected';
-          } else if (isDiscovering) {
-            color = AppColors.warning;
-            subtitle = 'Connecting...';
-          } else {
-            color = commState.pairedDevice != null
-                ? AppColors.error
-                : AppColors.textSecondary;
-            subtitle = commState.pairedDevice != null
-                ? 'Disconnected'
-                : 'Not paired';
-          }
+            if (isConnected) {
+              color = AppColors.success;
+              subtitle = commState.connectedDeviceName ?? 'Connected';
+            } else if (isDiscovering) {
+              color = AppColors.warning;
+              subtitle = 'Connecting...';
+            } else {
+              color = commState.pairedDevice != null
+                  ? AppColors.error
+                  : AppColors.error;
+              subtitle = commState.pairedDevice != null
+                  ? 'Disconnected'
+                  : 'Not paired';
+            }
 
-          return _MiniStatusCard(
-            icon: isConnected ? Icons.link : Icons.link_off,
-            label: 'Connection',
-            subtitle: subtitle,
-            color: color,
-            onTap: () => ConnectionDialog.show(context),
-          );
-        },
-      ),
-    );
+            return _MiniStatusCard(
+              icon: isConnected ? Icons.link : Icons.link_off,
+              label: 'Connection',
+              subtitle: subtitle,
+              color: color,
+              onTap: () => ConnectionDialog.show(context),
+            );
+          },
+        ),
+      );
+    } catch (e) {
+      debugPrint('[Connection] MiniCard error: $e');
+      return _MiniStatusCard(
+        icon: Icons.link_off,
+        label: 'Connection',
+        subtitle: 'Not paired',
+        color: AppColors.error,
+        onTap: () => ConnectionDialog.show(context),
+      );
+    }
   }
 }
 
@@ -576,6 +600,7 @@ class _SyncMiniCard extends StatelessWidget {
             label: 'Sync',
             subtitle: subtitle,
             color: color,
+            isLoading: isSyncing,
             onTap: () => _showSyncDialog(context),
           );
         },
@@ -619,6 +644,7 @@ class _BackupMiniCard extends StatelessWidget {
             onTap: () => _showBackupDialog(context),
             subtitle: subtitle,
             color: color,
+            isLoading: backupState.isBackingUp,
           );
         },
       ),
@@ -710,6 +736,7 @@ class _MiniStatusCard extends StatelessWidget {
   final String label;
   final String subtitle;
   final Color color;
+  final bool isLoading;
   final VoidCallback? onTap;
 
   const _MiniStatusCard({
@@ -717,6 +744,7 @@ class _MiniStatusCard extends StatelessWidget {
     required this.label,
     required this.subtitle,
     required this.color,
+    this.isLoading = false,
     this.onTap,
   });
 
@@ -733,7 +761,17 @@ class _MiniStatusCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 15, color: color),
+            if (isLoading)
+              SizedBox(
+                width: 15,
+                height: 15,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: color,
+                ),
+              )
+            else
+              Icon(icon, size: 15, color: color),
             const SizedBox(width: 6),
             Expanded(
               child: Column(
