@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -19,6 +21,7 @@ class ProcessingMappingSection extends StatelessWidget {
   final Future<bool> Function() checkModelExistence;
   final VoidCallback onRetryStep2;
   final VoidCallback onCancel;
+  final VoidCallback? onProcessOnDesktop;
 
   const ProcessingMappingSection({
     required this.state,
@@ -29,33 +32,60 @@ class ProcessingMappingSection extends StatelessWidget {
     required this.onRetryStep2,
     required this.onCancel,
     required this.checkModelExistence,
+    this.onProcessOnDesktop,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget content;
+
     if (state.status is CapacityFailure) {
-      return _buildCapacityFailure(context);
-    }
-
-    if (state.status is Failure) {
+      content = _buildCapacityFailure(context);
+    } else if (state.status is Failure) {
       final error = (state.status as Failure).error;
-      return _buildFailure(context, error);
+      content = _buildFailure(context, error);
+    } else if (displayedSession.status == ProcessingStatus.cancelled) {
+      content = _buildCancelled(context);
+    } else if (displayedSession.isProcessing) {
+      content = _buildProcessing(context);
+    } else if (displayedSession.status == ProcessingStatus.pending) {
+      content = _QueuedMessage(checkModelExistence: checkModelExistence);
+    } else {
+      content = const SizedBox.shrink();
     }
 
-    if (displayedSession.status == ProcessingStatus.cancelled) {
-      return _buildCancelled(context);
-    }
+    final showDesktopLink = !getIt<AppPlatform>().isDesktop &&
+        displayedSession.status != ProcessingStatus.draft &&
+        displayedSession.status != ProcessingStatus.patientExtracted &&
+        onProcessOnDesktop != null;
 
-    if (displayedSession.isProcessing) {
-      return _buildProcessing(context);
-    }
+    if (!showDesktopLink) return content;
 
-    if (displayedSession.status == ProcessingStatus.pending) {
-      return _QueuedMessage(checkModelExistence: checkModelExistence);
-    }
-
-    return const SizedBox.shrink();
+    return Column(
+      children: [
+        content,
+        const SizedBox(height: Insets.medium),
+        GestureDetector(
+          onTap: onProcessOnDesktop,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.computer,
+                  size: 20, color: context.colorScheme.primary),
+              const SizedBox(width: Insets.small),
+              Text(
+                'Process on Desktop',
+                style: AppTextStyle.bodySmall.copyWith(
+                  color: context.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildFailure(BuildContext context, String error) {

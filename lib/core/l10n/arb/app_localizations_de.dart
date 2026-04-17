@@ -498,6 +498,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get continueImporting => 'Continue Importing';
 
   @override
+  String get noAiModelOnDesktop =>
+      'Kein KI-Modell auf dem Desktop. Bitte laden Sie zuerst das KI-Modell auf Ihrer Desktop-App herunter.';
+
+  @override
   String get syncMedicalRecords =>
       'Medizinische Aufzeichnungen synchronisieren';
 

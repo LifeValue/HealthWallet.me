@@ -54,7 +54,6 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     MappingInitiated event,
     Emitter<ProcessingState> emit,
   ) async {
-    emit(state.copyWith(status: const PipelineStatus.loading()));
     final session =
         state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
     if (session == null) return;
@@ -63,6 +62,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         session.status == ProcessingStatus.patientExtracted) {
       return;
     }
+    emit(state.copyWith(status: const PipelineStatus.loading()));
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
     );
@@ -125,13 +125,15 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               encounter: StagedEncounter(draft: container as MappingEncounter),
               updateDb: true);
         }
-        emit(state.copyWith(
-          notification: Notification(
-            text: "${finalSession?.origin ?? 'Document'} patient matched",
-            route: ProcessingRoute(sessionId: event.sessionId),
-            time: DateTime.now(),
-          ),
-        ));
+        if (!processingRepository.shouldCancelGeneration) {
+          emit(state.copyWith(
+            notification: Notification(
+              text: "${finalSession?.origin ?? 'Document'} patient matched",
+              route: ProcessingRoute(sessionId: event.sessionId),
+              time: DateTime.now(),
+            ),
+          ));
+        }
         startNextPendingSession();
         return;
       }
@@ -161,13 +163,15 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
             encounter: StagedEncounter(draft: container as MappingEncounter),
             updateDb: true);
       }
-      emit(state.copyWith(
-        notification: Notification(
-          text: "${finalSession?.origin ?? 'Document'} patient info extracted",
-          route: ProcessingRoute(sessionId: event.sessionId),
-          time: DateTime.now(),
-        ),
-      ));
+      if (!processingRepository.shouldCancelGeneration) {
+        emit(state.copyWith(
+          notification: Notification(
+            text: "${finalSession?.origin ?? 'Document'} patient info extracted",
+            route: ProcessingRoute(sessionId: event.sessionId),
+            time: DateTime.now(),
+          ),
+        ));
+      }
 
       startNextPendingSession();
     } on Exception catch (e) {

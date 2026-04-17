@@ -178,6 +178,7 @@
     "processOnDesktop": "Process on Desktop",
     "sendToDesktop": "Send to Desktop",
     "continueImporting": "Continue Importing",
+    "noAiModelOnDesktop": "No AI model on Desktop. Please download the AI model on your desktop app first.",
     "syncMedicalRecords": "Sync Medical records",
     "syncLatestMedicalRecords": "Sync your latest medical records from your healthcare provider using a secure JWT token.",
     "neverSynced": "Never synced",

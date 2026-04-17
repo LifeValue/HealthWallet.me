@@ -990,6 +990,12 @@ abstract class AppLocalizations {
   /// **'Continue Importing'**
   String get continueImporting;
 
+  /// No description provided for @noAiModelOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI model on Desktop. Please download the AI model on your desktop app first.'**
+  String get noAiModelOnDesktop;
+
   /// No description provided for @syncMedicalRecords.
   ///
   /// In en, this message translates to:

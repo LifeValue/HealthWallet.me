@@ -151,6 +151,7 @@
     "processOnDesktop": "Process on Desktop",
     "sendToDesktop": "Send to Desktop",
     "continueImporting": "Continue Importing",
+    "noAiModelOnDesktop": "Kein KI-Modell auf dem Desktop. Bitte laden Sie zuerst das KI-Modell auf Ihrer Desktop-App herunter.",
     "syncMedicalRecords": "Medizinische Aufzeichnungen synchronisieren",
     "syncLatestMedicalRecords": "Synchronisieren Sie Ihre neuesten medizinischen Aufzeichnungen von Ihrem Gesundheitsdienstleister mit einem sicheren JWT-Token.",
     "neverSynced": "Nie synchronisiert",

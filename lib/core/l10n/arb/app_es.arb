@@ -155,6 +155,7 @@
     "processOnDesktop": "Process on Desktop",
     "sendToDesktop": "Send to Desktop",
     "continueImporting": "Continue Importing",
+    "noAiModelOnDesktop": "No hay modelo de IA en el escritorio. Por favor, descargue el modelo de IA en su aplicación de escritorio primero.",
     "syncMedicalRecords": "Sincronizar registros médicos",
     "syncLatestMedicalRecords": "Sincroniza tus últimos registros médicos de tu proveedor de atención médica usando un token JWT seguro.",
     "neverSynced": "Nunca sincronizado",

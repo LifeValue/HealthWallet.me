@@ -489,6 +489,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueImporting => 'Continue Importing';
 
   @override
+  String get noAiModelOnDesktop =>
+      'No AI model on Desktop. Please download the AI model on your desktop app first.';
+
+  @override
   String get syncMedicalRecords => 'Sync Medical records';
 
   @override

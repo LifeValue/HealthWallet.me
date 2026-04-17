@@ -5,10 +5,8 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
-import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
@@ -112,24 +110,10 @@ class SessionList extends StatelessWidget {
                                         !getIt<AppPlatform>().isDesktop)
                                       IconButton(
                                         onPressed: () {
-                                          try {
-                                            final connected = getIt<CommunicationBloc>()
-                                                .state.connectionStatus == ConnectionStatus.connected;
-                                            if (connected) {
-                                              HandoverSendDialog.show(
-                                                context,
-                                                session.filePaths,
-                                                continueLabel: session.origin == ProcessingOrigin.import
-                                                    ? context.l10n.continueImporting
-                                                    : null,
-                                                sourceSessionId: session.id,
-                                              );
-                                            } else {
-                                              DeviceSyncDialog.show(context);
-                                            }
-                                          } catch (_) {
-                                            DeviceSyncDialog.show(context);
-                                          }
+                                          HandoverUtils.initiateHandover(
+                                            context,
+                                            session: session,
+                                          );
                                         },
                                         icon: Icon(
                                           Icons.computer,

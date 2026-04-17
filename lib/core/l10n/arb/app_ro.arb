@@ -183,6 +183,7 @@
     "processOnDesktop": "Process on Desktop",
     "sendToDesktop": "Send to Desktop",
     "continueImporting": "Continue Importing",
+    "noAiModelOnDesktop": "Nu există model AI pe Desktop. Vă rugăm să descărcați modelul AI pe aplicația desktop mai întâi.",
     "syncMedicalRecords": "Sincronizează Înregistrări Medicale",
     "syncLatestMedicalRecords": "Sincronizează cele mai recente înregistrări medicale de la furnizorul tău de servicii de sănătate folosind un token JWT securizat.",
     "neverSynced": "Niciodată sincronizat",

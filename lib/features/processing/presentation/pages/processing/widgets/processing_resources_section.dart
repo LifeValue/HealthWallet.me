@@ -5,16 +5,14 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
-import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/resources_form.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
@@ -297,38 +295,10 @@ class _ScannedBasicButtons extends StatelessWidget {
   }
 
   void _handleProcessOnDesktop(BuildContext context) {
-    try {
-      final connected = getIt<CommunicationBloc>()
-          .state.connectionStatus == ConnectionStatus.connected;
-      if (connected && session.filePaths.isNotEmpty) {
-        Map<String, dynamic>? phase1Data;
-        if (session.status == ProcessingStatus.patientExtracted &&
-            session.patient.hasSelection) {
-          phase1Data = {
-            'patient': stagedPatientToJson(session.patient),
-            if (session.encounter.draft != null)
-              'encounter': stagedEncounterToJson(session.encounter),
-            if (session.diagnosticReport != null)
-              'diagnosticReport':
-                  stagedDiagnosticReportToJson(session.diagnosticReport!),
-          };
-        }
-        HandoverSendDialog.show(
-          context,
-          session.filePaths,
-          continueLabel: session.origin == ProcessingOrigin.import ||
-                  session.origin == ProcessingOrigin.handover
-              ? 'Continue Importing'
-              : null,
-          sourceSessionId: session.id,
-          phase1Data: phase1Data,
-        );
-      } else {
-        DeviceSyncDialog.show(context);
-      }
-    } catch (_) {
-      DeviceSyncDialog.show(context);
-    }
+    HandoverUtils.initiateHandover(
+      context,
+      session: session,
+    );
   }
 
   void _attachToEncounter(BuildContext context) async {

@@ -493,6 +493,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get continueImporting => 'Continue Importing';
 
   @override
+  String get noAiModelOnDesktop =>
+      'Nu există model AI pe Desktop. Vă rugăm să descărcați modelul AI pe aplicația desktop mai întâi.';
+
+  @override
   String get syncMedicalRecords => 'Sincronizează Înregistrări Medicale';
 
   @override

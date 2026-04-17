@@ -493,6 +493,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get continueImporting => 'Continue Importing';
 
   @override
+  String get noAiModelOnDesktop =>
+      'No hay modelo de IA en el escritorio. Por favor, descargue el modelo de IA en su aplicación de escritorio primero.';
+
+  @override
   String get syncMedicalRecords => 'Sincronizar registros médicos';
 
   @override

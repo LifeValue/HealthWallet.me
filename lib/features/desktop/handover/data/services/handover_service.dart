@@ -138,7 +138,6 @@ class HandoverService {
     _step1Notified = false;
 
     final filePaths = _receivedFiles[sessionId]!;
-    final sessionCountBefore = _processingBloc.state.sessions.length;
     final phase1 = _phase1Data[sessionId];
     _hasPhase1Data = phase1 != null && phase1['patient'] != null;
 
@@ -170,7 +169,6 @@ class HandoverService {
 
     var sessionActivated = false;
     var phase2Triggered = false;
-    var mappingTriggered = false;
 
     _processingBlocSub?.cancel();
     _processingBlocSub = _processingBloc.stream.listen((processingState) {
@@ -184,17 +182,6 @@ class HandoverService {
         if (!_hasPhase1Data) {
           _processingBloc.add(SessionActivated(sessionId: newSession.id));
         }
-      }
-
-      if (!mappingTriggered &&
-          sessionActivated &&
-          !_hasPhase1Data &&
-          processingState.sessions.length > sessionCountBefore &&
-          newSession.status == ProcessingStatus.pending) {
-        mappingTriggered = true;
-        Future.delayed(const Duration(milliseconds: 500), () {
-          _processingBloc.add(MappingInitiated(sessionId: newSession.id));
-        });
       }
 
       if (_hasPhase1Data &&

@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -18,6 +19,8 @@ import 'package:health_wallet/features/processing/presentation/pages/processing/
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_resources_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/summary_card.dart';
@@ -186,26 +189,35 @@ class _ProcessingPageState extends State<ProcessingPage> {
         if (displayedSession == null) return;
 
         if (state.status == const PipelineStatus.success()) {
+          try {
+            getIt<LwwSyncBloc>().add(const SyncTriggered());
+          } catch (_) {}
           final sessionToClear = displayedSession;
           final isImport = displayedSession.origin == ProcessingOrigin.import ||
               displayedSession.origin == ProcessingOrigin.handover;
           final scanBloc = context.read<ProcessingBloc>();
           final navController = getIt<PageViewNavigationController>();
           final router = context.router;
+          final isDesktop = getIt<AppPlatform>().isDesktop;
           final dialogResult = await AppSimpleDialog.showConfirmation(
             context: context,
             title: context.l10n.recordsSavedTitle,
             subtitle: context.l10n.whatNextQuestion,
-            confirmText: isImport
-                ? context.l10n.continueImporting
-                : context.l10n.continueScanning,
-            cancelText: context.l10n.goToRecords,
+            confirmText: isDesktop
+                ? context.l10n.goToRecords
+                : isImport
+                    ? context.l10n.continueImporting
+                    : context.l10n.continueScanning,
+            cancelText: isDesktop ? '' : context.l10n.goToRecords,
             barrierDismissible: true,
             onConfirm: () {
+              if (isDesktop) {
+                navController.jumpToPage(1);
+              }
               scanBloc.add(SessionCleared(session: sessionToClear));
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
-            onCancel: () {
+            onCancel: isDesktop ? null : () {
               navController.jumpToPage(1);
               scanBloc.add(SessionCleared(session: sessionToClear));
               Navigator.of(context).popUntil((route) => route.isFirst);
@@ -284,6 +296,12 @@ class _ProcessingPageState extends State<ProcessingPage> {
                         MappingCancelled(sessionId: widget.sessionId),
                       ),
                   checkModelExistence: () => getIt<ProcessingRepository>().checkModelExistence(),
+                  onProcessOnDesktop: () {
+                    HandoverUtils.initiateHandover(
+                      context,
+                      session: displayedSession,
+                    );
+                  },
                 ),
                 ProcessingResourcesSection(
                   state: state,

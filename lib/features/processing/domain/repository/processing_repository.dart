@@ -68,6 +68,8 @@ abstract class ProcessingRepository {
     int? contextSize,
   });
 
+  bool get shouldCancelGeneration;
+
   Future<void> cancelGeneration();
 
   Future<void> waitForStreamCompletion();

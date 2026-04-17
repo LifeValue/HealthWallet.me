@@ -11,6 +11,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:collection/collection.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
@@ -63,16 +64,41 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
   StreamSubscription<HandoverSession>? _subscription;
   HandoverSession? _session;
   bool _started = false;
+  bool _processingCancelled = false;
 
   @override
   void initState() {
     super.initState();
     _subscription = _senderService.sessionUpdates.listen((session) {
       if (mounted) {
+        debugPrint('[Handover] session update: ${session.status}, isSent=$_isSent');
         setState(() => _session = session);
+        if (_isSent && !_processingCancelled) {
+          _processingCancelled = true;
+          _cancelMobileProcessing();
+        }
       }
     });
     _startSending();
+  }
+
+  void _cancelMobileProcessing() {
+    debugPrint('[Handover] _cancelMobileProcessing called, sourceId=${widget.sourceSessionId}');
+    if (widget.sourceSessionId == null) return;
+    try {
+      final processingBloc = getIt<ProcessingBloc>();
+      final session = processingBloc.state.sessions
+          .firstWhereOrNull((s) => s.id == widget.sourceSessionId);
+      debugPrint('[Handover] found session: ${session?.id}, status=${session?.status}, isProcessing=${session?.isProcessing}');
+      if (session != null && session.isProcessing) {
+        debugPrint('[Handover] calling cancelGeneration + disposeModel + MappingCancelled');
+        getIt<ProcessingRepository>().cancelGeneration();
+        getIt<ProcessingRepository>().disposeModel();
+        processingBloc.add(MappingCancelled(sessionId: session.id));
+      }
+    } catch (e) {
+      debugPrint('[Handover] cancel error: $e');
+    }
   }
 
   void _clearSourceSession() {
@@ -108,7 +134,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
       _session?.status == HandoverStatus.complete ||
       _session?.status == HandoverStatus.waitingForResults;
 
-  String get _statusText {
+  String _statusText(BuildContext context) {
     if (_session == null) return 'Preparing...';
 
     switch (_session!.status) {
@@ -119,10 +145,12 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
       case HandoverStatus.complete:
         return 'Complete!';
       case HandoverStatus.error:
-        if (_session!.error != null) {
-          return 'Error: ${_session!.error}';
+        final error = _session!.error ?? '';
+        if (error.contains('Model file not found') ||
+            (error.contains('model') && error.contains('not found'))) {
+          return context.l10n.noAiModelOnDesktop;
         }
-        return 'Error occurred';
+        return error.isNotEmpty ? error : 'Error occurred';
       default:
         return 'Sending...';
     }
@@ -192,14 +220,14 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
             const SizedBox(height: Insets.small),
             if (_session?.status != HandoverStatus.complete)
               Text(
-                _statusText,
+                _statusText(context),
                 style: AppTextStyle.labelSmall.copyWith(
                   color: _session?.status == HandoverStatus.error
                       ? AppColors.error
                       : AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
             const SizedBox(height: Insets.normal),
