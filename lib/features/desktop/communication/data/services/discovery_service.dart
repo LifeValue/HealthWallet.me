@@ -61,6 +61,9 @@ class DiscoveryService {
   Future<DiscoveryResult?> _tryNetworkDiscovery() async {
     debugPrint('[Discovery] Starting mDNS + SSDP parallel search');
 
+    final pairing = _pairingStorage.loadPairing();
+    final expectedDeviceId = pairing?.deviceId;
+
     Future<DiscoveryResult?> safeMdns() async {
       try {
         final r = await _mdnsService.search(timeout: const Duration(seconds: 3));
@@ -72,7 +75,10 @@ class DiscoveryService {
 
     Future<DiscoveryResult?> safeSsdp() async {
       try {
-        final r = await _ssdpService.search(timeout: const Duration(seconds: 3));
+        final r = await _ssdpService.search(
+          timeout: const Duration(seconds: 3),
+          expectedDeviceId: expectedDeviceId,
+        );
         return r != null ? DiscoveryResult(ip: r.ip, port: r.port, method: 'ssdp') : null;
       } catch (_) {
         return null;

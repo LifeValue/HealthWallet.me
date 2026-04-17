@@ -112,29 +112,31 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
             if (_reconnecting) ...[
               const SizedBox(height: Insets.normal),
               SizedBox(
-                width: 32,
-                height: 32,
+                width: 24,
+                height: 24,
                 child: CircularProgressIndicator(
-                  strokeWidth: 3,
+                  strokeWidth: 2,
                   color: context.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: Insets.normal),
-              Text(
-                'Reconnecting...',
-                style: AppTextStyle.bodySmall.copyWith(
-                  color: context.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: Insets.small),
               Text(
-                _commBloc.state.pairedDevice?.deviceName ?? '',
+                'Reconnecting to ${_commBloc.state.pairedDevice?.deviceName ?? 'Desktop'}...',
                 style: AppTextStyle.labelSmall.copyWith(
                   color:
                       context.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(height: Insets.normal),
+              SizedBox(
+                width: double.infinity,
+                child: AppButton(
+                  label: 'Scan QR Code',
+                  variant: AppButtonVariant.primary,
+                  height: 40,
+                  onPressed: _openPairing,
+                ),
+              ),
             ],
             if (_showPairing) ...[
               Text(

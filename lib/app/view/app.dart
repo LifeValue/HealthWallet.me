@@ -7,6 +7,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
@@ -59,9 +60,21 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _startSymmetricDiscovery();
+      _reconnectDesktopIfNeeded();
     } else if (state == AppLifecycleState.paused) {
       _stopSymmetricDiscovery();
     }
+  }
+
+  void _reconnectDesktopIfNeeded() {
+    if (getIt<AppPlatform>().isDesktop) return;
+    try {
+      final commBloc = getIt<CommunicationBloc>();
+      if (commBloc.state.pairedDevice != null &&
+          commBloc.state.connectionStatus == ConnectionStatus.disconnected) {
+        commBloc.add(const CommunicationConnectionRequested());
+      }
+    } catch (_) {}
   }
 
   Future<void> _startSymmetricDiscovery() async {

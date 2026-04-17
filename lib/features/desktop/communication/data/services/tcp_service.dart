@@ -455,6 +455,18 @@ class TcpService {
         _handleDisconnect();
         return;
       case MessageType.hello:
+        if (_pairingKey != null && _clientSocket == null) {
+          try {
+            final json = jsonDecode(message.payloadString) as Map<String, dynamic>;
+            final remoteHash = json['pairing_key_hash'] as String?;
+            final localHash = _hashKey(_pairingKey!);
+            if (remoteHash != null && remoteHash != localHash) {
+              debugPrint('[TCP] Rejected: pairing key mismatch');
+              _handleDisconnect();
+              return;
+            }
+          } catch (_) {}
+        }
         _updateState(ConnectionState.connected);
         sendMessage(TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
         _messageController.add(message);

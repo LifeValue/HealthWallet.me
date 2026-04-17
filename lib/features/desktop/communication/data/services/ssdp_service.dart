@@ -60,6 +60,7 @@ class SsdpService {
 
   Future<({String ip, int port, String deviceId})?> search({
     Duration timeout = const Duration(seconds: 3),
+    String? expectedDeviceId,
   }) async {
     final completer = Completer<({String ip, int port, String deviceId})?>();
 
@@ -87,6 +88,11 @@ class SsdpService {
         if (message.contains(_urn) && !completer.isCompleted) {
           final result = _parseResponse(message);
           if (result != null) {
+            if (expectedDeviceId != null &&
+                result.deviceId != expectedDeviceId) {
+              debugPrint('[SSDP] Ignoring device ${result.deviceId} (expected $expectedDeviceId)');
+              return;
+            }
             completer.complete(result);
             socket.close();
           }

@@ -191,12 +191,13 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
               ],
             ),
             const SizedBox(height: Insets.normal),
-            Text(
-              '${widget.filePaths.length} ${widget.filePaths.length == 1 ? 'file' : 'files'}',
-              style: AppTextStyle.labelLarge.copyWith(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+            if (_session?.status != HandoverStatus.error)
+              Text(
+                '${widget.filePaths.length} ${widget.filePaths.length == 1 ? 'file' : 'files'}',
+                style: AppTextStyle.labelLarge.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
               ),
-            ),
             const SizedBox(height: Insets.normal),
             if (_isSent) ...[
               Icon(
@@ -211,7 +212,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
                   color: AppColors.success,
                 ),
               ),
-            ] else ...[
+            ] else if (_session?.status != HandoverStatus.error) ...[
               LinearProgressIndicator(
                 value: _session?.progress,
                 backgroundColor: context.colorScheme.onSurface.withValues(alpha: 0.08),

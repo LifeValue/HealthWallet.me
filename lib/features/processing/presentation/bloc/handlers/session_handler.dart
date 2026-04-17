@@ -258,7 +258,11 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           if (isModelLoaded) {
             add(MappingInitiated(sessionId: event.sessionId));
           } else {
-            emit(state.copyWith(status: const PipelineStatus.initial()));
+            emit(state.copyWith(
+              status: const PipelineStatus.failure(
+                error: 'Model file not found. Please download the AI model first.',
+              ),
+            ));
           }
         } catch (e) {
           emit(state.copyWith(status: const PipelineStatus.initial()));

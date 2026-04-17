@@ -29,7 +29,14 @@ class ConnectionDialog extends StatefulWidget {
             width: 500,
             child: BlocProvider.value(
               value: getIt<CommunicationBloc>(),
-              child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
+              child: BlocConsumer<CommunicationBloc, DesktopSyncState>(
+                listener: (context, commState) {
+                  if (getIt<AppPlatform>().isDesktop &&
+                      commState.connectionStatus == ConnectionStatus.connected &&
+                      commState.connectedDeviceName != null) {
+                    Navigator.of(context).pop();
+                  }
+                },
                 builder: (context, commState) {
                   return Container(
                     decoration: BoxDecoration(
@@ -389,9 +396,6 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     } catch (_) {}
 
     navigator.pop();
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Unrecognized QR code format')),
-    );
   }
 
   Future<void> _handlePairing(
@@ -403,10 +407,6 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     await pairingStorage.savePairing(pairing);
 
     navigator.pop();
-
-    messenger.showSnackBar(
-      SnackBar(content: Text('Paired with ${pairing.deviceName}')),
-    );
 
     getIt<CommunicationBloc>()
         .add(CommunicationPairingCompleted(pairing: pairing));

@@ -53,31 +53,27 @@ class HandoverUtils {
     BuildContext context,
     ProcessingSession session,
   ) async {
-    final result = await showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: HandoverReconnectDialog(session: session),
-        ),
-      ),
-    );
+    final commBloc = getIt<CommunicationBloc>();
+    final hasPairing = commBloc.state.pairedDevice != null;
 
-    if (result == true) return true;
-
-    if (result == 'pair' && context.mounted) {
-      ConnectionDialog.show(context);
-      return await _waitForConnection();
+    if (hasPairing) {
+      commBloc.add(const CommunicationConnectionRequested());
+      final connected = await _waitForConnection(timeout: 5);
+      if (connected) return true;
     }
 
-    return false;
+    if (!context.mounted) return false;
+    ConnectionDialog.show(context);
+    return await _waitForConnection(timeout: 60);
   }
 
-  static Future<bool> _waitForConnection() async {
+  static Future<bool> _waitForConnection({int timeout = 30}) async {
     final completer = Completer<bool>();
-    Timer? timeout;
+
+    if (getIt<CommunicationBloc>().state.connectionStatus ==
+        ConnectionStatus.connected) {
+      return true;
+    }
 
     final sub = getIt<CommunicationBloc>().stream.listen((state) {
       if (state.connectionStatus == ConnectionStatus.connected &&
@@ -86,7 +82,7 @@ class HandoverUtils {
       }
     });
 
-    timeout = Timer(const Duration(seconds: 30), () {
+    final timer = Timer(Duration(seconds: timeout), () {
       if (!completer.isCompleted) {
         completer.complete(false);
       }
@@ -94,7 +90,7 @@ class HandoverUtils {
 
     final result = await completer.future;
     sub.cancel();
-    timeout.cancel();
+    timer.cancel();
     return result;
   }
 
