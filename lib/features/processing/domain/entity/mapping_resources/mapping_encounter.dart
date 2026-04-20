@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -96,6 +97,11 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
       period: encounter.period,
     );
   }
+
+  static Map<String, String> localizedLabels(AppLocalizations l10n) => {
+        'encounterType': l10n.labelEncounterName,
+        'periodStart': l10n.labelStartDate,
+      };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {

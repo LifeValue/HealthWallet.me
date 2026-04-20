@@ -10,6 +10,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class RegionDialog extends StatelessWidget {
   const RegionDialog({super.key});

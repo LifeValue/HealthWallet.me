@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
@@ -10,6 +11,7 @@ import 'package:get_it/get_it.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:path_provider/path_provider.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class MediaFullscreenViewer extends StatelessWidget {
   final entities.Media media;
@@ -45,15 +47,15 @@ class MediaFullscreenViewer extends StatelessWidget {
                 value: 'info',
                 child: ListTile(
                   leading: Assets.icons.information.svg(width: 24, height: 24),
-                  title: const Text('Media Info'),
+                  title: Text(context.l10n.mediaInfo),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'link',
                 child: ListTile(
-                  leading: Icon(Icons.link),
-                  title: Text('Link to Encounter'),
+                  leading: const Icon(Icons.link),
+                  title: Text(context.l10n.linkToEncounter),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -72,7 +74,7 @@ class MediaFullscreenViewer extends StatelessWidget {
             'application/pdf' ||
         media.content?.data?.valueString == null) {
       return _buildPlaceholder(
-          context, Icons.picture_as_pdf, 'No PDF data available');
+          context, Icons.picture_as_pdf, context.l10n.noPdfDataAvailable);
     }
 
     return FutureBuilder<File>(
@@ -94,21 +96,21 @@ class MediaFullscreenViewer extends StatelessWidget {
               onError: (error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error loading PDF: $error')),
+                    SnackBar(content: Text(context.l10n.errorLoadingPdf('$error'))),
                   );
                 }
               },
               onPageError: (page, error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error on page $page: $error')),
+                    SnackBar(content: Text(context.l10n.errorOnPage('$page', '$error'))),
                   );
                 }
               },
             );
           } else {
             return _buildPlaceholder(
-                context, Icons.picture_as_pdf, 'Failed to load PDF document');
+                context, Icons.picture_as_pdf, context.l10n.failedToLoadPdf);
           }
         } else {
           return const Center(child: CircularProgressIndicator());
@@ -153,39 +155,39 @@ class MediaFullscreenViewer extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Media Information'),
+        title: Text(context.l10n.mediaInformation),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfoRow('Title:', media.displayTitle),
+              _buildInfoRow(context.l10n.mediaInfoTitle, media.displayTitle),
               if (media.content?.contentType?.valueString != null)
                 _buildInfoRow(
-                    'Type:', media.content!.contentType!.valueString!),
+                    context.l10n.mediaInfoType, media.content!.contentType!.valueString!),
               if (media.statusDisplay.isNotEmpty)
-                _buildInfoRow('Status:', media.statusDisplay),
+                _buildInfoRow(context.l10n.mediaInfoStatus, media.statusDisplay),
               if (media.subject?.display?.valueString != null)
-                _buildInfoRow('Patient:', media.subject!.display!.valueString!),
+                _buildInfoRow(context.l10n.mediaInfoPatient, media.subject!.display!.valueString!),
               if (media.encounter?.display?.valueString != null)
                 _buildInfoRow(
-                    'Encounter:', media.encounter!.display!.valueString!),
+                    context.l10n.mediaInfoEncounter, media.encounter!.display!.valueString!),
               if (media.content?.size?.valueString != null)
                 _buildInfoRow(
-                    'File Size:',
+                    context.l10n.mediaInfoFileSize,
                     _formatFileSize(
                         _parseFileSize(media.content!.size!.valueString!))),
               if (media.date != null)
-                _buildInfoRow('Created:', media.date!.toString().split(' ')[0]),
-              _buildInfoRow('Resource ID:', media.resourceId),
-              _buildInfoRow('Source:', media.sourceId),
+                _buildInfoRow(context.l10n.mediaInfoCreated, media.date!.toString().split(' ')[0]),
+              _buildInfoRow(context.l10n.mediaInfoResourceId, media.resourceId),
+              _buildInfoRow(context.l10n.mediaInfoSource, media.sourceId),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: Text(context.l10n.close),
           ),
         ],
       ),
@@ -233,18 +235,18 @@ class MediaFullscreenViewer extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Link to Encounter'),
+        title: Text(context.l10n.linkToEncounter),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Link this media resource to an encounter:'),
+            Text(context.l10n.linkMediaToEncounterDescription),
             const SizedBox(height: 16),
             TextFormField(
               controller: encounterController,
-              decoration: const InputDecoration(
-                labelText: 'Encounter ID',
-                hintText: 'e.g., encounter-123',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: context.l10n.encounterId,
+                hintText: context.l10n.encounterIdHint,
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -252,7 +254,7 @@ class MediaFullscreenViewer extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -269,8 +271,8 @@ class MediaFullscreenViewer extends StatelessWidget {
                   if (context.mounted) {
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Media linked to encounter successfully'),
+                      SnackBar(
+                        content: Text(context.l10n.mediaLinkedSuccess),
                         backgroundColor: Colors.green,
                       ),
                     );
@@ -279,7 +281,7 @@ class MediaFullscreenViewer extends StatelessWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Failed to link media: $e'),
+                        content: Text(context.l10n.failedToLinkMedia('$e')),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -287,7 +289,7 @@ class MediaFullscreenViewer extends StatelessWidget {
                 }
               }
             },
-            child: const Text('Link'),
+            child: Text(context.l10n.link),
           ),
         ],
       ),

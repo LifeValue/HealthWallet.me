@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
@@ -86,6 +87,12 @@ class MappingAllergyIntolerance
       category: allergyIntolerance.category,
     );
   }
+
+  static Map<String, String> localizedLabels(AppLocalizations l10n) => {
+        'substance': l10n.labelSubstance,
+        'manifestation': l10n.labelManifestation,
+        'category': l10n.labelCategory,
+      };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {

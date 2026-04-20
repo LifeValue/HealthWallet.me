@@ -8,6 +8,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
@@ -86,7 +87,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "Notifications",
+                                  context.l10n.notificationsTitle,
                                   style: AppTextStyle.bodyMedium.copyWith(
                                     color: colorScheme.onSurface,
                                     fontWeight: FontWeight.w600,
@@ -111,7 +112,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                                     ),
                                   ),
                                   child: Text(
-                                    "Clear all",
+                                    context.l10n.clearAll,
                                     style: AppTextStyle.regular.copyWith(
                                       color: colorScheme.primary,
                                     ),
@@ -129,7 +130,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                             child: currentState.notifications.isEmpty
                                 ? Center(
                                     child: Text(
-                                      "No notifications",
+                                      context.l10n.noNotifications,
                                       style: AppTextStyle.bodySmall.copyWith(
                                         color: colorScheme.onSurface
                                             .withOpacity(0.6),
@@ -286,8 +287,8 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                   Text(
                     description ??
                         (notification.type == NotificationType.progress
-                            ? 'Downloading... ${notification.progress?.toStringAsFixed(0) ?? 0}%'
-                            : 'Choose the resources you want to add for processing.'),
+                            ? '${context.l10n.aiModelDownloading} ${notification.progress?.toStringAsFixed(0) ?? 0}%'
+                            : context.l10n.chooseResourcesDescription),
                     style: AppTextStyle.regular.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.6),
                       decoration: TextDecoration.none,
@@ -321,11 +322,10 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                         _hideOverlay();
                         AppSimpleDialog.showConfirmation(
                           context: context,
-                          title: 'Cancel Download',
-                          message:
-                              'Are you sure you want to cancel the AI Model download? You can restart it later.',
-                          confirmText: 'Cancel Download',
-                          cancelText: 'Continue',
+                          title: context.l10n.cancelDownloadTitle,
+                          message: context.l10n.cancelDownloadMessage,
+                          confirmText: context.l10n.cancelDownloadTitle,
+                          cancelText: context.l10n.continueButton,
                           onConfirm: () {
                             GetIt.instance
                                 .get<LoadModelBloc>()
@@ -343,7 +343,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'Cancel',
+                          context.l10n.cancel,
                           style: AppTextStyle.labelSmall.copyWith(
                             color: AppColors.error,
                             decoration: TextDecoration.none,

@@ -83,8 +83,12 @@ class PdfGenerationService {
     }
   }
 
-  Future<List<DocumentGroup>> groupAndConvertDocuments(
-      {required List<String> filePaths}) async {
+  Future<List<DocumentGroup>> groupAndConvertDocuments({
+    required List<String> filePaths,
+    String? scannedDocumentsTitle,
+    String Function(int)? scannedDocumentsPagesTitle,
+    String Function(String)? pdfFileTitle,
+  }) async {
     final List<DocumentGroup> groups = [];
 
     List<String> pdfPaths = [];
@@ -100,16 +104,18 @@ class PdfGenerationService {
     try {
       if (imagePaths.isNotEmpty) {
         final fileName = await _generateScannedDocumentName();
+        final defaultTitle = scannedDocumentsTitle ?? 'Scanned Documents';
         final pdfPath = await createPdfFromImages(
           imagePaths: imagePaths,
           fileName: fileName,
-          title: 'Scanned Documents',
+          title: defaultTitle,
         );
 
         groups.add(DocumentGroup(
           type: DocumentGroupType.scannedImages,
           pdfPath: pdfPath,
-          title: 'Scanned Documents (${imagePaths.length} pages)',
+          title: scannedDocumentsPagesTitle?.call(imagePaths.length) ??
+              '$defaultTitle (${imagePaths.length} pages)',
           originalCount: imagePaths.length,
         ));
       }
@@ -126,7 +132,7 @@ class PdfGenerationService {
         groups.add(DocumentGroup(
           type: DocumentGroupType.importedPdf,
           pdfPath: pdfPath,
-          title: 'PDF: $fileName',
+          title: pdfFileTitle?.call(fileName) ?? 'PDF: $fileName',
           originalCount: 1,
         ));
       }
@@ -141,8 +147,6 @@ class PdfGenerationService {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 
-  /// Generate a scanned document name in the format: scanned_document_ddmmyyyy_N
-  /// where N is an incremental number for documents created on the same day
   Future<String> _generateScannedDocumentName() async {
     final now = DateTime.now();
     final dateStr = '${now.day.toString().padLeft(2, '0')}'
@@ -153,13 +157,11 @@ class PdfGenerationService {
     return 'scanned_document_${dateStr}_$incrementalNumber';
   }
 
-  /// Get the next incremental number for scanned documents on a specific date
   Future<int> _getIncrementalNumberForDate(String dateStr) async {
     try {
       final tempDir = await getTemporaryDirectory();
       final files = tempDir.listSync();
 
-      // Find all files matching the pattern scanned_document_{dateStr}_*
       final pattern = 'scanned_document_${dateStr}_';
       int maxNumber = 0;
 
@@ -167,9 +169,8 @@ class PdfGenerationService {
         if (file is File) {
           final fileName = path.basename(file.path);
           if (fileName.startsWith(pattern) && fileName.endsWith('.pdf')) {
-            // Extract the number from the filename
             final numberPart = fileName.substring(
-                pattern.length, fileName.length - 4); // Remove .pdf
+                pattern.length, fileName.length - 4);
             final number = int.tryParse(numberPart);
             if (number != null && number > maxNumber) {
               maxNumber = number;
@@ -180,7 +181,6 @@ class PdfGenerationService {
 
       return maxNumber + 1;
     } catch (e) {
-      // If there's an error reading files, default to 1
       return 1;
     }
   }

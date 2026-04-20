@@ -13,6 +13,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SyncDialog extends StatelessWidget {
   static void show(BuildContext context) {
@@ -50,7 +51,7 @@ class SyncDialog extends StatelessWidget {
                               child: Row(
                                 children: [
                                   Text(
-                                    'Sync',
+                                    context.l10n.syncTitle,
                                     style: AppTextStyle.bodyMedium.copyWith(
                                       color: context.colorScheme.onSurface,
                                       fontWeight: FontWeight.w600,
@@ -118,21 +119,21 @@ class SyncSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             InfoRow(
-              label: 'Last synced',
+              label: context.l10n.lastSynced,
               value: syncState.lastSyncTime != null
                   ? DateFormatUtils.getSincePretty(syncState.lastSyncTime!)
-                  : 'Not yet',
+                  : context.l10n.desktopSyncNotYet,
             ),
             if (syncState.sentRows > 0 || syncState.receivedRows > 0)
               InfoRow(
-                label: 'Transfer',
+                label: context.l10n.desktopSyncTransfer,
                 value:
-                    '${syncState.sentRows} sent, ${syncState.receivedRows} received',
+                    context.l10n.desktopSyncTransferValue(syncState.sentRows, syncState.receivedRows),
               ),
             if (syncState.pendingChangeCount > 0)
               InfoRow(
-                label: 'Pending',
-                value: '${syncState.pendingChangeCount} changes',
+                label: context.l10n.desktopSyncPending,
+                value: context.l10n.desktopSyncPendingValue(syncState.pendingChangeCount),
               ),
             if (syncState.error != null) ...[
               const SizedBox(height: Insets.small),
@@ -149,7 +150,7 @@ class SyncSection extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
-                    'Syncing ${_formatTableName(syncState.currentTable!)}...',
+                    context.l10n.desktopSyncingTable(_formatTableName(context, syncState.currentTable!)),
                     style: AppTextStyle.labelSmall.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -163,7 +164,7 @@ class SyncSection extends StatelessWidget {
             ],
             const SizedBox(height: Insets.normal),
             AppButton(
-                  label: isSyncing ? 'Syncing...' : 'Sync Now',
+                  label: isSyncing ? context.l10n.desktopSyncing : context.l10n.desktopSyncNow,
                   onPressed: isConnected && !isSyncing
                       ? () {
                           getIt<LwwSyncBloc>().add(const SyncTriggered());
@@ -181,7 +182,7 @@ class SyncSection extends StatelessWidget {
                 ),
               ),
               Text(
-                'Recent',
+                context.l10n.desktopSyncRecent,
                 style: AppTextStyle.labelSmall.copyWith(
                   color:
                       context.colorScheme.onSurface.withValues(alpha: 0.35),
@@ -208,14 +209,14 @@ class SyncSection extends StatelessWidget {
     );
   }
 
-  String _formatTableName(String tableName) {
+  String _formatTableName(BuildContext context, String tableName) {
     switch (tableName) {
       case 'fhir_resource':
-        return 'Health Records';
+        return context.l10n.desktopTableHealthRecords;
       case 'sources':
-        return 'Sources';
+        return context.l10n.desktopTableSources;
       case 'record_notes':
-        return 'Notes';
+        return context.l10n.desktopTableNotes;
       default:
         return tableName;
     }
@@ -240,7 +241,7 @@ class _SyncHistoryEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timeStr = DateFormatUtils.getSincePretty(time);
-    final device = deviceName ?? 'Unknown device';
+    final device = deviceName ?? context.l10n.desktopUnknownDevice;
     final hasTransfer = sentRows > 0 || receivedRows > 0;
 
     return Row(
@@ -268,7 +269,7 @@ class _SyncHistoryEntry extends StatelessWidget {
               ),
               if (hasTransfer)
                 Text(
-                  '$sentRows sent · $receivedRows received',
+                  context.l10n.desktopSyncHistoryTransfer(sentRows, receivedRows),
                   style: AppTextStyle.labelSmall.copyWith(
                     color:
                         context.colorScheme.onSurface.withValues(alpha: 0.3),

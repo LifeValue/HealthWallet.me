@@ -85,6 +85,7 @@ class AiInferenceDataSourceImpl
   LlamaEngine? _engine;
   bool _hasVisionProjector = false;
   int? _deviceRamMB;
+  DeviceProfile? _deviceProfile;
 
   @override
   LlamaEngine? get engine => _engine;
@@ -121,6 +122,13 @@ class AiInferenceDataSourceImpl
     } catch (_) {}
     _deviceRamMB ??= 4096;
     return _deviceRamMB!;
+  }
+
+  Future<DeviceProfile> _getDeviceProfile() async {
+    if (_deviceProfile != null) return _deviceProfile!;
+    final ramMB = await _getDeviceRamMB();
+    _deviceProfile = await DeviceCapabilityService.buildProfile(ramMB: ramMB);
+    return _deviceProfile!;
   }
 
   static Future<int?> _readAndroidRamMB() async {
@@ -221,13 +229,18 @@ class AiInferenceDataSourceImpl
         overheadMB;
   }
 
-  static ({int gpuLayers, int threads, int contextSize}) computeModelConfig({
+  static ({
+    int gpuLayers,
+    int threads,
+    int threadsBatch,
+    int contextSize,
+  }) computeModelConfigFromProfile({
     required bool withVision,
-    required int ramMB,
+    required DeviceProfile profile,
   }) =>
       DeviceCapabilityService.computeModelConfig(
         withVision: withVision,
-        ramMB: ramMB,
+        profile: profile,
       );
 
   Future<String> _getModelDirectory() async {
@@ -462,13 +475,12 @@ class AiInferenceDataSourceImpl
 
     final modelFile = File(modelPath);
     final fileSize = await modelFile.length();
-    final ramMB = await _getDeviceRamMB();
+    final profile = await _getDeviceProfile();
     final autoConfig =
-        computeModelConfig(withVision: withVision, ramMB: ramMB);
-    final config = (
-      gpuLayers: gpuLayers ?? autoConfig.gpuLayers,
-      threads: threads ?? autoConfig.threads,
-    );
+        computeModelConfigFromProfile(withVision: withVision, profile: profile);
+    final effectiveGpuLayers = gpuLayers ?? autoConfig.gpuLayers;
+    final effectiveThreads = threads ?? autoConfig.threads;
+    final effectiveThreadsBatch = threads ?? autoConfig.threadsBatch;
     final ctx = contextSize ?? autoConfig.contextSize;
     final availableMB = Platform.isIOS
         ? await _getAvailableRamMBForIos()
@@ -478,10 +490,16 @@ class AiInferenceDataSourceImpl
     ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] model loaded (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)');
     ProcessingLogBuffer.instance.log(
-        '[$ts][ScanAI] config: ctx=$ctx, gpu_layers=${config.gpuLayers}, threads=${config.threads}, ram=${ramMB}MB, available=${availableMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, required~${requiredMB}MB, platform=${Platform.operatingSystem}');
+        '[$ts][ScanAI] device: ${profile.platform}, ram=${profile.ramMB}MB, '
+        'cores=${profile.physicalCores}p/${profile.logicalCores}l, '
+        'gpu=${profile.gpuType.name}');
+    ProcessingLogBuffer.instance.log(
+        '[$ts][ScanAI] config: ctx=$ctx, gpu_layers=$effectiveGpuLayers, '
+        'threads=$effectiveThreads, threadsBatch=$effectiveThreadsBatch, '
+        'available=${availableMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, '
+        'required~${requiredMB}MB');
 
-    final isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-    if (availableMB >= 0 && availableMB < requiredMB && !isDesktop) {
+    if (availableMB >= 0 && availableMB < requiredMB && !profile.isDesktop) {
       ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] ABORT: only ${availableMB}MB available, need ~${requiredMB}MB');
       throw Exception(
@@ -496,7 +514,14 @@ class AiInferenceDataSourceImpl
           'Model file is corrupted. Please re-download the AI model.');
     }
 
-    final backend = Platform.isAndroid ? GpuBackend.cpu : GpuBackend.auto;
+    final GpuBackend backend;
+    if (Platform.isAndroid) {
+      backend = GpuBackend.cpu;
+    } else if (!profile.hasUsableGpu) {
+      backend = GpuBackend.cpu;
+    } else {
+      backend = GpuBackend.auto;
+    }
     ProcessingLogBuffer.instance
         .log('[$ts][ScanAI] creating engine with backend=$backend');
 
@@ -504,13 +529,13 @@ class AiInferenceDataSourceImpl
 
     final params = ModelParams(
       contextSize: ctx,
-      gpuLayers: config.gpuLayers,
+      gpuLayers: effectiveGpuLayers,
       preferredBackend: backend,
-      numberOfThreads: config.threads,
-      numberOfThreadsBatch: config.threads,
+      numberOfThreads: effectiveThreads,
+      numberOfThreadsBatch: effectiveThreadsBatch,
     );
     ProcessingLogBuffer.instance.log(
-        '[$ts][ScanAI] loadModel: ctx=${params.contextSize}, gpuLayers=${params.gpuLayers}, backend=${params.preferredBackend}, threads=${params.numberOfThreads}');
+        '[$ts][ScanAI] loadModel: ctx=${params.contextSize}, gpuLayers=${params.gpuLayers}, backend=${params.preferredBackend}, threads=${params.numberOfThreads}, threadsBatch=${params.numberOfThreadsBatch}');
 
     final loadSw = Stopwatch()..start();
     try {
@@ -561,16 +586,15 @@ class AiInferenceDataSourceImpl
     bool withVision = true,
     int? contextSize,
   }) async {
-    final ramMB = await _getDeviceRamMB();
+    final profile = await _getDeviceProfile();
     final autoConfig =
-        computeModelConfig(withVision: withVision, ramMB: ramMB);
+        computeModelConfigFromProfile(withVision: withVision, profile: profile);
     final ctx = contextSize ?? autoConfig.contextSize;
     final availableMB = Platform.isIOS
         ? await _getAvailableRamMBForIos()
         : await _getAvailableRamMB();
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
-    final isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-    final canProceed = (availableMB < 0) || availableMB >= requiredMB || isDesktop;
+    final canProceed = (availableMB < 0) || availableMB >= requiredMB || profile.isDesktop;
     ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] health check: available=${availableMB}MB, required~=${requiredMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, canProceed=$canProceed');
     return (

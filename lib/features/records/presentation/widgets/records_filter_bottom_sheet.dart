@@ -5,6 +5,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'filters/date_range_filter_model.dart';
 import 'filters/date_range_selector.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class RecordsFilterBottomSheet extends StatefulWidget {
   const RecordsFilterBottomSheet({
@@ -119,9 +120,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                                 labelStyle: AppTextStyle.bodyMedium,
                                 unselectedLabelStyle: AppTextStyle.bodyMedium,
                                 dividerColor: Colors.transparent,
-                                tabs: const [
-                                  Tab(text: "Filters"),
-                                  Tab(text: "Time Range"),
+                                tabs: [
+                                  Tab(text: context.l10n.filters),
+                                  Tab(text: context.l10n.timeRange),
                                 ],
                               ),
                             ),
@@ -175,7 +176,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                     child: GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       child: Text(
-                        "Cancel",
+                        context.l10n.cancel,
                         style: AppTextStyle.buttonMedium.copyWith(
                           color: context.colorScheme.primary,
                         ),
@@ -225,7 +226,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Text("Apply filters",
+                          Text(context.l10n.applyFilters,
                               style: AppTextStyle.buttonMedium),
                         ],
                       ),
@@ -247,7 +248,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
         shrinkWrap: true,
         children: [
           Text(
-            "Record type",
+            context.l10n.recordType,
             style: AppTextStyle.buttonSmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
@@ -320,14 +321,14 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Selected Range',
+                  context.l10n.selectedRange,
                   style: AppTextStyle.labelSmall.copyWith(
                     color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  rangePreview ?? 'No range selected',
+                  rangePreview ?? context.l10n.noRangeSelected,
                   style: AppTextStyle.titleSmall.copyWith(
                     color: rangePreview != null
                         ? context.colorScheme.primary
@@ -346,7 +347,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DateRangeSelector(
-                  label: 'Start',
+                  label: context.l10n.start,
                   icon: Assets.icons.calendar,
                   containerKey: _dateRangeContainerKey,
                   year: _dateRangeModel.fromYear,
@@ -372,7 +373,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                 ),
                 const SizedBox(height: 24),
                 DateRangeSelector(
-                  label: 'End',
+                  label: context.l10n.end,
                   icon: Assets.icons.calendar,
                   containerKey: _dateRangeContainerKey,
                   openUpward: true,
@@ -433,7 +434,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Clear data range',
+                    context.l10n.clearDateRange,
                     style: AppTextStyle.labelLarge.copyWith(
                       color: _dateRangeModel.hasValue
                           ? context.colorScheme.error
@@ -519,9 +520,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
     if (start.isNotEmpty && end.isNotEmpty) {
       return '$start - $end';
     } else if (start.isNotEmpty) {
-      return 'From $start';
+      return context.l10n.fromDate(start);
     } else if (end.isNotEmpty) {
-      return 'Until $end';
+      return context.l10n.untilDate(end);
     }
 
     return null;

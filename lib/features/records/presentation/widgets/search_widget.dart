@@ -6,6 +6,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SearchWidget extends StatefulWidget {
   const SearchWidget({super.key});

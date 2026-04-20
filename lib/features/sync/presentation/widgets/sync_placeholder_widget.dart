@@ -25,6 +25,7 @@ import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotatio
 import 'package:health_wallet/features/processing/presentation/widgets/import_actions.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/form_fields.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SyncPlaceholderWidget extends StatefulWidget {
   final PageController? pageController;

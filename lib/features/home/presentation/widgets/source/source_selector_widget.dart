@@ -7,6 +7,7 @@ import 'package:health_wallet/features/records/domain/entity/patient/patient.dar
 import 'package:health_wallet/features/home/presentation/widgets/source/source_list_dialog.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_label_edit_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SourceSelectorWidget extends StatelessWidget {
   final List<Source> sources;

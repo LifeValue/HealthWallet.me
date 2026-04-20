@@ -36,6 +36,7 @@ import 'package:health_wallet/features/records/presentation/widgets/record_type_
 import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class RecordsPage extends StatelessWidget {
@@ -153,19 +154,19 @@ class _RecordsViewState extends State<RecordsView> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Permissions Required'),
+        title: Text(context.l10n.permissionsRequired),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               SharePermissionsHelper.openSettings();
             },
-            child: const Text('Open Settings'),
+            child: Text(context.l10n.openSettings),
           ),
         ],
       ),
@@ -342,8 +343,8 @@ class _RecordsViewState extends State<RecordsView> {
     return CustomAppBar(
       titleWidget: Text(
         appBarState.isSelectionMode
-            ? '${appBarState.selectedResourceIds.length} ${appBarState.selectedResourceIds.length == 1 ? 'record' : 'records'} selected'
-            : 'No records selected',
+            ? context.l10n.recordsSelectedCount(appBarState.selectedResourceIds.length)
+            : context.l10n.noRecordsSelected,
         style: AppTextStyle.bodyMedium.copyWith(
           color: context.colorScheme.onSurface,
         ),
@@ -373,7 +374,7 @@ class _RecordsViewState extends State<RecordsView> {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              appBarState.isSelectionMode ? 'Cancel' : 'Select',
+              appBarState.isSelectionMode ? context.l10n.cancel : context.l10n.select,
               style: AppTextStyle.labelLarge.copyWith(
                 color: context.colorScheme.primary,
               ),
@@ -433,7 +434,7 @@ class _RecordsViewState extends State<RecordsView> {
       CustomArrowTooltip.show(
         context: context,
         buttonKey: _shareTooltipKey,
-        message: 'Select records\nbefore sharing',
+        message: context.l10n.selectRecordsBeforeSharing,
         alignment: TooltipAlignment.auto,
         width: 160,
       );

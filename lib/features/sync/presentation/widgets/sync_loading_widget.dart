@@ -6,6 +6,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SyncLoadingWidget extends StatelessWidget {
   final VoidCallback? onCancel;

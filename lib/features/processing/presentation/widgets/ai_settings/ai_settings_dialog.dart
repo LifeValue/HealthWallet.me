@@ -18,6 +18,7 @@ import 'package:health_wallet/features/processing/domain/services/ai_model_downl
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_token_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_vision_toggle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class AiSettingsResult {
   final int maxTokens;
@@ -67,9 +68,11 @@ class AiTokenSettingsDialog extends StatefulWidget {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final deviceRamMB = await _detectDeviceRamMB();
+    final profile =
+        await DeviceCapabilityService.buildProfile(ramMB: deviceRamMB);
     final config = DeviceCapabilityService.computeModelConfig(
       withVision: true,
-      ramMB: deviceRamMB,
+      profile: profile,
     );
 
     final savedGpu = prefs.getInt(SharedPrefsConstants.aiGpuLayers);
@@ -102,8 +105,8 @@ class AiTokenSettingsDialog extends StatefulWidget {
 
   static Future<int> _detectDeviceRamMB() async {
     try {
-      final deviceInfo = DeviceInfoPlugin();
       if (Platform.isIOS) {
+        final deviceInfo = DeviceInfoPlugin();
         final ios = await deviceInfo.iosInfo;
         return DeviceCapabilityService.estimateIosRam(ios.utsname.machine);
       } else if (Platform.isAndroid) {
@@ -112,8 +115,28 @@ class AiTokenSettingsDialog extends StatefulWidget {
           final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
           if (match != null) return int.parse(match.group(1)!) ~/ 1024;
         } catch (_) {}
+        final deviceInfo = DeviceInfoPlugin();
         final android = await deviceInfo.androidInfo;
         return android.isLowRamDevice ? 2048 : 4096;
+      } else if (Platform.isMacOS) {
+        final result = await Process.run('sysctl', ['-n', 'hw.memsize']);
+        if (result.exitCode == 0) {
+          final bytes = int.tryParse(result.stdout.toString().trim());
+          if (bytes != null) return bytes ~/ (1024 * 1024);
+        }
+      } else if (Platform.isWindows) {
+        final result = await Process.run('powershell', [
+          '-NoProfile', '-Command',
+          '(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory',
+        ]);
+        if (result.exitCode == 0) {
+          final bytes = int.tryParse(result.stdout.toString().trim());
+          if (bytes != null) return bytes ~/ (1024 * 1024);
+        }
+      } else if (Platform.isLinux) {
+        final memInfo = await File('/proc/meminfo').readAsString();
+        final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
+        if (match != null) return int.parse(match.group(1)!) ~/ 1024;
       }
     } catch (_) {}
     return 4096;
@@ -398,7 +421,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
   Widget _buildDeviceInfoChip(Color textColor, int estimatedMB) {
     final ramGB = (widget.deviceRamMB / 1024).toStringAsFixed(1);
     final cores = Platform.numberOfProcessors;
-    final platform = Platform.isIOS ? 'iOS' : 'Android';
+    final platform = Platform.operatingSystem;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -410,7 +433,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        '$platform  •  ${ramGB}GB RAM  •  $cores cores  •  ~${estimatedMB}MB needed',
+        context.l10n.deviceInfoChip(platform, ramGB, cores, estimatedMB),
         style: AppTextStyle.labelSmall.copyWith(
           color: AppColors.primary,
           fontWeight: FontWeight.w600,

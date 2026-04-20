@@ -173,8 +173,7 @@
     
     "synchronization": "Synchronization",
     "desktopSyncAndBackup": "Desktop Sync & Backup",
-    "desktopSyncDescription": "Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.",
-    "connect": "Connect",
+    "desktopSyncDescription": "Sync & Backup your health records.\nHand over documents to be digitally processed on your desktop.",
     "processOnDesktop": "Process on Desktop",
     "sendToDesktop": "Send to Desktop",
     "continueImporting": "Continue Importing",
@@ -193,7 +192,6 @@
     "disable": "Disable",
     
     "continueButton": "Continue",
-    "getStarted": "Get started",
     "enableBiometricAuth": "Enable Biometric Auth (FaceID / Passcode)",
     "disableBiometricAuth": "Disable Biometric Auth (FaceID / Passcode)",
     
@@ -234,15 +232,8 @@
     "continueScanning": "Continue Scanning",
 
     "effectiveDate": "Effective Date",
-    "finishProcessing": "Finish Processing",
-    "finishProcessingMessage": "Are you sure you want to finish this processing session?",
-    "finishProcessingWarning": "This will clear the current session.",
-    "fieldCannotBeEmpty": "This field cannot be empty",
-    "selectDate": "Select date",
-    "attachToEncounter": "Attach to Encounter",
-    "continueProcessing": "Continue Processing",
     "privacyIntro": "Your privacy is our highest priority.",
-    "privacyDescription": "is a simple, secure tool designed to help you organize your health records at ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.",
+    "privacyDescription": "is a simple, secure tool designed to help you organize your health records with ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.",
     "corePrinciple": "Our Core Principle: Your Data Stays on Your Device",
     "whatInformationHandled": "What Information is Handled?",
     "informationWeDoNotCollect": "Information We Do Not Collect or Access",
@@ -262,6 +253,7 @@
     "demoDataLoadedSuccessfully": "Demo data has been loaded successfully. You will be redirected to the home page.",
 
     "documentScanTitle": "Scan",
+    "fromPhoneTab": "From Phone",
 
     "onboardingAiModelTitle": "Enable AI Model",
     "onboardingAiModelDescription": "Download a secure, on-device AI model to automatically analyze and organize your health records. Choose between two options depending on your needs and device capability. This is a one-time setup.\n\n**Your data stays private on your device.**",
@@ -441,7 +433,7 @@
     "regionUS": "US",
     "regionEurope": "Europe",
     "regionUK": "UK",
-    "medGemmaIncompatibleDevice": "This model requires more memory than your device has available. Use the Standard model instead.",
+    "medGemmaIncompatibleDevice": "This model requires more memory than your device has available. Use the Lite model instead.",
     "deepScanDownloadTitle": "Download Vision Model",
     "deepScanDownloadMessage": "Deep Scan requires an additional download (~{size} MB). Download now?",
     "@deepScanDownloadMessage": {
@@ -673,5 +665,501 @@
                 "type": "String"
             }
         }
-    }
+    },
+
+    "desktopSyncNotYet": "Not yet",
+    "desktopSyncTransfer": "Transfer",
+    "desktopSyncTransferValue": "{sentRows} sent, {receivedRows} received",
+    "@desktopSyncTransferValue": {
+        "placeholders": {
+            "sentRows": {
+                "type": "int"
+            },
+            "receivedRows": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopSyncPending": "Pending",
+    "desktopSyncPendingValue": "{count} changes",
+    "@desktopSyncPendingValue": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopSyncingTable": "Syncing {tableName}...",
+    "@desktopSyncingTable": {
+        "placeholders": {
+            "tableName": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopSyncing": "Syncing...",
+    "desktopSyncNow": "Sync Now",
+    "desktopSyncError": "Error",
+    "desktopSyncInSync": "In Sync",
+    "desktopSyncReady": "Ready",
+    "desktopSyncOffline": "Offline",
+    "desktopTableHealthRecords": "Health Records",
+    "desktopTableSources": "Sources",
+    "desktopTableNotes": "Notes",
+    "desktopTableSessions": "Sessions",
+    "desktopConnection": "Connection",
+    "desktopGeneratePairingQr": "Generate Pairing QR",
+    "desktopScanFromMobile": "Scan from mobile Sync page",
+    "desktopDevice": "Device",
+    "desktopTransport": "Transport",
+    "desktopIp": "IP",
+    "desktopPort": "Port",
+    "desktopNewPairing": "New Pairing",
+    "desktopTransportTcp": "TCP over WiFi",
+    "desktopTransportMpc": "MultipeerConnectivity (Direct)",
+    "desktopConnectedTo": "Connected to {name}",
+    "@desktopConnectedTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopConnected": "Connected",
+    "desktopReconnectingTo": "Reconnecting to {name}...",
+    "@desktopReconnectingTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopReconnecting": "Reconnecting...",
+    "desktopDisconnectedFrom": "Disconnected from {name}",
+    "@desktopDisconnectedFrom": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopDisconnected": "Disconnected",
+    "desktopDisconnect": "Disconnect",
+    "desktopReconnect": "Reconnect",
+    "desktopVpnDetected": "VPN detected. Disconnect VPN to sync with desktop.",
+    "desktopPairing": "Pairing",
+    "desktopLabel": "Desktop",
+    "desktopScanFromPhoneToPair": "Scan from your phone to pair",
+    "desktopNewQrCode": "New QR Code",
+    "desktopGenerateQrCode": "Generate QR Code",
+    "desktopScanQrCode": "Scan QR Code",
+    "desktopChooseWhereToSave": "Choose where to save backups",
+    "desktopSelectBackupFolder": "Select a folder on your computer to store backup files",
+    "desktopChooseLocation": "Choose Location",
+    "desktopChooseBackupLocation": "Choose Backup Location",
+    "desktopBackingUp": "Backing up...",
+    "desktopCreateBackup": "Create Backup",
+    "desktopSyncWithPhoneFirst": "Sync with phone first",
+    "desktopNotConnected": "(not connected)",
+    "desktopStartBackup": "Start Backup",
+    "desktopNoBackupsYet": "No backups yet",
+    "desktopCreateFirstBackup": "Create your first backup to keep your health data safe",
+    "desktopAllBackups": "All backups",
+    "desktopDate": "Date",
+    "desktopSize": "Size",
+    "desktopChecksum": "Checksum",
+    "desktopRestoreThisBackup": "Restore this backup",
+    "desktopRestoreBackupTitle": "Restore Backup?",
+    "desktopRestoreBackupMessage": "This will replace all current data on this device with \"{name}\".\n\n{count} records will be restored.\n\nYour data on the paired phone will not be affected.",
+    "@desktopRestoreBackupMessage": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopRestore": "Restore",
+    "desktopDeleteBackupTitle": "Delete Backup?",
+    "desktopDeleteBackupMessage": "Delete \"{name}\"?\n\nThis cannot be undone.",
+    "@desktopDeleteBackupMessage": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopDelete": "Delete",
+    "desktopBackupFrom": "Backup from",
+    "desktopBackup": "Backup",
+    "desktopChange": "Change",
+    "desktopProcessingHistory": "Processing History",
+    "desktopScannedOnPhone": "Scanned on Phone",
+    "desktopProcessedOnDesktop": "Processed on Desktop",
+    "desktopImportedOnDesktop": "Imported on Desktop",
+    "desktopSyncRecent": "Recent",
+    "desktopUnknownDevice": "Unknown device",
+    "desktopSyncHistoryTransfer": "{sentRows} sent · {receivedRows} received",
+    "@desktopSyncHistoryTransfer": {
+        "placeholders": {
+            "sentRows": {
+                "type": "int"
+            },
+            "receivedRows": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopNewDeviceConnecting": "New Device Connecting",
+    "desktopNewDeviceMessage": "A new device ({address}) wants to connect.\n\nThis will disconnect \"{currentDevice}\".\n\nSwitch to the new device?",
+    "@desktopNewDeviceMessage": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            },
+            "currentDevice": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopKeepCurrent": "Keep Current",
+    "desktopSwitch": "Switch",
+    "desktopCurrentDevice": "current device",
+    "desktopHandoverPreparing": "Preparing...",
+    "desktopHandoverSendingFiles": "Sending files...",
+    "desktopHandoverProcessingOnDesktop": "Processing on desktop...",
+    "desktopHandoverComplete": "Complete!",
+    "desktopHandoverError": "Error occurred",
+    "desktopHandoverSending": "Sending...",
+    "desktopHandoverSendingToDesktop": "Sending to Desktop",
+    "desktopHandoverFileCount": "{count} files",
+    "@desktopHandoverFileCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopHandoverSuccess": "Handed over to Desktop",
+    "desktopClose": "Close",
+    "desktopContinueImporting": "Continue Importing",
+    "desktopConnectToDesktop": "Connect to Desktop",
+    "desktopCouldNotReconnect": "Could not reconnect. Scan QR code to pair again.",
+    "desktopScanQrToPair": "Scan the QR code on your desktop app to pair.",
+    "desktopHandoverToDesktop": "Handover to Desktop",
+    "desktopHandoverProcessingMessage": "Processing is in progress. Handover will cancel the current processing and send files to desktop.",
+    "desktopHandover": "Handover",
+
+    "attachedDocuments": "Attached Documents",
+    "cameraPermissionRequired": "Camera Permission Required",
+    "cameraPermissionRequiredMessage": "This app needs camera access to scan. Please grant permission to continue.",
+    "cameraPermissionDenied": "Camera Permission Denied",
+    "cameraPermissionDeniedMessage": "Camera permission has been permanently denied. Please enable it in Settings to use the scanner.",
+    "successTitle": "Success!",
+    "attachmentSuccessMessage": "Successfully attached {count} documents to the encounter.",
+    "@attachmentSuccessMessage": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "encounterLabel": "Encounter",
+    "viewRecords": "View Records",
+    "errorTitle": "Error",
+    "somethingWentWrong": "Something went wrong",
+    "importDocument": "Import Document",
+    "pickImageFromGallery": "Pick Image from Gallery",
+    "scanDocument": "Scan Document",
+    "deleteSession": "Delete Session",
+    "deleteSessionConfirmation": "Are you sure you want to delete this session?",
+    "delete": "Delete",
+    "canceling": "Canceling...",
+    "waitingForAiToFinish": "Waiting for AI to finish...",
+    "logsCopied": "Logs copied",
+    "download": "Download",
+    "active": "Active",
+    "tapToSelect": "Tap to select",
+    "deviceInfoChip": "{platform}  •  {ramGB}GB RAM  •  {cores} cores  •  ~{estimatedMB}MB needed",
+    "@deviceInfoChip": {
+        "placeholders": {
+            "platform": {
+                "type": "String"
+            },
+            "ramGB": {
+                "type": "String"
+            },
+            "cores": {
+                "type": "int"
+            },
+            "estimatedMB": {
+                "type": "int"
+            }
+        }
+    },
+    "downloadContinuesInBackground": "You can navigate away - download will continue in background.\nCheck notifications for progress.",
+    "continueWithoutAi": "Continue without AI (download in background)",
+    "continueUsingApp": "Continue using app",
+    "attachWithoutProcessing": "I want to attach the document without processing",
+    "currentPatientAndSource": "Current Patient & Source",
+    "createEncounter": "Create Encounter",
+    "encounterName": "Encounter name",
+    "enterEncounterName": "Enter encounter name",
+    "pleaseEnterEncounterName": "Please enter an encounter name",
+    "date": "Date",
+    "create": "Create",
+    "searchEncounters": "Search encounters...",
+    "noEncountersFound": "No encounters found",
+    "noEncountersFoundMessage": "Create a new encounter first or select a different patient.",
+    "newEncounterPrefix": "New encounter",
+    "scannedDocumentsTitle": "Scanned Documents",
+    "scannedDocumentsPagesTitle": "Scanned Documents ({count} pages)",
+    "@scannedDocumentsPagesTitle": {
+        "placeholders": {
+            "count": {
+                "type": "String"
+            }
+        }
+    },
+    "pdfFileTitle": "PDF: {fileName}",
+    "@pdfFileTitle": {
+        "placeholders": {
+            "fileName": {
+                "type": "String"
+            }
+        }
+    },
+    "labelOrganizationName": "Organization Name",
+    "labelAddress": "Address",
+    "labelPhone": "Phone",
+    "labelEncounterName": "Encounter Name",
+    "labelStartDate": "Start Date",
+    "labelFirstName": "First name",
+    "labelFamilyName": "Family name",
+    "labelDateOfBirth": "Date of birth",
+    "labelGender": "Gender",
+    "labelReportName": "Report Name",
+    "labelConclusion": "Conclusion",
+    "labelIssuedDate": "Issued Date",
+    "labelPractitionerName": "Practitioner Name",
+    "labelSpecialty": "Specialty",
+    "labelIdentifier": "Identifier",
+    "labelConditionName": "Condition Name",
+    "labelOnsetDate": "Onset Date",
+    "labelClinicalStatus": "Clinical Status",
+    "labelSubstance": "Substance",
+    "labelManifestation": "Manifestation",
+    "labelCategory": "Category",
+    "labelProcedureName": "Procedure Name",
+    "labelPerformedDate": "Performed Date",
+    "labelReason": "Reason",
+    "labelMedicationName": "Medication Name",
+    "labelDosage": "Dosage",
+    "labelObservationName": "Observation name",
+    "labelValue": "Value",
+    "labelUnit": "Unit",
+    "labelReferenceRange": "Reference Range",
+
+    "permissionsRequired": "Permissions Required",
+    "recordsSelectedCount": "{count} selected",
+    "@recordsSelectedCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "noRecordsSelected": "No records selected",
+    "select": "Select",
+    "selectRecordsBeforeSharing": "Select records\nbefore sharing",
+    "recordDetails": "Record Details",
+    "viewDocument": "View Document",
+    "encounterDetails": "Encounter details",
+    "relatedResources": "Related resources",
+    "deletePlusRelated": "Delete + {count} related",
+    "@deletePlusRelated": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "fileNotAvailable": "File not available on this device",
+    "couldNotOpenFile": "Could not open file: {message}",
+    "@couldNotOpenFile": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "errorOpeningFile": "Error opening file: {error}",
+    "@errorOpeningFile": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToLoadImage": "Failed to load image",
+    "errorLoadingPdf": "Error loading PDF: {error}",
+    "@errorLoadingPdf": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "errorOnPage": "Error on page {page}: {error}",
+    "@errorOnPage": {
+        "placeholders": {
+            "page": {
+                "type": "String"
+            },
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "notes": "Notes",
+    "noNotesAttached": "This record has no notes attached",
+    "addNote": "Add note",
+    "editNote": "Edit note",
+    "filters": "Filters",
+    "timeRange": "Time Range",
+    "applyFilters": "Apply filters",
+    "recordType": "Record type",
+    "selectedRange": "Selected Range",
+    "noRangeSelected": "No range selected",
+    "clearDateRange": "Clear date range",
+    "start": "Start",
+    "end": "End",
+    "fromDate": "From {date}",
+    "@fromDate": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "untilDate": "Until {date}",
+    "@untilDate": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "mediaInfo": "Media Info",
+    "linkToEncounter": "Link to Encounter",
+    "noPdfDataAvailable": "No PDF data available",
+    "failedToLoadPdf": "Failed to load PDF document",
+    "mediaInformation": "Media Information",
+    "mediaInfoTitle": "Title:",
+    "mediaInfoType": "Type:",
+    "mediaInfoStatus": "Status:",
+    "mediaInfoPatient": "Patient:",
+    "mediaInfoEncounter": "Encounter:",
+    "mediaInfoFileSize": "File Size:",
+    "mediaInfoCreated": "Created:",
+    "mediaInfoResourceId": "Resource ID:",
+    "mediaInfoSource": "Source:",
+    "close": "Close",
+    "linkMediaToEncounterDescription": "Link this media resource to an encounter:",
+    "encounterId": "Encounter ID",
+    "encounterIdHint": "e.g., encounter-123",
+    "mediaLinkedSuccess": "Media linked to encounter successfully",
+    "failedToLinkMedia": "Failed to link media: {error}",
+    "@failedToLinkMedia": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "link": "Link",
+
+    "connectionLabel": "Connection",
+    "connectionStatusConnected": "Connected",
+    "connectionStatusConnecting": "Connecting...",
+    "connectionStatusDisconnected": "Disconnected",
+    "connectionStatusNotPaired": "Not paired",
+    "syncLabel": "Sync",
+    "syncStatusSyncing": "Syncing...",
+    "syncStatusNotSynced": "Not synced",
+    "syncStatusInSync": "In sync",
+    "syncStatusPending": "{count} pending",
+    "@syncStatusPending": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "backupLabel": "Backup",
+    "backupStatusWorking": "Working...",
+    "backupStatusNoBackup": "No backup",
+    "backupStatusBackingUp": "Backing up...",
+    "backupStatusRestoring": "Restoring...",
+    "backupStatusWaiting": "Waiting...",
+    "backupStatusNotConnected": "Not connected",
+    "exportIpsPdf": "Export IPS (PDF)",
+    "addIpsToAppleWallet": "Add IPS to Apple Wallet",
+    "addIpsToGoogleWallet": "Add IPS to Google Wallet",
+    "sourcesTitle": "Sources",
+    "emergencyMedicalId": "Emergency Medical ID",
+    "phoneLabel": "Phone",
+    "allergiesLabel": "Allergies",
+    "medicalConditionsLabel": "Medical Conditions",
+    "medicationsLabel": "Medications",
+    "conditionsLabel": "Conditions",
+    "dateOfBirthLabel": "Date of Birth",
+    "emergencyPhoneLabel": "Emergency Phone",
+    "openingScanner": "Opening scanner...",
+    "activeScanSessions": "Active scan sessions:",
+    "noScansYet": "No scans yet",
+    "scanOrImportToGetStarted": "Scan or import documents to get started",
+    "pageOfTotal": "{current} of {total}",
+    "@pageOfTotal": {
+        "placeholders": {
+            "current": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "fileNotFound": "File not found",
+    "fileIsEmpty": "File is empty",
+    "importTitle": "Import",
+    "activeImportSessions": "Active import sessions:",
+    "dropToImport": "Drop to import",
+    "dropFilesHereToImport": "Drop files here to import",
+    "supportedFileFormats": "PDF, JPG, PNG, TIFF",
+    "browseFiles": "Browse Files",
+    "noImportsYet": "No imports yet",
+    "importOrScanToGetStarted": "Import or scan documents to get started",
+    "notificationsTitle": "Notifications",
+    "noNotifications": "No notifications",
+    "cancelDownloadTitle": "Cancel Download",
+    "cancelDownloadMessage": "Are you sure you want to cancel the AI Model download? You can restart it later.",
+    "processingDone": "Processing done",
+    "pairedWithDevice": "Paired with {deviceName}",
+    "@pairedWithDevice": {
+        "placeholders": {
+            "deviceName": {
+                "type": "String"
+            }
+        }
+    },
+    "deviceSyncLabel": "Device Sync",
+    "disconnectLabel": "Disconnect",
+    "changeLabel": "Change",
+    "minimizeToTray": "Minimize to tray"
 }

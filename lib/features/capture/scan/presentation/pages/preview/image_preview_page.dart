@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/preview/bloc/preview_bloc.dart';
@@ -116,7 +117,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                 state.isReordering
                     ? context.l10n.reorderPages
                     : images.length > 1
-                        ? '${currentIndex + 1} of ${images.length}'
+                        ? context.l10n.pageOfTotal('${currentIndex + 1}', '${images.length}')
                         : widget.title,
               ),
               actions: [
@@ -237,9 +238,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         children: [
           const Icon(Icons.error_outline, color: Colors.white, size: 64),
           const SizedBox(height: 16),
-          const Text(
-            'File not found',
-            style: TextStyle(color: Colors.white, fontSize: 18),
+          Text(
+            context.l10n.fileNotFound,
+            style: const TextStyle(color: Colors.white, fontSize: 18),
           ),
           const SizedBox(height: 8),
           Text(
@@ -259,14 +260,14 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
         return Container(
           padding: const EdgeInsets.all(20),
           color: Colors.black,
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, color: Colors.white, size: 64),
-              SizedBox(height: 16),
+              const Icon(Icons.error_outline, color: Colors.white, size: 64),
+              const SizedBox(height: 16),
               Text(
-                'File is empty',
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                context.l10n.fileIsEmpty,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
               ),
             ],
           ),
@@ -529,7 +530,7 @@ class _QuickPreviewOverlay extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
-          title: Text('${index + 1} of $total'),
+          title: Text(context.l10n.pageOfTotal('${index + 1}', '$total')),
           leading: IconButton(
             icon: const Icon(Icons.close),
             onPressed: () => Navigator.of(context).pop(),

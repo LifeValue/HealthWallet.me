@@ -17,6 +17,7 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/resources_form.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ProcessingResourcesSection extends StatelessWidget {
   final ProcessingState state;

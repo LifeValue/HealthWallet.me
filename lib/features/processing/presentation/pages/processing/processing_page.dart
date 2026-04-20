@@ -26,6 +26,7 @@ import 'package:health_wallet/features/processing/presentation/widgets/preview_c
 import 'package:health_wallet/features/processing/presentation/widgets/summary_card.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class ProcessingPage extends StatefulWidget {

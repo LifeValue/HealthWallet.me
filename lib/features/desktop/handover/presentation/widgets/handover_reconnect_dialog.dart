@@ -9,6 +9,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class HandoverReconnectDialog extends StatefulWidget {
   final ProcessingSession session;
@@ -90,7 +91,7 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
             Row(
               children: [
                 Text(
-                  'Connect to Desktop',
+                  context.l10n.desktopConnectToDesktop,
                   style: AppTextStyle.bodyMedium.copyWith(
                     color: context.colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
@@ -121,7 +122,7 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
               ),
               const SizedBox(height: Insets.small),
               Text(
-                'Reconnecting to ${_commBloc.state.pairedDevice?.deviceName ?? 'Desktop'}...',
+                context.l10n.desktopReconnectingTo(_commBloc.state.pairedDevice?.deviceName ?? context.l10n.desktopLabel),
                 style: AppTextStyle.labelSmall.copyWith(
                   color:
                       context.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -131,7 +132,7 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
               SizedBox(
                 width: double.infinity,
                 child: AppButton(
-                  label: 'Scan QR Code',
+                  label: context.l10n.desktopScanQrCode,
                   variant: AppButtonVariant.primary,
                   height: 40,
                   onPressed: _openPairing,
@@ -141,8 +142,8 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
             if (_showPairing) ...[
               Text(
                 _commBloc.state.pairedDevice != null
-                    ? 'Could not reconnect. Scan QR code to pair again.'
-                    : 'Scan the QR code on your desktop app to pair.',
+                    ? context.l10n.desktopCouldNotReconnect
+                    : context.l10n.desktopScanQrToPair,
                 style: AppTextStyle.bodySmall.copyWith(
                   color:
                       context.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -153,7 +154,7 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
               SizedBox(
                 width: double.infinity,
                 child: AppButton(
-                  label: 'Scan QR Code',
+                  label: context.l10n.desktopScanQrCode,
                   variant: AppButtonVariant.primary,
                   height: 40,
                   onPressed: _openPairing,

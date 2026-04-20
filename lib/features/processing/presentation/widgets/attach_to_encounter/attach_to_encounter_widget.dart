@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -91,13 +92,13 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header
+
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      const Expanded(
-                        child: Text('Attach to encounter',
+                      Expanded(
+                        child: Text(context.l10n.attachToEncounter,
                             style: AppTextStyle.bodyMedium),
                       ),
                       IconButton(
@@ -114,15 +115,15 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                 ),
                 Container(height: 1, color: borderColor),
 
-                // Content
+
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        const PatientSelector(
-                          title: 'Current Patient & Source',
+                          PatientSelector(
+                          title: context.l10n.currentPatientAndSource,
                         ),
                         const SizedBox(height: 24),
                         const Expanded(child: EncounterSelector()),
@@ -133,7 +134,7 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
 
                 Container(height: 1, color: borderColor),
 
-                // Footer
+
                 Padding(
                   padding: const EdgeInsets.all(Insets.normal),
                   child: Row(
@@ -152,7 +153,7 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                             ),
                           ),
                           child:
-                              Text('Cancel', style: AppTextStyle.buttonSmall),
+                              Text(context.l10n.cancel, style: AppTextStyle.buttonSmall),
                         ),
                       ),
                       const SizedBox(width: Insets.small),

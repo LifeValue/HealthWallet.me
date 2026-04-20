@@ -23,6 +23,7 @@ import 'package:health_wallet/features/processing/presentation/widgets/import_ac
 import 'package:health_wallet/features/processing/presentation/helpers/document_handler.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 
 @RoutePage()
@@ -89,7 +90,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
   Widget build(BuildContext context) {
     final body = Scaffold(
       appBar: CustomAppBar(
-        title: 'Import',
+        title: context.l10n.importTitle,
         automaticallyImplyLeading: false,
         extraTopPadding: context.isTablet ? 16 : 0,
       ),
@@ -122,13 +123,13 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "Active import sessions:",
+                        Text(
+                          context.l10n.activeImportSessions,
                           style: AppTextStyle.titleMedium,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          "Only one processing session can run at a time!",
+                        Text(
+                          context.l10n.onlyOneSessionAtTime,
                           style: AppTextStyle.bodySmall,
                         ),
                         const SizedBox(height: 24),
@@ -214,7 +215,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                         ),
                         const SizedBox(height: Insets.normal),
                         Text(
-                          'Drop to import',
+                          context.l10n.dropToImport,
                           style: AppTextStyle.titleMedium.copyWith(
                             color: context.colorScheme.primary,
                           ),
@@ -244,14 +245,14 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
             ),
             const SizedBox(height: Insets.normal),
             Text(
-              'Drop files here to import',
+              context.l10n.dropFilesHereToImport,
               style: AppTextStyle.titleMedium.copyWith(
                 color: context.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: Insets.small),
             Text(
-              'PDF, JPG, PNG, TIFF',
+              context.l10n.supportedFileFormats,
               style: AppTextStyle.bodySmall.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
@@ -272,7 +273,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
           onPressed: () => _handleImportDocument(context),
           icon: Icon(Icons.folder_open, size: 18, color: context.colorScheme.primary),
           label: Text(
-            'Browse Files',
+            context.l10n.browseFiles,
             style: AppTextStyle.buttonSmall.copyWith(
               color: context.colorScheme.primary,
             ),
@@ -291,14 +292,14 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
           const SizedBox(height: 16),
           Assets.images.emptyScan.svg(),
           const SizedBox(height: 36),
-          const Text(
-            "No imports yet",
+          Text(
+            context.l10n.noImportsYet,
             style: AppTextStyle.titleMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          const Text(
-            "Import or scan documents to get started",
+          Text(
+            context.l10n.importOrScanToGetStarted,
             style: AppTextStyle.bodyMedium,
             textAlign: TextAlign.center,
           ),

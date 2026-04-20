@@ -16,4 +16,5 @@ class SharedPrefsConstants {
   static const countryCode = 'countryCode';
   static const appLocale = 'appLocale';
   static const backupDirectory = 'backupDirectory';
+  static const minimizeToTray = 'minimizeToTray';
 }

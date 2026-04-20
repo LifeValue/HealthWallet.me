@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -159,6 +160,13 @@ class MappingPatient with _$MappingPatient implements MappingResource {
       identifier: patient.identifier,
     );
   }
+
+  static Map<String, String> localizedLabels(AppLocalizations l10n) => {
+        'givenName': l10n.labelFirstName,
+        'familyName': l10n.labelFamilyName,
+        'dateOfBirth': l10n.labelDateOfBirth,
+        'gender': l10n.labelGender,
+      };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {

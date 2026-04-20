@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
@@ -89,6 +90,12 @@ class MappingProcedure with _$MappingProcedure implements MappingResource {
       reasonCode: procedure.reasonCode,
     );
   }
+
+  static Map<String, String> localizedLabels(AppLocalizations l10n) => {
+        'procedureName': l10n.labelProcedureName,
+        'performedDateTime': l10n.labelPerformedDate,
+        'reason': l10n.labelReason,
+      };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {

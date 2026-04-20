@@ -10,6 +10,7 @@ import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class RecordNotesWidget extends StatefulWidget {
   const RecordNotesWidget({
@@ -77,7 +78,7 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Notes", style: AppTextStyle.bodyMedium),
+                Text(context.l10n.notes, style: AppTextStyle.bodyMedium),
                 IconButton(
                   iconSize: 20,
                   visualDensity:
@@ -89,11 +90,11 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
             ),
           ),
           if (state.notes.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Center(
                 child: Text(
-                  "This record has no notes attached",
+                  context.l10n.noNotesAttached,
                   style: AppTextStyle.labelLarge,
                 ),
               ),
@@ -130,7 +131,7 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                   children: [
                     Assets.icons.addPlus.svg(width: 16, color: Colors.white),
                     const SizedBox(width: 4),
-                    const Text("Add note", style: AppTextStyle.buttonSmall),
+                    Text(context.l10n.addNote, style: AppTextStyle.buttonSmall),
                   ],
                 ),
               ),
@@ -166,7 +167,7 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                         const VisualDensity(horizontal: -4, vertical: -4),
                   ),
                   const SizedBox(width: 12),
-                  Text(state.editNote != null ? "Edit note" : "Add note",
+                  Text(state.editNote != null ? context.l10n.editNote : context.l10n.addNote,
                       style: AppTextStyle.bodyMedium),
                 ],
               ),
@@ -211,7 +212,7 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                 child: GestureDetector(
                   onTap: () => _bloc.add(const RecordNotesInputCanceled()),
                   child: Text(
-                    "Cancel",
+                    context.l10n.cancel,
                     style: AppTextStyle.buttonSmall
                         .copyWith(color: AppColors.primary),
                     textAlign: TextAlign.center,
@@ -240,7 +241,7 @@ class _RecordNotesWidgetState extends State<RecordNotesWidget> {
                       Assets.icons.checkmarkCircleOutline
                           .svg(width: 14, color: Colors.white),
                       const SizedBox(width: 4),
-                      const Text("Done", style: AppTextStyle.buttonSmall),
+                      Text(context.l10n.done, style: AppTextStyle.buttonSmall),
                     ],
                   ),
                 ),

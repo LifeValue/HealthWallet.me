@@ -12,6 +12,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ModelManagementDialog extends StatefulWidget {
   const ModelManagementDialog({super.key});
@@ -344,7 +345,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 onPressed: () => _bloc.add(LoadModelDownloadInitiated(
                     variant: config.variant)),
                 icon: const Icon(Icons.download, size: 14),
-                label: const Text('Download'),
+                label: Text(context.l10n.download),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -360,7 +361,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
             )
           else if (isActive)
             Text(
-              'Active',
+              context.l10n.active,
               style: AppTextStyle.labelSmall.copyWith(
                 color: AppColors.success,
                 fontWeight: FontWeight.w600,
@@ -368,7 +369,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
             )
           else if (isDownloaded)
             Text(
-              'Tap to select',
+              context.l10n.tapToSelect,
               style: AppTextStyle.labelSmall.copyWith(
                 color: AppColors.primary,
               ),

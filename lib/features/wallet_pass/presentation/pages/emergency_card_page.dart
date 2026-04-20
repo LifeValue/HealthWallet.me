@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:intl/intl.dart';
@@ -18,8 +19,8 @@ class EmergencyCardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Emergency Medical ID',
+        title: Text(
+          context.l10n.emergencyMedicalId,
           style: AppTextStyle.titleMedium,
         ),
         centerTitle: false,
@@ -41,7 +42,7 @@ class EmergencyCardPage extends StatelessWidget {
               _buildPhoneRow(
                 context,
                 icon: Icons.phone,
-                label: 'Phone',
+                label: context.l10n.phoneLabel,
                 phone: cardData.patientPhone!,
               ),
             if (cardData.emergencyContactName != null)
@@ -50,7 +51,7 @@ class EmergencyCardPage extends StatelessWidget {
               _buildListSection(
                 context,
                 icon: Icons.warning_amber_rounded,
-                label: 'Allergies',
+                label: context.l10n.allergiesLabel,
                 items: cardData.allergies,
                 badgeColor: AppColors.error,
               ),
@@ -58,7 +59,7 @@ class EmergencyCardPage extends StatelessWidget {
               _buildListSection(
                 context,
                 icon: Icons.monitor_heart_outlined,
-                label: 'Medical Conditions',
+                label: context.l10n.medicalConditionsLabel,
                 items: cardData.conditions,
                 badgeColor: AppColors.secondary,
               ),
@@ -66,7 +67,7 @@ class EmergencyCardPage extends StatelessWidget {
               _buildListSection(
                 context,
                 icon: Icons.medication_outlined,
-                label: 'Medications',
+                label: context.l10n.medicationsLabel,
                 items: cardData.medications,
                 badgeColor: AppColors.info,
               ),
@@ -267,7 +268,7 @@ class EmergencyCardPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Emergency Phone Contact',
+                    context.l10n.emergencyContact,
                     style: AppTextStyle.labelSmall.copyWith(
                       color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),

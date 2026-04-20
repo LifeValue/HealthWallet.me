@@ -14,6 +14,7 @@ import 'package:health_wallet/features/share_records/presentation/bloc/share_rec
 import 'package:health_wallet/features/share_records/presentation/widgets/peer_invitation_view.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/peer_search_status_view.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PeerDiscoveryView extends StatefulWidget {
   final ShareRecordsState state;

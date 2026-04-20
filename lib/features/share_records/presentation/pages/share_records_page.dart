@@ -23,6 +23,7 @@ import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class ShareRecordsPage extends StatelessWidget {

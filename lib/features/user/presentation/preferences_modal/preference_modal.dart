@@ -14,6 +14,7 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/widge
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PreferenceModal extends StatelessWidget {
   const PreferenceModal({super.key});

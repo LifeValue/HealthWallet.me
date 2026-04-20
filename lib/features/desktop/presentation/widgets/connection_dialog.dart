@@ -16,6 +16,7 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ConnectionDialog extends StatefulWidget {
   static void show(BuildContext context) {
@@ -55,7 +56,7 @@ class ConnectionDialog extends StatefulWidget {
                           child: Row(
                             children: [
                               Text(
-                                'Connection',
+                                context.l10n.desktopConnection,
                                 style: AppTextStyle.bodyMedium.copyWith(
                                   color: context.colorScheme.onSurface,
                                   fontWeight: FontWeight.w600,
@@ -142,17 +143,17 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     if (isConnected) {
       dotColor = AppColors.success;
       statusLabel =
-          remoteName != null ? 'Connected to $remoteName' : 'Connected';
+          remoteName != null ? context.l10n.desktopConnectedTo(remoteName) : context.l10n.desktopConnected;
     } else if (isDiscovering) {
       dotColor = AppColors.warning;
       statusLabel = remoteName != null
-          ? 'Reconnecting to $remoteName...'
-          : 'Reconnecting...';
+          ? context.l10n.desktopReconnectingTo(remoteName)
+          : context.l10n.desktopReconnecting;
     } else {
       dotColor = AppColors.error;
       statusLabel = remoteName != null
-          ? 'Disconnected from $remoteName'
-          : 'Disconnected';
+          ? context.l10n.desktopDisconnectedFrom(remoteName)
+          : context.l10n.desktopDisconnected;
     }
 
     return Column(
@@ -183,7 +184,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                       .add(const CommunicationManualDisconnect());
                 },
                 child: Text(
-                  'Disconnect',
+                  context.l10n.desktopDisconnect,
                   style: AppTextStyle.labelSmall.copyWith(
                     color: AppColors.error,
                     fontSize: 12,
@@ -200,7 +201,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                       .add(const CommunicationConnectionRequested());
                 },
                 child: Text(
-                  'Reconnect',
+                  context.l10n.desktopReconnect,
                   style: AppTextStyle.labelSmall.copyWith(
                     color: context.colorScheme.primary,
                     fontSize: 12,
@@ -218,7 +219,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'VPN detected. Disconnect VPN to sync with desktop.',
+                  context.l10n.desktopVpnDetected,
                   style: AppTextStyle.labelSmall.copyWith(
                     color: AppColors.warning,
                     fontSize: 11,
@@ -239,7 +240,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pairing',
+          context.l10n.desktopPairing,
           style: AppTextStyle.bodyMedium.copyWith(
             color: context.colorScheme.onSurface,
             fontWeight: FontWeight.w600,
@@ -248,7 +249,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
         if (hasPairing && getIt<AppPlatform>().isMobile) ...[
           const SizedBox(height: Insets.small),
           InfoRow(
-            label: 'Desktop',
+            label: context.l10n.desktopLabel,
             value: widget.commState.pairedDevice!.deviceName,
           ),
         ],
@@ -274,7 +275,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
           const SizedBox(height: 4),
           Center(
             child: Text(
-              'Scan from your phone to pair',
+              context.l10n.desktopScanFromPhoneToPair,
               style: AppTextStyle.labelSmall.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.3),
                 fontSize: 11,
@@ -285,7 +286,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
         const SizedBox(height: Insets.normal),
         if (getIt<AppPlatform>().isDesktop)
           AppButton(
-            label: hasPairing ? 'New QR Code' : 'Generate QR Code',
+            label: hasPairing ? context.l10n.desktopNewQrCode : context.l10n.desktopGenerateQrCode,
             onPressed: () {
               getIt<CommunicationBloc>()
                   .add(const CommunicationPairingRequested());
@@ -295,7 +296,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
           ),
         if (getIt<AppPlatform>().isMobile)
           AppButton(
-            label: 'Scan QR Code',
+            label: context.l10n.desktopScanQrCode,
             onPressed: () => _openMobileQRScanner(context),
             height: 36,
           ),
@@ -338,7 +339,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                   ),
                   const SizedBox(height: Insets.normal),
                   Text(
-                    'Scan from your phone to pair',
+                    context.l10n.desktopScanFromPhoneToPair,
                     style: AppTextStyle.bodyMedium.copyWith(
                       color: Colors.black54,
                     ),
@@ -438,7 +439,7 @@ class _FullScreenQRScanner extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Scan QR Code',
+          context.l10n.desktopScanQrCode,
           style: AppTextStyle.titleMedium,
         ),
         centerTitle: true,

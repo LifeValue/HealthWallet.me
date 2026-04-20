@@ -9,6 +9,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
@@ -454,7 +455,7 @@ class _PatientRowState extends State<_PatientRow> {
   Widget build(BuildContext context) {
     final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
             widget.homeState.patient?.name?.first) ??
-        'Loading...';
+        context.l10n.loading;
 
     return GestureDetector(
       key: _tapKey,
@@ -463,7 +464,7 @@ class _PatientRowState extends State<_PatientRow> {
       child: Row(
         children: [
           Text(
-            'Patient: ',
+            '${context.l10n.patient}: ',
             style: AppTextStyle.bodyMedium.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
@@ -535,22 +536,22 @@ class _ConnectionMiniCard extends StatelessWidget {
 
             if (isConnected) {
               color = AppColors.success;
-              subtitle = commState.connectedDeviceName ?? 'Connected';
+              subtitle = commState.connectedDeviceName ?? context.l10n.connectionStatusConnected;
             } else if (isDiscovering) {
               color = AppColors.warning;
-              subtitle = 'Connecting...';
+              subtitle = context.l10n.connectionStatusConnecting;
             } else {
               color = commState.pairedDevice != null
                   ? AppColors.error
                   : AppColors.error;
               subtitle = commState.pairedDevice != null
-                  ? 'Disconnected'
-                  : 'Not paired';
+                  ? context.l10n.connectionStatusDisconnected
+                  : context.l10n.connectionStatusNotPaired;
             }
 
             return _MiniStatusCard(
               icon: isConnected ? Icons.link : Icons.link_off,
-              label: 'Connection',
+              label: context.l10n.connectionLabel,
               subtitle: subtitle,
               color: color,
               onTap: () => ConnectionDialog.show(context),
@@ -562,8 +563,8 @@ class _ConnectionMiniCard extends StatelessWidget {
       debugPrint('[Connection] MiniCard error: $e');
       return _MiniStatusCard(
         icon: Icons.link_off,
-        label: 'Connection',
-        subtitle: 'Not paired',
+        label: context.l10n.connectionLabel,
+        subtitle: context.l10n.connectionStatusNotPaired,
         color: AppColors.error,
         onTap: () => ConnectionDialog.show(context),
       );
@@ -590,14 +591,14 @@ class _SyncMiniCard extends StatelessWidget {
                       : AppColors.error;
 
           final subtitle = isSyncing
-              ? 'Syncing...'
+              ? context.l10n.syncStatusSyncing
               : syncState.lastSyncTime != null
                   ? DateFormatUtils.getSincePretty(syncState.lastSyncTime!)
-                  : 'Not synced';
+                  : context.l10n.syncStatusNotSynced;
 
           return _MiniStatusCard(
             icon: Icons.sync,
-            label: 'Sync',
+            label: context.l10n.syncLabel,
             subtitle: subtitle,
             color: color,
             isLoading: isSyncing,
@@ -629,18 +630,18 @@ class _BackupMiniCard extends StatelessWidget {
 
           String subtitle;
           if (backupState.isBackingUp) {
-            subtitle = 'Working...';
+            subtitle = context.l10n.backupStatusWorking;
           } else if (hasBackup) {
             subtitle = DateFormatUtils.getSincePretty(backupState.backupHistory.first.timestamp);
           } else if (hasRemoteBackup) {
             subtitle = DateFormatUtils.getSincePretty(backupState.desktopLastBackupTime!);
           } else {
-            subtitle = 'No backup';
+            subtitle = context.l10n.backupStatusNoBackup;
           }
 
           return _MiniStatusCard(
             icon: Icons.shield_outlined,
-            label: 'Backup',
+            label: context.l10n.backupLabel,
             onTap: () => _showBackupDialog(context),
             subtitle: subtitle,
             color: color,
@@ -693,7 +694,7 @@ void _showBackupDialog(BuildContext context) {
                             child: Row(
                               children: [
                                 Text(
-                                  'Backup',
+                                  context.l10n.backupLabel,
                                   style: AppTextStyle.bodyMedium.copyWith(
                                     color: context.colorScheme.onSurface,
                                     fontWeight: FontWeight.w600,

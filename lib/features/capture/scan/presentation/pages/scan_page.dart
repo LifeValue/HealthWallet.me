@@ -253,13 +253,13 @@ class _ScanViewState extends State<ScanView>
   }
 
   Widget _buildLoadingView() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Opening scanner...'),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(context.l10n.openingScanner),
         ],
       ),
     );
@@ -285,13 +285,13 @@ class _ScanViewState extends State<ScanView>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Active scan sessions:",
+                  Text(
+                    context.l10n.activeScanSessions,
                     style: AppTextStyle.titleMedium,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    "Only one processing session can run at a time!",
+                  Text(
+                    context.l10n.onlyOneSessionAtTime,
                     style: AppTextStyle.bodySmall,
                   ),
                   const SizedBox(height: 24),
@@ -305,7 +305,7 @@ class _ScanViewState extends State<ScanView>
                   Padding(
                     padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
                     child: AppButton(
-                      label: 'Scan Document',
+                      label: context.l10n.scanDocument,
                       icon: Assets.icons.scan.svg(),
                       variant: AppButtonVariant.primary,
                       onPressed: () => _handleDirectScan(context),
@@ -338,14 +338,14 @@ class _ScanViewState extends State<ScanView>
           const SizedBox(height: 16),
           Assets.images.emptyScan.svg(),
           const SizedBox(height: 36),
-          const Text(
-            "No scans yet",
+          Text(
+            context.l10n.noScansYet,
             style: AppTextStyle.titleMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          const Text(
-            "Scan or import documents to get started",
+          Text(
+            context.l10n.scanOrImportToGetStarted,
             style: AppTextStyle.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -353,7 +353,7 @@ class _ScanViewState extends State<ScanView>
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: AppButton(
-              label: 'Scan Document',
+              label: context.l10n.scanDocument,
               icon: Assets.icons.scan.svg(),
               variant: AppButtonVariant.primary,
               onPressed: () => _handleDirectScan(context),

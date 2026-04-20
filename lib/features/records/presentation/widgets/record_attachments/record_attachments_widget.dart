@@ -16,6 +16,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path/path.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class RecordAttachmentsWidget extends StatefulWidget {
   const RecordAttachmentsWidget({
@@ -156,7 +157,7 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     if (!await File(filePath).exists()) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File not available on this device')),
+          SnackBar(content: Text(context.l10n.fileNotAvailable)),
         );
       }
       return;
@@ -186,7 +187,7 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
       if (result.type != ResultType.done && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not open file: ${result.message}'),
+            content: Text(context.l10n.couldNotOpenFile(result.message)),
             backgroundColor: Colors.orange,
           ),
         );
@@ -195,7 +196,7 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error opening file: $e'),
+            content: Text(context.l10n.errorOpeningFile('$e')),
             backgroundColor: Colors.red,
           ),
         );
@@ -313,14 +314,14 @@ class _ImageViewer extends StatelessWidget {
           child: Image.file(
             File(filePath),
             fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Column(
+            errorBuilder: (context, error, stackTrace) => Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.broken_image, color: Colors.white54, size: 64),
-                SizedBox(height: 16),
+                const Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                const SizedBox(height: 16),
                 Text(
-                  'Failed to load image',
-                  style: TextStyle(color: Colors.white54),
+                  context.l10n.failedToLoadImage,
+                  style: const TextStyle(color: Colors.white54),
                 ),
               ],
             ),
@@ -359,14 +360,14 @@ class _PdfViewer extends StatelessWidget {
               onError: (error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error loading PDF: $error')),
+                    SnackBar(content: Text(context.l10n.errorLoadingPdf('$error'))),
                   );
                 }
               },
               onPageError: (page, error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error on page $page: $error')),
+                    SnackBar(content: Text(context.l10n.errorOnPage('$page', '$error'))),
                   );
                 }
               },

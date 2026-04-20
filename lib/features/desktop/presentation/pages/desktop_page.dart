@@ -13,6 +13,7 @@ import 'package:health_wallet/features/desktop/presentation/widgets/connection_c
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_chip.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/processing_card.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/sync_status_card.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class DesktopPage extends StatelessWidget {
@@ -94,17 +95,15 @@ class DesktopPage extends StatelessWidget {
 
   void _showPendingClientDialog(BuildContext context, String address) {
     final commBloc = context.read<CommunicationBloc>();
-    final currentDevice = commBloc.state.connectedDeviceName ?? 'current device';
+    final currentDevice = commBloc.state.connectedDeviceName ?? context.l10n.desktopCurrentDevice;
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('New Device Connecting'),
+        title: Text(context.l10n.desktopNewDeviceConnecting),
         content: Text(
-          'A new device ($address) wants to connect.\n\n'
-          'This will disconnect "$currentDevice".\n\n'
-          'Switch to the new device?',
+          context.l10n.desktopNewDeviceMessage(address, currentDevice),
         ),
         actions: [
           TextButton(
@@ -112,14 +111,14 @@ class DesktopPage extends StatelessWidget {
               Navigator.of(dialogContext).pop();
               commBloc.add(const CommunicationPendingClientRejected());
             },
-            child: const Text('Keep Current'),
+            child: Text(context.l10n.desktopKeepCurrent),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
               commBloc.add(const CommunicationPendingClientAccepted());
             },
-            child: const Text('Switch'),
+            child: Text(context.l10n.desktopSwitch),
           ),
         ],
       ),
@@ -132,7 +131,7 @@ class DesktopPage extends StatelessWidget {
         Icon(Icons.sync, size: 28, color: context.colorScheme.primary),
         const SizedBox(width: Insets.small),
         Text(
-          'Sync',
+          context.l10n.syncTitle,
           style: AppTextStyle.titleMedium
               .copyWith(color: context.colorScheme.onSurface),
         ),

@@ -15,6 +15,7 @@ import 'package:health_wallet/features/processing/domain/repository/processing_r
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class HandoverSendDialog extends StatefulWidget {
   final List<String> filePaths;
@@ -135,24 +136,24 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
       _session?.status == HandoverStatus.waitingForResults;
 
   String _statusText(BuildContext context) {
-    if (_session == null) return 'Preparing...';
+    if (_session == null) return context.l10n.desktopHandoverPreparing;
 
     switch (_session!.status) {
       case HandoverStatus.sending:
-        return 'Sending files...';
+        return context.l10n.desktopHandoverSendingFiles;
       case HandoverStatus.waitingForResults:
-        return 'Processing on desktop...';
+        return context.l10n.desktopHandoverProcessingOnDesktop;
       case HandoverStatus.complete:
-        return 'Complete!';
+        return context.l10n.desktopHandoverComplete;
       case HandoverStatus.error:
         final error = _session!.error ?? '';
         if (error.contains('Model file not found') ||
             (error.contains('model') && error.contains('not found'))) {
           return context.l10n.noAiModelOnDesktop;
         }
-        return error.isNotEmpty ? error : 'Error occurred';
+        return error.isNotEmpty ? error : context.l10n.desktopHandoverError;
       default:
-        return 'Sending...';
+        return context.l10n.desktopHandoverSending;
     }
   }
 
@@ -172,7 +173,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
             Row(
               children: [
                 Text(
-                  'Sending to Desktop',
+                  context.l10n.desktopHandoverSendingToDesktop,
                   style: AppTextStyle.bodyMedium.copyWith(
                     color: context.colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
@@ -193,7 +194,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
             const SizedBox(height: Insets.normal),
             if (_session?.status != HandoverStatus.error)
               Text(
-                '${widget.filePaths.length} ${widget.filePaths.length == 1 ? 'file' : 'files'}',
+                context.l10n.desktopHandoverFileCount(widget.filePaths.length),
                 style: AppTextStyle.labelLarge.copyWith(
                   color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -207,7 +208,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
               ),
               const SizedBox(height: Insets.small),
               Text(
-                'Handed over to Desktop',
+                context.l10n.desktopHandoverSuccess,
                 style: AppTextStyle.bodySmall.copyWith(
                   color: AppColors.success,
                 ),
@@ -236,7 +237,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
               SizedBox(
                 width: 160,
                 child: AppButton(
-                  label: 'Cancel',
+                  label: context.l10n.cancel,
                   onPressed: () {
                     if (_session != null) {
                       _senderService.cancelHandover(_session!.sessionId);
@@ -274,7 +275,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
               SizedBox(
                 width: 160,
                 child: AppButton(
-                  label: 'Close',
+                  label: context.l10n.desktopClose,
                   onPressed: () => Navigator.of(context).pop(),
                   height: 36,
                 ),

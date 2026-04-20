@@ -20,6 +20,7 @@ import 'package:health_wallet/features/home/presentation/widgets/section_info_mo
 import 'package:health_wallet/features/home/presentation/widgets/source/source_selector_widget.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class HomeDashboardSections extends StatelessWidget {
   final HomeState state;

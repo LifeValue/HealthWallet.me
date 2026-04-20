@@ -11,6 +11,7 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/presentation/widgets/desktop_card.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ConnectionCard extends StatelessWidget {
   final DesktopSyncState state;
@@ -20,12 +21,12 @@ class ConnectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DesktopCard(
-      title: 'Connection',
+      title: context.l10n.desktopConnection,
       child: Column(
         children: [
           if (state.pairedDevice == null) ...[
             AppButton(
-              label: 'Generate Pairing QR',
+              label: context.l10n.desktopGeneratePairingQr,
               onPressed: () {
                 context
                     .read<CommunicationBloc>()
@@ -55,7 +56,7 @@ class ConnectionCard extends StatelessWidget {
             ),
             const SizedBox(height: Insets.small),
             Text(
-              'Scan from mobile Sync page',
+              context.l10n.desktopScanFromMobile,
               style: AppTextStyle.labelSmall.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
@@ -71,15 +72,15 @@ class ConnectionCard extends StatelessWidget {
           ],
           if (state.pairedDevice != null) ...[
             const SizedBox(height: Insets.normal),
-            InfoRow(label: 'Device', value: state.pairedDevice!.deviceName),
-            InfoRow(label: 'Transport', value: _transportLabel(state)),
+            InfoRow(label: context.l10n.desktopDevice, value: state.pairedDevice!.deviceName),
+            InfoRow(label: context.l10n.desktopTransport, value: _transportLabel(context, state)),
             if (state.connectedIp != null)
-              InfoRow(label: 'IP', value: state.connectedIp!),
+              InfoRow(label: context.l10n.desktopIp, value: state.connectedIp!),
             if (state.connectedPort != null)
-              InfoRow(label: 'Port', value: '${state.connectedPort}'),
+              InfoRow(label: context.l10n.desktopPort, value: '${state.connectedPort}'),
             const SizedBox(height: Insets.small),
             AppButton(
-              label: 'New Pairing',
+              label: context.l10n.desktopNewPairing,
               onPressed: () {
                 context
                     .read<CommunicationBloc>()
@@ -94,11 +95,11 @@ class ConnectionCard extends StatelessWidget {
     );
   }
 
-  String _transportLabel(DesktopSyncState state) {
+  String _transportLabel(BuildContext context, DesktopSyncState state) {
     return switch (state.connectionTransport) {
-      ConnectionTransport.tcp => 'TCP over WiFi',
+      ConnectionTransport.tcp => context.l10n.desktopTransportTcp,
       ConnectionTransport.multipeerConnectivity =>
-        'MultipeerConnectivity (Direct)',
+        context.l10n.desktopTransportMpc,
       ConnectionTransport.unknown => '-',
     };
   }

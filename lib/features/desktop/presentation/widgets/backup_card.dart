@@ -14,6 +14,7 @@ import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_b
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class BackupCard extends StatefulWidget {
   final DesktopSyncState syncState;
@@ -44,7 +45,7 @@ class _BackupCardState extends State<BackupCard> {
     final name = _nameController.text.trim();
     final effectiveName = name.isNotEmpty
         ? name
-        : 'Backup ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
+        : '${context.l10n.desktopBackup} ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
 
     if (_syncFirst && widget.syncState.connectionStatus == ConnectionStatus.connected) {
       try { context.read<LwwSyncBloc>().add(const SyncTriggered()); } catch (_) {}
@@ -61,7 +62,7 @@ class _BackupCardState extends State<BackupCard> {
         widget.syncState.connectionStatus == ConnectionStatus.connected;
     final isWorking = widget.backupState.isBackingUp || widget.backupState.isRestoring;
     final selected = widget.backupState.selectedBackup;
-    final defaultName = 'Backup ${DateFormat('MMM d, yyyy').format(DateTime.now())}';
+    final defaultName = '${context.l10n.desktopBackup} ${DateFormat('MMM d, yyyy').format(DateTime.now())}';
 
     if (!widget.backupState.hasUserSelectedPath) {
       return Padding(
@@ -76,7 +77,7 @@ class _BackupCardState extends State<BackupCard> {
             ),
             const SizedBox(height: Insets.normal),
             Text(
-              'Choose where to save backups',
+              context.l10n.desktopChooseWhereToSave,
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.onSurface,
               ),
@@ -84,7 +85,7 @@ class _BackupCardState extends State<BackupCard> {
             ),
             const SizedBox(height: Insets.small),
             Text(
-              'Select a folder on your computer to store backup files',
+              context.l10n.desktopSelectBackupFolder,
               style: AppTextStyle.labelSmall.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.4),
                 fontSize: 12,
@@ -95,7 +96,7 @@ class _BackupCardState extends State<BackupCard> {
             SizedBox(
               width: 200,
               child: AppButton(
-                label: 'Choose Location',
+                label: context.l10n.desktopChooseLocation,
                 onPressed: () => _BackupLocationRow.pickAndSetDirectory(context),
                 height: 36,
               ),
@@ -149,7 +150,7 @@ class _BackupCardState extends State<BackupCard> {
               child: SizedBox(
                 width: 200,
                 child: AppButton(
-                  label: isWorking ? 'Backing up...' : 'Create Backup',
+                  label: isWorking ? context.l10n.desktopBackingUp : context.l10n.desktopCreateBackup,
                   onPressed: !isWorking
                       ? () => setState(() => _showForm = true)
                       : null,
@@ -224,7 +225,7 @@ class _BackupCardState extends State<BackupCard> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Sync with phone first',
+                      context.l10n.desktopSyncWithPhoneFirst,
                       style: AppTextStyle.labelSmall.copyWith(
                         color: isConnected
                             ? context.colorScheme.onSurface.withValues(alpha: 0.5)
@@ -235,7 +236,7 @@ class _BackupCardState extends State<BackupCard> {
                     if (!isConnected) ...[
                       const SizedBox(width: 6),
                       Text(
-                        '(not connected)',
+                        context.l10n.desktopNotConnected,
                         style: AppTextStyle.labelSmall.copyWith(
                           color: context.colorScheme.onSurface.withValues(alpha: 0.15),
                           fontSize: 11,
@@ -257,7 +258,7 @@ class _BackupCardState extends State<BackupCard> {
                       _nameController.clear();
                     }),
                     child: Text(
-                      'Cancel',
+                      context.l10n.cancel,
                       style: TextStyle(
                         color: context.colorScheme.onSurface.withValues(alpha: 0.4),
                       ),
@@ -267,7 +268,7 @@ class _BackupCardState extends State<BackupCard> {
                   SizedBox(
                     width: 160,
                     child: AppButton(
-                      label: 'Start Backup',
+                      label: context.l10n.desktopStartBackup,
                       onPressed: _create,
                       height: 36,
                     ),
@@ -303,7 +304,7 @@ class _BackupList extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'No backups yet',
+                context.l10n.desktopNoBackupsYet,
                 style: AppTextStyle.bodySmall.copyWith(
                   color: context.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
@@ -311,7 +312,7 @@ class _BackupList extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Create your first backup to keep your health data safe',
+                context.l10n.desktopCreateFirstBackup,
                 style: AppTextStyle.labelSmall.copyWith(
                   color: context.colorScheme.onSurface.withValues(alpha: 0.25),
                   fontSize: 11,
@@ -405,7 +406,7 @@ class _BackupTile extends StatelessWidget {
                       ),
                     ),
                   Text(
-                    '${backup.recordCount} records \u2022 ${_formatBytes(backup.sizeBytes)}',
+                    '${backup.recordCount} ${context.l10n.records.toLowerCase()} \u2022 ${_formatBytes(backup.sizeBytes)}',
                     style: AppTextStyle.labelSmall.copyWith(
                       color: context.colorScheme.onSurface.withValues(alpha: 0.5),
                       fontSize: 11,
@@ -441,7 +442,7 @@ class _BackupPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayName = backup.name.isNotEmpty
         ? backup.name
-        : 'Backup from ${DateFormat.yMMMd().format(backup.timestamp)}';
+        : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,7 +460,7 @@ class _BackupPreview extends StatelessWidget {
                   Icon(Icons.arrow_back, size: 16, color: context.colorScheme.primary),
                   const SizedBox(width: 4),
                   Text(
-                    'All backups',
+                    context.l10n.desktopAllBackups,
                     style: AppTextStyle.labelSmall.copyWith(
                       color: context.colorScheme.primary,
                     ),
@@ -479,19 +480,19 @@ class _BackupPreview extends StatelessWidget {
         ),
         const SizedBox(height: Insets.small),
         InfoRow(
-          label: 'Date',
+          label: context.l10n.desktopDate,
           value: DateFormat.yMMMd().add_Hm().format(backup.timestamp),
         ),
         InfoRow(
-          label: 'Records',
+          label: context.l10n.records,
           value: backup.recordCount.toString(),
         ),
         InfoRow(
-          label: 'Size',
+          label: context.l10n.desktopSize,
           value: _formatBytes(backup.sizeBytes),
         ),
         InfoRow(
-          label: 'Checksum',
+          label: context.l10n.desktopChecksum,
           value: backup.checksum.length > 16
               ? '${backup.checksum.substring(0, 16)}\u2026'
               : backup.checksum,
@@ -501,7 +502,7 @@ class _BackupPreview extends StatelessWidget {
           children: [
             Expanded(
               child: AppButton(
-                label: 'Restore this backup',
+                label: context.l10n.desktopRestoreThisBackup,
                 onPressed: !isWorking
                     ? () => _confirmRestore(context, backup)
                     : null,
@@ -531,16 +532,17 @@ class _BackupPreview extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Restore Backup?'),
+        title: Text(context.l10n.desktopRestoreBackupTitle),
         content: Text(
-          'This will replace all current data on this device with "${backup.name.isNotEmpty ? backup.name : 'backup from ${DateFormat.yMMMd().format(backup.timestamp)}'}".\n\n'
-          '${backup.recordCount} records will be restored.\n\n'
-          'Your data on the paired phone will not be affected.',
+          context.l10n.desktopRestoreBackupMessage(
+            backup.name.isNotEmpty ? backup.name : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}',
+            backup.recordCount,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -550,7 +552,7 @@ class _BackupPreview extends StatelessWidget {
                   .add(RestoreRequested(backupId: backup.id));
             },
             child: Text(
-              'Restore',
+              context.l10n.desktopRestore,
               style: TextStyle(
                 color: AppColors.warning,
                 fontWeight: FontWeight.w600,
@@ -566,14 +568,16 @@ class _BackupPreview extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Backup?'),
+        title: Text(context.l10n.desktopDeleteBackupTitle),
         content: Text(
-          'Delete "${backup.name.isNotEmpty ? backup.name : 'backup from ${DateFormat.yMMMd().format(backup.timestamp)}'}"?\n\nThis cannot be undone.',
+          context.l10n.desktopDeleteBackupMessage(
+            backup.name.isNotEmpty ? backup.name : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -583,7 +587,7 @@ class _BackupPreview extends StatelessWidget {
                   .add(BackupDeleted(backupId: backup.id));
             },
             child: Text(
-              'Delete',
+              context.l10n.desktopDelete,
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -634,7 +638,7 @@ class _BackupLocationRow extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(4),
             child: Text(
-              'Change',
+              context.l10n.desktopChange,
               style: AppTextStyle.labelSmall.copyWith(
                 color: isWorking
                     ? context.colorScheme.onSurface.withValues(alpha: 0.3)
@@ -655,11 +659,11 @@ class _BackupLocationRow extends StatelessWidget {
     if (Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
         if (initialPath != null) 'initialDirectory': initialPath,
-        'title': 'Choose Backup Location',
+        'title': context.l10n.desktopChooseBackupLocation,
       });
     } else {
       result = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: 'Choose Backup Location',
+        dialogTitle: context.l10n.desktopChooseBackupLocation,
         initialDirectory: initialPath,
       );
     }

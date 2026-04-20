@@ -11,6 +11,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
@@ -93,22 +94,22 @@ class SyncSection extends StatelessWidget {
                                 icon: commState.connectionStatus == ConnectionStatus.connected
                                     ? Icons.link
                                     : Icons.link_off,
-                                label: 'Connection',
-                                status: _getConnectionStatus(commState),
+                                label: context.l10n.connectionLabel,
+                                status: _getConnectionStatus(commState, context.l10n),
                                 statusColor: _getConnectionColor(commState),
                               ),
                               const SizedBox(height: Insets.small),
                               _StatusRow(
                                 icon: Icons.sync,
-                                label: 'Device Sync',
-                                status: _getSyncStatus(commState, lwwState),
+                                label: context.l10n.deviceSyncLabel,
+                                status: _getSyncStatus(commState, lwwState, context.l10n),
                                 statusColor: _getSyncColor(commState, lwwState),
                               ),
                               const SizedBox(height: Insets.small),
                               _StatusRow(
                                 icon: Icons.shield_outlined,
-                                label: 'Backup',
-                                status: _getBackupStatus(commState, backupState),
+                                label: context.l10n.backupLabel,
+                                status: _getBackupStatus(commState, backupState, context.l10n),
                                 statusColor: _getBackupColor(commState, backupState),
                               ),
                               const SizedBox(height: Insets.normal),
@@ -158,7 +159,7 @@ class SyncSection extends StatelessWidget {
                                           ),
                                         ),
                                         label: Text(
-                                          'Sync',
+                                          context.l10n.syncLabel,
                                           style: AppTextStyle.buttonSmall,
                                         ),
                                         style: ElevatedButton.styleFrom(
@@ -189,8 +190,8 @@ class SyncSection extends StatelessWidget {
                                         ),
                                         label: Text(
                                           backupState.isBackingUp
-                                              ? 'Backing up...'
-                                              : 'Backup',
+                                              ? context.l10n.backupStatusBackingUp
+                                              : context.l10n.backupLabel,
                                           style: AppTextStyle.buttonSmall,
                                         ),
                                         style: ElevatedButton.styleFrom(
@@ -234,7 +235,7 @@ class SyncSection extends StatelessWidget {
                                           ),
                                         ),
                                         child: Text(
-                                          'Disconnect',
+                                          context.l10n.disconnectLabel,
                                           style: AppTextStyle.buttonSmall.copyWith(
                                             color: AppColors.error,
                                           ),
@@ -251,7 +252,7 @@ class SyncSection extends StatelessWidget {
                                     onPressed: () => DeviceSyncDialog.show(context),
                                     icon: const Icon(Icons.link, size: 16),
                                     label: Text(
-                                      'Connect',
+                                      context.l10n.connect,
                                       style: AppTextStyle.buttonSmall,
                                     ),
                                     style: ElevatedButton.styleFrom(
@@ -294,15 +295,15 @@ class SyncSection extends StatelessWidget {
     );
   }
 
-  String _getConnectionStatus(DesktopSyncState comm) {
+  String _getConnectionStatus(DesktopSyncState comm, AppLocalizations l10n) {
     if (comm.connectionStatus == ConnectionStatus.connected) {
-      return comm.connectedDeviceName ?? 'Connected';
+      return comm.connectedDeviceName ?? l10n.connectionStatusConnected;
     }
     if (comm.connectionStatus == ConnectionStatus.discovering) {
-      return 'Connecting...';
+      return l10n.connectionStatusConnecting;
     }
-    if (comm.pairedDevice != null) return 'Disconnected';
-    return 'Not paired';
+    if (comm.pairedDevice != null) return l10n.connectionStatusDisconnected;
+    return l10n.connectionStatusNotPaired;
   }
 
   Color _getConnectionColor(DesktopSyncState comm) {
@@ -316,17 +317,17 @@ class SyncSection extends StatelessWidget {
     return AppColors.textSecondary;
   }
 
-  String _getSyncStatus(DesktopSyncState comm, LwwSyncState lww) {
+  String _getSyncStatus(DesktopSyncState comm, LwwSyncState lww, AppLocalizations l10n) {
     final isConnected =
         comm.connectionStatus == ConnectionStatus.connected;
-    if (lww.syncStatus == LwwSyncStatus.syncing) return 'Syncing...';
-    if (lww.isSynced && isConnected) return 'In sync';
-    if (isConnected) return 'Connected';
-    if (lww.pendingChangeCount > 0) return '${lww.pendingChangeCount} pending';
+    if (lww.syncStatus == LwwSyncStatus.syncing) return l10n.syncStatusSyncing;
+    if (lww.isSynced && isConnected) return l10n.syncStatusInSync;
+    if (isConnected) return l10n.connectionStatusConnected;
+    if (lww.pendingChangeCount > 0) return l10n.syncStatusPending(lww.pendingChangeCount);
     if (lww.lastSyncTime != null) {
       return DateFormatUtils.getSincePretty(lww.lastSyncTime!);
     }
-    return 'Not paired';
+    return l10n.connectionStatusNotPaired;
   }
 
   Color _getSyncColor(DesktopSyncState comm, LwwSyncState lww) {
@@ -339,9 +340,9 @@ class SyncSection extends StatelessWidget {
     return AppColors.textSecondary;
   }
 
-  String _getBackupStatus(DesktopSyncState comm, BackupState state) {
-    if (state.isBackingUp) return 'Backing up...';
-    if (state.isRestoring) return 'Restoring...';
+  String _getBackupStatus(DesktopSyncState comm, BackupState state, AppLocalizations l10n) {
+    if (state.isBackingUp) return l10n.backupStatusBackingUp;
+    if (state.isRestoring) return l10n.backupStatusRestoring;
     if (state.backupHistory.isNotEmpty) {
       return DateFormatUtils.getSincePretty(state.backupHistory.first.timestamp);
     }
@@ -349,9 +350,9 @@ class SyncSection extends StatelessWidget {
       return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!);
     }
     if (comm.connectionStatus == ConnectionStatus.connected) {
-      return 'Waiting...';
+      return l10n.backupStatusWaiting;
     }
-    return 'Not connected';
+    return l10n.backupStatusNotConnected;
   }
 
   Color _getBackupColor(DesktopSyncState comm, BackupState state) {
@@ -468,7 +469,7 @@ class _BackupLocationRow extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(4),
             child: Text(
-              'Change',
+              context.l10n.changeLabel,
               style: AppTextStyle.labelSmall.copyWith(
                 color: isWorking
                     ? context.colorScheme.onSurface.withValues(alpha: 0.3)

@@ -8,6 +8,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ExtendRequestCard extends StatelessWidget {
   final int durationSeconds;

@@ -22,6 +22,7 @@ import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PatientEditDialog extends StatefulWidget {
   final Patient patient;

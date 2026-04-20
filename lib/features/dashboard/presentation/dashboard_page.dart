@@ -5,6 +5,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -355,7 +356,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                           BlendMode.srcIn,
                                         ),
                                       ),
-                                      label: 'Import',
+                                      label: context.l10n.importTitle,
                                       isSelected:
                                           _navigationController.currentPage == 2,
                                       pageIndex: 2,
@@ -377,7 +378,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                             BlendMode.srcIn,
                                           ),
                                         ),
-                                        label: 'Handover',
+                                        label: context.l10n.fromPhoneTab,
                                         isSelected:
                                             _navigationController.currentPage == 3,
                                         pageIndex: 3,
@@ -462,7 +463,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                           BlendMode.srcIn,
                                         ),
                                       ),
-                                      label: 'Import',
+                                      label: context.l10n.importTitle,
                                       isSelected:
                                           _navigationController.currentPage == 3,
                                       pageIndex: 3,

@@ -21,6 +21,7 @@ import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage<bool>()
 class LoadModelPage extends StatefulWidget {
@@ -201,7 +202,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'You can navigate away - download will continue in background.\nCheck notifications for progress.',
+            context.l10n.downloadContinuesInBackground,
             textAlign: TextAlign.center,
             style: AppTextStyle.bodySmall.copyWith(
               color: context.colorScheme.primary,
@@ -215,15 +216,15 @@ class _LoadModelPageState extends State<LoadModelPage> {
               onPressed: () => context.router.maybePop(),
               child: Text(
                 widget.canAttachToEncounter
-                    ? 'Continue without AI (download in background)'
-                    : 'Continue using app',
+                    ? context.l10n.continueWithoutAi
+                    : context.l10n.continueUsingApp,
               ),
             ),
           ),
         ] else ...[
           if (state.deviceCapability == DeviceAiCapability.unsupported) ...[
             AppButton(
-              label: 'Process on Desktop',
+              label: context.l10n.processOnDesktop,
               icon: const Icon(Icons.computer),
               variant: AppButtonVariant.primary,
               height: 48,
@@ -235,7 +236,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
                 onPressed: () => context.router.maybePop(false),
                 child: Text(
                   widget.canAttachToEncounter
-                      ? 'I want to attach the document without processing'
+                      ? context.l10n.attachWithoutProcessing
                       : context.l10n.cancel,
                   textAlign: TextAlign.center,
                 ),
@@ -305,7 +306,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
               child: TextButton(
                 onPressed: () => context.router.maybePop(false),
                 child: Text(widget.canAttachToEncounter
-                    ? 'I want to attach the document without processing'
+                    ? context.l10n.attachWithoutProcessing
                     : context.l10n.cancel),
               ),
             ),
@@ -318,7 +319,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
                   Icon(Icons.computer, size: 22, color: context.colorScheme.primary),
                   const SizedBox(width: Insets.small),
                   Text(
-                    'Process on Desktop',
+                    context.l10n.processOnDesktop,
                     style: AppTextStyle.bodyMedium.copyWith(
                       color: context.colorScheme.primary,
                       fontWeight: FontWeight.w700,

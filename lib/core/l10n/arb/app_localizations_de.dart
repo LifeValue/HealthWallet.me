@@ -33,26 +33,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String get onboardingNext => 'Nächste';
 
   @override
-  String get onboardingWelcomeTitle => 'eine Gesundheits-Brieftasche für Sie!';
+  String get onboardingWelcomeTitle => 'eine Gesundheits-Brieftasche für dich!';
 
   @override
   String get onboardingWelcomeSubtitle =>
-      'Greifen Sie sicher auf Ihre vollständige Krankengeschichte mit <link>HealthWallet.me</link> zu. Verbinden Sie sich mit über 100.000 US-Gesundheitseinrichtungen oder fügen Sie Aufzeichnungen hinzu, indem Sie direkt mit der App teilen oder Dokumente scannen. Ihre Gesundheitsdaten sind privat, konform und werden nur auf Ihrem Gerät gespeichert.';
+      '<link>HealthWallet.me</link> verbindet dich bereits mit über 100.000 US-Gesundheitseinrichtungen und wir expandieren in neue Länder.';
 
   @override
   String get onboardingWelcomeDescription =>
-      'Synchronisieren Sie Ihre Gesundheitsdaten über <link>FastenHealth OnPrem</link> mit den Gesundheitsdienstleistern und sehen Sie Ihre vollständige Krankengeschichte an einem Ort. Sicher, konform und immer auf Ihrem Gerät. Genießen Sie!';
+      'Füge Aufzeichnungen von beliebigen Anbietern hinzu, importiere Dokumente manuell oder fordere Unterstützung für dein Land an.';
 
   @override
-  String get onboardingRecordsTitle => 'Ihre Gesundheit, Immer Synchron';
+  String get onboardingRecordsTitle => 'Deine Gesundheit, Immer Synchron';
 
   @override
   String get onboardingRecordsSubtitle =>
-      '**Halten Sie Ihre Krankengeschichte mühelos mit automatischen und manuellen Optionen auf dem neuesten Stand.**';
+      '<link>HealthWallet.me</link> bietet dir flexible Möglichkeiten, deine gesamte Krankengeschichte zusammenzubringen:';
 
   @override
   String get onboardingRecordsDescription =>
-      '<link>HealthWallet.me</link> stellt sicher, dass Ihre vollständige Gesundheitsgeschichte immer aktuell ist. Es synchronisiert automatisch neue Aufzeichnungen von verbundenen Anbietern und ermöglicht es Ihnen, physische Dokumente sofort mit einem schnellen Scan hinzuzufügen.';
+      '• Dokumente mit der Handykamera scannen\n• PDFs, Bilder oder Labordateien direkt hochladen\n• Aufzeichnungen teilen, indem du direkt von jeder App auf deinem Smartphone mit <link>HealthWallet.me</link> teilst.\n• QR-Code von Fasten Health OnPrem scannen und alle Aufzeichnungen aus dem US-Gesundheitssystem in dein Wallet übertragen.';
 
   @override
   String get onboardingRecordsContent =>
@@ -69,19 +69,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get onboardingScanButton => 'Scannen';
 
   @override
-  String get onboardingSyncTitle => 'Privat von Design';
+  String get onboardingSyncTitle => 'Sicherheit & Datenschutz';
 
   @override
   String get onboardingSyncSubtitle =>
-      'Ihre Gesundheitsdaten gehören nur Ihnen.';
+      'Deine Gesundheitsdaten gehören nur dir.';
 
   @override
   String get onboardingSyncDescription =>
-      'Wir glauben, dass Ihre sensiblen Gesundheitsinformationen niemals auf einem Firmenserver liegen sollten. Ihre Daten sind verschlüsselt und ausschließlich auf Ihrem Gerät gespeichert, was bedeutet, dass nur Sie Zugang haben.';
+      'Wir glauben, dass deine sensiblen Gesundheitsinformationen niemals auf einem Firmenserver liegen sollten. Deine Daten sind verschlüsselt und ausschließlich auf deinem Gerät gespeichert, was bedeutet, dass nur du Zugang hast.';
 
   @override
   String get onboardingBiometricText =>
-      'Für eine zusätzliche Schutzschicht können Sie Ihre HealthWallet mit biometrischer Sicherheit wie Face ID oder einem Fingerabdruck-Scan sperren.';
+      'Für eine zusätzliche Schutzschicht kannst du deine HealthWallet mit biometrischer Sicherheit wie Face ID oder einem Fingerabdruck-Scan sperren.';
 
   @override
   String get homeHi => 'Hallo, ';
@@ -96,7 +96,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get homeVitalSigns => 'Vitalzeichen';
 
   @override
-  String get homeOverview => 'Überblick';
+  String get homeOverview => 'Medizinische Aufzeichnungen';
 
   @override
   String get homeSource => 'Quelle:';
@@ -115,7 +115,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get bluetoothRequired =>
-      'Bitte schalten Sie Bluetooth ein, um die Nahbereichsfreigabe zu nutzen';
+      'Bitte schalte Bluetooth ein, um die Nahbereichsfreigabe zu nutzen';
 
   @override
   String get dashboardTitle => 'Instrumententafel';
@@ -134,14 +134,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncDataLoadedSuccessfully =>
-      'Ihre medizinischen Aufzeichnungen wurden synchronisiert. Sie werden zur Startseite weitergeleitet.';
+      'Deine medizinischen Aufzeichnungen wurden synchronisiert. Du wirst zur Startseite weitergeleitet.';
 
   @override
   String get cancelSyncTitle => 'Synchronisierung abbrechen?';
 
   @override
   String get cancelSyncMessage =>
-      'Sind Sie sicher, dass Sie die Synchronisierung abbrechen möchten? Dies wird den aktuellen Synchronisierungsprozess stoppen.';
+      'Bist du sicher, dass du die Synchronisierung abbrechen möchtest? Dies wird den aktuellen Synchronisierungsprozess stoppen.';
 
   @override
   String get yesCancel => 'Ja, abbrechen';
@@ -177,8 +177,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get medicalRecords => 'Krankenakten';
 
   @override
-  String get searchRecordsHint =>
-      'Suchen Sie nach Aufzeichnungen, Ärzten, Orten...';
+  String get searchRecordsHint => 'Suche nach Aufzeichnungen, Ärzten, Orten...';
 
   @override
   String get detailsFor => 'Details für ';
@@ -200,7 +199,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncLatestRecords =>
-      'Synchronisieren Sie Ihre neuesten medizinischen Unterlagen von Ihrem Gesundheitsdienstleister.';
+      'Synchronisiere deine neuesten medizinischen Unterlagen von deinem Gesundheitsdienstleister.';
 
   @override
   String get scanToSync => 'Zum Synchronisieren scannen';
@@ -210,7 +209,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pleaseAuthenticate =>
-      'Bitte authentifizieren Sie sich, um fortzufahren';
+      'Bitte authentifiziere dich, um fortzufahren';
 
   @override
   String get authenticate => 'Authentifizieren';
@@ -223,7 +222,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onboardingAuthDescription =>
-      'Fügen Sie eine zusätzliche Sicherheitsebene zu Ihrem Konto hinzu, indem Sie die biometrische Authentifizierung aktivieren.';
+      'Füge eine zusätzliche Sicherheitsebene zu deinem Konto hinzu, indem du die biometrische Authentifizierung aktivierst.';
 
   @override
   String get onboardingAuthEnable => 'Jetzt aktivieren';
@@ -242,26 +241,26 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get deviceSecurityMessage =>
-      'Ihr Gerät hat keine Sicherheitseinrichtung. Zu Ihrer Sicherheit richten Sie bitte die Gerätesicherheit ein, bevor Sie diese App verwenden:';
+      'Dein Gerät hat keine Sicherheitseinrichtung. Zu deiner Sicherheit richte bitte die Gerätesicherheit ein, bevor du diese App verwendest:';
 
   @override
-  String get deviceSettingsStep1 => 'Gehen Sie zu Ihren Geräteeinstellungen';
+  String get deviceSettingsStep1 => 'Gehe zu deinen Geräteeinstellungen';
 
   @override
   String get deviceSettingsStep2 =>
-      'Navigieren Sie zu Sicherheit oder Sperrbildschirm';
+      'Navigiere zu Sicherheit oder Sperrbildschirm';
 
   @override
   String get deviceSettingsStep3 =>
-      'Richten Sie eine Bildschirmsperre ein (PIN, Muster oder Passwort)';
+      'Richte eine Bildschirmsperre ein (PIN, Muster oder Passwort)';
 
   @override
   String get deviceSettingsStep4 =>
-      'Fügen Sie optional Fingerabdruck oder Gesichtserkennung für mehr Komfort hinzu';
+      'Füge optional Fingerabdruck oder Gesichtserkennung für mehr Komfort hinzu';
 
   @override
   String get deviceSecurityReturnMessage =>
-      'Nach dem Einrichten der Gerätesicherheit kehren Sie zu dieser App zurück und versuchen Sie es erneut.';
+      'Nach dem Einrichten der Gerätesicherheit kehre zu dieser App zurück und versuche es erneut.';
 
   @override
   String get cancel => 'Abbrechen';
@@ -289,10 +288,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get manualSyncMessage => 'Roher QR-Code';
 
   @override
-  String get pasteSyncDataHint => 'Fügen Sie den rohen QR-Code ein';
+  String get pasteSyncDataHint => 'Füge den rohen QR-Code ein';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Verbinden';
 
   @override
   String get scanNewQRCode => 'Neuen QR-Code scannen';
@@ -313,18 +312,18 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get loadDemoDataMessage =>
-      'Laden Sie Demo-Daten, um die App zu erkunden, oder synchronisieren Sie Ihre echten medizinischen Aufzeichnungen';
+      'Lade Demo-Daten, um die App zu erkunden, oder synchronisiere deine echten medizinischen Aufzeichnungen';
 
   @override
   String syncDataMessage(Object recordType) {
-    return 'Synchronisieren oder aktualisieren Sie Ihre Daten, um $recordType-Aufzeichnungen anzuzeigen';
+    return 'Synchronisiere oder aktualisiere deine Daten, um $recordType-Aufzeichnungen anzuzeigen';
   }
 
   @override
-  String get retry => 'Wiederholen';
+  String get retry => 'Erneut versuchen';
 
   @override
-  String get pleaseEnterSourceName => 'Bitte geben Sie einen Quellennamen ein';
+  String get pleaseEnterSourceName => 'Bitte gib einen Quellennamen ein';
 
   @override
   String get selectBirthDate => 'Geburtsdatum auswählen';
@@ -349,7 +348,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noChangesDetected => 'Keine Änderungen erkannt';
 
   @override
-  String get pleaseSelectBirthDate => 'Bitte wählen Sie ein Geburtsdatum';
+  String get pleaseSelectBirthDate => 'Bitte wähle ein Geburtsdatum';
 
   @override
   String get errorSavingPatientData =>
@@ -375,29 +374,29 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get deleteRecordConfirm =>
-      'Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?';
+      'Bist du sicher, dass du diesen Eintrag löschen möchtest?';
 
   @override
   String get deleteNoteConfirm =>
-      'Sind Sie sicher, dass Sie diese Notiz löschen möchten?';
+      'Bist du sicher, dass du diese Notiz löschen möchtest?';
 
   @override
   String get deleteAttachmentConfirm =>
-      'Sind Sie sicher, dass Sie diesen Anhang löschen möchten?';
+      'Bist du sicher, dass du diesen Anhang löschen möchtest?';
 
   @override
   String deleteRecordsConfirm(int count) {
-    return 'Sind Sie sicher, dass Sie $count Einträge löschen möchten?';
+    return 'Bist du sicher, dass du $count Einträge löschen möchtest?';
   }
 
   @override
   String confirmDeleteFile(Object filename) {
-    return 'Sind Sie sicher, dass Sie \"$filename\" löschen möchten?';
+    return 'Bist du sicher, dass du \"$filename\" löschen möchtest?';
   }
 
   @override
   String selectAtLeastOne(Object type) {
-    return 'Wählen Sie mindestens einen $type aus, um fortzufahren.';
+    return 'Wähle mindestens einen $type aus, um fortzufahren.';
   }
 
   @override
@@ -436,7 +435,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String chooseToDisplay(Object type) {
-    return 'Wählen Sie die $type, die Sie in Ihrem Dashboard sehen möchten.';
+    return 'Wähle die $type, die du in deinem Dashboard sehen möchtest.';
   }
 
   @override
@@ -486,20 +485,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get desktopSyncDescription =>
-      'Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.';
+      'Synchronisiere und sichere deine Gesundheitsdaten.\nÜbergib Dokumente zur digitalen Verarbeitung auf deinem Desktop.';
 
   @override
-  String get processOnDesktop => 'Process on Desktop';
+  String get processOnDesktop => 'Auf dem Desktop verarbeiten';
 
   @override
-  String get sendToDesktop => 'Send to Desktop';
+  String get sendToDesktop => 'An Desktop senden';
 
   @override
-  String get continueImporting => 'Continue Importing';
+  String get continueImporting => 'Weiter importieren';
 
   @override
   String get noAiModelOnDesktop =>
-      'Kein KI-Modell auf dem Desktop. Bitte laden Sie zuerst das KI-Modell auf Ihrer Desktop-App herunter.';
+      'Kein KI-Modell auf dem Desktop. Bitte lade zuerst das KI-Modell auf deiner Desktop-App herunter.';
 
   @override
   String get syncMedicalRecords =>
@@ -507,7 +506,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncLatestMedicalRecords =>
-      'Synchronisieren Sie Ihre neuesten medizinischen Aufzeichnungen von Ihrem Gesundheitsdienstleister mit einem sicheren JWT-Token.';
+      'Synchronisiere deine neuesten medizinischen Aufzeichnungen von deinem Gesundheitsdienstleister mit einem sicheren JWT-Token.';
 
   @override
   String get neverSynced => 'Nie synchronisiert';
@@ -516,7 +515,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get lastSynced => 'Zuletzt synchronisiert';
 
   @override
-  String get tapToSelectPatient => 'Tippen Sie, um einen Patienten auszuwählen';
+  String get tapToSelectPatient => 'Tippe, um einen Patienten auszuwählen';
 
   @override
   String get preferences => 'Einstellungen';
@@ -532,7 +531,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get confirmDisableBiometric =>
-      'Sind Sie sicher, dass Sie die biometrische Authentifizierung (FaceID / Passcode) deaktivieren möchten?';
+      'Bist du sicher, dass du die biometrische Authentifizierung (FaceID / Passcode) deaktivieren möchtest?';
 
   @override
   String get disable => 'Deaktivieren';
@@ -591,8 +590,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noRecords => 'keine Aufzeichnungen';
 
   @override
-  String get tryDifferentKeywords =>
-      'Versuchen Sie es mit anderen Suchbegriffen';
+  String get tryDifferentKeywords => 'Versuche es mit anderen Suchbegriffen';
 
   @override
   String get clearAllFilters => 'Alle löschen';
@@ -605,7 +603,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scanQRMessage =>
-      'Scannen Sie den QR-Code von Ihrem Fasten Health Server, um eine neue Synchronisierungsverbindung zu erstellen.';
+      'Scanne den QR-Code von deinem Fasten Health Server, um eine neue Synchronisierungsverbindung zu erstellen.';
 
   @override
   String get viewAll => 'Alle anzeigen';
@@ -615,14 +613,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get longPressToReorder =>
-      'Lange drücken, um Karten zu verschieben und neu anzuordnen, oder filtern, um auszuwählen, welche in Ihrem Dashboard erscheinen.';
+      'Lange drücken, um Karten zu verschieben und neu anzuordnen, oder filtern, um auszuwählen, welche in deinem Dashboard erscheinen.';
 
   @override
   String get finishProcessing => 'Verarbeitung beenden';
 
   @override
   String get finishProcessingMessage =>
-      'Sind Sie sicher, dass Sie diese Verarbeitungssitzung beenden möchten?';
+      'Bist du sicher, dass du diese Verarbeitungssitzung beenden möchtest?';
 
   @override
   String get finishProcessingWarning => 'Dies löscht die aktuelle Sitzung.';
@@ -634,7 +632,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get selectDate => 'Datum auswählen';
 
   @override
-  String get attachToEncounter => 'An Begegnung anhängen';
+  String get attachToEncounter => 'An Termin anhängen';
 
   @override
   String get continueProcessing => 'Verarbeitung fortsetzen';
@@ -644,10 +642,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get recordsSavedMessage =>
-      'Ihre Gesundheitsdaten wurden erfolgreich gespeichert.';
+      'Deine Gesundheitsdaten wurden erfolgreich gespeichert.';
 
   @override
-  String get whatNextQuestion => 'Was möchten Sie als Nächstes tun?';
+  String get whatNextQuestion => 'Was möchtest du als Nächstes tun?';
 
   @override
   String get continueScanning => 'Weiter Scannen';
@@ -656,15 +654,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get effectiveDate => 'Gültigkeitsdatum';
 
   @override
-  String get privacyIntro => 'Ihre Privatsphäre ist unsere höchste Priorität.';
+  String get privacyIntro => 'Deine Privatsphäre ist unsere höchste Priorität.';
 
   @override
   String get privacyDescription =>
-      'ist ein einfaches, sicheres Tool, das Ihnen hilft, Ihre Gesundheitsakten einfach direkt auf Ihrem Gerät zu organisieren. Diese Richtlinie erklärt unser Engagement für Ihre Privatsphäre: Wir sammeln Ihre Daten nicht und verfolgen Sie nicht. Sie haben die vollständige Kontrolle.';
+      'ist ein einfaches, sicheres Tool, das dir hilft, deine Gesundheitsakten einfach direkt auf deinem Gerät zu organisieren. Diese Richtlinie erklärt unser Engagement für deine Privatsphäre: Wir sammeln deine Daten nicht und verfolgen dich nicht. Du hast die vollständige Kontrolle.';
 
   @override
   String get corePrinciple =>
-      'Unser Grundprinzip: Ihre Daten bleiben auf Ihrem Gerät';
+      'Unser Grundprinzip: Deine Daten bleiben auf deinem Gerät';
 
   @override
   String get whatInformationHandled =>
@@ -675,16 +673,16 @@ class AppLocalizationsDe extends AppLocalizations {
       'Informationen, die wir nicht sammeln oder darauf zugreifen';
 
   @override
-  String get informationYouManage => 'Informationen, die Sie verwalten';
+  String get informationYouManage => 'Informationen, die du verwaltest';
 
   @override
-  String get importingDocuments => 'Dokumente von Ihrem Gerät importieren';
+  String get importingDocuments => 'Dokumente von deinem Gerät importieren';
 
   @override
   String get connectingFastenHealth => 'Verbindung zu FastenHealth OnPrem';
 
   @override
-  String get howInformationUsed => 'Wie Ihre Informationen verwendet werden';
+  String get howInformationUsed => 'Wie deine Informationen verwendet werden';
 
   @override
   String get dataStorageSecurity =>
@@ -697,7 +695,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get changesToPolicy => 'Änderungen an dieser Datenschutzrichtlinie';
 
   @override
-  String get contactUs => 'Kontaktieren Sie uns';
+  String get contactUs => 'Kontaktiere uns';
 
   @override
   String get builtWithLove => 'Mit Liebe von Life Value gebaut!';
@@ -706,28 +704,30 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sourceName => 'Quellenname';
 
   @override
-  String get provideCustomLabel =>
-      'Geben Sie ein benutzerdefiniertes Label an für:';
+  String get provideCustomLabel => 'Gib ein benutzerdefiniertes Label an für:';
 
   @override
   String get success => 'Erfolg';
 
   @override
   String get demoDataLoadedSuccessfully =>
-      'Demo-Daten wurden erfolgreich geladen. Sie werden zur Startseite weitergeleitet.';
+      'Demo-Daten wurden erfolgreich geladen. Du wirst zur Startseite weitergeleitet.';
 
   @override
   String get documentScanTitle => 'Scan';
 
   @override
-  String get onboardingAiModelTitle => 'AI-Modell aktivieren';
+  String get fromPhoneTab => 'Vom Handy';
+
+  @override
+  String get onboardingAiModelTitle => 'KI-Modell aktivieren';
 
   @override
   String get onboardingAiModelDescription =>
-      'Laden Sie ein sicheres, geräteinternes AI-Modell herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren. Wählen Sie zwischen zwei Optionen je nach Bedarf und Gerätekapazität. Dies ist eine einmalige Einrichtung.\n\n**Ihre Daten bleiben privat auf Ihrem Gerät.**';
+      'Lade ein sicheres, geräteinternes KI-Modell herunter, um deine Gesundheitsakten automatisch zu analysieren und zu organisieren. Wähle zwischen zwei Optionen je nach Bedarf und Gerätekapazität. Dies ist eine einmalige Einrichtung.\n\n**Deine Daten bleiben privat auf deinem Gerät.**';
 
   @override
-  String get onboardingAiModelSubtitle => 'AI-gestütztes Scannen freischalten';
+  String get onboardingAiModelSubtitle => 'KI-gestütztes Scannen freischalten';
 
   @override
   String get aiModelReady => 'KI bereit! Du kannst mit dem Scannen beginnen.';
@@ -753,11 +753,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiModelUnlockDescription =>
-      'Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell.\n\n**Ihre Daten bleiben privat auf Ihrem Gerät.**';
+      'Um deine medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell.\n\n**Deine Daten bleiben privat auf deinem Gerät.**';
 
   @override
   String get aiModelDownloadInfo =>
-      'Um zu beginnen, wählen und laden Sie eine der zwei verfügbaren KI-Optionen herunter. Dies ist eine einmalige Einrichtung.';
+      'Um zu beginnen, wähle und lade eine der zwei verfügbaren KI-Optionen herunter. Dies ist eine einmalige Einrichtung.';
 
   @override
   String get setup => 'Einrichten';
@@ -767,28 +767,28 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get patientSetupSubtitle =>
-      'Personalisieren Sie Ihre Gesundheits-Brieftasche mit Ihren Informationen';
+      'Personalisiere deine Gesundheits-Brieftasche mit deinen Informationen';
 
   @override
   String get onboardingSetupTitle => 'Meine Gesundheits-Brieftasche einrichten';
 
   @override
   String get onboardingSetupBody =>
-      'Erstellen Sie Ihr persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen';
+      'Erstelle dein persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen';
 
   @override
   String get onboardingDemoTitle => 'Demo-Daten ausprobieren';
 
   @override
   String get onboardingDemoBody =>
-      'Erkunden Sie die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert';
+      'Erkunde die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert';
 
   @override
-  String get onboardingSyncTitle2 => 'Ihre Aufzeichnungen synchronisieren';
+  String get onboardingSyncTitle2 => 'Deine Aufzeichnungen synchronisieren';
 
   @override
   String get onboardingSyncBody =>
-      'Verbinden Sie sich mit Ihren Gesundheitsdienstleistern, um Ihre echten medizinischen Aufzeichnungen zu importieren';
+      'Verbinde dich mit deinen Gesundheitsdienstleistern, um deine echten medizinischen Aufzeichnungen zu importieren';
 
   @override
   String get givenName => 'Vorname';
@@ -807,22 +807,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncPlaceholderTutorialStep1 =>
-      'Vervollständigen Sie Ihr Profil, um alle Funktionen freizuschalten.';
+      'Vervollständige dein Profil, um alle Funktionen freizuschalten.';
 
   @override
   String get syncPlaceholderTutorialStep2 =>
-      'Noch nicht bereit zum Importieren? Laden Sie Demo-Daten, um zu sehen, wie die App in Aktion aussieht.';
+      'Noch nicht bereit zum Importieren? Lade Demo-Daten, um zu sehen, wie die App in Aktion aussieht.';
 
   @override
   String get syncPlaceholderTutorialStep3 =>
-      'Halten Sie Ihre Desktop- und Mobile-Wallet auf dem neuesten Stand.';
+      'Halte deine Desktop- und Mobile-Wallet auf dem neuesten Stand.';
 
   @override
-  String get tapToContinue => 'Tippen Sie, um fortzufahren';
+  String get tapToContinue => 'Tippe, um fortzufahren';
 
   @override
   String get homeOnboardingReorderMessage =>
-      'Lange drücken, um sie nach Ihren Wünschen neu anzuordnen.';
+      'Lange drücken, um sie nach deinen Wünschen neu anzuordnen.';
 
   @override
   String get processing => 'Verarbeitung';
@@ -847,10 +847,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get extractingPatientInfo =>
-      'Patienten- und Begegnungsinformationen werden extrahiert.';
+      'Patienten- und Termininformationen werden extrahiert.';
 
   @override
-  String get pleaseWait => 'Es kann eine Weile dauern. Bitte warten Sie.';
+  String get pleaseWait => 'Es kann eine Weile dauern. Bitte warten.';
 
   @override
   String get focusMode => 'Fokusmodus';
@@ -870,16 +870,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get chooseResourcesDescription =>
-      'Wählen Sie die Ressourcen aus, die Sie zur Verarbeitung hinzufügen möchten.';
+      'Wähle die Ressourcen aus, die du zur Verarbeitung hinzufügen möchtest.';
 
   @override
   String get add => 'Hinzufügen';
 
   @override
-  String get allergyIntolerance => 'Allergieunverträglichkeit';
+  String get allergyIntolerance => 'Allergie';
 
   @override
-  String get condition => 'Bedingung';
+  String get condition => 'Erkrankung';
 
   @override
   String get diagnosticReport => 'Diagnosebericht';
@@ -897,11 +897,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get practitioner => 'Fachkraft';
 
   @override
-  String get procedure => 'Verfahren';
+  String get procedure => 'Maßnahme';
 
   @override
   String get tapToViewProgress =>
-      'Tippen Sie irgendwo, um den Fortschritt anzuzeigen';
+      'Tippe irgendwo, um den Fortschritt anzuzeigen';
 
   @override
   String screenWillDarkenInSeconds(int remainingSeconds) {
@@ -914,14 +914,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get whileDocumentsProcessed =>
-      'Während Ihre Dokumente verarbeitet werden:';
+      'Während deine Dokumente verarbeitet werden:';
 
   @override
   String get doNotLockScreen =>
-      'Sperren Sie den Bildschirm nicht und verlassen Sie die App nicht.';
+      'Sperre den Bildschirm nicht und verlasse die App nicht.';
 
   @override
-  String get plugInCharger => 'Stecken Sie das Ladegerät ein.';
+  String get plugInCharger => 'Stecke das Ladegerät ein.';
 
   @override
   String get exitFocusMode => 'Fokusmodus beenden';
@@ -930,7 +930,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get chargerPluggedIn => 'Ladegerät eingesteckt.';
 
   @override
-  String get plugInChargerEllipsis => 'Stecken Sie das Ladegerät ein...';
+  String get plugInChargerEllipsis => 'Stecke das Ladegerät ein...';
 
   @override
   String get processingFailedCapacity =>
@@ -938,7 +938,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processingFailedCapacitySuggestion =>
-      'Tippen Sie oben auf das Einstellungssymbol und erhöhen Sie die Kontextgröße auf 2048 oder höher, dann erneut versuchen.';
+      'Tippe oben auf das Einstellungssymbol und erhöhe die Kontextgröße auf 2048 oder höher, dann erneut versuchen.';
 
   @override
   String get increaseAiModelCapacity => 'KI-Kapazität erhöhen';
@@ -960,14 +960,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiSettingsDescription =>
-      'KI-Leistung für Ihr Gerät anpassen. Empfohlene Werte sind vorausgewählt.';
+      'KI-Leistung für dein Gerät anpassen. Empfohlene Werte sind vorausgewählt.';
 
   @override
   String get setAiTokensUsage => 'KI-Token-Nutzung einstellen';
 
   @override
   String get tokenUsageDescription =>
-      'Steuern Sie, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.';
+      'Steuere, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.';
 
   @override
   String get gpuLayersLabel => 'GPU-Schichten';
@@ -1012,7 +1012,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tokenPresetCustomDescription =>
-      'Legen Sie eine benutzerdefinierte Anzahl von Tokens fest.';
+      'Lege eine benutzerdefinierte Anzahl von Tokens fest.';
 
   @override
   String get setTokens => 'Festlegen';
@@ -1047,7 +1047,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noInternetConnectionDescription =>
-      'Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
+      'Bitte überprüfe deine Internetverbindung und versuche es erneut.';
 
   @override
   String get processingStep2NotAvailableTitle =>
@@ -1111,21 +1111,21 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get dropModificationsMessage =>
-      'Ihre Änderungen an den Patientenfeldern werden verworfen.';
+      'Deine Änderungen an den Patientenfeldern werden verworfen.';
 
   @override
   String get modifyPatientTitle => 'Patient ändern?';
 
   @override
   String get modifyPatientMessage =>
-      'Die bestehenden Patientendaten werden mit Ihren Änderungen aktualisiert.';
+      'Die bestehenden Patientendaten werden mit deinen Änderungen aktualisiert.';
 
   @override
   String get scanIdCard => 'Ausweis oder Reisepass scannen';
 
   @override
   String get scanIdCardDescription =>
-      'Automatisch aus Ihrem Dokument ausfüllen. Daten bleiben auf Ihrem Gerät.';
+      'Automatisch aus deinem Dokument ausfüllen. Daten bleiben auf deinem Gerät.';
 
   @override
   String get newLabel => 'Neu';
@@ -1160,7 +1160,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get medGemmaIncompatibleDevice =>
-      'Dieses Modell benötigt mehr Arbeitsspeicher als auf Ihrem Gerät verfügbar ist. Verwenden Sie stattdessen das Standardmodell.';
+      'Dieses Modell benötigt mehr Arbeitsspeicher als auf deinem Gerät verfügbar ist. Verwende stattdessen das Lite-Modell.';
 
   @override
   String get deepScanDownloadTitle => 'Visionsmodell herunterladen';
@@ -1178,7 +1178,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shareViewOnlyBanner =>
-      'NUR ANSICHT - Daten werden gelöscht, wenn Sie die Sitzung schließen oder den Näherungsbereich verlassen';
+      'NUR ANSICHT - Daten werden gelöscht, wenn du die Sitzung schließt oder den Näherungsbereich verlässt';
 
   @override
   String get shareViewOnlyBannerViewing =>
@@ -1232,7 +1232,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shareInvitationDeclinedMessage =>
-      'Der Empfänger hat Ihre Einladung zur Ansicht der Aufzeichnungen abgelehnt.';
+      'Der Empfänger hat deine Einladung zur Ansicht der Aufzeichnungen abgelehnt.';
 
   @override
   String get shareSessionCompleteMessage =>
@@ -1246,7 +1246,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shareUnableToConnect =>
-      'Verbindung nicht möglich. Bitte versuchen Sie es erneut.';
+      'Verbindung nicht möglich. Bitte versuche es erneut.';
 
   @override
   String get shareNoDataReceived => 'Keine Daten empfangen';
@@ -1329,11 +1329,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shareWifiToggleHint =>
-      'WiFi Direct reagiert nicht. Schalten Sie WiFi aus/ein und tippen Sie auf Wiederholen.';
+      'WiFi Direct reagiert nicht. Schalte WiFi aus/ein und tippe auf Wiederholen.';
 
   @override
   String get shareDiscoveryHint =>
-      'Stellen Sie sicher, dass auf dem anderen Gerät die HealthWallet.me App geöffnet ist';
+      'Stelle sicher, dass auf dem anderen Gerät die HealthWallet.me App geöffnet ist';
 
   @override
   String get shareProximityHint =>
@@ -1348,8 +1348,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Keine Aufzeichnungen für die angewendeten Filter gefunden';
 
   @override
-  String get shareTryClearingFilters =>
-      'Versuchen Sie, einige Filter zu löschen';
+  String get shareTryClearingFilters => 'Versuche, einige Filter zu löschen';
 
   @override
   String get shareRecordsPageFiltersNoResults =>
@@ -1357,7 +1356,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shareImportOrSyncRecords =>
-      'Importieren oder synchronisieren Sie Aufzeichnungen, um sie zu teilen';
+      'Importiere oder synchronisiere Aufzeichnungen, um sie zu teilen';
 
   @override
   String get shareSessionTime => 'Sitzungszeit';
@@ -1369,8 +1368,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shareRecordsButton => 'Aufzeichnungen Teilen';
 
   @override
-  String get shareSelectRecordsToShare =>
-      'Wählen Sie Aufzeichnungen zum Teilen';
+  String get shareSelectRecordsToShare => 'Wähle Aufzeichnungen zum Teilen';
 
   @override
   String get shareEndSession => 'Sitzung Beenden';
@@ -1423,7 +1421,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String shareDeviceWantsToShare(String deviceName) {
-    return '$deviceName möchte Aufzeichnungen mit Ihnen teilen';
+    return '$deviceName möchte Aufzeichnungen mit dir teilen';
   }
 
   @override
@@ -1480,4 +1478,912 @@ class AppLocalizationsDe extends AppLocalizations {
   String shareExtensionDurationRequested(String duration) {
     return '$duration angefordert';
   }
+
+  @override
+  String get desktopSyncNotYet => 'Noch nicht';
+
+  @override
+  String get desktopSyncTransfer => 'Übertragung';
+
+  @override
+  String desktopSyncTransferValue(int sentRows, int receivedRows) {
+    return '$sentRows gesendet, $receivedRows empfangen';
+  }
+
+  @override
+  String get desktopSyncPending => 'Ausstehend';
+
+  @override
+  String desktopSyncPendingValue(int count) {
+    return '$count Änderungen';
+  }
+
+  @override
+  String desktopSyncingTable(String tableName) {
+    return '$tableName wird synchronisiert...';
+  }
+
+  @override
+  String get desktopSyncing => 'Synchronisiere...';
+
+  @override
+  String get desktopSyncNow => 'Jetzt synchronisieren';
+
+  @override
+  String get desktopSyncError => 'Fehler';
+
+  @override
+  String get desktopSyncInSync => 'Synchron';
+
+  @override
+  String get desktopSyncReady => 'Bereit';
+
+  @override
+  String get desktopSyncOffline => 'Offline';
+
+  @override
+  String get desktopTableHealthRecords => 'Gesundheitsdaten';
+
+  @override
+  String get desktopTableSources => 'Quellen';
+
+  @override
+  String get desktopTableNotes => 'Notizen';
+
+  @override
+  String get desktopTableSessions => 'Sitzungen';
+
+  @override
+  String get desktopConnection => 'Verbindung';
+
+  @override
+  String get desktopGeneratePairingQr => 'Kopplungs-QR generieren';
+
+  @override
+  String get desktopScanFromMobile => 'Über die mobile Sync-Seite scannen';
+
+  @override
+  String get desktopDevice => 'Gerät';
+
+  @override
+  String get desktopTransport => 'Übertragung';
+
+  @override
+  String get desktopIp => 'IP';
+
+  @override
+  String get desktopPort => 'Port';
+
+  @override
+  String get desktopNewPairing => 'Neue Kopplung';
+
+  @override
+  String get desktopTransportTcp => 'TCP über WLAN';
+
+  @override
+  String get desktopTransportMpc => 'MultipeerConnectivity (Direkt)';
+
+  @override
+  String desktopConnectedTo(String name) {
+    return 'Verbunden mit $name';
+  }
+
+  @override
+  String get desktopConnected => 'Verbunden';
+
+  @override
+  String desktopReconnectingTo(String name) {
+    return 'Verbindung zu $name wird wiederhergestellt...';
+  }
+
+  @override
+  String get desktopReconnecting => 'Verbindung wird wiederhergestellt...';
+
+  @override
+  String desktopDisconnectedFrom(String name) {
+    return 'Verbindung zu $name getrennt';
+  }
+
+  @override
+  String get desktopDisconnected => 'Getrennt';
+
+  @override
+  String get desktopDisconnect => 'Trennen';
+
+  @override
+  String get desktopReconnect => 'Erneut verbinden';
+
+  @override
+  String get desktopVpnDetected =>
+      'VPN erkannt. Trenne das VPN, um mit dem Desktop zu synchronisieren.';
+
+  @override
+  String get desktopPairing => 'Kopplung';
+
+  @override
+  String get desktopLabel => 'Desktop';
+
+  @override
+  String get desktopScanFromPhoneToPair =>
+      'Scanne mit deinem Handy, um zu koppeln';
+
+  @override
+  String get desktopNewQrCode => 'Neuer QR-Code';
+
+  @override
+  String get desktopGenerateQrCode => 'QR-Code generieren';
+
+  @override
+  String get desktopScanQrCode => 'QR-Code scannen';
+
+  @override
+  String get desktopChooseWhereToSave => 'Wähle einen Speicherort für Backups';
+
+  @override
+  String get desktopSelectBackupFolder =>
+      'Wähle einen Ordner auf deinem Computer zum Speichern der Backup-Dateien';
+
+  @override
+  String get desktopChooseLocation => 'Speicherort wählen';
+
+  @override
+  String get desktopChooseBackupLocation => 'Backup-Speicherort wählen';
+
+  @override
+  String get desktopBackingUp => 'Sicherung läuft...';
+
+  @override
+  String get desktopCreateBackup => 'Backup erstellen';
+
+  @override
+  String get desktopSyncWithPhoneFirst =>
+      'Zuerst mit dem Handy synchronisieren';
+
+  @override
+  String get desktopNotConnected => '(nicht verbunden)';
+
+  @override
+  String get desktopStartBackup => 'Backup starten';
+
+  @override
+  String get desktopNoBackupsYet => 'Noch keine Backups';
+
+  @override
+  String get desktopCreateFirstBackup =>
+      'Erstelle dein erstes Backup, um deine Gesundheitsdaten zu sichern';
+
+  @override
+  String get desktopAllBackups => 'Alle Backups';
+
+  @override
+  String get desktopDate => 'Datum';
+
+  @override
+  String get desktopSize => 'Größe';
+
+  @override
+  String get desktopChecksum => 'Prüfsumme';
+
+  @override
+  String get desktopRestoreThisBackup => 'Dieses Backup wiederherstellen';
+
+  @override
+  String get desktopRestoreBackupTitle => 'Backup wiederherstellen?';
+
+  @override
+  String desktopRestoreBackupMessage(String name, int count) {
+    return 'Alle aktuellen Daten auf diesem Gerät werden durch \"$name\" ersetzt.\n\n$count Aufzeichnungen werden wiederhergestellt.\n\nDeine Daten auf dem gekoppelten Handy bleiben unberührt.';
+  }
+
+  @override
+  String get desktopRestore => 'Wiederherstellen';
+
+  @override
+  String get desktopDeleteBackupTitle => 'Backup löschen?';
+
+  @override
+  String desktopDeleteBackupMessage(String name) {
+    return '\"$name\" löschen?\n\nDies kann nicht rückgängig gemacht werden.';
+  }
+
+  @override
+  String get desktopDelete => 'Löschen';
+
+  @override
+  String get desktopBackupFrom => 'Backup vom';
+
+  @override
+  String get desktopBackup => 'Backup';
+
+  @override
+  String get desktopChange => 'Ändern';
+
+  @override
+  String get desktopProcessingHistory => 'Verarbeitungsverlauf';
+
+  @override
+  String get desktopScannedOnPhone => 'Auf dem Handy gescannt';
+
+  @override
+  String get desktopProcessedOnDesktop => 'Auf dem Desktop verarbeitet';
+
+  @override
+  String get desktopImportedOnDesktop => 'Auf dem Desktop importiert';
+
+  @override
+  String get desktopSyncRecent => 'Kürzlich';
+
+  @override
+  String get desktopUnknownDevice => 'Unbekanntes Gerät';
+
+  @override
+  String desktopSyncHistoryTransfer(int sentRows, int receivedRows) {
+    return '$sentRows gesendet · $receivedRows empfangen';
+  }
+
+  @override
+  String get desktopNewDeviceConnecting => 'Neues Gerät verbindet sich';
+
+  @override
+  String desktopNewDeviceMessage(String address, String currentDevice) {
+    return 'Ein neues Gerät ($address) möchte sich verbinden.\n\nDies trennt die Verbindung zu \"$currentDevice\".\n\nZum neuen Gerät wechseln?';
+  }
+
+  @override
+  String get desktopKeepCurrent => 'Aktuelles behalten';
+
+  @override
+  String get desktopSwitch => 'Wechseln';
+
+  @override
+  String get desktopCurrentDevice => 'aktuelles Gerät';
+
+  @override
+  String get desktopHandoverPreparing => 'Wird vorbereitet...';
+
+  @override
+  String get desktopHandoverSendingFiles => 'Dateien werden gesendet...';
+
+  @override
+  String get desktopHandoverProcessingOnDesktop =>
+      'Wird auf dem Desktop verarbeitet...';
+
+  @override
+  String get desktopHandoverComplete => 'Fertig!';
+
+  @override
+  String get desktopHandoverError => 'Fehler aufgetreten';
+
+  @override
+  String get desktopHandoverSending => 'Wird gesendet...';
+
+  @override
+  String get desktopHandoverSendingToDesktop => 'Wird an den Desktop gesendet';
+
+  @override
+  String desktopHandoverFileCount(int count) {
+    return '$count Dateien';
+  }
+
+  @override
+  String get desktopHandoverSuccess => 'An den Desktop übergeben';
+
+  @override
+  String get desktopClose => 'Schließen';
+
+  @override
+  String get desktopContinueImporting => 'Weiter importieren';
+
+  @override
+  String get desktopConnectToDesktop => 'Mit Desktop verbinden';
+
+  @override
+  String get desktopCouldNotReconnect =>
+      'Verbindung konnte nicht wiederhergestellt werden. Scanne den QR-Code erneut, um zu koppeln.';
+
+  @override
+  String get desktopScanQrToPair =>
+      'Scanne den QR-Code auf deiner Desktop-App, um zu koppeln.';
+
+  @override
+  String get desktopHandoverToDesktop => 'An Desktop übergeben';
+
+  @override
+  String get desktopHandoverProcessingMessage =>
+      'Verarbeitung läuft. Die Übergabe wird die aktuelle Verarbeitung abbrechen und Dateien an den Desktop senden.';
+
+  @override
+  String get desktopHandover => 'Übergabe';
+
+  @override
+  String get attachedDocuments => 'Angehängte Dokumente';
+
+  @override
+  String get cameraPermissionRequired => 'Kamerazugriff erforderlich';
+
+  @override
+  String get cameraPermissionRequiredMessage =>
+      'Diese App benötigt Kamerazugriff zum Scannen. Bitte erteile die Berechtigung.';
+
+  @override
+  String get cameraPermissionDenied => 'Kamerazugriff verweigert';
+
+  @override
+  String get cameraPermissionDeniedMessage =>
+      'Der Kamerazugriff wurde dauerhaft verweigert. Bitte aktiviere ihn in den Einstellungen.';
+
+  @override
+  String get successTitle => 'Erfolg!';
+
+  @override
+  String attachmentSuccessMessage(int count) {
+    return '$count Dokumente erfolgreich dem Termin angehängt.';
+  }
+
+  @override
+  String get encounterLabel => 'Termin';
+
+  @override
+  String get viewRecords => 'Aufzeichnungen ansehen';
+
+  @override
+  String get errorTitle => 'Fehler';
+
+  @override
+  String get somethingWentWrong => 'Etwas ist schiefgelaufen';
+
+  @override
+  String get importDocument => 'Dokument importieren';
+
+  @override
+  String get pickImageFromGallery => 'Bild aus Galerie wählen';
+
+  @override
+  String get scanDocument => 'Dokument scannen';
+
+  @override
+  String get deleteSession => 'Sitzung löschen';
+
+  @override
+  String get deleteSessionConfirmation =>
+      'Möchtest du diese Sitzung wirklich löschen?';
+
+  @override
+  String get delete => 'Löschen';
+
+  @override
+  String get canceling => 'Wird abgebrochen...';
+
+  @override
+  String get waitingForAiToFinish => 'Warte auf Abschluss der KI...';
+
+  @override
+  String get logsCopied => 'Protokolle kopiert';
+
+  @override
+  String get download => 'Herunterladen';
+
+  @override
+  String get active => 'Aktiv';
+
+  @override
+  String get tapToSelect => 'Tippen zum Auswählen';
+
+  @override
+  String deviceInfoChip(
+    String platform,
+    String ramGB,
+    int cores,
+    int estimatedMB,
+  ) {
+    return '$platform  •  $ramGB GB RAM  •  $cores Kerne  •  ~$estimatedMB MB benötigt';
+  }
+
+  @override
+  String get downloadContinuesInBackground =>
+      'Du kannst weiternavigieren — der Download läuft im Hintergrund.\nBenachrichtigungen zeigen den Fortschritt.';
+
+  @override
+  String get continueWithoutAi =>
+      'Ohne KI fortfahren (Download im Hintergrund)';
+
+  @override
+  String get continueUsingApp => 'App weiter nutzen';
+
+  @override
+  String get attachWithoutProcessing => 'Dokument ohne Verarbeitung anhängen';
+
+  @override
+  String get currentPatientAndSource => 'Aktueller Patient & Quelle';
+
+  @override
+  String get createEncounter => 'Termin erstellen';
+
+  @override
+  String get encounterName => 'Terminname';
+
+  @override
+  String get enterEncounterName => 'Terminname eingeben';
+
+  @override
+  String get pleaseEnterEncounterName => 'Bitte gib einen Terminnamen ein';
+
+  @override
+  String get date => 'Datum';
+
+  @override
+  String get create => 'Erstellen';
+
+  @override
+  String get searchEncounters => 'Termine suchen...';
+
+  @override
+  String get noEncountersFound => 'Keine Termine gefunden';
+
+  @override
+  String get noEncountersFoundMessage =>
+      'Erstelle zuerst einen neuen Termin oder wähle einen anderen Patienten.';
+
+  @override
+  String get newEncounterPrefix => 'Neuer Termin';
+
+  @override
+  String get scannedDocumentsTitle => 'Gescannte Dokumente';
+
+  @override
+  String scannedDocumentsPagesTitle(String count) {
+    return 'Gescannte Dokumente ($count Seiten)';
+  }
+
+  @override
+  String pdfFileTitle(String fileName) {
+    return 'PDF: $fileName';
+  }
+
+  @override
+  String get labelOrganizationName => 'Name der Organisation';
+
+  @override
+  String get labelAddress => 'Adresse';
+
+  @override
+  String get labelPhone => 'Telefon';
+
+  @override
+  String get labelEncounterName => 'Terminname';
+
+  @override
+  String get labelStartDate => 'Startdatum';
+
+  @override
+  String get labelFirstName => 'Vorname';
+
+  @override
+  String get labelFamilyName => 'Nachname';
+
+  @override
+  String get labelDateOfBirth => 'Geburtsdatum';
+
+  @override
+  String get labelGender => 'Geschlecht';
+
+  @override
+  String get labelReportName => 'Berichtsname';
+
+  @override
+  String get labelConclusion => 'Befund';
+
+  @override
+  String get labelIssuedDate => 'Ausstellungsdatum';
+
+  @override
+  String get labelPractitionerName => 'Arztname';
+
+  @override
+  String get labelSpecialty => 'Fachgebiet';
+
+  @override
+  String get labelIdentifier => 'Kennung';
+
+  @override
+  String get labelConditionName => 'Diagnose';
+
+  @override
+  String get labelOnsetDate => 'Beginn';
+
+  @override
+  String get labelClinicalStatus => 'Klinischer Status';
+
+  @override
+  String get labelSubstance => 'Substanz';
+
+  @override
+  String get labelManifestation => 'Symptome';
+
+  @override
+  String get labelCategory => 'Kategorie';
+
+  @override
+  String get labelProcedureName => 'Maßnahme';
+
+  @override
+  String get labelPerformedDate => 'Durchgeführt am';
+
+  @override
+  String get labelReason => 'Grund';
+
+  @override
+  String get labelMedicationName => 'Medikament';
+
+  @override
+  String get labelDosage => 'Dosierung';
+
+  @override
+  String get labelObservationName => 'Beobachtung';
+
+  @override
+  String get labelValue => 'Wert';
+
+  @override
+  String get labelUnit => 'Einheit';
+
+  @override
+  String get labelReferenceRange => 'Referenzbereich';
+
+  @override
+  String get permissionsRequired => 'Berechtigungen erforderlich';
+
+  @override
+  String recordsSelectedCount(int count) {
+    return '$count ausgewählt';
+  }
+
+  @override
+  String get noRecordsSelected => 'Keine Aufzeichnungen ausgewählt';
+
+  @override
+  String get select => 'Auswählen';
+
+  @override
+  String get selectRecordsBeforeSharing =>
+      'Aufzeichnungen auswählen\nvor dem Teilen';
+
+  @override
+  String get recordDetails => 'Aufzeichnungsdetails';
+
+  @override
+  String get viewDocument => 'Dokument ansehen';
+
+  @override
+  String get encounterDetails => 'Termindetails';
+
+  @override
+  String get relatedResources => 'Zugehörige Einträge';
+
+  @override
+  String deletePlusRelated(int count) {
+    return 'Löschen + $count zugehörige';
+  }
+
+  @override
+  String get fileNotAvailable => 'Datei auf diesem Gerät nicht verfügbar';
+
+  @override
+  String couldNotOpenFile(String message) {
+    return 'Datei konnte nicht geöffnet werden: $message';
+  }
+
+  @override
+  String errorOpeningFile(String error) {
+    return 'Fehler beim Öffnen der Datei: $error';
+  }
+
+  @override
+  String get failedToLoadImage => 'Bild konnte nicht geladen werden';
+
+  @override
+  String errorLoadingPdf(String error) {
+    return 'Fehler beim Laden der PDF: $error';
+  }
+
+  @override
+  String errorOnPage(String page, String error) {
+    return 'Fehler auf Seite $page: $error';
+  }
+
+  @override
+  String get notes => 'Notizen';
+
+  @override
+  String get noNotesAttached => 'Keine Notizen vorhanden';
+
+  @override
+  String get addNote => 'Notiz hinzufügen';
+
+  @override
+  String get editNote => 'Notiz bearbeiten';
+
+  @override
+  String get filters => 'Filter';
+
+  @override
+  String get timeRange => 'Zeitraum';
+
+  @override
+  String get applyFilters => 'Filter anwenden';
+
+  @override
+  String get recordType => 'Aufzeichnungstyp';
+
+  @override
+  String get selectedRange => 'Ausgewählter Zeitraum';
+
+  @override
+  String get noRangeSelected => 'Kein Zeitraum ausgewählt';
+
+  @override
+  String get clearDateRange => 'Zeitraum zurücksetzen';
+
+  @override
+  String get start => 'Beginn';
+
+  @override
+  String get end => 'Ende';
+
+  @override
+  String fromDate(String date) {
+    return 'Ab $date';
+  }
+
+  @override
+  String untilDate(String date) {
+    return 'Bis $date';
+  }
+
+  @override
+  String get day => 'Tag';
+
+  @override
+  String get month => 'Monat';
+
+  @override
+  String get year => 'Jahr';
+
+  @override
+  String get mediaInfo => 'Medieninfo';
+
+  @override
+  String get linkToEncounter => 'Mit Termin verknüpfen';
+
+  @override
+  String get noPdfDataAvailable => 'Keine PDF-Daten verfügbar';
+
+  @override
+  String get failedToLoadPdf => 'PDF konnte nicht geladen werden';
+
+  @override
+  String get mediaInformation => 'Medieninformationen';
+
+  @override
+  String get mediaInfoTitle => 'Titel:';
+
+  @override
+  String get mediaInfoType => 'Typ:';
+
+  @override
+  String get mediaInfoStatus => 'Status:';
+
+  @override
+  String get mediaInfoPatient => 'Patient:';
+
+  @override
+  String get mediaInfoEncounter => 'Termin:';
+
+  @override
+  String get mediaInfoFileSize => 'Dateigröße:';
+
+  @override
+  String get mediaInfoCreated => 'Erstellt:';
+
+  @override
+  String get mediaInfoResourceId => 'Ressourcen-ID:';
+
+  @override
+  String get mediaInfoSource => 'Quelle:';
+
+  @override
+  String get close => 'Schließen';
+
+  @override
+  String get linkMediaToEncounterDescription =>
+      'Diese Mediendatei mit einem Termin verknüpfen:';
+
+  @override
+  String get encounterId => 'Termin-ID';
+
+  @override
+  String get encounterIdHint => 'z. B. termin-123';
+
+  @override
+  String get mediaLinkedSuccess =>
+      'Mediendatei erfolgreich mit Termin verknüpft';
+
+  @override
+  String failedToLinkMedia(String error) {
+    return 'Verknüpfung fehlgeschlagen: $error';
+  }
+
+  @override
+  String get link => 'Verknüpfen';
+
+  @override
+  String get connectionLabel => 'Verbindung';
+
+  @override
+  String get connectionStatusConnected => 'Verbunden';
+
+  @override
+  String get connectionStatusConnecting => 'Verbindung wird hergestellt...';
+
+  @override
+  String get connectionStatusDisconnected => 'Getrennt';
+
+  @override
+  String get connectionStatusNotPaired => 'Nicht gekoppelt';
+
+  @override
+  String get syncLabel => 'Sync';
+
+  @override
+  String get syncStatusSyncing => 'Synchronisiere...';
+
+  @override
+  String get syncStatusNotSynced => 'Nicht synchronisiert';
+
+  @override
+  String get syncStatusInSync => 'Synchron';
+
+  @override
+  String syncStatusPending(int count) {
+    return '$count ausstehend';
+  }
+
+  @override
+  String get backupLabel => 'Backup';
+
+  @override
+  String get backupStatusWorking => 'In Arbeit...';
+
+  @override
+  String get backupStatusNoBackup => 'Kein Backup';
+
+  @override
+  String get backupStatusBackingUp => 'Sicherung läuft...';
+
+  @override
+  String get backupStatusRestoring => 'Wird wiederhergestellt...';
+
+  @override
+  String get backupStatusWaiting => 'Warten...';
+
+  @override
+  String get backupStatusNotConnected => 'Nicht verbunden';
+
+  @override
+  String get exportIpsPdf => 'IPS exportieren (PDF)';
+
+  @override
+  String get addIpsToAppleWallet => 'IPS zu Apple Wallet hinzufügen';
+
+  @override
+  String get addIpsToGoogleWallet => 'IPS zu Google Wallet hinzufügen';
+
+  @override
+  String get sourcesTitle => 'Quellen';
+
+  @override
+  String get emergencyMedicalId => 'Medizinischer Notfallausweis';
+
+  @override
+  String get phoneLabel => 'Telefon';
+
+  @override
+  String get allergiesLabel => 'Allergien';
+
+  @override
+  String get medicalConditionsLabel => 'Erkrankungen';
+
+  @override
+  String get medicationsLabel => 'Medikamente';
+
+  @override
+  String get conditionsLabel => 'Erkrankungen';
+
+  @override
+  String get dateOfBirthLabel => 'Geburtsdatum';
+
+  @override
+  String get emergencyPhoneLabel => 'Notfalltelefon';
+
+  @override
+  String get openingScanner => 'Scanner wird geöffnet...';
+
+  @override
+  String get activeScanSessions => 'Aktive Scan-Sitzungen:';
+
+  @override
+  String get noScansYet => 'Noch keine Scans';
+
+  @override
+  String get scanOrImportToGetStarted =>
+      'Scanne oder importiere Dokumente, um zu beginnen';
+
+  @override
+  String pageOfTotal(String current, String total) {
+    return '$current von $total';
+  }
+
+  @override
+  String get fileNotFound => 'Datei nicht gefunden';
+
+  @override
+  String get fileIsEmpty => 'Datei ist leer';
+
+  @override
+  String get importTitle => 'Importieren';
+
+  @override
+  String get activeImportSessions => 'Aktive Import-Sitzungen:';
+
+  @override
+  String get dropToImport => 'Zum Importieren ablegen';
+
+  @override
+  String get dropFilesHereToImport => 'Dateien hier zum Importieren ablegen';
+
+  @override
+  String get supportedFileFormats => 'PDF, JPG, PNG, TIFF';
+
+  @override
+  String get browseFiles => 'Dateien durchsuchen';
+
+  @override
+  String get noImportsYet => 'Noch keine Importe';
+
+  @override
+  String get importOrScanToGetStarted =>
+      'Importiere oder scanne Dokumente, um zu beginnen';
+
+  @override
+  String get notificationsTitle => 'Benachrichtigungen';
+
+  @override
+  String get noNotifications => 'Keine Benachrichtigungen';
+
+  @override
+  String get cancelDownloadTitle => 'Download abbrechen';
+
+  @override
+  String get cancelDownloadMessage =>
+      'Möchtest du den Download des KI-Modells wirklich abbrechen? Du kannst ihn später neu starten.';
+
+  @override
+  String get processingDone => 'Verarbeitung abgeschlossen';
+
+  @override
+  String pairedWithDevice(String deviceName) {
+    return 'Gekoppelt mit $deviceName';
+  }
+
+  @override
+  String get deviceSyncLabel => 'Gerätesync';
+
+  @override
+  String get disconnectLabel => 'Trennen';
+
+  @override
+  String get changeLabel => 'Ändern';
+
+  @override
+  String get minimizeToTray => 'In Taskleiste minimieren';
 }

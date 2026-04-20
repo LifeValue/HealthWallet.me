@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
@@ -86,6 +87,12 @@ class MappingCondition with _$MappingCondition implements MappingResource {
       clinicalStatus: condition.clinicalStatus,
     );
   }
+
+  static Map<String, String> localizedLabels(AppLocalizations l10n) => {
+        'conditionName': l10n.labelConditionName,
+        'onsetDateTime': l10n.labelOnsetDate,
+        'clinicalStatus': l10n.labelClinicalStatus,
+      };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {

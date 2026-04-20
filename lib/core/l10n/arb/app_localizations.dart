@@ -753,7 +753,7 @@ abstract class AppLocalizations {
   /// No description provided for @getStarted.
   ///
   /// In en, this message translates to:
-  /// **'Get started'**
+  /// **'Get Started'**
   String get getStarted;
 
   /// No description provided for @failedToUpdateDisplayName.
@@ -969,7 +969,7 @@ abstract class AppLocalizations {
   /// No description provided for @desktopSyncDescription.
   ///
   /// In en, this message translates to:
-  /// **'Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.'**
+  /// **'Sync & Backup your health records.\nHand over documents to be digitally processed on your desktop.'**
   String get desktopSyncDescription;
 
   /// No description provided for @processOnDesktop.
@@ -1293,7 +1293,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyDescription.
   ///
   /// In en, this message translates to:
-  /// **'is a simple, secure tool designed to help you organize your health records at ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.'**
+  /// **'is a simple, secure tool designed to help you organize your health records with ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.'**
   String get privacyDescription;
 
   /// No description provided for @corePrinciple.
@@ -1397,6 +1397,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scan'**
   String get documentScanTitle;
+
+  /// No description provided for @fromPhoneTab.
+  ///
+  /// In en, this message translates to:
+  /// **'From Phone'**
+  String get fromPhoneTab;
 
   /// No description provided for @onboardingAiModelTitle.
   ///
@@ -2175,7 +2181,7 @@ abstract class AppLocalizations {
   /// No description provided for @medGemmaIncompatibleDevice.
   ///
   /// In en, this message translates to:
-  /// **'This model requires more memory than your device has available. Use the Standard model instead.'**
+  /// **'This model requires more memory than your device has available. Use the Lite model instead.'**
   String get medGemmaIncompatibleDevice;
 
   /// No description provided for @deepScanDownloadTitle.
@@ -2699,6 +2705,1667 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{duration} requested'**
   String shareExtensionDurationRequested(String duration);
+
+  /// No description provided for @desktopSyncNotYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet'**
+  String get desktopSyncNotYet;
+
+  /// No description provided for @desktopSyncTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get desktopSyncTransfer;
+
+  /// No description provided for @desktopSyncTransferValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{sentRows} sent, {receivedRows} received'**
+  String desktopSyncTransferValue(int sentRows, int receivedRows);
+
+  /// No description provided for @desktopSyncPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get desktopSyncPending;
+
+  /// No description provided for @desktopSyncPendingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} changes'**
+  String desktopSyncPendingValue(int count);
+
+  /// No description provided for @desktopSyncingTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing {tableName}...'**
+  String desktopSyncingTable(String tableName);
+
+  /// No description provided for @desktopSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get desktopSyncing;
+
+  /// No description provided for @desktopSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Now'**
+  String get desktopSyncNow;
+
+  /// No description provided for @desktopSyncError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get desktopSyncError;
+
+  /// No description provided for @desktopSyncInSync.
+  ///
+  /// In en, this message translates to:
+  /// **'In Sync'**
+  String get desktopSyncInSync;
+
+  /// No description provided for @desktopSyncReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get desktopSyncReady;
+
+  /// No description provided for @desktopSyncOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get desktopSyncOffline;
+
+  /// No description provided for @desktopTableHealthRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Records'**
+  String get desktopTableHealthRecords;
+
+  /// No description provided for @desktopTableSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get desktopTableSources;
+
+  /// No description provided for @desktopTableNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get desktopTableNotes;
+
+  /// No description provided for @desktopTableSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions'**
+  String get desktopTableSessions;
+
+  /// No description provided for @desktopConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get desktopConnection;
+
+  /// No description provided for @desktopGeneratePairingQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Pairing QR'**
+  String get desktopGeneratePairingQr;
+
+  /// No description provided for @desktopScanFromMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan from mobile Sync page'**
+  String get desktopScanFromMobile;
+
+  /// No description provided for @desktopDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get desktopDevice;
+
+  /// No description provided for @desktopTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get desktopTransport;
+
+  /// No description provided for @desktopIp.
+  ///
+  /// In en, this message translates to:
+  /// **'IP'**
+  String get desktopIp;
+
+  /// No description provided for @desktopPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get desktopPort;
+
+  /// No description provided for @desktopNewPairing.
+  ///
+  /// In en, this message translates to:
+  /// **'New Pairing'**
+  String get desktopNewPairing;
+
+  /// No description provided for @desktopTransportTcp.
+  ///
+  /// In en, this message translates to:
+  /// **'TCP over WiFi'**
+  String get desktopTransportTcp;
+
+  /// No description provided for @desktopTransportMpc.
+  ///
+  /// In en, this message translates to:
+  /// **'MultipeerConnectivity (Direct)'**
+  String get desktopTransportMpc;
+
+  /// No description provided for @desktopConnectedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {name}'**
+  String desktopConnectedTo(String name);
+
+  /// No description provided for @desktopConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get desktopConnected;
+
+  /// No description provided for @desktopReconnectingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting to {name}...'**
+  String desktopReconnectingTo(String name);
+
+  /// No description provided for @desktopReconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting...'**
+  String get desktopReconnecting;
+
+  /// No description provided for @desktopDisconnectedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected from {name}'**
+  String desktopDisconnectedFrom(String name);
+
+  /// No description provided for @desktopDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get desktopDisconnected;
+
+  /// No description provided for @desktopDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get desktopDisconnect;
+
+  /// No description provided for @desktopReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get desktopReconnect;
+
+  /// No description provided for @desktopVpnDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'VPN detected. Disconnect VPN to sync with desktop.'**
+  String get desktopVpnDetected;
+
+  /// No description provided for @desktopPairing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairing'**
+  String get desktopPairing;
+
+  /// No description provided for @desktopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop'**
+  String get desktopLabel;
+
+  /// No description provided for @desktopScanFromPhoneToPair.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan from your phone to pair'**
+  String get desktopScanFromPhoneToPair;
+
+  /// No description provided for @desktopNewQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'New QR Code'**
+  String get desktopNewQrCode;
+
+  /// No description provided for @desktopGenerateQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate QR Code'**
+  String get desktopGenerateQrCode;
+
+  /// No description provided for @desktopScanQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR Code'**
+  String get desktopScanQrCode;
+
+  /// No description provided for @desktopChooseWhereToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where to save backups'**
+  String get desktopChooseWhereToSave;
+
+  /// No description provided for @desktopSelectBackupFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a folder on your computer to store backup files'**
+  String get desktopSelectBackupFolder;
+
+  /// No description provided for @desktopChooseLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Location'**
+  String get desktopChooseLocation;
+
+  /// No description provided for @desktopChooseBackupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Backup Location'**
+  String get desktopChooseBackupLocation;
+
+  /// No description provided for @desktopBackingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing up...'**
+  String get desktopBackingUp;
+
+  /// No description provided for @desktopCreateBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Backup'**
+  String get desktopCreateBackup;
+
+  /// No description provided for @desktopSyncWithPhoneFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with phone first'**
+  String get desktopSyncWithPhoneFirst;
+
+  /// No description provided for @desktopNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'(not connected)'**
+  String get desktopNotConnected;
+
+  /// No description provided for @desktopStartBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Backup'**
+  String get desktopStartBackup;
+
+  /// No description provided for @desktopNoBackupsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups yet'**
+  String get desktopNoBackupsYet;
+
+  /// No description provided for @desktopCreateFirstBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first backup to keep your health data safe'**
+  String get desktopCreateFirstBackup;
+
+  /// No description provided for @desktopAllBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'All backups'**
+  String get desktopAllBackups;
+
+  /// No description provided for @desktopDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get desktopDate;
+
+  /// No description provided for @desktopSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get desktopSize;
+
+  /// No description provided for @desktopChecksum.
+  ///
+  /// In en, this message translates to:
+  /// **'Checksum'**
+  String get desktopChecksum;
+
+  /// No description provided for @desktopRestoreThisBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this backup'**
+  String get desktopRestoreThisBackup;
+
+  /// No description provided for @desktopRestoreBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Backup?'**
+  String get desktopRestoreBackupTitle;
+
+  /// No description provided for @desktopRestoreBackupMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will replace all current data on this device with \"{name}\".\n\n{count} records will be restored.\n\nYour data on the paired phone will not be affected.'**
+  String desktopRestoreBackupMessage(String name, int count);
+
+  /// No description provided for @desktopRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get desktopRestore;
+
+  /// No description provided for @desktopDeleteBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Backup?'**
+  String get desktopDeleteBackupTitle;
+
+  /// No description provided for @desktopDeleteBackupMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?\n\nThis cannot be undone.'**
+  String desktopDeleteBackupMessage(String name);
+
+  /// No description provided for @desktopDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get desktopDelete;
+
+  /// No description provided for @desktopBackupFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup from'**
+  String get desktopBackupFrom;
+
+  /// No description provided for @desktopBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get desktopBackup;
+
+  /// No description provided for @desktopChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get desktopChange;
+
+  /// No description provided for @desktopProcessingHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing History'**
+  String get desktopProcessingHistory;
+
+  /// No description provided for @desktopScannedOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned on Phone'**
+  String get desktopScannedOnPhone;
+
+  /// No description provided for @desktopProcessedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed on Desktop'**
+  String get desktopProcessedOnDesktop;
+
+  /// No description provided for @desktopImportedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported on Desktop'**
+  String get desktopImportedOnDesktop;
+
+  /// No description provided for @desktopSyncRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get desktopSyncRecent;
+
+  /// No description provided for @desktopUnknownDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown device'**
+  String get desktopUnknownDevice;
+
+  /// No description provided for @desktopSyncHistoryTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'{sentRows} sent · {receivedRows} received'**
+  String desktopSyncHistoryTransfer(int sentRows, int receivedRows);
+
+  /// No description provided for @desktopNewDeviceConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'New Device Connecting'**
+  String get desktopNewDeviceConnecting;
+
+  /// No description provided for @desktopNewDeviceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A new device ({address}) wants to connect.\n\nThis will disconnect \"{currentDevice}\".\n\nSwitch to the new device?'**
+  String desktopNewDeviceMessage(String address, String currentDevice);
+
+  /// No description provided for @desktopKeepCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Current'**
+  String get desktopKeepCurrent;
+
+  /// No description provided for @desktopSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get desktopSwitch;
+
+  /// No description provided for @desktopCurrentDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'current device'**
+  String get desktopCurrentDevice;
+
+  /// No description provided for @desktopHandoverPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing...'**
+  String get desktopHandoverPreparing;
+
+  /// No description provided for @desktopHandoverSendingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending files...'**
+  String get desktopHandoverSendingFiles;
+
+  /// No description provided for @desktopHandoverProcessingOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing on desktop...'**
+  String get desktopHandoverProcessingOnDesktop;
+
+  /// No description provided for @desktopHandoverComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete!'**
+  String get desktopHandoverComplete;
+
+  /// No description provided for @desktopHandoverError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error occurred'**
+  String get desktopHandoverError;
+
+  /// No description provided for @desktopHandoverSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending...'**
+  String get desktopHandoverSending;
+
+  /// No description provided for @desktopHandoverSendingToDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending to Desktop'**
+  String get desktopHandoverSendingToDesktop;
+
+  /// No description provided for @desktopHandoverFileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} files'**
+  String desktopHandoverFileCount(int count);
+
+  /// No description provided for @desktopHandoverSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Handed over to Desktop'**
+  String get desktopHandoverSuccess;
+
+  /// No description provided for @desktopClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get desktopClose;
+
+  /// No description provided for @desktopContinueImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Importing'**
+  String get desktopContinueImporting;
+
+  /// No description provided for @desktopConnectToDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Desktop'**
+  String get desktopConnectToDesktop;
+
+  /// No description provided for @desktopCouldNotReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reconnect. Scan QR code to pair again.'**
+  String get desktopCouldNotReconnect;
+
+  /// No description provided for @desktopScanQrToPair.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the QR code on your desktop app to pair.'**
+  String get desktopScanQrToPair;
+
+  /// No description provided for @desktopHandoverToDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Handover to Desktop'**
+  String get desktopHandoverToDesktop;
+
+  /// No description provided for @desktopHandoverProcessingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing is in progress. Handover will cancel the current processing and send files to desktop.'**
+  String get desktopHandoverProcessingMessage;
+
+  /// No description provided for @desktopHandover.
+  ///
+  /// In en, this message translates to:
+  /// **'Handover'**
+  String get desktopHandover;
+
+  /// No description provided for @attachedDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached Documents'**
+  String get attachedDocuments;
+
+  /// No description provided for @cameraPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera Permission Required'**
+  String get cameraPermissionRequired;
+
+  /// No description provided for @cameraPermissionRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This app needs camera access to scan. Please grant permission to continue.'**
+  String get cameraPermissionRequiredMessage;
+
+  /// No description provided for @cameraPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera Permission Denied'**
+  String get cameraPermissionDenied;
+
+  /// No description provided for @cameraPermissionDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission has been permanently denied. Please enable it in Settings to use the scanner.'**
+  String get cameraPermissionDeniedMessage;
+
+  /// No description provided for @successTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Success!'**
+  String get successTitle;
+
+  /// No description provided for @attachmentSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully attached {count} documents to the encounter.'**
+  String attachmentSuccessMessage(int count);
+
+  /// No description provided for @encounterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter'**
+  String get encounterLabel;
+
+  /// No description provided for @viewRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'View Records'**
+  String get viewRecords;
+
+  /// No description provided for @errorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorTitle;
+
+  /// No description provided for @somethingWentWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get somethingWentWrong;
+
+  /// No description provided for @importDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Document'**
+  String get importDocument;
+
+  /// No description provided for @pickImageFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Image from Gallery'**
+  String get pickImageFromGallery;
+
+  /// No description provided for @scanDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Document'**
+  String get scanDocument;
+
+  /// No description provided for @deleteSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Session'**
+  String get deleteSession;
+
+  /// No description provided for @deleteSessionConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this session?'**
+  String get deleteSessionConfirmation;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @canceling.
+  ///
+  /// In en, this message translates to:
+  /// **'Canceling...'**
+  String get canceling;
+
+  /// No description provided for @waitingForAiToFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for AI to finish...'**
+  String get waitingForAiToFinish;
+
+  /// No description provided for @logsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs copied'**
+  String get logsCopied;
+
+  /// No description provided for @download.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get download;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @tapToSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select'**
+  String get tapToSelect;
+
+  /// No description provided for @deviceInfoChip.
+  ///
+  /// In en, this message translates to:
+  /// **'{platform}  •  {ramGB}GB RAM  •  {cores} cores  •  ~{estimatedMB}MB needed'**
+  String deviceInfoChip(
+    String platform,
+    String ramGB,
+    int cores,
+    int estimatedMB,
+  );
+
+  /// No description provided for @downloadContinuesInBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'You can navigate away - download will continue in background.\nCheck notifications for progress.'**
+  String get downloadContinuesInBackground;
+
+  /// No description provided for @continueWithoutAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without AI (download in background)'**
+  String get continueWithoutAi;
+
+  /// No description provided for @continueUsingApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue using app'**
+  String get continueUsingApp;
+
+  /// No description provided for @attachWithoutProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'I want to attach the document without processing'**
+  String get attachWithoutProcessing;
+
+  /// No description provided for @currentPatientAndSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Patient & Source'**
+  String get currentPatientAndSource;
+
+  /// No description provided for @createEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Encounter'**
+  String get createEncounter;
+
+  /// No description provided for @encounterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter name'**
+  String get encounterName;
+
+  /// No description provided for @enterEncounterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter encounter name'**
+  String get enterEncounterName;
+
+  /// No description provided for @pleaseEnterEncounterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an encounter name'**
+  String get pleaseEnterEncounterName;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @searchEncounters.
+  ///
+  /// In en, this message translates to:
+  /// **'Search encounters...'**
+  String get searchEncounters;
+
+  /// No description provided for @noEncountersFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No encounters found'**
+  String get noEncountersFound;
+
+  /// No description provided for @noEncountersFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new encounter first or select a different patient.'**
+  String get noEncountersFoundMessage;
+
+  /// No description provided for @newEncounterPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'New encounter'**
+  String get newEncounterPrefix;
+
+  /// No description provided for @scannedDocumentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned Documents'**
+  String get scannedDocumentsTitle;
+
+  /// No description provided for @scannedDocumentsPagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned Documents ({count} pages)'**
+  String scannedDocumentsPagesTitle(String count);
+
+  /// No description provided for @pdfFileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF: {fileName}'**
+  String pdfFileTitle(String fileName);
+
+  /// No description provided for @labelOrganizationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization Name'**
+  String get labelOrganizationName;
+
+  /// No description provided for @labelAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get labelAddress;
+
+  /// No description provided for @labelPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get labelPhone;
+
+  /// No description provided for @labelEncounterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter Name'**
+  String get labelEncounterName;
+
+  /// No description provided for @labelStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get labelStartDate;
+
+  /// No description provided for @labelFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First name'**
+  String get labelFirstName;
+
+  /// No description provided for @labelFamilyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Family name'**
+  String get labelFamilyName;
+
+  /// No description provided for @labelDateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get labelDateOfBirth;
+
+  /// No description provided for @labelGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get labelGender;
+
+  /// No description provided for @labelReportName.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Name'**
+  String get labelReportName;
+
+  /// No description provided for @labelConclusion.
+  ///
+  /// In en, this message translates to:
+  /// **'Conclusion'**
+  String get labelConclusion;
+
+  /// No description provided for @labelIssuedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued Date'**
+  String get labelIssuedDate;
+
+  /// No description provided for @labelPractitionerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Practitioner Name'**
+  String get labelPractitionerName;
+
+  /// No description provided for @labelSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Specialty'**
+  String get labelSpecialty;
+
+  /// No description provided for @labelIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Identifier'**
+  String get labelIdentifier;
+
+  /// No description provided for @labelConditionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition Name'**
+  String get labelConditionName;
+
+  /// No description provided for @labelOnsetDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Onset Date'**
+  String get labelOnsetDate;
+
+  /// No description provided for @labelClinicalStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinical Status'**
+  String get labelClinicalStatus;
+
+  /// No description provided for @labelSubstance.
+  ///
+  /// In en, this message translates to:
+  /// **'Substance'**
+  String get labelSubstance;
+
+  /// No description provided for @labelManifestation.
+  ///
+  /// In en, this message translates to:
+  /// **'Manifestation'**
+  String get labelManifestation;
+
+  /// No description provided for @labelCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get labelCategory;
+
+  /// No description provided for @labelProcedureName.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure Name'**
+  String get labelProcedureName;
+
+  /// No description provided for @labelPerformedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Performed Date'**
+  String get labelPerformedDate;
+
+  /// No description provided for @labelReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get labelReason;
+
+  /// No description provided for @labelMedicationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Name'**
+  String get labelMedicationName;
+
+  /// No description provided for @labelDosage.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosage'**
+  String get labelDosage;
+
+  /// No description provided for @labelObservationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation name'**
+  String get labelObservationName;
+
+  /// No description provided for @labelValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get labelValue;
+
+  /// No description provided for @labelUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get labelUnit;
+
+  /// No description provided for @labelReferenceRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference Range'**
+  String get labelReferenceRange;
+
+  /// No description provided for @permissionsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions Required'**
+  String get permissionsRequired;
+
+  /// No description provided for @recordsSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String recordsSelectedCount(int count);
+
+  /// No description provided for @noRecordsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No records selected'**
+  String get noRecordsSelected;
+
+  /// No description provided for @select.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get select;
+
+  /// No description provided for @selectRecordsBeforeSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Select records\nbefore sharing'**
+  String get selectRecordsBeforeSharing;
+
+  /// No description provided for @recordDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Details'**
+  String get recordDetails;
+
+  /// No description provided for @viewDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'View Document'**
+  String get viewDocument;
+
+  /// No description provided for @encounterDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter details'**
+  String get encounterDetails;
+
+  /// No description provided for @relatedResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Related resources'**
+  String get relatedResources;
+
+  /// No description provided for @deletePlusRelated.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete + {count} related'**
+  String deletePlusRelated(int count);
+
+  /// No description provided for @fileNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'File not available on this device'**
+  String get fileNotAvailable;
+
+  /// No description provided for @couldNotOpenFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open file: {message}'**
+  String couldNotOpenFile(String message);
+
+  /// No description provided for @errorOpeningFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Error opening file: {error}'**
+  String errorOpeningFile(String error);
+
+  /// No description provided for @failedToLoadImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load image'**
+  String get failedToLoadImage;
+
+  /// No description provided for @errorLoadingPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading PDF: {error}'**
+  String errorLoadingPdf(String error);
+
+  /// No description provided for @errorOnPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Error on page {page}: {error}'**
+  String errorOnPage(String page, String error);
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @noNotesAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'This record has no notes attached'**
+  String get noNotesAttached;
+
+  /// No description provided for @addNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add note'**
+  String get addNote;
+
+  /// No description provided for @editNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get editNote;
+
+  /// No description provided for @filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filters;
+
+  /// No description provided for @timeRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Range'**
+  String get timeRange;
+
+  /// No description provided for @applyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
+  String get applyFilters;
+
+  /// No description provided for @recordType.
+  ///
+  /// In en, this message translates to:
+  /// **'Record type'**
+  String get recordType;
+
+  /// No description provided for @selectedRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Range'**
+  String get selectedRange;
+
+  /// No description provided for @noRangeSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No range selected'**
+  String get noRangeSelected;
+
+  /// No description provided for @clearDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear date range'**
+  String get clearDateRange;
+
+  /// No description provided for @start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
+
+  /// No description provided for @end.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get end;
+
+  /// No description provided for @fromDate.
+  ///
+  /// In en, this message translates to:
+  /// **'From {date}'**
+  String fromDate(String date);
+
+  /// No description provided for @untilDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String untilDate(String date);
+
+  /// No description provided for @day.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get day;
+
+  /// No description provided for @month.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get month;
+
+  /// No description provided for @year.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get year;
+
+  /// No description provided for @mediaInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Media Info'**
+  String get mediaInfo;
+
+  /// No description provided for @linkToEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to Encounter'**
+  String get linkToEncounter;
+
+  /// No description provided for @noPdfDataAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No PDF data available'**
+  String get noPdfDataAvailable;
+
+  /// No description provided for @failedToLoadPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load PDF document'**
+  String get failedToLoadPdf;
+
+  /// No description provided for @mediaInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Media Information'**
+  String get mediaInformation;
+
+  /// No description provided for @mediaInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title:'**
+  String get mediaInfoTitle;
+
+  /// No description provided for @mediaInfoType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type:'**
+  String get mediaInfoType;
+
+  /// No description provided for @mediaInfoStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status:'**
+  String get mediaInfoStatus;
+
+  /// No description provided for @mediaInfoPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient:'**
+  String get mediaInfoPatient;
+
+  /// No description provided for @mediaInfoEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter:'**
+  String get mediaInfoEncounter;
+
+  /// No description provided for @mediaInfoFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File Size:'**
+  String get mediaInfoFileSize;
+
+  /// No description provided for @mediaInfoCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created:'**
+  String get mediaInfoCreated;
+
+  /// No description provided for @mediaInfoResourceId.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource ID:'**
+  String get mediaInfoResourceId;
+
+  /// No description provided for @mediaInfoSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source:'**
+  String get mediaInfoSource;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @linkMediaToEncounterDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Link this media resource to an encounter:'**
+  String get linkMediaToEncounterDescription;
+
+  /// No description provided for @encounterId.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter ID'**
+  String get encounterId;
+
+  /// No description provided for @encounterIdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., encounter-123'**
+  String get encounterIdHint;
+
+  /// No description provided for @mediaLinkedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Media linked to encounter successfully'**
+  String get mediaLinkedSuccess;
+
+  /// No description provided for @failedToLinkMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to link media: {error}'**
+  String failedToLinkMedia(String error);
+
+  /// No description provided for @link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get link;
+
+  /// No description provided for @connectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get connectionLabel;
+
+  /// No description provided for @connectionStatusConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get connectionStatusConnected;
+
+  /// No description provided for @connectionStatusConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get connectionStatusConnecting;
+
+  /// No description provided for @connectionStatusDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get connectionStatusDisconnected;
+
+  /// No description provided for @connectionStatusNotPaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paired'**
+  String get connectionStatusNotPaired;
+
+  /// No description provided for @syncLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get syncLabel;
+
+  /// No description provided for @syncStatusSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get syncStatusSyncing;
+
+  /// No description provided for @syncStatusNotSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced'**
+  String get syncStatusNotSynced;
+
+  /// No description provided for @syncStatusInSync.
+  ///
+  /// In en, this message translates to:
+  /// **'In sync'**
+  String get syncStatusInSync;
+
+  /// No description provided for @syncStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending'**
+  String syncStatusPending(int count);
+
+  /// No description provided for @backupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backupLabel;
+
+  /// No description provided for @backupStatusWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working...'**
+  String get backupStatusWorking;
+
+  /// No description provided for @backupStatusNoBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup'**
+  String get backupStatusNoBackup;
+
+  /// No description provided for @backupStatusBackingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Backing up...'**
+  String get backupStatusBackingUp;
+
+  /// No description provided for @backupStatusRestoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring...'**
+  String get backupStatusRestoring;
+
+  /// No description provided for @backupStatusWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting...'**
+  String get backupStatusWaiting;
+
+  /// No description provided for @backupStatusNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get backupStatusNotConnected;
+
+  /// No description provided for @exportIpsPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Export IPS (PDF)'**
+  String get exportIpsPdf;
+
+  /// No description provided for @addIpsToAppleWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add IPS to Apple Wallet'**
+  String get addIpsToAppleWallet;
+
+  /// No description provided for @addIpsToGoogleWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add IPS to Google Wallet'**
+  String get addIpsToGoogleWallet;
+
+  /// No description provided for @sourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get sourcesTitle;
+
+  /// No description provided for @emergencyMedicalId.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Medical ID'**
+  String get emergencyMedicalId;
+
+  /// No description provided for @phoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phoneLabel;
+
+  /// No description provided for @allergiesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies'**
+  String get allergiesLabel;
+
+  /// No description provided for @medicalConditionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical Conditions'**
+  String get medicalConditionsLabel;
+
+  /// No description provided for @medicationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Medications'**
+  String get medicationsLabel;
+
+  /// No description provided for @conditionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions'**
+  String get conditionsLabel;
+
+  /// No description provided for @dateOfBirthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth'**
+  String get dateOfBirthLabel;
+
+  /// No description provided for @emergencyPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Phone'**
+  String get emergencyPhoneLabel;
+
+  /// No description provided for @openingScanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening scanner...'**
+  String get openingScanner;
+
+  /// No description provided for @activeScanSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Active scan sessions:'**
+  String get activeScanSessions;
+
+  /// No description provided for @noScansYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No scans yet'**
+  String get noScansYet;
+
+  /// No description provided for @scanOrImportToGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan or import documents to get started'**
+  String get scanOrImportToGetStarted;
+
+  /// No description provided for @pageOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String pageOfTotal(String current, String total);
+
+  /// No description provided for @fileNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'File not found'**
+  String get fileNotFound;
+
+  /// No description provided for @fileIsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'File is empty'**
+  String get fileIsEmpty;
+
+  /// No description provided for @importTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importTitle;
+
+  /// No description provided for @activeImportSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Active import sessions:'**
+  String get activeImportSessions;
+
+  /// No description provided for @dropToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop to import'**
+  String get dropToImport;
+
+  /// No description provided for @dropFilesHereToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop files here to import'**
+  String get dropFilesHereToImport;
+
+  /// No description provided for @supportedFileFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF, JPG, PNG, TIFF'**
+  String get supportedFileFormats;
+
+  /// No description provided for @browseFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Files'**
+  String get browseFiles;
+
+  /// No description provided for @noImportsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No imports yet'**
+  String get noImportsYet;
+
+  /// No description provided for @importOrScanToGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Import or scan documents to get started'**
+  String get importOrScanToGetStarted;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @noNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications'**
+  String get noNotifications;
+
+  /// No description provided for @cancelDownloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Download'**
+  String get cancelDownloadTitle;
+
+  /// No description provided for @cancelDownloadMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel the AI Model download? You can restart it later.'**
+  String get cancelDownloadMessage;
+
+  /// No description provided for @processingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing done'**
+  String get processingDone;
+
+  /// No description provided for @pairedWithDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired with {deviceName}'**
+  String pairedWithDevice(String deviceName);
+
+  /// No description provided for @deviceSyncLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Sync'**
+  String get deviceSyncLabel;
+
+  /// No description provided for @disconnectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnectLabel;
+
+  /// No description provided for @changeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get changeLabel;
+
+  /// No description provided for @minimizeToTray.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize to tray'**
+  String get minimizeToTray;
 }
 
 class _AppLocalizationsDelegate

@@ -8,6 +8,7 @@ import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/widgets/app_date_picker.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class DateField extends StatelessWidget {
   final String label;

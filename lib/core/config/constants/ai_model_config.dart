@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum AiModelVariant { medGemma, qwen, qwen7b }
@@ -32,8 +33,8 @@ class AiModelConfig {
 
   static const medGemma = AiModelConfig._(
     variant: AiModelVariant.medGemma,
-    displayName: 'Advanced Medical',
-    description: 'Higher accuracy, larger download (~2.5 GB)',
+    displayName: 'Medical',
+    description: 'Medical-trained, higher accuracy (~2.5 GB)',
     modelUrl:
         'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf',
     modelId: 'medgemma-4b-it_Q4_K_M.gguf',
@@ -47,7 +48,7 @@ class AiModelConfig {
 
   static const qwen = AiModelConfig._(
     variant: AiModelVariant.qwen,
-    displayName: 'Standard',
+    displayName: 'Lite',
     description: 'Fast and lightweight (~1.1 GB)',
     modelUrl:
         'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf',
@@ -62,7 +63,7 @@ class AiModelConfig {
 
   static const qwen7b = AiModelConfig._(
     variant: AiModelVariant.qwen7b,
-    displayName: 'Desktop Advanced',
+    displayName: 'Ultra',
     description: 'Best accuracy for desktop (~5 GB)',
     modelUrl:
         'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q4_K_M.gguf',
@@ -82,11 +83,13 @@ class AiModelConfig {
     return [qwen, medGemma];
   }
 
-  static AiModelConfig getActive(SharedPreferences prefs) {
+  static AiModelConfig getActive(SharedPreferences prefs,
+      {DeviceProfile? profile}) {
     final name = prefs.getString(SharedPrefsConstants.aiSelectedModel);
     if (name == AiModelVariant.medGemma.name) return medGemma;
     if (name == AiModelVariant.qwen.name) return qwen;
     if (name == AiModelVariant.qwen7b.name) return qwen7b;
+    if (profile != null) return fromVariant(recommendedVariant(profile));
     if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) return qwen7b;
     return qwen;
   }
@@ -100,5 +103,27 @@ class AiModelConfig {
       case AiModelVariant.qwen7b:
         return qwen7b;
     }
+  }
+
+  static AiModelVariant recommendedVariant(DeviceProfile profile) {
+    if (!profile.isDesktop) {
+      if (profile.ramMB >= 6144) return AiModelVariant.medGemma;
+      return AiModelVariant.qwen;
+    }
+
+    if (profile.gpuType == GpuType.appleSilicon) {
+      if (profile.ramMB >= 16384) return AiModelVariant.qwen7b;
+      return AiModelVariant.medGemma;
+    }
+
+    if (profile.hasUsableGpu && profile.ramMB >= 16384) {
+      return AiModelVariant.qwen7b;
+    }
+
+    if (profile.physicalCores >= 4 && profile.ramMB >= 16384) {
+      return AiModelVariant.medGemma;
+    }
+
+    return AiModelVariant.qwen;
   }
 }

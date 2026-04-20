@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
@@ -157,7 +158,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         patientId: patientId,
         encounter: encounter,
         sourceId: walletSource.id,
-        title: 'Attached Documents',
+        title: context.l10n.attachedDocuments,
       );
 
       if (context.mounted) {

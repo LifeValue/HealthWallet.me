@@ -1,6 +1,7 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -67,7 +68,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                 maxLines: 1,
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: 'Search encounters...',
+                  hintText: context.l10n.searchEncounters,
                   hintStyle: AppTextStyle.labelLarge.copyWith(
                     color: context.colorScheme.onSurface.withOpacity(0.6),
                   ),
@@ -141,7 +142,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No encounters found',
+                                context.l10n.noEncountersFound,
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: textColor,
@@ -149,7 +150,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Create a new encounter first or select a different patient.',
+                                context.l10n.noEncountersFoundMessage,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: iconColor,
@@ -209,7 +210,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
     String title = '';
 
     if (encounter is MappingEncounter) {
-      title = "New encounter: ${encounter.encounterType.value}";
+      title = "${context.l10n.newEncounterPrefix}: ${encounter.encounterType.value}";
     } else if (encounter is Encounter) {
       title = encounter.displayTitle;
     } else {
@@ -289,7 +290,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Create Encounter',
+                context.l10n.createEncounter,
                 style: AppTextStyle.bodySmall.copyWith(
                   color: context.colorScheme.onSurface,
                 ),

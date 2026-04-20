@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -111,14 +112,14 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
+
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Create Encounter',
+                        context.l10n.createEncounter,
                         style: AppTextStyle.bodyLarge,
                       ),
                     ),
@@ -137,15 +138,15 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
               ),
               Container(height: 1, color: borderColor),
 
-              // Content
+
               Padding(
                 padding: const EdgeInsets.all(Insets.normal),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Encounter name field
+
                     Text(
-                      'Encounter name',
+                      context.l10n.encounterName,
                       style: AppTextStyle.bodySmall.copyWith(
                         color: context.colorScheme.onSurface,
                       ),
@@ -156,13 +157,13 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                       style: AppTextStyle.labelLarge,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter an encounter name';
+                          return context.l10n.pleaseEnterEncounterName;
                         }
                         return null;
                       },
                       decoration: InputDecoration(
                         isDense: true,
-                        hintText: 'Enter encounter name',
+                        hintText: context.l10n.enterEncounterName,
                         hintStyle: AppTextStyle.labelLarge.copyWith(
                           color: context.colorScheme.onSurface.withOpacity(0.5),
                         ),
@@ -192,9 +193,9 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
 
                     const SizedBox(height: Insets.normal),
 
-                    // Date field
+
                     Text(
-                      'Date',
+                      context.l10n.date,
                       style: AppTextStyle.bodySmall.copyWith(
                         color: context.colorScheme.onSurface,
                       ),
@@ -239,14 +240,14 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
 
               Container(height: 1, color: borderColor),
 
-              // Footer
+
               Padding(
                 padding: const EdgeInsets.all(Insets.normal),
                 child: Row(
                   children: [
                     Expanded(
                       child: AppButton(
-                        label: 'Cancel',
+                        label: context.l10n.cancel,
                         variant: AppButtonVariant.transparent,
                         onPressed: _handleCancel,
                       ),
@@ -254,7 +255,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                     const SizedBox(width: Insets.small),
                     Expanded(
                       child: AppButton(
-                        label: 'Create',
+                        label: context.l10n.create,
                         variant: AppButtonVariant.primary,
                         onPressed: _handleCreate,
                       ),

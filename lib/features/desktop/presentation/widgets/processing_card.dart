@@ -3,6 +3,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/desktop_card.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ProcessingCard extends StatelessWidget {
   const ProcessingCard({super.key});
@@ -10,21 +11,21 @@ class ProcessingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DesktopCard(
-      title: 'Processing History',
+      title: context.l10n.desktopProcessingHistory,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildRow(context,
               icon: Icons.phone_android,
-              label: 'Scanned on Phone',
+              label: context.l10n.desktopScannedOnPhone,
               count: '-'),
           _buildRow(context,
               icon: Icons.desktop_mac,
-              label: 'Processed on Desktop',
+              label: context.l10n.desktopProcessedOnDesktop,
               count: '-'),
           _buildRow(context,
               icon: Icons.file_upload_outlined,
-              label: 'Imported on Desktop',
+              label: context.l10n.desktopImportedOnDesktop,
               count: '-'),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -77,7 +78,7 @@ class SessionList extends StatelessWidget {
                                       children: [
                                         Text(
                                           isThisSessionDeleting
-                                              ? 'Canceling...'
+                                              ? context.l10n.canceling
                                               : session.status.toString(),
                                           style: TextStyle(
                                             color: isThisSessionDeleting
@@ -94,7 +95,7 @@ class SessionList extends StatelessWidget {
                                         if (isThisSessionDeleting) ...[
                                           const SizedBox(height: 4),
                                           Text(
-                                            'Waiting for AI to finish...',
+                                            context.l10n.waitingForAiToFinish,
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: context.colorScheme.error,
@@ -183,11 +184,11 @@ class SessionList extends StatelessWidget {
 
     AppSimpleDialog.showDestructiveConfirmation(
       context: context,
-      title: 'Delete Session',
-      message: 'Are you sure you want to delete this session?',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      warningText: 'This action cannot be undone.',
+      title: context.l10n.deleteSession,
+      message: context.l10n.deleteSessionConfirmation,
+      confirmText: context.l10n.delete,
+      cancelText: context.l10n.cancel,
+      warningText: context.l10n.actionCannotBeUndone,
       confirmButtonColor: context.colorScheme.error,
       onConfirm: () {
         processingBloc.add(SessionCleared(session: session));

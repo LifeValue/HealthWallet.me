@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
@@ -45,8 +46,8 @@ class _SyncPageState extends State<SyncPage> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: const Text(
-              'Sync',
+            title: Text(
+              context.l10n.syncTitle,
               style: AppTextStyle.titleMedium,
             ),
             backgroundColor: context.colorScheme.surface,
@@ -141,7 +142,7 @@ class _SyncPageState extends State<SyncPage> {
     context.read<SyncBloc>().add(const SyncCancel());
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Paired with ${pairing.deviceName}')),
+      SnackBar(content: Text(context.l10n.pairedWithDevice(pairing.deviceName))),
     );
 
     final commBloc = getIt<CommunicationBloc>();

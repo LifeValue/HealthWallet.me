@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
@@ -9,6 +10,7 @@ import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sy
 import 'package:health_wallet/features/desktop/presentation/widgets/desktop_card.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
 import 'package:intl/intl.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SyncStatusCard extends StatelessWidget {
   final DesktopSyncState commState;
@@ -28,10 +30,10 @@ class SyncStatusCard extends StatelessWidget {
     final hasError = syncState.syncStatus == LwwSyncStatus.error;
 
     final (statusColor, statusLabel) =
-        _getStatus(isConnected, isSyncing, hasError, syncState.isSynced);
+        _getStatus(context, isConnected, isSyncing, hasError, syncState.isSynced);
 
     return DesktopCard(
-      title: 'Sync',
+      title: context.l10n.syncTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -58,20 +60,20 @@ class SyncStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: Insets.small),
           InfoRow(
-            label: 'Last synced',
+            label: context.l10n.lastSynced,
             value: syncState.lastSyncTime != null
                 ? DateFormat.yMMMd().add_Hm().format(syncState.lastSyncTime!)
-                : 'Not yet',
+                : context.l10n.desktopSyncNotYet,
           ),
           if (syncState.sentRows > 0 || syncState.receivedRows > 0)
             InfoRow(
-              label: 'Transfer',
-              value: '${syncState.sentRows} sent, ${syncState.receivedRows} received',
+              label: context.l10n.desktopSyncTransfer,
+              value: context.l10n.desktopSyncTransferValue(syncState.sentRows, syncState.receivedRows),
             ),
           if (syncState.pendingChangeCount > 0)
             InfoRow(
-              label: 'Pending',
-              value: '${syncState.pendingChangeCount} changes',
+              label: context.l10n.desktopSyncPending,
+              value: context.l10n.desktopSyncPendingValue(syncState.pendingChangeCount),
             ),
           if (syncState.error != null) ...[
             const SizedBox(height: Insets.small),
@@ -88,7 +90,7 @@ class SyncStatusCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  'Syncing ${_formatTableName(syncState.currentTable!)}...',
+                  context.l10n.desktopSyncingTable(_formatTableName(context, syncState.currentTable!)),
                   style: AppTextStyle.labelSmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -102,7 +104,7 @@ class SyncStatusCard extends StatelessWidget {
           ],
           const SizedBox(height: Insets.normal),
           AppButton(
-            label: isSyncing ? 'Syncing...' : 'Sync Now',
+            label: isSyncing ? context.l10n.desktopSyncing : context.l10n.desktopSyncNow,
             onPressed: isConnected && !isSyncing
                 ? () {
                     context
@@ -118,24 +120,24 @@ class SyncStatusCard extends StatelessWidget {
   }
 
   (Color, String) _getStatus(
-      bool connected, bool syncing, bool hasError, bool isSynced) {
-    if (hasError) return (AppColors.error, 'Error');
-    if (syncing) return (AppColors.warning, 'Syncing...');
-    if (isSynced && connected) return (AppColors.success, 'In Sync');
-    if (connected) return (AppColors.success, 'Ready');
-    return (AppColors.error, 'Offline');
+      BuildContext context, bool connected, bool syncing, bool hasError, bool isSynced) {
+    if (hasError) return (AppColors.error, context.l10n.desktopSyncError);
+    if (syncing) return (AppColors.warning, context.l10n.desktopSyncing);
+    if (isSynced && connected) return (AppColors.success, context.l10n.desktopSyncInSync);
+    if (connected) return (AppColors.success, context.l10n.desktopSyncReady);
+    return (AppColors.error, context.l10n.desktopSyncOffline);
   }
 
-  String _formatTableName(String tableName) {
+  String _formatTableName(BuildContext context, String tableName) {
     switch (tableName) {
       case 'fhir_resource':
-        return 'Health Records';
+        return context.l10n.desktopTableHealthRecords;
       case 'sources':
-        return 'Sources';
+        return context.l10n.desktopTableSources;
       case 'record_notes':
-        return 'Notes';
+        return context.l10n.desktopTableNotes;
       case 'processing_sessions':
-        return 'Sessions';
+        return context.l10n.desktopTableSessions;
       default:
         return tableName;
     }

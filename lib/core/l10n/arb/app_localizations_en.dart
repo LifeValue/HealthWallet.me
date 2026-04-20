@@ -358,7 +358,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This patient is the primary owner of this health wallet';
 
   @override
-  String get getStarted => 'Get started';
+  String get getStarted => 'Get Started';
 
   @override
   String get failedToUpdateDisplayName => 'Failed to update display name';
@@ -477,7 +477,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desktopSyncDescription =>
-      'Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.';
+      'Sync & Backup your health records.\nHand over documents to be digitally processed on your desktop.';
 
   @override
   String get processOnDesktop => 'Process on Desktop';
@@ -648,7 +648,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyDescription =>
-      'is a simple, secure tool designed to help you organize your health records at ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.';
+      'is a simple, secure tool designed to help you organize your health records with ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.';
 
   @override
   String get corePrinciple =>
@@ -703,6 +703,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get documentScanTitle => 'Scan';
+
+  @override
+  String get fromPhoneTab => 'From Phone';
 
   @override
   String get onboardingAiModelTitle => 'Enable AI Model';
@@ -1139,7 +1142,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get medGemmaIncompatibleDevice =>
-      'This model requires more memory than your device has available. Use the Standard model instead.';
+      'This model requires more memory than your device has available. Use the Lite model instead.';
 
   @override
   String get deepScanDownloadTitle => 'Download Vision Model';
@@ -1453,4 +1456,908 @@ class AppLocalizationsEn extends AppLocalizations {
   String shareExtensionDurationRequested(String duration) {
     return '$duration requested';
   }
+
+  @override
+  String get desktopSyncNotYet => 'Not yet';
+
+  @override
+  String get desktopSyncTransfer => 'Transfer';
+
+  @override
+  String desktopSyncTransferValue(int sentRows, int receivedRows) {
+    return '$sentRows sent, $receivedRows received';
+  }
+
+  @override
+  String get desktopSyncPending => 'Pending';
+
+  @override
+  String desktopSyncPendingValue(int count) {
+    return '$count changes';
+  }
+
+  @override
+  String desktopSyncingTable(String tableName) {
+    return 'Syncing $tableName...';
+  }
+
+  @override
+  String get desktopSyncing => 'Syncing...';
+
+  @override
+  String get desktopSyncNow => 'Sync Now';
+
+  @override
+  String get desktopSyncError => 'Error';
+
+  @override
+  String get desktopSyncInSync => 'In Sync';
+
+  @override
+  String get desktopSyncReady => 'Ready';
+
+  @override
+  String get desktopSyncOffline => 'Offline';
+
+  @override
+  String get desktopTableHealthRecords => 'Health Records';
+
+  @override
+  String get desktopTableSources => 'Sources';
+
+  @override
+  String get desktopTableNotes => 'Notes';
+
+  @override
+  String get desktopTableSessions => 'Sessions';
+
+  @override
+  String get desktopConnection => 'Connection';
+
+  @override
+  String get desktopGeneratePairingQr => 'Generate Pairing QR';
+
+  @override
+  String get desktopScanFromMobile => 'Scan from mobile Sync page';
+
+  @override
+  String get desktopDevice => 'Device';
+
+  @override
+  String get desktopTransport => 'Transport';
+
+  @override
+  String get desktopIp => 'IP';
+
+  @override
+  String get desktopPort => 'Port';
+
+  @override
+  String get desktopNewPairing => 'New Pairing';
+
+  @override
+  String get desktopTransportTcp => 'TCP over WiFi';
+
+  @override
+  String get desktopTransportMpc => 'MultipeerConnectivity (Direct)';
+
+  @override
+  String desktopConnectedTo(String name) {
+    return 'Connected to $name';
+  }
+
+  @override
+  String get desktopConnected => 'Connected';
+
+  @override
+  String desktopReconnectingTo(String name) {
+    return 'Reconnecting to $name...';
+  }
+
+  @override
+  String get desktopReconnecting => 'Reconnecting...';
+
+  @override
+  String desktopDisconnectedFrom(String name) {
+    return 'Disconnected from $name';
+  }
+
+  @override
+  String get desktopDisconnected => 'Disconnected';
+
+  @override
+  String get desktopDisconnect => 'Disconnect';
+
+  @override
+  String get desktopReconnect => 'Reconnect';
+
+  @override
+  String get desktopVpnDetected =>
+      'VPN detected. Disconnect VPN to sync with desktop.';
+
+  @override
+  String get desktopPairing => 'Pairing';
+
+  @override
+  String get desktopLabel => 'Desktop';
+
+  @override
+  String get desktopScanFromPhoneToPair => 'Scan from your phone to pair';
+
+  @override
+  String get desktopNewQrCode => 'New QR Code';
+
+  @override
+  String get desktopGenerateQrCode => 'Generate QR Code';
+
+  @override
+  String get desktopScanQrCode => 'Scan QR Code';
+
+  @override
+  String get desktopChooseWhereToSave => 'Choose where to save backups';
+
+  @override
+  String get desktopSelectBackupFolder =>
+      'Select a folder on your computer to store backup files';
+
+  @override
+  String get desktopChooseLocation => 'Choose Location';
+
+  @override
+  String get desktopChooseBackupLocation => 'Choose Backup Location';
+
+  @override
+  String get desktopBackingUp => 'Backing up...';
+
+  @override
+  String get desktopCreateBackup => 'Create Backup';
+
+  @override
+  String get desktopSyncWithPhoneFirst => 'Sync with phone first';
+
+  @override
+  String get desktopNotConnected => '(not connected)';
+
+  @override
+  String get desktopStartBackup => 'Start Backup';
+
+  @override
+  String get desktopNoBackupsYet => 'No backups yet';
+
+  @override
+  String get desktopCreateFirstBackup =>
+      'Create your first backup to keep your health data safe';
+
+  @override
+  String get desktopAllBackups => 'All backups';
+
+  @override
+  String get desktopDate => 'Date';
+
+  @override
+  String get desktopSize => 'Size';
+
+  @override
+  String get desktopChecksum => 'Checksum';
+
+  @override
+  String get desktopRestoreThisBackup => 'Restore this backup';
+
+  @override
+  String get desktopRestoreBackupTitle => 'Restore Backup?';
+
+  @override
+  String desktopRestoreBackupMessage(String name, int count) {
+    return 'This will replace all current data on this device with \"$name\".\n\n$count records will be restored.\n\nYour data on the paired phone will not be affected.';
+  }
+
+  @override
+  String get desktopRestore => 'Restore';
+
+  @override
+  String get desktopDeleteBackupTitle => 'Delete Backup?';
+
+  @override
+  String desktopDeleteBackupMessage(String name) {
+    return 'Delete \"$name\"?\n\nThis cannot be undone.';
+  }
+
+  @override
+  String get desktopDelete => 'Delete';
+
+  @override
+  String get desktopBackupFrom => 'Backup from';
+
+  @override
+  String get desktopBackup => 'Backup';
+
+  @override
+  String get desktopChange => 'Change';
+
+  @override
+  String get desktopProcessingHistory => 'Processing History';
+
+  @override
+  String get desktopScannedOnPhone => 'Scanned on Phone';
+
+  @override
+  String get desktopProcessedOnDesktop => 'Processed on Desktop';
+
+  @override
+  String get desktopImportedOnDesktop => 'Imported on Desktop';
+
+  @override
+  String get desktopSyncRecent => 'Recent';
+
+  @override
+  String get desktopUnknownDevice => 'Unknown device';
+
+  @override
+  String desktopSyncHistoryTransfer(int sentRows, int receivedRows) {
+    return '$sentRows sent · $receivedRows received';
+  }
+
+  @override
+  String get desktopNewDeviceConnecting => 'New Device Connecting';
+
+  @override
+  String desktopNewDeviceMessage(String address, String currentDevice) {
+    return 'A new device ($address) wants to connect.\n\nThis will disconnect \"$currentDevice\".\n\nSwitch to the new device?';
+  }
+
+  @override
+  String get desktopKeepCurrent => 'Keep Current';
+
+  @override
+  String get desktopSwitch => 'Switch';
+
+  @override
+  String get desktopCurrentDevice => 'current device';
+
+  @override
+  String get desktopHandoverPreparing => 'Preparing...';
+
+  @override
+  String get desktopHandoverSendingFiles => 'Sending files...';
+
+  @override
+  String get desktopHandoverProcessingOnDesktop => 'Processing on desktop...';
+
+  @override
+  String get desktopHandoverComplete => 'Complete!';
+
+  @override
+  String get desktopHandoverError => 'Error occurred';
+
+  @override
+  String get desktopHandoverSending => 'Sending...';
+
+  @override
+  String get desktopHandoverSendingToDesktop => 'Sending to Desktop';
+
+  @override
+  String desktopHandoverFileCount(int count) {
+    return '$count files';
+  }
+
+  @override
+  String get desktopHandoverSuccess => 'Handed over to Desktop';
+
+  @override
+  String get desktopClose => 'Close';
+
+  @override
+  String get desktopContinueImporting => 'Continue Importing';
+
+  @override
+  String get desktopConnectToDesktop => 'Connect to Desktop';
+
+  @override
+  String get desktopCouldNotReconnect =>
+      'Could not reconnect. Scan QR code to pair again.';
+
+  @override
+  String get desktopScanQrToPair =>
+      'Scan the QR code on your desktop app to pair.';
+
+  @override
+  String get desktopHandoverToDesktop => 'Handover to Desktop';
+
+  @override
+  String get desktopHandoverProcessingMessage =>
+      'Processing is in progress. Handover will cancel the current processing and send files to desktop.';
+
+  @override
+  String get desktopHandover => 'Handover';
+
+  @override
+  String get attachedDocuments => 'Attached Documents';
+
+  @override
+  String get cameraPermissionRequired => 'Camera Permission Required';
+
+  @override
+  String get cameraPermissionRequiredMessage =>
+      'This app needs camera access to scan. Please grant permission to continue.';
+
+  @override
+  String get cameraPermissionDenied => 'Camera Permission Denied';
+
+  @override
+  String get cameraPermissionDeniedMessage =>
+      'Camera permission has been permanently denied. Please enable it in Settings to use the scanner.';
+
+  @override
+  String get successTitle => 'Success!';
+
+  @override
+  String attachmentSuccessMessage(int count) {
+    return 'Successfully attached $count documents to the encounter.';
+  }
+
+  @override
+  String get encounterLabel => 'Encounter';
+
+  @override
+  String get viewRecords => 'View Records';
+
+  @override
+  String get errorTitle => 'Error';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong';
+
+  @override
+  String get importDocument => 'Import Document';
+
+  @override
+  String get pickImageFromGallery => 'Pick Image from Gallery';
+
+  @override
+  String get scanDocument => 'Scan Document';
+
+  @override
+  String get deleteSession => 'Delete Session';
+
+  @override
+  String get deleteSessionConfirmation =>
+      'Are you sure you want to delete this session?';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get canceling => 'Canceling...';
+
+  @override
+  String get waitingForAiToFinish => 'Waiting for AI to finish...';
+
+  @override
+  String get logsCopied => 'Logs copied';
+
+  @override
+  String get download => 'Download';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get tapToSelect => 'Tap to select';
+
+  @override
+  String deviceInfoChip(
+    String platform,
+    String ramGB,
+    int cores,
+    int estimatedMB,
+  ) {
+    return '$platform  •  ${ramGB}GB RAM  •  $cores cores  •  ~${estimatedMB}MB needed';
+  }
+
+  @override
+  String get downloadContinuesInBackground =>
+      'You can navigate away - download will continue in background.\nCheck notifications for progress.';
+
+  @override
+  String get continueWithoutAi =>
+      'Continue without AI (download in background)';
+
+  @override
+  String get continueUsingApp => 'Continue using app';
+
+  @override
+  String get attachWithoutProcessing =>
+      'I want to attach the document without processing';
+
+  @override
+  String get currentPatientAndSource => 'Current Patient & Source';
+
+  @override
+  String get createEncounter => 'Create Encounter';
+
+  @override
+  String get encounterName => 'Encounter name';
+
+  @override
+  String get enterEncounterName => 'Enter encounter name';
+
+  @override
+  String get pleaseEnterEncounterName => 'Please enter an encounter name';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get searchEncounters => 'Search encounters...';
+
+  @override
+  String get noEncountersFound => 'No encounters found';
+
+  @override
+  String get noEncountersFoundMessage =>
+      'Create a new encounter first or select a different patient.';
+
+  @override
+  String get newEncounterPrefix => 'New encounter';
+
+  @override
+  String get scannedDocumentsTitle => 'Scanned Documents';
+
+  @override
+  String scannedDocumentsPagesTitle(String count) {
+    return 'Scanned Documents ($count pages)';
+  }
+
+  @override
+  String pdfFileTitle(String fileName) {
+    return 'PDF: $fileName';
+  }
+
+  @override
+  String get labelOrganizationName => 'Organization Name';
+
+  @override
+  String get labelAddress => 'Address';
+
+  @override
+  String get labelPhone => 'Phone';
+
+  @override
+  String get labelEncounterName => 'Encounter Name';
+
+  @override
+  String get labelStartDate => 'Start Date';
+
+  @override
+  String get labelFirstName => 'First name';
+
+  @override
+  String get labelFamilyName => 'Family name';
+
+  @override
+  String get labelDateOfBirth => 'Date of birth';
+
+  @override
+  String get labelGender => 'Gender';
+
+  @override
+  String get labelReportName => 'Report Name';
+
+  @override
+  String get labelConclusion => 'Conclusion';
+
+  @override
+  String get labelIssuedDate => 'Issued Date';
+
+  @override
+  String get labelPractitionerName => 'Practitioner Name';
+
+  @override
+  String get labelSpecialty => 'Specialty';
+
+  @override
+  String get labelIdentifier => 'Identifier';
+
+  @override
+  String get labelConditionName => 'Condition Name';
+
+  @override
+  String get labelOnsetDate => 'Onset Date';
+
+  @override
+  String get labelClinicalStatus => 'Clinical Status';
+
+  @override
+  String get labelSubstance => 'Substance';
+
+  @override
+  String get labelManifestation => 'Manifestation';
+
+  @override
+  String get labelCategory => 'Category';
+
+  @override
+  String get labelProcedureName => 'Procedure Name';
+
+  @override
+  String get labelPerformedDate => 'Performed Date';
+
+  @override
+  String get labelReason => 'Reason';
+
+  @override
+  String get labelMedicationName => 'Medication Name';
+
+  @override
+  String get labelDosage => 'Dosage';
+
+  @override
+  String get labelObservationName => 'Observation name';
+
+  @override
+  String get labelValue => 'Value';
+
+  @override
+  String get labelUnit => 'Unit';
+
+  @override
+  String get labelReferenceRange => 'Reference Range';
+
+  @override
+  String get permissionsRequired => 'Permissions Required';
+
+  @override
+  String recordsSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get noRecordsSelected => 'No records selected';
+
+  @override
+  String get select => 'Select';
+
+  @override
+  String get selectRecordsBeforeSharing => 'Select records\nbefore sharing';
+
+  @override
+  String get recordDetails => 'Record Details';
+
+  @override
+  String get viewDocument => 'View Document';
+
+  @override
+  String get encounterDetails => 'Encounter details';
+
+  @override
+  String get relatedResources => 'Related resources';
+
+  @override
+  String deletePlusRelated(int count) {
+    return 'Delete + $count related';
+  }
+
+  @override
+  String get fileNotAvailable => 'File not available on this device';
+
+  @override
+  String couldNotOpenFile(String message) {
+    return 'Could not open file: $message';
+  }
+
+  @override
+  String errorOpeningFile(String error) {
+    return 'Error opening file: $error';
+  }
+
+  @override
+  String get failedToLoadImage => 'Failed to load image';
+
+  @override
+  String errorLoadingPdf(String error) {
+    return 'Error loading PDF: $error';
+  }
+
+  @override
+  String errorOnPage(String page, String error) {
+    return 'Error on page $page: $error';
+  }
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get noNotesAttached => 'This record has no notes attached';
+
+  @override
+  String get addNote => 'Add note';
+
+  @override
+  String get editNote => 'Edit note';
+
+  @override
+  String get filters => 'Filters';
+
+  @override
+  String get timeRange => 'Time Range';
+
+  @override
+  String get applyFilters => 'Apply filters';
+
+  @override
+  String get recordType => 'Record type';
+
+  @override
+  String get selectedRange => 'Selected Range';
+
+  @override
+  String get noRangeSelected => 'No range selected';
+
+  @override
+  String get clearDateRange => 'Clear date range';
+
+  @override
+  String get start => 'Start';
+
+  @override
+  String get end => 'End';
+
+  @override
+  String fromDate(String date) {
+    return 'From $date';
+  }
+
+  @override
+  String untilDate(String date) {
+    return 'Until $date';
+  }
+
+  @override
+  String get day => 'Day';
+
+  @override
+  String get month => 'Month';
+
+  @override
+  String get year => 'Year';
+
+  @override
+  String get mediaInfo => 'Media Info';
+
+  @override
+  String get linkToEncounter => 'Link to Encounter';
+
+  @override
+  String get noPdfDataAvailable => 'No PDF data available';
+
+  @override
+  String get failedToLoadPdf => 'Failed to load PDF document';
+
+  @override
+  String get mediaInformation => 'Media Information';
+
+  @override
+  String get mediaInfoTitle => 'Title:';
+
+  @override
+  String get mediaInfoType => 'Type:';
+
+  @override
+  String get mediaInfoStatus => 'Status:';
+
+  @override
+  String get mediaInfoPatient => 'Patient:';
+
+  @override
+  String get mediaInfoEncounter => 'Encounter:';
+
+  @override
+  String get mediaInfoFileSize => 'File Size:';
+
+  @override
+  String get mediaInfoCreated => 'Created:';
+
+  @override
+  String get mediaInfoResourceId => 'Resource ID:';
+
+  @override
+  String get mediaInfoSource => 'Source:';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get linkMediaToEncounterDescription =>
+      'Link this media resource to an encounter:';
+
+  @override
+  String get encounterId => 'Encounter ID';
+
+  @override
+  String get encounterIdHint => 'e.g., encounter-123';
+
+  @override
+  String get mediaLinkedSuccess => 'Media linked to encounter successfully';
+
+  @override
+  String failedToLinkMedia(String error) {
+    return 'Failed to link media: $error';
+  }
+
+  @override
+  String get link => 'Link';
+
+  @override
+  String get connectionLabel => 'Connection';
+
+  @override
+  String get connectionStatusConnected => 'Connected';
+
+  @override
+  String get connectionStatusConnecting => 'Connecting...';
+
+  @override
+  String get connectionStatusDisconnected => 'Disconnected';
+
+  @override
+  String get connectionStatusNotPaired => 'Not paired';
+
+  @override
+  String get syncLabel => 'Sync';
+
+  @override
+  String get syncStatusSyncing => 'Syncing...';
+
+  @override
+  String get syncStatusNotSynced => 'Not synced';
+
+  @override
+  String get syncStatusInSync => 'In sync';
+
+  @override
+  String syncStatusPending(int count) {
+    return '$count pending';
+  }
+
+  @override
+  String get backupLabel => 'Backup';
+
+  @override
+  String get backupStatusWorking => 'Working...';
+
+  @override
+  String get backupStatusNoBackup => 'No backup';
+
+  @override
+  String get backupStatusBackingUp => 'Backing up...';
+
+  @override
+  String get backupStatusRestoring => 'Restoring...';
+
+  @override
+  String get backupStatusWaiting => 'Waiting...';
+
+  @override
+  String get backupStatusNotConnected => 'Not connected';
+
+  @override
+  String get exportIpsPdf => 'Export IPS (PDF)';
+
+  @override
+  String get addIpsToAppleWallet => 'Add IPS to Apple Wallet';
+
+  @override
+  String get addIpsToGoogleWallet => 'Add IPS to Google Wallet';
+
+  @override
+  String get sourcesTitle => 'Sources';
+
+  @override
+  String get emergencyMedicalId => 'Emergency Medical ID';
+
+  @override
+  String get phoneLabel => 'Phone';
+
+  @override
+  String get allergiesLabel => 'Allergies';
+
+  @override
+  String get medicalConditionsLabel => 'Medical Conditions';
+
+  @override
+  String get medicationsLabel => 'Medications';
+
+  @override
+  String get conditionsLabel => 'Conditions';
+
+  @override
+  String get dateOfBirthLabel => 'Date of Birth';
+
+  @override
+  String get emergencyPhoneLabel => 'Emergency Phone';
+
+  @override
+  String get openingScanner => 'Opening scanner...';
+
+  @override
+  String get activeScanSessions => 'Active scan sessions:';
+
+  @override
+  String get noScansYet => 'No scans yet';
+
+  @override
+  String get scanOrImportToGetStarted =>
+      'Scan or import documents to get started';
+
+  @override
+  String pageOfTotal(String current, String total) {
+    return '$current of $total';
+  }
+
+  @override
+  String get fileNotFound => 'File not found';
+
+  @override
+  String get fileIsEmpty => 'File is empty';
+
+  @override
+  String get importTitle => 'Import';
+
+  @override
+  String get activeImportSessions => 'Active import sessions:';
+
+  @override
+  String get dropToImport => 'Drop to import';
+
+  @override
+  String get dropFilesHereToImport => 'Drop files here to import';
+
+  @override
+  String get supportedFileFormats => 'PDF, JPG, PNG, TIFF';
+
+  @override
+  String get browseFiles => 'Browse Files';
+
+  @override
+  String get noImportsYet => 'No imports yet';
+
+  @override
+  String get importOrScanToGetStarted =>
+      'Import or scan documents to get started';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get noNotifications => 'No notifications';
+
+  @override
+  String get cancelDownloadTitle => 'Cancel Download';
+
+  @override
+  String get cancelDownloadMessage =>
+      'Are you sure you want to cancel the AI Model download? You can restart it later.';
+
+  @override
+  String get processingDone => 'Processing done';
+
+  @override
+  String pairedWithDevice(String deviceName) {
+    return 'Paired with $deviceName';
+  }
+
+  @override
+  String get deviceSyncLabel => 'Device Sync';
+
+  @override
+  String get disconnectLabel => 'Disconnect';
+
+  @override
+  String get changeLabel => 'Change';
+
+  @override
+  String get minimizeToTray => 'Minimize to tray';
 }

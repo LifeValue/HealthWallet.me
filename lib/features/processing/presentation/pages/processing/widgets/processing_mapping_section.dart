@@ -11,6 +11,7 @@ import 'package:health_wallet/features/processing/presentation/widgets/custom_pr
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ProcessingMappingSection extends StatelessWidget {
   final ProcessingState state;
@@ -124,7 +125,7 @@ class ProcessingMappingSection extends StatelessWidget {
               Text(
                 error,
                 style: AppTextStyle.bodySmall.copyWith(
-                  color: context.colorScheme.onErrorContainer,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -261,14 +262,14 @@ class ProcessingMappingSection extends StatelessWidget {
               Text(
                 context.l10n.processingFailedCapacity,
                 style: AppTextStyle.bodySmall.copyWith(
-                  color: context.colorScheme.onErrorContainer,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 context.l10n.processingFailedCapacitySuggestion,
                 style: AppTextStyle.labelSmall.copyWith(
-                  color: context.colorScheme.onErrorContainer.withOpacity(0.7),
+                  color: context.colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),
             ],

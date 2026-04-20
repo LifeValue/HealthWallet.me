@@ -8,36 +8,36 @@
     "onboardingBack": "Zurück",
     "onboardingGetStarted": "Los geht's",
     "onboardingNext": "Nächste",
-    "onboardingWelcomeTitle": "eine Gesundheits-Brieftasche für Sie!",
-    "onboardingWelcomeSubtitle": "Greifen Sie sicher auf Ihre vollständige Krankengeschichte mit <link>HealthWallet.me</link> zu. Verbinden Sie sich mit über 100.000 US-Gesundheitseinrichtungen oder fügen Sie Aufzeichnungen hinzu, indem Sie direkt mit der App teilen oder Dokumente scannen. Ihre Gesundheitsdaten sind privat, konform und werden nur auf Ihrem Gerät gespeichert.",
-    "onboardingWelcomeDescription": "Synchronisieren Sie Ihre Gesundheitsdaten über <link>FastenHealth OnPrem</link> mit den Gesundheitsdienstleistern und sehen Sie Ihre vollständige Krankengeschichte an einem Ort. Sicher, konform und immer auf Ihrem Gerät. Genießen Sie!",
-      "onboardingRecordsTitle": "Ihre Gesundheit, Immer Synchron",
-  "onboardingRecordsSubtitle": "**Halten Sie Ihre Krankengeschichte mühelos mit automatischen und manuellen Optionen auf dem neuesten Stand.**",
-    "onboardingRecordsDescription": "<link>HealthWallet.me</link> stellt sicher, dass Ihre vollständige Gesundheitsgeschichte immer aktuell ist. Es synchronisiert automatisch neue Aufzeichnungen von verbundenen Anbietern und ermöglicht es Ihnen, physische Dokumente sofort mit einem schnellen Scan hinzuzufügen.",
-  "onboardingScanButton": "Scannen",
-    "onboardingSyncTitle": "Privat von Design",
-  "onboardingSyncSubtitle": "Ihre Gesundheitsdaten gehören nur Ihnen.",
-    "onboardingSyncDescription": "Wir glauben, dass Ihre sensiblen Gesundheitsinformationen niemals auf einem Firmenserver liegen sollten. Ihre Daten sind verschlüsselt und ausschließlich auf Ihrem Gerät gespeichert, was bedeutet, dass nur Sie Zugang haben.",
-  "onboardingBiometricText": "Für eine zusätzliche Schutzschicht können Sie Ihre HealthWallet mit biometrischer Sicherheit wie Face ID oder einem Fingerabdruck-Scan sperren.",
-  "homeHi": "Hallo, ",
+    "onboardingWelcomeTitle": "eine Gesundheits-Brieftasche für dich!",
+    "onboardingWelcomeSubtitle": "<link>HealthWallet.me</link> verbindet dich bereits mit über 100.000 US-Gesundheitseinrichtungen und wir expandieren in neue Länder.",
+    "onboardingWelcomeDescription": "Füge Aufzeichnungen von beliebigen Anbietern hinzu, importiere Dokumente manuell oder fordere Unterstützung für dein Land an.",
+    "onboardingRecordsTitle": "Deine Gesundheit, Immer Synchron",
+    "onboardingRecordsSubtitle": "<link>HealthWallet.me</link> bietet dir flexible Möglichkeiten, deine gesamte Krankengeschichte zusammenzubringen:",
+    "onboardingRecordsDescription": "• Dokumente mit der Handykamera scannen\n• PDFs, Bilder oder Labordateien direkt hochladen\n• Aufzeichnungen teilen, indem du direkt von jeder App auf deinem Smartphone mit <link>HealthWallet.me</link> teilst.\n• QR-Code von Fasten Health OnPrem scannen und alle Aufzeichnungen aus dem US-Gesundheitssystem in dein Wallet übertragen.",
+    "onboardingScanButton": "Scannen",
+    "onboardingSyncTitle": "Sicherheit & Datenschutz",
+    "onboardingSyncSubtitle": "Deine Gesundheitsdaten gehören nur dir.",
+    "onboardingSyncDescription": "Wir glauben, dass deine sensiblen Gesundheitsinformationen niemals auf einem Firmenserver liegen sollten. Deine Daten sind verschlüsselt und ausschließlich auf deinem Gerät gespeichert, was bedeutet, dass nur du Zugang hast.",
+    "onboardingBiometricText": "Für eine zusätzliche Schutzschicht kannst du deine HealthWallet mit biometrischer Sicherheit wie Face ID oder einem Fingerabdruck-Scan sperren.",
+    "homeHi": "Hallo, ",
     "homeLastSynced": "Zuletzt synchronisiert: ",
     "homeNever": "Nie",
     "homeVitalSigns": "Vitalzeichen",
-    "homeOverview": "Überblick",
+    "homeOverview": "Medizinische Aufzeichnungen",
     "homeSource": "Quelle:",
     "homeAll": "Alle",
     "homeRecentRecords": "Letzte Einträge",
     "homeViewAll": "Alle anzeigen",
     "homeNA": "N/A",
-    "bluetoothRequired": "Bitte schalten Sie Bluetooth ein, um die Nahbereichsfreigabe zu nutzen",
+    "bluetoothRequired": "Bitte schalte Bluetooth ein, um die Nahbereichsfreigabe zu nutzen",
     "dashboardTitle": "Instrumententafel",
     "recordsTitle": "Aufzeichnungen",
     "goToRecords": "Zu Aufzeichnungen",
     "syncTitle": "Synchronisieren",
     "syncSuccessful": "Synchronisierung erfolgreich!",
-    "syncDataLoadedSuccessfully": "Ihre medizinischen Aufzeichnungen wurden synchronisiert. Sie werden zur Startseite weitergeleitet.",
+    "syncDataLoadedSuccessfully": "Deine medizinischen Aufzeichnungen wurden synchronisiert. Du wirst zur Startseite weitergeleitet.",
     "cancelSyncTitle": "Synchronisierung abbrechen?",
-    "cancelSyncMessage": "Sind Sie sicher, dass Sie die Synchronisierung abbrechen möchten? Dies wird den aktuellen Synchronisierungsprozess stoppen.",
+    "cancelSyncMessage": "Bist du sicher, dass du die Synchronisierung abbrechen möchtest? Dies wird den aktuellen Synchronisierungsprozess stoppen.",
     "yesCancel": "Ja, abbrechen",
     "continueSync": "Synchronisierung fortsetzen",
     "syncAgain": "Erneut synchronisieren",
@@ -49,73 +49,68 @@
     "hideManualEntry": "Manuelle Eingabe ausblenden",
     "enterDataManually": "Daten manuell eingeben",
     "medicalRecords": "Krankenakten",
-    "searchRecordsHint": "Suchen Sie nach Aufzeichnungen, Ärzten, Orten...",
+    "searchRecordsHint": "Suche nach Aufzeichnungen, Ärzten, Orten...",
     "detailsFor": "Details für ",
     "patientId": "Patienten-ID: ",
     "age": "Alter",
     "sex": "Geschlecht",
     "bloodType": "Blutgruppe",
     "lastSyncedProfile": "Zuletzt synchronisiert: vor 2 Stunden",
-    "syncLatestRecords": "Synchronisieren Sie Ihre neuesten medizinischen Unterlagen von Ihrem Gesundheitsdienstleister.",
+    "syncLatestRecords": "Synchronisiere deine neuesten medizinischen Unterlagen von deinem Gesundheitsdienstleister.",
     "scanToSync": "Zum Synchronisieren scannen",
     "theme": "Thema",
-    "pleaseAuthenticate": "Bitte authentifizieren Sie sich, um fortzufahren",
+    "pleaseAuthenticate": "Bitte authentifiziere dich, um fortzufahren",
     "authenticate": "Authentifizieren",
     "bypass": "Umgehen",
     "onboardingAuthTitle": "Biometrische Authentifizierung aktivieren",
-    "onboardingAuthDescription": "Fügen Sie eine zusätzliche Sicherheitsebene zu Ihrem Konto hinzu, indem Sie die biometrische Authentifizierung aktivieren.",
+    "onboardingAuthDescription": "Füge eine zusätzliche Sicherheitsebene zu deinem Konto hinzu, indem du die biometrische Authentifizierung aktivierst.",
     "onboardingAuthEnable": "Jetzt aktivieren",
     "onboardingAuthSkip": "Vorerst überspringen",
     "biometricAuthentication": "Biometrische Authentifizierung",
     "privacyPolicy": "Datenschutz-Bestimmungen",
-    
     "setupDeviceSecurity": "Gerätesicherheit einrichten",
-    "deviceSecurityMessage": "Ihr Gerät hat keine Sicherheitseinrichtung. Zu Ihrer Sicherheit richten Sie bitte die Gerätesicherheit ein, bevor Sie diese App verwenden:",
-    "deviceSettingsStep1": "Gehen Sie zu Ihren Geräteeinstellungen",
-    "deviceSettingsStep2": "Navigieren Sie zu Sicherheit oder Sperrbildschirm",
-    "deviceSettingsStep3": "Richten Sie eine Bildschirmsperre ein (PIN, Muster oder Passwort)",
-    "deviceSettingsStep4": "Fügen Sie optional Fingerabdruck oder Gesichtserkennung für mehr Komfort hinzu",
-    "deviceSecurityReturnMessage": "Nach dem Einrichten der Gerätesicherheit kehren Sie zu dieser App zurück und versuchen Sie es erneut.",
+    "deviceSecurityMessage": "Dein Gerät hat keine Sicherheitseinrichtung. Zu deiner Sicherheit richte bitte die Gerätesicherheit ein, bevor du diese App verwendest:",
+    "deviceSettingsStep1": "Gehe zu deinen Geräteeinstellungen",
+    "deviceSettingsStep2": "Navigiere zu Sicherheit oder Sperrbildschirm",
+    "deviceSettingsStep3": "Richte eine Bildschirmsperre ein (PIN, Muster oder Passwort)",
+    "deviceSettingsStep4": "Füge optional Fingerabdruck oder Gesichtserkennung für mehr Komfort hinzu",
+    "deviceSecurityReturnMessage": "Nach dem Einrichten der Gerätesicherheit kehre zu dieser App zurück und versuche es erneut.",
     "cancel": "Abbrechen",
     "openSettings": "Einstellungen öffnen",
     "settingsNotAvailable": "Einstellungen nicht verfügbar",
     "settingsNotAvailableMessage": "Geräteeinstellungen konnten nicht automatisch geöffnet werden. Bitte manuell:\n\n1. Einstellungen öffnen\n2. Zu Sicherheit → Biometrie gehen\n3. Fingerabdruck oder Gesichtserkennung hinzufügen\n4. Zu dieser App zurückkehren und erneut versuchen",
     "ok": "OK",
-    
     "scanCode": "Code scannen",
     "or": "oder",
     "manualSyncMessage": "Roher QR-Code",
-    "pasteSyncDataHint": "Fügen Sie den rohen QR-Code ein",
+    "pasteSyncDataHint": "Füge den rohen QR-Code ein",
     "connect": "Verbinden",
     "scanNewQRCode": "Neuen QR-Code scannen",
     "loadDemoData": "Demo-Daten laden",
     "syncData": "Daten synchronisieren",
     "noMedicalRecordsYet": "Noch keine medizinischen Aufzeichnungen",
     "noRecordTypeYet": "Noch keine {recordType}",
-    "loadDemoDataMessage": "Laden Sie Demo-Daten, um die App zu erkunden, oder synchronisieren Sie Ihre echten medizinischen Aufzeichnungen",
-    "syncDataMessage": "Synchronisieren oder aktualisieren Sie Ihre Daten, um {recordType}-Aufzeichnungen anzuzeigen",
+    "loadDemoDataMessage": "Lade Demo-Daten, um die App zu erkunden, oder synchronisiere deine echten medizinischen Aufzeichnungen",
+    "syncDataMessage": "Synchronisiere oder aktualisiere deine Daten, um {recordType}-Aufzeichnungen anzuzeigen",
     "retry": "Erneut versuchen",
-    
-    "pleaseEnterSourceName": "Bitte geben Sie einen Quellennamen ein",
+    "pleaseEnterSourceName": "Bitte gib einen Quellennamen ein",
     "selectBirthDate": "Geburtsdatum auswählen",
     "years": "Jahre",
     "male": "Männlich",
     "female": "Weiblich",
     "preferNotToSay": "Keine Angabe",
-    
     "errorUpdatingSourceLabel": "Fehler beim Aktualisieren der Quellenbezeichnung",
     "noChangesDetected": "Keine Änderungen erkannt",
-    "pleaseSelectBirthDate": "Bitte wählen Sie ein Geburtsdatum",
+    "pleaseSelectBirthDate": "Bitte wähle ein Geburtsdatum",
     "errorSavingPatientData": "Fehler beim Speichern der Patientendaten",
     "failedToUpdateDisplayName": "Fehler beim Aktualisieren des Anzeigenamens",
     "actionCannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden.",
-    "deleteRecordConfirm": "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?",
-    "deleteNoteConfirm": "Sind Sie sicher, dass Sie diese Notiz löschen möchten?",
-    "deleteAttachmentConfirm": "Sind Sie sicher, dass Sie diesen Anhang löschen möchten?",
-    "deleteRecordsConfirm": "Sind Sie sicher, dass Sie {count} Einträge löschen möchten?",
-    "confirmDeleteFile": "Sind Sie sicher, dass Sie \"{filename}\" löschen möchten?",
-    "selectAtLeastOne": "Wählen Sie mindestens einen {type} aus, um fortzufahren.",
-    
+    "deleteRecordConfirm": "Bist du sicher, dass du diesen Eintrag löschen möchtest?",
+    "deleteNoteConfirm": "Bist du sicher, dass du diese Notiz löschen möchtest?",
+    "deleteAttachmentConfirm": "Bist du sicher, dass du diesen Anhang löschen möchtest?",
+    "deleteRecordsConfirm": "Bist du sicher, dass du {count} Einträge löschen möchtest?",
+    "confirmDeleteFile": "Bist du sicher, dass du \"{filename}\" löschen möchtest?",
+    "selectAtLeastOne": "Wähle mindestens einen {type} aus, um fortzufahren.",
     "editSourceLabel": "Quellenbezeichnung bearbeiten",
     "saveDetails": "Details speichern",
     "editDetails": "Details bearbeiten",
@@ -127,9 +122,8 @@
     "attachFile": "Datei anhängen",
     "overview": "Überblick",
     "recentRecords": "Neueste Einträge",
-    "chooseToDisplay": "Wählen Sie die {type}, die Sie in Ihrem Dashboard sehen möchten.",
+    "chooseToDisplay": "Wähle die {type}, die du in deinem Dashboard sehen möchtest.",
     "displayName": "Anzeigename",
-    
     "bloodTypeAPositive": "A positiv",
     "bloodTypeANegative": "A negativ",
     "bloodTypeBPositive": "B positiv",
@@ -138,40 +132,34 @@
     "bloodTypeABNegative": "AB negativ",
     "bloodTypeOPositive": "O positiv",
     "bloodTypeONegative": "O negativ",
-    
     "serverError": "Etwas ist auf dem Server schief gelaufen",
     "serverTimeout": "Server-Zeitüberschreitung",
     "connectionError": "Verbindungsfehler",
     "unknownSource": "Unbekannte Quelle",
-    
     "synchronization": "Synchronisierung",
     "desktopSyncAndBackup": "Desktop Sync & Backup",
-    "desktopSyncDescription": "Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.",
-    "connect": "Connect",
-    "processOnDesktop": "Process on Desktop",
-    "sendToDesktop": "Send to Desktop",
-    "continueImporting": "Continue Importing",
-    "noAiModelOnDesktop": "Kein KI-Modell auf dem Desktop. Bitte laden Sie zuerst das KI-Modell auf Ihrer Desktop-App herunter.",
+    "desktopSyncDescription": "Synchronisiere und sichere deine Gesundheitsdaten.\nÜbergib Dokumente zur digitalen Verarbeitung auf deinem Desktop.",
+    "fromPhoneTab": "Vom Handy",
+    "processOnDesktop": "Auf dem Desktop verarbeiten",
+    "sendToDesktop": "An Desktop senden",
+    "continueImporting": "Weiter importieren",
+    "noAiModelOnDesktop": "Kein KI-Modell auf dem Desktop. Bitte lade zuerst das KI-Modell auf deiner Desktop-App herunter.",
     "syncMedicalRecords": "Medizinische Aufzeichnungen synchronisieren",
-    "syncLatestMedicalRecords": "Synchronisieren Sie Ihre neuesten medizinischen Aufzeichnungen von Ihrem Gesundheitsdienstleister mit einem sicheren JWT-Token.",
+    "syncLatestMedicalRecords": "Synchronisiere deine neuesten medizinischen Aufzeichnungen von deinem Gesundheitsdienstleister mit einem sicheren JWT-Token.",
     "neverSynced": "Nie synchronisiert",
     "lastSynced": "Zuletzt synchronisiert",
-    "tapToSelectPatient": "Tippen Sie, um einen Patienten auszuwählen",
+    "tapToSelectPatient": "Tippe, um einen Patienten auszuwählen",
     "preferences": "Einstellungen",
     "version": "Version",
     "on": "EIN",
     "off": "AUS",
-    
-    "confirmDisableBiometric": "Sind Sie sicher, dass Sie die biometrische Authentifizierung (FaceID / Passcode) deaktivieren möchten?",
+    "confirmDisableBiometric": "Bist du sicher, dass du die biometrische Authentifizierung (FaceID / Passcode) deaktivieren möchtest?",
     "disable": "Deaktivieren",
-    
     "continueButton": "Weiter",
     "getStarted": "Los geht's",
     "enableBiometricAuth": "Biometrische Authentifizierung aktivieren (FaceID / Passcode)",
     "disableBiometricAuth": "Biometrische Authentifizierung deaktivieren (FaceID / Passcode)",
-    
     "patient": "Patient",
-    
     "noPatientsFound": "Keine Patienten gefunden",
     "id": "ID",
     "gender": "Geschlecht",
@@ -184,60 +172,48 @@
     "clearAll": "Alle löschen",
     "save": "Speichern",
     "noRecordsFound": "Keine Aufzeichnungen gefunden",
-    "tryDifferentKeywords": "Versuchen Sie es mit anderen Suchbegriffen",
+    "tryDifferentKeywords": "Versuche es mit anderen Suchbegriffen",
     "clearAllFilters": "Alle löschen",
     "syncingData": "Daten werden synchronisiert",
     "syncingMessage": "Das kann eine Weile dauern. Bitte warten.",
     "finishProcessing": "Verarbeitung beenden",
-    "finishProcessingMessage": "Sind Sie sicher, dass Sie diese Verarbeitungssitzung beenden möchten?",
+    "finishProcessingMessage": "Bist du sicher, dass du diese Verarbeitungssitzung beenden möchtest?",
     "finishProcessingWarning": "Dies löscht die aktuelle Sitzung.",
     "fieldCannotBeEmpty": "Dieses Feld darf nicht leer sein",
     "selectDate": "Datum auswählen",
-    "attachToEncounter": "An Begegnung anhängen",
+    "attachToEncounter": "An Termin anhängen",
     "continueProcessing": "Verarbeitung fortsetzen",
     "recordsSavedTitle": "Erfolgreich gespeichert",
-    "recordsSavedMessage": "Ihre Gesundheitsdaten wurden erfolgreich gespeichert.",
-    "whatNextQuestion": "Was möchten Sie als Nächstes tun?",
+    "recordsSavedMessage": "Deine Gesundheitsdaten wurden erfolgreich gespeichert.",
+    "whatNextQuestion": "Was möchtest du als Nächstes tun?",
     "continueScanning": "Weiter Scannen",
-    "scanQRMessage": "Scannen Sie den QR-Code von Ihrem Fasten Health Server, um eine neue Synchronisierungsverbindung zu erstellen.",
+    "scanQRMessage": "Scanne den QR-Code von deinem Fasten Health Server, um eine neue Synchronisierungsverbindung zu erstellen.",
     "viewAll": "Alle anzeigen",
     "vitalSigns": "Vitalzeichen",
-    "longPressToReorder": "Lange drücken, um Karten zu verschieben und neu anzuordnen, oder filtern, um auszuwählen, welche in Ihrem Dashboard erscheinen.",
-    
+    "longPressToReorder": "Lange drücken, um Karten zu verschieben und neu anzuordnen, oder filtern, um auszuwählen, welche in deinem Dashboard erscheinen.",
     "effectiveDate": "Gültigkeitsdatum",
-    "privacyIntro": "Ihre Privatsphäre ist unsere höchste Priorität.",
-    "privacyDescription": "ist ein einfaches, sicheres Tool, das Ihnen hilft, Ihre Gesundheitsakten einfach direkt auf Ihrem Gerät zu organisieren. Diese Richtlinie erklärt unser Engagement für Ihre Privatsphäre: Wir sammeln Ihre Daten nicht und verfolgen Sie nicht. Sie haben die vollständige Kontrolle.",
-    "corePrinciple": "Unser Grundprinzip: Ihre Daten bleiben auf Ihrem Gerät",
+    "privacyIntro": "Deine Privatsphäre ist unsere höchste Priorität.",
+    "privacyDescription": "ist ein einfaches, sicheres Tool, das dir hilft, deine Gesundheitsakten einfach direkt auf deinem Gerät zu organisieren. Diese Richtlinie erklärt unser Engagement für deine Privatsphäre: Wir sammeln deine Daten nicht und verfolgen dich nicht. Du hast die vollständige Kontrolle.",
+    "corePrinciple": "Unser Grundprinzip: Deine Daten bleiben auf deinem Gerät",
     "whatInformationHandled": "Welche Informationen werden verarbeitet?",
     "informationWeDoNotCollect": "Informationen, die wir nicht sammeln oder darauf zugreifen",
-    "informationYouManage": "Informationen, die Sie verwalten",
-    "importingDocuments": "Dokumente von Ihrem Gerät importieren",
+    "informationYouManage": "Informationen, die du verwaltest",
+    "importingDocuments": "Dokumente von deinem Gerät importieren",
     "connectingFastenHealth": "Verbindung zu FastenHealth OnPrem",
-    "howInformationUsed": "Wie Ihre Informationen verwendet werden",
+    "howInformationUsed": "Wie deine Informationen verwendet werden",
     "dataStorageSecurity": "Datenspeicherung, Sicherheit und Weitergabe",
     "childrensPrivacy": "Privatsphäre von Kindern",
     "changesToPolicy": "Änderungen an dieser Datenschutzrichtlinie",
-    "contactUs": "Kontaktieren Sie uns",
+    "contactUs": "Kontaktiere uns",
     "builtWithLove": "Mit Liebe von Life Value gebaut!",
-
     "noRecords": "keine Aufzeichnungen",
-    
     "sourceName": "Quellenname",
-    "effectiveDate": "Gültigkeitsdatum",
-    "finishProcessing": "Verarbeitung beenden",
-    "finishProcessingMessage": "Sind Sie sicher, dass Sie diese Verarbeitungssitzung beenden möchten?",
-    "finishProcessingWarning": "Dies löscht die aktuelle Sitzung.",
-    "fieldCannotBeEmpty": "Dieses Feld darf nicht leer sein",
-    "selectDate": "Datum auswählen",
-    "attachToEncounter": "An Begegnung anhängen",
-    "continueProcessing": "Verarbeitung fortsetzen",
-    "provideCustomLabel": "Geben Sie ein benutzerdefiniertes Label an für:",
+    "provideCustomLabel": "Gib ein benutzerdefiniertes Label an für:",
     "success": "Erfolg",
-    "demoDataLoadedSuccessfully": "Demo-Daten wurden erfolgreich geladen. Sie werden zur Startseite weitergeleitet.",
-
-    "onboardingAiModelTitle": "AI-Modell aktivieren",
-    "onboardingAiModelDescription": "Laden Sie ein sicheres, geräteinternes AI-Modell herunter, um Ihre Gesundheitsakten automatisch zu analysieren und zu organisieren. Wählen Sie zwischen zwei Optionen je nach Bedarf und Gerätekapazität. Dies ist eine einmalige Einrichtung.\n\n**Ihre Daten bleiben privat auf Ihrem Gerät.**",
-    "onboardingAiModelSubtitle": "AI-gestütztes Scannen freischalten",
+    "demoDataLoadedSuccessfully": "Demo-Daten wurden erfolgreich geladen. Du wirst zur Startseite weitergeleitet.",
+    "onboardingAiModelTitle": "KI-Modell aktivieren",
+    "onboardingAiModelDescription": "Lade ein sicheres, geräteinternes KI-Modell herunter, um deine Gesundheitsakten automatisch zu analysieren und zu organisieren. Wähle zwischen zwei Optionen je nach Bedarf und Gerätekapazität. Dies ist eine einmalige Einrichtung.\n\n**Deine Daten bleiben privat auf deinem Gerät.**",
+    "onboardingAiModelSubtitle": "KI-gestütztes Scannen freischalten",
     "aiModelReady": "KI bereit! Du kannst mit dem Scannen beginnen.",
     "aiModelDownloading": "Wird heruntergeladen...",
     "aiModelEnableDownload": "Auswählen & Herunterladen",
@@ -245,63 +221,52 @@
     "aiModelMissing": "Nicht heruntergeladen.",
     "aiModelTitle": "KI-Modell laden",
     "aiModelUnlockTitle": "KI-gestütztes Scannen freischalten",
-    "aiModelUnlockDescription": "Um Ihre medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell.\n\n**Ihre Daten bleiben privat auf Ihrem Gerät.**",
-    "aiModelDownloadInfo": "Um zu beginnen, wählen und laden Sie eine der zwei verfügbaren KI-Optionen herunter. Dies ist eine einmalige Einrichtung.",
-    
+    "aiModelUnlockDescription": "Um deine medizinischen Dokumente automatisch zu lesen und zu organisieren, verwendet diese Funktion ein sicheres, geräteinternes KI-Modell.\n\n**Deine Daten bleiben privat auf deinem Gerät.**",
+    "aiModelDownloadInfo": "Um zu beginnen, wähle und lade eine der zwei verfügbaren KI-Optionen herunter. Dies ist eine einmalige Einrichtung.",
     "setup": "Einrichten",
     "patientSetupTitle": "Profil einrichten",
-    "patientSetupSubtitle": "Personalisieren Sie Ihre Gesundheits-Brieftasche mit Ihren Informationen",
-    
+    "patientSetupSubtitle": "Personalisiere deine Gesundheits-Brieftasche mit deinen Informationen",
     "onboardingSetupTitle": "Meine Gesundheits-Brieftasche einrichten",
-    "onboardingSetupBody": "Erstellen Sie Ihr persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen",
+    "onboardingSetupBody": "Erstelle dein persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen",
     "onboardingDemoTitle": "Demo-Daten ausprobieren",
-    "onboardingDemoBody": "Erkunden Sie die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert",
-    "onboardingSyncTitle2": "Ihre Aufzeichnungen synchronisieren",
-    "onboardingSyncBody": "Verbinden Sie sich mit Ihren Gesundheitsdienstleistern, um Ihre echten medizinischen Aufzeichnungen zu importieren",
-    
+    "onboardingDemoBody": "Erkunde die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert",
+    "onboardingSyncTitle2": "Deine Aufzeichnungen synchronisieren",
+    "onboardingSyncBody": "Verbinde dich mit deinen Gesundheitsdienstleistern, um deine echten medizinischen Aufzeichnungen zu importieren",
     "givenName": "Vorname",
     "familyName": "Nachname",
     "skipForNow": "Vorerst überspringen",
-    
     "setUpProfile": "Einrichten",
     "useDefaults": "Standard",
-    "editDetails": "Details bearbeiten",
-    "saveDetails": "Details speichern",
-    
-    "syncPlaceholderTutorialStep1": "Vervollständigen Sie Ihr Profil, um alle Funktionen freizuschalten.",
-    "syncPlaceholderTutorialStep2": "Noch nicht bereit zum Importieren? Laden Sie Demo-Daten, um zu sehen, wie die App in Aktion aussieht.",
-    "syncPlaceholderTutorialStep3": "Halten Sie Ihre Desktop- und Mobile-Wallet auf dem neuesten Stand.",
-    "tapToContinue": "Tippen Sie, um fortzufahren",
-    
-    "homeOnboardingReorderMessage": "Lange drücken, um sie nach Ihren Wünschen neu anzuordnen.",
-    
+    "syncPlaceholderTutorialStep1": "Vervollständige dein Profil, um alle Funktionen freizuschalten.",
+    "syncPlaceholderTutorialStep2": "Noch nicht bereit zum Importieren? Lade Demo-Daten, um zu sehen, wie die App in Aktion aussieht.",
+    "syncPlaceholderTutorialStep3": "Halte deine Desktop- und Mobile-Wallet auf dem neuesten Stand.",
+    "tapToContinue": "Tippe, um fortzufahren",
+    "homeOnboardingReorderMessage": "Lange drücken, um sie nach deinen Wünschen neu anzuordnen.",
     "processing": "Verarbeitung",
     "sessionNotFound": "Sitzung nicht gefunden!",
     "preparingPreview": "Vorschau wird vorbereitet...",
     "processingFailed": "Verarbeitung fehlgeschlagen",
-    "retry": "Wiederholen",
     "processingCancelled": "Die Verarbeitung wurde abgebrochen",
     "processingBasicDetails": "Grunddaten werden verarbeitet...",
     "processingPages": "Seiten werden verarbeitet...",
-    "extractingPatientInfo": "Patienten- und Begegnungsinformationen werden extrahiert.",
-    "pleaseWait": "Es kann eine Weile dauern. Bitte warten Sie.",
-    "cancel": "Abbrechen",
+    "extractingPatientInfo": "Patienten- und Termininformationen werden extrahiert.",
+    "pleaseWait": "Es kann eine Weile dauern. Bitte warten.",
     "focusMode": "Fokusmodus",
     "onlyOneSessionAtTime": "Nur eine Verarbeitungssitzung kann gleichzeitig ausgeführt werden",
     "aiModelNotAvailable": "Intelligentes Scannen ist nicht verfügbar",
     "addResources": "Ressourcen hinzufügen",
     "addResourcesTitle": "Ressourcen hinzufügen",
-    "chooseResourcesDescription": "Wählen Sie die Ressourcen aus, die Sie zur Verarbeitung hinzufügen möchten.",
+    "chooseResourcesDescription": "Wähle die Ressourcen aus, die du zur Verarbeitung hinzufügen möchtest.",
     "add": "Hinzufügen",
-    "allergyIntolerance": "Allergieunverträglichkeit",
-    "condition": "Bedingung",
+    "allergyIntolerance": "Allergie",
+    "condition": "Erkrankung",
     "diagnosticReport": "Diagnosebericht",
     "medicationStatement": "Medikamentenerklärung",
     "observation": "Beobachtung",
     "organization": "Organisation",
     "practitioner": "Fachkraft",
-    "procedure": "Verfahren",
-    "tapToViewProgress": "Tippen Sie irgendwo, um den Fortschritt anzuzeigen",
+    "procedure": "Maßnahme",
+    "tapToViewProgress": "Tippe irgendwo, um den Fortschritt anzuzeigen",
     "screenWillDarkenInSeconds": "Der Bildschirm wird sich in {remainingSeconds} Sekunden verdunkeln.",
     "@screenWillDarkenInSeconds": {
         "placeholders": {
@@ -311,20 +276,18 @@
         }
     },
     "screenWillDarkenInZeroSeconds": "Der Bildschirm wird sich in 0 Sekunden verdunkeln.",
-    "whileDocumentsProcessed": "Während Ihre Dokumente verarbeitet werden:",
-    "doNotLockScreen": "Sperren Sie den Bildschirm nicht und verlassen Sie die App nicht.",
-    "plugInCharger": "Stecken Sie das Ladegerät ein.",
+    "whileDocumentsProcessed": "Während deine Dokumente verarbeitet werden:",
+    "doNotLockScreen": "Sperre den Bildschirm nicht und verlasse die App nicht.",
+    "plugInCharger": "Stecke das Ladegerät ein.",
     "exitFocusMode": "Fokusmodus beenden",
     "chargerPluggedIn": "Ladegerät eingesteckt.",
-    "plugInChargerEllipsis": "Stecken Sie das Ladegerät ein...",
-
+    "plugInChargerEllipsis": "Stecke das Ladegerät ein...",
     "processingFailedCapacity": "Das Dokument ist zu groß für die aktuelle KI-Kontextgröße.",
-    "processingFailedCapacitySuggestion": "Tippen Sie oben auf das Einstellungssymbol und erhöhen Sie die Kontextgröße auf 2048 oder höher, dann erneut versuchen.",
+    "processingFailedCapacitySuggestion": "Tippe oben auf das Einstellungssymbol und erhöhe die Kontextgröße auf 2048 oder höher, dann erneut versuchen.",
     "increaseAiModelCapacity": "KI-Kapazität erhöhen",
     "goBack": "Zurück",
-
     "setAiTokensUsage": "KI-Token-Nutzung einstellen",
-    "tokenUsageDescription": "Steuern Sie, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.",
+    "tokenUsageDescription": "Steuere, wie viel Rechenleistung die KI nutzen kann. Höhere Kapazität ermöglicht größere Dateien und komplexere Aufgaben, verbraucht aber mehr Ressourcen und dauert länger.",
     "tokenPresetLow": "Niedrig",
     "tokenPresetLowDescription": "Ideal für kleine Dateien und schnelle Aufgaben.\nVerbraucht die wenigsten Ressourcen und verarbeitet am schnellsten.",
     "tokenPresetMedium": "Mittel",
@@ -332,15 +295,14 @@
     "tokenPresetHigh": "Hoch",
     "tokenPresetHighDescription": "Ideal für große Dateien und komplexe Verarbeitung.\nVerbraucht mehr Ressourcen und Akku, und dauert länger.",
     "tokenPresetCustom": "Benutzerdefiniert",
-    "tokenPresetCustomDescription": "Legen Sie eine benutzerdefinierte Anzahl von Tokens fest.",
+    "tokenPresetCustomDescription": "Lege eine benutzerdefinierte Anzahl von Tokens fest.",
     "setTokens": "Festlegen",
     "tokens": "Tokens",
-
     "aiModelManage": "KI-Optionen verwalten",
     "aiModelNotSelected": "Keine Option ausgewählt",
     "aiModelSelect": "Option auswählen",
     "aiSettings": "KI-Einstellungen",
-    "aiSettingsDescription": "KI-Leistung für Ihr Gerät anpassen. Empfohlene Werte sind vorausgewählt.",
+    "aiSettingsDescription": "KI-Leistung für dein Gerät anpassen. Empfohlene Werte sind vorausgewählt.",
     "gpuLayersLabel": "GPU-Schichten",
     "gpuLayersDescription": "Modell-Schichten auf GPU auslagern für schnellere Bildverarbeitung. Mehr Schichten = schneller, aber mehr Speicherverbrauch. Auf 0 setzen bei Abstürzen.",
     "threadsLabel": "CPU-Threads",
@@ -349,12 +311,11 @@
     "contextSizeLabel": "Kontextgröße",
     "contextSizeDescription": "Textmenge, die die KI auf einmal verarbeiten kann. Größerer Kontext verarbeitet größere Dokumente, benötigt aber mehr Speicher.",
     "useVisionLabel": "Tiefenscan",
-    "useVisionDescription": "Liest Bilder für eine tiefere Analyse (z.\u00A0B. Handschrift). Verbraucht mehr Speicher und erfordert ein leistungsfähigeres Gerät.",
-
+    "useVisionDescription": "Liest Bilder für eine tiefere Analyse (z. B. Handschrift). Verbraucht mehr Speicher und erfordert ein leistungsfähigeres Gerät.",
     "aiModelNotAvailableForDevice": "Nicht verfügbar für dieses Telefon",
     "aiModelNotAvailableForDeviceDescription": "Dieses Gerät hat nicht genügend Speicher, um intelligentes Scannen auszuführen.",
     "noInternetConnectionTitle": "Keine Internetverbindung",
-    "noInternetConnectionDescription": "Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "noInternetConnectionDescription": "Bitte überprüfe deine Internetverbindung und versuche es erneut.",
     "processingStep2NotAvailableTitle": "Tiefenscan auf diesem Gerät nicht verfügbar",
     "processingStep2NotEnoughRam": "Dieses Gerät hat nicht genügend Speicher für den Tiefenscan. Textbasierte Verarbeitung ist weiterhin verfügbar und funktioniert gut für die meisten Dokumente.",
     "emergencyContact": "Notfall-Telefonkontakt",
@@ -372,22 +333,28 @@
     "patientModifiedUpdating": "Bestehenden Patienten ändern: {name}",
     "patientSavingModified": "Geänderten Patienten speichern: {name}",
     "dropModificationsTitle": "Änderungen verwerfen?",
-    "dropModificationsMessage": "Ihre Änderungen an den Patientenfeldern werden verworfen.",
+    "dropModificationsMessage": "Deine Änderungen an den Patientenfeldern werden verworfen.",
     "modifyPatientTitle": "Patient ändern?",
-    "modifyPatientMessage": "Die bestehenden Patientendaten werden mit Ihren Änderungen aktualisiert.",
+    "modifyPatientMessage": "Die bestehenden Patientendaten werden mit deinen Änderungen aktualisiert.",
     "scanIdCard": "Ausweis oder Reisepass scannen",
-    "scanIdCardDescription": "Automatisch aus Ihrem Dokument ausfüllen. Daten bleiben auf Ihrem Gerät.",
+    "scanIdCardDescription": "Automatisch aus deinem Dokument ausfüllen. Daten bleiben auf deinem Gerät.",
     "newLabel": "Neu",
     "newPatient": "Neuer Patient",
     "patientChangedTo": "Geändert zu: {name}",
     "patientMatchFound": "Bestehender Patient: {name}",
-    "@patientMatchFound": { "placeholders": { "name": { "type": "String" } } },
+    "@patientMatchFound": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
     "language": "Sprache",
     "systemDefault": "Systemstandard",
     "regionUS": "US",
     "regionEurope": "Europa",
     "regionUK": "UK",
-    "medGemmaIncompatibleDevice": "Dieses Modell benötigt mehr Arbeitsspeicher als auf Ihrem Gerät verfügbar ist. Verwenden Sie stattdessen das Standardmodell.",
+    "medGemmaIncompatibleDevice": "Dieses Modell benötigt mehr Arbeitsspeicher als auf deinem Gerät verfügbar ist. Verwende stattdessen das Lite-Modell.",
     "deepScanDownloadTitle": "Visionsmodell herunterladen",
     "deepScanDownloadMessage": "Tiefenscan erfordert einen zusätzlichen Download (~{size} MB). Jetzt herunterladen?",
     "@deepScanDownloadMessage": {
@@ -398,9 +365,8 @@
         }
     },
     "downloadingVisionModel": "Visionsmodell wird heruntergeladen...",
-
     "shareUnknownDevice": "Unbekanntes Gerät",
-    "shareViewOnlyBanner": "NUR ANSICHT - Daten werden gelöscht, wenn Sie die Sitzung schließen oder den Näherungsbereich verlassen",
+    "shareViewOnlyBanner": "NUR ANSICHT - Daten werden gelöscht, wenn du die Sitzung schließt oder den Näherungsbereich verlässt",
     "shareViewOnlyBannerViewing": "NUR ANSICHT - Daten werden beim Verlassen gelöscht",
     "shareInfoBannerMessage": "Geteilte Aufzeichnungen sind schreibgeschützt. Alle Daten werden automatisch gelöscht, wenn die Sitzung endet oder das Zeitlimit abläuft.",
     "shareTitle": "Teilen",
@@ -417,11 +383,11 @@
     "shareHealthWalletDevice": "HealthWallet-Gerät",
     "shareInvitationDeclined": "Einladung Abgelehnt",
     "shareSessionComplete": "Sitzung Abgeschlossen",
-    "shareInvitationDeclinedMessage": "Der Empfänger hat Ihre Einladung zur Ansicht der Aufzeichnungen abgelehnt.",
+    "shareInvitationDeclinedMessage": "Der Empfänger hat deine Einladung zur Ansicht der Aufzeichnungen abgelehnt.",
     "shareSessionCompleteMessage": "Alle geteilten Daten wurden sicher von diesem Gerät entfernt",
     "shareBackHome": "Zurück zum Start",
     "shareConnectionFailed": "Verbindung Fehlgeschlagen",
-    "shareUnableToConnect": "Verbindung nicht möglich. Bitte versuchen Sie es erneut.",
+    "shareUnableToConnect": "Verbindung nicht möglich. Bitte versuche es erneut.",
     "shareNoDataReceived": "Keine Daten empfangen",
     "shareSearchRecords": "Aufzeichnungen suchen",
     "shareNoRecordsMatchFilters": "Keine Aufzeichnungen entsprechen den Filtern",
@@ -446,18 +412,18 @@
     "shareNoDevicesFound": "Keine Geräte Gefunden",
     "shareConnectionIssue": "Verbindungsproblem",
     "shareWifiDirectUnresponsive": "WiFi Direct reagiert auf diesem Gerät nicht.",
-    "shareWifiToggleHint": "WiFi Direct reagiert nicht. Schalten Sie WiFi aus/ein und tippen Sie auf Wiederholen.",
-    "shareDiscoveryHint": "Stellen Sie sicher, dass auf dem anderen Gerät die HealthWallet.me App geöffnet ist",
+    "shareWifiToggleHint": "WiFi Direct reagiert nicht. Schalte WiFi aus/ein und tippe auf Wiederholen.",
+    "shareDiscoveryHint": "Stelle sicher, dass auf dem anderen Gerät die HealthWallet.me App geöffnet ist",
     "shareProximityHint": "Das empfangende Gerät muss Näherungsfreigabe in den Einstellungen AKTIVIERT haben, um erkennbar zu sein.",
     "shareNoRecordsMatchSelectedFilters": "Keine Aufzeichnungen entsprechen den ausgewählten Filtern",
     "shareNoRecordsForAppliedFilters": "Keine Aufzeichnungen für die angewendeten Filter gefunden",
-    "shareTryClearingFilters": "Versuchen Sie, einige Filter zu löschen",
+    "shareTryClearingFilters": "Versuche, einige Filter zu löschen",
     "shareRecordsPageFiltersNoResults": "Die Filter der Aufzeichnungsseite ergaben keine Ergebnisse",
-    "shareImportOrSyncRecords": "Importieren oder synchronisieren Sie Aufzeichnungen, um sie zu teilen",
+    "shareImportOrSyncRecords": "Importiere oder synchronisiere Aufzeichnungen, um sie zu teilen",
     "shareSessionTime": "Sitzungszeit",
     "shareSetAsDefault": "Als Standard festlegen",
     "shareRecordsButton": "Aufzeichnungen Teilen",
-    "shareSelectRecordsToShare": "Wählen Sie Aufzeichnungen zum Teilen",
+    "shareSelectRecordsToShare": "Wähle Aufzeichnungen zum Teilen",
     "shareEndSession": "Sitzung Beenden",
     "shareRequestTenMin": "+10 Min anfordern",
     "shareWaitingForResponse": "Warte auf Antwort...",
@@ -506,7 +472,7 @@
             }
         }
     },
-    "shareDeviceWantsToShare": "{deviceName} möchte Aufzeichnungen mit Ihnen teilen",
+    "shareDeviceWantsToShare": "{deviceName} möchte Aufzeichnungen mit dir teilen",
     "@shareDeviceWantsToShare": {
         "placeholders": {
             "deviceName": {
@@ -619,5 +585,497 @@
                 "type": "String"
             }
         }
-    }
+    },
+    "desktopSyncNotYet": "Noch nicht",
+    "desktopSyncTransfer": "Übertragung",
+    "desktopSyncTransferValue": "{sentRows} gesendet, {receivedRows} empfangen",
+    "@desktopSyncTransferValue": {
+        "placeholders": {
+            "sentRows": {
+                "type": "int"
+            },
+            "receivedRows": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopSyncPending": "Ausstehend",
+    "desktopSyncPendingValue": "{count} Änderungen",
+    "@desktopSyncPendingValue": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopSyncingTable": "{tableName} wird synchronisiert...",
+    "@desktopSyncingTable": {
+        "placeholders": {
+            "tableName": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopSyncing": "Synchronisiere...",
+    "desktopSyncNow": "Jetzt synchronisieren",
+    "desktopSyncError": "Fehler",
+    "desktopSyncInSync": "Synchron",
+    "desktopSyncReady": "Bereit",
+    "desktopSyncOffline": "Offline",
+    "desktopTableHealthRecords": "Gesundheitsdaten",
+    "desktopTableSources": "Quellen",
+    "desktopTableNotes": "Notizen",
+    "desktopTableSessions": "Sitzungen",
+    "desktopConnection": "Verbindung",
+    "desktopGeneratePairingQr": "Kopplungs-QR generieren",
+    "desktopScanFromMobile": "Über die mobile Sync-Seite scannen",
+    "desktopDevice": "Gerät",
+    "desktopTransport": "Übertragung",
+    "desktopIp": "IP",
+    "desktopPort": "Port",
+    "desktopNewPairing": "Neue Kopplung",
+    "desktopTransportTcp": "TCP über WLAN",
+    "desktopTransportMpc": "MultipeerConnectivity (Direkt)",
+    "desktopConnectedTo": "Verbunden mit {name}",
+    "@desktopConnectedTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopConnected": "Verbunden",
+    "desktopReconnectingTo": "Verbindung zu {name} wird wiederhergestellt...",
+    "@desktopReconnectingTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopReconnecting": "Verbindung wird wiederhergestellt...",
+    "desktopDisconnectedFrom": "Verbindung zu {name} getrennt",
+    "@desktopDisconnectedFrom": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopDisconnected": "Getrennt",
+    "desktopDisconnect": "Trennen",
+    "desktopReconnect": "Erneut verbinden",
+    "desktopVpnDetected": "VPN erkannt. Trenne das VPN, um mit dem Desktop zu synchronisieren.",
+    "desktopPairing": "Kopplung",
+    "desktopLabel": "Desktop",
+    "desktopScanFromPhoneToPair": "Scanne mit deinem Handy, um zu koppeln",
+    "desktopNewQrCode": "Neuer QR-Code",
+    "desktopGenerateQrCode": "QR-Code generieren",
+    "desktopScanQrCode": "QR-Code scannen",
+    "desktopChooseWhereToSave": "Wähle einen Speicherort für Backups",
+    "desktopSelectBackupFolder": "Wähle einen Ordner auf deinem Computer zum Speichern der Backup-Dateien",
+    "desktopChooseLocation": "Speicherort wählen",
+    "desktopChooseBackupLocation": "Backup-Speicherort wählen",
+    "desktopBackingUp": "Sicherung läuft...",
+    "desktopCreateBackup": "Backup erstellen",
+    "desktopSyncWithPhoneFirst": "Zuerst mit dem Handy synchronisieren",
+    "desktopNotConnected": "(nicht verbunden)",
+    "desktopStartBackup": "Backup starten",
+    "desktopNoBackupsYet": "Noch keine Backups",
+    "desktopCreateFirstBackup": "Erstelle dein erstes Backup, um deine Gesundheitsdaten zu sichern",
+    "desktopAllBackups": "Alle Backups",
+    "desktopDate": "Datum",
+    "desktopSize": "Größe",
+    "desktopChecksum": "Prüfsumme",
+    "desktopRestoreThisBackup": "Dieses Backup wiederherstellen",
+    "desktopRestoreBackupTitle": "Backup wiederherstellen?",
+    "desktopRestoreBackupMessage": "Alle aktuellen Daten auf diesem Gerät werden durch \"{name}\" ersetzt.\n\n{count} Aufzeichnungen werden wiederhergestellt.\n\nDeine Daten auf dem gekoppelten Handy bleiben unberührt.",
+    "@desktopRestoreBackupMessage": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopRestore": "Wiederherstellen",
+    "desktopDeleteBackupTitle": "Backup löschen?",
+    "desktopDeleteBackupMessage": "\"{name}\" löschen?\n\nDies kann nicht rückgängig gemacht werden.",
+    "@desktopDeleteBackupMessage": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopDelete": "Löschen",
+    "desktopBackupFrom": "Backup vom",
+    "desktopBackup": "Backup",
+    "desktopChange": "Ändern",
+    "desktopProcessingHistory": "Verarbeitungsverlauf",
+    "desktopScannedOnPhone": "Auf dem Handy gescannt",
+    "desktopProcessedOnDesktop": "Auf dem Desktop verarbeitet",
+    "desktopImportedOnDesktop": "Auf dem Desktop importiert",
+    "desktopSyncRecent": "Kürzlich",
+    "desktopUnknownDevice": "Unbekanntes Gerät",
+    "desktopSyncHistoryTransfer": "{sentRows} gesendet · {receivedRows} empfangen",
+    "@desktopSyncHistoryTransfer": {
+        "placeholders": {
+            "sentRows": {
+                "type": "int"
+            },
+            "receivedRows": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopNewDeviceConnecting": "Neues Gerät verbindet sich",
+    "desktopNewDeviceMessage": "Ein neues Gerät ({address}) möchte sich verbinden.\n\nDies trennt die Verbindung zu \"{currentDevice}\".\n\nZum neuen Gerät wechseln?",
+    "@desktopNewDeviceMessage": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            },
+            "currentDevice": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopKeepCurrent": "Aktuelles behalten",
+    "desktopSwitch": "Wechseln",
+    "desktopCurrentDevice": "aktuelles Gerät",
+    "desktopHandoverPreparing": "Wird vorbereitet...",
+    "desktopHandoverSendingFiles": "Dateien werden gesendet...",
+    "desktopHandoverProcessingOnDesktop": "Wird auf dem Desktop verarbeitet...",
+    "desktopHandoverComplete": "Fertig!",
+    "desktopHandoverError": "Fehler aufgetreten",
+    "desktopHandoverSending": "Wird gesendet...",
+    "desktopHandoverSendingToDesktop": "Wird an den Desktop gesendet",
+    "desktopHandoverFileCount": "{count} Dateien",
+    "@desktopHandoverFileCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopHandoverSuccess": "An den Desktop übergeben",
+    "desktopClose": "Schließen",
+    "desktopContinueImporting": "Weiter importieren",
+    "desktopConnectToDesktop": "Mit Desktop verbinden",
+    "desktopCouldNotReconnect": "Verbindung konnte nicht wiederhergestellt werden. Scanne den QR-Code erneut, um zu koppeln.",
+    "desktopScanQrToPair": "Scanne den QR-Code auf deiner Desktop-App, um zu koppeln.",
+    "desktopHandoverToDesktop": "An Desktop übergeben",
+    "desktopHandoverProcessingMessage": "Verarbeitung läuft. Die Übergabe wird die aktuelle Verarbeitung abbrechen und Dateien an den Desktop senden.",
+    "desktopHandover": "Übergabe",
+    "attachedDocuments": "Angehängte Dokumente",
+    "cameraPermissionRequired": "Kamerazugriff erforderlich",
+    "cameraPermissionRequiredMessage": "Diese App benötigt Kamerazugriff zum Scannen. Bitte erteile die Berechtigung.",
+    "cameraPermissionDenied": "Kamerazugriff verweigert",
+    "cameraPermissionDeniedMessage": "Der Kamerazugriff wurde dauerhaft verweigert. Bitte aktiviere ihn in den Einstellungen.",
+    "successTitle": "Erfolg!",
+    "attachmentSuccessMessage": "{count} Dokumente erfolgreich dem Termin angehängt.",
+    "@attachmentSuccessMessage": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "encounterLabel": "Termin",
+    "viewRecords": "Aufzeichnungen ansehen",
+    "errorTitle": "Fehler",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "importDocument": "Dokument importieren",
+    "pickImageFromGallery": "Bild aus Galerie wählen",
+    "scanDocument": "Dokument scannen",
+    "deleteSession": "Sitzung löschen",
+    "deleteSessionConfirmation": "Möchtest du diese Sitzung wirklich löschen?",
+    "delete": "Löschen",
+    "canceling": "Wird abgebrochen...",
+    "waitingForAiToFinish": "Warte auf Abschluss der KI...",
+    "logsCopied": "Protokolle kopiert",
+    "download": "Herunterladen",
+    "active": "Aktiv",
+    "tapToSelect": "Tippen zum Auswählen",
+    "deviceInfoChip": "{platform}  •  {ramGB} GB RAM  •  {cores} Kerne  •  ~{estimatedMB} MB benötigt",
+    "@deviceInfoChip": {
+        "placeholders": {
+            "platform": {
+                "type": "String"
+            },
+            "ramGB": {
+                "type": "String"
+            },
+            "cores": {
+                "type": "int"
+            },
+            "estimatedMB": {
+                "type": "int"
+            }
+        }
+    },
+    "downloadContinuesInBackground": "Du kannst weiternavigieren — der Download läuft im Hintergrund.\nBenachrichtigungen zeigen den Fortschritt.",
+    "continueWithoutAi": "Ohne KI fortfahren (Download im Hintergrund)",
+    "continueUsingApp": "App weiter nutzen",
+    "attachWithoutProcessing": "Dokument ohne Verarbeitung anhängen",
+    "currentPatientAndSource": "Aktueller Patient & Quelle",
+    "createEncounter": "Termin erstellen",
+    "encounterName": "Terminname",
+    "enterEncounterName": "Terminname eingeben",
+    "pleaseEnterEncounterName": "Bitte gib einen Terminnamen ein",
+    "date": "Datum",
+    "create": "Erstellen",
+    "searchEncounters": "Termine suchen...",
+    "noEncountersFound": "Keine Termine gefunden",
+    "noEncountersFoundMessage": "Erstelle zuerst einen neuen Termin oder wähle einen anderen Patienten.",
+    "newEncounterPrefix": "Neuer Termin",
+    "scannedDocumentsTitle": "Gescannte Dokumente",
+    "scannedDocumentsPagesTitle": "Gescannte Dokumente ({count} Seiten)",
+    "@scannedDocumentsPagesTitle": {
+        "placeholders": {
+            "count": {
+                "type": "String"
+            }
+        }
+    },
+    "pdfFileTitle": "PDF: {fileName}",
+    "@pdfFileTitle": {
+        "placeholders": {
+            "fileName": {
+                "type": "String"
+            }
+        }
+    },
+    "labelOrganizationName": "Name der Organisation",
+    "labelAddress": "Adresse",
+    "labelPhone": "Telefon",
+    "labelEncounterName": "Terminname",
+    "labelStartDate": "Startdatum",
+    "labelFirstName": "Vorname",
+    "labelFamilyName": "Nachname",
+    "labelDateOfBirth": "Geburtsdatum",
+    "labelGender": "Geschlecht",
+    "labelReportName": "Berichtsname",
+    "labelConclusion": "Befund",
+    "labelIssuedDate": "Ausstellungsdatum",
+    "labelPractitionerName": "Arztname",
+    "labelSpecialty": "Fachgebiet",
+    "labelIdentifier": "Kennung",
+    "labelConditionName": "Diagnose",
+    "labelOnsetDate": "Beginn",
+    "labelClinicalStatus": "Klinischer Status",
+    "labelSubstance": "Substanz",
+    "labelManifestation": "Symptome",
+    "labelCategory": "Kategorie",
+    "labelProcedureName": "Maßnahme",
+    "labelPerformedDate": "Durchgeführt am",
+    "labelReason": "Grund",
+    "labelMedicationName": "Medikament",
+    "labelDosage": "Dosierung",
+    "labelObservationName": "Beobachtung",
+    "labelValue": "Wert",
+    "labelUnit": "Einheit",
+    "labelReferenceRange": "Referenzbereich",
+    "permissionsRequired": "Berechtigungen erforderlich",
+    "recordsSelectedCount": "{count} ausgewählt",
+    "@recordsSelectedCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "noRecordsSelected": "Keine Aufzeichnungen ausgewählt",
+    "select": "Auswählen",
+    "selectRecordsBeforeSharing": "Aufzeichnungen auswählen\nvor dem Teilen",
+    "recordDetails": "Aufzeichnungsdetails",
+    "viewDocument": "Dokument ansehen",
+    "encounterDetails": "Termindetails",
+    "relatedResources": "Zugehörige Einträge",
+    "deletePlusRelated": "Löschen + {count} zugehörige",
+    "@deletePlusRelated": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "fileNotAvailable": "Datei auf diesem Gerät nicht verfügbar",
+    "couldNotOpenFile": "Datei konnte nicht geöffnet werden: {message}",
+    "@couldNotOpenFile": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "errorOpeningFile": "Fehler beim Öffnen der Datei: {error}",
+    "@errorOpeningFile": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToLoadImage": "Bild konnte nicht geladen werden",
+    "errorLoadingPdf": "Fehler beim Laden der PDF: {error}",
+    "@errorLoadingPdf": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "errorOnPage": "Fehler auf Seite {page}: {error}",
+    "@errorOnPage": {
+        "placeholders": {
+            "page": {
+                "type": "String"
+            },
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "notes": "Notizen",
+    "noNotesAttached": "Keine Notizen vorhanden",
+    "addNote": "Notiz hinzufügen",
+    "editNote": "Notiz bearbeiten",
+    "filters": "Filter",
+    "timeRange": "Zeitraum",
+    "applyFilters": "Filter anwenden",
+    "recordType": "Aufzeichnungstyp",
+    "selectedRange": "Ausgewählter Zeitraum",
+    "noRangeSelected": "Kein Zeitraum ausgewählt",
+    "clearDateRange": "Zeitraum zurücksetzen",
+    "start": "Beginn",
+    "end": "Ende",
+    "fromDate": "Ab {date}",
+    "@fromDate": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "untilDate": "Bis {date}",
+    "@untilDate": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "day": "Tag",
+    "month": "Monat",
+    "year": "Jahr",
+    "mediaInfo": "Medieninfo",
+    "linkToEncounter": "Mit Termin verknüpfen",
+    "noPdfDataAvailable": "Keine PDF-Daten verfügbar",
+    "failedToLoadPdf": "PDF konnte nicht geladen werden",
+    "mediaInformation": "Medieninformationen",
+    "mediaInfoTitle": "Titel:",
+    "mediaInfoType": "Typ:",
+    "mediaInfoStatus": "Status:",
+    "mediaInfoPatient": "Patient:",
+    "mediaInfoEncounter": "Termin:",
+    "mediaInfoFileSize": "Dateigröße:",
+    "mediaInfoCreated": "Erstellt:",
+    "mediaInfoResourceId": "Ressourcen-ID:",
+    "mediaInfoSource": "Quelle:",
+    "close": "Schließen",
+    "linkMediaToEncounterDescription": "Diese Mediendatei mit einem Termin verknüpfen:",
+    "encounterId": "Termin-ID",
+    "encounterIdHint": "z. B. termin-123",
+    "mediaLinkedSuccess": "Mediendatei erfolgreich mit Termin verknüpft",
+    "failedToLinkMedia": "Verknüpfung fehlgeschlagen: {error}",
+    "@failedToLinkMedia": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "link": "Verknüpfen",
+    "connectionLabel": "Verbindung",
+    "connectionStatusConnected": "Verbunden",
+    "connectionStatusConnecting": "Verbindung wird hergestellt...",
+    "connectionStatusDisconnected": "Getrennt",
+    "connectionStatusNotPaired": "Nicht gekoppelt",
+    "syncLabel": "Sync",
+    "syncStatusSyncing": "Synchronisiere...",
+    "syncStatusNotSynced": "Nicht synchronisiert",
+    "syncStatusInSync": "Synchron",
+    "syncStatusPending": "{count} ausstehend",
+    "@syncStatusPending": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "backupLabel": "Backup",
+    "backupStatusWorking": "In Arbeit...",
+    "backupStatusNoBackup": "Kein Backup",
+    "backupStatusBackingUp": "Sicherung läuft...",
+    "backupStatusRestoring": "Wird wiederhergestellt...",
+    "backupStatusWaiting": "Warten...",
+    "backupStatusNotConnected": "Nicht verbunden",
+    "exportIpsPdf": "IPS exportieren (PDF)",
+    "addIpsToAppleWallet": "IPS zu Apple Wallet hinzufügen",
+    "addIpsToGoogleWallet": "IPS zu Google Wallet hinzufügen",
+    "sourcesTitle": "Quellen",
+    "emergencyMedicalId": "Medizinischer Notfallausweis",
+    "phoneLabel": "Telefon",
+    "allergiesLabel": "Allergien",
+    "medicalConditionsLabel": "Erkrankungen",
+    "medicationsLabel": "Medikamente",
+    "conditionsLabel": "Erkrankungen",
+    "dateOfBirthLabel": "Geburtsdatum",
+    "emergencyPhoneLabel": "Notfalltelefon",
+    "openingScanner": "Scanner wird geöffnet...",
+    "activeScanSessions": "Aktive Scan-Sitzungen:",
+    "noScansYet": "Noch keine Scans",
+    "scanOrImportToGetStarted": "Scanne oder importiere Dokumente, um zu beginnen",
+    "pageOfTotal": "{current} von {total}",
+    "@pageOfTotal": {
+        "placeholders": {
+            "current": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "fileNotFound": "Datei nicht gefunden",
+    "fileIsEmpty": "Datei ist leer",
+    "importTitle": "Importieren",
+    "activeImportSessions": "Aktive Import-Sitzungen:",
+    "dropToImport": "Zum Importieren ablegen",
+    "dropFilesHereToImport": "Dateien hier zum Importieren ablegen",
+    "supportedFileFormats": "PDF, JPG, PNG, TIFF",
+    "browseFiles": "Dateien durchsuchen",
+    "noImportsYet": "Noch keine Importe",
+    "importOrScanToGetStarted": "Importiere oder scanne Dokumente, um zu beginnen",
+    "notificationsTitle": "Benachrichtigungen",
+    "noNotifications": "Keine Benachrichtigungen",
+    "cancelDownloadTitle": "Download abbrechen",
+    "cancelDownloadMessage": "Möchtest du den Download des KI-Modells wirklich abbrechen? Du kannst ihn später neu starten.",
+    "processingDone": "Verarbeitung abgeschlossen",
+    "pairedWithDevice": "Gekoppelt mit {deviceName}",
+    "@pairedWithDevice": {
+        "placeholders": {
+            "deviceName": {
+                "type": "String"
+            }
+        }
+    },
+    "deviceSyncLabel": "Gerätesync",
+    "disconnectLabel": "Trennen",
+    "changeLabel": "Ändern",
+    "minimizeToTray": "In Taskleiste minimieren"
 }

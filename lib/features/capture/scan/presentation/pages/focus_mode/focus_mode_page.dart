@@ -15,6 +15,7 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/focus_mode/bloc/focus_mode_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class FocusModePage extends StatelessWidget {

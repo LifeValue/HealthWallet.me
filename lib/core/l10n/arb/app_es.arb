@@ -3,129 +3,131 @@
     "appTitle": "HealthWallet.me",
     "homeTitle": "Inicio",
     "profileTitle": "Perfil",
-    "settingsTitle": "Configuración",
-    "welcomeMessage": "¡Bienvenido a HealthWallet.me!",
+    "settingsTitle": "Configuraci\u00f3n",
+    "welcomeMessage": "\u00a1Bienvenido a HealthWallet.me!",
     "counterAppBarTitle": "Contador",
     "@counterAppBarTitle": {
-        "description": "Texto mostrado en la AppBar de la página del contador"
+        "description": "Texto mostrado en la AppBar de la p\u00e1gina del contador"
     },
-    "onboardingBack": "Atrás",
+    "onboardingBack": "Atr\u00e1s",
     "onboardingGetStarted": "Empezar",
     "onboardingNext": "Siguiente",
-    "onboardingWelcomeTitle": "¡una Cartera de Salud para Ti!",
-    "onboardingWelcomeSubtitle": "Accede de forma segura a tu historial médico completo con <link>HealthWallet.me</link>. Conéctate a más de 100,000 instituciones de salud de EE.UU. o agrega registros compartiendo directamente con la app o escaneando documentos. Tus datos de salud son privados, compatibles y se almacenan solo en tu dispositivo.",
-    "onboardingWelcomeDescription": "Sincroniza tus datos de salud a través de <link>FastenHealth OnPrem</link> con los proveedores de atención médica y ve tu historial médico completo en un solo lugar. Seguro, compatible y siempre en tu dispositivo. ¡Disfruta!",
-      "onboardingRecordsTitle": "Tu Salud, Siempre Sincronizada",
-  "onboardingRecordsSubtitle": "**Mantén tu historial médico actualizado sin esfuerzo con opciones automáticas y manuales.**",
-    "onboardingRecordsDescription": "<link>HealthWallet.me</link> asegura que tu historial de salud completo esté siempre actualizado. Sincroniza automáticamente nuevos registros de proveedores conectados y te permite agregar instantáneamente documentos físicos con un escaneo rápido.",
-  "onboardingScanButton": "Escanear",
-    "onboardingSyncTitle": "Privado por Diseño",
-  "onboardingSyncSubtitle": "Tus datos de salud te pertenecen solo a ti.",
-    "onboardingSyncDescription": "Creemos que tu información de salud sensible nunca debería estar en el servidor de una empresa. Tus datos están encriptados y almacenados exclusivamente en tu dispositivo, lo que significa que eres el único con acceso.",
-  "onboardingBiometricText": "Para una capa adicional de protección, puedes bloquear tu HealthWallet con seguridad biométrica como Face ID o un escaneo de huella dactilar.",
-  "homeHi": "Hola, ",
-    "homeLastSynced": "Última sincronización: ",
+    "onboardingWelcomeTitle": "\u00a1una Cartera de Salud para Ti!",
+    "onboardingWelcomeSubtitle": "<link>HealthWallet.me</link> ya se conecta a m\u00e1s de 100.000 proveedores de salud estadounidenses, y estamos expandiendo a nuevos pa\u00edses.",
+    "onboardingWelcomeDescription": "Agrega registros de cualquier proveedor, importa documentos manualmente o solicita soporte para tu pa\u00eds.",
+    "onboardingRecordsTitle": "Tu salud, siempre sincronizada",
+    "onboardingRecordsSubtitle": "<link>HealthWallet.me</link> te ofrece formas flexibles de reunir todo tu historial m\u00e9dico:",
+    "onboardingRecordsDescription": "\u2022 Escanea documentos con la c\u00e1mara de tu tel\u00e9fono\n\u2022 Sube PDFs, im\u00e1genes o archivos de laboratorio directamente\n\u2022 Importa registros compartiendo directamente con <link>HealthWallet.me</link> desde cualquier app de tu tel\u00e9fono.\n\u2022 Escanea el c\u00f3digo QR de Fasten Health OnPrem y obt\u00e9n todos los registros de salud de EE.UU. en tu wallet.",
+    "onboardingScanButton": "Escanear",
+    "onboardingSyncTitle": "Privado por dise\u00f1o",
+    "onboardingSyncSubtitle": "Tus datos de salud te pertenecen solo a ti.",
+    "onboardingSyncDescription": "Creemos que tu informaci\u00f3n de salud sensible nunca deber\u00eda estar en el servidor de una empresa. Tus datos est\u00e1n encriptados y almacenados exclusivamente en tu dispositivo, lo que significa que eres el \u00fanico con acceso.",
+    "onboardingBiometricText": "Para una capa adicional de protecci\u00f3n, puedes bloquear tu HealthWallet con seguridad biom\u00e9trica como Face ID o un escaneo de huella dactilar.",
+    "homeHi": "Hola, ",
+    "homeLastSynced": "\u00daltima sincronizaci\u00f3n: ",
     "homeNever": "Nunca",
     "homeVitalSigns": "Signos vitales",
-    "homeOverview": "Visión general",
+    "homeOverview": "Visi\u00f3n general",
     "homeSource": "Fuente:",
     "homeAll": "Todos",
     "homeRecentRecords": "Registros recientes",
     "homeViewAll": "Ver todo",
     "homeNA": "N/A",
-    "bluetoothRequired": "Active el Bluetooth para usar la función de Compartir en proximidad",
+    "bluetoothRequired": "Activa el Bluetooth para usar la funci\u00f3n de Compartir en proximidad",
     "dashboardTitle": "Tablero",
     "recordsTitle": "Registros",
-    "goToRecords": "Ir a Registros",
+    "goToRecords": "Ir a registros",
     "syncTitle": "Sincronizar",
-    "syncSuccessful": "¡Sincronización exitosa!",
-    "syncDataLoadedSuccessfully": "Sus registros médicos han sido sincronizados. Será redirigido a la página de inicio.",
-    "cancelSyncTitle": "¿Cancelar sincronización?",
-    "cancelSyncMessage": "¿Está seguro de que desea cancelar la sincronización? Esto detendrá el proceso de sincronización actual.",
-    "yesCancel": "Sí, cancelar",
-    "continueSync": "Continuar sincronización",
+    "syncSuccessful": "\u00a1Sincronizaci\u00f3n exitosa!",
+    "syncDataLoadedSuccessfully": "Tus registros m\u00e9dicos han sido sincronizados. Ser\u00e1s redirigido a la p\u00e1gina de inicio.",
+    "cancelSyncTitle": "\u00bfCancelar sincronizaci\u00f3n?",
+    "cancelSyncMessage": "\u00bfEst\u00e1s seguro de que quieres cancelar la sincronizaci\u00f3n? Esto detendr\u00e1 el proceso de sincronizaci\u00f3n actual.",
+    "yesCancel": "S\u00ed, cancelar",
+    "continueSync": "Continuar sincronizaci\u00f3n",
     "syncAgain": "Sincronizar de nuevo",
-    "syncFailed": "Sincronización fallida: ",
+    "syncFailed": "Sincronizaci\u00f3n fallida: ",
     "tryAgain": "Intentar de nuevo",
     "syncedAt": "Sincronizado en: ",
-    "pasteSyncData": "Pegar datos de sincronización",
+    "pasteSyncData": "Pegar datos de sincronizaci\u00f3n",
     "submit": "Enviar",
     "hideManualEntry": "Ocultar entrada manual",
     "enterDataManually": "Ingresar datos manualmente",
-    "medicalRecords": "Registros médicos",
-    "searchRecordsHint": "Buscar registros, médicos, ubicaciones...",
+    "medicalRecords": "Registros m\u00e9dicos",
+    "searchRecordsHint": "Buscar registros, m\u00e9dicos, ubicaciones...",
     "detailsFor": "Detalles de ",
     "patientId": "ID de paciente: ",
     "age": "Edad",
     "sex": "Sexo",
     "bloodType": "Tipo de sangre",
-    "lastSyncedProfile": "Última sincronización: hace 2 horas",
-    "syncLatestRecords": "Sincronice sus últimos registros médicos de su proveedor de atención médica.",
+    "lastSyncedProfile": "\u00daltima sincronizaci\u00f3n: hace 2 horas",
+    "syncLatestRecords": "Sincroniza tus \u00faltimos registros m\u00e9dicos de tu proveedor de atenci\u00f3n m\u00e9dica.",
     "scanToSync": "Escanear para sincronizar",
     "theme": "Tema",
-    "pleaseAuthenticate": "Por favor, autentíquese para continuar",
+    "pleaseAuthenticate": "Por favor, autent\u00edcate para continuar",
     "authenticate": "Autenticar",
     "bypass": "Omitir",
-    "onboardingAuthTitle": "Habilitar Autenticación Biométrica",
-    "onboardingAuthDescription": "Agrega una capa extra de seguridad a tu cuenta habilitando la autenticación biométrica.",
-    "onboardingAuthEnable": "Habilitar Ahora",
-    "onboardingAuthSkip": "Omitir por Ahora",
-    "biometricAuthentication": "Autenticación Biométrica",
-    "privacyPolicy": "Política de privacidad",
-    
-    "setupDeviceSecurity": "Configurar Seguridad del Dispositivo",
-    "deviceSecurityMessage": "Tu dispositivo no tiene configuración de seguridad. Por tu seguridad, por favor configura la seguridad del dispositivo antes de usar esta aplicación:",
-    "deviceSettingsStep1": "Ve a la Configuración de tu dispositivo",
+    "onboardingAuthTitle": "Habilitar autenticaci\u00f3n biom\u00e9trica",
+    "onboardingAuthDescription": "Agrega una capa extra de seguridad a tu cuenta habilitando la autenticaci\u00f3n biom\u00e9trica.",
+    "onboardingAuthEnable": "Habilitar ahora",
+    "onboardingAuthSkip": "Omitir por ahora",
+    "biometricAuthentication": "Autenticaci\u00f3n biom\u00e9trica",
+    "privacyPolicy": "Pol\u00edtica de privacidad",
+
+    "setupDeviceSecurity": "Configurar seguridad del dispositivo",
+    "deviceSecurityMessage": "Tu dispositivo no tiene configuraci\u00f3n de seguridad. Por tu seguridad, por favor configura la seguridad del dispositivo antes de usar esta aplicaci\u00f3n:",
+    "deviceSettingsStep1": "Ve a la configuraci\u00f3n de tu dispositivo",
     "deviceSettingsStep2": "Navega a Seguridad o Pantalla de bloqueo",
-    "deviceSettingsStep3": "Configura un bloqueo de pantalla (PIN, patrón o contraseña)",
+    "deviceSettingsStep3": "Configura un bloqueo de pantalla (PIN, patr\u00f3n o contrase\u00f1a)",
     "deviceSettingsStep4": "Opcionalmente agrega huella dactilar o desbloqueo facial para mayor comodidad",
-    "deviceSecurityReturnMessage": "Después de configurar la seguridad del dispositivo, regresa a esta aplicación e inténtalo de nuevo.",
+    "deviceSecurityReturnMessage": "Despu\u00e9s de configurar la seguridad del dispositivo, regresa a esta aplicaci\u00f3n e int\u00e9ntalo de nuevo.",
     "cancel": "Cancelar",
-    "openSettings": "Abrir Configuración",
-    "settingsNotAvailable": "Configuración No Disponible",
-    "settingsNotAvailableMessage": "No se pudo abrir la configuración del dispositivo automáticamente. Por favor hazlo manualmente:\n\n1. Abrir Configuración\n2. Ir a Seguridad → Biometría\n3. Agregar huella dactilar o desbloqueo facial\n4. Regresar a esta aplicación e intentar de nuevo",
+    "openSettings": "Abrir configuraci\u00f3n",
+    "settingsNotAvailable": "Configuraci\u00f3n no disponible",
+    "settingsNotAvailableMessage": "No se pudo abrir la configuraci\u00f3n del dispositivo autom\u00e1ticamente. Por favor hazlo manualmente:\n\n1. Abrir Configuraci\u00f3n\n2. Ir a Seguridad \u2192 Biometr\u00eda\n3. Agregar huella dactilar o desbloqueo facial\n4. Regresar a esta aplicaci\u00f3n e intentar de nuevo",
     "ok": "OK",
-    
-    "scanCode": "Escanear código",
+
+    "scanCode": "Escanear c\u00f3digo",
     "or": "o",
-    "manualSyncMessage": "Código QR sin procesar",
-    "pasteSyncDataHint": "Pega el código QR sin procesar",
+    "manualSyncMessage": "C\u00f3digo QR sin procesar",
+    "pasteSyncDataHint": "Pega el c\u00f3digo QR sin procesar",
     "connect": "Conectar",
-    "scanNewQRCode": "Escanear Nuevo Código QR",
-    "loadDemoData": "Cargar Datos de Demostración",
-    "syncData": "Sincronizar Datos",
-    "noMedicalRecordsYet": "Aún no hay registros médicos",
-    "noRecordTypeYet": "Aún no hay {recordType}",
-    "loadDemoDataMessage": "Carga datos de demostración para explorar la aplicación o sincroniza tus registros médicos reales",
+    "scanNewQRCode": "Escanear nuevo c\u00f3digo QR",
+    "loadDemoData": "Cargar datos de demostraci\u00f3n",
+    "syncData": "Sincronizar datos",
+    "noMedicalRecordsYet": "A\u00fan no hay registros m\u00e9dicos",
+    "noRecordTypeYet": "A\u00fan no hay {recordType}",
+    "loadDemoDataMessage": "Carga datos de demostraci\u00f3n para explorar la aplicaci\u00f3n o sincroniza tus registros m\u00e9dicos reales",
     "syncDataMessage": "Sincroniza o actualiza tus datos para ver registros de {recordType}",
     "retry": "Reintentar",
-    
+
     "pleaseEnterSourceName": "Por favor ingresa un nombre de fuente",
     "selectBirthDate": "Seleccionar fecha de nacimiento",
-    "years": "años",
+    "years": "a\u00f1os",
     "male": "Masculino",
     "female": "Femenino",
     "preferNotToSay": "Prefiero no decir",
-    
+
     "errorUpdatingSourceLabel": "Error al actualizar etiqueta de fuente",
     "noChangesDetected": "No se detectaron cambios",
     "pleaseSelectBirthDate": "Por favor selecciona una fecha de nacimiento",
     "errorSavingPatientData": "Error al guardar datos del paciente",
+    "walletHolder": "Titular de la cartera",
+    "walletHolderDescription": "Este paciente es el propietario principal de esta cartera de salud",
     "failedToUpdateDisplayName": "Error al actualizar nombre para mostrar",
-    "actionCannotBeUndone": "Esta acción no se puede deshacer.",
-    "deleteRecordConfirm": "¿Estás seguro de que quieres eliminar este registro?",
-    "deleteNoteConfirm": "¿Estás seguro de que quieres eliminar esta nota?",
-    "deleteAttachmentConfirm": "¿Estás seguro de que quieres eliminar este archivo adjunto?",
-    "deleteRecordsConfirm": "¿Estás seguro de que quieres eliminar {count} elementos?",
-    "confirmDeleteFile": "¿Estás seguro de que quieres eliminar \"{filename}\"?",
+    "actionCannotBeUndone": "Esta acci\u00f3n no se puede deshacer.",
+    "deleteRecordConfirm": "\u00bfEst\u00e1s seguro de que quieres eliminar este registro?",
+    "deleteNoteConfirm": "\u00bfEst\u00e1s seguro de que quieres eliminar esta nota?",
+    "deleteAttachmentConfirm": "\u00bfEst\u00e1s seguro de que quieres eliminar este archivo adjunto?",
+    "deleteRecordsConfirm": "\u00bfEst\u00e1s seguro de que quieres eliminar {count} elementos?",
+    "confirmDeleteFile": "\u00bfEst\u00e1s seguro de que quieres eliminar \"{filename}\"?",
     "selectAtLeastOne": "Selecciona al menos un {type} para continuar.",
-    
+
     "editSourceLabel": "Editar etiqueta de fuente",
     "saveDetails": "Guardar detalles",
     "editDetails": "Editar detalles",
     "done": "Hecho",
-    "page": "Página",
-    "reorderPages": "Reordenar páginas",
+    "page": "P\u00e1gina",
+    "reorderPages": "Reordenar p\u00e1ginas",
     "attachments": "Archivos adjuntos",
     "noFilesAttached": "Este registro no tiene archivos adjuntos",
     "attachFile": "Adjuntar archivo",
@@ -133,7 +135,7 @@
     "recentRecords": "Registros recientes",
     "chooseToDisplay": "Elige los {type} que quieres ver en tu panel de control.",
     "displayName": "Nombre para mostrar",
-    
+
     "bloodTypeAPositive": "A positivo",
     "bloodTypeANegative": "A negativo",
     "bloodTypeBPositive": "B positivo",
@@ -142,48 +144,48 @@
     "bloodTypeABNegative": "AB negativo",
     "bloodTypeOPositive": "O positivo",
     "bloodTypeONegative": "O negativo",
-    
-    "serverError": "Algo salió mal en el servidor",
+
+    "serverError": "Algo sali\u00f3 mal en el servidor",
     "serverTimeout": "Tiempo de espera del servidor agotado",
-    "connectionError": "Error de conexión",
-    "unknownSource": "Fuente Desconocida",
-    
-    "synchronization": "Sincronización",
-    "desktopSyncAndBackup": "Desktop Sync & Backup",
-    "desktopSyncDescription": "Sync & Backup your health records.\nHandover documents to be digitally processed on your desktop.",
-    "connect": "Connect",
-    "processOnDesktop": "Process on Desktop",
-    "sendToDesktop": "Send to Desktop",
-    "continueImporting": "Continue Importing",
-    "noAiModelOnDesktop": "No hay modelo de IA en el escritorio. Por favor, descargue el modelo de IA en su aplicación de escritorio primero.",
-    "syncMedicalRecords": "Sincronizar registros médicos",
-    "syncLatestMedicalRecords": "Sincroniza tus últimos registros médicos de tu proveedor de atención médica usando un token JWT seguro.",
+    "connectionError": "Error de conexi\u00f3n",
+    "unknownSource": "Fuente desconocida",
+
+    "synchronization": "Sincronizaci\u00f3n",
+    "desktopSyncAndBackup": "Sincronizaci\u00f3n y respaldo de escritorio",
+    "desktopSyncDescription": "Sincroniza y respalda tus registros de salud.\nEntrega documentos para procesamiento digital en tu escritorio.",
+    "fromPhoneTab": "Del tel\u00e9fono",
+    "processOnDesktop": "Procesar en el escritorio",
+    "sendToDesktop": "Enviar al escritorio",
+    "continueImporting": "Continuar importando",
+    "noAiModelOnDesktop": "No hay modelo de IA en el escritorio. Por favor, descarga el modelo de IA en tu aplicaci\u00f3n de escritorio primero.",
+    "syncMedicalRecords": "Sincronizar registros m\u00e9dicos",
+    "syncLatestMedicalRecords": "Sincroniza tus \u00faltimos registros m\u00e9dicos de tu proveedor de atenci\u00f3n m\u00e9dica usando un token JWT seguro.",
     "neverSynced": "Nunca sincronizado",
-    "lastSynced": "Última sincronización",
+    "lastSynced": "\u00daltima sincronizaci\u00f3n",
     "tapToSelectPatient": "Toca para seleccionar paciente",
     "preferences": "Preferencias",
-    "version": "Versión",
-    "on": "ENCENDIDO",
-    "off": "APAGADO",
-    
-    "confirmDisableBiometric": "¿Estás seguro de que quieres desactivar la Autenticación Biométrica (FaceID / Código de acceso)?",
+    "version": "Versi\u00f3n",
+    "on": "Encendido",
+    "off": "Apagado",
+
+    "confirmDisableBiometric": "\u00bfEst\u00e1s seguro de que quieres desactivar la autenticaci\u00f3n biom\u00e9trica (FaceID / C\u00f3digo de acceso)?",
     "disable": "Desactivar",
-    
+
     "continueButton": "Continuar",
     "getStarted": "Empezar",
-    "enableBiometricAuth": "Habilitar Autenticación Biométrica (FaceID / Código de acceso)",
-    "disableBiometricAuth": "Desactivar Autenticación Biométrica (FaceID / Código de acceso)",
-    
+    "enableBiometricAuth": "Habilitar autenticaci\u00f3n biom\u00e9trica (FaceID / C\u00f3digo de acceso)",
+    "disableBiometricAuth": "Desactivar autenticaci\u00f3n biom\u00e9trica (FaceID / C\u00f3digo de acceso)",
+
     "patient": "Paciente",
-    
+
     "noPatientsFound": "No se encontraron pacientes",
     "id": "ID",
-    "gender": "Género",
+    "gender": "G\u00e9nero",
     "loading": "Cargando...",
     "source": "Fuente",
-    "showAll": "Mostrar Todo",
+    "showAll": "Mostrar todo",
     "records": "Registros",
-    "vitals": "Signos Vitales",
+    "vitals": "Signos vitales",
     "selectAll": "Seleccionar todo",
     "clearAll": "Limpiar todo",
     "save": "Guardar",
@@ -192,121 +194,109 @@
     "clearAllFilters": "Limpiar todo",
     "syncingData": "Sincronizando datos",
     "syncingMessage": "Puede tomar un tiempo. Por favor espera.",
-    "finishProcessing": "Finalizar Procesamiento",
-    "finishProcessingMessage": "¿Estás seguro de que quieres finalizar esta sesión de procesamiento?",
-    "finishProcessingWarning": "Esto borrará la sesión actual.",
-    "fieldCannotBeEmpty": "Este campo no puede estar vacío",
+    "finishProcessing": "Finalizar procesamiento",
+    "finishProcessingMessage": "\u00bfEst\u00e1s seguro de que quieres finalizar esta sesi\u00f3n de procesamiento?",
+    "finishProcessingWarning": "Esto borrar\u00e1 la sesi\u00f3n actual.",
+    "fieldCannotBeEmpty": "Este campo no puede estar vac\u00edo",
     "selectDate": "Seleccionar fecha",
-    "attachToEncounter": "Adjuntar a Encuentro",
-    "continueProcessing": "Continuar Procesamiento",
+    "attachToEncounter": "Adjuntar a encuentro",
+    "continueProcessing": "Continuar procesamiento",
     "recordsSavedTitle": "Guardado exitosamente",
-    "recordsSavedMessage": "Sus registros de salud se han guardado correctamente.",
-    "whatNextQuestion": "¿Qué le gustaría hacer a continuación?",
-    "continueScanning": "Continuar Escaneando",
-    "scanQRMessage": "Escanea el código QR de tu servidor Fasten Health para crear una nueva conexión de sincronización.",
+    "recordsSavedMessage": "Tus registros de salud se han guardado correctamente.",
+    "whatNextQuestion": "\u00bfQu\u00e9 te gustar\u00eda hacer a continuaci\u00f3n?",
+    "continueScanning": "Continuar escaneando",
+    "scanQRMessage": "Escanea el c\u00f3digo QR de tu servidor Fasten Health para crear una nueva conexi\u00f3n de sincronizaci\u00f3n.",
     "viewAll": "Ver todo",
-    "vitalSigns": "Signos Vitales",
-    "longPressToReorder": "Mantén presionado para mover y reordenar tarjetas, o filtra para seleccionar cuáles aparecen en tu panel de control.",
-    
+    "vitalSigns": "Signos vitales",
+    "longPressToReorder": "Mant\u00e9n presionado para mover y reordenar tarjetas, o filtra para seleccionar cu\u00e1les aparecen en tu panel de control.",
+
     "effectiveDate": "Fecha de vigencia",
-    "privacyIntro": "Tu privacidad es nuestra máxima prioridad.",
-    "privacyDescription": "es una herramienta simple y segura diseñada para ayudarte a organizar tus registros de salud con facilidad, directamente en tu dispositivo. Esta política explica nuestro compromiso con tu privacidad: no recopilamos tus datos y no te rastreamos. Tienes el control completo.",
-    "corePrinciple": "Nuestro Principio Fundamental: Tus Datos Permanecen en Tu Dispositivo",
-    "whatInformationHandled": "¿Qué Información se Maneja?",
-    "informationWeDoNotCollect": "Información que No Recopilamos o Accedemos",
-    "informationYouManage": "Información que Tú Administras",
-    "importingDocuments": "Importar Documentos desde Tu Dispositivo",
+    "privacyIntro": "Tu privacidad es nuestra m\u00e1xima prioridad.",
+    "privacyDescription": "es una herramienta simple y segura dise\u00f1ada para ayudarte a organizar tus registros de salud con facilidad, directamente en tu dispositivo. Esta pol\u00edtica explica nuestro compromiso con tu privacidad: no recopilamos tus datos y no te rastreamos. Tienes el control completo.",
+    "corePrinciple": "Nuestro principio fundamental: tus datos permanecen en tu dispositivo",
+    "whatInformationHandled": "\u00bfQu\u00e9 informaci\u00f3n se maneja?",
+    "informationWeDoNotCollect": "Informaci\u00f3n que no recopilamos o accedemos",
+    "informationYouManage": "Informaci\u00f3n que t\u00fa administras",
+    "importingDocuments": "Importar documentos desde tu dispositivo",
     "connectingFastenHealth": "Conectando a FastenHealth OnPrem",
-    "howInformationUsed": "Cómo se Usa Tu Información",
-    "dataStorageSecurity": "Almacenamiento de Datos, Seguridad y Compartir",
-    "childrensPrivacy": "Privacidad de los Niños",
-    "changesToPolicy": "Cambios a Esta Política de Privacidad",
-    "contactUs": "Contáctanos",
-    "builtWithLove": "¡Construido con amor por Life Value!",
+    "howInformationUsed": "C\u00f3mo se usa tu informaci\u00f3n",
+    "dataStorageSecurity": "Almacenamiento de datos, seguridad y compartir",
+    "childrensPrivacy": "Privacidad de los ni\u00f1os",
+    "changesToPolicy": "Cambios a esta pol\u00edtica de privacidad",
+    "contactUs": "Cont\u00e1ctanos",
+    "builtWithLove": "\u00a1Construido con amor por Life Value!",
 
     "noRecords": "Sin registros",
-    
-    "effectiveDate": "Fecha Efectiva",
-    "finishProcessing": "Finalizar Procesamiento",
-    "finishProcessingMessage": "¿Estás seguro de que quieres finalizar esta sesión de procesamiento?",
-    "finishProcessingWarning": "Esto borrará la sesión actual.",
-    "fieldCannotBeEmpty": "Este campo no puede estar vacío",
-    "selectDate": "Seleccionar fecha",
-    "attachToEncounter": "Adjuntar a Encuentro",
-    "continueProcessing": "Continuar Procesamiento",
+
     "sourceName": "Nombre de fuente",
     "provideCustomLabel": "Proporciona una etiqueta personalizada para:",
-    "success": "Éxito",
-    "demoDataLoadedSuccessfully": "Los datos de demostración se han cargado exitosamente. Serás redirigido a la página de inicio.",
+    "success": "\u00c9xito",
+    "demoDataLoadedSuccessfully": "Los datos de demostraci\u00f3n se han cargado exitosamente. Ser\u00e1s redirigido a la p\u00e1gina de inicio.",
 
-    "onboardingAiModelTitle": "Habilitar Modelo de IA",
-    "onboardingAiModelDescription": "Descarga un modelo de IA seguro y en el dispositivo para analizar y organizar automáticamente tus registros de salud. Elige entre dos opciones según tus necesidades y la capacidad del dispositivo. Es una configuración única.\n\n**Tus datos permanecen privados en tu dispositivo.**",
+    "onboardingAiModelTitle": "Habilitar modelo de IA",
+    "onboardingAiModelDescription": "Descarga un modelo de IA seguro y en el dispositivo para analizar y organizar autom\u00e1ticamente tus registros de salud. Elige entre dos opciones seg\u00fan tus necesidades y la capacidad del dispositivo. Es una configuraci\u00f3n \u00fanica.\n\n**Tus datos permanecen privados en tu dispositivo.**",
     "onboardingAiModelSubtitle": "Desbloquea el escaneo impulsado por IA",
-    "aiModelReady": "¡IA lista! Puedes empezar a escanear.",
+    "aiModelReady": "\u00a1IA lista! Puedes empezar a escanear.",
     "aiModelDownloading": "Descargando...",
     "aiModelEnableDownload": "Elegir y descargar",
-    "aiModelError": "No se pudo verificar. Inténtalo de nuevo.",
+    "aiModelError": "No se pudo verificar. Int\u00e9ntalo de nuevo.",
     "aiModelMissing": "No descargado.",
     "aiModelTitle": "Cargar modelo de IA",
     "aiModelUnlockTitle": "Desbloquea el escaneo con IA",
-    "aiModelUnlockDescription": "Para leer y organizar automáticamente tus documentos médicos, esta función utiliza un modelo de IA seguro y local en tu dispositivo.\n\n**Tus datos permanecen privados en tu dispositivo.**",
-    "aiModelDownloadInfo": "Para comenzar, elige y descarga una de las dos opciones de IA disponibles. Es una configuración única.",
-    
+    "aiModelUnlockDescription": "Para leer y organizar autom\u00e1ticamente tus documentos m\u00e9dicos, esta funci\u00f3n utiliza un modelo de IA seguro y local en tu dispositivo.\n\n**Tus datos permanecen privados en tu dispositivo.**",
+    "aiModelDownloadInfo": "Para comenzar, elige y descarga una de las dos opciones de IA disponibles. Es una configuraci\u00f3n \u00fanica.",
+
     "setup": "Configurar",
-    "patientSetupTitle": "Configura tu Perfil",
-    "patientSetupSubtitle": "Personaliza tu cartera de salud con tu información",
-    
-    "onboardingSetupTitle": "Configurar mi Cartera de Salud",
+    "patientSetupTitle": "Configura tu perfil",
+    "patientSetupSubtitle": "Personaliza tu cartera de salud con tu informaci\u00f3n",
+
+    "onboardingSetupTitle": "Configurar mi cartera de salud",
     "onboardingSetupBody": "Crea tu perfil de salud personal para comenzar con HealthWallet",
-    "onboardingDemoTitle": "Probar Datos de Demostración",
-    "onboardingDemoBody": "Explora la aplicación con registros médicos de ejemplo para ver cómo funciona",
-    "onboardingSyncTitle2": "Sincronizar tus Registros",
-    "onboardingSyncBody": "Conéctate a tus proveedores de salud para importar tus registros médicos reales",
-    
+    "onboardingDemoTitle": "Probar datos de demostraci\u00f3n",
+    "onboardingDemoBody": "Explora la aplicaci\u00f3n con registros m\u00e9dicos de ejemplo para ver c\u00f3mo funciona",
+    "onboardingSyncTitle2": "Sincronizar tus registros",
+    "onboardingSyncBody": "Con\u00e9ctate a tus proveedores de salud para importar tus registros m\u00e9dicos reales",
+
     "givenName": "Nombre",
     "familyName": "Apellido",
     "skipForNow": "Omitir por ahora",
-    
+
     "setUpProfile": "Configurar",
     "useDefaults": "Predeterminado",
-    "editDetails": "Editar detalles",
-    "saveDetails": "Guardar detalles",
-    
+
     "syncPlaceholderTutorialStep1": "Completa tu perfil para desbloquear todas las funciones.",
-    "syncPlaceholderTutorialStep2": "¿No estás listo para importar? Carga datos de demostración para ver cómo se ve la aplicación en acción.",
-    "syncPlaceholderTutorialStep3": "Mantén tu cartera de escritorio y móvil actualizada.",
+    "syncPlaceholderTutorialStep2": "\u00bfNo est\u00e1s listo para importar? Carga datos de demostraci\u00f3n para ver c\u00f3mo se ve la aplicaci\u00f3n en acci\u00f3n.",
+    "syncPlaceholderTutorialStep3": "Mant\u00e9n tu cartera de escritorio y m\u00f3vil actualizada.",
     "tapToContinue": "Toca para continuar",
-    
-    "homeOnboardingReorderMessage": "Mantén presionado para reordenarlos según tu preferencia.",
-    
+
+    "homeOnboardingReorderMessage": "Mant\u00e9n presionado para reordenarlos seg\u00fan tu preferencia.",
+
     "processing": "Procesamiento",
-    "sessionNotFound": "¡Sesión no encontrada!",
+    "sessionNotFound": "\u00a1Sesi\u00f3n no encontrada!",
     "preparingPreview": "Preparando vista previa...",
     "processingFailed": "Procesamiento fallido",
-    "retry": "Reintentar",
     "processingCancelled": "El procesamiento fue cancelado",
-    "processingBasicDetails": "Procesando detalles básicos...",
-    "processingPages": "Procesando páginas...",
-    "extractingPatientInfo": "Extrayendo información del paciente y encuentro.",
+    "processingBasicDetails": "Procesando detalles b\u00e1sicos...",
+    "processingPages": "Procesando p\u00e1ginas...",
+    "extractingPatientInfo": "Extrayendo informaci\u00f3n del paciente y encuentro.",
     "pleaseWait": "Puede tardar un poco. Por favor espera.",
-    "cancel": "Cancelar",
-    "focusMode": "Modo Enfoque",
-    "onlyOneSessionAtTime": "Solo una sesión de procesamiento puede ejecutarse a la vez",
-    "aiModelNotAvailable": "El escaneo inteligente no está disponible",
+    "focusMode": "Modo enfoque",
+    "onlyOneSessionAtTime": "Solo una sesi\u00f3n de procesamiento puede ejecutarse a la vez",
+    "aiModelNotAvailable": "El escaneo inteligente no est\u00e1 disponible",
     "addResources": "Agregar recursos",
-    "addResourcesTitle": "Agregar Recursos",
-    "chooseResourcesDescription": "Elige los recursos que deseas agregar para el procesamiento.",
+    "addResourcesTitle": "Agregar recursos",
+    "chooseResourcesDescription": "Elige los recursos que quieres agregar para el procesamiento.",
     "add": "Agregar",
-    "allergyIntolerance": "Intolerancia a Alergias",
-    "condition": "Condición",
-    "diagnosticReport": "Informe de Diagnóstico",
-    "medicationStatement": "Declaración de Medicación",
-    "observation": "Observación",
-    "organization": "Organización",
+    "allergyIntolerance": "Intolerancia a alergias",
+    "condition": "Condici\u00f3n",
+    "diagnosticReport": "Informe de diagn\u00f3stico",
+    "medicationStatement": "Declaraci\u00f3n de medicaci\u00f3n",
+    "observation": "Observaci\u00f3n",
+    "organization": "Organizaci\u00f3n",
     "practitioner": "Profesional",
     "procedure": "Procedimiento",
     "tapToViewProgress": "Toca en cualquier lugar para ver el progreso",
-    "screenWillDarkenInSeconds": "La pantalla se oscurecerá en {remainingSeconds} segundos.",
+    "screenWillDarkenInSeconds": "La pantalla se oscurecer\u00e1 en {remainingSeconds} segundos.",
     "@screenWillDarkenInSeconds": {
         "placeholders": {
             "remainingSeconds": {
@@ -314,73 +304,73 @@
             }
         }
     },
-    "screenWillDarkenInZeroSeconds": "La pantalla se oscurecerá en 0 segundos.",
+    "screenWillDarkenInZeroSeconds": "La pantalla se oscurecer\u00e1 en 0 segundos.",
     "whileDocumentsProcessed": "Mientras se procesan tus documentos:",
-    "doNotLockScreen": "No bloquees la pantalla ni salgas de la aplicación.",
+    "doNotLockScreen": "No bloquees la pantalla ni salgas de la aplicaci\u00f3n.",
     "plugInCharger": "Conecta el cargador.",
-    "exitFocusMode": "Salir del Modo Enfoque",
+    "exitFocusMode": "Salir del modo enfoque",
     "chargerPluggedIn": "Cargador conectado.",
     "plugInChargerEllipsis": "Conecta el cargador...",
 
-    "processingFailedCapacity": "El documento es demasiado grande para el tamaño de contexto actual de IA.",
-    "processingFailedCapacitySuggestion": "Toca el icono de ajustes arriba y aumenta el Tamaño de Contexto a 2048 o más, luego reintenta.",
-    "increaseAiModelCapacity": "Aumentar Capacidad de IA",
+    "processingFailedCapacity": "El documento es demasiado grande para el tama\u00f1o de contexto actual de IA.",
+    "processingFailedCapacitySuggestion": "Toca el icono de ajustes arriba y aumenta el tama\u00f1o de contexto a 2048 o m\u00e1s, luego reintenta.",
+    "increaseAiModelCapacity": "Aumentar capacidad de IA",
     "goBack": "Volver",
 
-    "setAiTokensUsage": "Configurar Uso de Tokens IA",
-    "tokenUsageDescription": "Controla cuánta capacidad de procesamiento puede usar la IA. Mayor capacidad permite archivos más grandes y tareas más complejas, pero usa más recursos y tarda más.",
+    "setAiTokensUsage": "Configurar uso de tokens IA",
+    "tokenUsageDescription": "Controla cu\u00e1nta capacidad de procesamiento puede usar la IA. Mayor capacidad permite archivos m\u00e1s grandes y tareas m\u00e1s complejas, pero usa m\u00e1s recursos y tarda m\u00e1s.",
     "tokenPresetLow": "Bajo",
-    "tokenPresetLowDescription": "Ideal para archivos pequeños y tareas rápidas.\nUsa menos recursos y procesa más rápido.",
+    "tokenPresetLowDescription": "Ideal para archivos peque\u00f1os y tareas r\u00e1pidas.\nUsa menos recursos y procesa m\u00e1s r\u00e1pido.",
     "tokenPresetMedium": "Medio",
-    "tokenPresetMediumDescription": "Bueno para la mayoría de casos.\nEquilibra tamaño de archivo, tiempo de procesamiento y uso de recursos.",
+    "tokenPresetMediumDescription": "Bueno para la mayor\u00eda de casos.\nEquilibra tama\u00f1o de archivo, tiempo de procesamiento y uso de recursos.",
     "tokenPresetHigh": "Alto",
-    "tokenPresetHighDescription": "Ideal para archivos grandes y procesamiento complejo.\nUsa más recursos y batería, y tarda más en completar.",
+    "tokenPresetHighDescription": "Ideal para archivos grandes y procesamiento complejo.\nUsa m\u00e1s recursos y bater\u00eda, y tarda m\u00e1s en completar.",
     "tokenPresetCustom": "Personalizado",
     "tokenPresetCustomDescription": "Establece una cantidad personalizada de tokens.",
     "setTokens": "Establecer",
     "tokens": "tokens",
 
     "aiModelManage": "Gestionar opciones de IA",
-    "aiModelNotSelected": "Ninguna opción seleccionada",
-    "aiModelSelect": "Seleccionar opción",
+    "aiModelNotSelected": "Ninguna opci\u00f3n seleccionada",
+    "aiModelSelect": "Seleccionar opci\u00f3n",
     "aiSettings": "Ajustes de IA",
-    "aiSettingsDescription": "Ajusta el rendimiento de IA para tu dispositivo. Los valores recomendados están preseleccionados.",
+    "aiSettingsDescription": "Ajusta el rendimiento de IA para tu dispositivo. Los valores recomendados est\u00e1n preseleccionados.",
     "gpuLayersLabel": "Capas GPU",
-    "gpuLayersDescription": "Descargar capas del modelo a la GPU para un procesamiento de imágenes más rápido. Más capas = más rápido pero más memoria. Pon 0 si la app se cierra.",
+    "gpuLayersDescription": "Descargar capas del modelo a la GPU para un procesamiento de im\u00e1genes m\u00e1s r\u00e1pido. M\u00e1s capas = m\u00e1s r\u00e1pido pero m\u00e1s memoria. Pon 0 si la app se cierra.",
     "threadsLabel": "Hilos CPU",
-    "threadsDescription": "Número de hilos de CPU para inferencia. Más hilos = más rápido pero más batería.",
+    "threadsDescription": "N\u00famero de hilos de CPU para inferencia. M\u00e1s hilos = m\u00e1s r\u00e1pido pero m\u00e1s bater\u00eda.",
     "recommended": "Recomendado",
-    "contextSizeLabel": "Tamaño de contexto",
-    "contextSizeDescription": "Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos más grandes pero usa más memoria.",
+    "contextSizeLabel": "Tama\u00f1o de contexto",
+    "contextSizeDescription": "Cantidad de texto que la IA puede procesar a la vez. Un contexto mayor maneja documentos m\u00e1s grandes pero usa m\u00e1s memoria.",
     "useVisionLabel": "Escaneo profundo",
-    "useVisionDescription": "Lee imágenes para un análisis más profundo (p. ej. escritura a mano). Usa más memoria y requiere un dispositivo más potente.",
+    "useVisionDescription": "Lee im\u00e1genes para un an\u00e1lisis m\u00e1s profundo (p. ej. escritura a mano). Usa m\u00e1s memoria y requiere un dispositivo m\u00e1s potente.",
 
-    "aiModelNotAvailableForDevice": "No disponible para este teléfono",
+    "aiModelNotAvailableForDevice": "No disponible para este tel\u00e9fono",
     "aiModelNotAvailableForDeviceDescription": "Este dispositivo no tiene suficiente memoria para ejecutar el escaneo inteligente.",
-    "noInternetConnectionTitle": "Sin conexión a Internet",
-    "noInternetConnectionDescription": "Por favor, verifica tu conexión a Internet e inténtalo de nuevo.",
+    "noInternetConnectionTitle": "Sin conexi\u00f3n a Internet",
+    "noInternetConnectionDescription": "Por favor, verifica tu conexi\u00f3n a Internet e int\u00e9ntalo de nuevo.",
     "processingStep2NotAvailableTitle": "Escaneo profundo no disponible en este dispositivo",
-    "processingStep2NotEnoughRam": "Este dispositivo no tiene suficiente memoria para el escaneo profundo. El procesamiento basado en texto sigue disponible y funciona bien para la mayoría de documentos.",
-    "emergencyContact": "Contacto telefónico de emergencia",
-    "emergencyContactHint": "Número de teléfono",
-    "searchCountry": "Buscar país...",
+    "processingStep2NotEnoughRam": "Este dispositivo no tiene suficiente memoria para el escaneo profundo. El procesamiento basado en texto sigue disponible y funciona bien para la mayor\u00eda de documentos.",
+    "emergencyContact": "Contacto telef\u00f3nico de emergencia",
+    "emergencyContactHint": "N\u00famero de tel\u00e9fono",
+    "searchCountry": "Buscar pa\u00eds...",
     "rotatePage": "Rotar",
     "deletePage": "Eliminar",
-    "deletePageConfirmTitle": "Eliminar página",
-    "deletePageConfirmMessage": "Esta página será eliminada del documento.",
-    "cannotDeleteLastPage": "No se puede eliminar la última página",
-    "pageRotated": "Página rotada",
-    "regionAndUnits": "Idioma y Unidades",
-    "country": "País",
-    "patientModifiedNewWillBeCreated": "Modificado — se creará un nuevo paciente",
+    "deletePageConfirmTitle": "Eliminar p\u00e1gina",
+    "deletePageConfirmMessage": "Esta p\u00e1gina ser\u00e1 eliminada del documento.",
+    "cannotDeleteLastPage": "No se puede eliminar la \u00faltima p\u00e1gina",
+    "pageRotated": "P\u00e1gina rotada",
+    "regionAndUnits": "Idioma y unidades",
+    "country": "Pa\u00eds",
+    "patientModifiedNewWillBeCreated": "Modificado \u2014 se crear\u00e1 un nuevo paciente",
     "patientModifiedUpdating": "Modificando paciente existente: {name}",
     "patientSavingModified": "Guardando paciente modificado: {name}",
-    "dropModificationsTitle": "¿Descartar modificaciones?",
-    "dropModificationsMessage": "Los cambios realizados en los campos del paciente se descartarán.",
-    "modifyPatientTitle": "¿Modificar paciente?",
-    "modifyPatientMessage": "Los datos del paciente existente se actualizarán con sus cambios.",
-    "scanIdCard": "Escanear DNI o Pasaporte",
-    "scanIdCardDescription": "Completa automáticamente desde tu documento. Los datos permanecen en tu dispositivo.",
+    "dropModificationsTitle": "\u00bfDescartar modificaciones?",
+    "dropModificationsMessage": "Los cambios realizados en los campos del paciente se descartar\u00e1n.",
+    "modifyPatientTitle": "\u00bfModificar paciente?",
+    "modifyPatientMessage": "Los datos del paciente existente se actualizar\u00e1n con tus cambios.",
+    "scanIdCard": "Escanear DNI o pasaporte",
+    "scanIdCardDescription": "Completa autom\u00e1ticamente desde tu documento. Los datos permanecen en tu dispositivo.",
     "newLabel": "Nuevo",
     "newPatient": "Nuevo paciente",
     "patientChangedTo": "Cambiado a: {name}",
@@ -391,9 +381,9 @@
     "regionUS": "US",
     "regionEurope": "Europa",
     "regionUK": "UK",
-    "medGemmaIncompatibleDevice": "Este modelo requiere más memoria de la que tiene disponible su dispositivo. Utilice el modelo Estándar en su lugar.",
-    "deepScanDownloadTitle": "Descargar modelo de visión",
-    "deepScanDownloadMessage": "El escaneo profundo requiere una descarga adicional (~{size} MB). ¿Descargar ahora?",
+    "medGemmaIncompatibleDevice": "Este modelo requiere m\u00e1s memoria de la que tiene disponible tu dispositivo. Usa el modelo est\u00e1ndar en su lugar.",
+    "deepScanDownloadTitle": "Descargar modelo de visi\u00f3n",
+    "deepScanDownloadMessage": "El escaneo profundo requiere una descarga adicional (~{size} MB). \u00bfDescargar ahora?",
     "@deepScanDownloadMessage": {
         "placeholders": {
             "size": {
@@ -401,73 +391,73 @@
             }
         }
     },
-    "downloadingVisionModel": "Descargando modelo de visión...",
+    "downloadingVisionModel": "Descargando modelo de visi\u00f3n...",
 
-    "shareUnknownDevice": "Dispositivo Desconocido",
-    "shareViewOnlyBanner": "SOLO LECTURA - Los datos se eliminarán cuando cierre la sesión o salga del área de proximidad",
-    "shareViewOnlyBannerViewing": "SOLO LECTURA - Los datos se eliminarán cuando salga",
-    "shareInfoBannerMessage": "Los registros compartidos son de solo lectura. Todos los datos se eliminan automáticamente cuando la sesión termina o el límite de tiempo expira.",
+    "shareUnknownDevice": "Dispositivo desconocido",
+    "shareViewOnlyBanner": "SOLO LECTURA - Los datos se eliminar\u00e1n cuando cierres la sesi\u00f3n o salgas del \u00e1rea de proximidad",
+    "shareViewOnlyBannerViewing": "SOLO LECTURA - Los datos se eliminar\u00e1n cuando salgas",
+    "shareInfoBannerMessage": "Los registros compartidos son de solo lectura. Todos los datos se eliminan autom\u00e1ticamente cuando la sesi\u00f3n termina o el l\u00edmite de tiempo expira.",
     "shareTitle": "Compartir",
-    "shareFindDevices": "Buscar Dispositivos",
+    "shareFindDevices": "Buscar dispositivos",
     "shareWaiting": "Esperando...",
     "shareConnectingTitle": "Conectando",
     "shareSending": "Enviando",
     "shareReceiving": "Recibiendo",
-    "shareSessionActive": "Sesión Activa",
-    "shareViewingRecords": "Viendo Registros",
+    "shareSessionActive": "Sesi\u00f3n activa",
+    "shareViewingRecords": "Viendo registros",
     "shareComplete": "Completo",
     "shareError": "Error",
-    "sharePermissionsRequired": "Permisos Requeridos",
+    "sharePermissionsRequired": "Permisos requeridos",
     "shareHealthWalletDevice": "Dispositivo HealthWallet",
-    "shareInvitationDeclined": "Invitación Rechazada",
-    "shareSessionComplete": "Sesión Completa",
-    "shareInvitationDeclinedMessage": "El receptor rechazó su invitación para ver los registros.",
+    "shareInvitationDeclined": "Invitaci\u00f3n rechazada",
+    "shareSessionComplete": "Sesi\u00f3n completa",
+    "shareInvitationDeclinedMessage": "El receptor rechaz\u00f3 tu invitaci\u00f3n para ver los registros.",
     "shareSessionCompleteMessage": "Todos los datos compartidos han sido eliminados de forma segura de este dispositivo",
-    "shareBackHome": "Volver al Inicio",
-    "shareConnectionFailed": "Conexión Fallida",
-    "shareUnableToConnect": "No se pudo conectar. Inténtelo de nuevo.",
+    "shareBackHome": "Volver al inicio",
+    "shareConnectionFailed": "Conexi\u00f3n fallida",
+    "shareUnableToConnect": "No se pudo conectar. Int\u00e9ntalo de nuevo.",
     "shareNoDataReceived": "No se recibieron datos",
     "shareSearchRecords": "Buscar registros",
     "shareNoRecordsMatchFilters": "No hay registros que coincidan con los filtros",
     "shareNoRecordsAvailable": "No hay registros disponibles",
-    "shareReceiverViewingRecords": "El receptor está viendo los registros",
-    "shareSessionAutoExpire": "La sesión expirará automáticamente cuando el temporizador llegue a cero",
-    "shareRecordsDelivered": "Registros entregados con éxito",
+    "shareReceiverViewingRecords": "El receptor est\u00e1 viendo los registros",
+    "shareSessionAutoExpire": "La sesi\u00f3n expirar\u00e1 autom\u00e1ticamente cuando el temporizador llegue a cero",
+    "shareRecordsDelivered": "Registros entregados con \u00e9xito",
     "shareConnecting": "Conectando...",
-    "shareConnectionInterrupted": "Conexión interrumpida, reconectando",
+    "shareConnectionInterrupted": "Conexi\u00f3n interrumpida, reconectando",
     "shareSendingRecords": "Enviando registros...",
     "shareReceivingRecords": "Recibiendo registros...",
-    "shareConfirmExit": "Confirmar Salida",
-    "shareDeleteSharedRecords": "¿Eliminar Registros Compartidos?",
-    "shareDeleteWarning": "El registro compartido se eliminará permanentemente de este dispositivo. La acción no se puede deshacer",
-    "shareDeleteAndExit": "Eliminar y Salir",
-    "shareIncomingTransfer": "Transferencia Entrante",
-    "shareViewOnlyWarning": "Los registros serán de solo lectura y se eliminarán automáticamente al salir",
+    "shareConfirmExit": "Confirmar salida",
+    "shareDeleteSharedRecords": "\u00bfEliminar registros compartidos?",
+    "shareDeleteWarning": "El registro compartido se eliminar\u00e1 permanentemente de este dispositivo. La acci\u00f3n no se puede deshacer",
+    "shareDeleteAndExit": "Eliminar y salir",
+    "shareIncomingTransfer": "Transferencia entrante",
+    "shareViewOnlyWarning": "Los registros ser\u00e1n de solo lectura y se eliminar\u00e1n autom\u00e1ticamente al salir",
     "shareDecline": "Rechazar",
     "shareAccept": "Aceptar",
     "shareSearchingForDevices": "Buscando dispositivos cercanos...",
     "shareSearchForDevices": "Buscar dispositivos...",
-    "shareNoDevicesFound": "No se Encontraron Dispositivos",
-    "shareConnectionIssue": "Problema de Conexión",
+    "shareNoDevicesFound": "No se encontraron dispositivos",
+    "shareConnectionIssue": "Problema de conexi\u00f3n",
     "shareWifiDirectUnresponsive": "WiFi Direct no responde en este dispositivo.",
-    "shareWifiToggleHint": "WiFi Direct no responde. Desactive/active WiFi, luego toque Reintentar.",
-    "shareDiscoveryHint": "Asegúrese de que el otro dispositivo tenga la aplicación HealthWallet.me abierta",
-    "shareProximityHint": "El dispositivo receptor debe tener Proximidad de Compartir ACTIVADA en Preferencias para ser detectable.",
+    "shareWifiToggleHint": "WiFi Direct no responde. Desactiva/activa WiFi, luego toca Reintentar.",
+    "shareDiscoveryHint": "Aseg\u00farate de que el otro dispositivo tenga la aplicaci\u00f3n HealthWallet.me abierta",
+    "shareProximityHint": "El dispositivo receptor debe tener Proximidad de compartir activada en Preferencias para ser detectable.",
     "shareNoRecordsMatchSelectedFilters": "No hay registros que coincidan con los filtros seleccionados",
     "shareNoRecordsForAppliedFilters": "No se encontraron registros para los filtros aplicados",
-    "shareTryClearingFilters": "Intente borrar algunos filtros",
-    "shareRecordsPageFiltersNoResults": "Los filtros de la página de Registros no devolvieron resultados",
-    "shareImportOrSyncRecords": "Importe o sincronice registros para compartirlos",
-    "shareSessionTime": "Tiempo de sesión",
+    "shareTryClearingFilters": "Intenta borrar algunos filtros",
+    "shareRecordsPageFiltersNoResults": "Los filtros de la p\u00e1gina de registros no devolvieron resultados",
+    "shareImportOrSyncRecords": "Importa o sincroniza registros para compartirlos",
+    "shareSessionTime": "Tiempo de sesi\u00f3n",
     "shareSetAsDefault": "Establecer como predeterminado",
-    "shareRecordsButton": "Compartir Registros",
-    "shareSelectRecordsToShare": "Seleccione registros para compartir",
-    "shareEndSession": "Finalizar Sesión",
+    "shareRecordsButton": "Compartir registros",
+    "shareSelectRecordsToShare": "Selecciona registros para compartir",
+    "shareEndSession": "Finalizar sesi\u00f3n",
     "shareRequestTenMin": "Solicitar +10 min",
     "shareWaitingForResponse": "Esperando respuesta...",
-    "shareAddMoreTime": "Agregar más tiempo",
-    "shareSessionExpiresIn": "La sesión expira en",
-    "shareExtensionRequestedTitle": "Extensión Solicitada",
+    "shareAddMoreTime": "Agregar m\u00e1s tiempo",
+    "shareSessionExpiresIn": "La sesi\u00f3n expira en",
+    "shareExtensionRequestedTitle": "Extensi\u00f3n solicitada",
     "shareHoursLabel": "horas",
     "shareMinLabel": "min",
     "shareSelectedCount": "{count} seleccionados",
@@ -605,7 +595,7 @@
             }
         }
     },
-    "shareExtensionRequestMessage": "El {peerRole} quiere extender la sesión en {duration}",
+    "shareExtensionRequestMessage": "El {peerRole} quiere extender la sesi\u00f3n en {duration}",
     "@shareExtensionRequestMessage": {
         "placeholders": {
             "peerRole": {
@@ -623,5 +613,505 @@
                 "type": "String"
             }
         }
-    }
+    },
+
+    "desktopSyncNotYet": "A\u00fan no",
+    "desktopSyncTransfer": "Transferencia",
+    "desktopSyncTransferValue": "{sentRows} enviados, {receivedRows} recibidos",
+    "@desktopSyncTransferValue": {
+        "placeholders": {
+            "sentRows": {
+                "type": "int"
+            },
+            "receivedRows": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopSyncPending": "Pendiente",
+    "desktopSyncPendingValue": "{count} cambios",
+    "@desktopSyncPendingValue": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopSyncingTable": "Sincronizando {tableName}...",
+    "@desktopSyncingTable": {
+        "placeholders": {
+            "tableName": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopSyncing": "Sincronizando...",
+    "desktopSyncNow": "Sincronizar ahora",
+    "desktopSyncError": "Error",
+    "desktopSyncInSync": "Sincronizado",
+    "desktopSyncReady": "Listo",
+    "desktopSyncOffline": "Sin conexi\u00f3n",
+    "desktopTableHealthRecords": "Registros de salud",
+    "desktopTableSources": "Fuentes",
+    "desktopTableNotes": "Notas",
+    "desktopTableSessions": "Sesiones",
+    "desktopConnection": "Conexi\u00f3n",
+    "desktopGeneratePairingQr": "Generar QR de vinculaci\u00f3n",
+    "desktopScanFromMobile": "Escanea desde la p\u00e1gina Sync del m\u00f3vil",
+    "desktopDevice": "Dispositivo",
+    "desktopTransport": "Transporte",
+    "desktopIp": "IP",
+    "desktopPort": "Puerto",
+    "desktopNewPairing": "Nueva vinculaci\u00f3n",
+    "desktopTransportTcp": "TCP sobre WiFi",
+    "desktopTransportMpc": "MultipeerConnectivity (Directo)",
+    "desktopConnectedTo": "Conectado a {name}",
+    "@desktopConnectedTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopConnected": "Conectado",
+    "desktopReconnectingTo": "Reconectando a {name}...",
+    "@desktopReconnectingTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopReconnecting": "Reconectando...",
+    "desktopDisconnectedFrom": "Desconectado de {name}",
+    "@desktopDisconnectedFrom": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopDisconnected": "Desconectado",
+    "desktopDisconnect": "Desconectar",
+    "desktopReconnect": "Reconectar",
+    "desktopVpnDetected": "VPN detectado. Desconecta la VPN para sincronizar con el escritorio.",
+    "desktopPairing": "Vinculaci\u00f3n",
+    "desktopLabel": "Escritorio",
+    "desktopScanFromPhoneToPair": "Escanea con tu tel\u00e9fono para vincular",
+    "desktopNewQrCode": "Nuevo c\u00f3digo QR",
+    "desktopGenerateQrCode": "Generar c\u00f3digo QR",
+    "desktopScanQrCode": "Escanear c\u00f3digo QR",
+    "desktopChooseWhereToSave": "Elige d\u00f3nde guardar los respaldos",
+    "desktopSelectBackupFolder": "Selecciona una carpeta en tu computadora para almacenar los respaldos",
+    "desktopChooseLocation": "Elegir ubicaci\u00f3n",
+    "desktopChooseBackupLocation": "Elegir ubicaci\u00f3n de respaldo",
+    "desktopBackingUp": "Respaldando...",
+    "desktopCreateBackup": "Crear respaldo",
+    "desktopSyncWithPhoneFirst": "Sincroniza con el tel\u00e9fono primero",
+    "desktopNotConnected": "(no conectado)",
+    "desktopStartBackup": "Iniciar respaldo",
+    "desktopNoBackupsYet": "A\u00fan no hay respaldos",
+    "desktopCreateFirstBackup": "Crea tu primer respaldo para mantener tus datos de salud seguros",
+    "desktopAllBackups": "Todos los respaldos",
+    "desktopDate": "Fecha",
+    "desktopSize": "Tama\u00f1o",
+    "desktopChecksum": "Suma de verificaci\u00f3n",
+    "desktopRestoreThisBackup": "Restaurar este respaldo",
+    "desktopRestoreBackupTitle": "\u00bfRestaurar respaldo?",
+    "desktopRestoreBackupMessage": "Esto reemplazar\u00e1 todos los datos actuales en este dispositivo con \"{name}\".\n\n Se restaurar\u00e1n {count} registros.\n\nTus datos en el tel\u00e9fono vinculado no se ver\u00e1n afectados.",
+    "@desktopRestoreBackupMessage": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopRestore": "Restaurar",
+    "desktopDeleteBackupTitle": "\u00bfEliminar respaldo?",
+    "desktopDeleteBackupMessage": "\u00bfEliminar \"{name}\"?\n\nEsto no se puede deshacer.",
+    "@desktopDeleteBackupMessage": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopDelete": "Eliminar",
+    "desktopBackupFrom": "Respaldo del",
+    "desktopBackup": "Respaldo",
+    "desktopChange": "Cambiar",
+    "desktopProcessingHistory": "Historial de procesamiento",
+    "desktopScannedOnPhone": "Escaneado en el tel\u00e9fono",
+    "desktopProcessedOnDesktop": "Procesado en el escritorio",
+    "desktopImportedOnDesktop": "Importado en el escritorio",
+    "desktopSyncRecent": "Recientes",
+    "desktopUnknownDevice": "Dispositivo desconocido",
+    "desktopSyncHistoryTransfer": "{sentRows} enviados \u00b7 {receivedRows} recibidos",
+    "@desktopSyncHistoryTransfer": {
+        "placeholders": {
+            "sentRows": {
+                "type": "int"
+            },
+            "receivedRows": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopNewDeviceConnecting": "Nuevo dispositivo conect\u00e1ndose",
+    "desktopNewDeviceMessage": "Un nuevo dispositivo ({address}) quiere conectarse.\n\nEsto desconectar\u00e1 \"{currentDevice}\".\n\n\u00bfCambiar al nuevo dispositivo?",
+    "@desktopNewDeviceMessage": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            },
+            "currentDevice": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopKeepCurrent": "Mantener actual",
+    "desktopSwitch": "Cambiar",
+    "desktopCurrentDevice": "dispositivo actual",
+    "desktopHandoverPreparing": "Preparando...",
+    "desktopHandoverSendingFiles": "Enviando archivos...",
+    "desktopHandoverProcessingOnDesktop": "Procesando en el escritorio...",
+    "desktopHandoverComplete": "\u00a1Completado!",
+    "desktopHandoverError": "Ocurri\u00f3 un error",
+    "desktopHandoverSending": "Enviando...",
+    "desktopHandoverSendingToDesktop": "Enviando al escritorio",
+    "desktopHandoverFileCount": "{count} archivos",
+    "@desktopHandoverFileCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopHandoverSuccess": "Entregado al escritorio",
+    "desktopClose": "Cerrar",
+    "desktopContinueImporting": "Continuar importando",
+    "desktopConnectToDesktop": "Conectar al escritorio",
+    "desktopCouldNotReconnect": "No se pudo reconectar. Escanea el c\u00f3digo QR para vincular de nuevo.",
+    "desktopScanQrToPair": "Escanea el c\u00f3digo QR en tu app de escritorio para vincular.",
+    "desktopHandoverToDesktop": "Entregar al escritorio",
+    "desktopHandoverProcessingMessage": "El procesamiento est\u00e1 en curso. La entrega cancelar\u00e1 el procesamiento actual y enviar\u00e1 los archivos al escritorio.",
+    "desktopHandover": "Entrega",
+
+    "attachedDocuments": "Documentos adjuntos",
+    "cameraPermissionRequired": "Permiso de c\u00e1mara requerido",
+    "cameraPermissionRequiredMessage": "Esta app necesita acceso a la c\u00e1mara para escanear. Por favor, otorga el permiso.",
+    "cameraPermissionDenied": "Permiso de c\u00e1mara denegado",
+    "cameraPermissionDeniedMessage": "El permiso de c\u00e1mara fue denegado permanentemente. Act\u00edvalo en Configuraci\u00f3n para usar el esc\u00e1ner.",
+    "successTitle": "\u00a1\u00c9xito!",
+    "attachmentSuccessMessage": "{count} documentos adjuntados exitosamente al encuentro.",
+    "@attachmentSuccessMessage": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "encounterLabel": "Encuentro",
+    "viewRecords": "Ver registros",
+    "errorTitle": "Error",
+    "somethingWentWrong": "Algo sali\u00f3 mal",
+    "importDocument": "Importar documento",
+    "pickImageFromGallery": "Elegir imagen de la galer\u00eda",
+    "scanDocument": "Escanear documento",
+    "deleteSession": "Eliminar sesi\u00f3n",
+    "deleteSessionConfirmation": "\u00bfEst\u00e1s seguro de que quieres eliminar esta sesi\u00f3n?",
+    "delete": "Eliminar",
+    "canceling": "Cancelando...",
+    "waitingForAiToFinish": "Esperando a que la IA termine...",
+    "logsCopied": "Registros copiados",
+    "download": "Descargar",
+    "active": "Activo",
+    "tapToSelect": "Toca para seleccionar",
+    "deviceInfoChip": "{platform}  \u2022  {ramGB} GB RAM  \u2022  {cores} n\u00facleos  \u2022  ~{estimatedMB} MB necesarios",
+    "@deviceInfoChip": {
+        "placeholders": {
+            "platform": {
+                "type": "String"
+            },
+            "ramGB": {
+                "type": "String"
+            },
+            "cores": {
+                "type": "int"
+            },
+            "estimatedMB": {
+                "type": "int"
+            }
+        }
+    },
+    "downloadContinuesInBackground": "Puedes navegar libremente, la descarga continuar\u00e1 en segundo plano.\nRevisa las notificaciones para ver el progreso.",
+    "continueWithoutAi": "Continuar sin IA (descarga en segundo plano)",
+    "continueUsingApp": "Seguir usando la app",
+    "attachWithoutProcessing": "Quiero adjuntar el documento sin procesar",
+    "currentPatientAndSource": "Paciente y fuente actuales",
+    "createEncounter": "Crear encuentro",
+    "encounterName": "Nombre del encuentro",
+    "enterEncounterName": "Ingresa el nombre del encuentro",
+    "pleaseEnterEncounterName": "Por favor, ingresa un nombre para el encuentro",
+    "date": "Fecha",
+    "create": "Crear",
+    "searchEncounters": "Buscar encuentros...",
+    "noEncountersFound": "No se encontraron encuentros",
+    "noEncountersFoundMessage": "Crea un nuevo encuentro primero o selecciona un paciente diferente.",
+    "newEncounterPrefix": "Nuevo encuentro",
+    "scannedDocumentsTitle": "Documentos escaneados",
+    "scannedDocumentsPagesTitle": "Documentos escaneados ({count} p\u00e1ginas)",
+    "@scannedDocumentsPagesTitle": {
+        "placeholders": {
+            "count": {
+                "type": "String"
+            }
+        }
+    },
+    "pdfFileTitle": "PDF: {fileName}",
+    "@pdfFileTitle": {
+        "placeholders": {
+            "fileName": {
+                "type": "String"
+            }
+        }
+    },
+    "labelOrganizationName": "Nombre de la organizaci\u00f3n",
+    "labelAddress": "Direcci\u00f3n",
+    "labelPhone": "Tel\u00e9fono",
+    "labelEncounterName": "Nombre del encuentro",
+    "labelStartDate": "Fecha de inicio",
+    "labelFirstName": "Nombre",
+    "labelFamilyName": "Apellido",
+    "labelDateOfBirth": "Fecha de nacimiento",
+    "labelGender": "G\u00e9nero",
+    "labelReportName": "Nombre del informe",
+    "labelConclusion": "Conclusi\u00f3n",
+    "labelIssuedDate": "Fecha de emisi\u00f3n",
+    "labelPractitionerName": "Nombre del profesional",
+    "labelSpecialty": "Especialidad",
+    "labelIdentifier": "Identificador",
+    "labelConditionName": "Nombre de la condici\u00f3n",
+    "labelOnsetDate": "Fecha de inicio",
+    "labelClinicalStatus": "Estado cl\u00ednico",
+    "labelSubstance": "Sustancia",
+    "labelManifestation": "Manifestaci\u00f3n",
+    "labelCategory": "Categor\u00eda",
+    "labelProcedureName": "Nombre del procedimiento",
+    "labelPerformedDate": "Fecha de realizaci\u00f3n",
+    "labelReason": "Motivo",
+    "labelMedicationName": "Nombre del medicamento",
+    "labelDosage": "Dosis",
+    "labelObservationName": "Nombre de la observaci\u00f3n",
+    "labelValue": "Valor",
+    "labelUnit": "Unidad",
+    "labelReferenceRange": "Rango de referencia",
+
+    "permissionsRequired": "Permisos requeridos",
+    "recordsSelectedCount": "{count} seleccionados",
+    "@recordsSelectedCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "noRecordsSelected": "No hay registros seleccionados",
+    "select": "Seleccionar",
+    "selectRecordsBeforeSharing": "Selecciona registros\nantes de compartir",
+    "recordDetails": "Detalles del registro",
+    "viewDocument": "Ver documento",
+    "encounterDetails": "Detalles del encuentro",
+    "relatedResources": "Recursos relacionados",
+    "deletePlusRelated": "Eliminar + {count} relacionados",
+    "@deletePlusRelated": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "fileNotAvailable": "Archivo no disponible en este dispositivo",
+    "couldNotOpenFile": "No se pudo abrir el archivo: {message}",
+    "@couldNotOpenFile": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "errorOpeningFile": "Error al abrir el archivo: {error}",
+    "@errorOpeningFile": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToLoadImage": "No se pudo cargar la imagen",
+    "errorLoadingPdf": "Error al cargar el PDF: {error}",
+    "@errorLoadingPdf": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "errorOnPage": "Error en la p\u00e1gina {page}: {error}",
+    "@errorOnPage": {
+        "placeholders": {
+            "page": {
+                "type": "String"
+            },
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "notes": "Notas",
+    "noNotesAttached": "Este registro no tiene notas",
+    "addNote": "Agregar nota",
+    "editNote": "Editar nota",
+    "filters": "Filtros",
+    "timeRange": "Rango de tiempo",
+    "applyFilters": "Aplicar filtros",
+    "recordType": "Tipo de registro",
+    "selectedRange": "Rango seleccionado",
+    "noRangeSelected": "Sin rango seleccionado",
+    "clearDateRange": "Limpiar rango de fechas",
+    "start": "Inicio",
+    "end": "Fin",
+    "fromDate": "Desde {date}",
+    "@fromDate": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "untilDate": "Hasta {date}",
+    "@untilDate": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "day": "D\u00eda",
+    "month": "Mes",
+    "year": "A\u00f1o",
+    "mediaInfo": "Info de medios",
+    "linkToEncounter": "Vincular a encuentro",
+    "noPdfDataAvailable": "No hay datos PDF disponibles",
+    "failedToLoadPdf": "No se pudo cargar el documento PDF",
+    "mediaInformation": "Informaci\u00f3n de medios",
+    "mediaInfoTitle": "T\u00edtulo:",
+    "mediaInfoType": "Tipo:",
+    "mediaInfoStatus": "Estado:",
+    "mediaInfoPatient": "Paciente:",
+    "mediaInfoEncounter": "Encuentro:",
+    "mediaInfoFileSize": "Tama\u00f1o:",
+    "mediaInfoCreated": "Creado:",
+    "mediaInfoResourceId": "ID del recurso:",
+    "mediaInfoSource": "Fuente:",
+    "close": "Cerrar",
+    "linkMediaToEncounterDescription": "Vincular este recurso multimedia a un encuentro:",
+    "encounterId": "ID del encuentro",
+    "encounterIdHint": "ej., encuentro-123",
+    "mediaLinkedSuccess": "Recurso multimedia vinculado exitosamente al encuentro",
+    "failedToLinkMedia": "Error al vincular: {error}",
+    "@failedToLinkMedia": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "link": "Vincular",
+
+    "connectionLabel": "Conexi\u00f3n",
+    "connectionStatusConnected": "Conectado",
+    "connectionStatusConnecting": "Conectando...",
+    "connectionStatusDisconnected": "Desconectado",
+    "connectionStatusNotPaired": "No vinculado",
+    "syncLabel": "Sincronizaci\u00f3n",
+    "syncStatusSyncing": "Sincronizando...",
+    "syncStatusNotSynced": "No sincronizado",
+    "syncStatusInSync": "Sincronizado",
+    "syncStatusPending": "{count} pendientes",
+    "@syncStatusPending": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "backupLabel": "Respaldo",
+    "backupStatusWorking": "Trabajando...",
+    "backupStatusNoBackup": "Sin respaldo",
+    "backupStatusBackingUp": "Respaldando...",
+    "backupStatusRestoring": "Restaurando...",
+    "backupStatusWaiting": "Esperando...",
+    "backupStatusNotConnected": "No conectado",
+    "exportIpsPdf": "Exportar IPS (PDF)",
+    "addIpsToAppleWallet": "Agregar IPS a Apple Wallet",
+    "addIpsToGoogleWallet": "Agregar IPS a Google Wallet",
+    "sourcesTitle": "Fuentes",
+    "emergencyMedicalId": "Identificaci\u00f3n m\u00e9dica de emergencia",
+    "phoneLabel": "Tel\u00e9fono",
+    "allergiesLabel": "Alergias",
+    "medicalConditionsLabel": "Condiciones m\u00e9dicas",
+    "medicationsLabel": "Medicamentos",
+    "conditionsLabel": "Condiciones",
+    "dateOfBirthLabel": "Fecha de nacimiento",
+    "emergencyPhoneLabel": "Tel\u00e9fono de emergencia",
+    "openingScanner": "Abriendo esc\u00e1ner...",
+    "activeScanSessions": "Sesiones de escaneo activas:",
+    "noScansYet": "A\u00fan no hay escaneos",
+    "scanOrImportToGetStarted": "Escanea o importa documentos para comenzar",
+    "pageOfTotal": "{current} de {total}",
+    "@pageOfTotal": {
+        "placeholders": {
+            "current": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "fileNotFound": "Archivo no encontrado",
+    "fileIsEmpty": "El archivo est\u00e1 vac\u00edo",
+    "importTitle": "Importar",
+    "activeImportSessions": "Sesiones de importaci\u00f3n activas:",
+    "dropToImport": "Suelta para importar",
+    "dropFilesHereToImport": "Suelta archivos aqu\u00ed para importar",
+    "supportedFileFormats": "PDF, JPG, PNG, TIFF",
+    "browseFiles": "Explorar archivos",
+    "noImportsYet": "A\u00fan no hay importaciones",
+    "importOrScanToGetStarted": "Importa o escanea documentos para comenzar",
+    "notificationsTitle": "Notificaciones",
+    "noNotifications": "Sin notificaciones",
+    "cancelDownloadTitle": "Cancelar descarga",
+    "cancelDownloadMessage": "\u00bfEst\u00e1s seguro de que quieres cancelar la descarga del modelo de IA? Puedes reiniciarla m\u00e1s tarde.",
+    "processingDone": "Procesamiento completado",
+    "pairedWithDevice": "Vinculado con {deviceName}",
+    "@pairedWithDevice": {
+        "placeholders": {
+            "deviceName": {
+                "type": "String"
+            }
+        }
+    },
+    "deviceSyncLabel": "Sincronizaci\u00f3n de dispositivo",
+    "disconnectLabel": "Desconectar",
+    "changeLabel": "Cambiar",
+    "documentScanTitle": "Escanear",
+    "onboardingRecordsContent": "\u2022 Escanea documentos con la c\u00e1mara de tu tel\u00e9fono\n\u2022 Sube PDFs, im\u00e1genes o archivos de laboratorio directamente\n\u2022 Importa registros compartiendo directamente con <link>HealthWallet.me</link> desde cualquier app de tu tel\u00e9fono.\n\u2022 Escanea el c\u00f3digo QR de <link>Fasten Health OnPrem</link> y obt\u00e9n todos los registros de salud de EE.UU. en tu wallet.",
+    "onboardingRecordsBottom": "Todo se organiza de forma segura en tu dispositivo.",
+    "onboardingRequestIntegration": "Solicitar una integraci\u00f3n",
+    "minimizeToTray": "Minimizar a la bandeja"
 }

@@ -13,6 +13,7 @@ import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_b
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class OnboardingNavigation extends StatelessWidget {
   final PageController pageController;

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
@@ -86,6 +87,12 @@ class MappingDiagnosticReport
       issued: diagnosticReport.issued,
     );
   }
+
+  static Map<String, String> localizedLabels(AppLocalizations l10n) => {
+        'reportName': l10n.labelReportName,
+        'conclusion': l10n.labelConclusion,
+        'issuedDate': l10n.labelIssuedDate,
+      };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {

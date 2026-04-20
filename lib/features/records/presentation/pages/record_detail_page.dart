@@ -19,6 +19,7 @@ import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class RecordDetailsPage extends StatefulWidget {
@@ -110,7 +111,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Record Details',
+        title: context.l10n.recordDetails,
         actions: isEphemeral
             ? null
             : [
@@ -190,7 +191,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: AppButton(
-                label: 'View Document',
+                label: context.l10n.viewDocument,
                 onPressed: () => _onViewDocument(widget.resource),
                 icon: const Icon(Icons.visibility_outlined),
                 variant: AppButtonVariant.outlined,
@@ -250,7 +251,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Encounter details", style: AppTextStyle.buttonSmall),
+        Text(context.l10n.encounterDetails, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 4),
         InkWell(
           onTap: () => context.router.push(RecordDetailsRoute(
@@ -272,7 +273,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Related resources", style: AppTextStyle.buttonSmall),
+        Text(context.l10n.relatedResources, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 16),
         ...resources.map((resource) => InkWell(
               onTap: () => context.router.push(RecordDetailsRoute(
@@ -289,7 +290,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: AppButton(
-                        label: 'View Document',
+                        label: context.l10n.viewDocument,
                         onPressed: () => _onViewDocument(resource),
                         icon: const Icon(Icons.visibility_outlined),
                         variant: AppButtonVariant.outlined,
@@ -426,7 +427,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                     if (relatedResources.isNotEmpty) ...[
                       const SizedBox(height: Insets.normal),
                       Text(
-                        'Related resources',
+                        context.l10n.relatedResources,
                         style: AppTextStyle.labelLarge.copyWith(
                           color: textColor,
                           fontWeight: FontWeight.w600,
@@ -562,7 +563,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                           ),
                         ),
                         child: Text(
-                          '${context.l10n.deletePage} + ${selectedIds.length} related',
+                          context.l10n.deletePlusRelated(selectedIds.length),
                         ),
                       ),
                     ],

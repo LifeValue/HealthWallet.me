@@ -11,6 +11,7 @@ import 'package:health_wallet/features/desktop/handover/presentation/widgets/han
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class HandoverUtils {
   static Future<void> initiateHandover(
@@ -22,9 +23,9 @@ class HandoverUtils {
     if (session.isProcessing) {
       final confirmed = await AppSimpleDialog.showDestructiveConfirmation(
         context: context,
-        title: 'Handover to Desktop',
-        message: 'Processing is in progress. Handover will cancel the current processing and send files to desktop.',
-        confirmText: 'Handover',
+        title: context.l10n.desktopHandoverToDesktop,
+        message: context.l10n.desktopHandoverProcessingMessage,
+        confirmText: context.l10n.desktopHandover,
         cancelText: context.l10n.cancel,
         confirmButtonColor: context.colorScheme.primary,
         onConfirm: () {},
@@ -117,7 +118,7 @@ class HandoverUtils {
       phase1Data: phase1Data,
       continueLabel: session.origin == ProcessingOrigin.import ||
               session.origin == ProcessingOrigin.handover
-          ? 'Continue Importing'
+          ? context.l10n.desktopContinueImporting
           : null,
     );
   }
