@@ -286,6 +286,8 @@
     "sessionNotFound": "Sesiune negăsită!",
     "preparingPreview": "Se pregătește previzualizarea...",
     "processingFailed": "Procesare eșuată",
+    "modelNotFoundError": "Fișierul modelului nu a fost găsit. Descarcă modelul AI mai întâi.",
+    "modelCorruptedError": "Fișierul modelului este corupt. Re-descarcă modelul AI.",
     "processingCancelled": "Procesarea a fost anulată",
     "processingBasicDetails": "Se procesează detaliile de bază...",
     "processingPages": "Se procesează paginile...",

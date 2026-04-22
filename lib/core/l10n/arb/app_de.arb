@@ -246,6 +246,8 @@
     "sessionNotFound": "Sitzung nicht gefunden!",
     "preparingPreview": "Vorschau wird vorbereitet...",
     "processingFailed": "Verarbeitung fehlgeschlagen",
+    "modelNotFoundError": "Modelldatei nicht gefunden. Bitte laden Sie das KI-Modell zuerst herunter.",
+    "modelCorruptedError": "Modelldatei ist beschädigt. Bitte laden Sie das KI-Modell erneut herunter.",
     "processingCancelled": "Die Verarbeitung wurde abgebrochen",
     "processingBasicDetails": "Grunddaten werden verarbeitet...",
     "processingPages": "Seiten werden verarbeitet...",

@@ -311,10 +311,20 @@ class _RecordsViewState extends State<RecordsView> {
           return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              appBar: _buildAppBar(context, appBarState),
-              body: Stack(
-                children: [
-                  _buildBody(context),
+              body: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: _buildAppBar(context, appBarState).preferredSize.height + MediaQuery.of(context).padding.top,
+                        child: _buildAppBar(context, appBarState),
+                      ),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            _buildBody(context),
                   if (_showScrollToTopButton)
                     Positioned(
                       right: 16,
@@ -329,7 +339,12 @@ class _RecordsViewState extends State<RecordsView> {
                         child: const Icon(Icons.keyboard_arrow_up),
                       ),
                     ),
-                ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           );

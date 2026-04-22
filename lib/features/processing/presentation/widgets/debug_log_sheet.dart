@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 
 class DebugLogSheet extends StatefulWidget {
@@ -11,6 +12,9 @@ class DebugLogSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF1E1E1E),
+      constraints: BoxConstraints(
+        maxWidth: context.contentMaxWidth,
+      ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),

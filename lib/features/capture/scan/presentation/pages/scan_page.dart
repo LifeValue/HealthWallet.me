@@ -270,7 +270,10 @@ class _ScanViewState extends State<ScanView>
         .where((element) => element.origin == ProcessingOrigin.scan)
         .toList();
 
-    return Padding(
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+        child: Padding(
       padding: EdgeInsets.only(
         left: context.screenHorizontalPadding,
         right: context.screenHorizontalPadding,
@@ -326,6 +329,8 @@ class _ScanViewState extends State<ScanView>
               Center(child: _buildEmptyState(context)),
         ],
       ),
+    ),
+    ),
     );
   }
 

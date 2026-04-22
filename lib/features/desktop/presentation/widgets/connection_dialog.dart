@@ -9,6 +9,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
@@ -27,7 +28,7 @@ class ConnectionDialog extends StatefulWidget {
         child: Dialog(
           backgroundColor: Colors.transparent,
           child: SizedBox(
-            width: 500,
+            width: context.dialogWidth,
             child: BlocProvider.value(
               value: getIt<CommunicationBloc>(),
               child: BlocConsumer<CommunicationBloc, DesktopSyncState>(

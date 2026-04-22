@@ -19,6 +19,7 @@ import 'package:health_wallet/features/processing/presentation/widgets/ai_settin
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_vision_toggle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 
 class AiSettingsResult {
   final int maxTokens;
@@ -283,7 +284,9 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
       child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-        child: Container(
+        child: SizedBox(
+          width: context.wideDialogWidth,
+          child: Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
@@ -345,10 +348,10 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
                       _buildSliderSection(
                         context.l10n.gpuLayersLabel,
                         context.l10n.gpuLayersDescription,
-                        _gpuLayers,
+                        _gpuLayers.clamp(0, 99),
                         0,
-                        8,
-                        widget.recommendedGpuLayers,
+                        99,
+                        widget.recommendedGpuLayers.clamp(0, 99),
                         (v) => setState(() => _gpuLayers = v),
                         textColor,
                         secondaryTextColor,
@@ -381,6 +384,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

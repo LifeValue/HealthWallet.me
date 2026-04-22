@@ -5,6 +5,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
+import 'package:health_wallet/core/widgets/app_input_field.dart';
 
 class FormFields {
   static Widget buildFieldLabel(BuildContext context, String label) {
@@ -45,41 +46,13 @@ class FormFields {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildFieldLabel(context, label),
-        Container(
-          height: 36,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: context.borderColor,
-              width: 1.5,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: TextField(
-            controller: textController,
-            enabled: onChanged != null,
-            onChanged: onChanged,
-            keyboardType: keyboardType,
-            inputFormatters: inputFormatters,
-            style: AppTextStyle.labelLarge.copyWith(
-              color: context.isDarkMode
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimary,
-            ),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: Insets.small,
-                vertical: Insets.small,
-              ),
-              border: InputBorder.none,
-              isDense: true,
-              hintText: hintText,
-              hintStyle: AppTextStyle.labelLarge.copyWith(
-                color: context.isDarkMode
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ),
+        AppInputField(
+          controller: textController,
+          enabled: onChanged != null,
+          onChanged: onChanged,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          hintText: hintText,
         ),
       ],
     );

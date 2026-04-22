@@ -275,6 +275,8 @@
     "sessionNotFound": "\u00a1Sesi\u00f3n no encontrada!",
     "preparingPreview": "Preparando vista previa...",
     "processingFailed": "Procesamiento fallido",
+    "modelNotFoundError": "Archivo de modelo no encontrado. Descarga el modelo de IA primero.",
+    "modelCorruptedError": "El archivo del modelo est\u00e1 da\u00f1ado. Vuelve a descargar el modelo de IA.",
     "processingCancelled": "El procesamiento fue cancelado",
     "processingBasicDetails": "Procesando detalles b\u00e1sicos...",
     "processingPages": "Procesando p\u00e1ginas...",

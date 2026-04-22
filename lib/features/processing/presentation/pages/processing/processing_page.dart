@@ -12,6 +12,7 @@ import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -236,8 +237,17 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
         return Scaffold(
           backgroundColor: context.colorScheme.surface,
-          appBar: _buildAppBar(context, displayedSession, canRetry, isStep2Retry),
-          body: Builder(builder: (context) {
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: _buildAppBar(context, displayedSession, canRetry, isStep2Retry).preferredSize.height + MediaQuery.of(context).padding.top,
+                    child: _buildAppBar(context, displayedSession, canRetry, isStep2Retry),
+                  ),
+                  Expanded(child: Builder(builder: (context) {
             if (displayedSession == null) {
               return Center(child: Text(context.l10n.sessionNotFound));
             }
@@ -259,8 +269,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(Insets.normal),
-              child:
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 SummaryCard(
                   totalPagesForOcr: sessionImages.length,
                 ),
@@ -317,7 +326,11 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 const SizedBox(height: Insets.large),
               ]),
             );
-          }),
+          })),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );

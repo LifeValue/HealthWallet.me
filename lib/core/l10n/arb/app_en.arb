@@ -299,6 +299,8 @@
     "sessionNotFound": "Session not found!",
     "preparingPreview": "Preparing preview...",
     "processingFailed": "Processing failed",
+    "modelNotFoundError": "Model file not found. Please download the AI model first.",
+    "modelCorruptedError": "Model file is corrupted. Please re-download the AI model.",
     "retry": "Retry",
     "processingCancelled": "Processing was cancelled",
     "processingBasicDetails": "Processing basic details...",

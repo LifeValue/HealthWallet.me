@@ -89,6 +89,22 @@ class ProcessingMappingSection extends StatelessWidget {
     );
   }
 
+  String _sanitizeError(BuildContext context, String error) {
+    if (error.contains('Model file not found')) {
+      return context.l10n.modelNotFoundError;
+    }
+    if (error.contains('Not enough memory')) {
+      return context.l10n.processingFailedCapacity;
+    }
+    if (error.contains('corrupted')) {
+      return context.l10n.modelCorruptedError;
+    }
+    if (error.contains('Exception:')) {
+      return error.replaceAll(RegExp(r'Exception:\s*'), '').replaceAll(RegExp(r'/[\w/\-\.]+/'), '');
+    }
+    return error;
+  }
+
   Widget _buildFailure(BuildContext context, String error) {
     return Column(
       children: [
@@ -123,7 +139,7 @@ class ProcessingMappingSection extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                error,
+                _sanitizeError(context, error),
                 style: AppTextStyle.bodySmall.copyWith(
                   color: context.colorScheme.onSurface,
                 ),

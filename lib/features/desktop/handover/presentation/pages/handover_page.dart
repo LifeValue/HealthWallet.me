@@ -5,6 +5,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
@@ -36,7 +37,11 @@ class HandoverPage extends StatelessWidget {
               final hasContent =
                   transferSessions.isNotEmpty || processingSessions.isNotEmpty;
 
-              return Padding(
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+                  child: Padding(
                 padding: const EdgeInsets.all(Insets.medium),
                 child: hasContent
                     ? SingleChildScrollView(
@@ -84,6 +89,8 @@ class HandoverPage extends StatelessWidget {
                         ),
                       )
                     : _HandoverEmptyState(),
+              ),
+              ),
               );
             },
           );

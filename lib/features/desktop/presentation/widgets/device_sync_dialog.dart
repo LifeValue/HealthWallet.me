@@ -6,6 +6,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
@@ -20,7 +21,7 @@ class DeviceSyncDialog {
         child: Dialog(
           backgroundColor: Colors.transparent,
           child: SizedBox(
-            width: 500,
+            width: context.dialogWidth,
             child: MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: getIt<CommunicationBloc>()),

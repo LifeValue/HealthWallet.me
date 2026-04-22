@@ -10,6 +10,7 @@ import 'package:health_wallet/features/records/domain/services/fhir_resource_rel
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/resource_info_content.dart';
@@ -519,7 +520,10 @@ class _ResourceCardState extends State<ResourceCard> {
               borderRadius: BorderRadius.circular(12),
             ),
             insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-            child: child,
+            child: SizedBox(
+              width: context.wideDialogWidth,
+              child: child,
+            ),
           ),
         ),
       );

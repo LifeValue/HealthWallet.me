@@ -588,7 +588,9 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
             side: BorderSide(color: borderColor, width: 1),
           ),
           insetPadding: const EdgeInsets.all(Insets.normal),
-          child: Padding(
+          child: SizedBox(
+            width: context.dialogWidth,
+            child: Padding(
             padding: const EdgeInsets.all(Insets.normal),
             child: AnimatedSize(
               duration: const Duration(milliseconds: 250),
@@ -599,6 +601,7 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
                 children: _buildStepContent(context, textColor, borderColor),
               ),
             ),
+          ),
           ),
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_input_field.dart';
 
 class AppDropdownField<T> extends StatefulWidget {
   final String value;
@@ -128,9 +129,9 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           width: double.infinity,
-          height: 42,
+          height: kInputFieldHeight,
           padding: const EdgeInsets.symmetric(
-              horizontal: Insets.smallNormal, vertical: Insets.small),
+              horizontal: Insets.smallNormal),
           decoration: BoxDecoration(
             border: Border.all(
               color: _isOpen
@@ -138,9 +139,9 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                   : context.isDarkMode
                       ? AppColors.borderDark
                       : AppColors.border,
-              width: 1.5,
+              width: kInputBorderWidth,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(kInputBorderRadius),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
