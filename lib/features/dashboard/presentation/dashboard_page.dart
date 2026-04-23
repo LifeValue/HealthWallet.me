@@ -203,8 +203,14 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Scaffold(
         body: Stack(
           children: [
-            PageView.builder(
+            ValueListenableBuilder<bool>(
+              valueListenable: _navigationController.swipeEnabledNotifier,
+              builder: (context, swipeEnabled, _) {
+                return PageView.builder(
               controller: _navigationController.pageController,
+              physics: swipeEnabled
+                  ? null
+                  : const NeverScrollableScrollPhysics(),
               onPageChanged: (index) {
                 FocusScope.of(context).unfocus();
               },
@@ -244,6 +250,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   default:
                     return const SizedBox.shrink();
                 }
+              },
+            );
               },
             ),
             BlocBuilder<SyncBloc, SyncState>(

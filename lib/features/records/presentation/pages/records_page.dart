@@ -4,8 +4,10 @@ import 'package:auto_route/auto_route.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -19,7 +21,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_active_filters_bar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
-import 'package:health_wallet/features/records/presentation/widgets/search_widget.dart';
+import 'package:health_wallet/features/records/presentation/widgets/records_toolbar.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
@@ -30,12 +32,14 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
-import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
+import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
+import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
@@ -68,11 +72,17 @@ class _RecordsViewState extends State<RecordsView> {
 
   Timer? _debounceTimer;
   bool _showScrollToTopButton = false;
+  RecordsViewMode _viewMode = RecordsViewMode.recordsList;
+  final ValueNotifier<bool> _isAttachmentScrolled = ValueNotifier(false);
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _loadViewMode();
+    getIt<PageViewNavigationController>()
+        .currentPageNotifier
+        .addListener(_updateSwipeState);
 
     final selected = context.read<HomeBloc>().state.selectedSource;
     final selectedSourceId = selected == 'All' ? null : selected;
@@ -87,6 +97,42 @@ class _RecordsViewState extends State<RecordsView> {
           .read<RecordsBloc>()
           .add(RecordsFiltersApplied(widget.initFilters!));
     }
+  }
+
+  void _loadViewMode() {
+    final prefs = getIt<SharedPreferences>();
+    final saved = prefs.getString(SharedPrefsConstants.recordsViewMode);
+    if (saved == RecordsViewMode.attachments.name) {
+      setState(() => _viewMode = RecordsViewMode.attachments);
+    }
+    _updateSwipeState();
+  }
+
+  void _setViewMode(RecordsViewMode mode) {
+    setState(() => _viewMode = mode);
+    getIt<SharedPreferences>()
+        .setString(SharedPrefsConstants.recordsViewMode, mode.name);
+    _updateSwipeState();
+  }
+
+  void _updateSwipeState() {
+    final nav = getIt<PageViewNavigationController>();
+    final isOnRecords = nav.currentPage == 1;
+    nav.swipeEnabledNotifier.value =
+        !isOnRecords || _viewMode == RecordsViewMode.recordsList;
+  }
+
+  void _reloadAttachmentBrowse(BuildContext context,
+      {List<FhirType> resourceTypes = const []}) {
+    final homeState = context.read<HomeBloc>().state;
+    final sourceId =
+        homeState.selectedSource == 'All' ? null : homeState.selectedSource;
+    final patientSourceIds =
+        _resolvePatientSourceIds(context, homeState.selectedSource);
+    context.read<AttachmentBrowseBloc>().add(AttachmentBrowseInitialised(
+        sourceId: sourceId,
+        sourceIds: patientSourceIds,
+        resourceTypes: resourceTypes));
   }
 
   List<String>? _resolvePatientSourceIds(
@@ -177,6 +223,9 @@ class _RecordsViewState extends State<RecordsView> {
   void dispose() {
     _scrollController.dispose();
     _debounceTimer?.cancel();
+    final nav = getIt<PageViewNavigationController>();
+    nav.currentPageNotifier.removeListener(_updateSwipeState);
+    nav.swipeEnabledNotifier.value = true;
     super.dispose();
   }
 
@@ -247,8 +296,11 @@ class _RecordsViewState extends State<RecordsView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: getIt<LwwSyncBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: getIt<LwwSyncBloc>()),
+        BlocProvider(create: (_) => getIt<AttachmentBrowseBloc>()),
+      ],
       child: MultiBlocListener(
         listeners: [
           BlocListener<HomeBloc, HomeState>(
@@ -261,6 +313,10 @@ class _RecordsViewState extends State<RecordsView> {
               context.read<RecordsBloc>().add(RecordsSourceChanged(
                   selectedSourceId,
                   sourceIds: patientSourceIds));
+              context.read<AttachmentBrowseBloc>().add(AttachmentBrowseInitialised(
+                  sourceId: selectedSourceId,
+                  sourceIds: patientSourceIds,
+                  resourceTypes: context.read<RecordsBloc>().state.activeFilters));
             },
           ),
           BlocListener<SyncBloc, SyncState>(
@@ -278,6 +334,10 @@ class _RecordsViewState extends State<RecordsView> {
                 context.read<RecordsBloc>().add(RecordsSourceChanged(
                     selectedSourceId,
                     sourceIds: patientSourceIds));
+                context.read<AttachmentBrowseBloc>().add(
+                    AttachmentBrowseInitialised(
+                        sourceId: selectedSourceId,
+                        sourceIds: patientSourceIds));
               }
             },
           ),
@@ -315,20 +375,12 @@ class _RecordsViewState extends State<RecordsView> {
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: _buildAppBar(context, appBarState).preferredSize.height + MediaQuery.of(context).padding.top,
-                        child: _buildAppBar(context, appBarState),
-                      ),
-                      Expanded(
-                        child: Stack(
-                          children: [
-                            _buildBody(context),
-                  if (_showScrollToTopButton)
-                    Positioned(
-                      right: 16,
-                      bottom: 100,
+                  child: _buildBody(context, appBarState),
+                ),
+              ),
+              floatingActionButton: _showScrollToTopButton
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: 80),
                       child: FloatingActionButton(
                         onPressed: _scrollToTop,
                         mini: true,
@@ -338,14 +390,8 @@ class _RecordsViewState extends State<RecordsView> {
                             : context.colorScheme.onPrimary,
                         child: const Icon(Icons.keyboard_arrow_up),
                       ),
-                    ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                    )
+                  : null,
             ),
           );
         },
@@ -354,50 +400,51 @@ class _RecordsViewState extends State<RecordsView> {
     );
   }
 
-  CustomAppBar _buildAppBar(BuildContext context, RecordsState appBarState) {
-    return CustomAppBar(
-      titleWidget: Text(
-        appBarState.isSelectionMode
-            ? context.l10n.recordsSelectedCount(appBarState.selectedResourceIds.length)
-            : context.l10n.noRecordsSelected,
-        style: AppTextStyle.bodyMedium.copyWith(
-          color: context.colorScheme.onSurface,
+  Widget _buildTitleRow(BuildContext context, RecordsState appBarState) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            appBarState.isSelectionMode
+                ? context.l10n.recordsSelectedCount(
+                    appBarState.selectedResourceIds.length)
+                : context.l10n.noRecordsSelected,
+            style: AppTextStyle.bodyMedium.copyWith(
+              color: context.colorScheme.onSurface,
+            ),
+          ),
         ),
-      ),
-      automaticallyImplyLeading: false,
-      extraTopPadding: context.isTablet ? 16 : 0,
-      actions: [
         Container(
-          margin: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
             color: context.colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: TextButton(
-            onPressed: () {
+          child: GestureDetector(
+            onTap: () {
               CustomArrowTooltip.dismiss();
               context
                   .read<RecordsBloc>()
                   .add(const RecordsSelectionModeToggled());
             },
-            style: TextButton.styleFrom(
+            child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 8,
+                horizontal: 16,
+                vertical: 6,
               ),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              appBarState.isSelectionMode ? context.l10n.cancel : context.l10n.select,
-              style: AppTextStyle.labelLarge.copyWith(
-                color: context.colorScheme.primary,
+              child: Text(
+                appBarState.isSelectionMode
+                    ? context.l10n.cancel
+                    : context.l10n.select,
+                style: AppTextStyle.labelLarge.copyWith(
+                  color: context.colorScheme.primary,
+                ),
               ),
             ),
           ),
         ),
         IconButton(
           key: _shareTooltipKey,
+          visualDensity: VisualDensity.compact,
           onPressed: () => _handleShare(context),
           icon: Assets.icons.shareNearby.svg(
             colorFilter: ColorFilter.mode(
@@ -407,35 +454,6 @@ class _RecordsViewState extends State<RecordsView> {
               BlendMode.srcIn,
             ),
           ),
-        ),
-        BlocBuilder<RecordsBloc, RecordsState>(
-          builder: (context, filterState) {
-            return IconButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  builder: (context) => RecordsFilterBottomSheet(
-                    activeFilters: filterState.activeFilters,
-                    currentDateFilter: filterState.dateFilter,
-                    onApply: (filters, dateFilter) =>
-                        context.read<RecordsBloc>().add(RecordsFiltersApplied(
-                              filters,
-                              dateFilter: dateFilter,
-                            )),
-                  ),
-                  isScrollControlled: true,
-                );
-              },
-              icon: Assets.icons.filter.svg(
-                colorFilter: ColorFilter.mode(
-                  context.colorScheme.onSurface,
-                  BlendMode.srcIn,
-                ),
-              ),
-            );
-          },
         ),
       ],
     );
@@ -491,16 +509,139 @@ class _RecordsViewState extends State<RecordsView> {
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildHeader(BuildContext context, RecordsState appBarState) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isAttachmentScrolled,
+      builder: (context, isScrolled, _) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.colorScheme.surface,
+            borderRadius: isScrolled
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  )
+                : BorderRadius.zero,
+            boxShadow: isScrolled
+                ? [
+                    BoxShadow(
+                      offset: const Offset(0, 4),
+                      blurRadius: 12,
+                      color: Colors.black.withValues(alpha: 0.15),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: MediaQuery.of(context).padding.top + Insets.small,
+              bottom: isScrolled ? Insets.smallNormal : 0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTitleRow(context, appBarState),
+                const SizedBox(height: Insets.extraSmall),
+                RecordsToolbar(
+            viewMode: _viewMode,
+            onViewModeChanged: (mode) {
+              _setViewMode(mode);
+              if (mode == RecordsViewMode.attachments) {
+                final filters = context.read<RecordsBloc>().state.activeFilters;
+                _reloadAttachmentBrowse(context, resourceTypes: filters);
+              }
+            },
+            onFilterTap: () {
+              final recordsBloc = context.read<RecordsBloc>();
+              final recordsState = recordsBloc.state;
+              showModalBottomSheet(
+                context: context,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                builder: (_) => RecordsFilterBottomSheet(
+                  activeFilters: recordsState.activeFilters,
+                  currentDateFilter: recordsState.dateFilter,
+                  onApply: (filters, dateFilter) =>
+                      recordsBloc.add(RecordsFiltersApplied(
+                        filters,
+                        dateFilter: dateFilter,
+                      )),
+                ),
+                isScrollControlled: true,
+              );
+            },
+          ),
+          BlocBuilder<RecordsBloc, RecordsState>(
+            buildWhen: (previous, current) =>
+                previous.activeFilters != current.activeFilters ||
+                previous.dateFilter != current.dateFilter,
+            builder: (context, recordsState) {
+              return RecordsActiveFiltersBar(
+                activeFilters: recordsState.activeFilters,
+                dateFilter: recordsState.dateFilter,
+              );
+            },
+          ),
+        ],
+      ),
+      ),
+    );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, RecordsState appBarState) {
+    if (_viewMode == RecordsViewMode.attachments) {
+      return _buildAttachmentsBody(context, appBarState);
+    }
+
     return BlocBuilder<RecordsBloc, RecordsState>(
       buildWhen: (previous, current) =>
           previous.activeFilters != current.activeFilters ||
           previous.dateFilter != current.dateFilter,
       builder: (context, filterState) {
         return AnimatedStickyHeader(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: MediaQuery.of(context).padding.top + Insets.small,
+            bottom: 0,
+          ),
           children: [
-            const SearchWidget(),
-            const SizedBox(height: Insets.small),
+            _buildTitleRow(context, appBarState),
+            const SizedBox(height: Insets.extraSmall),
+            RecordsToolbar(
+              viewMode: _viewMode,
+              onViewModeChanged: (mode) {
+                _setViewMode(mode);
+                if (mode == RecordsViewMode.attachments) {
+                  final filters = context.read<RecordsBloc>().state.activeFilters;
+                  _reloadAttachmentBrowse(context, resourceTypes: filters);
+                }
+              },
+              onFilterTap: () {
+                final recordsBloc = context.read<RecordsBloc>();
+                final recordsState = recordsBloc.state;
+                showModalBottomSheet(
+                  context: context,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  builder: (_) => RecordsFilterBottomSheet(
+                    activeFilters: recordsState.activeFilters,
+                    currentDateFilter: recordsState.dateFilter,
+                    onApply: (filters, dateFilter) =>
+                        recordsBloc.add(RecordsFiltersApplied(
+                          filters,
+                          dateFilter: dateFilter,
+                        )),
+                  ),
+                  isScrollControlled: true,
+                );
+              },
+            ),
             BlocBuilder<RecordsBloc, RecordsState>(
               buildWhen: (previous, current) =>
                   previous.activeFilters != current.activeFilters ||
@@ -544,6 +685,35 @@ class _RecordsViewState extends State<RecordsView> {
 
               return _buildRecordsList(context, state, timelineResources);
             },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAttachmentsBody(BuildContext context, RecordsState appBarState) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedHeight) {
+          return const SizedBox.shrink();
+        }
+        return SizedBox(
+          height: constraints.maxHeight,
+          width: constraints.maxWidth,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              final scrolled = notification.metrics.pixels > 0;
+              if (scrolled != _isAttachmentScrolled.value) {
+                _isAttachmentScrolled.value = scrolled;
+              }
+              return false;
+            },
+            child: Column(
+              children: [
+                _buildHeader(context, appBarState),
+                const Expanded(child: AttachmentBrowseView()),
+              ],
+            ),
           ),
         );
       },

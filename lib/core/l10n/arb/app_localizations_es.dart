@@ -833,6 +833,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get processingFailed => 'Procesamiento fallido';
 
   @override
+  String get modelNotFoundError =>
+      'Archivo de modelo no encontrado. Descarga el modelo de IA primero.';
+
+  @override
+  String get modelCorruptedError =>
+      'El archivo del modelo está dañado. Vuelve a descargar el modelo de IA.';
+
+  @override
   String get processingCancelled => 'El procesamiento fue cancelado';
 
   @override

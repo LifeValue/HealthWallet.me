@@ -834,6 +834,14 @@ class AppLocalizationsRo extends AppLocalizations {
   String get processingFailed => 'Procesare eșuată';
 
   @override
+  String get modelNotFoundError =>
+      'Fișierul modelului nu a fost găsit. Descarcă modelul AI mai întâi.';
+
+  @override
+  String get modelCorruptedError =>
+      'Fișierul modelului este corupt. Re-descarcă modelul AI.';
+
+  @override
   String get processingCancelled => 'Procesarea a fost anulată';
 
   @override

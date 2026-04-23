@@ -1614,6 +1614,18 @@ abstract class AppLocalizations {
   /// **'Processing failed'**
   String get processingFailed;
 
+  /// No description provided for @modelNotFoundError.
+  ///
+  /// In en, this message translates to:
+  /// **'Model file not found. Please download the AI model first.'**
+  String get modelNotFoundError;
+
+  /// No description provided for @modelCorruptedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Model file is corrupted. Please re-download the AI model.'**
+  String get modelCorruptedError;
+
   /// No description provided for @processingCancelled.
   ///
   /// In en, this message translates to:

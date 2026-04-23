@@ -61,18 +61,19 @@ class RecordsActiveFiltersBar extends StatelessWidget {
           ),
         );
 
-        return Row(
-          children: [
-            Expanded(
-              child: Wrap(
-                spacing: 8.0,
-                runSpacing: 8,
-                children: allChips,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: 6.0,
+                  runSpacing: 6,
+                  children: allChips,
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: GestureDetector(
+              GestureDetector(
                 onTap: () {
                   context
                       .read<RecordsBloc>()
@@ -81,17 +82,20 @@ class RecordsActiveFiltersBar extends StatelessWidget {
                       .read<RecordsBloc>()
                       .add(const RecordsDateRangeCleared());
                 },
-                child: Assets.icons.close.svg(
-                  width: 20,
-                  height: 20,
-                  colorFilter: const ColorFilter.mode(
-                    AppColors.primary,
-                    BlendMode.srcIn,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Assets.icons.close.svg(
+                    width: 22,
+                    height: 22,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -106,7 +110,7 @@ class RecordsActiveFiltersBar extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
-          vertical: 4,
+          vertical: 2,
           horizontal: 8,
         ),
         decoration: BoxDecoration(

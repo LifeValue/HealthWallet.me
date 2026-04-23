@@ -48,6 +48,10 @@ class $AssetsIconsGen {
   SvgGenImage get attachment =>
       const SvgGenImage('assets/icons/attachment.svg');
 
+  /// File path: assets/icons/attachments-view.svg
+  SvgGenImage get attachmentsView =>
+      const SvgGenImage('assets/icons/attachments-view.svg');
+
   /// File path: assets/icons/blood-glucose.svg
   SvgGenImage get bloodGlucose =>
       const SvgGenImage('assets/icons/blood-glucose.svg');
@@ -157,6 +161,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/license-draft-notes.svg
   SvgGenImage get licenseDraftNotes =>
       const SvgGenImage('assets/icons/license-draft-notes.svg');
+
+  /// File path: assets/icons/list.svg
+  SvgGenImage get list => const SvgGenImage('assets/icons/list.svg');
 
   /// File path: assets/icons/medication.svg
   SvgGenImage get medication =>

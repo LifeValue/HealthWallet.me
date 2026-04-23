@@ -1,0 +1,210 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
+import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
+import 'package:health_wallet/core/utils/pdf_thumbnail_utils.dart';
+
+class AttachmentThumbnailStrip extends StatelessWidget {
+  final List<AttachmentBrowseEntry> records;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final ScrollController scrollController;
+  final bool isSelectionMode;
+  final Set<String> selectedResourceIds;
+  final ValueChanged<String>? onSelectionToggle;
+
+  const AttachmentThumbnailStrip({
+    super.key,
+    required this.records,
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.scrollController,
+    this.isSelectionMode = false,
+    this.selectedResourceIds = const {},
+    this.onSelectionToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      controller: scrollController,
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: kThumbnailPadding),
+      itemCount: records.length,
+      separatorBuilder: (_, __) => const SizedBox(width: kThumbnailGap),
+      itemBuilder: (context, index) {
+        final entry = records[index];
+        final isCurrent = index == selectedIndex;
+        final isChecked = selectedResourceIds.contains(entry.record.id);
+        final hasFile = entry.thumbnailPath != null;
+
+        return GestureDetector(
+          onTap: () {
+            if (isSelectionMode) {
+              onSelectionToggle?.call(entry.record.id);
+            } else {
+              onSelected(index);
+            }
+          },
+          onLongPress: isSelectionMode
+              ? null
+              : () {
+                  context.read<RecordsBloc>().add(
+                        const RecordsSelectionModeToggled(),
+                      );
+                  onSelectionToggle?.call(entry.record.id);
+                },
+          child: Container(
+            width: kThumbnailItemWidth,
+            height: kThumbnailItemWidth,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isChecked
+                    ? AppColors.primary
+                    : isCurrent
+                        ? AppColors.primary
+                        : context.colorScheme.onSurface.withValues(alpha: 0.24),
+                width: isChecked || isCurrent ? 3 : 1,
+              ),
+              color: isChecked
+                  ? AppColors.primary.withValues(alpha: 0.15)
+                  : hasFile
+                      ? Colors.white
+                      : context.isDarkMode
+                          ? context.colorScheme.surface
+                          : Colors.grey.shade100,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                _ThumbnailContent(entry: entry),
+                if (isChecked)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ThumbnailContent extends StatefulWidget {
+  final AttachmentBrowseEntry entry;
+
+  const _ThumbnailContent({required this.entry});
+
+  @override
+  State<_ThumbnailContent> createState() => _ThumbnailContentState();
+}
+
+class _ThumbnailContentState extends State<_ThumbnailContent> {
+  Uint8List? _pdfBytes;
+  bool _triedPdf = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tryLoadPreview();
+  }
+
+  @override
+  void didUpdateWidget(_ThumbnailContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.entry.thumbnailPath != widget.entry.thumbnailPath) {
+      _pdfBytes = null;
+      _triedPdf = false;
+      _tryLoadPreview();
+    }
+  }
+
+  bool get _isPdf {
+    final path = widget.entry.thumbnailPath?.toLowerCase() ?? '';
+    return path.endsWith('.pdf');
+  }
+
+  void _tryLoadPreview() {
+    if (widget.entry.thumbnailPath == null) return;
+    if (!_isPdf) return;
+    _triedPdf = true;
+    _renderPdfThumb(widget.entry.thumbnailPath!);
+  }
+
+  Future<void> _renderPdfThumb(String filePath) async {
+    final bytes = await renderPdfFirstPage(filePath);
+    if (mounted && bytes != null) {
+      setState(() => _pdfBytes = bytes);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.entry.thumbnailPath != null && !_isPdf) {
+      return Image.file(
+        File(widget.entry.thumbnailPath!),
+        fit: BoxFit.cover,
+        width: 100,
+        height: 100,
+        errorBuilder: (_, __, ___) => _TitleFallback(title: widget.entry.record.title),
+      );
+    }
+
+    if (_pdfBytes != null) {
+      return Image.memory(
+        _pdfBytes!,
+        fit: BoxFit.cover,
+        width: 100,
+        height: 100,
+      );
+    }
+
+    return _TitleFallback(title: widget.entry.record.title);
+  }
+}
+
+class _TitleFallback extends StatelessWidget {
+  final String title;
+
+  const _TitleFallback({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text(
+          title,
+          style: AppTextStyle.labelSmall.copyWith(
+            color: context.colorScheme.onSurface.withValues(alpha: 0.85),
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+}

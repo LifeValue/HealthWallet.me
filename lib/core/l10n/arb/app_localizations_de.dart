@@ -837,6 +837,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get processingFailed => 'Verarbeitung fehlgeschlagen';
 
   @override
+  String get modelNotFoundError =>
+      'Modelldatei nicht gefunden. Bitte laden Sie das KI-Modell zuerst herunter.';
+
+  @override
+  String get modelCorruptedError =>
+      'Modelldatei ist beschädigt. Bitte laden Sie das KI-Modell erneut herunter.';
+
+  @override
   String get processingCancelled => 'Die Verarbeitung wurde abgebrochen';
 
   @override

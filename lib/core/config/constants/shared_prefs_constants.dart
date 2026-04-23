@@ -17,4 +17,5 @@ class SharedPrefsConstants {
   static const appLocale = 'appLocale';
   static const backupDirectory = 'backupDirectory';
   static const minimizeToTray = 'minimizeToTray';
+  static const recordsViewMode = 'recordsViewMode';
 }
