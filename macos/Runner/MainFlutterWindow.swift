@@ -11,5 +11,9 @@ class MainFlutterWindow: NSWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     super.awakeFromNib()
+
+    if let screen = self.screen ?? NSScreen.main {
+      self.setFrame(screen.visibleFrame, display: true)
+    }
   }
 }

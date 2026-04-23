@@ -10,6 +10,9 @@ import 'package:health_wallet/features/desktop/communication/data/services/tcp_s
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/desktop/tray/data/services/tray_service.dart';
+import 'package:health_wallet/features/desktop/tray/data/services/window_lifecycle_service.dart';
+import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 void main() async {
@@ -28,11 +31,32 @@ void main() async {
     ),
   );
 
+  getIt.registerLazySingleton<TrayBloc>(
+    () => TrayBloc(
+      getIt<TrayService>(),
+      getIt<WindowLifecycleService>(),
+    ),
+  );
+
   getIt<CommunicationBloc>().add(const CommunicationInitialised());
   getIt<BackupBloc>().add(const BackupHistoryLoaded());
   getIt<ProcessingBloc>().add(const ProcessingInitialised());
   getIt<LwwSyncBloc>().add(const LwwSyncInitialised());
   getIt<HandoverBloc>().add(const HandoverInitialised());
+  getIt<TrayBloc>().add(const TrayInitialised());
+
+  getIt<CommunicationBloc>().stream.listen((commState) {
+    getIt<TrayBloc>().add(TrayConnectionStatusChanged(
+      connectionStatus: commState.connectionStatus,
+      deviceName: commState.connectedDeviceName,
+    ));
+  });
+
+  getIt<LwwSyncBloc>().stream.listen((syncState) {
+    getIt<TrayBloc>().add(TraySyncStatusChanged(
+      syncStatus: syncState.syncStatus,
+    ));
+  });
 
   await bootstrap(() => const App());
 }

@@ -27,6 +27,7 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/secti
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
+import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 
 class App extends StatefulWidget {
@@ -138,6 +139,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         ),
         BlocProvider.value(value: getIt<NotificationBloc>()),
         BlocProvider(create: (_) => getIt<WalletPassBloc>()),
+        if (getIt<AppPlatform>().isDesktop)
+          BlocProvider.value(value: getIt<TrayBloc>()),
       ],
       child: MultiBlocListener(
         listeners: [
