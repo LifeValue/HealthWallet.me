@@ -32,7 +32,8 @@ class PdfPreviewService {
     final attachment = (contentList[0] as Map?)?['attachment'] as Map?;
     final url = attachment?['url'] as String?;
     if (url == null) return null;
-    final rawPath = url.startsWith('file://') ? url.substring(7) : url;
+    final rawPath = Uri.decodeComponent(
+        url.startsWith('file://') ? url.substring(7) : url);
     final resolved = await _pathResolver.toAbsolute(rawPath);
     return resolved;
   }

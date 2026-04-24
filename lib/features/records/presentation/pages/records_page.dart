@@ -537,7 +537,7 @@ class _RecordsViewState extends State<RecordsView> {
               left: 20,
               right: 20,
               top: MediaQuery.of(context).padding.top + Insets.small,
-              bottom: isScrolled ? Insets.smallNormal : 0,
+              bottom: isScrolled ? Insets.small : Insets.smaller,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -702,6 +702,7 @@ class _RecordsViewState extends State<RecordsView> {
           width: constraints.maxWidth,
           child: NotificationListener<ScrollNotification>(
             onNotification: (notification) {
+              if (notification.metrics.axis != Axis.vertical) return false;
               final scrolled = notification.metrics.pixels > 0;
               if (scrolled != _isAttachmentScrolled.value) {
                 _isAttachmentScrolled.value = scrolled;

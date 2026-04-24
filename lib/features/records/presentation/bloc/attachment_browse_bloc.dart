@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
@@ -23,6 +24,7 @@ class AttachmentBrowseBloc
     on<AttachmentBrowseSelected>(_onRecordSelected);
     on<AttachmentBrowseMonthSelected>(_onMonthSelected);
     on<AttachmentBrowseSearchChanged>(_onSearchChanged);
+    on<AttachmentBrowseDetailRefreshed>(_onDetailRefreshed);
   }
 
   Future<void> _onInitialised(
@@ -43,6 +45,7 @@ class AttachmentBrowseBloc
     List<String>? sourceIds,
     List<FhirType> resourceTypes = const [],
   }) async {
+    debugPrint('[BROWSE] _loadRecords sourceId=$sourceId, resourceTypes=$resourceTypes');
     emit(state.copyWith(status: AttachmentBrowseStatus.loading));
 
     try {
@@ -53,6 +56,7 @@ class AttachmentBrowseBloc
         limit: 1000,
         offset: 0,
       );
+      debugPrint('[BROWSE] loaded ${records.length} records');
 
       records.sort((a, b) {
         final dateA = a.date;
@@ -70,20 +74,35 @@ class AttachmentBrowseBloc
         limit: 2000,
         offset: 0,
       );
+      debugPrint('[BROWSE] loaded ${documentReferences.length} DocumentReferences');
 
       final docsByEncounter = <String, List<IFhirResource>>{};
+      final docsByRelated = <String, List<IFhirResource>>{};
       for (final doc in documentReferences) {
         final encId = doc.encounterId;
         if (encId.isNotEmpty) {
           docsByEncounter.putIfAbsent(encId, () => []).add(doc);
         }
+        final related = doc.rawResource['context']?['related'] as List?;
+        if (related != null) {
+          for (final ref in related) {
+            final refStr = ref['reference'] as String?;
+            if (refStr != null) {
+              final id = refStr.contains('/') ? refStr.split('/').last : refStr;
+              docsByRelated.putIfAbsent(id, () => []).add(doc);
+            }
+          }
+        }
       }
+      debugPrint('[BROWSE] docsByEncounter keys: ${docsByEncounter.keys.toList()}');
+      debugPrint('[BROWSE] docsByRelated keys: ${docsByRelated.keys.toList()}');
 
       final entries = <AttachmentBrowseEntry>[];
       for (final record in records) {
         if (record.fhirType == FhirType.DocumentReference) continue;
         final docs = docsByEncounter[record.resourceId] ??
             docsByEncounter[record.encounterId] ??
+            docsByRelated[record.resourceId] ??
             [];
         String? thumbnailPath;
 
@@ -101,8 +120,8 @@ class AttachmentBrowseBloc
                     contentType == 'application/pdf')) {
               final url = attachment['url'] as String?;
               if (url != null && url.isNotEmpty) {
-                final rawPath =
-                    url.startsWith('file://') ? url.substring(7) : url;
+                final rawPath = Uri.decodeComponent(
+                    url.startsWith('file://') ? url.substring(7) : url);
                 try {
                   final resolved = await _pathResolver.toAbsolute(rawPath);
                   if (await File(resolved).exists()) {
@@ -225,22 +244,37 @@ class AttachmentBrowseBloc
     ));
   }
 
+  Future<void> _onDetailRefreshed(
+    AttachmentBrowseDetailRefreshed event,
+    Emitter<AttachmentBrowseState> emit,
+  ) async {
+    final index = state.selectedIndex;
+    if (index < 0 || index >= state.records.length) return;
+
+    final entry = state.records[index];
+    final detail =
+        await _loadDetail(entry.record, sourceId: entry.record.sourceId);
+    emit(state.copyWith(selectedDetail: detail));
+  }
+
   Future<AttachmentBrowseDetail> _loadDetail(
     IFhirResource record, {
     String? sourceId,
   }) async {
+    debugPrint('[DETAIL] _loadDetail record=${record.resourceId} type=${record.fhirType} sourceId=$sourceId');
     List<IFhirResource> related = [];
     try {
       final encId = record.fhirType == FhirType.Encounter
           ? record.resourceId
           : record.encounterId;
+      debugPrint('[DETAIL] encId=$encId');
       if (encId.isNotEmpty) {
         related = await _recordsRepository.getRelatedResourcesForEncounter(
           encounterId: encId,
-          sourceId: sourceId,
         );
       }
     } catch (_) {}
+    debugPrint('[DETAIL] related resources: ${related.length} (types: ${related.map((r) => r.fhirType).toList()})');
 
     String? patientName;
     String? organizationName;
@@ -263,12 +297,41 @@ class AttachmentBrowseBloc
             practitionerName = _extractPersonName(resource.rawResource);
           case FhirType.DocumentReference:
             final docAttachments = await _resolveDocumentAttachments(resource);
+            debugPrint('[DETAIL] encounter DocRef ${resource.resourceId}: ${docAttachments.length} files');
             attachments.addAll(docAttachments);
           default:
             break;
         }
       } catch (_) {}
     }
+    debugPrint('[DETAIL] after encounter lookup: ${attachments.length} attachments');
+
+    try {
+      final existingIds = attachments.map((a) => a.id).toSet();
+      final allDocs = await _recordsRepository.getResources(
+        resourceTypes: [FhirType.DocumentReference],
+        limit: 500,
+      );
+      debugPrint('[DETAIL] context.related search: ${allDocs.length} total DocRefs, existingIds=$existingIds');
+      for (final doc in allDocs) {
+        if (existingIds.contains(doc.resourceId)) continue;
+        final relatedList =
+            doc.rawResource['context']?['related'] as List?;
+        if (relatedList == null) continue;
+        final matches = relatedList.any((ref) {
+          final refStr = ref['reference'] as String?;
+          if (refStr == null) return false;
+          final id = refStr.contains('/') ? refStr.split('/').last : refStr;
+          return id == record.resourceId;
+        });
+        if (matches) {
+          final docAttachments = await _resolveDocumentAttachments(doc);
+          debugPrint('[DETAIL] related DocRef ${doc.resourceId}: ${docAttachments.length} files');
+          attachments.addAll(docAttachments);
+        }
+      }
+    } catch (_) {}
+    debugPrint('[DETAIL] final attachments: ${attachments.length} (titles: ${attachments.map((a) => a.title).toList()})');
 
     if (patientName == null && organizationName == null && practitionerName == null) {
       _extractContextFromRecord(record, (p, o, pr) {
@@ -379,7 +442,8 @@ class AttachmentBrowseBloc
       String? resolvedPath;
 
       if (url != null && url.isNotEmpty) {
-        final rawPath = url.startsWith('file://') ? url.substring(7) : url;
+        final rawPath = Uri.decodeComponent(
+            url.startsWith('file://') ? url.substring(7) : url);
         try {
           final absolute = await _pathResolver.toAbsolute(rawPath);
           if (await File(absolute).exists()) {

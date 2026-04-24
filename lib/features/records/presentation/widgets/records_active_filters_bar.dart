@@ -62,7 +62,7 @@ class RecordsActiveFiltersBar extends StatelessWidget {
         );
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 6),
+          padding: EdgeInsets.only(top: 4, bottom: allChips.length > 2 ? 4 : 0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -83,7 +83,7 @@ class RecordsActiveFiltersBar extends StatelessWidget {
                       .add(const RecordsDateRangeCleared());
                 },
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Assets.icons.close.svg(
                     width: 22,
                     height: 22,

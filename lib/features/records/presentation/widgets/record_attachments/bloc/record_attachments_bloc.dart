@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -144,7 +145,7 @@ class RecordAttachmentsBloc
 
       String? filePath;
       if (url?.startsWith('file://') == true) {
-        final rawPath = url!.substring(7);
+        final rawPath = Uri.decodeComponent(url!.substring(7));
         final resolved = await _pathResolver.toAbsolute(rawPath);
         if (await File(resolved).exists()) {
           filePath = resolved;
@@ -172,7 +173,10 @@ class RecordAttachmentsBloc
     emit(state.copyWith(status: const RecordAttachmentsStatus.loading()));
 
     try {
+      debugPrint('[ATTACH] resource type: ${state.resource.fhirType}, id: ${state.resource.id}, resourceId: ${state.resource.resourceId}');
+
       if (state.resource.fhirType == FhirType.DocumentReference) {
+        debugPrint('[ATTACH] ERROR: Cannot attach to DocumentReference');
         emit(state.copyWith(
             status: const RecordAttachmentsStatus.error(
                 'Cannot attach files to DocumentReference resources')));
@@ -180,44 +184,57 @@ class RecordAttachmentsBloc
       }
 
       Directory appDirectory = await getApplicationDocumentsDirectory();
+      debugPrint('[ATTACH] appDir: ${appDirectory.path}');
 
       String originalFileName = basename(event.file.path);
       String newFilePath = join(appDirectory.path, originalFileName);
+      debugPrint('[ATTACH] source: ${event.file.path}');
+      debugPrint('[ATTACH] destination: $newFilePath');
 
       await event.file.copy(newFilePath);
+      final copiedExists = await File(newFilePath).exists();
+      debugPrint('[ATTACH] file copied, exists: $copiedExists');
 
       final subjectId = _extractSubjectId(state.resource);
       final encounterId = _extractEncounterId(state.resource);
+      debugPrint('[ATTACH] subjectId: $subjectId, encounterId: $encounterId');
 
       final effectiveSourceId = await _getEffectiveSourceId(
         resourceSourceId: state.resource.sourceId,
         patientId: subjectId ?? '',
       );
+      debugPrint('[ATTACH] effectiveSourceId: $effectiveSourceId');
 
       final documentReference = await _createDocumentReference(
         filePath: newFilePath,
         fileName: originalFileName,
         subjectId: subjectId ?? '',
         encounterId: encounterId,
-        relatedResourceId: state.resource.id,
+        relatedResourceId: state.resource.resourceId,
         relatedResourceType: state.resource.fhirType.name,
       );
+      debugPrint('[ATTACH] DocumentReference created, id: ${documentReference.id?.valueString}');
 
       await _saveDocumentReferenceToDatabase(
         documentReference: documentReference,
         sourceId: effectiveSourceId,
         title: originalFileName,
       );
+      debugPrint('[ATTACH] saved to DB');
 
       try {
         final homeBloc = getIt<HomeBloc>();
         homeBloc.add(const HomeRefreshPreservingOrder());
       } catch (e) {
+        debugPrint('[ATTACH] HomeBloc refresh error: $e');
       }
 
+      debugPrint('[ATTACH] success, re-initialising');
       emit(state.copyWith(attachments: []));
       add(RecordAttachmentsInitialised(resource: state.resource));
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[ATTACH] ERROR: $e');
+      debugPrint('[ATTACH] STACK: $stack');
       emit(state.copyWith(status: RecordAttachmentsStatus.error(e)));
     }
   }
@@ -269,7 +286,7 @@ class RecordAttachmentsBloc
         fhir_r4.DocumentReferenceContent(
           attachment: fhir_r4.Attachment(
             contentType: fhir_r4.FhirCode(_getContentTypeFromPath(filePath)),
-            url: fhir_r4.FhirUrl('file://$relativeFilePath'),
+            url: fhir_r4.FhirUrl('file://${relativeFilePath.split('/').map(Uri.encodeComponent).join('/')}'),
             title: fhir_r4.FhirString(fileName),
             size: fhir_r4.FhirUnsignedInt(bytes.length.toString()),
           ),
@@ -383,7 +400,7 @@ class RecordAttachmentsBloc
           final attachment = content.first['attachment'];
           final url = attachment?['url'] as String?;
           if (url != null && url.startsWith('file://')) {
-            final rawPath = url.substring(7);
+            final rawPath = Uri.decodeComponent(url.substring(7));
             final absolutePath = await _pathResolver.toAbsolute(rawPath);
             final file = File(absolutePath);
             if (await file.exists()) {

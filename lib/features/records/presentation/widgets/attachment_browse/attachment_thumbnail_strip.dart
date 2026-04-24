@@ -60,51 +60,12 @@ class AttachmentThumbnailStrip extends StatelessWidget {
                       );
                   onSelectionToggle?.call(entry.record.id);
                 },
-          child: Container(
-            width: kThumbnailItemWidth,
-            height: kThumbnailItemWidth,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isChecked
-                    ? AppColors.primary
-                    : isCurrent
-                        ? AppColors.primary
-                        : context.colorScheme.onSurface.withValues(alpha: 0.24),
-                width: isChecked || isCurrent ? 3 : 1,
-              ),
-              color: isChecked
-                  ? AppColors.primary.withValues(alpha: 0.15)
-                  : hasFile
-                      ? Colors.white
-                      : context.isDarkMode
-                          ? context.colorScheme.surface
-                          : Colors.grey.shade100,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              children: [
-                _ThumbnailContent(entry: entry),
-                if (isChecked)
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          child: _ThumbnailFrame(
+            isCurrent: isCurrent,
+            isChecked: isChecked,
+            isDashed: isSelectionMode && !isChecked,
+            hasFile: hasFile,
+            entry: entry,
           ),
         );
       },
@@ -183,6 +144,140 @@ class _ThumbnailContentState extends State<_ThumbnailContent> {
 
     return _TitleFallback(title: widget.entry.record.title);
   }
+}
+
+class _ThumbnailFrame extends StatelessWidget {
+  final bool isCurrent;
+  final bool isChecked;
+  final bool isDashed;
+  final bool hasFile;
+  final AttachmentBrowseEntry entry;
+
+  const _ThumbnailFrame({
+    required this.isCurrent,
+    required this.isChecked,
+    required this.isDashed,
+    required this.hasFile,
+    required this.entry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fillColor = isChecked
+        ? AppColors.primary.withValues(alpha: 0.15)
+        : hasFile
+            ? Colors.white
+            : context.isDarkMode
+                ? context.colorScheme.surface
+                : Colors.grey.shade100;
+
+    final child = SizedBox(
+      width: kThumbnailItemWidth,
+      height: kThumbnailItemWidth,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              color: fillColor,
+              child: _ThumbnailContent(entry: entry),
+            ),
+          ),
+          if (isChecked)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, size: 14, color: Colors.white),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (isDashed) {
+      return CustomPaint(
+        foregroundPainter: _DashedBorderPainter(
+          color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+          borderRadius: 8,
+          dashWidth: 5,
+          dashGap: 4,
+          strokeWidth: 1.5,
+        ),
+        child: child,
+      );
+    }
+
+    return Container(
+      width: kThumbnailItemWidth,
+      height: kThumbnailItemWidth,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isChecked
+              ? AppColors.primary
+              : isCurrent
+                  ? AppColors.primary
+                  : context.colorScheme.onSurface.withValues(alpha: 0.24),
+          width: isChecked || isCurrent ? 3 : 1,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double borderRadius;
+  final double dashWidth;
+  final double dashGap;
+  final double strokeWidth;
+
+  _DashedBorderPainter({
+    required this.color,
+    required this.borderRadius,
+    required this.dashWidth,
+    required this.dashGap,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(borderRadius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = (distance + dashWidth).clamp(0.0, metric.length);
+        final segment = metric.extractPath(distance, end);
+        canvas.drawPath(segment, paint);
+        distance += dashWidth + dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
+      color != oldDelegate.color ||
+      strokeWidth != oldDelegate.strokeWidth;
 }
 
 class _TitleFallback extends StatelessWidget {

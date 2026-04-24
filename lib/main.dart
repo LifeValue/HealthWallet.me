@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:health_wallet/app/view/app.dart';
 import 'package:health_wallet/bootstrap.dart';
@@ -15,6 +17,12 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+  if (prefs.containsKey('lww_offline_queue')) {
+    debugPrint('[MAIN] Clearing lww_offline_queue to free memory');
+    await prefs.remove('lww_offline_queue');
+  }
 
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 

@@ -71,7 +71,7 @@ class AttachmentSyncService {
       final attachment = item['attachment'] as Map<String, dynamic>?;
       final url = attachment?['url'] as String?;
       if (url != null && url.startsWith('file://')) {
-        final file = await resolveFile(url.substring(7));
+        final file = await resolveFile(Uri.decodeComponent(url.substring(7)));
         if (file != null) {
           final bytes = await file.readAsBytes();
           attachment!['data'] = base64Encode(bytes);

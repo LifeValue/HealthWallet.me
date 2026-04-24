@@ -126,9 +126,29 @@ class _SourceListDialogState extends State<SourceListDialog> {
               child: ListView.builder(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: Insets.small),
-                itemCount: _getSortedSources().length,
+                itemCount: _getSectionedItems().length,
                 itemBuilder: (context, index) {
-                  final source = _getSortedSources()[index];
+                  final item = _getSectionedItems()[index];
+                  if (item is String) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        left: Insets.normal,
+                        top: Insets.smallNormal,
+                        bottom: Insets.extraSmall,
+                      ),
+                      child: Text(
+                        item,
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: context.isDarkMode
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    );
+                  }
+                  final source = item as Source;
                   final isSelected = source.id == widget.selectedSource;
                   final isWallet = source.id.startsWith('wallet-');
                   final isAll = source.id == 'All';
@@ -158,8 +178,11 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                 ? Assets.icons.wallet.svg(
                                     width: 18,
                                     height: 18,
-                                    colorFilter: const ColorFilter.mode(
-                                        Colors.green, BlendMode.srcIn),
+                                    colorFilter: ColorFilter.mode(
+                                        isSelected
+                                            ? context.colorScheme.primary
+                                            : iconColor,
+                                        BlendMode.srcIn),
                                   )
                                 : Icon(
                                     Icons.source,
@@ -281,6 +304,44 @@ class _SourceListDialogState extends State<SourceListDialog> {
     });
 
     return [...allSource, ...walletSource, ...otherSources];
+  }
+
+  List<dynamic> _getSectionedItems() {
+    final sources = List<Source>.from(widget.sources);
+
+    final allSource = sources.where((s) => s.id == 'All').toList();
+
+    final walletSource = sources
+        .where((s) =>
+            s.platformType == 'wallet' &&
+            s.id != 'All' &&
+            s.id != 'demo_data')
+        .toList();
+
+    final walletIds = walletSource.map((s) => s.id).toSet();
+    final otherSources = sources
+        .where((s) =>
+            s.id != 'All' &&
+            !walletIds.contains(s.id) &&
+            s.platformType != 'wallet')
+        .toList();
+
+    otherSources.sort((a, b) {
+      final nameA = _getSourceDisplayName(context, a).toLowerCase();
+      final nameB = _getSourceDisplayName(context, b).toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
+    final items = <dynamic>[...allSource];
+    if (walletSource.isNotEmpty) {
+      items.add('WALLET');
+      items.addAll(walletSource);
+    }
+    if (otherSources.isNotEmpty) {
+      items.add('EHR SOURCES');
+      items.addAll(otherSources);
+    }
+    return items;
   }
 
   String _getSourceDisplayName(BuildContext context, Source source) {

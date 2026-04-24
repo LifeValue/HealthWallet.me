@@ -48,8 +48,8 @@ class PdfGenerationService {
         );
       }
 
-      final tempDir = await getTemporaryDirectory();
-      final pdfPath = path.join(tempDir.path, '$fileName.pdf');
+      final docsDir = await getApplicationDocumentsDirectory();
+      final pdfPath = path.join(docsDir.path, '$fileName.pdf');
       final pdfFile = File(pdfPath);
 
       final pdfBytes = await pdf.save();
@@ -72,8 +72,8 @@ class PdfGenerationService {
         throw Exception('Source PDF not found: $sourcePdfPath');
       }
 
-      final tempDir = await getTemporaryDirectory();
-      final newPdfPath = path.join(tempDir.path, '$fileName.pdf');
+      final docsDir = await getApplicationDocumentsDirectory();
+      final newPdfPath = path.join(docsDir.path, '$fileName.pdf');
 
       await sourceFile.copy(newPdfPath);
 
@@ -159,8 +159,8 @@ class PdfGenerationService {
 
   Future<int> _getIncrementalNumberForDate(String dateStr) async {
     try {
-      final tempDir = await getTemporaryDirectory();
-      final files = tempDir.listSync();
+      final docsDir = await getApplicationDocumentsDirectory();
+      final files = docsDir.listSync();
 
       final pattern = 'scanned_document_${dateStr}_';
       int maxNumber = 0;

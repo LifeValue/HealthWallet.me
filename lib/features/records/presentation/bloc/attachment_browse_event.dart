@@ -32,3 +32,5 @@ class AttachmentBrowseSearchChanged extends AttachmentBrowseEvent
   const factory AttachmentBrowseSearchChanged(String query) =
       _AttachmentBrowseSearchChanged;
 }
+
+class AttachmentBrowseDetailRefreshed extends AttachmentBrowseEvent {}

@@ -160,7 +160,7 @@ class LwwSyncService {
         final url = attachment?['url'] as String?;
         if (url == null || !url.startsWith('file://')) continue;
 
-        final rawPath = url.substring(7);
+        final rawPath = Uri.decodeComponent(url.substring(7));
         final absolutePath = rawPath.startsWith('/')
             ? rawPath
             : '${docsDir.path}/$rawPath';
@@ -262,7 +262,7 @@ class LwwSyncService {
           final attachment = item['attachment'] as Map<String, dynamic>?;
           final url = attachment?['url'] as String?;
           if (url != null && url.startsWith('file://')) {
-            final relativePath = url.substring(7);
+            final relativePath = Uri.decodeComponent(url.substring(7));
             final absolutePath = relativePath.startsWith('/')
                 ? relativePath
                 : '${docsDir.path}/$relativePath';
@@ -339,7 +339,7 @@ class LwwSyncService {
           final url = attachment?['url'] as String?;
           if (url == null) continue;
 
-          final urlPath = url.startsWith('file://') ? url.substring(7) : url;
+          final urlPath = Uri.decodeComponent(url.startsWith('file://') ? url.substring(7) : url);
           if (urlPath == oldPath || urlPath.endsWith('/$oldPath') || urlPath.split('/').last == oldPath.split('/').last) {
             attachment!['url'] = 'file://$newRelativePath';
             updated = true;
@@ -381,7 +381,7 @@ class LwwSyncService {
           final url = attachment?['url'] as String?;
           if (url == null || !url.startsWith('file://')) continue;
 
-          final rawPath = url.substring(7);
+          final rawPath = Uri.decodeComponent(url.substring(7));
           final absolutePath = rawPath.startsWith('/')
               ? rawPath
               : '${docsDir.path}/$rawPath';

@@ -73,14 +73,14 @@ class PathResolver {
 
   Future<String> resolveFileUrl(String fileUrl) async {
     if (!fileUrl.startsWith('file://')) return fileUrl;
-    final path = fileUrl.substring(7);
+    final path = Uri.decodeComponent(fileUrl.substring(7));
     final resolved = await toAbsolute(path);
     return 'file://$resolved';
   }
 
   Future<String> toRelativeFileUrl(String fileUrl) async {
     if (!fileUrl.startsWith('file://')) return fileUrl;
-    final path = fileUrl.substring(7);
+    final path = Uri.decodeComponent(fileUrl.substring(7));
     final relative = await toRelative(path);
     return 'file://$relative';
   }

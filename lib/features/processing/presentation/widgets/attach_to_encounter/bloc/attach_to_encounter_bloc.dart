@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
@@ -18,6 +19,7 @@ class AttachToEncounterBloc
     extends Bloc<AttachToEncounterEvent, AttachToEncounterState> {
   final RecordsRepository _recordsRepository;
   final PatientDeduplicationService _deduplicationService;
+  List<Patient> _allPatients = [];
 
   AttachToEncounterBloc(
     this._recordsRepository,
@@ -40,9 +42,9 @@ class AttachToEncounterBloc
         limit: 100,
       );
 
-      final allPatients = allPatientsResources.whereType<Patient>().toList();
+      _allPatients = allPatientsResources.whereType<Patient>().toList();
       List<Patient> uniquePatients =
-          _deduplicationService.getUniquePatients(allPatients);
+          _deduplicationService.getUniquePatients(_allPatients);
 
       if (uniquePatients.isEmpty) {
         emit(state.copyWith(
@@ -124,15 +126,28 @@ class AttachToEncounterBloc
     Patient patient,
   ) async {
     try {
-      final sourceId = patient.sourceId;
+      debugPrint('[ENCOUNTER_PICKER] patient.id=${patient.id} patient.resourceId=${patient.resourceId} patient.sourceId=${patient.sourceId}');
+
+      final patientSourceIds = _deduplicationService.getSourcesForPatient(
+        patient.id,
+        _allPatients,
+      );
+      final resourceSourceIds = await _deduplicationService.getSourceIdsForPatient(
+        patient.resourceId,
+      );
+      final sourceIds = {...patientSourceIds, ...resourceSourceIds}.toList();
+      debugPrint('[ENCOUNTER_PICKER] patientSourceIds=$patientSourceIds resourceSourceIds=$resourceSourceIds merged=$sourceIds');
 
       final resources = await _recordsRepository.getResources(
         resourceTypes: [FhirType.Encounter],
-        sourceId: sourceId,
+        sourceIds: sourceIds.isNotEmpty ? sourceIds : null,
+        sourceId: sourceIds.isEmpty ? patient.sourceId : null,
         limit: 100,
       );
+      debugPrint('[ENCOUNTER_PICKER] loaded ${resources.length} resources (types: ${resources.map((r) => r.fhirType).toList()})');
 
       List<Encounter> encounters = resources.whereType<Encounter>().toList();
+      debugPrint('[ENCOUNTER_PICKER] encounters: ${encounters.length} (titles: ${encounters.map((e) => '${e.title}(${e.sourceId})').toList()})');
 
       emit(state.copyWith(
         status: AttachToEncounterStatus.success,

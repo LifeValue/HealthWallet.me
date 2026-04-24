@@ -31,9 +31,17 @@ class AttachmentBrowseView extends StatefulWidget {
 
 class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
   final ScrollController _thumbnailScrollController = ScrollController();
+  final ScrollController _detailScrollController = ScrollController();
   bool _didInit = false;
   bool _isThumbnailSyncing = false;
+  int _visibleIndex = 0;
   List<FhirType> _lastFilters = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _thumbnailScrollController.addListener(_onThumbnailScroll);
+  }
 
   @override
   void didChangeDependencies() {
@@ -69,6 +77,7 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
       filters = context.read<RecordsBloc>().state.activeFilters;
     } catch (_) {}
     _lastFilters = filters;
+    debugPrint('[BROWSE_VIEW] _loadWithCurrentFilters sourceId=${source.sourceId} sourceIds=${source.sourceIds} filters=$filters');
     context.read<AttachmentBrowseBloc>().add(
           AttachmentBrowseInitialised(
             sourceId: source.sourceId,
@@ -90,8 +99,29 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
 
   @override
   void dispose() {
+    _thumbnailScrollController.removeListener(_onThumbnailScroll);
     _thumbnailScrollController.dispose();
+    _detailScrollController.dispose();
     super.dispose();
+  }
+
+  void _onThumbnailScroll() {
+    if (_isThumbnailSyncing) return;
+    if (!_thumbnailScrollController.hasClients) return;
+
+    final bloc = context.read<AttachmentBrowseBloc>();
+    final max = bloc.state.records.length - 1;
+    if (max <= 0) return;
+
+    final maxScroll = _thumbnailScrollController.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+
+    final progress =
+        (_thumbnailScrollController.offset / maxScroll).clamp(0.0, 1.0);
+    final index = (progress * max).round();
+    if (index != _visibleIndex) {
+      setState(() => _visibleIndex = index);
+    }
   }
 
   void _scrollThumbnailTo(int index) {
@@ -108,6 +138,11 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
           curve: Curves.easeInOut,
         )
         .then((_) => _isThumbnailSyncing = false);
+  }
+
+  void _scrollDetailToTop() {
+    if (!_detailScrollController.hasClients) return;
+    _detailScrollController.jumpTo(0);
   }
 
   void _checkFiltersChanged(List<FhirType> currentFilters) {
@@ -135,8 +170,10 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
             prev.selectedIndex != curr.selectedIndex &&
             curr.status == AttachmentBrowseStatus.success,
         listener: (context, state) {
+          _visibleIndex = state.selectedIndex;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _scrollThumbnailTo(state.selectedIndex);
+            _scrollDetailToTop();
           });
         },
         builder: (context, state) {
@@ -158,6 +195,11 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
           final detail = state.selectedDetail;
           final hasTimeline = state.timelineYears.isNotEmpty;
           final bottomInset = MediaQuery.of(context).padding.bottom;
+          final view = View.of(context);
+          final rawKeyboard = view.viewInsets.bottom / view.devicePixelRatio;
+          final isKeyboardOpen = rawKeyboard > 0;
+          final overlayBottomPad =
+              isKeyboardOpen ? 8.0 : _kBottomNavHeight + bottomInset;
           final timelineSpace =
               hasTimeline ? _kTimelineTopPad + _kTimelineHeight : 0.0;
           final bottomBarHeight =
@@ -173,10 +215,9 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
                 },
                 child: detail != null
                     ? SingleChildScrollView(
+                        controller: _detailScrollController,
                         padding: EdgeInsets.only(
-                          bottom: bottomBarHeight +
-                              _kBottomNavHeight +
-                              bottomInset,
+                          bottom: bottomBarHeight + overlayBottomPad,
                         ),
                         child: AttachmentDetailPanel(detail: detail),
                       )
@@ -185,12 +226,14 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: _kBottomNavHeight + bottomInset,
+                bottom: 0,
                 child: _BottomOverlay(
                   hasTimeline: hasTimeline,
                   state: state,
+                  visibleIndex: _visibleIndex,
                   thumbnailScrollController: _thumbnailScrollController,
                   onSwipe: _swipeRecord,
+                  bottomPadding: overlayBottomPad,
                   isSelectionMode: recordsState.isSelectionMode,
                   selectedResourceIds: recordsState.selectedResourceIds,
                   onSelectionToggle: (id) {
@@ -212,8 +255,10 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
 class _BottomOverlay extends StatelessWidget {
   final bool hasTimeline;
   final AttachmentBrowseState state;
+  final int visibleIndex;
   final ScrollController thumbnailScrollController;
   final void Function(int direction) onSwipe;
+  final double bottomPadding;
   final bool isSelectionMode;
   final Set<String> selectedResourceIds;
   final ValueChanged<String>? onSelectionToggle;
@@ -221,8 +266,10 @@ class _BottomOverlay extends StatelessWidget {
   const _BottomOverlay({
     required this.hasTimeline,
     required this.state,
+    required this.visibleIndex,
     required this.thumbnailScrollController,
     required this.onSwipe,
+    this.bottomPadding = 0,
     this.isSelectionMode = false,
     this.selectedResourceIds = const {},
     this.onSelectionToggle,
@@ -284,7 +331,7 @@ class _BottomOverlay extends StatelessWidget {
                 height: _kTimelineHeight,
                 child: AttachmentTimelineScrubber(
                   timelineYears: state.timelineYears,
-                  selectedIndex: state.selectedIndex,
+                  selectedIndex: visibleIndex,
                   records: state.records,
                   onYearSelected: (year) {
                     final yearEntry = state.timelineYears
@@ -323,6 +370,7 @@ class _BottomOverlay extends StatelessWidget {
                 },
               ),
             ),
+            SizedBox(height: bottomPadding),
           ],
         ),
       ],

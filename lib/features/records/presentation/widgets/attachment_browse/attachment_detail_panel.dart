@@ -16,7 +16,9 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
+import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
@@ -36,10 +38,13 @@ class AttachmentDetailPanel extends StatefulWidget {
 
 class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   String _currentFileName = '';
+  bool _startFromEnd = false;
+  String _lastRecordId = '';
 
   @override
   void initState() {
     super.initState();
+    _lastRecordId = widget.detail.record.id;
     _currentFileName = widget.detail.attachments.isNotEmpty
         ? widget.detail.attachments.first.title
         : '';
@@ -48,10 +53,23 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   @override
   void didUpdateWidget(AttachmentDetailPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.detail.record.id != widget.detail.record.id) {
-      _currentFileName = widget.detail.attachments.isNotEmpty
-          ? widget.detail.attachments.first.title
-          : '';
+    final idChanged = oldWidget.detail.record.id != widget.detail.record.id;
+    final attachmentsChanged =
+        oldWidget.detail.attachments.length != widget.detail.attachments.length;
+    if (idChanged) {
+      final bloc = context.read<AttachmentBrowseBloc>();
+      final records = bloc.state.records;
+      final oldIdx = records.indexWhere((e) => e.record.id == _lastRecordId);
+      final newIdx = records.indexWhere((e) => e.record.id == widget.detail.record.id);
+      _startFromEnd = oldIdx != -1 && newIdx != -1 && newIdx < oldIdx;
+      _lastRecordId = widget.detail.record.id;
+    }
+    if (idChanged || attachmentsChanged) {
+      _currentFileName = _startFromEnd && widget.detail.attachments.isNotEmpty
+          ? widget.detail.attachments.last.title
+          : widget.detail.attachments.isNotEmpty
+              ? widget.detail.attachments.first.title
+              : '';
     }
   }
 
@@ -74,6 +92,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
           const SizedBox(height: Insets.smallNormal),
           _AttachmentPreview(
             detail: detail,
+            startFromEnd: _startFromEnd,
             onFileNameChanged: (name) {
               setState(() => _currentFileName = name);
             },
@@ -111,12 +130,14 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
 
 class _AttachmentPreview extends StatefulWidget {
   final AttachmentBrowseDetail detail;
+  final bool startFromEnd;
   final ValueChanged<String>? onFileNameChanged;
   final VoidCallback? onSwipeNextRecord;
   final VoidCallback? onSwipePrevRecord;
 
   const _AttachmentPreview({
     required this.detail,
+    this.startFromEnd = false,
     this.onFileNameChanged,
     this.onSwipeNextRecord,
     this.onSwipePrevRecord,
@@ -145,33 +166,62 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   @override
   void didUpdateWidget(_AttachmentPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.detail.record.id != widget.detail.record.id) {
-      _currentPage = 0;
+    final idChanged = oldWidget.detail.record.id != widget.detail.record.id;
+    final attachmentsChanged =
+        oldWidget.detail.attachments.length != widget.detail.attachments.length;
+    debugPrint('[PREVIEW] didUpdateWidget idChanged=$idChanged attachmentsChanged=$attachmentsChanged '
+        'oldId=${oldWidget.detail.record.id} newId=${widget.detail.record.id} '
+        'oldAttach=${oldWidget.detail.attachments.length} newAttach=${widget.detail.attachments.length}');
+    if (idChanged || attachmentsChanged) {
+      if (attachmentsChanged && !idChanged) {
+        _cache.remove(widget.detail.record.id);
+        _loadedRecordId = '';
+      }
       _loadPages();
     }
   }
 
   void _loadPages() {
     final recordId = widget.detail.record.id;
-    if (recordId == _loadedRecordId && _pages.isNotEmpty) return;
+    debugPrint('[PREVIEW] _loadPages recordId=$recordId _loadedRecordId=$_loadedRecordId '
+        'pagesNotEmpty=${_pages.isNotEmpty} cacheKeys=${_cache.keys.toList()}');
+
+    if (recordId == _loadedRecordId && _pages.isNotEmpty) {
+      debugPrint('[PREVIEW] skipped — already loaded');
+      return;
+    }
 
     final cached = _cache[recordId];
-    if (cached != null) {
+    if (cached != null && cached.isNotEmpty) {
+      final startPage = widget.startFromEnd ? cached.length - 1 : 0;
+      debugPrint('[PREVIEW] cache HIT for $recordId (${cached.length} pages) startFromEnd=${widget.startFromEnd} → page $startPage');
       _pages.clear();
       _pages.addAll(cached);
       _loading = false;
-      _currentPage = 0;
+      _currentPage = startPage;
       _loadedRecordId = recordId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {});
-          if (_pageController.hasClients) _pageController.jumpToPage(0);
+          if (_pageController.hasClients) _pageController.jumpToPage(_currentPage);
           _notifyFileName();
         }
       });
       return;
     }
 
+    if (widget.detail.attachments.isEmpty) {
+      debugPrint('[PREVIEW] no attachments for $recordId');
+      _pages.clear();
+      _loading = false;
+      _loadedRecordId = recordId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+      return;
+    }
+
+    debugPrint('[PREVIEW] cache MISS — building ${widget.detail.attachments.length} attachments for $recordId');
     _loadedRecordId = recordId;
     _buildPages();
   }
@@ -185,8 +235,10 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   Future<void> _buildPages() async {
     setState(() => _loading = true);
     final pages = <_PreviewPage>[];
+    debugPrint('[PREVIEW] _buildPages: ${widget.detail.attachments.length} attachments');
 
     for (final attachment in widget.detail.attachments) {
+      debugPrint('[PREVIEW]   file: ${attachment.title} path=${attachment.filePath} type=${attachment.contentType}');
       if (attachment.filePath == null) continue;
       final path = attachment.filePath!;
       final ct = attachment.contentType?.toLowerCase() ?? '';
@@ -226,17 +278,22 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       }
     }
 
-    _cache[widget.detail.record.id] = pages;
+    if (pages.isNotEmpty) {
+      _cache[widget.detail.record.id] = pages;
+    }
 
     if (mounted) {
+      final startPage = widget.startFromEnd && pages.isNotEmpty
+          ? pages.length - 1
+          : 0;
       setState(() {
         _pages.clear();
         _pages.addAll(pages);
         _loading = false;
-        _currentPage = 0;
+        _currentPage = pages.isNotEmpty ? startPage : 0;
       });
-      if (_pageController.hasClients) {
-        _pageController.jumpToPage(0);
+      if (_pageController.hasClients && pages.isNotEmpty) {
+        _pageController.jumpToPage(_currentPage);
       }
       _notifyFileName();
     }
@@ -440,32 +497,56 @@ class _EmptyAttachmentContent extends StatelessWidget {
             height: 36,
             child: ElevatedButton(
               onPressed: () async {
+                debugPrint('[BROWSE_ATTACH] picking file...');
                 final result = await FilePicker.platform.pickFiles();
-                if (result == null) return;
+                if (result == null) {
+                  debugPrint('[BROWSE_ATTACH] picker cancelled');
+                  return;
+                }
 
                 final file = File(result.files.first.path!);
+                debugPrint('[BROWSE_ATTACH] picked: ${file.path}');
+                debugPrint('[BROWSE_ATTACH] record: ${record.fhirType} id=${record.id} resourceId=${record.resourceId}');
+
                 final attachBloc = getIt.get<RecordAttachmentsBloc>();
                 attachBloc.add(RecordAttachmentsInitialised(resource: record));
-                await attachBloc.stream.firstWhere(
+                debugPrint('[BROWSE_ATTACH] waiting for init...');
+                final initState = await attachBloc.stream.firstWhere(
                   (s) => s.status.when(
                     loading: () => false,
                     success: () => true,
                     error: (_) => true,
                   ),
                 );
+                debugPrint('[BROWSE_ATTACH] init done, status: ${initState.status}, resource: ${initState.resource.fhirType}');
+
                 attachBloc.add(RecordAttachmentsFileAttached(file));
-                await attachBloc.stream.firstWhere(
+                debugPrint('[BROWSE_ATTACH] waiting for attach...');
+                final attachState = await attachBloc.stream.firstWhere(
                   (s) => s.status.when(
                     loading: () => false,
                     success: () => true,
                     error: (_) => true,
                   ),
                 );
+                debugPrint('[BROWSE_ATTACH] attach done, status: ${attachState.status}');
 
                 if (context.mounted) {
+                  debugPrint('[BROWSE_ATTACH] refreshing browse view');
+                  final filters =
+                      context.read<RecordsBloc>().state.activeFilters;
+                  final homeState = context.read<HomeBloc>().state;
+                  final sourceId = homeState.selectedSource == 'All'
+                      ? null
+                      : homeState.selectedSource;
                   context.read<AttachmentBrowseBloc>().add(
-                    const AttachmentBrowseInitialised(),
+                    AttachmentBrowseInitialised(
+                      sourceId: sourceId,
+                      resourceTypes: filters,
+                    ),
                   );
+                } else {
+                  debugPrint('[BROWSE_ATTACH] context not mounted, skipping refresh');
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -533,10 +614,17 @@ class _FileInfoRow extends StatelessWidget {
         ),
         const SizedBox(width: Insets.normal),
         GestureDetector(
-          onTap: () => _showActionDialog(
-            context,
-            RecordAttachmentsWidget(resource: detail.record),
-          ),
+          onTap: () async {
+            await _showActionDialog(
+              context,
+              RecordAttachmentsWidget(resource: detail.record),
+            );
+            if (context.mounted) {
+              context.read<AttachmentBrowseBloc>().add(
+                    AttachmentBrowseDetailRefreshed(),
+                  );
+            }
+          },
           child: Padding(
             padding: const EdgeInsets.all(6),
             child: Assets.icons.attachment.svg(
@@ -552,8 +640,8 @@ class _FileInfoRow extends StatelessWidget {
     );
   }
 
-  void _showActionDialog(BuildContext context, Widget child) {
-    showDialog(
+  Future<void> _showActionDialog(BuildContext context, Widget child) {
+    return showDialog(
       context: context,
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),

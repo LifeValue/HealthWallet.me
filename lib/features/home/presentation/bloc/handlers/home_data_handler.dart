@@ -136,10 +136,18 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
 
   Future<List<IFhirResource>> fetchPatientResources(String? sourceId,
       [List<String>? patientSourceIds, String? selectedPatientId]) async {
-    final resources = await fetchResourcesFromAllSources(
+    var resources = await fetchResourcesFromAllSources(
         [FhirType.Patient], sourceId, patientSourceIds);
 
-    final patients = resources.whereType<Patient>().toList();
+    var patients = resources.whereType<Patient>().toList();
+
+    if (patients.isEmpty && sourceId != null && sourceId != 'All') {
+      resources = await recordsRepository.getResources(
+        resourceTypes: [FhirType.Patient],
+        limit: 100,
+      );
+      patients = resources.whereType<Patient>().toList();
+    }
 
     if (patients.isEmpty) {
       return [];

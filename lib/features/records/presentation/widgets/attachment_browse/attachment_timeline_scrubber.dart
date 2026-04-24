@@ -67,7 +67,7 @@ class _AttachmentTimelineScrubberState
     if (oldWidget.timelineYears != widget.timelineYears) {
       _buildTimelineItems();
     }
-    if (oldWidget.selectedIndex != widget.selectedIndex && !_isSyncing) {
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
       _scrollToSelectedIndex();
     }
   }
