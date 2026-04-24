@@ -42,15 +42,15 @@ class RecordsViewToggle extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildTab(
-              svgIcon: Assets.icons.list,
-              label: 'Records',
-              isActive: isRecords,
-              inactiveIconColor: inactiveIconColor,
-            ),
-            _buildTab(
               svgIcon: Assets.icons.attachmentsView,
               label: 'Attachments',
               isActive: !isRecords,
+              inactiveIconColor: inactiveIconColor,
+            ),
+            _buildTab(
+              svgIcon: Assets.icons.list,
+              label: 'Records',
+              isActive: isRecords,
               inactiveIconColor: inactiveIconColor,
             ),
           ],

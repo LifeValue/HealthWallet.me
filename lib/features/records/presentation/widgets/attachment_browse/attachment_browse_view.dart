@@ -3,14 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
-import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_detail_panel.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_timeline_scrubber.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_thumbnail_strip.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
 const double kThumbnailItemWidth = 100.0;
 const double kThumbnailGap = 16.0;
@@ -23,7 +20,28 @@ const double _kThumbnailTopPad = 8.0;
 const double _kBottomNavHeight = 80.0;
 
 class AttachmentBrowseView extends StatefulWidget {
-  const AttachmentBrowseView({super.key});
+  final List<FhirType> externalFilters;
+  final String? sourceId;
+  final List<String>? sourceIds;
+  final bool isSelectionMode;
+  final Set<String> selectedResourceIds;
+  final ValueChanged<String>? onSelectionToggle;
+  final VoidCallback? onSelectionModeToggled;
+  final double bottomNavHeight;
+  final bool readOnly;
+
+  const AttachmentBrowseView({
+    super.key,
+    this.externalFilters = const [],
+    this.sourceId,
+    this.sourceIds,
+    this.isSelectionMode = false,
+    this.selectedResourceIds = const {},
+    this.onSelectionToggle,
+    this.onSelectionModeToggled,
+    this.bottomNavHeight = _kBottomNavHeight,
+    this.readOnly = false,
+  });
 
   @override
   State<AttachmentBrowseView> createState() => _AttachmentBrowseViewState();
@@ -35,7 +53,6 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
   bool _didInit = false;
   bool _isThumbnailSyncing = false;
   int _visibleIndex = 0;
-  List<FhirType> _lastFilters = [];
 
   @override
   void initState() {
@@ -52,37 +69,26 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
     }
   }
 
-  ({String? sourceId, List<String>? sourceIds}) _resolveSource() {
-    final homeState = context.read<HomeBloc>().state;
-    final sourceId =
-        homeState.selectedSource == 'All' ? null : homeState.selectedSource;
-    List<String>? sourceIds;
-    if (sourceId == null) {
-      try {
-        final patientState = context.read<PatientBloc>().state;
-        final selectedPatientId = patientState.selectedPatientId;
-        if (selectedPatientId != null) {
-          final group = patientState.patientGroups[selectedPatientId];
-          if (group != null) sourceIds = group.sourceIds;
-        }
-      } catch (_) {}
+  @override
+  void didUpdateWidget(AttachmentBrowseView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final filtersChanged =
+        widget.externalFilters.length != oldWidget.externalFilters.length ||
+            !widget.externalFilters
+                .every((f) => oldWidget.externalFilters.contains(f));
+    final sourceChanged = widget.sourceId != oldWidget.sourceId;
+    if (filtersChanged || sourceChanged) {
+      _loadWithCurrentFilters();
     }
-    return (sourceId: sourceId, sourceIds: sourceIds);
   }
 
   void _loadWithCurrentFilters() {
-    final source = _resolveSource();
-    List<FhirType> filters = [];
-    try {
-      filters = context.read<RecordsBloc>().state.activeFilters;
-    } catch (_) {}
-    _lastFilters = filters;
-    debugPrint('[BROWSE_VIEW] _loadWithCurrentFilters sourceId=${source.sourceId} sourceIds=${source.sourceIds} filters=$filters');
     context.read<AttachmentBrowseBloc>().add(
           AttachmentBrowseInitialised(
-            sourceId: source.sourceId,
-            sourceIds: source.sourceIds,
-            resourceTypes: filters,
+            sourceId: widget.sourceId,
+            sourceIds: widget.sourceIds,
+            resourceTypes: widget.externalFilters,
+            readOnly: widget.readOnly,
           ),
         );
   }
@@ -145,108 +151,88 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
     _detailScrollController.jumpTo(0);
   }
 
-  void _checkFiltersChanged(List<FhirType> currentFilters) {
-    final changed = currentFilters.length != _lastFilters.length ||
-        !currentFilters.every((f) => _lastFilters.contains(f));
-    if (changed) {
-      _lastFilters = currentFilters;
-      _loadWithCurrentFilters();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<RecordsBloc, RecordsState>(
-      buildWhen: (prev, curr) =>
-          prev.activeFilters != curr.activeFilters ||
-          prev.isSelectionMode != curr.isSelectionMode ||
-          prev.selectedResourceIds != curr.selectedResourceIds,
-      builder: (context, recordsState) {
+    return BlocConsumer<AttachmentBrowseBloc, AttachmentBrowseState>(
+      listenWhen: (prev, curr) =>
+          prev.selectedIndex != curr.selectedIndex &&
+          curr.status == AttachmentBrowseStatus.success,
+      listener: (context, state) {
+        _visibleIndex = state.selectedIndex;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _checkFiltersChanged(recordsState.activeFilters);
+          _scrollThumbnailTo(state.selectedIndex);
+          _scrollDetailToTop();
         });
-        return BlocConsumer<AttachmentBrowseBloc, AttachmentBrowseState>(
-        listenWhen: (prev, curr) =>
-            prev.selectedIndex != curr.selectedIndex &&
-            curr.status == AttachmentBrowseStatus.success,
-        listener: (context, state) {
-          _visibleIndex = state.selectedIndex;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollThumbnailTo(state.selectedIndex);
-            _scrollDetailToTop();
-          });
-        },
-        builder: (context, state) {
-          if (state.status == AttachmentBrowseStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      },
+      builder: (context, state) {
+        if (state.status == AttachmentBrowseStatus.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (state.records.isEmpty) {
-            return Center(
-              child: Text(
-                'No records',
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: context.colorScheme.onSurface,
-                ),
+        if (state.records.isEmpty) {
+          return Center(
+            child: Text(
+              'No records',
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.onSurface,
               ),
-            );
-          }
-
-          final detail = state.selectedDetail;
-          final hasTimeline = state.timelineYears.isNotEmpty;
-          final bottomInset = MediaQuery.of(context).padding.bottom;
-          final view = View.of(context);
-          final rawKeyboard = view.viewInsets.bottom / view.devicePixelRatio;
-          final isKeyboardOpen = rawKeyboard > 0;
-          final overlayBottomPad =
-              isKeyboardOpen ? 8.0 : _kBottomNavHeight + bottomInset;
-          final timelineSpace =
-              hasTimeline ? _kTimelineTopPad + _kTimelineHeight : 0.0;
-          final bottomBarHeight =
-              timelineSpace + _kThumbnailTopPad + _kThumbnailHeight;
-
-          return Stack(
-            children: [
-              GestureDetector(
-                onHorizontalDragEnd: (details) {
-                  final velocity = details.primaryVelocity ?? 0;
-                  if (velocity.abs() < 200) return;
-                  _swipeRecord(velocity < 0 ? 1 : -1);
-                },
-                child: detail != null
-                    ? SingleChildScrollView(
-                        controller: _detailScrollController,
-                        padding: EdgeInsets.only(
-                          bottom: bottomBarHeight + overlayBottomPad,
-                        ),
-                        child: AttachmentDetailPanel(detail: detail),
-                      )
-                    : const SizedBox.expand(),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _BottomOverlay(
-                  hasTimeline: hasTimeline,
-                  state: state,
-                  visibleIndex: _visibleIndex,
-                  thumbnailScrollController: _thumbnailScrollController,
-                  onSwipe: _swipeRecord,
-                  bottomPadding: overlayBottomPad,
-                  isSelectionMode: recordsState.isSelectionMode,
-                  selectedResourceIds: recordsState.selectedResourceIds,
-                  onSelectionToggle: (id) {
-                    context.read<RecordsBloc>().add(
-                          RecordsSelectionToggled(id),
-                        );
-                  },
-                ),
-              ),
-            ],
+            ),
           );
-        },
-      );
+        }
+
+        final detail = state.selectedDetail;
+        final hasTimeline = state.timelineYears.isNotEmpty;
+        final bottomInset = MediaQuery.of(context).padding.bottom;
+        final view = View.of(context);
+        final rawKeyboard = view.viewInsets.bottom / view.devicePixelRatio;
+        final isKeyboardOpen = rawKeyboard > 0;
+        final navPad = widget.bottomNavHeight > 0
+            ? widget.bottomNavHeight + bottomInset
+            : 8.0;
+        final overlayBottomPad = isKeyboardOpen ? 8.0 : navPad;
+        final timelineSpace =
+            hasTimeline ? _kTimelineTopPad + _kTimelineHeight : 0.0;
+        final bottomBarHeight =
+            timelineSpace + _kThumbnailTopPad + _kThumbnailHeight;
+
+        return Stack(
+          children: [
+            GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              onHorizontalDragEnd: (details) {
+                final velocity = details.primaryVelocity ?? 0;
+                if (velocity.abs() < 200) return;
+                _swipeRecord(velocity < 0 ? 1 : -1);
+              },
+              child: detail != null
+                  ? SingleChildScrollView(
+                      controller: _detailScrollController,
+                      padding: EdgeInsets.only(
+                        bottom: bottomBarHeight + overlayBottomPad,
+                      ),
+                      child: AttachmentDetailPanel(detail: detail),
+                    )
+                  : const SizedBox.expand(),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _BottomOverlay(
+                hasTimeline: hasTimeline,
+                state: state,
+                visibleIndex: _visibleIndex,
+                thumbnailScrollController: _thumbnailScrollController,
+                onSwipe: _swipeRecord,
+                bottomPadding: overlayBottomPad,
+                isSelectionMode: widget.isSelectionMode,
+                selectedResourceIds: widget.selectedResourceIds,
+                onSelectionToggle: widget.onSelectionToggle,
+                onSelectionModeToggled: widget.onSelectionModeToggled,
+              ),
+            ),
+          ],
+        );
       },
     );
   }
@@ -262,6 +248,7 @@ class _BottomOverlay extends StatelessWidget {
   final bool isSelectionMode;
   final Set<String> selectedResourceIds;
   final ValueChanged<String>? onSelectionToggle;
+  final VoidCallback? onSelectionModeToggled;
 
   const _BottomOverlay({
     required this.hasTimeline,
@@ -273,6 +260,7 @@ class _BottomOverlay extends StatelessWidget {
     this.isSelectionMode = false,
     this.selectedResourceIds = const {},
     this.onSelectionToggle,
+    this.onSelectionModeToggled,
   });
 
   @override
@@ -363,6 +351,7 @@ class _BottomOverlay extends StatelessWidget {
                 isSelectionMode: isSelectionMode,
                 selectedResourceIds: selectedResourceIds,
                 onSelectionToggle: onSelectionToggle,
+                onSelectionModeToggled: onSelectionModeToggled,
                 onSelected: (index) {
                   context.read<AttachmentBrowseBloc>().add(
                         AttachmentBrowseSelected(index),

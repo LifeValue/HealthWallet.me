@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
-import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
 import 'package:health_wallet/core/utils/pdf_thumbnail_utils.dart';
 
@@ -18,6 +17,7 @@ class AttachmentThumbnailStrip extends StatelessWidget {
   final bool isSelectionMode;
   final Set<String> selectedResourceIds;
   final ValueChanged<String>? onSelectionToggle;
+  final VoidCallback? onSelectionModeToggled;
 
   const AttachmentThumbnailStrip({
     super.key,
@@ -28,6 +28,7 @@ class AttachmentThumbnailStrip extends StatelessWidget {
     this.isSelectionMode = false,
     this.selectedResourceIds = const {},
     this.onSelectionToggle,
+    this.onSelectionModeToggled,
   });
 
   @override
@@ -52,12 +53,10 @@ class AttachmentThumbnailStrip extends StatelessWidget {
               onSelected(index);
             }
           },
-          onLongPress: isSelectionMode
+          onLongPress: isSelectionMode || onSelectionModeToggled == null
               ? null
               : () {
-                  context.read<RecordsBloc>().add(
-                        const RecordsSelectionModeToggled(),
-                      );
+                  onSelectionModeToggled?.call();
                   onSelectionToggle?.call(entry.record.id);
                 },
           child: _ThumbnailFrame(
@@ -85,6 +84,7 @@ class _ThumbnailContent extends StatefulWidget {
 class _ThumbnailContentState extends State<_ThumbnailContent> {
   Uint8List? _pdfBytes;
   bool _triedPdf = false;
+  bool _imageLoadFailed = false;
 
   @override
   void initState() {
@@ -98,18 +98,31 @@ class _ThumbnailContentState extends State<_ThumbnailContent> {
     if (oldWidget.entry.thumbnailPath != widget.entry.thumbnailPath) {
       _pdfBytes = null;
       _triedPdf = false;
+      _imageLoadFailed = false;
       _tryLoadPreview();
     }
   }
 
-  bool get _isPdf {
+  bool get _isImage {
     final path = widget.entry.thumbnailPath?.toLowerCase() ?? '';
-    return path.endsWith('.pdf');
+    return path.endsWith('.jpg') ||
+        path.endsWith('.jpeg') ||
+        path.endsWith('.png') ||
+        path.endsWith('.gif') ||
+        path.endsWith('.webp') ||
+        path.endsWith('.bmp');
   }
 
   void _tryLoadPreview() {
     if (widget.entry.thumbnailPath == null) return;
-    if (!_isPdf) return;
+    if (_isImage) return;
+    _triedPdf = true;
+    _renderPdfThumb(widget.entry.thumbnailPath!);
+  }
+
+  void _onImageError() {
+    if (_triedPdf || _imageLoadFailed) return;
+    _imageLoadFailed = true;
     _triedPdf = true;
     _renderPdfThumb(widget.entry.thumbnailPath!);
   }
@@ -123,16 +136,6 @@ class _ThumbnailContentState extends State<_ThumbnailContent> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.entry.thumbnailPath != null && !_isPdf) {
-      return Image.file(
-        File(widget.entry.thumbnailPath!),
-        fit: BoxFit.cover,
-        width: 100,
-        height: 100,
-        errorBuilder: (_, __, ___) => _TitleFallback(title: widget.entry.record.title),
-      );
-    }
-
     if (_pdfBytes != null) {
       return Image.memory(
         _pdfBytes!,
@@ -140,6 +143,23 @@ class _ThumbnailContentState extends State<_ThumbnailContent> {
         width: 100,
         height: 100,
       );
+    }
+
+    if (widget.entry.thumbnailPath != null && _isImage && !_imageLoadFailed) {
+      return Image.file(
+        File(widget.entry.thumbnailPath!),
+        fit: BoxFit.cover,
+        width: 100,
+        height: 100,
+        errorBuilder: (_, __, ___) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _onImageError());
+          return _TitleFallback(title: widget.entry.record.title);
+        },
+      );
+    }
+
+    if (widget.entry.thumbnailPath != null && !_isImage && !_triedPdf) {
+      return _TitleFallback(title: widget.entry.record.title);
     }
 
     return _TitleFallback(title: widget.entry.record.title);

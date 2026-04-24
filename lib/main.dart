@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -20,7 +19,6 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   if (prefs.containsKey('lww_offline_queue')) {
-    debugPrint('[MAIN] Clearing lww_offline_queue to free memory');
     await prefs.remove('lww_offline_queue');
   }
 

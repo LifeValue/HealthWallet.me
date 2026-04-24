@@ -168,7 +168,7 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
                         ),
                         const SizedBox(width: 4),
                         Icon(
-                          _isDurationPickerExpanded ? Icons.expand_less : Icons.expand_more,
+                          _isDurationPickerExpanded ? Icons.expand_more : Icons.expand_less,
                           size: 20,
                           color: context.colorScheme.onSurface,
                         ),

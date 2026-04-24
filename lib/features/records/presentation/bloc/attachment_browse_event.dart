@@ -9,6 +9,8 @@ class AttachmentBrowseInitialised extends AttachmentBrowseEvent
     String? sourceId,
     List<String>? sourceIds,
     @Default([]) List<FhirType> resourceTypes,
+    @Default(false) bool readOnly,
+    @Default([]) List<IFhirResource> sourceRecords,
   }) = _AttachmentBrowseInitialised;
 }
 

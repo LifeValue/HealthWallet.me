@@ -72,7 +72,7 @@ class _RecordsViewState extends State<RecordsView> {
 
   Timer? _debounceTimer;
   bool _showScrollToTopButton = false;
-  RecordsViewMode _viewMode = RecordsViewMode.recordsList;
+  RecordsViewMode _viewMode = RecordsViewMode.attachments;
   final ValueNotifier<bool> _isAttachmentScrolled = ValueNotifier(false);
 
   @override
@@ -102,8 +102,8 @@ class _RecordsViewState extends State<RecordsView> {
   void _loadViewMode() {
     final prefs = getIt<SharedPreferences>();
     final saved = prefs.getString(SharedPrefsConstants.recordsViewMode);
-    if (saved == RecordsViewMode.attachments.name) {
-      setState(() => _viewMode = RecordsViewMode.attachments);
+    if (saved == RecordsViewMode.recordsList.name) {
+      setState(() => _viewMode = RecordsViewMode.recordsList);
     }
     _updateSwipeState();
   }
@@ -712,7 +712,38 @@ class _RecordsViewState extends State<RecordsView> {
             child: Column(
               children: [
                 _buildHeader(context, appBarState),
-                const Expanded(child: AttachmentBrowseView()),
+                Expanded(
+                  child: BlocBuilder<RecordsBloc, RecordsState>(
+                    buildWhen: (previous, current) =>
+                        previous.activeFilters != current.activeFilters ||
+                        previous.isSelectionMode != current.isSelectionMode ||
+                        previous.selectedResourceIds != current.selectedResourceIds,
+                    builder: (context, recordsState) {
+                      return BlocBuilder<HomeBloc, HomeState>(
+                        buildWhen: (previous, current) =>
+                            previous.selectedSource != current.selectedSource,
+                        builder: (context, homeState) {
+                          return AttachmentBrowseView(
+                            externalFilters: recordsState.activeFilters,
+                            sourceId: homeState.selectedSource == 'All'
+                                ? null
+                                : homeState.selectedSource,
+                            sourceIds: _resolvePatientSourceIds(
+                                context, homeState.selectedSource),
+                            isSelectionMode: recordsState.isSelectionMode,
+                            selectedResourceIds: recordsState.selectedResourceIds,
+                            onSelectionToggle: (id) => context
+                                .read<RecordsBloc>()
+                                .add(RecordsSelectionToggled(id)),
+                            onSelectionModeToggled: () => context
+                                .read<RecordsBloc>()
+                                .add(const RecordsSelectionModeToggled()),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
           ),

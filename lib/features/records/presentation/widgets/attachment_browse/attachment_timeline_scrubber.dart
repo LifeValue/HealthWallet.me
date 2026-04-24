@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 
 class _TimelineItem {
@@ -140,13 +141,11 @@ class _AttachmentTimelineScrubberState
     _isSyncing = true;
     final itemIndex = _itemIndexForRecordIndex(widget.selectedIndex);
     final target = _offsetForItemIndex(itemIndex);
-    _scrollController.animateTo(
+    _scrollController.jumpTo(
       target.clamp(0.0, _scrollController.position.maxScrollExtent),
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
     );
     setState(() => _currentItemIndex = itemIndex);
-    Future.delayed(const Duration(milliseconds: 250), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _isSyncing = false;
     });
   }

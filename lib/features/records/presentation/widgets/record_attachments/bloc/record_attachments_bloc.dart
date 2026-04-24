@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -12,6 +11,7 @@ import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -62,61 +62,74 @@ class RecordAttachmentsBloc
 
       final encounterId = _extractEncounterId(event.resource);
 
-      final List<IFhirResource> documentReferences;
+      final List<IFhirResource> relatedDocuments;
       if (event.ephemeralRecords.isNotEmpty) {
-        documentReferences = event.ephemeralRecords
+        final related = FhirResourceRelationshipService.findRelatedInMemory(
+          resource: event.resource,
+          allRecords: event.ephemeralRecords,
+        );
+        relatedDocuments = related
             .where((r) => r.fhirType == FhirType.DocumentReference)
             .toList();
       } else {
-        documentReferences = await _recordsRepository.getResources(
+        final documentReferences = await _recordsRepository.getResources(
           resourceTypes: [FhirType.DocumentReference],
           sourceId: null,
           limit: 100,
         );
+
+        relatedDocuments = documentReferences.where((doc) {
+          if (doc.rawResource.isEmpty) return false;
+
+          try {
+            if (encounterId != null && doc.encounterId == encounterId) {
+              return true;
+            }
+
+            if (event.resource.fhirType == FhirType.Encounter &&
+                doc.encounterId == event.resource.resourceId) {
+              return true;
+            }
+
+            final context = doc.rawResource['context'];
+            if (context == null) return false;
+
+            if (context['related'] != null) {
+              final relatedList = context['related'] as List;
+              final isRelatedToThisResource = relatedList.any((related) {
+                final refId = FhirReferenceUtils.extractReferenceId(
+                    related['reference']?.toString());
+                return refId == event.resource.resourceId;
+              });
+              if (isRelatedToThisResource) return true;
+            }
+
+            if (encounterId != null && context['encounter'] != null) {
+              final encounters = context['encounter'] as List;
+              final isInSameEncounter = encounters.any((encounter) {
+                final refId = FhirReferenceUtils.extractReferenceId(
+                    encounter['reference']?.toString());
+                return refId == encounterId;
+              });
+              if (isInSameEncounter) return true;
+            }
+
+            if (event.resource.fhirType == FhirType.Encounter &&
+                context['encounter'] != null) {
+              final encounters = context['encounter'] as List;
+              return encounters.any((encounter) {
+                final refId = FhirReferenceUtils.extractReferenceId(
+                    encounter['reference']?.toString());
+                return refId == event.resource.resourceId;
+              });
+            }
+
+            return false;
+          } catch (e) {
+            return false;
+          }
+        }).toList();
       }
-
-      final relatedDocuments = documentReferences.where((doc) {
-        if (doc.rawResource.isEmpty) return false;
-
-        try {
-          final context = doc.rawResource['context'];
-          if (context == null) return false;
-
-          if (context['related'] != null) {
-            final relatedList = context['related'] as List;
-            final isRelatedToThisResource = relatedList.any((related) {
-              final refId = FhirReferenceUtils.extractReferenceId(
-                  related['reference']?.toString());
-              return refId == event.resource.resourceId;
-            });
-            if (isRelatedToThisResource) return true;
-          }
-
-          if (encounterId != null && context['encounter'] != null) {
-            final encounters = context['encounter'] as List;
-            final isInSameEncounter = encounters.any((encounter) {
-              final refId = FhirReferenceUtils.extractReferenceId(
-                  encounter['reference']?.toString());
-              return refId == encounterId;
-            });
-            if (isInSameEncounter) return true;
-          }
-
-          if (event.resource.fhirType == FhirType.Encounter &&
-              context['encounter'] != null) {
-            final encounters = context['encounter'] as List;
-            return encounters.any((encounter) {
-              final refId = FhirReferenceUtils.extractReferenceId(
-                  encounter['reference']?.toString());
-              return refId == event.resource.resourceId;
-            });
-          }
-
-          return false;
-        } catch (e) {
-          return false;
-        }
-      }).toList();
 
       final attachmentInfos = await Future.wait(
           relatedDocuments.map((doc) => _extractAttachmentInfo(doc)));
@@ -173,10 +186,7 @@ class RecordAttachmentsBloc
     emit(state.copyWith(status: const RecordAttachmentsStatus.loading()));
 
     try {
-      debugPrint('[ATTACH] resource type: ${state.resource.fhirType}, id: ${state.resource.id}, resourceId: ${state.resource.resourceId}');
-
       if (state.resource.fhirType == FhirType.DocumentReference) {
-        debugPrint('[ATTACH] ERROR: Cannot attach to DocumentReference');
         emit(state.copyWith(
             status: const RecordAttachmentsStatus.error(
                 'Cannot attach files to DocumentReference resources')));
@@ -184,26 +194,19 @@ class RecordAttachmentsBloc
       }
 
       Directory appDirectory = await getApplicationDocumentsDirectory();
-      debugPrint('[ATTACH] appDir: ${appDirectory.path}');
 
       String originalFileName = basename(event.file.path);
       String newFilePath = join(appDirectory.path, originalFileName);
-      debugPrint('[ATTACH] source: ${event.file.path}');
-      debugPrint('[ATTACH] destination: $newFilePath');
 
       await event.file.copy(newFilePath);
-      final copiedExists = await File(newFilePath).exists();
-      debugPrint('[ATTACH] file copied, exists: $copiedExists');
 
       final subjectId = _extractSubjectId(state.resource);
       final encounterId = _extractEncounterId(state.resource);
-      debugPrint('[ATTACH] subjectId: $subjectId, encounterId: $encounterId');
 
       final effectiveSourceId = await _getEffectiveSourceId(
         resourceSourceId: state.resource.sourceId,
         patientId: subjectId ?? '',
       );
-      debugPrint('[ATTACH] effectiveSourceId: $effectiveSourceId');
 
       final documentReference = await _createDocumentReference(
         filePath: newFilePath,
@@ -213,28 +216,21 @@ class RecordAttachmentsBloc
         relatedResourceId: state.resource.resourceId,
         relatedResourceType: state.resource.fhirType.name,
       );
-      debugPrint('[ATTACH] DocumentReference created, id: ${documentReference.id?.valueString}');
 
       await _saveDocumentReferenceToDatabase(
         documentReference: documentReference,
         sourceId: effectiveSourceId,
         title: originalFileName,
       );
-      debugPrint('[ATTACH] saved to DB');
 
       try {
         final homeBloc = getIt<HomeBloc>();
         homeBloc.add(const HomeRefreshPreservingOrder());
-      } catch (e) {
-        debugPrint('[ATTACH] HomeBloc refresh error: $e');
-      }
+      } catch (e) {}
 
-      debugPrint('[ATTACH] success, re-initialising');
       emit(state.copyWith(attachments: []));
       add(RecordAttachmentsInitialised(resource: state.resource));
-    } catch (e, stack) {
-      debugPrint('[ATTACH] ERROR: $e');
-      debugPrint('[ATTACH] STACK: $stack');
+    } catch (e) {
       emit(state.copyWith(status: RecordAttachmentsStatus.error(e)));
     }
   }

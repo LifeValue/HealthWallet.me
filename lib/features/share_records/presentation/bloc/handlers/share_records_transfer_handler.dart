@@ -1,14 +1,21 @@
 part of '../share_records_bloc.dart';
 
+void _shareLog(String msg) {
+  final ts = DateTime.now().toIso8601String().substring(11, 23);
+  ShareLogBuffer.instance.log('[$ts][SHARE] $msg');
+}
+
 extension ShareRecordsTransferHandler on ShareRecordsBloc {
   Future<void> handleDiscoveryStarted(
     DiscoveryStarted event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    _shareLog('Discovery started (bluetooth=${event.useBluetooth})');
     final result = await SharePermissionsHelper.requestSharePermissions();
 
     switch (result) {
       case PermissionGranted():
+        _shareLog('Permissions granted');
         final manager = getIt<ReceiveModeService>();
         if (manager.isListening) {
           manager.pauseListening();
@@ -22,6 +29,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         await _service.startDiscovery(useBluetooth: event.useBluetooth);
 
       case PermissionDenied(:final message):
+        _shareLog('ERROR: Permissions denied: $message');
         emit(state.copyWith(
           phase: SharePhase.error,
           errorMessage: message,
@@ -29,6 +37,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         ));
 
       case PermissionPermanentlyDenied(:final message):
+        _shareLog('ERROR: Permissions permanently denied: $message');
         emit(state.copyWith(
           phase: SharePhase.error,
           errorMessage: message,
@@ -146,6 +155,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     PeerSelected event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    _shareLog('Peer selected: ${event.deviceId}');
     final peer = state.discoveredPeers.firstWhere(
       (p) => p.deviceId == event.deviceId,
       orElse: () => PeerDevice(
@@ -154,6 +164,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       ),
     );
 
+    _shareLog('Connecting to ${peer.deviceName}...');
     emit(state.copyWith(
       selectedPeer: peer,
       phase: SharePhase.connecting,
@@ -167,13 +178,11 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
 
       final selectedRecords =
           state.selection.selectedRecords.values.toList();
+      _shareLog('Selected ${selectedRecords.length} records, enriching with related...');
       final enrichedRecords =
           await _enrichSelectionWithRelatedResources(selectedRecords);
 
-      debugPrint(
-          '[SHARE] User selected ${selectedRecords.length} records');
-      debugPrint(
-          '[SHARE] Enriched to ${enrichedRecords.length} records (including related)');
+      _shareLog('Enriched to ${enrichedRecords.length} records (types: ${enrichedRecords.map((r) => r.fhirType.name).toSet().toList()})');
 
       final notesMap = <String, List<RecordNote>>{};
       for (final resource in enrichedRecords) {
@@ -184,11 +193,12 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
             notesMap[resource.id] = notes;
           }
         } catch (e) {
-          debugPrint(
-              '[SHARE] Error fetching notes for ${resource.id}: $e');
+          _shareLog('WARNING: Error fetching notes for ${resource.id}: $e');
         }
       }
+      _shareLog('Notes: ${notesMap.length} resources have notes');
 
+      _shareLog('Creating payload...');
       final payload = await _service.createPayload(
         resources: enrichedRecords,
         deviceName: _deviceName,
@@ -197,8 +207,10 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         activeFilters:
             state.appliedFilters.map((f) => f.name).toList(),
       );
+      _shareLog('Preparing files for sending...');
       _tempFilePath = await _service.prepareFilesForSending(payload);
       if (_tempFilePath == null) {
+        _shareLog('ERROR: Failed to prepare files for sending');
         emit(state.copyWith(
           phase: SharePhase.error,
           errorMessage: 'Failed to prepare files for sending',
@@ -252,9 +264,10 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     TransferStarted event,
     Emitter<ShareRecordsState> emit,
   ) {
+    _shareLog('=== Transfer started ===');
     emit(state.copyWith(
       phase: SharePhase.transferring,
-      statusMessage: 'Sending records...',
+      statusMessage: null,
       isSessionActive: true,
     ));
   }
@@ -263,6 +276,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     TransferProgressUpdated event,
     Emitter<ShareRecordsState> emit,
   ) {
+    _shareLog('Transfer progress: ${(state.progressPercentage * 100).toInt()}%');
     emit(state.copyWith(
       transferProgress: event.progress,
       statusMessage:
@@ -274,6 +288,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     TransferCompleted event,
     Emitter<ShareRecordsState> emit,
   ) {
+    _shareLog('=== Transfer completed (isSending=${state.isSending}) ===');
     if (state.isSending) {
       if (_pendingViewingStarted) {
         _pendingViewingStarted = false;
@@ -308,6 +323,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     TransferFailed event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    _shareLog('ERROR: Transfer failed: ${event.error}');
     if (state.phase == SharePhase.selectingRecords ||
         state.phase == SharePhase.sessionEnded) {
       return;
@@ -359,6 +375,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     ConnectionRetried event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    _shareLog('Connection retry attempt ${state.connectionRetryCount}');
     await _service.disconnect();
     emit(state.copyWith(
       phase: SharePhase.discoveringPeers,
@@ -417,15 +434,13 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     DataReceived event,
     Emitter<ShareRecordsState> emit,
   ) async {
-    debugPrint(
-        '[SHARE] onDataReceived: ${event.data.fileName} (${event.data.size} bytes), phase=${state.phase}');
+    _shareLog('Data received: ${event.data.fileName} (${event.data.size} bytes)');
     final container = await _service.parseReceivedData(event.data);
     if (container != null) {
-      debugPrint(
-          '[SHARE] parseReceivedData succeeded: ${container.recordCount} records');
+      _shareLog('Parsed ${container.recordCount} records from ${container.senderDeviceName}');
       add(ShareRecordsEvent.ephemeralDataParsed(container));
     } else {
-      debugPrint('[SHARE] parseReceivedData returned null!');
+      _shareLog('ERROR: parseReceivedData returned null');
       emit(state.copyWith(
         phase: SharePhase.error,
         errorMessage: 'Failed to parse received data',
@@ -437,13 +452,17 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     FilesReceived event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    _shareLog('Files received: ${event.filePaths.length} file(s)');
     emit(state.copyWith(statusMessage: 'Processing received records...'));
 
     for (final filePath in event.filePaths) {
+      _shareLog('Parsing file: $filePath');
       final container = await _service.parseReceivedFile(filePath);
       if (container != null) {
+        _shareLog('Parsed ${container.recordCount} records, ${container.tempAttachmentPaths.length} attachments');
         add(ShareRecordsEvent.ephemeralDataParsed(container));
       } else {
+        _shareLog('ERROR: Failed to parse file: $filePath');
         emit(state.copyWith(
           phase: SharePhase.error,
           errorMessage: 'Failed to parse received file',
@@ -456,6 +475,10 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     EphemeralDataParsed event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    _shareLog('=== Session started: ${event.container.sessionId} ===');
+    _shareLog('Records: ${event.container.recordCount}, Duration: ${event.container.viewDuration.inMinutes}min');
+    _shareLog('Filters: ${event.container.activeFilters}');
+    _shareLog('Temp files: ${event.container.tempAttachmentPaths.length}');
     EphemeralSessionManager.instance.startSession(event.container);
     emit(state.copyWith(
       phase: SharePhase.viewingRecords,
@@ -472,9 +495,9 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
 
     try {
       await _service.sendViewingStarted();
-      debugPrint('[SHARE] Sent viewing started signal to sender');
+      _shareLog('Sent viewing started signal to sender');
     } catch (e) {
-      debugPrint('[SHARE] Failed to send viewing started signal: $e');
+      _shareLog('WARNING: Failed to send viewing started signal: $e');
     }
   }
 

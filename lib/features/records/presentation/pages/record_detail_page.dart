@@ -39,15 +39,17 @@ class RecordDetailsPage extends StatefulWidget {
 class _RecordDetailsPageState extends State<RecordDetailsPage> {
   final PdfPreviewService _pdfPreviewService = getIt<PdfPreviewService>();
   late final bool _isEphemeral;
-  late final RecordsBloc _appRecordsBloc;
+  RecordsBloc? _appRecordsBloc;
   List<IFhirResource> _ephemeralRelatedResources = [];
 
   @override
   void initState() {
     super.initState();
-    _appRecordsBloc = context.read<RecordsBloc>();
     _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
         EphemeralSessionManager.instance.hasActiveSession;
+    if (!_isEphemeral) {
+      _appRecordsBloc = context.read<RecordsBloc>();
+    }
     if (_isEphemeral) {
       _ephemeralRelatedResources = _findRelatedInMemory();
     }
@@ -349,7 +351,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   }
 
   void _showDeleteDialog(BuildContext context) async {
-    final relatedResources = await _appRecordsBloc.recordsRepository
+    final relatedResources = await _appRecordsBloc!.recordsRepository
         .getRelatedResourcesForDeletion(widget.resource.id);
 
     if (!context.mounted) return;
@@ -606,7 +608,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     BuildContext context, {
     List<String> selectedRelatedIds = const [],
   }) {
-    _appRecordsBloc.add(
+    _appRecordsBloc!.add(
       RecordsResourceDeleted(
         resourceId: widget.resource.id,
         selectedRelatedIds: selectedRelatedIds,

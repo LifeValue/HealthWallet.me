@@ -76,6 +76,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   @override
   Widget build(BuildContext context) {
     final detail = widget.detail;
+    final readOnly = context.read<AttachmentBrowseBloc>().state.readOnly;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
       child: Column(
@@ -93,6 +94,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
           _AttachmentPreview(
             detail: detail,
             startFromEnd: _startFromEnd,
+            readOnly: readOnly,
             onFileNameChanged: (name) {
               setState(() => _currentFileName = name);
             },
@@ -112,7 +114,11 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
             },
           ),
           const SizedBox(height: Insets.small),
-          _FileInfoRow(detail: detail, currentFileName: _currentFileName),
+          _FileInfoRow(
+            detail: detail,
+            currentFileName: _currentFileName,
+            readOnly: readOnly,
+          ),
           if (detail.patientName != null ||
               detail.organizationName != null ||
               detail.practitionerName != null) ...[
@@ -120,7 +126,13 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
             _AttachmentBrowseDetailsCard(detail: detail),
           ],
           const SizedBox(height: Insets.smallNormal),
-          _ShowDetailsButton(detail: detail),
+          _ShowDetailsButton(
+            detail: detail,
+            readOnly: readOnly,
+            ephemeralRecords: readOnly
+                ? context.read<AttachmentBrowseBloc>().state.sourceRecords
+                : null,
+          ),
           const SizedBox(height: Insets.normal),
         ],
       ),
@@ -131,6 +143,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
 class _AttachmentPreview extends StatefulWidget {
   final AttachmentBrowseDetail detail;
   final bool startFromEnd;
+  final bool readOnly;
   final ValueChanged<String>? onFileNameChanged;
   final VoidCallback? onSwipeNextRecord;
   final VoidCallback? onSwipePrevRecord;
@@ -138,6 +151,7 @@ class _AttachmentPreview extends StatefulWidget {
   const _AttachmentPreview({
     required this.detail,
     this.startFromEnd = false,
+    this.readOnly = false,
     this.onFileNameChanged,
     this.onSwipeNextRecord,
     this.onSwipePrevRecord,
@@ -169,9 +183,6 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
     final idChanged = oldWidget.detail.record.id != widget.detail.record.id;
     final attachmentsChanged =
         oldWidget.detail.attachments.length != widget.detail.attachments.length;
-    debugPrint('[PREVIEW] didUpdateWidget idChanged=$idChanged attachmentsChanged=$attachmentsChanged '
-        'oldId=${oldWidget.detail.record.id} newId=${widget.detail.record.id} '
-        'oldAttach=${oldWidget.detail.attachments.length} newAttach=${widget.detail.attachments.length}');
     if (idChanged || attachmentsChanged) {
       if (attachmentsChanged && !idChanged) {
         _cache.remove(widget.detail.record.id);
@@ -183,18 +194,14 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
 
   void _loadPages() {
     final recordId = widget.detail.record.id;
-    debugPrint('[PREVIEW] _loadPages recordId=$recordId _loadedRecordId=$_loadedRecordId '
-        'pagesNotEmpty=${_pages.isNotEmpty} cacheKeys=${_cache.keys.toList()}');
 
     if (recordId == _loadedRecordId && _pages.isNotEmpty) {
-      debugPrint('[PREVIEW] skipped — already loaded');
       return;
     }
 
     final cached = _cache[recordId];
     if (cached != null && cached.isNotEmpty) {
       final startPage = widget.startFromEnd ? cached.length - 1 : 0;
-      debugPrint('[PREVIEW] cache HIT for $recordId (${cached.length} pages) startFromEnd=${widget.startFromEnd} → page $startPage');
       _pages.clear();
       _pages.addAll(cached);
       _loading = false;
@@ -211,7 +218,6 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
     }
 
     if (widget.detail.attachments.isEmpty) {
-      debugPrint('[PREVIEW] no attachments for $recordId');
       _pages.clear();
       _loading = false;
       _loadedRecordId = recordId;
@@ -221,7 +227,6 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       return;
     }
 
-    debugPrint('[PREVIEW] cache MISS — building ${widget.detail.attachments.length} attachments for $recordId');
     _loadedRecordId = recordId;
     _buildPages();
   }
@@ -235,10 +240,8 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   Future<void> _buildPages() async {
     setState(() => _loading = true);
     final pages = <_PreviewPage>[];
-    debugPrint('[PREVIEW] _buildPages: ${widget.detail.attachments.length} attachments');
 
     for (final attachment in widget.detail.attachments) {
-      debugPrint('[PREVIEW]   file: ${attachment.title} path=${attachment.filePath} type=${attachment.contentType}');
       if (attachment.filePath == null) continue;
       final path = attachment.filePath!;
       final ct = attachment.contentType?.toLowerCase() ?? '';
@@ -329,7 +332,10 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
             )
           : hasPages
               ? _buildPageView(context)
-              : _EmptyAttachmentContent(record: widget.detail.record),
+              : _EmptyAttachmentContent(
+                  record: widget.detail.record,
+                  readOnly: widget.readOnly,
+                ),
     );
   }
 
@@ -474,11 +480,27 @@ class _PreviewPage {
 
 class _EmptyAttachmentContent extends StatelessWidget {
   final IFhirResource record;
+  final bool readOnly;
 
-  const _EmptyAttachmentContent({required this.record});
+  const _EmptyAttachmentContent({
+    required this.record,
+    this.readOnly = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (readOnly) {
+      return Center(
+        child: Text(
+          'No attachments',
+          style: AppTextStyle.titleSmall.copyWith(
+            color: context.colorScheme.onSurface,
+            fontSize: 20,
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
       child: Column(
@@ -497,20 +519,13 @@ class _EmptyAttachmentContent extends StatelessWidget {
             height: 36,
             child: ElevatedButton(
               onPressed: () async {
-                debugPrint('[BROWSE_ATTACH] picking file...');
                 final result = await FilePicker.platform.pickFiles();
-                if (result == null) {
-                  debugPrint('[BROWSE_ATTACH] picker cancelled');
-                  return;
-                }
+                if (result == null) return;
 
                 final file = File(result.files.first.path!);
-                debugPrint('[BROWSE_ATTACH] picked: ${file.path}');
-                debugPrint('[BROWSE_ATTACH] record: ${record.fhirType} id=${record.id} resourceId=${record.resourceId}');
 
                 final attachBloc = getIt.get<RecordAttachmentsBloc>();
                 attachBloc.add(RecordAttachmentsInitialised(resource: record));
-                debugPrint('[BROWSE_ATTACH] waiting for init...');
                 final initState = await attachBloc.stream.firstWhere(
                   (s) => s.status.when(
                     loading: () => false,
@@ -518,10 +533,8 @@ class _EmptyAttachmentContent extends StatelessWidget {
                     error: (_) => true,
                   ),
                 );
-                debugPrint('[BROWSE_ATTACH] init done, status: ${initState.status}, resource: ${initState.resource.fhirType}');
 
                 attachBloc.add(RecordAttachmentsFileAttached(file));
-                debugPrint('[BROWSE_ATTACH] waiting for attach...');
                 final attachState = await attachBloc.stream.firstWhere(
                   (s) => s.status.when(
                     loading: () => false,
@@ -529,10 +542,8 @@ class _EmptyAttachmentContent extends StatelessWidget {
                     error: (_) => true,
                   ),
                 );
-                debugPrint('[BROWSE_ATTACH] attach done, status: ${attachState.status}');
 
                 if (context.mounted) {
-                  debugPrint('[BROWSE_ATTACH] refreshing browse view');
                   final filters =
                       context.read<RecordsBloc>().state.activeFilters;
                   final homeState = context.read<HomeBloc>().state;
@@ -545,8 +556,6 @@ class _EmptyAttachmentContent extends StatelessWidget {
                       resourceTypes: filters,
                     ),
                   );
-                } else {
-                  debugPrint('[BROWSE_ATTACH] context not mounted, skipping refresh');
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -573,10 +582,12 @@ class _EmptyAttachmentContent extends StatelessWidget {
 class _FileInfoRow extends StatelessWidget {
   final AttachmentBrowseDetail detail;
   final String currentFileName;
+  final bool readOnly;
 
   const _FileInfoRow({
     required this.detail,
     required this.currentFileName,
+    this.readOnly = false,
   });
 
   @override
@@ -599,7 +610,7 @@ class _FileInfoRow extends StatelessWidget {
         GestureDetector(
           onTap: () => _showActionDialog(
             context,
-            RecordNotesWidget(resource: detail.record),
+            RecordNotesWidget(resource: detail.record, readOnly: readOnly),
           ),
           child: Padding(
             padding: const EdgeInsets.all(6),
@@ -617,9 +628,15 @@ class _FileInfoRow extends StatelessWidget {
           onTap: () async {
             await _showActionDialog(
               context,
-              RecordAttachmentsWidget(resource: detail.record),
+              RecordAttachmentsWidget(
+                resource: detail.record,
+                readOnly: readOnly,
+                ephemeralRecords: readOnly
+                    ? context.read<AttachmentBrowseBloc>().state.sourceRecords
+                    : const [],
+              ),
             );
-            if (context.mounted) {
+            if (context.mounted && !readOnly) {
               context.read<AttachmentBrowseBloc>().add(
                     AttachmentBrowseDetailRefreshed(),
                   );
@@ -777,8 +794,14 @@ class _DetailRow extends StatelessWidget {
 
 class _ShowDetailsButton extends StatelessWidget {
   final AttachmentBrowseDetail detail;
+  final bool readOnly;
+  final List<IFhirResource>? ephemeralRecords;
 
-  const _ShowDetailsButton({required this.detail});
+  const _ShowDetailsButton({
+    required this.detail,
+    this.readOnly = false,
+    this.ephemeralRecords,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -788,7 +811,10 @@ class _ShowDetailsButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: () {
           context.router.push(
-            RecordDetailsRoute(resource: detail.record),
+            RecordDetailsRoute(
+              resource: detail.record,
+              ephemeralRecords: readOnly ? (ephemeralRecords ?? const []) : const [],
+            ),
           );
         },
         style: OutlinedButton.styleFrom(

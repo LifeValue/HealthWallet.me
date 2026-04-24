@@ -12,12 +12,14 @@ class RecordsFilterBottomSheet extends StatefulWidget {
     required this.activeFilters,
     required this.onApply,
     this.currentDateFilter,
+    this.availableFilters,
     super.key,
   });
 
   final List<FhirType> activeFilters;
   final void Function(List<FhirType>, DateFilter?) onApply;
   final DateFilter? currentDateFilter;
+  final List<FhirType>? availableFilters;
 
   @override
   State<RecordsFilterBottomSheet> createState() =>
@@ -255,7 +257,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: FhirType.values.map((filter) {
+            children: (widget.availableFilters ?? FhirType.values).map((filter) {
               final isSelected = _selectedFilters.contains(filter);
               return GestureDetector(
                 onTap: () => _toggleFitler(filter),
