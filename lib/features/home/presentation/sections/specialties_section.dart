@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
-import 'package:health_wallet/features/home/presentation/widgets/reorderable_grid.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/presentation/widgets/reorderable_grid.dart';
 import 'package:health_wallet/features/home/presentation/widgets/shaking_card.dart';
 
-class MedicalRecordsSection extends StatelessWidget {
-  final List<OverviewCard> overviewCards;
+class SpecialtiesSection extends StatelessWidget {
+  final List<SpecialtyCard> specialtyCards;
   final bool editMode;
   final VoidCallback? onLongPressCard;
   final void Function(int oldIndex, int newIndex)? onReorder;
-  final void Function(OverviewCard card)? onTapCard;
+  final void Function(MedicalSpecialty specialty)? onTapCard;
   final GlobalKey? firstCardKey;
-  final FocusNode? firstCardFocusNode;
 
-  const MedicalRecordsSection({
+  const SpecialtiesSection({
     super.key,
-    required this.overviewCards,
+    required this.specialtyCards,
     this.editMode = false,
     this.onLongPressCard,
     this.onReorder,
     this.onTapCard,
     this.firstCardKey,
-    this.firstCardFocusNode,
   });
 
   static const double _breakpoint = 380;
@@ -45,8 +44,8 @@ class MedicalRecordsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.sizeOf(context).width;
 
-    return ReorderableGrid<OverviewCard>(
-      items: overviewCards,
+    return ReorderableGrid<SpecialtyCard>(
+      items: specialtyCards,
       enabled: editMode,
       onReorder: onReorder ?? (a, b) {},
       crossAxisCount: _getCrossAxisCount(screenWidth),
@@ -55,62 +54,45 @@ class MedicalRecordsSection extends StatelessWidget {
       childAspectRatio: _getChildAspectRatio(screenWidth),
       itemBuilder: (context, card, index) {
         final isFirstCard = index == 0 && !editMode;
-        final cardContent = _buildOverviewCard(
-          context,
-          card,
-          screenWidth,
+        final cardContent = _buildSpecialtyCard(
+          context, card, screenWidth,
           key: isFirstCard ? firstCardKey : null,
         );
-
-        Widget cardWidget;
-        if (isFirstCard && firstCardFocusNode != null) {
-          cardWidget = Focus(
-            focusNode: firstCardFocusNode!,
-            child: cardContent,
-          );
-        } else {
-          cardWidget = cardContent;
-        }
 
         return editMode
             ? ShakingCard(
                 isShaking: true,
-                child: cardWidget,
+                child: cardContent,
               )
             : ShakingCard(
                 isShaking: false,
                 child: GestureDetector(
-                  onTap: () => onTapCard?.call(card),
+                  onTap: () => onTapCard?.call(card.specialty),
                   onLongPress: onLongPressCard,
-                  child: cardWidget,
+                  child: cardContent,
                 ),
               );
       },
     );
   }
 
-  Widget _buildOverviewCard(
-      BuildContext context, OverviewCard card, double screenWidth,
-      {Key? key}) {
+  Widget _buildSpecialtyCard(
+    BuildContext context,
+    SpecialtyCard card,
+    double screenWidth, {
+    Key? key,
+  }) {
     final bool isSmall = screenWidth < _breakpoint;
     final double iconSize = isSmall ? 22 : 26;
 
-    final TextStyle categoryStyle = isSmall
-        ? AppTextStyle.bodySmall.copyWith(
-            fontSize: 10,
-            color: context.colorScheme.onSurface.withOpacity(0.6),
-          )
-        : AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.6),
-          );
+    final TextStyle nameStyle = AppTextStyle.bodySmall.copyWith(
+      fontSize: isSmall ? 10 : null,
+      color: context.colorScheme.onSurface.withOpacity(0.6),
+    );
 
-    final TextStyle countStyle = isSmall
-        ? AppTextStyle.titleSmall.copyWith(
-            color: context.colorScheme.onSurface,
-          )
-        : AppTextStyle.titleSmall.copyWith(
-            color: context.colorScheme.onSurface,
-          );
+    final TextStyle countStyle = AppTextStyle.titleSmall.copyWith(
+      color: context.colorScheme.onSurface,
+    );
 
     return Container(
       key: key,
@@ -133,7 +115,7 @@ class MedicalRecordsSection extends StatelessWidget {
                 SizedBox(
                   width: iconSize,
                   height: iconSize,
-                  child: card.category.icon.svg(
+                  child: card.specialty.icon.svg(
                     colorFilter: ColorFilter.mode(
                       context.colorScheme.onSurface,
                       BlendMode.srcIn,
@@ -146,14 +128,14 @@ class MedicalRecordsSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        card.category.display,
+                        card.specialty.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: categoryStyle,
+                        style: nameStyle,
                       ),
                       const SizedBox(height: Insets.small),
                       Text(
-                        card.count,
+                        '${card.count}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: countStyle,

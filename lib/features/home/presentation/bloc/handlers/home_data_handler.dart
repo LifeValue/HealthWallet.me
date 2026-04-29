@@ -9,6 +9,9 @@ import 'package:health_wallet/features/home/domain/repository/home_preferences_r
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +22,7 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
   PatientDeduplicationService get deduplicationService;
   PatientSelectionService get patientSelectionService;
   PatientVitalFactory get patientVitalFactory;
+  SpecialtyClassifier get specialtyClassifier;
 
   static const String demoSourceId = 'demo_data';
 
@@ -289,5 +293,32 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
       ...savedOrder.map((t) => map.remove(t)).whereType<OverviewCard>(),
       ...map.values,
     ];
+  }
+
+  Future<List<SpecialtyCard>> classifyIntoSpecialties(
+      List<IFhirResource> resources) async {
+    specialtyClassifier.buildEncounterIndex(resources);
+    final counts = <MedicalSpecialty, int>{};
+    for (final resource in resources) {
+      for (final specialty in specialtyClassifier.classify(resource)) {
+        counts[specialty] = (counts[specialty] ?? 0) + 1;
+      }
+    }
+    final cards = MedicalSpecialty.values
+        .map((s) => SpecialtyCard(specialty: s, count: counts[s] ?? 0))
+        .toList();
+
+    final savedOrder = await homePreferences.getSpecialtiesOrder();
+    if (savedOrder != null && savedOrder.isNotEmpty) {
+      cards.sort((a, b) {
+        final indexA = savedOrder.indexOf(a.specialty.name);
+        final indexB = savedOrder.indexOf(b.specialty.name);
+        if (indexA == -1 && indexB == -1) return 0;
+        if (indexA == -1) return 1;
+        if (indexB == -1) return -1;
+        return indexA.compareTo(indexB);
+      });
+    }
+    return cards;
   }
 }

@@ -14,6 +14,7 @@ class AppSimpleDialog {
     required String title,
     String? message,
     String? subtitle,
+    Widget? subtitleWidget,
     required String confirmText,
     required String cancelText,
     required VoidCallback onConfirm,
@@ -40,12 +41,12 @@ class AppSimpleDialog {
                   Text(
                     message,
                     style: AppTextStyle.labelLarge.copyWith(
-                      color: subtitle != null
-                          ? textColor.withValues(alpha: 0.4)
+                      color: (subtitle != null || subtitleWidget != null)
+                          ? textColor
                           : textColor,
                     ),
                   )
-                else if (subtitle != null)
+                else if (subtitle != null || subtitleWidget != null)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -71,7 +72,10 @@ class AppSimpleDialog {
                     title,
                     style: AppTextStyle.labelLarge.copyWith(color: textColor),
                   ),
-                if (subtitle != null) ...[
+                if (subtitleWidget != null) ...[
+                  const SizedBox(height: Insets.normal),
+                  subtitleWidget,
+                ] else if (subtitle != null) ...[
                   const SizedBox(height: Insets.normal),
                   Text(
                     subtitle,

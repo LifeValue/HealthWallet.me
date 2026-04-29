@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -102,6 +103,57 @@ class HomeDialogController {
             result[type] = selectedIds.contains(type.name);
           }
           onVitalsSaved(result);
+        },
+      ),
+    );
+  }
+
+  static void showEditSpecialtiesDialog(
+    BuildContext context,
+    HomeState state,
+    Function(Map<MedicalSpecialty, bool>) onSpecialtiesSaved,
+  ) {
+    final orderedSpecialties =
+        state.specialtyCards.map((c) => c.specialty).toList(growable: false);
+    final allSpecialties = MedicalSpecialty.values;
+    final items = orderedSpecialties.map((specialty) {
+      return DialogItem(
+        id: specialty.name,
+        label: specialty.displayName,
+      );
+    }).toList();
+
+    for (final specialty in allSpecialties) {
+      if (!orderedSpecialties.contains(specialty)) {
+        items.add(DialogItem(
+          id: specialty.name,
+          label: specialty.displayName,
+        ));
+      }
+    }
+
+    final initiallySelected = state.selectedSpecialties.entries
+        .where((e) => e.value)
+        .map((e) => e.key.name)
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (context) => AppDialog(
+        title: context.l10n.specialty,
+        description: 'Choose the specialities you want to see on your dashboard.',
+        items: items,
+        mode: AppDialogMode.multiSelect,
+        initiallySelected: initiallySelected,
+        cancelText: context.l10n.cancel,
+        confirmText: context.l10n.save,
+        validationMessage: 'Select at least one specialty to continue.',
+        onConfirm: (selectedIds) {
+          final result = <MedicalSpecialty, bool>{};
+          for (final specialty in allSpecialties) {
+            result[specialty] = selectedIds.contains(specialty.name);
+          }
+          onSpecialtiesSaved(result);
         },
       ),
     );

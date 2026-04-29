@@ -18,4 +18,7 @@ class SharedPrefsConstants {
   static const backupDirectory = 'backupDirectory';
   static const minimizeToTray = 'minimizeToTray';
   static const recordsViewMode = 'recordsViewMode';
+  static const specialtiesOrder = 'specialtiesOrder';
+  static const specialtiesVisibility = 'specialtiesVisibility';
+  static const overviewViewMode = 'overviewViewMode';
 }

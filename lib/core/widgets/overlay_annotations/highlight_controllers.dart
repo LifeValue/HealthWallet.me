@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class HomeHighlightController {
   late final GlobalKey firstVitalCardKey;
   late final GlobalKey firstOverviewCardKey;
+  late final GlobalKey firstSpecialtyCardKey;
 
   HomeHighlightController() {
     _initializeKeys();
@@ -11,10 +12,12 @@ class HomeHighlightController {
   void _initializeKeys() {
     firstVitalCardKey = GlobalKey(debugLabel: 'First Vital Card');
     firstOverviewCardKey = GlobalKey(debugLabel: 'First Overview Card');
+    firstSpecialtyCardKey = GlobalKey(debugLabel: 'First Specialty Card');
   }
 
   List<GlobalKey> get highlightTargetKeys => [
         firstVitalCardKey,
+        firstSpecialtyCardKey,
         firstOverviewCardKey,
       ];
 }
