@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -23,6 +24,7 @@ class ProcessingMappingSection extends StatelessWidget {
   final VoidCallback onRetryStep2;
   final VoidCallback onCancel;
   final VoidCallback? onProcessOnDesktop;
+  final VoidCallback? onAttachWithoutProcessing;
 
   const ProcessingMappingSection({
     required this.state,
@@ -34,6 +36,7 @@ class ProcessingMappingSection extends StatelessWidget {
     required this.onCancel,
     required this.checkModelExistence,
     this.onProcessOnDesktop,
+    this.onAttachWithoutProcessing,
     super.key,
   });
 
@@ -105,17 +108,30 @@ class ProcessingMappingSection extends StatelessWidget {
     return error;
   }
 
+  bool _isModelNotFound(String error) =>
+      error.contains('Model file not found');
+
   Widget _buildFailure(BuildContext context, String error) {
+    final isNoModel = _isModelNotFound(error);
+    final title = isNoModel
+        ? context.l10n.noAiModel
+        : context.l10n.processingFailed;
+
     return Column(
       children: [
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(Insets.normal),
           decoration: BoxDecoration(
-            color: context.colorScheme.errorContainer.withOpacity(0.3),
+            color: isNoModel
+                ? AppColors.warning.withValues(alpha: 0.08)
+                : context.colorScheme.errorContainer.withOpacity(0.3),
             borderRadius: BorderRadius.circular(8),
-            border:
-                Border.all(color: context.colorScheme.error.withOpacity(0.5)),
+            border: Border.all(
+              color: isNoModel
+                  ? AppColors.warning.withValues(alpha: 0.4)
+                  : context.colorScheme.error.withOpacity(0.5),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,15 +139,19 @@ class ProcessingMappingSection extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    Icons.error_outline,
-                    color: context.colorScheme.error,
+                    isNoModel ? Icons.warning_amber_rounded : Icons.error_outline,
+                    color: isNoModel
+                        ? AppColors.warning
+                        : context.colorScheme.error,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    context.l10n.processingFailed,
+                    title,
                     style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.error,
+                      color: isNoModel
+                          ? AppColors.warning
+                          : context.colorScheme.error,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -147,13 +167,23 @@ class ProcessingMappingSection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: Insets.normal),
-        if (displayedSession.status != ProcessingStatus.patientExtracted)
+        if (isNoModel && onAttachWithoutProcessing != null) ...[
+          const SizedBox(height: Insets.normal),
           AppButton(
-            label: context.l10n.retry,
-            variant: AppButtonVariant.outlined,
-            onPressed: onRetryStep1,
+            label: context.l10n.attachWithoutProcessing,
+            variant: AppButtonVariant.primary,
+            onPressed: onAttachWithoutProcessing,
           ),
+        ],
+        if (!isNoModel) ...[
+          const SizedBox(height: Insets.normal),
+          if (displayedSession.status != ProcessingStatus.patientExtracted)
+            AppButton(
+              label: context.l10n.retry,
+              variant: AppButtonVariant.outlined,
+              onPressed: onRetryStep1,
+            ),
+        ],
       ],
     );
   }

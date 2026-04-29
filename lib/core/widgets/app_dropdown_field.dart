@@ -10,6 +10,9 @@ class AppDropdownField<T> extends StatefulWidget {
   final List<T> items;
   final String Function(T) getDisplayText;
   final ValueChanged<T>? onChanged;
+  final Widget Function(BuildContext, T, bool isSelected)? itemBuilder;
+  final Widget Function(BuildContext, String)? valueBuilder;
+  final bool hasError;
 
   const AppDropdownField({
     super.key,
@@ -17,6 +20,9 @@ class AppDropdownField<T> extends StatefulWidget {
     required this.items,
     required this.getDisplayText,
     this.onChanged,
+    this.itemBuilder,
+    this.valueBuilder,
+    this.hasError = false,
   });
 
   @override
@@ -96,6 +102,7 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                       items: widget.items,
                       selectedValue: widget.value,
                       getDisplayText: widget.getDisplayText,
+                      itemBuilder: widget.itemBuilder,
                       onSelected: (item) {
                         widget.onChanged?.call(item);
                         _hideMenu();
@@ -134,11 +141,13 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
               horizontal: Insets.smallNormal),
           decoration: BoxDecoration(
             border: Border.all(
-              color: _isOpen
-                  ? context.colorScheme.primary
-                  : context.isDarkMode
-                      ? AppColors.borderDark
-                      : AppColors.border,
+              color: widget.hasError
+                  ? context.colorScheme.error
+                  : _isOpen
+                      ? context.colorScheme.primary
+                      : context.isDarkMode
+                          ? AppColors.borderDark
+                          : AppColors.border,
               width: kInputBorderWidth,
             ),
             borderRadius: BorderRadius.circular(kInputBorderRadius),
@@ -147,12 +156,14 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  widget.value,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.labelLarge
-                      .copyWith(color: context.colorScheme.onSurface),
-                ),
+                child: widget.valueBuilder != null
+                    ? widget.valueBuilder!(context, widget.value)
+                    : Text(
+                        widget.value,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyle.labelLarge
+                            .copyWith(color: context.colorScheme.onSurface),
+                      ),
               ),
               Icon(
                 _isOpen ? Icons.expand_less : Icons.expand_more,
@@ -172,12 +183,14 @@ class _MenuList<T> extends StatefulWidget {
   final String selectedValue;
   final String Function(T) getDisplayText;
   final ValueChanged<T> onSelected;
+  final Widget Function(BuildContext, T, bool isSelected)? itemBuilder;
 
   const _MenuList({
     required this.items,
     required this.selectedValue,
     required this.getDisplayText,
     required this.onSelected,
+    this.itemBuilder,
   });
 
   @override
@@ -246,15 +259,17 @@ class _MenuListState<T> extends State<_MenuList<T>> {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                itemText,
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: isSelected
-                      ? context.colorScheme.primary
-                      : context.colorScheme.onSurface,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: widget.itemBuilder != null
+                  ? widget.itemBuilder!(context, item, isSelected)
+                  : Text(
+                      itemText,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: isSelected
+                            ? context.colorScheme.primary
+                            : context.colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
             ),
           ),
         );

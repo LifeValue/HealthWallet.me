@@ -10,6 +10,7 @@ import 'package:health_wallet/features/notifications/domain/entities/notificatio
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
@@ -369,11 +370,34 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           .where((r) => r is! MappingPatient &&
               r is! MappingEncounter && r is! MappingDiagnosticReport)
           .toList();
+      final encounterDraft = activeSession.encounter.draft;
+      final specialtyValue = encounterDraft?.specialty.value ?? '';
+      String specialtyEnumName = '';
+      if (specialtyValue.isNotEmpty) {
+        final match = MedicalSpecialty.values
+            .where((s) => s.displayName == specialtyValue)
+            .firstOrNull;
+        specialtyEnumName = match?.name ?? 'generalCare';
+      }
       List<IFhirResource> fhirResources = otherResources
-          .map((resource) => resource.toFhirResource(
-              sourceId: sourceId,
-              subjectId: subjectId,
-              encounterId: finalContainer.id))
+          .map((resource) {
+            final fhirResource = resource.toFhirResource(
+                sourceId: sourceId,
+                subjectId: subjectId,
+                encounterId: finalContainer.id);
+            if (specialtyValue.isNotEmpty) {
+              final json = fhirResource.rawResource;
+              json['meta'] ??= {};
+              (json['meta'] as Map<String, dynamic>)['tag'] = [
+                {
+                  'system': 'http://healthwallet.me/specialty',
+                  'code': specialtyEnumName,
+                  'display': specialtyValue,
+                }
+              ];
+            }
+            return fhirResource;
+          })
           .toList();
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);

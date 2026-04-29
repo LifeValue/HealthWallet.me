@@ -83,7 +83,7 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
           final canProceed =
               state.patient.hasSelection && state.encounter.hasSelection;
           return Container(
-            constraints: const BoxConstraints(maxHeight: 600),
+            constraints: const BoxConstraints(maxHeight: 600, maxWidth: 500),
             decoration: BoxDecoration(
               color: context.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),

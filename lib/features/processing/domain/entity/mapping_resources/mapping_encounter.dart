@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/validator.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
@@ -19,6 +20,7 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
     @Default('') String id,
     @Default(MappedProperty()) MappedProperty encounterType,
     @Default(MappedProperty()) MappedProperty periodStart,
+    @Default(MappedProperty()) MappedProperty specialty,
   }) = _MappingEncounter;
 
   factory MappingEncounter.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,9 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
       periodStart: rawPeriodStart.copyWith(
         value: MappingResource.normalizeDateValue(rawPeriodStart.value),
       ),
+      specialty: json['specialty'] != null
+          ? MappedProperty.fromJson(json['specialty'])
+          : const MappedProperty(),
     );
   }
 
@@ -37,6 +42,7 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
       id: const Uuid().v4(),
       encounterType: MappedProperty.empty(),
       periodStart: MappedProperty.empty(),
+      specialty: MappedProperty.empty(),
     );
   }
 
@@ -60,6 +66,7 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
         'resourceType': 'Encounter',
         'encounterType': encounterType.toJson(),
         'periodStart': periodStart.toJson(),
+        'specialty': specialty.toJson(),
       };
 
   @override
@@ -72,6 +79,29 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
         type: [
           fhir_r4.CodeableConcept(text: fhir_r4.FhirString(encounterType.value))
         ],
+        serviceType: specialty.value.isNotEmpty
+            ? fhir_r4.CodeableConcept(
+                coding: [
+                  fhir_r4.Coding(
+                    system: fhir_r4.FhirUri('http://snomed.info/sct'),
+                    code: fhir_r4.FhirCode(_getSnomedCodeForSpecialty(specialty.value)),
+                    display: fhir_r4.FhirString(specialty.value),
+                  ),
+                ],
+                text: fhir_r4.FhirString(specialty.value),
+              )
+            : null,
+        meta: specialty.value.isNotEmpty
+            ? fhir_r4.FhirMeta(
+                tag: [
+                  fhir_r4.Coding(
+                    system: fhir_r4.FhirUri('http://healthwallet.me/specialty'),
+                    code: fhir_r4.FhirCode(_getSpecialtyEnumName(specialty.value)),
+                    display: fhir_r4.FhirString(specialty.value),
+                  ),
+                ],
+              )
+            : null,
         period: periodStart.value.isNotEmpty
             ? fhir_r4.Period(
                 start: fhir_r4.FhirDateTime.fromString(periodStart.value),
@@ -101,6 +131,7 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
         'encounterType': l10n.labelEncounterName,
         'periodStart': l10n.labelStartDate,
+        'specialty': l10n.labelSpecialty,
       };
 
   @override
@@ -117,6 +148,12 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
           confidenceLevel: periodStart.confidenceLevel,
           fieldType: FieldType.date,
           validators: [nonEmptyValidator, dateValidator],
+        ),
+        'specialty': TextFieldDescriptor(
+          label: 'Specialty',
+          value: specialty.value,
+          confidenceLevel: specialty.confidenceLevel,
+          fieldType: FieldType.dropdown,
         ),
       };
 
@@ -136,6 +173,12 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
               ? 1
               : periodStart.confidenceLevel,
         ),
+        specialty: MappedProperty(
+          value: newValues['specialty'] ?? specialty.value,
+          confidenceLevel: newValues['specialty'] != null
+              ? 1
+              : specialty.confidenceLevel,
+        ),
       );
 
   @override
@@ -145,8 +188,23 @@ class MappingEncounter with _$MappingEncounter implements MappingResource {
   MappingResource populateConfidence(String inputText) => copyWith(
         encounterType: encounterType.calculateConfidence(inputText),
         periodStart: periodStart.calculateDateConfidence(inputText),
+        specialty: specialty.calculateConfidence(inputText),
       );
 
   @override
   bool get isValid => encounterType.isValid || periodStart.isValid;
+
+  static String _getSnomedCodeForSpecialty(String displayName) {
+    final match = MedicalSpecialty.values
+        .where((s) => s.displayName == displayName)
+        .firstOrNull;
+    return match?.snomedSpecialtyCode ?? '394802001';
+  }
+
+  static String _getSpecialtyEnumName(String displayName) {
+    final match = MedicalSpecialty.values
+        .where((s) => s.displayName == displayName)
+        .firstOrNull;
+    return match?.name ?? 'generalCare';
+  }
 }

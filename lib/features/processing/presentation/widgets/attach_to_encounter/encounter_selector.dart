@@ -1,5 +1,5 @@
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
@@ -269,36 +269,12 @@ class _EncounterSelectorState extends State<EncounterSelector> {
   }
 
   Widget _buildCreateEncounterButton(BuildContext context, Color borderColor) {
-    return DottedBorder(
-      options: RoundedRectDottedBorderOptions(
-        radius: const Radius.circular(8),
-        dashPattern: [6, 6],
-        color: context.colorScheme.outline.withOpacity(0.2),
-      ),
-      child: GestureDetector(
-        onTap: () => _handleCreateEncounter(context),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add,
-                color: context.colorScheme.onSurface,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                context.l10n.createEncounter,
-                style: AppTextStyle.bodySmall.copyWith(
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return AppButton(
+      label: context.l10n.createEncounter,
+      icon: const Icon(Icons.add),
+      variant: AppButtonVariant.dashed,
+      onPressed: () => _handleCreateEncounter(context),
+      height: 48,
     );
   }
 }

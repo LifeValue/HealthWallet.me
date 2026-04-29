@@ -5,6 +5,8 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
@@ -33,7 +35,9 @@ class CreateEncounterDialog extends StatefulWidget {
 class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
   final _nameController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+  String _selectedSpecialty = '';
   final _formKey = GlobalKey<FormState>();
+  String? _nameError;
 
   @override
   void dispose() {
@@ -45,8 +49,21 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
     Navigator.of(context).pop();
   }
 
+  String? _specialtyError;
+
   void _handleCreate() {
-    if (!_formKey.currentState!.validate()) return;
+    final nameValid = _nameController.text.trim().isNotEmpty;
+    if (!nameValid) {
+      setState(() => _nameError = context.l10n.pleaseEnterEncounterName);
+    } else {
+      setState(() => _nameError = null);
+    }
+    if (_selectedSpecialty.isEmpty) {
+      setState(() => _specialtyError = 'Please select a specialty');
+    } else {
+      setState(() => _specialtyError = null);
+    }
+    if (!nameValid || _selectedSpecialty.isEmpty) return;
 
     final encounter = MappingEncounter(
       id: const Uuid().v4(),
@@ -56,6 +73,10 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
       ),
       periodStart: MappedProperty(
         value: _selectedDate.toIso8601String().split('T').first,
+        confidenceLevel: 1.0,
+      ),
+      specialty: MappedProperty(
+        value: _selectedSpecialty,
         confidenceLevel: 1.0,
       ),
     );
@@ -107,9 +128,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: borderColor, width: 1),
         ),
-        child: Form(
-          key: _formKey,
-          child: Column(
+        child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
 
@@ -152,14 +171,13 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                       ),
                     ),
                     const SizedBox(height: Insets.small),
-                    TextFormField(
+                    TextField(
                       controller: _nameController,
                       style: AppTextStyle.labelLarge,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return context.l10n.pleaseEnterEncounterName;
+                      onChanged: (_) {
+                        if (_nameError != null) {
+                          setState(() => _nameError = null);
                         }
-                        return null;
                       },
                       decoration: InputDecoration(
                         isDense: true,
@@ -173,16 +191,16 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: borderColor),
+                          borderSide: BorderSide(
+                            color: _nameError != null
+                                ? context.colorScheme.error
+                                : borderColor,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide:
                               const BorderSide(color: AppColors.primary),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.red),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -190,9 +208,112 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                         ),
                       ),
                     ),
+                    if (_nameError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: Insets.extraSmall),
+                        child: Text(
+                          _nameError!,
+                          style: AppTextStyle.labelSmall.copyWith(
+                            color: context.colorScheme.error,
+                          ),
+                        ),
+                      ),
 
                     const SizedBox(height: Insets.normal),
 
+                    Text(
+                      context.l10n.specialty,
+                      style: AppTextStyle.bodySmall.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: Insets.small),
+                    AppDropdownField<MedicalSpecialty>(
+                      hasError: _specialtyError != null,
+                      value: _selectedSpecialty,
+                      items: MedicalSpecialty.values,
+                      getDisplayText: (s) => s.displayName,
+                      onChanged: (s) =>
+                          setState(() {
+                            _selectedSpecialty = s.displayName;
+                            _specialtyError = null;
+                          }),
+                      itemBuilder: (context, s, isSelected) => Row(
+                        children: [
+                          s.icon.svg(
+                            width: 20,
+                            height: 20,
+                            colorFilter: ColorFilter.mode(
+                              isSelected
+                                  ? context.colorScheme.primary
+                                  : context.colorScheme.onSurface,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              s.displayName,
+                              style: AppTextStyle.bodyMedium.copyWith(
+                                color: isSelected
+                                    ? context.colorScheme.primary
+                                    : context.colorScheme.onSurface,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      valueBuilder: (context, value) {
+                        final match = MedicalSpecialty.values
+                            .where((s) => s.displayName == value)
+                            .firstOrNull;
+                        if (match == null) {
+                          return Text(
+                            value.isEmpty ? context.l10n.specialty : value,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyle.labelLarge.copyWith(
+                              color: value.isEmpty
+                                  ? context.colorScheme.onSurface
+                                      .withOpacity(0.5)
+                                  : context.colorScheme.onSurface,
+                            ),
+                          );
+                        }
+                        return Row(
+                          children: [
+                            match.icon.svg(
+                              width: 18,
+                              height: 18,
+                              colorFilter: ColorFilter.mode(
+                                context.colorScheme.onSurface,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              match.displayName,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyle.labelLarge.copyWith(
+                                color: context.colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    if (_specialtyError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: Insets.extraSmall),
+                        child: Text(
+                          _specialtyError!,
+                          style: AppTextStyle.labelSmall.copyWith(
+                            color: context.colorScheme.error,
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(height: Insets.normal),
 
                     Text(
                       context.l10n.date,
@@ -240,7 +361,6 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
 
               Container(height: 1, color: borderColor),
 
-
               Padding(
                 padding: const EdgeInsets.all(Insets.normal),
                 child: Row(
@@ -266,7 +386,6 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
             ],
           ),
         ),
-      ),
     );
   }
 }

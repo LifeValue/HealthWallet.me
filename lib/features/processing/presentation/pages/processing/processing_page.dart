@@ -312,6 +312,25 @@ class _ProcessingPageState extends State<ProcessingPage> {
                       session: displayedSession,
                     );
                   },
+                  onAttachWithoutProcessing: () async {
+                    final result = await showDialog<AttachToEncounterResult>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (ctx) => const AttachToEncounterWidget(),
+                    );
+                    if (result == null || !context.mounted) return;
+                    final (patient, encounter) = result;
+                    context.read<ProcessingBloc>().add(
+                          EncounterAttached(
+                            sessionId: widget.sessionId,
+                            patient: patient,
+                            encounter: encounter,
+                          ),
+                        );
+                    context.read<ProcessingBloc>().add(
+                          ResourceCreationInitiated(sessionId: widget.sessionId),
+                        );
+                  },
                 ),
                 ProcessingResourcesSection(
                   state: state,
