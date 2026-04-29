@@ -2,7 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/core/services/screen_security_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -12,7 +14,7 @@ import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
-import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/ephemeral_attachment_view.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/resource_card.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
@@ -96,8 +98,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
 
   void _ensureAttachmentBrowseBloc(List<IFhirResource> records) {
     if (_attachmentBrowseBloc != null) return;
-    final service = EphemeralAttachmentBrowseService(records);
-    _attachmentBrowseBloc = AttachmentBrowseBloc(service);
+    final service = EphemeralAttachmentBrowseService(records, getIt<SpecialtyClassifier>());
+    _attachmentBrowseBloc = AttachmentBrowseBloc(service, getIt<SpecialtyClassifier>());
     _attachmentBrowseBloc!.add(AttachmentBrowseInitialised(
       resourceTypes: _filterTypes,
       readOnly: true,
@@ -157,7 +159,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
         return RecordsFilterBottomSheet(
           activeFilters: _filterTypes,
           availableFilters: availableTypes,
-          onApply: (filters, _) {
+          onApply: (filters, _, __) {
             setState(() => _filterTypes = filters);
             if (_viewMode == RecordsViewMode.attachments) {
               _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
@@ -550,11 +552,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
           Expanded(
             child: BlocProvider.value(
               value: _attachmentBrowseBloc!,
-              child: AttachmentBrowseView(
-                externalFilters: _filterTypes,
-                bottomNavHeight: 0,
-                readOnly: true,
-              ),
+              child: const EphemeralAttachmentView(),
             ),
           ),
         ],

@@ -1,14 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 
 class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
   final List<IFhirResource> _records;
+  final SpecialtyClassifier _specialtyClassifier;
 
-  EphemeralAttachmentBrowseService(this._records);
+  EphemeralAttachmentBrowseService(this._records, this._specialtyClassifier);
 
   @override
   Future<List<AttachmentBrowseEntry>> loadEntries({
@@ -184,7 +187,30 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       patientName: patientName,
       organizationName: organizationName,
       practitionerName: practitionerName,
+      specialtyName: _extractSpecialtyName(record.rawResource) ?? _classifySpecialtyName(record),
     );
+  }
+
+  static const _specialtySystem = 'http://healthwallet.me/specialty';
+
+  String? _classifySpecialtyName(IFhirResource record) {
+    final specialties = _specialtyClassifier.classify(record);
+    final specialty = specialties.firstOrNull;
+    if (specialty == null) return null;
+    return specialty.displayName;
+  }
+
+  String? _extractSpecialtyName(Map<String, dynamic> rawResource) {
+    try {
+      final tags = rawResource['meta']?['tag'] as List?;
+      if (tags == null) return null;
+      for (final tag in tags) {
+        if (tag is Map && tag['system'] == _specialtySystem) {
+          return tag['display'] as String?;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   List<AttachmentBrowseFile> _resolveDocumentAttachments(IFhirResource docRef) {
