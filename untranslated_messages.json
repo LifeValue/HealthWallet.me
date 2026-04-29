@@ -3,8 +3,38 @@
     "onboardingRecordsContent",
     "onboardingRecordsBottom",
     "onboardingRequestIntegration",
+    "scanFastenQr",
     "walletHolder",
     "walletHolderDescription",
-    "documentScanTitle"
+    "deleteSourceConfirmPrefix",
+    "deleteSourceConfirmSuffix",
+    "noAiModel",
+    "documentScanTitle",
+    "changeSpecialty",
+    "changeSpecialtyConfirm",
+    "removeSpecialtyConfirm",
+    "confirm"
+  ],
+
+  "es": [
+    "scanFastenQr",
+    "deleteSourceConfirmPrefix",
+    "deleteSourceConfirmSuffix",
+    "noAiModel",
+    "changeSpecialty",
+    "changeSpecialtyConfirm",
+    "removeSpecialtyConfirm",
+    "confirm"
+  ],
+
+  "ro": [
+    "scanFastenQr",
+    "deleteSourceConfirmPrefix",
+    "deleteSourceConfirmSuffix",
+    "noAiModel",
+    "changeSpecialty",
+    "changeSpecialtyConfirm",
+    "removeSpecialtyConfirm",
+    "confirm"
   ]
 }

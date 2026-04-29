@@ -135,6 +135,7 @@ flutter:
     - assets/
     - assets/images/
     - assets/icons/
+    - assets/specialities/
     - assets/images/
     - assets/favIcons/
     - assets/onboarding/
