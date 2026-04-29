@@ -130,6 +130,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get syncTitle => 'Sincronizar';
 
   @override
+  String get scanFastenQr => 'Scan Fasten Health QR';
+
+  @override
   String get syncSuccessful => '¡Sincronización exitosa!';
 
   @override
@@ -370,6 +373,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get actionCannotBeUndone => 'Esta acción no se puede deshacer.';
 
   @override
+  String get deleteSourceConfirmPrefix => 'This will permanently delete ';
+
+  @override
+  String get deleteSourceConfirmSuffix =>
+      ' and all its records. To confirm, type the source name below.';
+
+  @override
   String get deleteRecordConfirm =>
       '¿Estás seguro de que quieres eliminar este registro?';
 
@@ -491,6 +501,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get continueImporting => 'Continuar importando';
+
+  @override
+  String get noAiModel => 'No AI model';
 
   @override
   String get noAiModelOnDesktop =>
@@ -2117,6 +2130,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recordType => 'Tipo de registro';
 
   @override
+  String get specialty => 'Especialidad';
+
+  @override
+  String get allSpecialties => 'Todas las especialidades';
+
+  @override
   String get selectedRange => 'Rango seleccionado';
 
   @override
@@ -2387,4 +2406,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get minimizeToTray => 'Minimizar a la bandeja';
+
+  @override
+  String get changeSpecialty => 'Change Specialty';
+
+  @override
+  String get changeSpecialtyConfirm =>
+      'Are you sure you want to change the specialty to';
+
+  @override
+  String get removeSpecialtyConfirm =>
+      'Are you sure you want to remove the specialty from this record?';
+
+  @override
+  String get confirm => 'Confirm';
 }

@@ -988,6 +988,8 @@
     "timeRange": "Interval de timp",
     "applyFilters": "Aplică filtre",
     "recordType": "Tip înregistrare",
+    "specialty": "Specialitate",
+    "allSpecialties": "Toate specialitățile",
     "selectedRange": "Interval selectat",
     "noRangeSelected": "Niciun interval selectat",
     "clearDateRange": "Șterge intervalul",

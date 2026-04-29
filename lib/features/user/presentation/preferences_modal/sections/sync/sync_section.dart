@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
@@ -18,6 +19,7 @@ import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_b
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart' show Assets;
 
 class SyncSection extends StatelessWidget {
@@ -34,24 +36,90 @@ class SyncSection extends StatelessWidget {
         BlocProvider.value(value: getIt<LwwSyncBloc>()),
         BlocProvider.value(value: getIt<BackupBloc>()),
       ],
-      child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
-        builder: (context, commState) {
-          return BlocBuilder<LwwSyncBloc, LwwSyncState>(
-            builder: (context, lwwState) {
-              return BlocBuilder<BackupBloc, BackupState>(
-                builder: (context, backupState) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: Insets.normal),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.l10n.desktopSyncAndBackup,
-                          style: AppTextStyle.bodySmall,
-                        ),
-                        const SizedBox(height: Insets.small),
-                        if (!isDesktop && commState.connectionStatus != ConnectionStatus.connected && commState.pairedDevice == null) ...[
+      child: BlocBuilder<SyncBloc, SyncState>(
+        builder: (context, ehrSyncState) {
+          return BlocBuilder<CommunicationBloc, DesktopSyncState>(
+            builder: (context, commState) {
+              return BlocBuilder<LwwSyncBloc, LwwSyncState>(
+                builder: (context, lwwState) {
+                  return BlocBuilder<BackupBloc, BackupState>(
+                    builder: (context, backupState) {
+                      final hasEhrSync = ehrSyncState.hasSyncedData;
+                      final hasDesktopPairing = commState.pairedDevice != null;
+                      final showSetup = !isDesktop && !hasDesktopPairing && !hasEhrSync;
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: Insets.normal),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              context.l10n.desktopSyncAndBackup,
+                              style: AppTextStyle.bodySmall,
+                            ),
+                            const SizedBox(height: Insets.small),
+                            if (hasEhrSync) ...[
+                              Container(
+                                padding: const EdgeInsets.all(Insets.smallNormal),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: borderColor),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _StatusRow(
+                                      icon: Icons.check_circle_outline,
+                                      label: 'EHR Sync',
+                                      status: context.l10n.syncSuccessful,
+                                      statusColor: AppColors.success,
+                                    ),
+                                    if (ehrSyncState.lastSyncTime != null) ...[
+                                      const SizedBox(height: Insets.extraSmall),
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 28),
+                                        child: Text(
+                                          DateFormatUtils.humanReadable(
+                                            DateTime.tryParse(ehrSyncState.lastSyncTime!),
+                                          ),
+                                          style: AppTextStyle.labelSmall.copyWith(
+                                            color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: Insets.small),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton.icon(
+                                        onPressed: () => ConnectionDialog.openQRScanner(context),
+                                        icon: const Icon(Icons.sync, size: 16),
+                                        label: Text(
+                                          context.l10n.syncTitle,
+                                          style: AppTextStyle.buttonSmall,
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: context.colorScheme.primary,
+                                          side: BorderSide(
+                                            color: context.colorScheme.primary.withValues(alpha: 0.3),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: Insets.small,
+                                            vertical: Insets.small,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: Insets.small),
+                            ],
+                            if (showSetup) ...[
                           Container(
                             padding: const EdgeInsets.all(Insets.smallNormal),
                             decoration: BoxDecoration(
@@ -72,10 +140,10 @@ class SyncSection extends StatelessWidget {
                                 ),
                                 const SizedBox(height: Insets.normal),
                                 AppButton(
-                                  label: context.l10n.connect,
-                                  icon: const Icon(Icons.link),
+                                  label: context.l10n.syncTitle,
+                                  icon: const Icon(Icons.sync),
                                   variant: AppButtonVariant.primary,
-                                  onPressed: () => DeviceSyncDialog.show(context),
+                                  onPressed: () => ConnectionDialog.openQRScanner(context),
                                 ),
                               ],
                             ),
@@ -290,6 +358,8 @@ class SyncSection extends StatelessWidget {
               );
             },
           );
+        },
+      );
         },
       ),
     );

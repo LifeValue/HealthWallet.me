@@ -324,6 +324,12 @@ abstract class AppLocalizations {
   /// **'Sync'**
   String get syncTitle;
 
+  /// No description provided for @scanFastenQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Fasten Health QR'**
+  String get scanFastenQr;
+
   /// No description provided for @syncSuccessful.
   ///
   /// In en, this message translates to:
@@ -768,6 +774,18 @@ abstract class AppLocalizations {
   /// **'This action cannot be undone.'**
   String get actionCannotBeUndone;
 
+  /// No description provided for @deleteSourceConfirmPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete '**
+  String get deleteSourceConfirmPrefix;
+
+  /// No description provided for @deleteSourceConfirmSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **' and all its records. To confirm, type the source name below.'**
+  String get deleteSourceConfirmSuffix;
+
   /// No description provided for @deleteRecordConfirm.
   ///
   /// In en, this message translates to:
@@ -963,7 +981,7 @@ abstract class AppLocalizations {
   /// No description provided for @desktopSyncAndBackup.
   ///
   /// In en, this message translates to:
-  /// **'Desktop Sync & Backup'**
+  /// **'Data Sync & Backup'**
   String get desktopSyncAndBackup;
 
   /// No description provided for @desktopSyncDescription.
@@ -989,6 +1007,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue Importing'**
   String get continueImporting;
+
+  /// No description provided for @noAiModel.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI model'**
+  String get noAiModel;
 
   /// No description provided for @noAiModelOnDesktop.
   ///
@@ -1191,7 +1215,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanQRMessage.
   ///
   /// In en, this message translates to:
-  /// **'Scan the QR code from your Fasten Health server to create a new sync connection.'**
+  /// **'Scan a QR code from your HealthWallet.me desktop app or Fasten Health to sync your data.'**
   String get scanQRMessage;
 
   /// No description provided for @viewAll.
@@ -3869,6 +3893,18 @@ abstract class AppLocalizations {
   /// **'Record type'**
   String get recordType;
 
+  /// No description provided for @specialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Specialty'**
+  String get specialty;
+
+  /// No description provided for @allSpecialties.
+  ///
+  /// In en, this message translates to:
+  /// **'All Specialties'**
+  String get allSpecialties;
+
   /// No description provided for @selectedRange.
   ///
   /// In en, this message translates to:
@@ -4378,6 +4414,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Minimize to tray'**
   String get minimizeToTray;
+
+  /// No description provided for @changeSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Specialty'**
+  String get changeSpecialty;
+
+  /// No description provided for @changeSpecialtyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to change the specialty to'**
+  String get changeSpecialtyConfirm;
+
+  /// No description provided for @removeSpecialtyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove the specialty from this record?'**
+  String get removeSpecialtyConfirm;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
 }
 
 class _AppLocalizationsDelegate

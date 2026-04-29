@@ -950,6 +950,8 @@
     "timeRange": "Zeitraum",
     "applyFilters": "Filter anwenden",
     "recordType": "Aufzeichnungstyp",
+    "specialty": "Fachgebiet",
+    "allSpecialties": "Alle Fachgebiete",
     "selectedRange": "Ausgewählter Zeitraum",
     "noRangeSelected": "Kein Zeitraum ausgewählt",
     "clearDateRange": "Zeitraum zurücksetzen",

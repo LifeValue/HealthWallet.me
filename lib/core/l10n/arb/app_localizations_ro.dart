@@ -130,6 +130,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get syncTitle => 'Sincronizare';
 
   @override
+  String get scanFastenQr => 'Scan Fasten Health QR';
+
+  @override
   String get syncSuccessful => 'Sincronizare reușită!';
 
   @override
@@ -371,6 +374,13 @@ class AppLocalizationsRo extends AppLocalizations {
   String get actionCannotBeUndone => 'Această acțiune nu poate fi anulată.';
 
   @override
+  String get deleteSourceConfirmPrefix => 'This will permanently delete ';
+
+  @override
+  String get deleteSourceConfirmSuffix =>
+      ' and all its records. To confirm, type the source name below.';
+
+  @override
   String get deleteRecordConfirm =>
       'Ești sigur că vrei să ștergi această înregistrare?';
 
@@ -491,6 +501,9 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get continueImporting => 'Continuă importul';
+
+  @override
+  String get noAiModel => 'No AI model';
 
   @override
   String get noAiModelOnDesktop =>
@@ -2120,6 +2133,12 @@ class AppLocalizationsRo extends AppLocalizations {
   String get recordType => 'Tip înregistrare';
 
   @override
+  String get specialty => 'Specialitate';
+
+  @override
+  String get allSpecialties => 'Toate specialitățile';
+
+  @override
   String get selectedRange => 'Interval selectat';
 
   @override
@@ -2391,4 +2410,18 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get minimizeToTray => 'Minimizează în bara de sistem';
+
+  @override
+  String get changeSpecialty => 'Change Specialty';
+
+  @override
+  String get changeSpecialtyConfirm =>
+      'Are you sure you want to change the specialty to';
+
+  @override
+  String get removeSpecialtyConfirm =>
+      'Are you sure you want to remove the specialty from this record?';
+
+  @override
+  String get confirm => 'Confirm';
 }

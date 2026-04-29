@@ -130,6 +130,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncTitle => 'Sync';
 
   @override
+  String get scanFastenQr => 'Scan Fasten Health QR';
+
+  @override
   String get syncSuccessful => 'Sync successful!';
 
   @override
@@ -367,6 +370,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionCannotBeUndone => 'This action cannot be undone.';
 
   @override
+  String get deleteSourceConfirmPrefix => 'This will permanently delete ';
+
+  @override
+  String get deleteSourceConfirmSuffix =>
+      ' and all its records. To confirm, type the source name below.';
+
+  @override
   String get deleteRecordConfirm =>
       'Are you sure you want to delete this record?';
 
@@ -473,7 +483,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get synchronization => 'Synchronization';
 
   @override
-  String get desktopSyncAndBackup => 'Desktop Sync & Backup';
+  String get desktopSyncAndBackup => 'Data Sync & Backup';
 
   @override
   String get desktopSyncDescription =>
@@ -487,6 +497,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get continueImporting => 'Continue Importing';
+
+  @override
+  String get noAiModel => 'No AI model';
 
   @override
   String get noAiModelOnDesktop =>
@@ -593,7 +606,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanQRMessage =>
-      'Scan the QR code from your Fasten Health server to create a new sync connection.';
+      'Scan a QR code from your HealthWallet.me desktop app or Fasten Health to sync your data.';
 
   @override
   String get viewAll => 'View all';
@@ -2099,6 +2112,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordType => 'Record type';
 
   @override
+  String get specialty => 'Specialty';
+
+  @override
+  String get allSpecialties => 'All Specialties';
+
+  @override
   String get selectedRange => 'Selected Range';
 
   @override
@@ -2368,4 +2387,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get minimizeToTray => 'Minimize to tray';
+
+  @override
+  String get changeSpecialty => 'Change Specialty';
+
+  @override
+  String get changeSpecialtyConfirm =>
+      'Are you sure you want to change the specialty to';
+
+  @override
+  String get removeSpecialtyConfirm =>
+      'Are you sure you want to remove the specialty from this record?';
+
+  @override
+  String get confirm => 'Confirm';
 }

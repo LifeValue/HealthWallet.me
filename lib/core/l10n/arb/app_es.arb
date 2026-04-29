@@ -981,6 +981,8 @@
     "timeRange": "Rango de tiempo",
     "applyFilters": "Aplicar filtros",
     "recordType": "Tipo de registro",
+    "specialty": "Especialidad",
+    "allSpecialties": "Todas las especialidades",
     "selectedRange": "Rango seleccionado",
     "noRangeSelected": "Sin rango seleccionado",
     "clearDateRange": "Limpiar rango de fechas",
