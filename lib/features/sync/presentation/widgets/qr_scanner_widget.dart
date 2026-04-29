@@ -45,9 +45,31 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
     return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            context.l10n.scanQRMessage,
-            style: AppTextStyle.labelLarge,
+          Text.rich(
+            TextSpan(
+              style: AppTextStyle.labelLarge.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
+              children: [
+                const TextSpan(text: 'Scan a QR code from your '),
+                TextSpan(
+                  text: 'HealthWallet.me',
+                  style: AppTextStyle.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+                const TextSpan(text: ' desktop app or '),
+                TextSpan(
+                  text: 'Fasten Health',
+                  style: AppTextStyle.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+                const TextSpan(text: ' to sync your data.'),
+              ],
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: Insets.medium),

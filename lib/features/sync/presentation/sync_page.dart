@@ -103,7 +103,7 @@ class _SyncPageState extends State<SyncPage> {
         }
 
         return SyncPlaceholderWidget(
-          onSyncPressed: () => DeviceSyncDialog.show(context),
+          onSyncPressed: null,
           recordTypeName: null,
         );
       },
@@ -111,9 +111,14 @@ class _SyncPageState extends State<SyncPage> {
   }
 
   void _handleQRCodeDetected(BuildContext context, String qrData) {
+    debugPrint('[QR_SCAN] Raw QR data (${qrData.length} chars): ${qrData.substring(0, qrData.length > 200 ? 200 : qrData.length)}...');
+
     try {
       final json = jsonDecode(qrData) as Map<String, dynamic>;
+      debugPrint('[QR_SCAN] Parsed JSON keys: ${json.keys.toList()}');
+
       if (json.containsKey('pairing_key') && json.containsKey('device_id')) {
+        debugPrint('[QR_SCAN] Detected: Desktop pairing QR');
         final pairing = DevicePairing(
           deviceId: json['device_id'] as String,
           deviceName: json['device_name'] as String,
@@ -127,8 +132,18 @@ class _SyncPageState extends State<SyncPage> {
         _handleBackupPairing(context, pairing);
         return;
       }
-    } catch (_) {}
 
+      if (json.containsKey('token') || json.containsKey('bearer')) {
+        debugPrint('[QR_SCAN] Detected: Fasten Health sync QR');
+      } else {
+        debugPrint('[QR_SCAN] Unknown JSON QR format, forwarding to SyncBloc');
+      }
+    } catch (e) {
+      debugPrint('[QR_SCAN] Not valid JSON: $e');
+      debugPrint('[QR_SCAN] Forwarding raw data to SyncBloc');
+    }
+
+    debugPrint('[QR_SCAN] Dispatching SyncData event');
     context.read<SyncBloc>().add(SyncData(qrData: qrData));
   }
 

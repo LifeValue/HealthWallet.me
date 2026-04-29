@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -424,7 +425,8 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   void _handleSyncRecords(BuildContext context) {
     if (context.mounted) {
-      DeviceSyncDialog.show(context);
+      debugPrint('[SYNC] Opening QR scanner from placeholder');
+      context.read<SyncBloc>().add(const SyncScanQRCode());
     }
   }
 

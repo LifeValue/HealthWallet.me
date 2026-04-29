@@ -14,12 +14,61 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
+import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ConnectionDialog extends StatefulWidget {
+  static void openQRScanner(BuildContext context) {
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    rootNavigator.push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _FullScreenQRScanner(
+          onQRCodeDetected: (qrData) {
+            debugPrint('[QR_SCAN] QR detected from direct scanner');
+            try {
+              final json = jsonDecode(qrData) as Map<String, dynamic>;
+              if (json.containsKey('pairing_key') && json.containsKey('device_id')) {
+                debugPrint('[QR_SCAN] Detected: Desktop pairing QR');
+                final pairing = DevicePairing(
+                  deviceId: json['device_id'] as String,
+                  deviceName: json['device_name'] as String,
+                  pairingKey: json['pairing_key'] as String,
+                  lastIp: json['ip'] as String,
+                  lastPort: json['port'] as int,
+                  pairedAt: DateTime.now(),
+                  os: json['os'] as String?,
+                );
+
+                final pairingStorage = getIt<PairingStorageService>();
+                pairingStorage.savePairing(pairing).then((_) {
+                  rootNavigator.pop();
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(content: Text('Paired with ${pairing.deviceName}')),
+                  );
+                  getIt<CommunicationBloc>().add(
+                    CommunicationPairingCompleted(pairing: pairing),
+                  );
+                });
+                return;
+              }
+            } catch (_) {}
+
+            debugPrint('[QR_SCAN] Forwarding to SyncBloc for Fasten Health sync');
+            rootNavigator.pop();
+            getIt<SyncBloc>().add(SyncData(qrData: qrData));
+          },
+        ),
+      ),
+    );
+  }
+
   static void show(BuildContext context) {
     showDialog(
       context: context,
@@ -397,7 +446,9 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
       }
     } catch (_) {}
 
+    debugPrint('[QR_SCAN] Not a pairing QR, forwarding to SyncBloc for Fasten Health sync');
     navigator.pop();
+    getIt<SyncBloc>().add(SyncData(qrData: qrData));
   }
 
   Future<void> _handlePairing(
