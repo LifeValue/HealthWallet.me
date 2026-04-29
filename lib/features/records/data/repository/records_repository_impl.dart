@@ -647,4 +647,13 @@ class RecordsRepositoryImpl implements RecordsRepository {
     final bytes = await renderer.render(ipsData: ipsData);
     return (bytes: bytes, patientName: patientName);
   }
+
+  @override
+  Future<void> updateResourceRaw(String resourceId, String rawJson) async {
+    await (_database.update(_database.fhirResource)
+          ..where((tbl) => tbl.id.equals(resourceId)))
+        .write(FhirResourceCompanion(
+      resourceRaw: Value(rawJson),
+    ));
+  }
 }

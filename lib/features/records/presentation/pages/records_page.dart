@@ -22,25 +22,21 @@ import 'package:health_wallet/features/records/presentation/bloc/records_bloc.da
 import 'package:health_wallet/features/records/presentation/widgets/records_active_filters_bar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_toolbar.dart';
-import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/resource_card.dart';
 
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
-import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
-import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
-import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/features/records/presentation/pages/records_list_body.dart';
+import 'package:health_wallet/features/records/presentation/pages/records_attachments_body.dart';
 
 @RoutePage()
 class RecordsPage extends StatelessWidget {
@@ -51,8 +47,11 @@ class RecordsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RecordsView(
-        initFilters: initFilters, pageController: pageController);
+    return BlocProvider(
+      create: (_) => getIt<AttachmentBrowseBloc>(),
+      child: RecordsView(
+          initFilters: initFilters, pageController: pageController),
+    );
   }
 }
 
@@ -92,6 +91,20 @@ class _RecordsViewState extends State<RecordsView> {
     context.read<RecordsBloc>().add(
         RecordsSourceChanged(selectedSourceId, sourceIds: patientSourceIds));
 
+    final currentFilters = context.read<RecordsBloc>().state.activeFilters;
+    final attachmentFilters = widget.initFilters ??
+        (currentFilters.isNotEmpty
+            ? currentFilters
+            : [FhirType.Encounter, FhirType.DiagnosticReport]);
+    final currentSpecialties = context.read<RecordsBloc>().state.activeSpecialties;
+    context.read<AttachmentBrowseBloc>().add(AttachmentBrowseInitialised(
+        sourceId: selectedSourceId,
+        sourceIds: patientSourceIds,
+        resourceTypes: attachmentFilters,
+        specialty: currentSpecialties.isNotEmpty
+            ? currentSpecialties.first
+            : null));
+
     if (widget.initFilters != null) {
       context
           .read<RecordsBloc>()
@@ -129,10 +142,12 @@ class _RecordsViewState extends State<RecordsView> {
         homeState.selectedSource == 'All' ? null : homeState.selectedSource;
     final patientSourceIds =
         _resolvePatientSourceIds(context, homeState.selectedSource);
+    final specialties = context.read<RecordsBloc>().state.activeSpecialties;
     context.read<AttachmentBrowseBloc>().add(AttachmentBrowseInitialised(
         sourceId: sourceId,
         sourceIds: patientSourceIds,
-        resourceTypes: resourceTypes));
+        resourceTypes: resourceTypes,
+        specialty: specialties.firstOrNull));
   }
 
   List<String>? _resolvePatientSourceIds(
@@ -151,10 +166,7 @@ class _RecordsViewState extends State<RecordsView> {
           return patientGroup.sourceIds;
         }
       }
-    } catch (e) {
-      debugPrint(
-          'PatientBloc not available, continue without patient source IDs');
-    }
+    } catch (_) {}
     return null;
   }
 
@@ -299,7 +311,6 @@ class _RecordsViewState extends State<RecordsView> {
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: getIt<LwwSyncBloc>()),
-        BlocProvider(create: (_) => getIt<AttachmentBrowseBloc>()),
       ],
       child: MultiBlocListener(
         listeners: [
@@ -313,10 +324,12 @@ class _RecordsViewState extends State<RecordsView> {
               context.read<RecordsBloc>().add(RecordsSourceChanged(
                   selectedSourceId,
                   sourceIds: patientSourceIds));
-              context.read<AttachmentBrowseBloc>().add(AttachmentBrowseInitialised(
-                  sourceId: selectedSourceId,
-                  sourceIds: patientSourceIds,
-                  resourceTypes: context.read<RecordsBloc>().state.activeFilters));
+              context.read<AttachmentBrowseBloc>().add(
+                  AttachmentBrowseInitialised(
+                      sourceId: selectedSourceId,
+                      sourceIds: patientSourceIds,
+                      resourceTypes:
+                          context.read<RecordsBloc>().state.activeFilters));
             },
           ),
           BlocListener<SyncBloc, SyncState>(
@@ -360,6 +373,36 @@ class _RecordsViewState extends State<RecordsView> {
               context.read<RecordsBloc>().add(RecordsSourceChanged(
                   selectedSourceId,
                   sourceIds: patientSourceIds));
+              context.read<AttachmentBrowseBloc>().add(
+                  AttachmentBrowseInitialised(
+                      sourceId: selectedSourceId,
+                      sourceIds: patientSourceIds));
+            },
+          ),
+          BlocListener<RecordsBloc, RecordsState>(
+            listenWhen: (previous, current) =>
+                current.status == const RecordsStatus.deleted(),
+            listener: (context, state) {
+              context
+                  .read<PatientBloc>()
+                  .add(const PatientPatientsLoaded());
+            },
+          ),
+          BlocListener<RecordsBloc, RecordsState>(
+            listenWhen: (previous, current) =>
+                previous.activeFilters != current.activeFilters ||
+                previous.activeSpecialties != current.activeSpecialties ||
+                previous.dateFilter != current.dateFilter,
+            listener: (context, state) {
+              context.read<AttachmentBrowseBloc>().add(
+                  AttachmentBrowseInitialised(
+                    sourceId: state.sourceId,
+                    sourceIds: state.sourceIds,
+                    resourceTypes: state.activeFilters,
+                    specialty: state.activeSpecialties.isNotEmpty
+                        ? state.activeSpecialties.first
+                        : null,
+                  ));
             },
           ),
         ],
@@ -509,99 +552,59 @@ class _RecordsViewState extends State<RecordsView> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, RecordsState appBarState) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _isAttachmentScrolled,
-      builder: (context, isScrolled, _) {
-        return Container(
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: isScrolled
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : BorderRadius.zero,
-            boxShadow: isScrolled
-                ? [
-                    BoxShadow(
-                      offset: const Offset(0, 4),
-                      blurRadius: 12,
-                      color: Colors.black.withValues(alpha: 0.15),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: MediaQuery.of(context).padding.top + Insets.small,
-              bottom: isScrolled ? Insets.small : Insets.smaller,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTitleRow(context, appBarState),
-                const SizedBox(height: Insets.extraSmall),
-                RecordsToolbar(
-            viewMode: _viewMode,
-            onViewModeChanged: (mode) {
-              _setViewMode(mode);
-              if (mode == RecordsViewMode.attachments) {
-                final filters = context.read<RecordsBloc>().state.activeFilters;
-                _reloadAttachmentBrowse(context, resourceTypes: filters);
-              }
-            },
-            onFilterTap: () {
-              final recordsBloc = context.read<RecordsBloc>();
-              final recordsState = recordsBloc.state;
-              showModalBottomSheet(
-                context: context,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                builder: (_) => RecordsFilterBottomSheet(
-                  activeFilters: recordsState.activeFilters,
-                  currentDateFilter: recordsState.dateFilter,
-                  onApply: (filters, dateFilter) =>
-                      recordsBloc.add(RecordsFiltersApplied(
-                        filters,
-                        dateFilter: dateFilter,
-                      )),
-                ),
-                isScrollControlled: true,
-              );
-            },
-          ),
-          BlocBuilder<RecordsBloc, RecordsState>(
-            buildWhen: (previous, current) =>
-                previous.activeFilters != current.activeFilters ||
-                previous.dateFilter != current.dateFilter,
-            builder: (context, recordsState) {
-              return RecordsActiveFiltersBar(
-                activeFilters: recordsState.activeFilters,
-                dateFilter: recordsState.dateFilter,
-              );
-            },
-          ),
-        ],
+  void _showFilterSheet(BuildContext context) {
+    final recordsBloc = context.read<RecordsBloc>();
+    final recordsState = recordsBloc.state;
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12)),
+      builder: (_) => RecordsFilterBottomSheet(
+        activeFilters: recordsState.activeFilters,
+        currentDateFilter: recordsState.dateFilter,
+        currentSpecialties: recordsState.activeSpecialties,
+        onApply: (filters, dateFilter, specialties) {
+          recordsBloc.add(RecordsFiltersApplied(
+            filters,
+            dateFilter: dateFilter,
+          ));
+          recordsBloc.add(RecordsSpecialtyApplied(specialties));
+        },
       ),
-      ),
-    );
-      },
+      isScrollControlled: true,
     );
   }
 
   Widget _buildBody(BuildContext context, RecordsState appBarState) {
     if (_viewMode == RecordsViewMode.attachments) {
-      return _buildAttachmentsBody(context, appBarState);
+      return KeyedSubtree(
+        key: const ValueKey('attachments_body'),
+        child: RecordsAttachmentsBody(
+          appBarState: appBarState,
+          isAttachmentScrolled: _isAttachmentScrolled,
+          viewMode: _viewMode,
+          onViewModeChanged: (mode) {
+            _setViewMode(mode);
+            if (mode == RecordsViewMode.attachments) {
+              final filters = context.read<RecordsBloc>().state.activeFilters;
+              _reloadAttachmentBrowse(context, resourceTypes: filters);
+            }
+          },
+          onFilterTap: () => _showFilterSheet(context),
+          titleRow: _buildTitleRow(context, appBarState),
+        ),
+      );
     }
 
-    return BlocBuilder<RecordsBloc, RecordsState>(
+    return KeyedSubtree(
+      key: const ValueKey('records_body'),
+      child: BlocBuilder<RecordsBloc, RecordsState>(
       buildWhen: (previous, current) =>
           previous.activeFilters != current.activeFilters ||
-          previous.dateFilter != current.dateFilter,
+          previous.dateFilter != current.dateFilter ||
+          previous.activeSpecialties != current.activeSpecialties ||
+          previous.status != current.status ||
+          previous.resources != current.resources,
       builder: (context, filterState) {
         return AnimatedStickyHeader(
           padding: EdgeInsets.only(
@@ -622,34 +625,18 @@ class _RecordsViewState extends State<RecordsView> {
                   _reloadAttachmentBrowse(context, resourceTypes: filters);
                 }
               },
-              onFilterTap: () {
-                final recordsBloc = context.read<RecordsBloc>();
-                final recordsState = recordsBloc.state;
-                showModalBottomSheet(
-                  context: context,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  builder: (_) => RecordsFilterBottomSheet(
-                    activeFilters: recordsState.activeFilters,
-                    currentDateFilter: recordsState.dateFilter,
-                    onApply: (filters, dateFilter) =>
-                        recordsBloc.add(RecordsFiltersApplied(
-                          filters,
-                          dateFilter: dateFilter,
-                        )),
-                  ),
-                  isScrollControlled: true,
-                );
-              },
+              onFilterTap: () => _showFilterSheet(context),
             ),
             BlocBuilder<RecordsBloc, RecordsState>(
               buildWhen: (previous, current) =>
                   previous.activeFilters != current.activeFilters ||
-                  previous.dateFilter != current.dateFilter,
+                  previous.dateFilter != current.dateFilter ||
+                  previous.activeSpecialties != current.activeSpecialties,
               builder: (context, recordsState) {
                 return RecordsActiveFiltersBar(
                   activeFilters: recordsState.activeFilters,
                   dateFilter: recordsState.dateFilter,
+                  activeSpecialties: recordsState.activeSpecialties,
                 );
               },
             ),
@@ -659,6 +646,7 @@ class _RecordsViewState extends State<RecordsView> {
                 previous.status != current.status ||
                 previous.resources != current.resources ||
                 previous.searchQuery != current.searchQuery ||
+                previous.activeSpecialties != current.activeSpecialties ||
                 previous.selectedResourceIds !=
                     current.selectedResourceIds ||
                 previous.isSelectionMode != current.isSelectionMode,
@@ -672,244 +660,23 @@ class _RecordsViewState extends State<RecordsView> {
                 );
               }
 
-              if (state.status == RecordsStatus.failure(Exception())) {
-                return Center(child: Text(state.status.toString()));
-              }
-
               final timelineResources =
                   List<IFhirResource>.from(state.resources);
 
-              if (timelineResources.isEmpty) {
-                return _buildEmptyState(context, state);
-              }
-
-              return _buildRecordsList(context, state, timelineResources);
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAttachmentsBody(BuildContext context, RecordsState appBarState) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (!constraints.hasBoundedHeight) {
-          return const SizedBox.shrink();
-        }
-        return SizedBox(
-          height: constraints.maxHeight,
-          width: constraints.maxWidth,
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (notification) {
-              if (notification.metrics.axis != Axis.vertical) return false;
-              final scrolled = notification.metrics.pixels > 0;
-              if (scrolled != _isAttachmentScrolled.value) {
-                _isAttachmentScrolled.value = scrolled;
-              }
-              return false;
-            },
-            child: Column(
-              children: [
-                _buildHeader(context, appBarState),
-                Expanded(
-                  child: BlocBuilder<RecordsBloc, RecordsState>(
-                    buildWhen: (previous, current) =>
-                        previous.activeFilters != current.activeFilters ||
-                        previous.isSelectionMode != current.isSelectionMode ||
-                        previous.selectedResourceIds != current.selectedResourceIds,
-                    builder: (context, recordsState) {
-                      return BlocBuilder<HomeBloc, HomeState>(
-                        buildWhen: (previous, current) =>
-                            previous.selectedSource != current.selectedSource,
-                        builder: (context, homeState) {
-                          return AttachmentBrowseView(
-                            externalFilters: recordsState.activeFilters,
-                            sourceId: homeState.selectedSource == 'All'
-                                ? null
-                                : homeState.selectedSource,
-                            sourceIds: _resolvePatientSourceIds(
-                                context, homeState.selectedSource),
-                            isSelectionMode: recordsState.isSelectionMode,
-                            selectedResourceIds: recordsState.selectedResourceIds,
-                            onSelectionToggle: (id) => context
-                                .read<RecordsBloc>()
-                                .add(RecordsSelectionToggled(id)),
-                            onSelectionModeToggled: () => context
-                                .read<RecordsBloc>()
-                                .add(const RecordsSelectionModeToggled()),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, RecordsState state) {
-    if (state.searchQuery.isNotEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.search_off,
-                size: 64,
-                color: context.colorScheme.onSurface.withOpacity(0.4),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                context.l10n.noRecordsFound,
-                style: AppTextStyle.titleMedium.copyWith(
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                context.l10n.tryDifferentKeywords,
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const double bottomNavBarSpacing = 100.0;
-
-        final placeholder = SyncPlaceholderWidget(
-          pageController: widget.pageController,
-          recordTypeName: state.activeFilters.isNotEmpty
-              ? state.activeFilters.length == 1
-                  ? state.activeFilters.first.display
-                  : state.activeFilters
-                      .map((f) => f.display)
-                      .join(', ')
-              : null,
-          onImportDocument: _handleImportDocument,
-          onPickImage: _handlePickImage,
-          onScanDocument: _handleScanDocument,
-        );
-
-        return SingleChildScrollView(
-          controller: _scrollController,
-          physics: const ClampingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                bottom: bottomNavBarSpacing,
-              ),
-              child: context.isTablet
-                  ? Align(
-                      alignment: const Alignment(0, -0.3),
-                      child: placeholder,
-                    )
-                  : IntrinsicHeight(child: placeholder),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildRecordsList(
-    BuildContext context,
-    RecordsState state,
-    List<IFhirResource> timelineResources,
-  ) {
-    const double bottomBarHeight = Insets.extraLarge;
-    const double bottomBarOffset = Insets.medium;
-    const double extraSpacing = Insets.large;
-    final double bottomSafeInset = MediaQuery.of(context).padding.bottom;
-
-    return ListView.builder(
-      controller: _scrollController,
-      padding: EdgeInsets.only(
-        top: 8,
-        bottom: bottomSafeInset +
-            bottomBarHeight +
-            bottomBarOffset +
-            extraSpacing,
-      ),
-      itemCount:
-          timelineResources.length + (state.hasMorePages ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == timelineResources.length) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 4,
-                color: context.colorScheme.primary,
-              ),
-            ),
-          );
-        }
-
-        final resource = timelineResources[index];
-        return TimelineEntry(
-          key: ValueKey(
-              'timeline-${resource.fhirType}-${resource.id}-$index'),
-          isFirst: index == 0,
-          isLast: index == timelineResources.length - 1,
-          isSelected:
-              state.selectedResourceIds.contains(resource.id),
-          isSelectionMode: state.isSelectionMode,
-          onTap: () {
-            if (state.isSelectionMode) {
-              context.read<RecordsBloc>().add(
-                    RecordsSelectionToggled(resource.id),
-                  );
-            } else {
-              context.router.push(
-                RecordDetailsRoute(resource: resource),
+              return RecordsListBody(
+                state: state,
+                resources: timelineResources,
+                scrollController: _scrollController,
+                pageController: widget.pageController,
+                onImportDocument: _handleImportDocument,
+                onPickImage: _handlePickImage,
+                onScanDocument: _handleScanDocument,
               );
-            }
-          },
-          onLongPress: state.isSelectionMode
-              ? null
-              : () {
-                  final bloc = context.read<RecordsBloc>();
-                  bloc.add(const RecordsSelectionModeToggled());
-                  bloc.add(RecordsSelectionToggled(resource.id));
-                },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RecordTypeHeader(
-                fhirType: resource.fhirType,
-                date: resource.date,
-                onTypeTap: state.isSelectionMode
-                    ? null
-                    : () {
-                        context.read<RecordsBloc>().add(
-                              RecordsFiltersApplied(
-                                  [resource.fhirType]),
-                            );
-                      },
-              ),
-              const SizedBox(height: Insets.small),
-              ResourceCard(resource: resource),
-            ],
+            },
           ),
         );
       },
+      ),
     );
   }
 }

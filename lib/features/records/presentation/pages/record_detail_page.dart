@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,9 +11,13 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/presentation/widgets/specialty_picker.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -41,10 +47,12 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   late final bool _isEphemeral;
   RecordsBloc? _appRecordsBloc;
   List<IFhirResource> _ephemeralRelatedResources = [];
+  late Map<String, dynamic> _rawResource;
 
   @override
   void initState() {
     super.initState();
+    _rawResource = Map<String, dynamic>.from(widget.resource.rawResource);
     _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
         EphemeralSessionManager.instance.hasActiveSession;
     if (!_isEphemeral) {
@@ -109,14 +117,23 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
       orElse: () => const GeneralResource(),
     );
 
-    final isEphemeral = widget.ephemeralRecords.isNotEmpty;
-
     return Scaffold(
       appBar: CustomAppBar(
         title: context.l10n.recordDetails,
-        actions: isEphemeral
+        actions: _isEphemeral
             ? null
             : [
+                IconButton(
+                  icon: (_getCurrentSpecialty()?.icon ?? Assets.specialities.generalCare).svg(
+                    width: 22,
+                    height: 22,
+                    colorFilter: ColorFilter.mode(
+                      context.colorScheme.primary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  onPressed: () => _showSpecialtyPicker(context),
+                ),
                 IconButton(
                   icon: Assets.icons.trashCan.svg(
                     colorFilter: ColorFilter.mode(
@@ -348,6 +365,140 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
           )
           .toList(),
     );
+  }
+
+  MedicalSpecialty? _getCurrentSpecialty() {
+    final meta = _rawResource['meta'];
+    if (meta == null) return null;
+    final tags = meta['tag'];
+    if (tags == null || tags is! List) return null;
+    for (final tag in tags) {
+      if (tag is Map &&
+          tag['system'] == _specialtySystem) {
+        final code = tag['code'];
+        if (code == null) return null;
+        return MedicalSpecialty.values.cast<MedicalSpecialty?>().firstWhere(
+          (s) => s?.name == code,
+          orElse: () => null,
+        );
+      }
+    }
+    return null;
+  }
+
+  static const _specialtySystem = 'http://healthwallet.me/specialty';
+
+  Future<void> _updateResourceSpecialty(MedicalSpecialty? specialty) async {
+    final json = Map<String, dynamic>.from(_rawResource);
+
+    if (specialty != null) {
+      json['meta'] ??= <String, dynamic>{};
+      final tags = List<Map<String, dynamic>>.from(
+        (json['meta']['tag'] as List?)?.map(
+              (e) => Map<String, dynamic>.from(e as Map),
+            ) ??
+            [],
+      );
+      tags.removeWhere((t) => t['system'] == _specialtySystem);
+      tags.add({
+        'system': _specialtySystem,
+        'code': specialty.name,
+        'display': specialty.displayName,
+      });
+      json['meta']['tag'] = tags;
+    } else {
+      final meta = json['meta'];
+      if (meta != null && meta['tag'] is List) {
+        final tags = List<Map<String, dynamic>>.from(
+          (meta['tag'] as List).map(
+            (e) => Map<String, dynamic>.from(e as Map),
+          ),
+        );
+        tags.removeWhere((t) => t['system'] == _specialtySystem);
+        if (tags.isEmpty) {
+          (meta as Map).remove('tag');
+        } else {
+          meta['tag'] = tags;
+        }
+      }
+    }
+
+    final repo = _appRecordsBloc?.recordsRepository ?? getIt<RecordsRepository>();
+    await repo.updateResourceRaw(widget.resource.id, jsonEncode(json));
+
+    _rawResource = json;
+  }
+
+  void _showSpecialtyPicker(BuildContext outerContext) async {
+    final currentSpecialty = _getCurrentSpecialty();
+
+    final selected = await showModalBottomSheet<MedicalSpecialty?>(
+      context: outerContext,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      isScrollControlled: true,
+      builder: (sheetContext) => SpecialtyPicker(
+        currentSpecialty: currentSpecialty,
+        onSelected: (specialty) async {
+          if (specialty == currentSpecialty) {
+            Navigator.of(sheetContext).pop();
+            return;
+          }
+
+          final isRemove = specialty == null && currentSpecialty != null;
+
+          final confirmed = await AppSimpleDialog.showConfirmation(
+            context: sheetContext,
+            title: outerContext.l10n.changeSpecialty,
+            message: isRemove
+                ? outerContext.l10n.removeSpecialtyConfirm
+                : outerContext.l10n.changeSpecialtyConfirm,
+            subtitleWidget: !isRemove && specialty != null
+                ? Row(
+                    children: [
+                      specialty.icon.svg(
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          Theme.of(sheetContext).colorScheme.onSurface,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        specialty.displayName,
+                        style: AppTextStyle.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(sheetContext).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
+            confirmText: outerContext.l10n.confirm,
+            cancelText: outerContext.l10n.cancel,
+            onConfirm: () {},
+            onCancel: () {},
+          );
+
+          if (confirmed == true && sheetContext.mounted) {
+            Navigator.of(sheetContext).pop(specialty);
+          }
+        },
+      ),
+    );
+
+    if (selected == null && currentSpecialty == null) return;
+    if (selected == currentSpecialty) return;
+
+    await _updateResourceSpecialty(selected);
+
+    if (mounted) {
+      setState(() {});
+      outerContext.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+      outerContext.read<RecordsBloc>().add(RecordsRefreshRequested());
+    }
   }
 
   void _showDeleteDialog(BuildContext context) async {

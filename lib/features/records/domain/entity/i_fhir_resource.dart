@@ -137,9 +137,10 @@ enum FhirType {
   SvgGenImage get icon {
     if (this == FhirType.GeneralResource) return Assets.icons.stethoscope;
 
-    return HomeRecordsCategory.values
-        .firstWhere((category) => category.resourceTypes.contains(this))
-        .icon;
+    final match = HomeRecordsCategory.values
+        .where((category) => category.resourceTypes.contains(this))
+        .firstOrNull;
+    return match?.icon ?? Assets.icons.stethoscope;
   }
 }
 

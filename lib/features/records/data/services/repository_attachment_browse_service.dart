@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:injectable/injectable.dart';
 
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
@@ -11,8 +13,9 @@ import 'package:health_wallet/features/records/domain/services/attachment_browse
 class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
   final RecordsRepository _repository;
   final PathResolver _pathResolver;
+  final SpecialtyClassifier _specialtyClassifier;
 
-  RepositoryAttachmentBrowseService(this._repository, this._pathResolver);
+  RepositoryAttachmentBrowseService(this._repository, this._pathResolver, this._specialtyClassifier);
 
   @override
   Future<List<AttachmentBrowseEntry>> loadEntries({
@@ -78,12 +81,15 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
     }
 
     final entries = <AttachmentBrowseEntry>[];
+    const headTypes = {FhirType.Encounter, FhirType.DiagnosticReport};
     for (final record in records) {
       if (record.fhirType == FhirType.DocumentReference) continue;
-      final docs = docsByEncounter[record.resourceId] ??
-          docsByEncounter[record.encounterId] ??
-          docsByRelated[record.resourceId] ??
-          [];
+      final docs = headTypes.contains(record.fhirType)
+          ? (docsByEncounter[record.resourceId] ??
+              docsByEncounter[record.encounterId] ??
+              docsByRelated[record.resourceId] ??
+              [])
+          : <IFhirResource>[];
       String? thumbnailPath;
 
       for (final doc in docs) {
@@ -145,6 +151,7 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
     String? patientName;
     String? organizationName;
     String? practitionerName;
+    final String? specialtyName = _extractSpecialtyName(record.rawResource) ?? _classifySpecialtyName(record);
     final attachments = <AttachmentBrowseFile>[];
 
     for (final resource in related) {
@@ -225,7 +232,30 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
       patientName: patientName,
       organizationName: organizationName,
       practitionerName: practitionerName,
+      specialtyName: specialtyName,
     );
+  }
+
+  static const _specialtySystem = 'http://healthwallet.me/specialty';
+
+  String? _classifySpecialtyName(IFhirResource record) {
+    final specialties = _specialtyClassifier.classify(record);
+    final specialty = specialties.firstOrNull;
+    if (specialty == null) return null;
+    return specialty.displayName;
+  }
+
+  String? _extractSpecialtyName(Map<String, dynamic> rawResource) {
+    try {
+      final tags = rawResource['meta']?['tag'] as List?;
+      if (tags == null) return null;
+      for (final tag in tags) {
+        if (tag is Map && tag['system'] == _specialtySystem) {
+          return tag['display'] as String?;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   String? _extractPersonName(Map<String, dynamic> rawResource) {

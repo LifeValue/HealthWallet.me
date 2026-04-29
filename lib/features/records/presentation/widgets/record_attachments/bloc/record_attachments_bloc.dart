@@ -6,10 +6,8 @@ import 'package:bloc/bloc.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
-import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
@@ -224,11 +222,6 @@ class RecordAttachmentsBloc
         title: originalFileName,
       );
 
-      try {
-        final homeBloc = getIt<HomeBloc>();
-        homeBloc.add(const HomeRefreshPreservingOrder());
-      } catch (e) {}
-
       emit(state.copyWith(attachments: []));
       add(RecordAttachmentsInitialised(resource: state.resource));
     } catch (e) {
@@ -406,12 +399,6 @@ class RecordAttachmentsBloc
           }
         }
       } catch (e) {}
-
-      try {
-        final homeBloc = getIt<HomeBloc>();
-        homeBloc.add(const HomeRefreshPreservingOrder());
-      } catch (e) {
-      }
 
       add(RecordAttachmentsInitialised(resource: state.resource));
     } catch (e) {

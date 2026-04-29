@@ -1,9 +1,9 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_detail_panel.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_timeline_scrubber.dart';
@@ -20,27 +20,19 @@ const double _kThumbnailTopPad = 8.0;
 const double _kBottomNavHeight = 80.0;
 
 class AttachmentBrowseView extends StatefulWidget {
-  final List<FhirType> externalFilters;
-  final String? sourceId;
-  final List<String>? sourceIds;
   final bool isSelectionMode;
   final Set<String> selectedResourceIds;
   final ValueChanged<String>? onSelectionToggle;
   final VoidCallback? onSelectionModeToggled;
   final double bottomNavHeight;
-  final bool readOnly;
 
   const AttachmentBrowseView({
     super.key,
-    this.externalFilters = const [],
-    this.sourceId,
-    this.sourceIds,
     this.isSelectionMode = false,
     this.selectedResourceIds = const {},
     this.onSelectionToggle,
     this.onSelectionModeToggled,
     this.bottomNavHeight = _kBottomNavHeight,
-    this.readOnly = false,
   });
 
   @override
@@ -50,7 +42,6 @@ class AttachmentBrowseView extends StatefulWidget {
 class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
   final ScrollController _thumbnailScrollController = ScrollController();
   final ScrollController _detailScrollController = ScrollController();
-  bool _didInit = false;
   bool _isThumbnailSyncing = false;
   int _visibleIndex = 0;
 
@@ -58,39 +49,6 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
   void initState() {
     super.initState();
     _thumbnailScrollController.addListener(_onThumbnailScroll);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_didInit) {
-      _didInit = true;
-      _loadWithCurrentFilters();
-    }
-  }
-
-  @override
-  void didUpdateWidget(AttachmentBrowseView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final filtersChanged =
-        widget.externalFilters.length != oldWidget.externalFilters.length ||
-            !widget.externalFilters
-                .every((f) => oldWidget.externalFilters.contains(f));
-    final sourceChanged = widget.sourceId != oldWidget.sourceId;
-    if (filtersChanged || sourceChanged) {
-      _loadWithCurrentFilters();
-    }
-  }
-
-  void _loadWithCurrentFilters() {
-    context.read<AttachmentBrowseBloc>().add(
-          AttachmentBrowseInitialised(
-            sourceId: widget.sourceId,
-            sourceIds: widget.sourceIds,
-            resourceTypes: widget.externalFilters,
-            readOnly: widget.readOnly,
-          ),
-        );
   }
 
   void _swipeRecord(int direction) {
@@ -164,21 +122,16 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
           _scrollDetailToTop();
         });
       },
+      buildWhen: (prev, curr) =>
+          prev.status != curr.status ||
+          prev.records != curr.records ||
+          prev.selectedIndex != curr.selectedIndex ||
+          prev.selectedDetail != curr.selectedDetail ||
+          prev.timelineYears != curr.timelineYears,
       builder: (context, state) {
-        if (state.status == AttachmentBrowseStatus.loading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (state.records.isEmpty) {
-          return Center(
-            child: Text(
-              'No records',
-              style: AppTextStyle.bodyMedium.copyWith(
-                color: context.colorScheme.onSurface,
-              ),
-            ),
-          );
-        }
+        debugPrint('[AttachmentBrowseView] build: status=${state.status}, records=${state.records.length}');
+        final isLoading = state.status == AttachmentBrowseStatus.loading;
+        final isEmpty = !isLoading && state.records.isEmpty;
 
         final detail = state.selectedDetail;
         final hasTimeline = state.timelineYears.isNotEmpty;
@@ -197,40 +150,58 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
 
         return Stack(
           children: [
-            GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              onHorizontalDragEnd: (details) {
-                final velocity = details.primaryVelocity ?? 0;
-                if (velocity.abs() < 200) return;
-                _swipeRecord(velocity < 0 ? 1 : -1);
-              },
-              child: detail != null
-                  ? SingleChildScrollView(
-                      controller: _detailScrollController,
-                      padding: EdgeInsets.only(
-                        bottom: bottomBarHeight + overlayBottomPad,
-                      ),
-                      child: AttachmentDetailPanel(detail: detail),
-                    )
-                  : const SizedBox.expand(),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _BottomOverlay(
-                hasTimeline: hasTimeline,
-                state: state,
-                visibleIndex: _visibleIndex,
-                thumbnailScrollController: _thumbnailScrollController,
-                onSwipe: _swipeRecord,
-                bottomPadding: overlayBottomPad,
-                isSelectionMode: widget.isSelectionMode,
-                selectedResourceIds: widget.selectedResourceIds,
-                onSelectionToggle: widget.onSelectionToggle,
-                onSelectionModeToggled: widget.onSelectionModeToggled,
+            if (isLoading)
+              Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 4,
+                  color: context.colorScheme.primary,
+                ),
+              )
+            else if (isEmpty)
+              Center(
+                child: Text(
+                  'No records',
+                  style: AppTextStyle.bodyMedium.copyWith(
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+              )
+            else
+              GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(),
+                onHorizontalDragEnd: (details) {
+                  final velocity = details.primaryVelocity ?? 0;
+                  if (velocity.abs() < 200) return;
+                  _swipeRecord(velocity < 0 ? 1 : -1);
+                },
+                child: detail != null
+                    ? SingleChildScrollView(
+                        controller: _detailScrollController,
+                        padding: EdgeInsets.only(
+                          bottom: bottomBarHeight + overlayBottomPad,
+                        ),
+                        child: AttachmentDetailPanel(detail: detail),
+                      )
+                    : const SizedBox.expand(),
               ),
-            ),
+            if (!isLoading && !isEmpty)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _BottomOverlay(
+                  hasTimeline: hasTimeline,
+                  state: state,
+                  visibleIndex: _visibleIndex,
+                  thumbnailScrollController: _thumbnailScrollController,
+                  onSwipe: _swipeRecord,
+                  bottomPadding: overlayBottomPad,
+                  isSelectionMode: widget.isSelectionMode,
+                  selectedResourceIds: widget.selectedResourceIds,
+                  onSelectionToggle: widget.onSelectionToggle,
+                  onSelectionModeToggled: widget.onSelectionModeToggled,
+                ),
+              ),
           ],
         );
       },

@@ -12,5 +12,6 @@ class AttachmentBrowseDetail with _$AttachmentBrowseDetail {
     String? patientName,
     String? organizationName,
     String? practitionerName,
+    String? specialtyName,
   }) = _AttachmentBrowseDetail;
 }

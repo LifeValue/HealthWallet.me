@@ -1,12 +1,9 @@
 import 'dart:io';
 import 'dart:ui';
 import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/utils/pdf_thumbnail_utils.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
-import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:auto_route/auto_route.dart';
@@ -15,28 +12,24 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
-import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
-import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
+import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
-class AttachmentDetailPanel extends StatefulWidget {
+class AttachmentDetailPanelEphemeral extends StatefulWidget {
   final AttachmentBrowseDetail detail;
 
-  const AttachmentDetailPanel({
-    super.key,
-    required this.detail,
-  });
+  const AttachmentDetailPanelEphemeral({super.key, required this.detail});
 
   @override
-  State<AttachmentDetailPanel> createState() => _AttachmentDetailPanelState();
+  State<AttachmentDetailPanelEphemeral> createState() =>
+      _AttachmentDetailPanelEphemeralState();
 }
 
-class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
+class _AttachmentDetailPanelEphemeralState
+    extends State<AttachmentDetailPanelEphemeral> {
   String _currentFileName = '';
   bool _startFromEnd = false;
   String _lastRecordId = '';
@@ -51,7 +44,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   }
 
   @override
-  void didUpdateWidget(AttachmentDetailPanel oldWidget) {
+  void didUpdateWidget(AttachmentDetailPanelEphemeral oldWidget) {
     super.didUpdateWidget(oldWidget);
     final idChanged = oldWidget.detail.record.id != widget.detail.record.id;
     final attachmentsChanged =
@@ -60,7 +53,8 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
       final bloc = context.read<AttachmentBrowseBloc>();
       final records = bloc.state.records;
       final oldIdx = records.indexWhere((e) => e.record.id == _lastRecordId);
-      final newIdx = records.indexWhere((e) => e.record.id == widget.detail.record.id);
+      final newIdx =
+          records.indexWhere((e) => e.record.id == widget.detail.record.id);
       _startFromEnd = oldIdx != -1 && newIdx != -1 && newIdx < oldIdx;
       _lastRecordId = widget.detail.record.id;
     }
@@ -76,7 +70,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   @override
   Widget build(BuildContext context) {
     final detail = widget.detail;
-    final readOnly = context.read<AttachmentBrowseBloc>().state.readOnly;
+    final sourceRecords = context.read<AttachmentBrowseBloc>().state.sourceRecords;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
       child: Column(
@@ -91,47 +85,37 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
             ),
           ),
           const SizedBox(height: Insets.smallNormal),
-          _AttachmentPreview(
+          _EphemeralAttachmentPreview(
             detail: detail,
             startFromEnd: _startFromEnd,
-            readOnly: readOnly,
             onFileNameChanged: (name) {
               setState(() => _currentFileName = name);
             },
             onSwipeNextRecord: () {
-              context.read<AttachmentBrowseBloc>().add(
-                    AttachmentBrowseSelected(
-                      context.read<AttachmentBrowseBloc>().state.selectedIndex + 1,
-                    ),
-                  );
+              final bloc = context.read<AttachmentBrowseBloc>();
+              bloc.add(AttachmentBrowseSelected(bloc.state.selectedIndex + 1));
             },
             onSwipePrevRecord: () {
-              context.read<AttachmentBrowseBloc>().add(
-                    AttachmentBrowseSelected(
-                      context.read<AttachmentBrowseBloc>().state.selectedIndex - 1,
-                    ),
-                  );
+              final bloc = context.read<AttachmentBrowseBloc>();
+              bloc.add(AttachmentBrowseSelected(bloc.state.selectedIndex - 1));
             },
           ),
           const SizedBox(height: Insets.small),
-          _FileInfoRow(
+          _EphemeralFileInfoRow(
             detail: detail,
             currentFileName: _currentFileName,
-            readOnly: readOnly,
+            sourceRecords: sourceRecords,
           ),
           if (detail.patientName != null ||
               detail.organizationName != null ||
               detail.practitionerName != null) ...[
             const SizedBox(height: Insets.normal),
-            _AttachmentBrowseDetailsCard(detail: detail),
+            _EphemeralDetailsCard(detail: detail),
           ],
           const SizedBox(height: Insets.smallNormal),
-          _ShowDetailsButton(
+          _EphemeralShowDetailsButton(
             detail: detail,
-            readOnly: readOnly,
-            ephemeralRecords: readOnly
-                ? context.read<AttachmentBrowseBloc>().state.sourceRecords
-                : null,
+            ephemeralRecords: sourceRecords,
           ),
           const SizedBox(height: Insets.normal),
         ],
@@ -140,30 +124,29 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   }
 }
 
-class _AttachmentPreview extends StatefulWidget {
+class _EphemeralAttachmentPreview extends StatefulWidget {
   final AttachmentBrowseDetail detail;
   final bool startFromEnd;
-  final bool readOnly;
   final ValueChanged<String>? onFileNameChanged;
   final VoidCallback? onSwipeNextRecord;
   final VoidCallback? onSwipePrevRecord;
 
-  const _AttachmentPreview({
+  const _EphemeralAttachmentPreview({
     required this.detail,
     this.startFromEnd = false,
-    this.readOnly = false,
     this.onFileNameChanged,
     this.onSwipeNextRecord,
     this.onSwipePrevRecord,
   });
 
   @override
-  State<_AttachmentPreview> createState() => _AttachmentPreviewState();
+  State<_EphemeralAttachmentPreview> createState() =>
+      _EphemeralAttachmentPreviewState();
 }
 
-class _AttachmentPreviewState extends State<_AttachmentPreview> {
+class _EphemeralAttachmentPreviewState
+    extends State<_EphemeralAttachmentPreview> {
   static final Map<String, List<_PreviewPage>> _cache = {};
-
   final List<_PreviewPage> _pages = [];
   int _currentPage = 0;
   bool _loading = true;
@@ -178,7 +161,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   }
 
   @override
-  void didUpdateWidget(_AttachmentPreview oldWidget) {
+  void didUpdateWidget(_EphemeralAttachmentPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
     final idChanged = oldWidget.detail.record.id != widget.detail.record.id;
     final attachmentsChanged =
@@ -194,10 +177,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
 
   void _loadPages() {
     final recordId = widget.detail.record.id;
-
-    if (recordId == _loadedRecordId && _pages.isNotEmpty) {
-      return;
-    }
+    if (recordId == _loadedRecordId && _pages.isNotEmpty) return;
 
     final cached = _cache[recordId];
     if (cached != null && cached.isNotEmpty) {
@@ -245,7 +225,8 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       if (attachment.filePath == null) continue;
       final path = attachment.filePath!;
       final ct = attachment.contentType?.toLowerCase() ?? '';
-      final isPdf = ct == 'application/pdf' || path.toLowerCase().endsWith('.pdf');
+      final isPdf =
+          ct == 'application/pdf' || path.toLowerCase().endsWith('.pdf');
 
       if (isPdf) {
         try {
@@ -286,9 +267,8 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
     }
 
     if (mounted) {
-      final startPage = widget.startFromEnd && pages.isNotEmpty
-          ? pages.length - 1
-          : 0;
+      final startPage =
+          widget.startFromEnd && pages.isNotEmpty ? pages.length - 1 : 0;
       setState(() {
         _pages.clear();
         _pages.addAll(pages);
@@ -332,9 +312,14 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
             )
           : hasPages
               ? _buildPageView(context)
-              : _EmptyAttachmentContent(
-                  record: widget.detail.record,
-                  readOnly: widget.readOnly,
+              : Center(
+                  child: Text(
+                    'No attachments',
+                    style: AppTextStyle.titleSmall.copyWith(
+                      color: context.colorScheme.onSurface,
+                      fontSize: 20,
+                    ),
+                  ),
                 ),
     );
   }
@@ -388,40 +373,41 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
               return false;
             },
             child: PageView.builder(
-            controller: _pageController,
-            itemCount: _pages.length,
-            onPageChanged: (index) {
-              setState(() => _currentPage = index);
-              _notifyFileName();
-            },
-            itemBuilder: (context, index) {
-              final page = _pages[index];
-              if (page.bytes != null) {
-                return Image.memory(
-                  page.bytes!,
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                  height: double.infinity,
-                );
-              }
-              if (page.filePath != null) {
-                return Image.file(
-                  File(page.filePath!),
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => Center(
-                    child: Icon(
-                      Icons.broken_image,
-                      size: 48,
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+              controller: _pageController,
+              itemCount: _pages.length,
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+                _notifyFileName();
+              },
+              itemBuilder: (context, index) {
+                final page = _pages[index];
+                if (page.bytes != null) {
+                  return Image.memory(
+                    page.bytes!,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
+                  );
+                }
+                if (page.filePath != null) {
+                  return Image.file(
+                    File(page.filePath!),
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        size: 48,
+                        color:
+                            context.colorScheme.onSurface.withValues(alpha: 0.3),
+                      ),
                     ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ),
           if (_pages.isNotEmpty)
             Positioned(
@@ -478,110 +464,15 @@ class _PreviewPage {
   });
 }
 
-class _EmptyAttachmentContent extends StatelessWidget {
-  final IFhirResource record;
-  final bool readOnly;
-
-  const _EmptyAttachmentContent({
-    required this.record,
-    this.readOnly = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (readOnly) {
-      return Center(
-        child: Text(
-          'No attachments',
-          style: AppTextStyle.titleSmall.copyWith(
-            color: context.colorScheme.onSurface,
-            fontSize: 20,
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'No attachments',
-            style: AppTextStyle.titleSmall.copyWith(
-              color: context.colorScheme.onSurface,
-              fontSize: 20,
-            ),
-          ),
-          const SizedBox(height: Insets.normal),
-          SizedBox(
-            width: double.infinity,
-            height: 36,
-            child: ElevatedButton(
-              onPressed: () async {
-                final result = await FilePicker.platform.pickFiles();
-                if (result == null) return;
-
-                final file = File(result.files.first.path!);
-
-                final attachBloc = getIt.get<RecordAttachmentsBloc>();
-                attachBloc.add(RecordAttachmentsInitialised(resource: record));
-                final initState = await attachBloc.stream.firstWhere(
-                  (s) => s.status.when(
-                    loading: () => false,
-                    success: () => true,
-                    error: (_) => true,
-                  ),
-                );
-
-                attachBloc.add(RecordAttachmentsFileAttached(file));
-                await attachBloc.stream.firstWhere(
-                  (s) => s.status.when(
-                    loading: () => false,
-                    success: () => true,
-                    error: (_) => true,
-                  ),
-                );
-
-                if (context.mounted) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (context.mounted) {
-                      context.read<AttachmentBrowseBloc>().add(
-                          AttachmentBrowseDetailRefreshed());
-                    }
-                  });
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Add Attachment',
-                style: AppTextStyle.buttonMedium.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FileInfoRow extends StatelessWidget {
+class _EphemeralFileInfoRow extends StatelessWidget {
   final AttachmentBrowseDetail detail;
   final String currentFileName;
-  final bool readOnly;
+  final List<IFhirResource> sourceRecords;
 
-  const _FileInfoRow({
+  const _EphemeralFileInfoRow({
     required this.detail,
     required this.currentFileName,
-    this.readOnly = false,
+    required this.sourceRecords,
   });
 
   @override
@@ -604,7 +495,7 @@ class _FileInfoRow extends StatelessWidget {
         GestureDetector(
           onTap: () => _showActionDialog(
             context,
-            RecordNotesWidget(resource: detail.record, readOnly: readOnly),
+            RecordNotesWidget(resource: detail.record, readOnly: true),
           ),
           child: Padding(
             padding: const EdgeInsets.all(6),
@@ -619,25 +510,14 @@ class _FileInfoRow extends StatelessWidget {
         ),
         const SizedBox(width: Insets.normal),
         GestureDetector(
-          onTap: () async {
-            await _showActionDialog(
-              context,
-              RecordAttachmentsWidget(
-                resource: detail.record,
-                readOnly: readOnly,
-                ephemeralRecords: readOnly
-                    ? context.read<AttachmentBrowseBloc>().state.sourceRecords
-                    : const [],
-              ),
-            );
-            if (context.mounted && !readOnly) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  context.read<AttachmentBrowseBloc>().add(AttachmentBrowseDetailRefreshed());
-                }
-              });
-            }
-          },
+          onTap: () => _showActionDialog(
+            context,
+            RecordAttachmentsWidget(
+              resource: detail.record,
+              readOnly: true,
+              ephemeralRecords: sourceRecords,
+            ),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(6),
             child: Assets.icons.attachment.svg(
@@ -663,26 +543,21 @@ class _FileInfoRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-          child: SizedBox(
-            width: context.wideDialogWidth,
-            child: child,
-          ),
+          child: child,
         ),
       ),
     );
   }
 }
 
-class _AttachmentBrowseDetailsCard extends StatelessWidget {
+class _EphemeralDetailsCard extends StatelessWidget {
   final AttachmentBrowseDetail detail;
 
-  const _AttachmentBrowseDetailsCard({required this.detail});
+  const _EphemeralDetailsCard({required this.detail});
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor =
-        context.colorScheme.onSurface.withValues(alpha: 0.12);
-
+    final dividerColor = context.colorScheme.onSurface.withValues(alpha: 0.12);
     final rows = <Widget>[];
 
     if (detail.patientName != null) {
@@ -709,7 +584,9 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
       ));
     }
     if (detail.specialtyName != null) {
-      final specialty = MedicalSpecialty.values.where((s) => s.displayName == detail.specialtyName).firstOrNull;
+      final specialty = MedicalSpecialty.values
+          .where((s) => s.displayName == detail.specialtyName)
+          .firstOrNull;
       if (rows.isNotEmpty) rows.add(Divider(height: 1, color: dividerColor));
       rows.add(_DetailRow(
         icon: specialty?.icon ?? Assets.icons.activity,
@@ -720,9 +597,7 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        context.router.push(
-          RecordDetailsRoute(resource: detail.record),
-        );
+        context.router.push(RecordDetailsRoute(resource: detail.record));
       },
       child: Container(
         width: double.infinity,
@@ -759,9 +634,7 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelColor =
-        context.colorScheme.onSurface.withValues(alpha: 0.7);
-
+    final labelColor = context.colorScheme.onSurface.withValues(alpha: 0.7);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Insets.small),
       child: Row(
@@ -804,15 +677,13 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-class _ShowDetailsButton extends StatelessWidget {
+class _EphemeralShowDetailsButton extends StatelessWidget {
   final AttachmentBrowseDetail detail;
-  final bool readOnly;
-  final List<IFhirResource>? ephemeralRecords;
+  final List<IFhirResource> ephemeralRecords;
 
-  const _ShowDetailsButton({
+  const _EphemeralShowDetailsButton({
     required this.detail,
-    this.readOnly = false,
-    this.ephemeralRecords,
+    required this.ephemeralRecords,
   });
 
   @override
@@ -825,7 +696,7 @@ class _ShowDetailsButton extends StatelessWidget {
           context.router.push(
             RecordDetailsRoute(
               resource: detail.record,
-              ephemeralRecords: readOnly ? (ephemeralRecords ?? const []) : const [],
+              ephemeralRecords: ephemeralRecords,
             ),
           );
         },

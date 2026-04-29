@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 
 class _TimelineItem {
   final bool isYear;
@@ -194,33 +193,37 @@ class _AttachmentTimelineScrubberState
     final isDark = context.isDarkMode;
     final onSurface = context.colorScheme.onSurface;
     final label = _currentLabel();
-    final halfScreen = MediaQuery.of(context).size.width / 2;
 
     return SizedBox(
       height: 72,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 32,
-            height: 24,
-            child: ListView.builder(
-              controller: _scrollController,
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: halfScreen),
-              itemCount: _items.length,
-              itemBuilder: (context, index) {
-                return _buildTimelineItem(index, onSurface, isDark);
-              },
-            ),
-          ),
-          if (label.isNotEmpty) _buildLabel(label, onSurface, isDark),
-          _buildCursorLine(onSurface),
-          _buildCursorDot(onSurface),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final halfWidth = constraints.maxWidth / 2;
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 32,
+                height: 24,
+                child: ListView.builder(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: halfWidth),
+                  itemCount: _items.length,
+                  itemBuilder: (context, index) {
+                    return _buildTimelineItem(index, onSurface, isDark);
+                  },
+                ),
+              ),
+              if (label.isNotEmpty) _buildLabel(label, onSurface, isDark),
+              _buildCursorLine(onSurface),
+              _buildCursorDot(onSurface),
+            ],
+          );
+        },
       ),
     );
   }

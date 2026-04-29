@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'filters/date_range_filter_model.dart';
@@ -13,13 +14,15 @@ class RecordsFilterBottomSheet extends StatefulWidget {
     required this.onApply,
     this.currentDateFilter,
     this.availableFilters,
+    this.currentSpecialties = const [],
     super.key,
   });
 
   final List<FhirType> activeFilters;
-  final void Function(List<FhirType>, DateFilter?) onApply;
+  final void Function(List<FhirType>, DateFilter?, List<MedicalSpecialty>) onApply;
   final DateFilter? currentDateFilter;
   final List<FhirType>? availableFilters;
+  final List<MedicalSpecialty> currentSpecialties;
 
   @override
   State<RecordsFilterBottomSheet> createState() =>
@@ -29,6 +32,7 @@ class RecordsFilterBottomSheet extends StatefulWidget {
 class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
     with SingleTickerProviderStateMixin {
   List<FhirType> _selectedFilters = [];
+  List<MedicalSpecialty> _selectedSpecialties = [];
   late DateRangeFilterModel _dateRangeModel;
   late TabController _tabController;
   final GlobalKey _dateRangeContainerKey = GlobalKey();
@@ -36,6 +40,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
   @override
   void initState() {
     _selectedFilters = [...widget.activeFilters];
+    _selectedSpecialties = [...widget.currentSpecialties];
     final df = widget.currentDateFilter;
     _dateRangeModel = DateRangeFilterModel(
       fromYear: df?.fromYear,
@@ -214,7 +219,8 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                           return;
                         }
 
-                        widget.onApply.call(_selectedFilters, dateFilter);
+                        widget.onApply
+                            .call(_selectedFilters, dateFilter, _selectedSpecialties);
                         Navigator.of(context).pop();
                       },
                       child: Row(
@@ -249,40 +255,161 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
       child: ListView(
         shrinkWrap: true,
         children: [
-          Text(
-            context.l10n.recordType,
-            style: AppTextStyle.buttonSmall.copyWith(
-              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                context.l10n.specialty,
+                style: AppTextStyle.buttonSmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              if (_selectedSpecialties.isNotEmpty)
+                GestureDetector(
+                  onTap: () => setState(() => _selectedSpecialties.clear()),
+                  child: Text(
+                    context.l10n.clearAll,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: context.colorScheme.primary,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 8),
+          _buildSpecialtySelector(context),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                context.l10n.recordType,
+                style: AppTextStyle.buttonSmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              if (_selectedFilters.isNotEmpty)
+                GestureDetector(
+                  onTap: () => setState(() => _selectedFilters.clear()),
+                  child: Text(
+                    context.l10n.clearAll,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: context.colorScheme.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: (widget.availableFilters ?? FhirType.values).map((filter) {
               final isSelected = _selectedFilters.contains(filter);
               return GestureDetector(
                 onTap: () => _toggleFitler(filter),
                 child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  width: MediaQuery.sizeOf(context).width,
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? context.colorScheme.primary.withValues(alpha: 0.12)
                         : context.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? context.colorScheme.primary.withValues(alpha: 0.3)
+                          : context.colorScheme.onSurface.withValues(alpha: 0.15),
+                    ),
                   ),
-                  child: Text(filter.display,
-                      style: AppTextStyle.labelLarge.copyWith(
-                        color: isSelected
-                            ? context.colorScheme.primary
-                            : context.colorScheme.onSurface,
-                      )),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      filter.icon.svg(
+                        width: 14,
+                        height: 14,
+                        colorFilter: ColorFilter.mode(
+                          isSelected
+                              ? context.colorScheme.primary
+                              : context.colorScheme.onSurface,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        filter.display,
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: isSelected
+                              ? context.colorScheme.primary
+                              : context.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }).toList(),
           )
         ],
       ),
+    );
+  }
+
+  Widget _buildSpecialtySelector(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ...MedicalSpecialty.values.map((specialty) {
+          final isSelected = _selectedSpecialties.contains(specialty);
+          return GestureDetector(
+            onTap: () => setState(() {
+              if (isSelected) {
+                _selectedSpecialties.remove(specialty);
+              } else {
+                _selectedSpecialties.add(specialty);
+              }
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? context.colorScheme.primary.withValues(alpha: 0.12)
+                    : context.colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected
+                      ? context.colorScheme.primary.withValues(alpha: 0.3)
+                      : context.colorScheme.onSurface.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  specialty.icon.svg(
+                    width: 14,
+                    height: 14,
+                    colorFilter: ColorFilter.mode(
+                      isSelected
+                          ? context.colorScheme.primary
+                          : context.colorScheme.onSurface,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    specialty.displayName,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: isSelected
+                          ? context.colorScheme.primary
+                          : context.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 

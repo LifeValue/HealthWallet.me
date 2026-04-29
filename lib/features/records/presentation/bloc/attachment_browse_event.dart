@@ -11,14 +11,14 @@ class AttachmentBrowseInitialised extends AttachmentBrowseEvent
     @Default([]) List<FhirType> resourceTypes,
     @Default(false) bool readOnly,
     @Default([]) List<IFhirResource> sourceRecords,
+    MedicalSpecialty? specialty,
   }) = _AttachmentBrowseInitialised;
 }
 
 @freezed
 class AttachmentBrowseSelected extends AttachmentBrowseEvent
     with _$AttachmentBrowseSelected {
-  const factory AttachmentBrowseSelected(int index) =
-      _AttachmentBrowseSelected;
+  const factory AttachmentBrowseSelected(int index) = _AttachmentBrowseSelected;
 }
 
 @freezed

@@ -73,4 +73,6 @@ abstract class RecordsRepository {
     String? sourceId,
     String? patientId,
   });
+
+  Future<void> updateResourceRaw(String resourceId, String rawJson);
 }

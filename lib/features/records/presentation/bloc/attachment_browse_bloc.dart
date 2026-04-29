@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
 import 'package:injectable/injectable.dart';
@@ -13,8 +15,9 @@ part 'attachment_browse_bloc.freezed.dart';
 class AttachmentBrowseBloc
     extends Bloc<AttachmentBrowseEvent, AttachmentBrowseState> {
   final AttachmentBrowseService _service;
+  final SpecialtyClassifier _specialtyClassifier;
 
-  AttachmentBrowseBloc(this._service)
+  AttachmentBrowseBloc(this._service, this._specialtyClassifier)
       : super(const AttachmentBrowseState()) {
     on<AttachmentBrowseInitialised>(_onInitialised);
     on<AttachmentBrowseSelected>(_onRecordSelected);
@@ -37,11 +40,24 @@ class AttachmentBrowseBloc
     ));
 
     try {
-      final entries = await _service.loadEntries(
+      debugPrint('[AttachmentBrowseBloc] loading entries sourceId=${event.sourceId}, sourceIds=${event.sourceIds}, types=${event.resourceTypes}');
+      var entries = await _service.loadEntries(
         sourceId: event.sourceId,
         sourceIds: event.sourceIds,
         resourceTypes: event.resourceTypes,
       );
+      debugPrint('[AttachmentBrowseBloc] loaded ${entries.length} entries');
+
+      if (event.specialty != null) {
+        _specialtyClassifier.buildEncounterIndex(
+            entries.map((e) => e.record).toList());
+        entries = entries
+            .where((e) => _specialtyClassifier
+                .classify(e.record)
+                .contains(event.specialty))
+            .toList();
+      }
+
       final timelineYears = _buildTimeline(entries);
 
       AttachmentBrowseDetail? detail;
@@ -61,7 +77,8 @@ class AttachmentBrowseBloc
         timelineYears: timelineYears,
         searchQuery: '',
       ));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[AttachmentBrowseBloc] ERROR: $e');
       emit(state.copyWith(status: AttachmentBrowseStatus.error));
     }
   }
@@ -165,7 +182,25 @@ class AttachmentBrowseBloc
     final entry = state.records[index];
     final detail =
         await _service.loadDetail(entry.record, sourceId: entry.record.sourceId);
-    emit(state.copyWith(selectedDetail: detail));
+
+    final updatedEntry = AttachmentBrowseEntry(
+      record: entry.record,
+      thumbnailPath: detail.attachments.isNotEmpty
+          ? detail.attachments.first.filePath
+          : entry.thumbnailPath,
+    );
+
+    final updatedRecords = List<AttachmentBrowseEntry>.from(state.records);
+    updatedRecords[index] = updatedEntry;
+    final updatedAll = List<AttachmentBrowseEntry>.from(state.allRecords);
+    final allIndex = updatedAll.indexWhere((e) => e.record.id == entry.record.id);
+    if (allIndex >= 0) updatedAll[allIndex] = updatedEntry;
+
+    emit(state.copyWith(
+      selectedDetail: detail,
+      records: updatedRecords,
+      allRecords: updatedAll,
+    ));
   }
 
   List<TimelineYear> _buildTimeline(List<AttachmentBrowseEntry> entries) {
