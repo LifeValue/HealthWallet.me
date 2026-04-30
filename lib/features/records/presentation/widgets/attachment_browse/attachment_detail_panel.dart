@@ -86,9 +86,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.isDesktopWidth ? 240 : Insets.medium,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
