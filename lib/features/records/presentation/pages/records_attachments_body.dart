@@ -57,8 +57,8 @@ class _RecordsAttachmentsBodyState extends State<RecordsAttachmentsBody> {
       },
       child: Stack(
         children: [
-          Padding(
-            padding: EdgeInsets.only(top: _headerHeight),
+          Positioned.fill(
+            top: _headerHeight,
             child: AttachmentBrowseView(
               isSelectionMode: widget.appBarState.isSelectionMode,
               selectedResourceIds: widget.appBarState.selectedResourceIds,
@@ -164,6 +164,7 @@ class _HeaderWidget extends StatelessWidget {
                 previous.dateFilter != current.dateFilter ||
                 previous.activeSpecialties != current.activeSpecialties,
             builder: (context, recordsState) {
+              WidgetsBinding.instance.addPostFrameCallback((_) => onLayout());
               return RecordsActiveFiltersBar(
                 activeFilters: recordsState.activeFilters,
                 dateFilter: recordsState.dateFilter,

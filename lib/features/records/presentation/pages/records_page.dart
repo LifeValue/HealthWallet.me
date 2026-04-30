@@ -37,6 +37,7 @@ import 'package:health_wallet/features/records/presentation/widgets/records_view
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_list_body.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_attachments_body.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 
 @RoutePage()
 class RecordsPage extends StatelessWidget {
@@ -96,9 +97,7 @@ class _RecordsViewState extends State<RecordsView> {
     final attachmentFilters = widget.initFilters ??
         (currentSpecialties.isNotEmpty
             ? <FhirType>[]
-            : currentFilters.isNotEmpty
-                ? currentFilters
-                : <FhirType>[]);
+            : currentFilters);
     context.read<AttachmentBrowseBloc>().add(AttachmentBrowseInitialised(
         sourceId: selectedSourceId,
         sourceIds: patientSourceIds,
@@ -380,11 +379,8 @@ class _RecordsViewState extends State<RecordsView> {
             listenWhen: (previous, current) =>
                 previous.activeFilters != current.activeFilters ||
                 previous.activeSpecialties != current.activeSpecialties ||
-                previous.dateFilter != current.dateFilter ||
-                previous.sourceId != current.sourceId ||
-                previous.sourceIds != current.sourceIds,
+                previous.dateFilter != current.dateFilter,
             listener: (context, state) {
-              debugPrint('[RecordsPage] filter listener: filters=${state.activeFilters}, specialties=${state.activeSpecialties}, source=${state.sourceId}');
               context.read<AttachmentBrowseBloc>().add(
                   AttachmentBrowseInitialised(
                     sourceId: state.sourceId,
@@ -405,13 +401,20 @@ class _RecordsViewState extends State<RecordsView> {
           return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              body: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
-                  child: _buildBody(context, appBarState),
-                ),
-              ),
+              body: _viewMode == RecordsViewMode.attachments && context.isDesktopWidth
+                  ? Row(
+                      children: [
+                        Expanded(child: _buildBody(context, appBarState)),
+                        const _DesktopDetailsPanel(),
+                      ],
+                    )
+                  : Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+                        child: _buildBody(context, appBarState),
+                      ),
+                    ),
               floatingActionButton: _showScrollToTopButton
                   ? Padding(
                       padding: const EdgeInsets.only(bottom: 80),
@@ -435,6 +438,7 @@ class _RecordsViewState extends State<RecordsView> {
   }
 
   Widget _buildTitleRow(BuildContext context, RecordsState appBarState) {
+    if (context.isDesktopWidth) return const SizedBox.shrink();
     return Row(
       children: [
         Expanded(
@@ -568,7 +572,7 @@ class _RecordsViewState extends State<RecordsView> {
 
   Widget _buildBody(BuildContext context, RecordsState appBarState) {
     if (_viewMode == RecordsViewMode.attachments) {
-      return KeyedSubtree(
+      final body = KeyedSubtree(
         key: const ValueKey('attachments_body'),
         child: RecordsAttachmentsBody(
           appBarState: appBarState,
@@ -585,6 +589,8 @@ class _RecordsViewState extends State<RecordsView> {
           titleRow: _buildTitleRow(context, appBarState),
         ),
       );
+
+      return body;
     }
 
     return KeyedSubtree(
@@ -668,6 +674,314 @@ class _RecordsViewState extends State<RecordsView> {
         );
       },
       ),
+    );
+  }
+}
+
+class _DesktopDetailsPanel extends StatefulWidget {
+  const _DesktopDetailsPanel();
+
+  @override
+  State<_DesktopDetailsPanel> createState() => _DesktopDetailsPanelState();
+}
+
+class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
+  static const double _kPanelMinWidth = 280.0;
+  static const double _kPanelMaxWidth = 800.0;
+  static const double _kDefaultWidth = 400.0;
+
+  double _panelWidth = _kDefaultWidth;
+  bool _isOpen = true;
+  List<IFhirResource> _relatedResources = [];
+  String _loadedResourceId = '';
+
+  Future<void> _loadRelated(AttachmentBrowseDetail detail) async {
+    final record = detail.record;
+    if (record.resourceId == _loadedResourceId) return;
+    _loadedResourceId = record.resourceId;
+    setState(() => _relatedResources = []);
+
+    try {
+      final repo = getIt<RecordsRepository>();
+      final encId = record.fhirType == FhirType.Encounter
+          ? record.resourceId
+          : record.encounterId;
+      if (encId.isNotEmpty) {
+        final related =
+            await repo.getRelatedResourcesForEncounter(encounterId: encId);
+        if (mounted && record.resourceId == _loadedResourceId) {
+          setState(() => _relatedResources = related);
+        }
+      }
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = context.colorScheme.onSurface;
+    final borderColor = onSurface.withValues(alpha: 0.24);
+
+    return BlocBuilder<AttachmentBrowseBloc, AttachmentBrowseState>(
+      buildWhen: (prev, curr) =>
+          prev.selectedDetail != curr.selectedDetail ||
+          prev.status != curr.status,
+      builder: (context, state) {
+        final detail = state.selectedDetail;
+        if (detail != null &&
+            detail.record.resourceId != _loadedResourceId) {
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _loadRelated(detail));
+        }
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            SizedBox(
+              width: _isOpen ? _panelWidth : 18,
+              height: double.infinity,
+              child: _isOpen && detail != null
+                  ? Container(
+                      decoration: BoxDecoration(
+                        color: context.isDarkMode
+                            ? const Color(0xFF1E1E1E)
+                            : Colors.white,
+                        border: Border(
+                            left: BorderSide(color: borderColor)),
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(
+                            left: 24, right: 16, top: 16, bottom: 16),
+                        child: _buildPanelContent(
+                            context, detail, onSurface, borderColor),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            if (_isOpen)
+              Positioned(
+                left: -4,
+                top: 0,
+                bottom: 0,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.resizeColumn,
+                  child: GestureDetector(
+                    onHorizontalDragUpdate: (d) {
+                      setState(() {
+                        _panelWidth = (_panelWidth - d.delta.dx)
+                            .clamp(_kPanelMinWidth, _kPanelMaxWidth);
+                      });
+                    },
+                    child: Container(
+                      width: 8,
+                      color: Colors.transparent,
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(
+              left: -16,
+              top: 72,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() => _isOpen = !_isOpen),
+                  onHorizontalDragUpdate: (d) {
+                    setState(() {
+                      _panelWidth = (_panelWidth - d.delta.dx)
+                          .clamp(_kPanelMinWidth, _kPanelMaxWidth);
+                    });
+                  },
+                  onHorizontalDragEnd: (_) {},
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: context.isDarkMode
+                          ? const Color(0xFF060606)
+                          : context.colorScheme.surface,
+                      border: Border.all(color: borderColor),
+                      borderRadius: BorderRadius.circular(222),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Center(
+                      child: Text(
+                        _isOpen ? '› ‹' : '‹ ›',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w300,
+                          color: onSurface.withValues(alpha: 0.6),
+                          height: 1,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPanelContent(
+    BuildContext context,
+    AttachmentBrowseDetail detail,
+    Color onSurface,
+    Color borderColor,
+  ) {
+    final dimColor = onSurface.withValues(alpha: 0.6);
+    final record = detail.record;
+
+    final encounter = _relatedResources
+        .where((r) => r.fhirType == FhirType.Encounter)
+        .firstOrNull;
+
+    final otherResources = _relatedResources
+        .where((r) =>
+            r.fhirType != FhirType.Patient &&
+            r.fhirType != FhirType.Organization &&
+            r.fhirType != FhirType.Practitioner &&
+            r.fhirType != FhirType.Encounter)
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.l10n.recordDetails,
+          style: AppTextStyle.titleSmall
+              .copyWith(color: onSurface, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: borderColor),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: onSurface.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    record.fhirType.icon.svg(
+                      width: 15,
+                      colorFilter:
+                          ColorFilter.mode(onSurface, BlendMode.srcIn),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(record.fhirType.display,
+                        style: AppTextStyle.labelSmall),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(record.displayTitle,
+                  style:
+                      AppTextStyle.bodyMedium.copyWith(color: onSurface)),
+              ...record.additionalInfo.map((info) {
+                if (info.isSection) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 20, bottom: 8),
+                    child: Text(info.info,
+                        style: AppTextStyle.labelLarge.copyWith(
+                            fontWeight: FontWeight.bold, color: onSurface)),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: info.icon.svg(
+                            width: 16,
+                            colorFilter: ColorFilter.mode(
+                                dimColor, BlendMode.srcIn)),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(info.info,
+                            style: AppTextStyle.labelLarge
+                                .copyWith(color: onSurface)),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (encounter != null &&
+            record.fhirType != FhirType.Encounter) ...[
+          Text(context.l10n.encounterDetails,
+              style: AppTextStyle.labelLarge
+                  .copyWith(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          _buildResourceInfo(encounter, dimColor),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Divider(color: borderColor),
+          ),
+        ],
+        if (otherResources.isNotEmpty) ...[
+          Text(context.l10n.relatedResources,
+              style: AppTextStyle.labelLarge
+                  .copyWith(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 16),
+          ...otherResources.map((res) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(res.displayTitle, style: AppTextStyle.labelLarge),
+                    _buildResourceInfo(res, dimColor),
+                  ],
+                ),
+              )),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildResourceInfo(IFhirResource resource, Color dimColor) {
+    final lines =
+        resource.additionalInfo.where((l) => !l.isSection).take(2).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: lines
+          .map((info) => Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  children: [
+                    info.icon.svg(
+                        width: 16,
+                        colorFilter:
+                            ColorFilter.mode(dimColor, BlendMode.srcIn)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(info.info,
+                          style: AppTextStyle.labelLarge
+                              .copyWith(color: dimColor)),
+                    ),
+                  ],
+                ),
+              ))
+          .toList(),
     );
   }
 }

@@ -193,34 +193,34 @@ class RecordAttachmentsBloc
       }
 
       Directory appDirectory = await getApplicationDocumentsDirectory();
-
-      String originalFileName = basename(event.file.path);
-      String newFilePath = join(appDirectory.path, originalFileName);
-
-      await event.file.copy(newFilePath);
-
       final subjectId = _extractSubjectId(state.resource);
       final encounterId = _extractEncounterId(state.resource);
-
       final effectiveSourceId = await _getEffectiveSourceId(
         resourceSourceId: state.resource.sourceId,
         patientId: subjectId ?? '',
       );
 
-      final documentReference = await _createDocumentReference(
-        filePath: newFilePath,
-        fileName: originalFileName,
-        subjectId: subjectId ?? '',
-        encounterId: encounterId,
-        relatedResourceId: state.resource.resourceId,
-        relatedResourceType: state.resource.fhirType.name,
-      );
+      for (final file in event.files) {
+        String originalFileName = basename(file.path);
+        String newFilePath = join(appDirectory.path, originalFileName);
 
-      await _saveDocumentReferenceToDatabase(
-        documentReference: documentReference,
-        sourceId: effectiveSourceId,
-        title: originalFileName,
-      );
+        await file.copy(newFilePath);
+
+        final documentReference = await _createDocumentReference(
+          filePath: newFilePath,
+          fileName: originalFileName,
+          subjectId: subjectId ?? '',
+          encounterId: encounterId,
+          relatedResourceId: state.resource.resourceId,
+          relatedResourceType: state.resource.fhirType.name,
+        );
+
+        await _saveDocumentReferenceToDatabase(
+          documentReference: documentReference,
+          sourceId: effectiveSourceId,
+          title: originalFileName,
+        );
+      }
 
       emit(state.copyWith(attachments: []));
       add(RecordAttachmentsInitialised(resource: state.resource));

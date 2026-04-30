@@ -145,6 +145,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsInitialised event,
     Emitter<RecordsState> emit,
   ) async {
+    if (state.activeFilters.isEmpty && !event.isShareContext) {
+      emit(state.copyWith(
+          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]));
+    }
     await _loadResources(emit);
   }
 
@@ -165,12 +169,17 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSourceChanged event,
     Emitter<RecordsState> emit,
   ) async {
-    final nextState = state.copyWith(
+    var nextState = state.copyWith(
       sourceId: event.sourceId,
       sourceIds: event.sourceIds,
       resources: [],
       hasMorePages: true,
     );
+
+    if (nextState.activeFilters.isEmpty && !event.isShareContext) {
+      nextState = nextState.copyWith(
+          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]);
+    }
 
     emit(nextState);
 

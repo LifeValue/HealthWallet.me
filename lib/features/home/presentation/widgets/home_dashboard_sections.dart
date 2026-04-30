@@ -146,8 +146,7 @@ class HomeDashboardSections extends StatelessWidget {
               context.read<HomeBloc>().add(HomeOverviewViewModeChanged(mode));
             },
           ),
-          subtitle: state.sources.isNotEmpty
-              ? SourceSelectorWidget(
+          subtitle: SourceSelectorWidget(
                   sources: state.sources,
                   selectedSource: state.selectedSource,
                   onSourceChanged: (sourceId, patientSourceIds) {
@@ -185,8 +184,7 @@ class HomeDashboardSections extends StatelessWidget {
                           );
                     }
                   },
-                )
-              : null,
+                ),
           filterLabel: state.overviewViewMode == OverviewViewMode.specialties
               ? context.l10n.specialty
               : context.l10n.records,

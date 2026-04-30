@@ -38,6 +38,7 @@ class AttachmentDetailPanel extends StatefulWidget {
 
 class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   String _currentFileName = '';
+  int _currentPage = 0;
   bool _startFromEnd = false;
   String _lastRecordId = '';
 
@@ -77,65 +78,117 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   Widget build(BuildContext context) {
     final detail = widget.detail;
     final readOnly = context.read<AttachmentBrowseBloc>().state.readOnly;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: Insets.extraSmall),
-          Text(
-            detail.record.title,
-            style: AppTextStyle.bodyMedium.copyWith(
-              color: context.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
+    final bloc = context.read<AttachmentBrowseBloc>();
+    final selectedIndex = bloc.state.selectedIndex;
+    final totalRecords = bloc.state.records.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: context.isDesktopWidth ? 240 : Insets.medium,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: Insets.extraSmall),
+              Text(
+                detail.record.title,
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: context.colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Insets.smallNormal),
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: context.isDesktopWidth ? 240 : Insets.medium,
+          ),
+          child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (context.isDesktopWidth) ...[
+              _NavPillButton(
+                icon: Icons.chevron_left,
+                enabled: selectedIndex > 0,
+                onTap: () => bloc.add(AttachmentBrowseSelected(selectedIndex - 1)),
+              ),
+              const SizedBox(width: Insets.medium),
+            ],
+            Expanded(
+              child: _AttachmentPreview(
+                detail: detail,
+                startFromEnd: _startFromEnd,
+                readOnly: readOnly,
+                onFileNameChanged: (name) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() => _currentFileName = name);
+                  });
+                },
+                onPageChanged: (page) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() => _currentPage = page);
+                  });
+                },
+                onSwipeNextRecord: () {
+                  bloc.add(AttachmentBrowseSelected(selectedIndex + 1));
+                },
+                onSwipePrevRecord: () {
+                  bloc.add(AttachmentBrowseSelected(selectedIndex - 1));
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: Insets.smallNormal),
-          _AttachmentPreview(
-            detail: detail,
-            startFromEnd: _startFromEnd,
-            readOnly: readOnly,
-            onFileNameChanged: (name) {
-              setState(() => _currentFileName = name);
-            },
-            onSwipeNextRecord: () {
-              context.read<AttachmentBrowseBloc>().add(
-                    AttachmentBrowseSelected(
-                      context.read<AttachmentBrowseBloc>().state.selectedIndex + 1,
-                    ),
-                  );
-            },
-            onSwipePrevRecord: () {
-              context.read<AttachmentBrowseBloc>().add(
-                    AttachmentBrowseSelected(
-                      context.read<AttachmentBrowseBloc>().state.selectedIndex - 1,
-                    ),
-                  );
-            },
-          ),
-          const SizedBox(height: Insets.small),
-          _FileInfoRow(
-            detail: detail,
-            currentFileName: _currentFileName,
-            readOnly: readOnly,
-          ),
-          if (detail.patientName != null ||
-              detail.organizationName != null ||
-              detail.practitionerName != null) ...[
-            const SizedBox(height: Insets.normal),
-            _AttachmentBrowseDetailsCard(detail: detail),
+            if (context.isDesktopWidth) ...[
+              const SizedBox(width: Insets.medium),
+              _NavPillButton(
+                icon: Icons.chevron_right,
+                enabled: selectedIndex < totalRecords - 1,
+                onTap: () => bloc.add(AttachmentBrowseSelected(selectedIndex + 1)),
+              ),
+            ],
           ],
-          const SizedBox(height: Insets.smallNormal),
-          _ShowDetailsButton(
-            detail: detail,
-            readOnly: readOnly,
-            ephemeralRecords: readOnly
-                ? context.read<AttachmentBrowseBloc>().state.sourceRecords
-                : null,
+        ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: context.isDesktopWidth ? 240 : Insets.medium,
           ),
-          const SizedBox(height: Insets.normal),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: Insets.small),
+              _FileInfoRow(
+                detail: detail,
+                currentFileName: _currentFileName,
+                readOnly: readOnly,
+                totalFiles: detail.attachments.length,
+                currentFileIndex: _currentPage,
+              ),
+              if (detail.patientName != null ||
+                  detail.organizationName != null ||
+                  detail.practitionerName != null) ...[
+                const SizedBox(height: Insets.normal),
+                _AttachmentBrowseDetailsCard(detail: detail),
+              ],
+              if (!context.isDesktopWidth) ...[
+                const SizedBox(height: Insets.smallNormal),
+                _ShowDetailsButton(
+                  detail: detail,
+                  readOnly: readOnly,
+                  ephemeralRecords: readOnly
+                      ? bloc.state.sourceRecords
+                      : null,
+                ),
+              ],
+              const SizedBox(height: Insets.normal),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -145,6 +198,7 @@ class _AttachmentPreview extends StatefulWidget {
   final bool startFromEnd;
   final bool readOnly;
   final ValueChanged<String>? onFileNameChanged;
+  final ValueChanged<int>? onPageChanged;
   final VoidCallback? onSwipeNextRecord;
   final VoidCallback? onSwipePrevRecord;
 
@@ -153,6 +207,7 @@ class _AttachmentPreview extends StatefulWidget {
     this.startFromEnd = false,
     this.readOnly = false,
     this.onFileNameChanged,
+    this.onPageChanged,
     this.onSwipeNextRecord,
     this.onSwipePrevRecord,
   });
@@ -303,8 +358,18 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   }
 
   void _notifyFileName() {
-    if (_pages.isNotEmpty && widget.onFileNameChanged != null) {
-      widget.onFileNameChanged!(_pages[_currentPage].title);
+    if (_pages.isNotEmpty) {
+      widget.onFileNameChanged?.call(_pages[_currentPage].title);
+      final currentResourceId = _pages[_currentPage].resource.resourceId;
+      int fileIndex = 0;
+      String? lastResourceId;
+      for (int i = 0; i <= _currentPage && i < _pages.length; i++) {
+        if (_pages[i].resource.resourceId != lastResourceId) {
+          lastResourceId = _pages[i].resource.resourceId;
+          fileIndex++;
+        }
+      }
+      widget.onPageChanged?.call(fileIndex - 1);
     }
   }
 
@@ -312,11 +377,14 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   Widget build(BuildContext context) {
     final hasPages = _pages.isNotEmpty;
 
+    final screenHeight = MediaQuery.of(context).size.height;
+    final previewHeight = (screenHeight * 0.55).clamp(350.0, 700.0);
+
     return Container(
-      height: 330,
+      height: previewHeight,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: hasPages ? Colors.white : null,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: context.colorScheme.onSurface.withValues(alpha: 0.24),
@@ -478,7 +546,7 @@ class _PreviewPage {
   });
 }
 
-class _EmptyAttachmentContent extends StatelessWidget {
+class _EmptyAttachmentContent extends StatefulWidget {
   final IFhirResource record;
   final bool readOnly;
 
@@ -488,7 +556,16 @@ class _EmptyAttachmentContent extends StatelessWidget {
   });
 
   @override
+  State<_EmptyAttachmentContent> createState() => _EmptyAttachmentContentState();
+}
+
+class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
+  bool _isAttaching = false;
+
+  @override
   Widget build(BuildContext context) {
+    final readOnly = widget.readOnly;
+    final record = widget.record;
     if (readOnly) {
       return Center(
         child: Text(
@@ -497,6 +574,27 @@ class _EmptyAttachmentContent extends StatelessWidget {
             color: context.colorScheme.onSurface,
             fontSize: 20,
           ),
+        ),
+      );
+    }
+
+    if (_isAttaching) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              strokeWidth: 2,
+              color: context.colorScheme.primary,
+            ),
+            const SizedBox(height: Insets.normal),
+            Text(
+              'Attaching files...',
+              style: AppTextStyle.labelLarge.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -519,22 +617,19 @@ class _EmptyAttachmentContent extends StatelessWidget {
             height: 36,
             child: ElevatedButton(
               onPressed: () async {
-                final result = await FilePicker.platform.pickFiles();
+                final result = await FilePicker.platform.pickFiles(allowMultiple: true);
                 if (result == null) return;
 
-                final file = File(result.files.first.path!);
+                final files = result.files
+                    .where((f) => f.path != null)
+                    .map((f) => File(f.path!))
+                    .toList();
+                if (files.isEmpty) return;
+
+                setState(() => _isAttaching = true);
 
                 final attachBloc = getIt.get<RecordAttachmentsBloc>();
                 attachBloc.add(RecordAttachmentsInitialised(resource: record));
-                final initState = await attachBloc.stream.firstWhere(
-                  (s) => s.status.when(
-                    loading: () => false,
-                    success: () => true,
-                    error: (_) => true,
-                  ),
-                );
-
-                attachBloc.add(RecordAttachmentsFileAttached(file));
                 await attachBloc.stream.firstWhere(
                   (s) => s.status.when(
                     loading: () => false,
@@ -543,7 +638,17 @@ class _EmptyAttachmentContent extends StatelessWidget {
                   ),
                 );
 
-                if (context.mounted) {
+                attachBloc.add(RecordAttachmentsFileAttached(files));
+                await attachBloc.stream.firstWhere(
+                  (s) => s.status.when(
+                    loading: () => false,
+                    success: () => true,
+                    error: (_) => true,
+                  ),
+                );
+
+                if (mounted) {
+                  setState(() => _isAttaching = false);
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (context.mounted) {
                       context.read<AttachmentBrowseBloc>().add(
@@ -577,28 +682,46 @@ class _FileInfoRow extends StatelessWidget {
   final AttachmentBrowseDetail detail;
   final String currentFileName;
   final bool readOnly;
+  final int totalFiles;
+  final int currentFileIndex;
 
   const _FileInfoRow({
     required this.detail,
     required this.currentFileName,
     this.readOnly = false,
+    this.totalFiles = 0,
+    this.currentFileIndex = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final hasFile = currentFileName.isNotEmpty;
+    final subtleColor = context.colorScheme.onSurface.withValues(alpha: 0.4);
 
     return Row(
       children: [
         Expanded(
-          child: Text(
-            hasFile ? currentFileName : 'No file name',
-            style: AppTextStyle.labelLarge.copyWith(
-              color: hasFile
-                  ? context.colorScheme.onSurface
-                  : context.colorScheme.onSurface.withValues(alpha: 0.4),
-            ),
-            overflow: TextOverflow.ellipsis,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                hasFile ? currentFileName : 'No file name',
+                style: AppTextStyle.labelLarge.copyWith(
+                  color: hasFile
+                      ? context.colorScheme.onSurface
+                      : subtleColor,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (totalFiles > 1)
+                Text(
+                  '( ${currentFileIndex + 1} of $totalFiles files )',
+                  style: AppTextStyle.labelSmall.copyWith(
+                    color: subtleColor,
+                    fontSize: 10,
+                  ),
+                ),
+            ],
           ),
         ),
         GestureDetector(
@@ -933,6 +1056,44 @@ class _ShowDetailsButton extends StatelessWidget {
           'Show Details',
           style: AppTextStyle.buttonMedium.copyWith(
             color: context.colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavPillButton extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _NavPillButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: context.colorScheme.onSurface.withValues(
+            alpha: enabled ? 0.08 : 0.03,
+          ),
+          borderRadius: BorderRadius.circular(222),
+        ),
+        child: Center(
+          child: Icon(
+            icon,
+            size: 16,
+            color: context.colorScheme.onSurface.withValues(
+              alpha: enabled ? 0.7 : 0.15,
+            ),
           ),
         ),
       ),

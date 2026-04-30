@@ -184,10 +184,10 @@ class _ThumbnailFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final fillColor = isChecked
         ? AppColors.primary.withValues(alpha: 0.15)
-        : hasFile
-            ? Colors.white
-            : context.isDarkMode
-                ? context.colorScheme.surface
+        : context.isDarkMode
+            ? context.colorScheme.surface
+            : hasFile
+                ? Colors.white
                 : Colors.grey.shade100;
 
     final child = SizedBox(

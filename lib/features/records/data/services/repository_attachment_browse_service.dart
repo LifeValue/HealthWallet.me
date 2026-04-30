@@ -83,12 +83,17 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
     final entries = <AttachmentBrowseEntry>[];
     for (final record in records) {
       if (FhirType.supportingTypes.contains(record.fhirType)) continue;
-      final docs = FhirType.mainRecordTypes.contains(record.fhirType)
-          ? (docsByEncounter[record.resourceId] ??
-              docsByEncounter[record.encounterId] ??
-              docsByRelated[record.resourceId] ??
-              [])
-          : <IFhirResource>[];
+      List<IFhirResource> docs = [];
+      if (FhirType.mainRecordTypes.contains(record.fhirType)) {
+        final directDocs = docsByRelated[record.resourceId] ?? [];
+        final encounterDocs = record.fhirType == FhirType.Encounter
+            ? (docsByEncounter[record.resourceId] ?? [])
+            : <IFhirResource>[];
+        final seen = <String>{};
+        docs = [...directDocs, ...encounterDocs]
+            .where((d) => seen.add(d.resourceId))
+            .toList();
+      }
       String? thumbnailPath;
 
       for (final doc in docs) {
@@ -168,9 +173,11 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
           case FhirType.Practitioner:
             practitionerName = _extractPersonName(resource.rawResource);
           case FhirType.DocumentReference:
-            final docAttachments =
-                await _resolveDocumentAttachments(resource);
-            attachments.addAll(docAttachments);
+            if (_isDocDirectlyLinked(resource, record)) {
+              final docAttachments =
+                  await _resolveDocumentAttachments(resource);
+              attachments.addAll(docAttachments);
+            }
           default:
             break;
         }
@@ -185,19 +192,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
       );
       for (final doc in allDocs) {
         if (existingIds.contains(doc.resourceId)) continue;
-        final relatedList =
-            doc.rawResource['context']?['related'] as List?;
-        if (relatedList == null) continue;
-        final matches = relatedList.any((ref) {
-          final refStr = ref['reference'] as String?;
-          if (refStr == null) return false;
-          final id = refStr.contains('/') ? refStr.split('/').last : refStr;
-          return id == record.resourceId;
-        });
-        if (matches) {
-          final docAttachments = await _resolveDocumentAttachments(doc);
-          attachments.addAll(docAttachments);
-        }
+        if (!_isDocDirectlyLinked(doc, record)) continue;
+        final docAttachments = await _resolveDocumentAttachments(doc);
+        attachments.addAll(docAttachments);
       }
     } catch (_) {}
 
@@ -233,6 +230,25 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
       practitionerName: practitionerName,
       specialtyName: specialtyName,
     );
+  }
+
+  bool _isDocDirectlyLinked(IFhirResource doc, IFhirResource record) {
+    if (record.fhirType == FhirType.Encounter &&
+        doc.encounterId == record.resourceId) {
+      return true;
+    }
+
+    final relatedList = doc.rawResource['context']?['related'] as List?;
+    if (relatedList != null) {
+      for (final ref in relatedList) {
+        final refStr = ref['reference'] as String?;
+        if (refStr == null) continue;
+        final id = refStr.contains('/') ? refStr.split('/').last : refStr;
+        if (id == record.resourceId) return true;
+      }
+    }
+
+    return false;
   }
 
   static const _specialtySystem = 'http://healthwallet.me/specialty';

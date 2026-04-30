@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -40,13 +39,11 @@ class AttachmentBrowseBloc
     ));
 
     try {
-      debugPrint('[AttachmentBrowseBloc] loading entries sourceId=${event.sourceId}, sourceIds=${event.sourceIds}, types=${event.resourceTypes}');
       var entries = await _service.loadEntries(
         sourceId: event.sourceId,
         sourceIds: event.sourceIds,
         resourceTypes: event.resourceTypes,
       );
-      debugPrint('[AttachmentBrowseBloc] loaded ${entries.length} entries');
 
       if (event.specialty != null) {
         _specialtyClassifier.buildEncounterIndex(
@@ -82,8 +79,7 @@ class AttachmentBrowseBloc
         timelineYears: timelineYears,
         searchQuery: '',
       ));
-    } catch (e) {
-      debugPrint('[AttachmentBrowseBloc] ERROR: $e');
+    } catch (_) {
       emit(state.copyWith(status: AttachmentBrowseStatus.error));
     }
   }
@@ -192,7 +188,7 @@ class AttachmentBrowseBloc
       record: entry.record,
       thumbnailPath: detail.attachments.isNotEmpty
           ? detail.attachments.first.filePath
-          : entry.thumbnailPath,
+          : null,
     );
 
     final updatedRecords = List<AttachmentBrowseEntry>.from(state.records);

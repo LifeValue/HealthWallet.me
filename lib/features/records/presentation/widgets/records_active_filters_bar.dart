@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/date_filter/date_filter.dart';
@@ -31,17 +30,9 @@ class RecordsActiveFiltersBar extends StatelessWidget {
       return const SizedBox();
     }
 
-    return BlocBuilder<HomeBloc, HomeState>(
-      buildWhen: (previous, current) =>
-          previous.hasDataLoaded != current.hasDataLoaded,
-      builder: (context, homeState) {
-        if (!homeState.hasDataLoaded) {
-          return const SizedBox();
-        }
+    final List<Widget> allChips = [];
 
-        final List<Widget> allChips = [];
-
-        for (final specialty in activeSpecialties) {
+    for (final specialty in activeSpecialties) {
           allChips.add(
             _buildFilterChip(
               context,
@@ -82,38 +73,36 @@ class RecordsActiveFiltersBar extends StatelessWidget {
           ),
         );
 
-        return Padding(
-          padding: EdgeInsets.only(top: 4, bottom: allChips.length > 2 ? 4 : 0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Wrap(
-                  spacing: 6.0,
-                  runSpacing: 6,
-                  children: allChips,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  context.read<RecordsBloc>().add(RecordsClearAllFilters());
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Assets.icons.close.svg(
-                    width: 22,
-                    height: 22,
-                    colorFilter: const ColorFilter.mode(
-                      AppColors.primary,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+    return Padding(
+      padding: EdgeInsets.only(top: 4, bottom: allChips.length > 2 ? 4 : 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Wrap(
+              spacing: 6.0,
+              runSpacing: 6,
+              children: allChips,
+            ),
           ),
-        );
-      },
+          GestureDetector(
+            onTap: () {
+              context.read<RecordsBloc>().add(RecordsClearAllFilters());
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Assets.icons.close.svg(
+                width: 22,
+                height: 22,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

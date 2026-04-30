@@ -125,12 +125,16 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                         ),
                         onPressed: () async {
                           FilePickerResult? result =
-                              await FilePicker.platform.pickFiles();
+                              await FilePicker.platform.pickFiles(allowMultiple: true);
                           if (result == null) return;
 
-                          File selectedFile = File(result.files.first.path!);
-
-                          _bloc.add(RecordAttachmentsFileAttached(selectedFile));
+                          final files = result.files
+                              .where((f) => f.path != null)
+                              .map((f) => File(f.path!))
+                              .toList();
+                          if (files.isNotEmpty) {
+                            _bloc.add(RecordAttachmentsFileAttached(files));
+                          }
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
