@@ -81,10 +81,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
     }
 
     final entries = <AttachmentBrowseEntry>[];
-    const headTypes = {FhirType.Encounter, FhirType.DiagnosticReport};
     for (final record in records) {
-      if (record.fhirType == FhirType.DocumentReference) continue;
-      final docs = headTypes.contains(record.fhirType)
+      if (FhirType.supportingTypes.contains(record.fhirType)) continue;
+      final docs = FhirType.mainRecordTypes.contains(record.fhirType)
           ? (docsByEncounter[record.resourceId] ??
               docsByEncounter[record.encounterId] ??
               docsByRelated[record.resourceId] ??

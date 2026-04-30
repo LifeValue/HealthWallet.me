@@ -187,7 +187,8 @@ flutter_gen:
 msix_config:
   display_name: HealthWallet.me
   publisher_display_name: Life Value
-  identity_name: com.techstackapps.healthwallet
+  identity_name: LifeValue.HealthWallet.me
+  publisher: CN=F498CCE3-F830-4599-99B7-76CF5193DE76
   logo_path: assets/icons/app-icon.png
   capabilities: internetClient, privateNetworkClientServer
   install_certificate: false

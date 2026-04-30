@@ -108,7 +108,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         _specialtyClassifier.buildEncounterIndex(resources);
         filteredResources = resources
             .where((r) {
-              final classified = _specialtyClassifier.classify(r);
+              final override = MedicalSpecialty.values
+                  .where((s) => s.name == r.specialtyOverride)
+                  .firstOrNull;
+              final classified = _specialtyClassifier.classify(r, override: override);
               return state.activeSpecialties.any((s) => classified.contains(s));
             })
             .toList();
@@ -142,13 +145,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsInitialised event,
     Emitter<RecordsState> emit,
   ) async {
-    if (state.activeFilters.isEmpty) {
-      if (!event.isShareContext) {
-        emit(state.copyWith(
-            activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]));
-      }
-    }
-
     await _loadResources(emit);
   }
 
@@ -169,17 +165,12 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSourceChanged event,
     Emitter<RecordsState> emit,
   ) async {
-    var nextState = state.copyWith(
+    final nextState = state.copyWith(
       sourceId: event.sourceId,
       sourceIds: event.sourceIds,
       resources: [],
       hasMorePages: true,
     );
-
-    if (nextState.activeFilters.isEmpty && !event.isShareContext) {
-      nextState = nextState.copyWith(
-          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]);
-    }
 
     emit(nextState);
 
@@ -448,6 +439,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     emit(state.copyWith(
       status: const RecordsStatus.loading(),
       activeSpecialties: event.specialties,
+      activeFilters: event.specialties.isNotEmpty ? [] : state.activeFilters,
       resources: [],
     ));
 

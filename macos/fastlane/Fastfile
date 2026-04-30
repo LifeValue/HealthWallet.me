@@ -50,7 +50,7 @@ platform :mac do
   desc "Fix framework symlinks for App Store (ITMS-90291)"
   private_lane :fix_framework_symlinks do |options|
     archive_path = options[:archive_path] || lane_context[SharedValues::XCODEBUILD_ARCHIVE]
-    fw_dir = File.join(archive_path, "Products", "Applications", "health_wallet.app", "Contents", "Frameworks")
+    fw_dir = File.join(archive_path, "Products", "Applications", "HealthWallet.me.app", "Contents", "Frameworks")
 
     unless Dir.exist?(fw_dir)
       UI.important("Frameworks dir not found: #{fw_dir}")

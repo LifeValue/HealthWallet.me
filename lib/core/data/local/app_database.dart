@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -22,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -75,6 +76,10 @@ class AppDatabase extends _$AppDatabase {
           if (from <= 9 && to >= 10) {
             await _migrateToV10();
             await _createSyncTriggers();
+          }
+
+          if (from <= 10 && to >= 11) {
+            await _migrateToV11();
           }
         },
       );
@@ -134,6 +139,63 @@ class AppDatabase extends _$AppDatabase {
         'ALTER TABLE record_notes ADD COLUMN deleted_at INTEGER');
   }
 
+
+  Future<void> _migrateToV11() async {
+    await customStatement(
+        'ALTER TABLE fhir_resource ADD COLUMN specialty_override TEXT');
+
+    final rows = await customSelect(
+      "SELECT id, resource_raw FROM fhir_resource "
+      "WHERE resource_raw LIKE '%healthwallet.me/specialty%'",
+    ).get();
+
+    for (final row in rows) {
+      final id = row.read<String>('id');
+      final rawJson = row.read<String>('resource_raw');
+
+      try {
+        final resource = jsonDecode(rawJson) as Map<String, dynamic>;
+        final meta = resource['meta'] as Map<String, dynamic>?;
+        if (meta == null) continue;
+
+        final tags = meta['tag'] as List<dynamic>?;
+        if (tags == null) continue;
+
+        String? specialtyCode;
+        final updatedTags = <dynamic>[];
+
+        for (final tag in tags) {
+          if (tag is Map<String, dynamic> &&
+              tag['system'] == 'http://healthwallet.me/specialty') {
+            specialtyCode = tag['code'] as String?;
+          } else {
+            updatedTags.add(tag);
+          }
+        }
+
+        if (specialtyCode == null) continue;
+
+        if (updatedTags.isEmpty) {
+          meta.remove('tag');
+        } else {
+          meta['tag'] = updatedTags;
+        }
+
+        if (meta.isEmpty) {
+          resource.remove('meta');
+        }
+
+        final updatedRaw = jsonEncode(resource);
+
+        await customStatement(
+          'UPDATE fhir_resource SET specialty_override = ?, resource_raw = ? WHERE id = ?',
+          [specialtyCode, updatedRaw, id],
+        );
+      } catch (_) {
+        continue;
+      }
+    }
+  }
 
   Future<void> _createOptimizationIndexes() async {
     await customStatement('PRAGMA journal_mode=WAL');

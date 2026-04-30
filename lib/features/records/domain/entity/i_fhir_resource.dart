@@ -17,6 +17,7 @@ abstract class IFhirResource {
   Map<String, dynamic> get rawResource;
   String get encounterId;
   String get subjectId;
+  String? get specialtyOverride;
 
   factory IFhirResource.fromLocalDto(FhirResourceLocalDto dto) {
     switch (dto.resourceType) {
@@ -86,6 +87,7 @@ abstract class IFhirResource {
           title: dto.title ?? '',
           date: dto.date,
           rawResource: jsonDecode(dto.resourceRaw),
+          specialtyOverride: dto.specialtyOverride,
         );
     }
   }
@@ -133,6 +135,42 @@ enum FhirType {
   const FhirType(this.display);
 
   final String display;
+
+  static const Set<FhirType> mainRecordTypes = {
+    FhirType.Encounter,
+    FhirType.DiagnosticReport,
+    FhirType.Condition,
+    FhirType.AllergyIntolerance,
+    FhirType.MedicationRequest,
+    FhirType.MedicationStatement,
+    FhirType.MedicationAdministration,
+    FhirType.MedicationDispense,
+    FhirType.Procedure,
+    FhirType.Immunization,
+    FhirType.Observation,
+    FhirType.ServiceRequest,
+    FhirType.Goal,
+    FhirType.CareTeam,
+    FhirType.AdverseEvent,
+    FhirType.Claim,
+    FhirType.ExplanationOfBenefit,
+    FhirType.Coverage,
+  };
+
+  static const Set<FhirType> supportingTypes = {
+    FhirType.Patient,
+    FhirType.Practitioner,
+    FhirType.PractitionerRole,
+    FhirType.Organization,
+    FhirType.Location,
+    FhirType.RelatedPerson,
+    FhirType.DocumentReference,
+    FhirType.Binary,
+    FhirType.Media,
+    FhirType.Medication,
+    FhirType.Specimen,
+    FhirType.GeneralResource,
+  };
 
   SvgGenImage get icon {
     if (this == FhirType.GeneralResource) return Assets.icons.stethoscope;

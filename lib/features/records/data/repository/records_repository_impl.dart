@@ -656,4 +656,14 @@ class RecordsRepositoryImpl implements RecordsRepository {
       resourceRaw: Value(rawJson),
     ));
   }
+
+  @override
+  Future<void> setSpecialtyOverride(
+      String resourceId, String? specialtyName) async {
+    await (_database.update(_database.fhirResource)
+          ..where((tbl) => tbl.id.equals(resourceId)))
+        .write(FhirResourceCompanion(
+      specialtyOverride: Value(specialtyName),
+    ));
+  }
 }

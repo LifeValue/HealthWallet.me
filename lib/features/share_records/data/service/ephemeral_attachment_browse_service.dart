@@ -37,7 +37,7 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
 
     final entries = <AttachmentBrowseEntry>[];
     for (final record in filtered) {
-      if (record.fhirType == FhirType.DocumentReference) continue;
+      if (FhirType.supportingTypes.contains(record.fhirType)) continue;
 
       final related = FhirResourceRelationshipService.findRelatedInMemory(
         resource: record,

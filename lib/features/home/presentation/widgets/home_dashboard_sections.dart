@@ -235,9 +235,6 @@ class HomeDashboardSections extends StatelessWidget {
               context
                   .read<RecordsBloc>()
                   .add(RecordsSpecialtyApplied([specialty]));
-              context.read<RecordsBloc>().add(RecordsFiltersApplied(
-                    [FhirType.Encounter, FhirType.DiagnosticReport],
-                  ));
               pageController.animateToPage(
                 1,
                 duration: HomeConstants.pageTransitionDuration,

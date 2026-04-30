@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,6 +10,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/home/presentation/widgets/specialty_picker.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
@@ -47,12 +46,16 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   late final bool _isEphemeral;
   RecordsBloc? _appRecordsBloc;
   List<IFhirResource> _ephemeralRelatedResources = [];
-  late Map<String, dynamic> _rawResource;
+  late MedicalSpecialty? _currentSpecialty;
 
   @override
   void initState() {
     super.initState();
-    _rawResource = Map<String, dynamic>.from(widget.resource.rawResource);
+    final parsed = MedicalSpecialty.values
+        .where((s) => s.name == widget.resource.specialtyOverride)
+        .firstOrNull;
+    _currentSpecialty = parsed ??
+        getIt<SpecialtyClassifier>().classify(widget.resource).firstOrNull;
     _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
         EphemeralSessionManager.instance.hasActiveSession;
     if (!_isEphemeral) {
@@ -124,7 +127,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
             ? null
             : [
                 IconButton(
-                  icon: (_getCurrentSpecialty()?.icon ?? Assets.specialities.generalCare).svg(
+                  icon: (_currentSpecialty?.icon ?? Assets.specialities.generalCare).svg(
                     width: 22,
                     height: 22,
                     colorFilter: ColorFilter.mode(
@@ -367,70 +370,8 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     );
   }
 
-  MedicalSpecialty? _getCurrentSpecialty() {
-    final meta = _rawResource['meta'];
-    if (meta == null) return null;
-    final tags = meta['tag'];
-    if (tags == null || tags is! List) return null;
-    for (final tag in tags) {
-      if (tag is Map &&
-          tag['system'] == _specialtySystem) {
-        final code = tag['code'];
-        if (code == null) return null;
-        return MedicalSpecialty.values.cast<MedicalSpecialty?>().firstWhere(
-          (s) => s?.name == code,
-          orElse: () => null,
-        );
-      }
-    }
-    return null;
-  }
-
-  static const _specialtySystem = 'http://healthwallet.me/specialty';
-
-  Future<void> _updateResourceSpecialty(MedicalSpecialty? specialty) async {
-    final json = Map<String, dynamic>.from(_rawResource);
-
-    if (specialty != null) {
-      json['meta'] ??= <String, dynamic>{};
-      final tags = List<Map<String, dynamic>>.from(
-        (json['meta']['tag'] as List?)?.map(
-              (e) => Map<String, dynamic>.from(e as Map),
-            ) ??
-            [],
-      );
-      tags.removeWhere((t) => t['system'] == _specialtySystem);
-      tags.add({
-        'system': _specialtySystem,
-        'code': specialty.name,
-        'display': specialty.displayName,
-      });
-      json['meta']['tag'] = tags;
-    } else {
-      final meta = json['meta'];
-      if (meta != null && meta['tag'] is List) {
-        final tags = List<Map<String, dynamic>>.from(
-          (meta['tag'] as List).map(
-            (e) => Map<String, dynamic>.from(e as Map),
-          ),
-        );
-        tags.removeWhere((t) => t['system'] == _specialtySystem);
-        if (tags.isEmpty) {
-          (meta as Map).remove('tag');
-        } else {
-          meta['tag'] = tags;
-        }
-      }
-    }
-
-    final repo = _appRecordsBloc?.recordsRepository ?? getIt<RecordsRepository>();
-    await repo.updateResourceRaw(widget.resource.id, jsonEncode(json));
-
-    _rawResource = json;
-  }
-
   void _showSpecialtyPicker(BuildContext outerContext) async {
-    final currentSpecialty = _getCurrentSpecialty();
+    final currentSpecialty = _currentSpecialty;
 
     final selected = await showModalBottomSheet<MedicalSpecialty?>(
       context: outerContext,
@@ -492,10 +433,13 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     if (selected == null && currentSpecialty == null) return;
     if (selected == currentSpecialty) return;
 
-    await _updateResourceSpecialty(selected);
+    final repo = _appRecordsBloc?.recordsRepository ?? getIt<RecordsRepository>();
+    await repo.setSpecialtyOverride(widget.resource.id, selected?.name);
 
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _currentSpecialty = selected;
+      });
       outerContext.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
       outerContext.read<RecordsBloc>().add(RecordsRefreshRequested());
     }

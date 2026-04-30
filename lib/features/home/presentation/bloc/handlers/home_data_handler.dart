@@ -300,7 +300,10 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
     specialtyClassifier.buildEncounterIndex(resources);
     final counts = <MedicalSpecialty, int>{};
     for (final resource in resources) {
-      for (final specialty in specialtyClassifier.classify(resource)) {
+      final parsedOverride = MedicalSpecialty.values
+          .where((s) => s.name == resource.specialtyOverride)
+          .firstOrNull;
+      for (final specialty in specialtyClassifier.classify(resource, override: parsedOverride)) {
         counts[specialty] = (counts[specialty] ?? 0) + 1;
       }
     }

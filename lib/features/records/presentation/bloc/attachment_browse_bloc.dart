@@ -52,9 +52,14 @@ class AttachmentBrowseBloc
         _specialtyClassifier.buildEncounterIndex(
             entries.map((e) => e.record).toList());
         entries = entries
-            .where((e) => _specialtyClassifier
-                .classify(e.record)
-                .contains(event.specialty))
+            .where((e) {
+              final override = MedicalSpecialty.values
+                  .where((s) => s.name == e.record.specialtyOverride)
+                  .firstOrNull;
+              return _specialtyClassifier
+                  .classify(e.record, override: override)
+                  .contains(event.specialty);
+            })
             .toList();
       }
 

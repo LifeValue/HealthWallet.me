@@ -92,11 +92,13 @@ class _RecordsViewState extends State<RecordsView> {
         RecordsSourceChanged(selectedSourceId, sourceIds: patientSourceIds));
 
     final currentFilters = context.read<RecordsBloc>().state.activeFilters;
-    final attachmentFilters = widget.initFilters ??
-        (currentFilters.isNotEmpty
-            ? currentFilters
-            : [FhirType.Encounter, FhirType.DiagnosticReport]);
     final currentSpecialties = context.read<RecordsBloc>().state.activeSpecialties;
+    final attachmentFilters = widget.initFilters ??
+        (currentSpecialties.isNotEmpty
+            ? <FhirType>[]
+            : currentFilters.isNotEmpty
+                ? currentFilters
+                : <FhirType>[]);
     context.read<AttachmentBrowseBloc>().add(AttachmentBrowseInitialised(
         sourceId: selectedSourceId,
         sourceIds: patientSourceIds,
@@ -324,12 +326,6 @@ class _RecordsViewState extends State<RecordsView> {
               context.read<RecordsBloc>().add(RecordsSourceChanged(
                   selectedSourceId,
                   sourceIds: patientSourceIds));
-              context.read<AttachmentBrowseBloc>().add(
-                  AttachmentBrowseInitialised(
-                      sourceId: selectedSourceId,
-                      sourceIds: patientSourceIds,
-                      resourceTypes:
-                          context.read<RecordsBloc>().state.activeFilters));
             },
           ),
           BlocListener<SyncBloc, SyncState>(
@@ -347,10 +343,6 @@ class _RecordsViewState extends State<RecordsView> {
                 context.read<RecordsBloc>().add(RecordsSourceChanged(
                     selectedSourceId,
                     sourceIds: patientSourceIds));
-                context.read<AttachmentBrowseBloc>().add(
-                    AttachmentBrowseInitialised(
-                        sourceId: selectedSourceId,
-                        sourceIds: patientSourceIds));
               }
             },
           ),
@@ -373,10 +365,6 @@ class _RecordsViewState extends State<RecordsView> {
               context.read<RecordsBloc>().add(RecordsSourceChanged(
                   selectedSourceId,
                   sourceIds: patientSourceIds));
-              context.read<AttachmentBrowseBloc>().add(
-                  AttachmentBrowseInitialised(
-                      sourceId: selectedSourceId,
-                      sourceIds: patientSourceIds));
             },
           ),
           BlocListener<RecordsBloc, RecordsState>(
@@ -392,8 +380,11 @@ class _RecordsViewState extends State<RecordsView> {
             listenWhen: (previous, current) =>
                 previous.activeFilters != current.activeFilters ||
                 previous.activeSpecialties != current.activeSpecialties ||
-                previous.dateFilter != current.dateFilter,
+                previous.dateFilter != current.dateFilter ||
+                previous.sourceId != current.sourceId ||
+                previous.sourceIds != current.sourceIds,
             listener: (context, state) {
+              debugPrint('[RecordsPage] filter listener: filters=${state.activeFilters}, specialties=${state.activeSpecialties}, source=${state.sourceId}');
               context.read<AttachmentBrowseBloc>().add(
                   AttachmentBrowseInitialised(
                     sourceId: state.sourceId,

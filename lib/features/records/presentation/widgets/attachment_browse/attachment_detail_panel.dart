@@ -708,15 +708,109 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
         value: detail.practitionerName!,
       ));
     }
-    if (detail.specialtyName != null) {
-      final specialty = MedicalSpecialty.values.where((s) => s.displayName == detail.specialtyName).firstOrNull;
-      if (rows.isNotEmpty) rows.add(Divider(height: 1, color: dividerColor));
-      rows.add(_DetailRow(
-        icon: specialty?.icon ?? Assets.icons.activity,
-        label: 'Specialty',
-        value: detail.specialtyName!,
-      ));
-    }
+    final specialty = detail.specialtyName != null
+        ? MedicalSpecialty.values.where((s) => s.displayName == detail.specialtyName).firstOrNull
+        : null;
+
+    if (rows.isNotEmpty) rows.add(Divider(height: 1, color: dividerColor));
+    final subtleColor = context.colorScheme.onSurface.withValues(alpha: 0.45);
+    rows.add(Padding(
+      padding: const EdgeInsets.symmetric(vertical: Insets.small),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: Center(
+                    child: (specialty?.icon ?? Assets.icons.activity).svg(
+                      width: 16,
+                      height: 16,
+                      colorFilter: ColorFilter.mode(
+                        context.colorScheme.onSurface,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Specialty',
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: subtleColor,
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      detail.specialtyName ?? 'General Care',
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: context.colorScheme.onSurface,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: Center(
+                    child: detail.record.fhirType.icon.svg(
+                      width: 16,
+                      height: 16,
+                      colorFilter: ColorFilter.mode(
+                        context.colorScheme.onSurface,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Record Type',
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: subtleColor,
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      detail.record.fhirType.display,
+                      style: AppTextStyle.labelSmall.copyWith(
+                        color: context.colorScheme.onSurface,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ));
 
     return GestureDetector(
       onTap: () {
