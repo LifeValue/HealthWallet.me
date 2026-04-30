@@ -192,3 +192,4 @@ msix_config:
   logo_path: assets/icons/app-icon.png
   capabilities: internetClient, privateNetworkClientServer
   install_certificate: false
+  store: true
