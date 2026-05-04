@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ class TrayService with TrayListener {
 
   bool _isWindowVisible = true;
   bool _initialized = false;
+  Timer? _menuDebounce;
 
   static const _menuKeyToggleWindow = 'toggle_window';
   static const _menuKeyQuit = 'quit';
@@ -40,11 +42,14 @@ class TrayService with TrayListener {
     String syncLabel = 'Idle',
   }) async {
     if (!_initialized) return;
-    await _rebuildMenu(
-      connectionStatus: connectionStatus,
-      deviceName: deviceName,
-      syncLabel: syncLabel,
-    );
+    _menuDebounce?.cancel();
+    _menuDebounce = Timer(const Duration(milliseconds: 100), () {
+      _rebuildMenu(
+        connectionStatus: connectionStatus,
+        deviceName: deviceName,
+        syncLabel: syncLabel,
+      );
+    });
   }
 
   Future<void> _rebuildMenu({
@@ -111,6 +116,7 @@ class TrayService with TrayListener {
   }
 
   Future<void> dispose() async {
+    _menuDebounce?.cancel();
     trayManager.removeListener(this);
     await trayManager.destroy();
     _initialized = false;

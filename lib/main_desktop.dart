@@ -45,14 +45,22 @@ void main() async {
   getIt<HandoverBloc>().add(const HandoverInitialised());
   getIt<TrayBloc>().add(const TrayInitialised());
 
-  getIt<CommunicationBloc>().stream.listen((commState) {
+  getIt<CommunicationBloc>()
+      .stream
+      .distinct((a, b) =>
+          a.connectionStatus == b.connectionStatus &&
+          a.connectedDeviceName == b.connectedDeviceName)
+      .listen((commState) {
     getIt<TrayBloc>().add(TrayConnectionStatusChanged(
       connectionStatus: commState.connectionStatus,
       deviceName: commState.connectedDeviceName,
     ));
   });
 
-  getIt<LwwSyncBloc>().stream.listen((syncState) {
+  getIt<LwwSyncBloc>()
+      .stream
+      .distinct((a, b) => a.syncStatus == b.syncStatus)
+      .listen((syncState) {
     getIt<TrayBloc>().add(TraySyncStatusChanged(
       syncStatus: syncState.syncStatus,
     ));

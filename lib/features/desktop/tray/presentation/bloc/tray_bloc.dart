@@ -71,6 +71,8 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     TrayWindowVisibilityChanged event,
     Emitter<TrayState> emit,
   ) async {
+    if (event.isVisible == state.isWindowVisible) return;
+
     if (event.isVisible) {
       await _windowLifecycleService.showWindow();
     } else {
@@ -91,6 +93,11 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     TrayConnectionStatusChanged event,
     Emitter<TrayState> emit,
   ) async {
+    if (event.connectionStatus == state.connectionStatus &&
+        event.deviceName == state.connectedDeviceName) {
+      return;
+    }
+
     emit(state.copyWith(
       connectionStatus: event.connectionStatus,
       connectedDeviceName: event.deviceName,
@@ -107,6 +114,8 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     TraySyncStatusChanged event,
     Emitter<TrayState> emit,
   ) async {
+    if (event.syncStatus == state.syncStatus) return;
+
     emit(state.copyWith(syncStatus: event.syncStatus));
 
     await _trayService.updateMenu(

@@ -30,6 +30,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
   StreamSubscription? _connectionSub;
   StreamSubscription? _pendingClientSub;
+  StreamSubscription? _messageSub;
   StreamSubscription? _mpcStateSub;
   MpcTransport? _mpcTransport;
 
@@ -79,7 +80,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       add(CommunicationPendingClientReceived(address: address));
     });
 
-    _tcpService.messages.listen((message) {
+    _messageSub = _tcpService.messages.listen((message) {
       if (message.type == MessageType.hello) {
         try {
           final json = jsonDecode(message.payloadString) as Map<String, dynamic>;
@@ -481,6 +482,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   Future<void> close() {
     _connectionSub?.cancel();
     _pendingClientSub?.cancel();
+    _messageSub?.cancel();
     _mpcStateSub?.cancel();
     return super.close();
   }
