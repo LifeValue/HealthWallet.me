@@ -183,7 +183,8 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
                 const SizedBox(height: Insets.normal),
                 _AttachmentBrowseDetailsCard(detail: detail),
               ],
-              if (!context.isDesktopWidth || MediaQuery.of(context).orientation == Orientation.portrait) ...[
+              if (MediaQuery.of(context).orientation == Orientation.portrait ||
+                  !(readOnly ? context.isTablet : context.isDesktopWidth)) ...[
                 const SizedBox(height: Insets.smallNormal),
                 _ShowDetailsButton(
                   detail: detail,

@@ -136,11 +136,14 @@ class _ThumbnailContentState extends State<_ThumbnailContent> {
   @override
   Widget build(BuildContext context) {
     if (_pdfBytes != null) {
-      return Image.memory(
-        _pdfBytes!,
-        fit: BoxFit.cover,
-        width: 100,
-        height: 100,
+      return Padding(
+        padding: const EdgeInsets.all(4),
+        child: Image.memory(
+          _pdfBytes!,
+          fit: BoxFit.contain,
+          width: 92,
+          height: 92,
+        ),
       );
     }
 

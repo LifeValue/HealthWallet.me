@@ -133,6 +133,7 @@ flutter:
   generate: true
   assets:
     - assets/
+    - assets/demo_data/
     - assets/images/
     - assets/icons/
     - assets/specialities/
