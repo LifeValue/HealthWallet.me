@@ -50,6 +50,14 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
     _thumbnailScrollController.addListener(_onThumbnailScroll);
   }
 
+  @override
+  void didUpdateWidget(AttachmentBrowseView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.bottomNavHeight != widget.bottomNavHeight) {
+      setState(() {});
+    }
+  }
+
   void _swipeRecord(int direction) {
     final bloc = context.read<AttachmentBrowseBloc>();
     final idx = bloc.state.selectedIndex;

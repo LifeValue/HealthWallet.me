@@ -10,12 +10,13 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
-import 'package:health_wallet/features/share_records/presentation/widgets/ephemeral_attachment_view.dart';
+import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/ephemeral_desktop_details_panel.dart';
 import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/resource_card.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
@@ -25,6 +26,7 @@ import 'package:health_wallet/features/share_records/presentation/bloc/share_rec
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/session/session_bottom_bar.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class EphemeralViewerView extends StatefulWidget {
@@ -50,6 +52,13 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ValueNotifier<bool> _isScrolled = ValueNotifier(false);
+  final GlobalKey _infoIconKey = GlobalKey();
+
+  static double _hPad(double width) {
+    if (width >= 1024) return 48.0;
+    if (width >= 600) return 32.0;
+    return 16.0;
+  }
 
   @override
   void initState() {
@@ -197,6 +206,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
 
   @override
   void dispose() {
+    CustomArrowTooltip.dismiss();
     _searchFocusNode.removeListener(_onSearchFocusChanged);
     _searchAnimController.dispose();
     _searchController.dispose();
@@ -246,63 +256,193 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
       return Center(child: Text(context.l10n.shareNoDataReceived));
     }
 
-    return Column(
+    final isDesktopSplit = _viewMode == RecordsViewMode.attachments &&
+        context.isTablet &&
+        MediaQuery.of(context).orientation != Orientation.portrait;
+
+    final content = isDesktopSplit
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildAttachmentsBody(context, receivedData.records),
+              ),
+              EphemeralDesktopDetailsPanel(
+                attachmentBrowseBloc: _attachmentBrowseBloc,
+              ),
+            ],
+          )
+        : (_viewMode == RecordsViewMode.attachments
+            ? _buildAttachmentsBody(context, receivedData.records)
+            : _buildListBody(context));
+
+    if (_searchFocusNode.hasFocus) return content;
+
+    return Stack(
       children: [
-        Expanded(
-          child: _viewMode == RecordsViewMode.attachments
-              ? _buildAttachmentsBody(context, receivedData.records)
-              : _buildListBody(context),
-        ),
-        if (!_searchFocusNode.hasFocus)
-          SessionBottomBar(
-            state: widget.state,
-            peerRole: 'sender',
-            endSessionEvent: const ShareRecordsEvent.dataDestructionConfirmed(),
-            isReceiver: true,
+        Positioned.fill(child: content),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: context.wideDialogWidth),
+              child: SessionBottomBar(
+                state: widget.state,
+                peerRole: 'sender',
+                endSessionEvent:
+                    const ShareRecordsEvent.dataDestructionConfirmed(),
+                isReceiver: true,
+              ),
+            ),
           ),
+        ),
       ],
     );
   }
 
   Widget _buildStyledHeader(BuildContext context) {
+    final isSplit = context.isTablet &&
+        MediaQuery.of(context).orientation != Orientation.portrait;
     return ValueListenableBuilder<bool>(
       valueListenable: _isScrolled,
       builder: (context, isScrolled, _) {
-        return Container(
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: isScrolled
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : BorderRadius.zero,
-            boxShadow: isScrolled
-                ? [
-                    BoxShadow(
-                      offset: const Offset(0, 4),
-                      blurRadius: 12,
-                      color: Colors.black.withValues(alpha: 0.15),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 8,
-              bottom: isScrolled ? 8 : 4,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildToolbar(context),
-                _buildActiveFiltersBar(context),
-              ],
-            ),
-          ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final hPad = _hPad(constraints.maxWidth);
+            return Container(
+              decoration: BoxDecoration(
+                color: context.colorScheme.surface,
+                borderRadius: isScrolled
+                    ? const BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      )
+                    : BorderRadius.zero,
+                boxShadow: isScrolled
+                    ? [
+                        BoxShadow(
+                          offset: const Offset(0, 4),
+                          blurRadius: 12,
+                          color: Colors.black.withValues(alpha: 0.15),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: hPad,
+                  right: hPad,
+                  top: isSplit
+                      ? MediaQuery.of(context).padding.top + Insets.small
+                      : 0,
+                  bottom: isScrolled ? Insets.small : Insets.smaller,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    isSplit
+                        ? _buildSplitToolbar(context)
+                        : _buildToolbar(context),
+                    _buildActiveFiltersBar(context),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildSplitToolbar(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildSharedFromRow(context),
+        const SizedBox(height: Insets.extraSmall),
+        _buildToolbar(context),
+      ],
+    );
+  }
+
+  Widget _buildSharedFromRow(BuildContext context) {
+    final iconColor = context.colorScheme.onSurface;
+    final receivedData = widget.state.receivedData;
+    final recordCount = receivedData?.recordCount ?? 0;
+    final deviceName =
+        receivedData?.senderDeviceName ?? context.l10n.shareUnknownDevice;
+
+    return SizedBox(
+      height: 36,
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: context.colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.phone_iphone,
+              size: 16,
+              color: context.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              overflow: TextOverflow.ellipsis,
+              text: TextSpan(
+                style: AppTextStyle.bodyMedium.copyWith(color: iconColor),
+                children: [
+                  TextSpan(
+                    text: context.l10n.shareRecordCount(recordCount),
+                    style: TextStyle(
+                      color: context.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const TextSpan(text: ' '),
+                  TextSpan(text: context.l10n.shareSharedFrom(deviceName)),
+                ],
+              ),
+            ),
+          ),
+          GestureDetector(
+            key: _infoIconKey,
+            onTap: () => CustomArrowTooltip.show(
+              context: context,
+              buttonKey: _infoIconKey,
+              message: context.l10n.shareViewOnlyBannerViewing,
+              backgroundColor: const Color(0xFFE37A3C),
+              alignment: TooltipAlignment.center,
+              width: 240,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: iconColor.withValues(alpha: 0.12)),
+                ),
+                child: Center(
+                  child: Assets.icons.information.svg(
+                    width: 16,
+                    height: 16,
+                    colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -552,7 +692,9 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
           Expanded(
             child: BlocProvider.value(
               value: _attachmentBrowseBloc!,
-              child: const EphemeralAttachmentView(),
+              child: const AttachmentBrowseView(
+                bottomNavHeight: 140,
+              ),
             ),
           ),
         ],

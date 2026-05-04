@@ -162,10 +162,15 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
                       titleWidget: _buildSelectionAppBarContent(context, state),
                     )
                   : state.phase == SharePhase.viewingRecords
-                      ? CustomAppBar(
-                          automaticallyImplyLeading: false,
-                          titleWidget: _buildViewingAppBarContent(context, state),
-                        )
+                      ? (MediaQuery.of(context).size.width >= 600 &&
+                              MediaQuery.of(context).orientation !=
+                                  Orientation.portrait
+                          ? null
+                          : CustomAppBar(
+                              automaticallyImplyLeading: false,
+                              titleWidget:
+                                  _buildViewingAppBarContent(context, state),
+                            ))
                       : state.phase == SharePhase.sessionEnded
                           ? null
                           : state.phase == SharePhase.monitoringSession

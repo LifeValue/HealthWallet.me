@@ -9,6 +9,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
@@ -243,13 +244,15 @@ class ReceiveModeManager implements ReceiveModeService {
           child: Dialog(
             backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.all(Insets.normal),
-            child: Container(
-              decoration: BoxDecoration(
-                color: dialogContext.colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: borderColor, width: 1),
-              ),
-              child: Padding(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: dialogContext.dialogWidth),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: dialogContext.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderColor, width: 1),
+                ),
+                child: Padding(
                 padding: const EdgeInsets.all(Insets.normal),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -369,6 +372,7 @@ class ReceiveModeManager implements ReceiveModeService {
                 ),
               ),
             ),
+          ),
           ),
         );
       },
