@@ -3132,6 +3132,12 @@ abstract class AppLocalizations {
   /// **'Backup'**
   String get desktopBackup;
 
+  /// No description provided for @desktopBackupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup Location'**
+  String get desktopBackupLocation;
+
   /// No description provided for @desktopChange.
   ///
   /// In en, this message translates to:
@@ -3778,6 +3784,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select records\nbefore sharing'**
   String get selectRecordsBeforeSharing;
+
+  /// No description provided for @selectRecordToViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a record to view details'**
+  String get selectRecordToViewDetails;
 
   /// No description provided for @recordDetails.
   ///

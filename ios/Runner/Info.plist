@@ -61,6 +61,7 @@
 			<string>_airdrop-service._tcp</string>
 			<string>_airdrop-service._udp</string>
 			<string>_healthwallet._tcp</string>
+			<string>_hw-sync._tcp</string>
 		</array>
 		<key>NSCameraUsageDescription</key>
 		<string>Enable your camera to securely connect to your health provider by scanning their QR code and syncing your health records.</string>

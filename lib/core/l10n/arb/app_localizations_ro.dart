@@ -1712,6 +1712,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopBackup => 'Copie de siguranță';
 
   @override
+  String get desktopBackupLocation => 'Backup Location';
+
+  @override
   String get desktopChange => 'Schimbă';
 
   @override
@@ -2064,6 +2067,10 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get selectRecordsBeforeSharing =>
       'Selectează înregistrări\nînainte de a partaja';
+
+  @override
+  String get selectRecordToViewDetails =>
+      'Selectează o înregistrare pentru a vedea detaliile';
 
   @override
   String get recordDetails => 'Detalii înregistrare';

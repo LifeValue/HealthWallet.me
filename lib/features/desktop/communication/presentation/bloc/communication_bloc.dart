@@ -33,6 +33,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   StreamSubscription? _messageSub;
   StreamSubscription? _mpcStateSub;
   MpcTransport? _mpcTransport;
+  Timer? _reconnectTimer;
 
   static const _mpcTimeout = Duration(seconds: 10);
   static const _initialReconnectDelay = Duration(seconds: 3);
@@ -101,11 +102,15 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     if (!TransportSelector.isMpcAvailable()) return;
 
     _mpcTransport = MpcTransport();
+    _tcpService.setMpcTransport(_mpcTransport);
     _mpcStateSub = _mpcTransport!.stateStream.listen((mpcState) {
       if (mpcState == CommunicationState.connected) {
+        _tcpService.setUseMpc(true);
         add(const CommunicationConnected(ip: 'mpc', port: 0));
       } else if (mpcState == CommunicationState.disconnected) {
-        if (state.connectionTransport == ConnectionTransport.multipeerConnectivity) {
+        _tcpService.setUseMpc(false);
+        if (state.connectionStatus == ConnectionStatus.connected &&
+            state.connectionTransport == ConnectionTransport.multipeerConnectivity) {
           add(const CommunicationDisconnected());
         }
       }
@@ -222,17 +227,27 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     CommunicationConnectionRequested event,
     Emitter<DesktopSyncState> emit,
   ) async {
-    if (_platform.isDesktop) return;
     if (state.pairedDevice == null) return;
+    if (state.connectionStatus == ConnectionStatus.connected) return;
+    if (state.connectionStatus == ConnectionStatus.discovering) return;
 
+    _reconnectTimer?.cancel();
+
+    debugPrint('[Communication] Connection requested, emitting discovering');
     emit(state.copyWith(
       connectionStatus: ConnectionStatus.discovering,
+      connectionTransport: ConnectionTransport.unknown,
       error: null,
     ));
 
-    if (await _tryMpc()) return;
+    if (_platform.isDesktop) {
+      await _startDesktopServer(emit, state.pairedDevice!);
+      return;
+    }
+
     if (await _trySavedIp()) return;
     if (await _tryNetworkDiscovery()) return;
+    if (await _tryMpc()) return;
 
     add(const CommunicationConnectionFailed(
         error: 'Desktop not found. Try scanning QR again.'));
@@ -242,6 +257,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     if (_mpcTransport == null) return false;
 
     debugPrint('[Communication] Step 1: MPC (Apple direct)');
+    await _mpcTransport!.disconnect();
     _mpcTransport!.connect(address: '', port: 0);
 
     for (var i = 0; i < _mpcTimeout.inSeconds; i++) {
@@ -251,7 +267,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         return true;
       }
     }
-    debugPrint('[Communication] MPC timeout, trying TCP');
+    debugPrint('[Communication] MPC timeout');
     return false;
   }
 
@@ -296,10 +312,12 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     }
   }
 
-  void _onConnected(
+  Future<void> _onConnected(
     CommunicationConnected event,
     Emitter<DesktopSyncState> emit,
-  ) {
+  ) async {
+    _reconnectTimer?.cancel();
+    _reconnectAttempts = 0;
 
     final transport = event.ip == 'mpc'
         ? ConnectionTransport.multipeerConnectivity
@@ -312,6 +330,15 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       connectedPort: event.port == 0 ? null : event.port,
       error: null,
     ));
+
+    if (transport == ConnectionTransport.multipeerConnectivity) {
+      final pairing = _pairingStorage.loadPairing();
+      if (pairing != null) {
+        _tcpService.setPairingKeyForMpc(pairing.pairingKey);
+        await _tcpService.sendMpcHello();
+        debugPrint('[Communication] MPC hello sent');
+      }
+    }
   }
 
   Future<void> _onDisconnected(
@@ -319,6 +346,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     Emitter<DesktopSyncState> emit,
   ) async {
     final wasConnected = state.connectionStatus == ConnectionStatus.connected;
+    if (!wasConnected) return;
 
     emit(state.copyWith(
       connectionStatus: ConnectionStatus.disconnected,
@@ -327,11 +355,17 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       connectedPort: null,
     ));
 
-    if (wasConnected && _platform.isDesktop) {
-      debugPrint('[Communication] Client disconnected');
+    _tcpService.setUseMpc(false);
+
+    if (_platform.isDesktop) {
+      debugPrint('[Communication] Client disconnected, restarting MPC advertising');
+      if (_mpcTransport != null) {
+        await _mpcTransport!.disconnect();
+        await _mpcTransport!.startServer(port: 0);
+      }
     }
 
-    if (wasConnected && state.pairedDevice != null && _platform.isMobile) {
+    if (state.pairedDevice != null && _platform.isMobile) {
       _reconnectAttempts++;
       if (_reconnectAttempts > _maxReconnectAttempts) {
         debugPrint('[Communication] Max reconnect attempts reached, clearing pairing');
@@ -344,7 +378,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       }
       final delay = _initialReconnectDelay * (1 << (_reconnectAttempts - 1));
       debugPrint('[Communication] Lost connection, reconnecting in ${delay.inSeconds}s (attempt $_reconnectAttempts/$_maxReconnectAttempts)');
-      Future.delayed(delay, () {
+      _reconnectTimer?.cancel();
+      _reconnectTimer = Timer(delay, () {
         if (!isClosed && state.connectionStatus == ConnectionStatus.disconnected) {
           add(const CommunicationConnectionRequested());
         }
@@ -356,6 +391,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     CommunicationManualDisconnect event,
     Emitter<DesktopSyncState> emit,
   ) async {
+    _reconnectTimer?.cancel();
     _reconnectAttempts = 0;
     await _tcpService.disconnect();
 
@@ -480,6 +516,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
   @override
   Future<void> close() {
+    _reconnectTimer?.cancel();
     _connectionSub?.cancel();
     _pendingClientSub?.cancel();
     _messageSub?.cancel();

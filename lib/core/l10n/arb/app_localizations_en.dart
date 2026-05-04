@@ -1693,6 +1693,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get desktopBackup => 'Backup';
 
   @override
+  String get desktopBackupLocation => 'Backup Location';
+
+  @override
   String get desktopChange => 'Change';
 
   @override
@@ -2043,6 +2046,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectRecordsBeforeSharing => 'Select records\nbefore sharing';
+
+  @override
+  String get selectRecordToViewDetails => 'Select a record to view details';
 
   @override
   String get recordDetails => 'Record Details';

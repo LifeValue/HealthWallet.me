@@ -4,6 +4,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
@@ -401,7 +402,9 @@ class _RecordsViewState extends State<RecordsView> {
           return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              body: _viewMode == RecordsViewMode.attachments && context.isDesktopWidth
+              body: _viewMode == RecordsViewMode.attachments &&
+                      context.isDesktopWidth &&
+                      MediaQuery.of(context).orientation != Orientation.portrait
                   ? Row(
                       children: [
                         Expanded(child: _buildBody(context, appBarState)),
@@ -411,7 +414,11 @@ class _RecordsViewState extends State<RecordsView> {
                   : Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).orientation == Orientation.portrait
+                              ? double.infinity
+                              : context.contentMaxWidth,
+                        ),
                         child: _buildBody(context, appBarState),
                       ),
                     ),
@@ -438,7 +445,7 @@ class _RecordsViewState extends State<RecordsView> {
   }
 
   Widget _buildTitleRow(BuildContext context, RecordsState appBarState) {
-    if (context.isDesktopWidth) return const SizedBox.shrink();
+    if (getIt<AppPlatform>().isDesktop) return const SizedBox.shrink();
     return Row(
       children: [
         Expanded(
@@ -605,8 +612,8 @@ class _RecordsViewState extends State<RecordsView> {
       builder: (context, filterState) {
         return AnimatedStickyHeader(
           padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
+            left: context.screenHorizontalPadding,
+            right: context.screenHorizontalPadding,
             top: MediaQuery.of(context).padding.top + Insets.small,
             bottom: 0,
           ),
@@ -739,21 +746,48 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
             SizedBox(
               width: _isOpen ? _panelWidth : 18,
               height: double.infinity,
-              child: _isOpen && detail != null
+              child: _isOpen
                   ? Container(
                       decoration: BoxDecoration(
                         color: context.isDarkMode
                             ? const Color(0xFF1E1E1E)
                             : Colors.white,
-                        border: Border(
-                            left: BorderSide(color: borderColor)),
+                        border: Border(left: BorderSide(color: borderColor)),
                       ),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.only(
-                            left: 24, right: 16, top: 16, bottom: 16),
-                        child: _buildPanelContent(
-                            context, detail, onSurface, borderColor),
-                      ),
+                      child: detail != null
+                          ? SingleChildScrollView(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: (_panelWidth * 0.06).clamp(12.0, 24.0),
+                                vertical: 16,
+                              ),
+                              child: _buildPanelContent(
+                                  context, detail, onSurface, borderColor),
+                            )
+                          : Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: (_panelWidth * 0.1).clamp(16.0, 32.0),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.article_outlined,
+                                      size: 40,
+                                      color: onSurface.withValues(alpha: 0.25),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      context.l10n.selectRecordToViewDetails,
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyle.bodyMedium.copyWith(
+                                        color: onSurface.withValues(alpha: 0.4),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                     )
                   : const SizedBox.shrink(),
             ),
@@ -779,13 +813,12 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                 ),
               ),
             Positioned(
-              left: -16,
+              left: -18,
               top: 72,
               child: Align(
                 alignment: Alignment.topCenter,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() => _isOpen = !_isOpen),
                   onHorizontalDragUpdate: (d) {
                     setState(() {
                       _panelWidth = (_panelWidth - d.delta.dx)
@@ -794,26 +827,42 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                   },
                   onHorizontalDragEnd: (_) {},
                   child: Container(
-                    width: 32,
-                    height: 32,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: context.isDarkMode
                           ? const Color(0xFF060606)
-                          : context.colorScheme.surface,
-                      border: Border.all(color: borderColor),
-                      borderRadius: BorderRadius.circular(222),
+                          : const Color(0xFFF2F2F2),
+                      border: Border.all(
+                        color: context.isDarkMode
+                            ? borderColor
+                            : const Color(0xFFF2F2F2),
+                      ),
+                      shape: BoxShape.circle,
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Center(
-                      child: Text(
-                        _isOpen ? '› ‹' : '‹ ›',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w300,
-                          color: onSurface.withValues(alpha: 0.6),
-                          height: 1,
-                          letterSpacing: 2,
-                        ),
+                    child: Opacity(
+                      opacity: 0.6,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Transform.translate(
+                            offset: const Offset(3, 0),
+                            child: Icon(
+                              _isOpen ? Icons.chevron_right : Icons.chevron_left,
+                              size: 16,
+                              color: onSurface,
+                            ),
+                          ),
+                          Transform.translate(
+                            offset: const Offset(-3, 0),
+                            child: Icon(
+                              _isOpen ? Icons.chevron_left : Icons.chevron_right,
+                              size: 16,
+                              color: onSurface,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

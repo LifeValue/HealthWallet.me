@@ -106,45 +106,76 @@ class _BackupCardState extends State<BackupCard> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(Insets.medium),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isWorking)
-            Padding(
-              padding: const EdgeInsets.only(bottom: Insets.small),
-              child: LinearProgressIndicator(
-                value: widget.backupState.progress > 0 ? widget.backupState.progress : null,
-                minHeight: 3,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isWorking)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+            child: LinearProgressIndicator(
+              value: widget.backupState.progress > 0 ? widget.backupState.progress : null,
+              minHeight: 3,
             ),
-          if (widget.backupState.error != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: Insets.small),
-              child: Text(
-                widget.backupState.error!,
-                style: TextStyle(color: context.colorScheme.error, fontSize: 12),
-              ),
+          ),
+        if (widget.backupState.error != null)
+          Padding(
+            padding: const EdgeInsets.only(left: Insets.medium, right: Insets.medium, bottom: Insets.small),
+            child: Text(
+              widget.backupState.error!,
+              style: TextStyle(color: context.colorScheme.error, fontSize: 12),
             ),
-          _BackupLocationRow(
+          ),
+        Padding(
+          padding: const EdgeInsets.only(left: Insets.medium, right: Insets.medium, top: Insets.normal),
+          child: Text(
+            'Location',
+            style: AppTextStyle.labelSmall.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+              fontSize: 11,
+            ),
+          ),
+        ),
+        const SizedBox(height: Insets.extraSmall),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+          child: _BackupLocationRow(
             path: widget.backupState.backupPath,
             isWorking: isWorking,
           ),
-          const SizedBox(height: Insets.small),
-          if (selected != null) ...[
-            _BackupPreview(
-              backup: selected,
-              isWorking: isWorking,
-              isConnected: isConnected,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: Insets.medium, right: Insets.medium, top: Insets.normal, bottom: Insets.small),
+          child: Text(
+            'History',
+            style: AppTextStyle.labelSmall.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+              fontSize: 11,
             ),
-          ] else ...[
-            _BackupList(
-              backups: widget.backupState.backupHistory,
-              isWorking: isWorking,
-            ),
-          ],
-          const SizedBox(height: Insets.normal),
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+            child: selected != null
+                ? SingleChildScrollView(
+                    child: _BackupPreview(
+                      backup: selected,
+                      isWorking: isWorking,
+                      isConnected: isConnected,
+                    ),
+                  )
+                : _BackupList(
+                    backups: widget.backupState.backupHistory,
+                    isWorking: isWorking,
+                  ),
+          ),
+        ),
+        if (selected == null) ...[
+          Divider(height: 1, color: context.theme.dividerColor),
+          Padding(
+            padding: const EdgeInsets.all(Insets.medium),
+            child: Column(
+              children: [
           if (!_showForm) ...[
             Center(
               child: SizedBox(
@@ -159,81 +190,71 @@ class _BackupCardState extends State<BackupCard> {
               ),
             ),
           ] else ...[
-            Center(
-              child: SizedBox(
-                width: 300,
-                child: TextField(
-                  controller: _nameController,
-                  autofocus: true,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyle.bodyMedium.copyWith(
-                    color: context.colorScheme.onSurface,
-                    fontSize: 13,
+            TextField(
+              controller: _nameController,
+              autofocus: true,
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.onSurface,
+                fontSize: 13,
+              ),
+              decoration: InputDecoration(
+                hintText: defaultName,
+                hintStyle: AppTextStyle.bodyMedium.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.2),
+                  fontSize: 13,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.08),
                   ),
-                  decoration: InputDecoration(
-                    hintText: defaultName,
-                    hintStyle: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.2),
-                      fontSize: 13,
-                    ),
-                    alignLabelWithHint: true,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: context.colorScheme.onSurface.withValues(alpha: 0.08),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: context.colorScheme.onSurface.withValues(alpha: 0.08),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: context.colorScheme.primary),
-                    ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.08),
                   ),
-                  onSubmitted: (_) => _create(),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: context.colorScheme.primary),
                 ),
               ),
+              onSubmitted: (_) => _create(),
             ),
-            const SizedBox(height: Insets.small),
-            Center(
-              child: GestureDetector(
-                onTap: isConnected
-                    ? () => setState(() => _syncFirst = !_syncFirst)
-                    : null,
-                behavior: HitTestBehavior.opaque,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: Checkbox(
-                        value: isConnected ? _syncFirst : false,
-                        onChanged: isConnected
-                            ? (v) => setState(() => _syncFirst = v ?? false)
-                            : null,
-                        activeColor: context.colorScheme.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
+            const SizedBox(height: Insets.normal),
+            GestureDetector(
+              onTap: isConnected
+                  ? () => setState(() => _syncFirst = !_syncFirst)
+                  : null,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: Checkbox(
+                      value: isConnected ? _syncFirst : false,
+                      onChanged: isConnected
+                          ? (v) => setState(() => _syncFirst = v ?? false)
+                          : null,
+                      activeColor: context.colorScheme.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      context.l10n.desktopSyncWithPhoneFirst,
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: isConnected
-                            ? context.colorScheme.onSurface.withValues(alpha: 0.5)
-                            : context.colorScheme.onSurface.withValues(alpha: 0.2),
-                        fontSize: 12,
-                      ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.l10n.desktopSyncWithPhoneFirst,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: isConnected
+                          ? context.colorScheme.onSurface.withValues(alpha: 0.5)
+                          : context.colorScheme.onSurface.withValues(alpha: 0.2),
+                      fontSize: 11,
                     ),
-                    if (!isConnected) ...[
+                  ),
+                  if (!isConnected) ...[
                       const SizedBox(width: 6),
                       Text(
                         context.l10n.desktopNotConnected,
@@ -246,13 +267,11 @@ class _BackupCardState extends State<BackupCard> {
                   ],
                 ),
               ),
-            ),
             const SizedBox(height: Insets.normal),
-            Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
                     onPressed: () => setState(() {
                       _showForm = false;
                       _nameController.clear();
@@ -275,10 +294,12 @@ class _BackupCardState extends State<BackupCard> {
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+            ],
+          ),
+        ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -292,11 +313,10 @@ class _BackupList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (backups.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: Insets.normal),
-        child: Center(
-          child: Column(
-            children: [
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
               Icon(
                 Icons.shield_outlined,
                 size: 32,
@@ -321,7 +341,6 @@ class _BackupList extends StatelessWidget {
               ),
             ],
           ),
-        ),
       );
     }
 
@@ -332,7 +351,7 @@ class _BackupList extends StatelessWidget {
         itemCount: backups.length,
         separatorBuilder: (_, __) => Divider(
           height: 1,
-          color: context.colorScheme.outlineVariant,
+          color: context.theme.dividerColor,
         ),
         itemBuilder: (context, index) {
           final backup = backups[index];
@@ -373,7 +392,7 @@ class _BackupTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          vertical: Insets.small,
+          vertical: Insets.smallNormal,
           horizontal: Insets.extraSmall,
         ),
         child: Row(
@@ -397,16 +416,13 @@ class _BackupTile extends StatelessWidget {
                       fontWeight: isLatest ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
-                  if (backup.name.isNotEmpty)
-                    Text(
-                      DateFormat.yMMMd().add_Hm().format(backup.timestamp),
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: context.colorScheme.onSurface.withValues(alpha: 0.4),
-                        fontSize: 11,
-                      ),
-                    ),
                   Text(
-                    '${backup.recordCount} ${context.l10n.records.toLowerCase()} \u2022 ${_formatBytes(backup.sizeBytes)}',
+                    [
+                      if (backup.name.isNotEmpty)
+                        DateFormat.yMMMd().add_Hm().format(backup.timestamp),
+                      '${backup.recordCount} ${context.l10n.records.toLowerCase()}',
+                      _formatBytes(backup.sizeBytes),
+                    ].join('  \u2022  '),
                     style: AppTextStyle.labelSmall.copyWith(
                       color: context.colorScheme.onSurface.withValues(alpha: 0.5),
                       fontSize: 11,

@@ -62,43 +62,55 @@ class SsdpService {
     Duration timeout = const Duration(seconds: 3),
     String? expectedDeviceId,
   }) async {
-    final completer = Completer<({String ip, int port, String deviceId})?>();
+    RawDatagramSocket? socket;
+    try {
+      socket = await RawDatagramSocket.bind(
+        InternetAddress.anyIPv4,
+        0,
+        reuseAddress: true,
+      );
+    } catch (e) {
+      debugPrint('[SSDP] Bind failed: $e');
+      return null;
+    }
 
-    final socket = await RawDatagramSocket.bind(
-      InternetAddress.anyIPv4,
-      0,
-      reuseAddress: true,
-    );
+    final completer = Completer<({String ip, int port, String deviceId})?>();
 
     socket.broadcastEnabled = true;
 
     Timer(timeout, () {
       if (!completer.isCompleted) {
         completer.complete(null);
-        socket.close();
+        socket?.close();
       }
     });
 
-    socket.listen((event) {
-      if (event == RawSocketEvent.read) {
-        final datagram = socket.receive();
-        if (datagram == null) return;
+    socket.listen(
+      (event) {
+        if (event == RawSocketEvent.read) {
+          final datagram = socket?.receive();
+          if (datagram == null) return;
 
-        final message = utf8.decode(datagram.data);
-        if (message.contains(_urn) && !completer.isCompleted) {
-          final result = _parseResponse(message);
-          if (result != null) {
-            if (expectedDeviceId != null &&
-                result.deviceId != expectedDeviceId) {
-              debugPrint('[SSDP] Ignoring device ${result.deviceId} (expected $expectedDeviceId)');
-              return;
+          final message = utf8.decode(datagram.data);
+          if (message.contains(_urn) && !completer.isCompleted) {
+            final result = _parseResponse(message);
+            if (result != null) {
+              if (expectedDeviceId != null &&
+                  result.deviceId != expectedDeviceId) {
+                return;
+              }
+              completer.complete(result);
+              socket?.close();
             }
-            completer.complete(result);
-            socket.close();
           }
         }
-      }
-    });
+      },
+      onError: (e) {
+        debugPrint('[SSDP] Socket error: $e');
+        if (!completer.isCompleted) completer.complete(null);
+        socket?.close();
+      },
+    );
 
     final searchMessage = 'M-SEARCH * HTTP/1.1\r\n'
         'HOST: $_multicastAddress:$_multicastPort\r\n'
@@ -107,11 +119,18 @@ class SsdpService {
         'ST: $_urn\r\n'
         '\r\n';
 
-    socket.send(
-      utf8.encode(searchMessage),
-      InternetAddress(_multicastAddress),
-      _multicastPort,
-    );
+    try {
+      socket.send(
+        utf8.encode(searchMessage),
+        InternetAddress(_multicastAddress),
+        _multicastPort,
+      );
+    } catch (e) {
+      debugPrint('[SSDP] Send failed: $e');
+      if (!completer.isCompleted) completer.complete(null);
+      socket.close();
+      return completer.future;
+    }
 
     return completer.future;
   }
@@ -132,11 +151,15 @@ class SsdpService {
         'SERVER: HealthWallet Desktop\r\n'
         '\r\n';
 
-    _socket!.send(
-      utf8.encode(notify),
-      InternetAddress(_multicastAddress),
-      _multicastPort,
-    );
+    try {
+      _socket!.send(
+        utf8.encode(notify),
+        InternetAddress(_multicastAddress),
+        _multicastPort,
+      );
+    } catch (e) {
+      debugPrint('[SSDP] Notify send failed: $e');
+    }
   }
 
   void _sendResponse(
@@ -155,7 +178,11 @@ class SsdpService {
         'SERVER: HealthWallet Desktop\r\n'
         '\r\n';
 
-    _socket!.send(utf8.encode(response), address, responsePort);
+    try {
+      _socket!.send(utf8.encode(response), address, responsePort);
+    } catch (e) {
+      debugPrint('[SSDP] Response send failed: $e');
+    }
   }
 
   ({String ip, int port, String deviceId})? _parseResponse(String message) {

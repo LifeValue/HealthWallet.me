@@ -7,7 +7,6 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,34 +17,59 @@ class StorageSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!Platform.isMacOS) return const SizedBox.shrink();
 
-    final textColor = context.colorScheme.onSurface;
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: Insets.small),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Storage',
-            style: AppTextStyle.bodySmall.copyWith(color: textColor),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Storage',
+                  style: AppTextStyle.bodySmall,
+                ),
+                Text(
+                  'Clear all records, preferences and cached data',
+                  style: AppTextStyle.labelSmall.copyWith(
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: Insets.small),
-          AppButton(
-            label: 'Reset App Data',
-            variant: AppButtonVariant.outlined,
-            backgroundColor: AppColors.error,
-            fullWidth: false,
-            onPressed: () => _showResetConfirmationDialog(context),
+          SizedBox(
+            height: 32,
+            child: OutlinedButton(
+              onPressed: () => _showResetDialog(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.error,
+                side: BorderSide(
+                  color: AppColors.error.withValues(alpha: 0.4),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: Text(
+                'Reset',
+                style: AppTextStyle.buttonSmall.copyWith(
+                  color: AppColors.error,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showResetConfirmationDialog(BuildContext context) {
+  void _showResetDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (dialogContext) => const _ResetConfirmationDialog(),
+      builder: (_) => const _ResetConfirmationDialog(),
     );
   }
 }
@@ -100,13 +124,6 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Reset App Data',
-                style: AppTextStyle.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: Insets.normal),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(Insets.smallNormal),
@@ -148,11 +165,11 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
               TextField(
                 controller: _controller,
                 enabled: !_isProcessing,
+                style: AppTextStyle.labelLarge,
                 decoration: InputDecoration(
                   hintText: 'RESET',
-                  hintStyle: AppTextStyle.bodySmall.copyWith(
-                    color:
-                        context.colorScheme.onSurface.withValues(alpha: 0.3),
+                  hintStyle: AppTextStyle.labelLarge.copyWith(
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.3),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: Insets.smallNormal,
@@ -174,25 +191,41 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
               ),
               const SizedBox(height: Insets.normal),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  AppButton(
-                    label: 'Cancel',
-                    variant: AppButtonVariant.transparent,
-                    fullWidth: false,
-                    onPressed:
-                        _isProcessing ? null : () => Navigator.pop(context),
+                  Expanded(
+                    child: TextButton(
+                      onPressed:
+                          _isProcessing ? null : () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: AppTextStyle.buttonMedium.copyWith(
+                          color: context.colorScheme.primary,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: Insets.small),
-                  AppButton(
-                    label: _isProcessing ? 'Deleting...' : 'Delete',
-                    variant: AppButtonVariant.primary,
-                    backgroundColor: AppColors.error,
-                    fullWidth: false,
-                    enabled: _isConfirmed && !_isProcessing,
-                    onPressed: _isConfirmed && !_isProcessing
-                        ? () => _performReset()
-                        : null,
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isConfirmed && !_isProcessing
+                          ? _performReset
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        disabledBackgroundColor:
+                            AppColors.error.withValues(alpha: 0.3),
+                        foregroundColor: Colors.white,
+                        disabledForegroundColor:
+                            Colors.white.withValues(alpha: 0.5),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: Insets.smallNormal),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(_isProcessing ? 'Deleting...' : 'Delete'),
+                    ),
                   ),
                 ],
               ),
@@ -206,24 +239,31 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
   Future<void> _performReset() async {
     setState(() => _isProcessing = true);
 
-    final db = getIt<AppDatabase>();
-    await db.delete(db.fhirResource).go();
-    await db.delete(db.sources).go();
-    await db.delete(db.recordNotes).go();
-    await db.delete(db.processingSessions).go();
+    try {
+      final db = getIt<AppDatabase>();
+      await db.delete(db.fhirResource).go();
+      await db.delete(db.sources).go();
+      await db.delete(db.recordNotes).go();
+      await db.delete(db.processingSessions).go();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
 
-    final cacheDir = await getTemporaryDirectory();
-    if (cacheDir.existsSync()) {
-      await cacheDir.delete(recursive: true);
-    }
+      try {
+        final cacheDir = await getTemporaryDirectory();
+        if (cacheDir.existsSync()) {
+          await cacheDir.delete(recursive: true);
+        }
+      } catch (_) {}
 
-    final docsDir = await getApplicationDocumentsDirectory();
-    if (docsDir.existsSync()) {
-      await docsDir.delete(recursive: true);
-    }
+      try {
+        final supportDir = await getApplicationSupportDirectory();
+        final shareDir = Directory('${supportDir.path}/share_sessions');
+        if (shareDir.existsSync()) {
+          await shareDir.delete(recursive: true);
+        }
+      } catch (_) {}
+    } catch (_) {}
 
     exit(0);
   }

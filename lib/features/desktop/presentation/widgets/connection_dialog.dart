@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -78,60 +79,46 @@ class ConnectionDialog extends StatefulWidget {
           backgroundColor: Colors.transparent,
           child: SizedBox(
             width: context.dialogWidth,
-            child: BlocProvider.value(
-              value: getIt<CommunicationBloc>(),
-              child: BlocConsumer<CommunicationBloc, DesktopSyncState>(
-                listener: (context, commState) {
-                  if (getIt<AppPlatform>().isDesktop &&
-                      commState.connectionStatus == ConnectionStatus.connected &&
-                      commState.connectedDeviceName != null) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                builder: (context, commState) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: context.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: Insets.medium,
+                      right: Insets.medium,
+                      top: Insets.normal,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Row(
                       children: [
-                        Padding(
-                          padding: EdgeInsets.only(
-                            left: Insets.medium,
-                            right: Insets.medium,
-                            top: Insets.normal,
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                context.l10n.desktopConnection,
-                                style: AppTextStyle.bodyMedium.copyWith(
-                                  color: context.colorScheme.onSurface,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              GestureDetector(
-                                onTap: () => Navigator.of(context).pop(),
-                                child: Icon(
-                                  Icons.close,
-                                  size: 20,
-                                  color: context.colorScheme.onSurface
-                                      .withValues(alpha: 0.4),
-                                ),
-                              ),
-                            ],
+                        Text(
+                          context.l10n.desktopConnection,
+                          style: AppTextStyle.bodyMedium.copyWith(
+                            color: context.colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        Flexible(
-                          child: ConnectionDialog._(commState: commState),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: context.colorScheme.onSurface
+                                .withValues(alpha: 0.4),
+                          ),
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                  const Flexible(
+                    child: ConnectionDialog._(),
+                  ),
+                ],
               ),
             ),
           ),
@@ -140,17 +127,38 @@ class ConnectionDialog extends StatefulWidget {
     );
   }
 
-  final DesktopSyncState commState;
-
-  const ConnectionDialog._({required this.commState});
+  const ConnectionDialog._();
 
   @override
   State<ConnectionDialog> createState() => _ConnectionDialogState();
 }
 
 class _ConnectionDialogState extends State<ConnectionDialog> {
+  late DesktopSyncState _commState;
+  StreamSubscription<DesktopSyncState>? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    final bloc = getIt<CommunicationBloc>();
+    _commState = bloc.state;
+    _sub = bloc.stream.listen((state) {
+      if (mounted) {
+        setState(() => _commState = state);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final commState = _commState;
+    debugPrint('[ConnectionDialog] status=${commState.connectionStatus}, discovering=${commState.connectionStatus == ConnectionStatus.discovering}');
     return Padding(
       padding: const EdgeInsets.all(Insets.medium),
       child: SingleChildScrollView(
@@ -158,18 +166,19 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildStatusSection(context),
-            if (widget.commState.connectionStatus !=
+            _buildStatusSection(context, commState),
+            if (commState.connectionStatus !=
                 ConnectionStatus.connected) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: Insets.normal),
+                padding:
+                    const EdgeInsets.symmetric(vertical: Insets.normal),
                 child: Divider(
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.06),
+                  color: context.colorScheme.onSurface
+                      .withValues(alpha: 0.06),
                   height: 1,
                 ),
               ),
-              _buildPairingSection(context),
+              _buildPairingSection(context, commState),
             ],
           ],
         ),
@@ -177,15 +186,16 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     );
   }
 
-  Widget _buildStatusSection(BuildContext context) {
+  Widget _buildStatusSection(BuildContext context, DesktopSyncState commState) {
     final isConnected =
-        widget.commState.connectionStatus == ConnectionStatus.connected;
+        commState.connectionStatus == ConnectionStatus.connected;
     final isDiscovering =
-        widget.commState.connectionStatus == ConnectionStatus.discovering;
+        commState.connectionStatus == ConnectionStatus.discovering;
+    debugPrint('[ConnectionDialog] status=${commState.connectionStatus}, discovering=$isDiscovering, connected=$isConnected');
 
     final isDesktop = getIt<AppPlatform>().isDesktop;
-    final remoteName = widget.commState.connectedDeviceName ??
-        (isDesktop ? null : widget.commState.pairedDevice?.deviceName);
+    final remoteName = commState.connectedDeviceName ??
+        (isDesktop ? null : commState.pairedDevice?.deviceName);
 
     final Color dotColor;
     final String statusLabel;
@@ -243,7 +253,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                 ),
               ),
             if (!isConnected &&
-                widget.commState.pairedDevice != null &&
+                commState.pairedDevice != null &&
                 !isDiscovering)
               GestureDetector(
                 onTap: () {
@@ -259,9 +269,31 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                   ),
                 ),
               ),
+            if (isDiscovering)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    context.l10n.connectionStatusConnecting,
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: AppColors.warning,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
-        if (widget.commState.vpnDetected && !isConnected) ...[
+        if (commState.vpnDetected && !isConnected) ...[
           const SizedBox(height: Insets.small),
           Row(
             children: [
@@ -283,8 +315,8 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     );
   }
 
-  Widget _buildPairingSection(BuildContext context) {
-    final hasPairing = widget.commState.pairedDevice != null;
+  Widget _buildPairingSection(BuildContext context, DesktopSyncState commState) {
+    final hasPairing = commState.pairedDevice != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,14 +332,14 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
           const SizedBox(height: Insets.small),
           InfoRow(
             label: context.l10n.desktopLabel,
-            value: widget.commState.pairedDevice!.deviceName,
+            value: commState.pairedDevice!.deviceName,
           ),
         ],
         if (hasPairing && getIt<AppPlatform>().isDesktop) ...[
           const SizedBox(height: Insets.normal),
           Center(
             child: GestureDetector(
-              onTap: () => _showFullScreenQr(context, widget.commState.pairedDevice!),
+              onTap: () => _showFullScreenQr(context, commState.pairedDevice!),
               child: Container(
                 padding: const EdgeInsets.all(Insets.normal),
                 decoration: BoxDecoration(
@@ -315,7 +347,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: QrImageView(
-                  data: _qrData(widget.commState.pairedDevice!),
+                  data: _qrData(commState.pairedDevice!),
                   version: QrVersions.auto,
                   size: 200,
                 ),
@@ -467,13 +499,11 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
 }
 
 class ConnectionSection extends StatelessWidget {
-  final DesktopSyncState commState;
-
-  const ConnectionSection({super.key, required this.commState});
+  const ConnectionSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ConnectionDialog._(commState: commState);
+    return const ConnectionDialog._();
   }
 }
 

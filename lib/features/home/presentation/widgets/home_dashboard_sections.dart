@@ -47,7 +47,7 @@ class HomeDashboardSections extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: context.screenHorizontalPadding),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
-          SizedBox(height: context.isTablet ? Insets.normal : Insets.small),
+          const SizedBox(height: Insets.small),
           if (state.hasDataLoaded || editMode)
             _buildVitalsSection(context, colorScheme),
           _buildResponsiveSpacing(context),
@@ -63,6 +63,7 @@ class HomeDashboardSections extends StatelessWidget {
   }
 
   Widget _buildResponsiveSpacing(BuildContext context) {
+    if (context.isTablet) return const SizedBox(height: Insets.normal);
     return SizedBox(
       height: MediaQuery.of(context).size.height < 700
           ? Insets.medium

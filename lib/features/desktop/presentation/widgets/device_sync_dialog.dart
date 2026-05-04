@@ -27,79 +27,86 @@ class DeviceSyncDialog {
                 BlocProvider.value(value: getIt<CommunicationBloc>()),
                 BlocProvider.value(value: getIt<LwwSyncBloc>()),
               ],
-              child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
-                builder: (context, commState) {
-                  return BlocBuilder<LwwSyncBloc, LwwSyncState>(
-                    builder: (context, syncState) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: context.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: Insets.medium,
+                        right: Insets.medium,
+                        top: Insets.normal,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Device Sync',
+                            style: AppTextStyle.bodyMedium.copyWith(
+                              color: context.colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: Icon(
+                              Icons.close,
+                              size: 20,
+                              color: context.colorScheme.onSurface
+                                  .withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Flexible(
+                      child: SingleChildScrollView(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: EdgeInsets.only(
-                                left: Insets.medium,
-                                right: Insets.medium,
-                                top: Insets.normal,
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'Device Sync',
-                                    style: AppTextStyle.bodyMedium.copyWith(
-                                      color: context.colorScheme.onSurface,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  GestureDetector(
-                                    onTap: () => Navigator.of(context).pop(),
-                                    child: Icon(
-                                      Icons.close,
-                                      size: 20,
-                                      color: context.colorScheme.onSurface
-                                          .withValues(alpha: 0.4),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Flexible(
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    ConnectionSection(commState: commState),
-                                    if (commState.pairedDevice != null) ...[
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: Insets.medium),
-                                        child: Divider(
-                                          color: context.colorScheme.onSurface
-                                              .withValues(alpha: 0.06),
-                                          height: 1,
+                            const ConnectionSection(),
+                            BlocBuilder<CommunicationBloc, DesktopSyncState>(
+                              builder: (context, commState) {
+                                if (commState.pairedDevice == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                return BlocBuilder<LwwSyncBloc, LwwSyncState>(
+                                  builder: (context, syncState) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: Insets.medium),
+                                          child: Divider(
+                                            color: context
+                                                .colorScheme.onSurface
+                                                .withValues(alpha: 0.06),
+                                            height: 1,
+                                          ),
                                         ),
-                                      ),
-                                      SyncSection(
-                                        commState: commState,
-                                        syncState: syncState,
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
+                                        SyncSection(
+                                          commState: commState,
+                                          syncState: syncState,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
                             ),
                           ],
                         ),
-                      );
-                    },
-                  );
-                },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

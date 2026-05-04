@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
@@ -12,6 +14,7 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/widge
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometric_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/share_proximity_row.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/storage/storage_section.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/region/region_dialog.dart';
 import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
@@ -48,22 +51,6 @@ class SettingsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              if (getIt<AppPlatform>().isDesktop) ...[
-                const SizedBox(height: Insets.normal),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: Insets.small),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        context.l10n.minimizeToTray,
-                        style: AppTextStyle.bodySmall,
-                      ),
-                      const MinimizeToTrayToggle(),
-                    ],
-                  ),
-                ),
-              ],
               const SizedBox(height: Insets.normal),
               InkWell(
                 onTap: () {
@@ -142,6 +129,10 @@ class SettingsSection extends StatelessWidget {
                   ),
                 ),
               ),
+              if (Platform.isMacOS) ...[
+                const SizedBox(height: Insets.normal),
+                const StorageSection(),
+              ],
               const SizedBox(height: Insets.normal),
               InkWell(
                 onTap: () {

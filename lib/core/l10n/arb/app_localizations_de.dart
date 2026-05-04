@@ -1717,6 +1717,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopBackup => 'Backup';
 
   @override
+  String get desktopBackupLocation => 'Backup Location';
+
+  @override
   String get desktopChange => 'Ändern';
 
   @override
@@ -2068,6 +2071,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get selectRecordsBeforeSharing =>
       'Aufzeichnungen auswählen\nvor dem Teilen';
+
+  @override
+  String get selectRecordToViewDetails =>
+      'Wähle einen Eintrag, um Details anzuzeigen';
 
   @override
   String get recordDetails => 'Aufzeichnungsdetails';

@@ -315,6 +315,10 @@ class HomeViewState extends State<HomeView> {
     }
 
     return AnimatedStickyHeader(
+      padding: EdgeInsets.symmetric(
+        horizontal: context.screenHorizontalPadding,
+        vertical: 12,
+      ),
       children: [
         Stack(
           children: [
@@ -666,6 +670,7 @@ void _showBackupDialog(BuildContext context) {
         backgroundColor: Colors.transparent,
         child: SizedBox(
         width: 500,
+        height: 600,
         child: MultiBlocProvider(
           providers: [
             BlocProvider.value(value: getIt<CommunicationBloc>()),
@@ -681,44 +686,47 @@ void _showBackupDialog(BuildContext context) {
                       color: context.colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(
-                              left: Insets.medium,
-                              right: Insets.medium,
-                              top: Insets.normal,
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  context.l10n.backupLabel,
-                                  style: AppTextStyle.bodyMedium.copyWith(
-                                    color: context.colorScheme.onSurface,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const Spacer(),
-                                GestureDetector(
-                                  onTap: () => Navigator.of(context).pop(),
-                                  child: Icon(
-                                    Icons.close,
-                                    size: 20,
-                                    color: context.colorScheme.onSurface
-                                        .withValues(alpha: 0.4),
-                                  ),
-                                ),
-                              ],
-                            ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Insets.medium,
+                            vertical: Insets.smallNormal,
                           ),
-                          BackupCard(
+                          child: Row(
+                            children: [
+                              Text(
+                                context.l10n.backupLabel,
+                                style: AppTextStyle.bodyMedium.copyWith(
+                                  color: context.colorScheme.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () => Navigator.of(context).pop(),
+                                child: Icon(
+                                  Icons.close,
+                                  size: 20,
+                                  color: context.colorScheme.onSurface
+                                      .withValues(alpha: 0.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Divider(
+                          height: 1,
+                          color: context.theme.dividerColor,
+                        ),
+                        Expanded(
+                          child: BackupCard(
                             syncState: commState,
                             backupState: backupState,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -751,29 +759,38 @@ class _MiniStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+    final bgAlpha = isDark ? 0.24 : 0.08;
+    final subtitleColor = isDark
+        ? Colors.white
+        : context.colorScheme.onSurface;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 120,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        width: 140,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          color: color.withValues(alpha: bgAlpha),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.08),
+          ),
         ),
         child: Row(
           children: [
             if (isLoading)
               SizedBox(
-                width: 15,
-                height: 15,
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   color: color,
                 ),
               )
             else
-              Icon(icon, size: 15, color: color),
-            const SizedBox(width: 6),
+              Icon(icon, size: 20, color: color),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -782,17 +799,20 @@ class _MiniStatusCard extends StatelessWidget {
                   Text(
                     label,
                     style: AppTextStyle.labelSmall.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                       color: color,
+                      letterSpacing: -0.14,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: AppTextStyle.labelSmall.copyWith(
-                      fontSize: 11,
-                      color: color.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      color: subtitleColor,
+                      letterSpacing: -0.12,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),

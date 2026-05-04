@@ -893,6 +893,7 @@
     "noRecordsSelected": "Keine Aufzeichnungen ausgewählt",
     "select": "Auswählen",
     "selectRecordsBeforeSharing": "Aufzeichnungen auswählen\nvor dem Teilen",
+    "selectRecordToViewDetails": "Wähle einen Eintrag, um Details anzuzeigen",
     "recordDetails": "Aufzeichnungsdetails",
     "viewDocument": "Dokument ansehen",
     "encounterDetails": "Termindetails",

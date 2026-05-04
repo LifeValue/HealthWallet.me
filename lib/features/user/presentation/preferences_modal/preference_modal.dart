@@ -117,10 +117,6 @@ class PreferenceModal extends StatelessWidget {
                     const AiModelSection(),
                     const SizedBox(height: Insets.medium),
                     const SettingsSection(),
-                    if (Platform.isMacOS) ...[
-                      const SizedBox(height: Insets.medium),
-                      const StorageSection(),
-                    ],
                     const SizedBox(height: Insets.medium),
                     FutureBuilder<PackageInfo>(
                       future: PackageInfo.fromPlatform(),

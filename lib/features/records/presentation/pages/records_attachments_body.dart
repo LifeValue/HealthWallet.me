@@ -109,71 +109,82 @@ class _HeaderWidget extends StatelessWidget {
     required this.onLayout,
   });
 
+  static double _hPad(double width) {
+    if (width >= 1024) return 48.0;
+    if (width >= 600) return 32.0;
+    return 16.0;
+  }
+
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) => onLayout());
 
-    return ValueListenableBuilder<bool>(
-      valueListenable: isAttachmentScrolled,
-      builder: (context, isScrolled, child) {
-        return Container(
-          key: headerKey,
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: isScrolled
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  )
-                : BorderRadius.zero,
-            boxShadow: isScrolled
-                ? [
-                    BoxShadow(
-                      offset: const Offset(0, 4),
-                      blurRadius: 12,
-                      color: Colors.black.withValues(alpha: 0.15),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: MediaQuery.of(context).padding.top + Insets.small,
-              bottom: isScrolled ? Insets.small : Insets.smaller,
-            ),
-            child: child!,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hPad = _hPad(constraints.maxWidth);
+        return ValueListenableBuilder<bool>(
+          valueListenable: isAttachmentScrolled,
+          builder: (context, isScrolled, child) {
+            return Container(
+              key: headerKey,
+              decoration: BoxDecoration(
+                color: context.colorScheme.surface,
+                borderRadius: isScrolled
+                    ? const BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      )
+                    : BorderRadius.zero,
+                boxShadow: isScrolled
+                    ? [
+                        BoxShadow(
+                          offset: const Offset(0, 4),
+                          blurRadius: 12,
+                          color: Colors.black.withValues(alpha: 0.15),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: hPad,
+                  right: hPad,
+                  top: MediaQuery.of(context).padding.top + Insets.small,
+                  bottom: isScrolled ? Insets.small : Insets.smaller,
+                ),
+                child: child!,
+              ),
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              titleRow,
+              const SizedBox(height: Insets.extraSmall),
+              RecordsToolbar(
+                viewMode: viewMode,
+                onViewModeChanged: onViewModeChanged,
+                onFilterTap: onFilterTap,
+              ),
+              BlocBuilder<RecordsBloc, RecordsState>(
+                buildWhen: (previous, current) =>
+                    previous.activeFilters != current.activeFilters ||
+                    previous.dateFilter != current.dateFilter ||
+                    previous.activeSpecialties != current.activeSpecialties,
+                builder: (context, recordsState) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) => onLayout());
+                  return RecordsActiveFiltersBar(
+                    activeFilters: recordsState.activeFilters,
+                    dateFilter: recordsState.dateFilter,
+                    activeSpecialties: recordsState.activeSpecialties,
+                  );
+                },
+              ),
+            ],
           ),
         );
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          titleRow,
-          const SizedBox(height: Insets.extraSmall),
-          RecordsToolbar(
-            viewMode: viewMode,
-            onViewModeChanged: onViewModeChanged,
-            onFilterTap: onFilterTap,
-          ),
-          BlocBuilder<RecordsBloc, RecordsState>(
-            buildWhen: (previous, current) =>
-                previous.activeFilters != current.activeFilters ||
-                previous.dateFilter != current.dateFilter ||
-                previous.activeSpecialties != current.activeSpecialties,
-            builder: (context, recordsState) {
-              WidgetsBinding.instance.addPostFrameCallback((_) => onLayout());
-              return RecordsActiveFiltersBar(
-                activeFilters: recordsState.activeFilters,
-                dateFilter: recordsState.dateFilter,
-                activeSpecialties: recordsState.activeSpecialties,
-              );
-            },
-          ),
-        ],
-      ),
     );
   }
 }

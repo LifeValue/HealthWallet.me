@@ -924,6 +924,7 @@
     "noRecordsSelected": "No hay registros seleccionados",
     "select": "Seleccionar",
     "selectRecordsBeforeSharing": "Selecciona registros\nantes de compartir",
+    "selectRecordToViewDetails": "Selecciona un registro para ver los detalles",
     "recordDetails": "Detalles del registro",
     "viewDocument": "Ver documento",
     "encounterDetails": "Detalles del encuentro",

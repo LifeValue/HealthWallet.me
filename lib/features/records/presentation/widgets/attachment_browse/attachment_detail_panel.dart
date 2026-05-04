@@ -24,6 +24,12 @@ import 'package:health_wallet/features/records/presentation/widgets/record_notes
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
+double _panelHPad(double width) {
+  if (width >= 1024) return 48.0;
+  if (width >= 600) return 32.0;
+  return 16.0;
+}
+
 class AttachmentDetailPanel extends StatefulWidget {
   final AttachmentBrowseDetail detail;
 
@@ -82,11 +88,20 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
     final selectedIndex = bloc.state.selectedIndex;
     final totalRecords = bloc.state.records.length;
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hPad = _panelHPad(constraints.maxWidth);
+        return _buildContent(context, detail, readOnly, bloc, selectedIndex, totalRecords, hPad);
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context, AttachmentBrowseDetail detail, bool readOnly, AttachmentBrowseBloc bloc, int selectedIndex, int totalRecords, double hPad) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
+          padding: EdgeInsets.symmetric(horizontal: hPad),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -103,9 +118,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
         ),
         const SizedBox(height: Insets.smallNormal),
         Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.isDesktopWidth ? 240 : Insets.medium,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: hPad),
           child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -152,9 +165,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
         ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.isDesktopWidth ? 240 : Insets.medium,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: hPad),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -172,7 +183,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
                 const SizedBox(height: Insets.normal),
                 _AttachmentBrowseDetailsCard(detail: detail),
               ],
-              if (!context.isDesktopWidth) ...[
+              if (!context.isDesktopWidth || MediaQuery.of(context).orientation == Orientation.portrait) ...[
                 const SizedBox(height: Insets.smallNormal),
                 _ShowDetailsButton(
                   detail: detail,
@@ -376,7 +387,10 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
     final hasPages = _pages.isNotEmpty;
 
     final screenHeight = MediaQuery.of(context).size.height;
-    final previewHeight = (screenHeight * 0.55).clamp(350.0, 700.0);
+    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final previewHeight = isPortrait
+        ? (screenHeight * 0.68).clamp(450.0, 900.0)
+        : (screenHeight * 0.55).clamp(350.0, 700.0);
 
     return Container(
       height: previewHeight,
@@ -597,81 +611,86 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'No attachments',
-            style: AppTextStyle.titleSmall.copyWith(
-              color: context.colorScheme.onSurface,
-              fontSize: 20,
-            ),
-          ),
-          const SizedBox(height: Insets.normal),
-          SizedBox(
-            width: double.infinity,
-            height: 36,
-            child: ElevatedButton(
-              onPressed: () async {
-                final result = await FilePicker.platform.pickFiles(allowMultiple: true);
-                if (result == null) return;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hPad = _panelHPad(constraints.maxWidth);
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: hPad),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'No attachments',
+                style: AppTextStyle.titleSmall.copyWith(
+                  color: context.colorScheme.onSurface,
+                  fontSize: 20,
+                ),
+              ),
+              const SizedBox(height: Insets.normal),
+              SizedBox(
+                width: double.infinity,
+                height: 36,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+                    if (result == null) return;
 
-                final files = result.files
-                    .where((f) => f.path != null)
-                    .map((f) => File(f.path!))
-                    .toList();
-                if (files.isEmpty) return;
+                    final files = result.files
+                        .where((f) => f.path != null)
+                        .map((f) => File(f.path!))
+                        .toList();
+                    if (files.isEmpty) return;
 
-                setState(() => _isAttaching = true);
+                    setState(() => _isAttaching = true);
 
-                final attachBloc = getIt.get<RecordAttachmentsBloc>();
-                attachBloc.add(RecordAttachmentsInitialised(resource: record));
-                await attachBloc.stream.firstWhere(
-                  (s) => s.status.when(
-                    loading: () => false,
-                    success: () => true,
-                    error: (_) => true,
-                  ),
-                );
+                    final attachBloc = getIt.get<RecordAttachmentsBloc>();
+                    attachBloc.add(RecordAttachmentsInitialised(resource: record));
+                    await attachBloc.stream.firstWhere(
+                      (s) => s.status.when(
+                        loading: () => false,
+                        success: () => true,
+                        error: (_) => true,
+                      ),
+                    );
 
-                attachBloc.add(RecordAttachmentsFileAttached(files));
-                await attachBloc.stream.firstWhere(
-                  (s) => s.status.when(
-                    loading: () => false,
-                    success: () => true,
-                    error: (_) => true,
-                  ),
-                );
+                    attachBloc.add(RecordAttachmentsFileAttached(files));
+                    await attachBloc.stream.firstWhere(
+                      (s) => s.status.when(
+                        loading: () => false,
+                        success: () => true,
+                        error: (_) => true,
+                      ),
+                    );
 
-                if (mounted) {
-                  setState(() => _isAttaching = false);
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (context.mounted) {
-                      context.read<AttachmentBrowseBloc>().add(
-                          AttachmentBrowseDetailRefreshed());
+                    if (mounted) {
+                      setState(() => _isAttaching = false);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (context.mounted) {
+                          context.read<AttachmentBrowseBloc>().add(
+                              AttachmentBrowseDetailRefreshed());
+                        }
+                      });
                     }
-                  });
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Add Attachment',
+                    style: AppTextStyle.buttonMedium.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-                elevation: 0,
               ),
-              child: Text(
-                'Add Attachment',
-                style: AppTextStyle.buttonMedium.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -1074,24 +1093,24 @@ class _NavPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
+
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        width: 36,
-        height: 36,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: context.colorScheme.onSurface.withValues(
-            alpha: enabled ? 0.08 : 0.03,
-          ),
+          color: isDark
+              ? Colors.white.withValues(alpha: enabled ? 0.08 : 0.03)
+              : Colors.black.withValues(alpha: enabled ? 0.08 : 0.03),
           borderRadius: BorderRadius.circular(222),
         ),
-        child: Center(
+        child: Opacity(
+          opacity: enabled ? 0.7 : 0.15,
           child: Icon(
             icon,
             size: 16,
-            color: context.colorScheme.onSurface.withValues(
-              alpha: enabled ? 0.7 : 0.15,
-            ),
+            color: context.colorScheme.onSurface,
           ),
         ),
       ),

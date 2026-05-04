@@ -7,6 +7,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pointycastle/export.dart';
@@ -72,6 +73,62 @@ class TcpService {
   ConnectionState _state = ConnectionState.disconnected;
   Uint8List _buffer = Uint8List(0);
   Completer<void>? _writeLock;
+
+  CommunicationService? _mpcTransport;
+  StreamSubscription? _mpcDataSub;
+  bool _useMpc = false;
+
+  void setMpcTransport(CommunicationService? transport) {
+    _mpcDataSub?.cancel();
+    _mpcTransport = transport;
+    if (transport != null) {
+      _mpcDataSub = transport.dataStream.listen(_onMpcData);
+    }
+  }
+
+  void setUseMpc(bool value) {
+    _useMpc = value;
+    if (value) {
+      debugPrint('[TCP] Routing data through MPC transport');
+    }
+  }
+
+  void setPairingKeyForMpc(String key) {
+    _pairingKey = key;
+  }
+
+  Future<void> sendMpcHello() async {
+    var name = deviceDisplayName;
+    if (name == null || name.isEmpty || name == 'localhost') {
+      name = await _getDeviceName();
+    }
+    debugPrint('[MPC] Sending hello as: "$name"');
+    await sendMessage(
+      TcpMessage.fromString(
+        type: MessageType.hello,
+        data: jsonEncode({
+          'pairing_key_hash': _pairingKey != null ? _hashKey(_pairingKey!) : '',
+          'device_name': name,
+        }),
+      ),
+    );
+  }
+
+  void _onMpcData(Uint8List data) {
+    try {
+      final decrypted = _decrypt(data);
+      final type = MessageType.fromCode(decrypted[0]);
+      final payload = decrypted.sublist(1);
+
+      final message = TcpMessage(type: type, payload: payload);
+      if (type != MessageType.ping && type != MessageType.pong) {
+        debugPrint('[MPC] Received: ${type.name}');
+      }
+      _handleMessage(message);
+    } catch (e) {
+      debugPrint('[MPC] Decrypt/parse failed: $e');
+    }
+  }
 
   Stream<TcpMessage> get messages => _messageController.stream;
   Stream<ConnectionState> get connectionState =>
@@ -488,6 +545,12 @@ class TcpService {
       typeAndPayload.setAll(1, message.payload);
 
       final encrypted = _encrypt(typeAndPayload);
+
+      if (_useMpc && _mpcTransport != null) {
+        await _mpcTransport!.send(encrypted);
+        return;
+      }
+
       final frame = Uint8List(4 + encrypted.length);
       ByteData.sublistView(frame, 0, 4).setUint32(0, encrypted.length);
       frame.setAll(4, encrypted);
