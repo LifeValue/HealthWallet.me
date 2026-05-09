@@ -9,9 +9,7 @@ class AppDelegate: FlutterAppDelegate {
   }
 
   override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-    if !hasVisibleWindows {
-      NSApp.windows.first?.makeKeyAndOrderFront(nil)
-    }
+    mainFlutterWindow?.makeKeyAndOrderFront(nil)
     return true
   }
 
