@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -311,8 +313,6 @@ class AiInferenceDataSourceImpl
     required String filename,
     required void Function(int) onProgress,
   }) async {
-    await _configureDownloaderForLargeFile();
-
     final dir = await _getModelDirectory();
     final filePath = path.join(dir, filename);
 
@@ -320,6 +320,64 @@ class AiInferenceDataSourceImpl
       onProgress(100);
       return;
     }
+
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      await _downloadWithDio(
+        url: url,
+        filePath: filePath,
+        onProgress: onProgress,
+      );
+    } else {
+      await _downloadWithBackgroundDownloader(
+        url: url,
+        filename: filename,
+        onProgress: onProgress,
+      );
+    }
+  }
+
+  Future<void> _downloadWithDio({
+    required String url,
+    required String filePath,
+    required void Function(int) onProgress,
+  }) async {
+    final dio = Dio();
+    final token = Env.huggingFaceToken;
+    if (token.isNotEmpty) {
+      dio.options.headers['Authorization'] = 'Bearer $token';
+    }
+
+    debugPrint('[AI_DOWNLOAD] Dio download: $url -> $filePath');
+
+    final tempPath = '$filePath.tmp';
+    try {
+      await dio.download(
+        url,
+        tempPath,
+        onReceiveProgress: (received, total) {
+          if (total > 0) {
+            onProgress(((received / total) * 100).round());
+          }
+        },
+      );
+      await File(tempPath).rename(filePath);
+      debugPrint('[AI_DOWNLOAD] Dio download complete: $filePath');
+    } catch (e) {
+      final tempFile = File(tempPath);
+      if (await tempFile.exists()) await tempFile.delete();
+      debugPrint('[AI_DOWNLOAD] Dio download failed: $e');
+      throw Exception('Download failed for ${path.basename(filePath)}: $e');
+    } finally {
+      dio.close();
+    }
+  }
+
+  Future<void> _downloadWithBackgroundDownloader({
+    required String url,
+    required String filename,
+    required void Function(int) onProgress,
+  }) async {
+    await _configureDownloaderForLargeFile();
 
     final headers = <String, String>{};
     final token = Env.huggingFaceToken;
@@ -357,8 +415,7 @@ class AiInferenceDataSourceImpl
         } else if (status == TaskStatus.canceled) {
           if (!completer.isCompleted) {
             completer.completeError(
-              Exception(
-                  'Download cancelled for $filename. Check your internet connection.'),
+              Exception('Download cancelled for $filename'),
             );
           }
         }
