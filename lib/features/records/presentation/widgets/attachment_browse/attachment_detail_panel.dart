@@ -65,19 +65,13 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
     final attachmentsChanged =
         oldWidget.detail.attachments.length != widget.detail.attachments.length;
     if (idChanged) {
-      final bloc = context.read<AttachmentBrowseBloc>();
-      final records = bloc.state.records;
-      final oldIdx = records.indexWhere((e) => e.record.id == _lastRecordId);
-      final newIdx = records.indexWhere((e) => e.record.id == widget.detail.record.id);
-      _startFromEnd = oldIdx != -1 && newIdx != -1 && newIdx < oldIdx;
+      _startFromEnd = false;
       _lastRecordId = widget.detail.record.id;
     }
     if (idChanged || attachmentsChanged) {
-      _currentFileName = _startFromEnd && widget.detail.attachments.isNotEmpty
-          ? widget.detail.attachments.last.title
-          : widget.detail.attachments.isNotEmpty
-              ? widget.detail.attachments.first.title
-              : '';
+      _currentFileName = widget.detail.attachments.isNotEmpty
+          ? widget.detail.attachments.first.title
+          : '';
     }
   }
 
