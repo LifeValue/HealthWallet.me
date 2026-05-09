@@ -59,6 +59,14 @@ class WindowLifecycleService with WindowListener {
     }
   }
 
+  @override
+  void onWindowFocus() {
+    if (!_isVisible) {
+      _isVisible = true;
+      onWindowVisibilityChanged?.call(true);
+    }
+  }
+
   void dispose() {
     windowManager.removeListener(this);
   }
