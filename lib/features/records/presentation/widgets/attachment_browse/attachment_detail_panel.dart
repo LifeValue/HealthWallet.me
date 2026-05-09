@@ -18,6 +18,7 @@ import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
+import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
@@ -321,6 +322,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
             final img = await page.render(
               width: page.width * 2,
               height: page.height * 2,
+              backgroundColor: '#FFFFFF',
             );
             await page.close();
             if (img != null) {
@@ -389,9 +391,17 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
 
     final screenHeight = MediaQuery.of(context).size.height;
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
-    final previewHeight = isPortrait
-        ? (screenHeight * 0.68).clamp(450.0, 900.0)
-        : (screenHeight * 0.55).clamp(350.0, 700.0);
+    final isMobile = !context.isTablet;
+    final double previewHeight;
+    if (isPortrait) {
+      previewHeight = isMobile
+          ? (screenHeight * 0.45).clamp(280.0, 420.0)
+          : (screenHeight * 0.68).clamp(450.0, 900.0);
+    } else {
+      previewHeight = isMobile
+          ? (screenHeight * 0.50).clamp(250.0, 350.0)
+          : (screenHeight * 0.55).clamp(350.0, 700.0);
+    }
 
     return Container(
       height: previewHeight,
@@ -633,6 +643,11 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                 height: 36,
                 child: ElevatedButton(
                   onPressed: () async {
+                    debugPrint('[ATTACH] Add Attachment button pressed for record: ${record.id} (${record.fhirType})');
+
+                    final browseBloc = context.read<AttachmentBrowseBloc>();
+                    final recordsState = context.read<RecordsBloc>().state;
+
                     final result = await FilePicker.platform.pickFiles(allowMultiple: true);
                     if (result == null) return;
 
@@ -663,14 +678,18 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                       ),
                     );
 
+                    debugPrint('[ATTACH] File saved, refreshing browse list');
+                    browseBloc.add(AttachmentBrowseInitialised(
+                      sourceId: recordsState.sourceId,
+                      sourceIds: recordsState.sourceIds,
+                      resourceTypes: recordsState.activeFilters,
+                      specialty: recordsState.activeSpecialties.isNotEmpty
+                          ? recordsState.activeSpecialties.first
+                          : null,
+                    ));
+
                     if (mounted) {
                       setState(() => _isAttaching = false);
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (context.mounted) {
-                          context.read<AttachmentBrowseBloc>().add(
-                              AttachmentBrowseDetailRefreshed());
-                        }
-                      });
                     }
                   },
                   style: ElevatedButton.styleFrom(
