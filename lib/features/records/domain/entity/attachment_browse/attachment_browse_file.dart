@@ -11,5 +11,7 @@ class AttachmentBrowseFile with _$AttachmentBrowseFile {
     required String title,
     String? filePath,
     String? contentType,
+    String? sourceRecordTitle,
+    String? sourceRecordType,
   }) = _AttachmentBrowseFile;
 }

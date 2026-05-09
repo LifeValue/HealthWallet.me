@@ -1118,5 +1118,6 @@
     "onboardingRecordsContent": "\u2022 Escanea documentos con la c\u00e1mara de tu tel\u00e9fono\n\u2022 Sube PDFs, im\u00e1genes o archivos de laboratorio directamente\n\u2022 Importa registros compartiendo directamente con <link>HealthWallet.me</link> desde cualquier app de tu tel\u00e9fono.\n\u2022 Escanea el c\u00f3digo QR de <link>Fasten Health OnPrem</link> y obt\u00e9n todos los registros de salud de EE.UU. en tu wallet.",
     "onboardingRecordsBottom": "Todo se organiza de forma segura en tu dispositivo.",
     "onboardingRequestIntegration": "Solicitar una integraci\u00f3n",
-    "minimizeToTray": "Minimizar a la bandeja"
+    "minimizeToTray": "Minimizar a la bandeja",
+    "currentRecord": "Registro actual"
 }

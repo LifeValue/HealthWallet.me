@@ -4450,6 +4450,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
+
+  /// No description provided for @currentRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Current record'**
+  String get currentRecord;
 }
 
 class _AppLocalizationsDelegate

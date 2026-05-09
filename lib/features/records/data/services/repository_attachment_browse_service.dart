@@ -88,6 +88,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
         final directDocs = docsByRelated[record.resourceId] ?? [];
         final encounterDocs = record.fhirType == FhirType.Encounter
             ? (docsByEncounter[record.resourceId] ?? [])
+                .where((d) => _hasNoRelatedRef(d) ||
+                    _relatedRefPointsTo(d, record.resourceId))
+                .toList()
             : <IFhirResource>[];
         final seen = <String>{};
         docs = [...directDocs, ...encounterDocs]
@@ -233,12 +236,14 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
   }
 
   bool _isDocDirectlyLinked(IFhirResource doc, IFhirResource record) {
+    final relatedList = doc.rawResource['context']?['related'] as List?;
+
     if (record.fhirType == FhirType.Encounter &&
         doc.encounterId == record.resourceId) {
-      return true;
+      return _hasNoRelatedRef(doc) ||
+          _relatedRefPointsTo(doc, record.resourceId);
     }
 
-    final relatedList = doc.rawResource['context']?['related'] as List?;
     if (relatedList != null) {
       for (final ref in relatedList) {
         final refStr = ref['reference'] as String?;
@@ -248,6 +253,23 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
       }
     }
 
+    return false;
+  }
+
+  bool _hasNoRelatedRef(IFhirResource doc) {
+    final related = doc.rawResource['context']?['related'] as List?;
+    return related == null || related.isEmpty;
+  }
+
+  bool _relatedRefPointsTo(IFhirResource doc, String resourceId) {
+    final related = doc.rawResource['context']?['related'] as List?;
+    if (related == null) return false;
+    for (final ref in related) {
+      final refStr = ref['reference'] as String?;
+      if (refStr == null) continue;
+      final id = refStr.contains('/') ? refStr.split('/').last : refStr;
+      if (id == resourceId) return true;
+    }
     return false;
   }
 

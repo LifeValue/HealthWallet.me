@@ -120,13 +120,15 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
   Widget build(BuildContext context) {
     return BlocConsumer<AttachmentBrowseBloc, AttachmentBrowseState>(
       listenWhen: (prev, curr) =>
-          prev.selectedIndex != curr.selectedIndex &&
-          curr.status == AttachmentBrowseStatus.success,
+          curr.status == AttachmentBrowseStatus.success &&
+          (prev.selectedIndex != curr.selectedIndex ||
+              prev.records != curr.records),
       listener: (context, state) {
+        final indexChanged = _visibleIndex != state.selectedIndex;
         _visibleIndex = state.selectedIndex;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollThumbnailTo(state.selectedIndex);
-          _scrollDetailToTop();
+          if (indexChanged) _scrollDetailToTop();
         });
       },
       buildWhen: (prev, curr) =>

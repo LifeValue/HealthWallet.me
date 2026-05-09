@@ -61,6 +61,8 @@ class RecordAttachmentsBloc
 
       final encounterId = _extractEncounterId(event.resource);
 
+      final isEncounter = event.resource.fhirType == FhirType.Encounter;
+
       final List<IFhirResource> relatedDocuments;
       if (event.ephemeralRecords.isNotEmpty) {
         final related = FhirResourceRelationshipService.findRelatedInMemory(
@@ -81,44 +83,26 @@ class RecordAttachmentsBloc
           if (doc.rawResource.isEmpty) return false;
 
           try {
-            if (encounterId != null && doc.encounterId == encounterId) {
-              return true;
+            final ctx = doc.rawResource['context'];
+
+            if (isEncounter) {
+              if (doc.encounterId == event.resource.resourceId) return true;
+              if (ctx?['encounter'] != null) {
+                final encounters = ctx['encounter'] as List;
+                return encounters.any((enc) {
+                  final refId = FhirReferenceUtils.extractReferenceId(
+                      enc['reference']?.toString());
+                  return refId == event.resource.resourceId;
+                });
+              }
+              return false;
             }
 
-            if (event.resource.fhirType == FhirType.Encounter &&
-                doc.encounterId == event.resource.resourceId) {
-              return true;
-            }
-
-            final context = doc.rawResource['context'];
-            if (context == null) return false;
-
-            if (context['related'] != null) {
-              final relatedList = context['related'] as List;
-              final isRelatedToThisResource = relatedList.any((related) {
+            if (ctx?['related'] != null) {
+              final relatedList = ctx['related'] as List;
+              return relatedList.any((related) {
                 final refId = FhirReferenceUtils.extractReferenceId(
                     related['reference']?.toString());
-                return refId == event.resource.resourceId;
-              });
-              if (isRelatedToThisResource) return true;
-            }
-
-            if (encounterId != null && context['encounter'] != null) {
-              final encounters = context['encounter'] as List;
-              final isInSameEncounter = encounters.any((encounter) {
-                final refId = FhirReferenceUtils.extractReferenceId(
-                    encounter['reference']?.toString());
-                return refId == encounterId;
-              });
-              if (isInSameEncounter) return true;
-            }
-
-            if (event.resource.fhirType == FhirType.Encounter &&
-                context['encounter'] != null) {
-              final encounters = context['encounter'] as List;
-              return encounters.any((encounter) {
-                final refId = FhirReferenceUtils.extractReferenceId(
-                    encounter['reference']?.toString());
                 return refId == event.resource.resourceId;
               });
             }
@@ -130,8 +114,44 @@ class RecordAttachmentsBloc
         }).toList();
       }
 
-      final attachmentInfos = await Future.wait(
-          relatedDocuments.map((doc) => _extractAttachmentInfo(doc)));
+      final List<AttachmentInfo> attachmentInfos;
+      if (isEncounter) {
+        final allRelated = event.ephemeralRecords.isNotEmpty
+            ? event.ephemeralRecords
+            : await _recordsRepository.getRelatedResourcesForEncounter(
+                encounterId: event.resource.resourceId,
+              );
+        final resourceMap = <String, IFhirResource>{};
+        for (final r in allRelated) {
+          resourceMap[r.resourceId] = r;
+        }
+
+        final infos = await Future.wait(relatedDocuments.map((doc) async {
+          final info = await _extractAttachmentInfo(doc);
+          final relatedRef = _extractRelatedResourceId(doc);
+          final isDirect = relatedRef == null ||
+              relatedRef == event.resource.resourceId;
+          if (!isDirect && resourceMap.containsKey(relatedRef)) {
+            final source = resourceMap[relatedRef]!;
+            return info.copyWith(
+              sourceRecordTitle: source.title,
+              sourceRecordType: source.fhirType.name,
+            );
+          }
+          return info;
+        }));
+        infos.sort((a, b) {
+          final aIsDirect = a.sourceRecordTitle == null;
+          final bIsDirect = b.sourceRecordTitle == null;
+          if (aIsDirect && !bIsDirect) return -1;
+          if (!aIsDirect && bIsDirect) return 1;
+          return 0;
+        });
+        attachmentInfos = infos;
+      } else {
+        attachmentInfos = await Future.wait(
+            relatedDocuments.map((doc) => _extractAttachmentInfo(doc)));
+      }
 
       emit(state.copyWith(
           attachments: attachmentInfos,
@@ -220,8 +240,10 @@ class RecordAttachmentsBloc
           sourceId: effectiveSourceId,
           title: originalFileName,
         );
+        debugPrint('[ATTACH_BLOC] Saved DocumentReference to DB: title=$originalFileName, sourceId=$effectiveSourceId, subjectId=$subjectId, encounterId=$encounterId');
       }
 
+      debugPrint('[ATTACH_BLOC] All files saved, refreshing state');
       emit(state.copyWith(attachments: []));
       add(RecordAttachmentsInitialised(resource: state.resource));
     } catch (e) {
@@ -481,6 +503,14 @@ class RecordAttachmentsBloc
     }
 
     return resourceSourceId;
+  }
+
+  String? _extractRelatedResourceId(IFhirResource doc) {
+    final related = doc.rawResource['context']?['related'] as List?;
+    if (related == null || related.isEmpty) return null;
+    final refStr = related.first['reference']?.toString();
+    if (refStr == null) return null;
+    return FhirReferenceUtils.extractReferenceId(refStr);
   }
 
   String _generateId() {

@@ -1175,5 +1175,6 @@
     "changeSpecialty": "Change Specialty",
     "changeSpecialtyConfirm": "Are you sure you want to change the specialty to",
     "removeSpecialtyConfirm": "Are you sure you want to remove the specialty from this record?",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "currentRecord": "Current record"
 }

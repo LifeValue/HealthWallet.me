@@ -214,67 +214,93 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     final title = attachmentInfo.title;
     final contentType = attachmentInfo.contentType;
 
+    final isEncounterView = widget.resource.fhirType == FhirType.Encounter;
+    final String? sourceLabel;
+    if (!isEncounterView) {
+      sourceLabel = null;
+    } else if (attachmentInfo.sourceRecordTitle != null) {
+      sourceLabel =
+          '${attachmentInfo.sourceRecordTitle} · ${attachmentInfo.sourceRecordType}';
+    } else {
+      sourceLabel = context.l10n.currentRecord;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Assets.icons.documentFile
-                    .svg(width: 16, color: context.theme.iconTheme.color),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: filePath != null
-                        ? () => _viewFile(context, filePath, contentType)
-                        : null,
-                    child: Text(
-                      filePath != null ? basename(filePath) : title,
-                      style: AppTextStyle.labelLarge,
-                    ),
-                  ),
-                )
-              ],
-            ),
-          ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (filePath != null)
-                Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: GestureDetector(
-                      onTap: () => _viewFile(context, filePath, contentType),
-                      child: const Icon(Icons.remove_red_eye_outlined)
+              Expanded(
+                child: Row(
+                  children: [
+                    Assets.icons.documentFile
+                        .svg(width: 16, color: context.theme.iconTheme.color),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: filePath != null
+                            ? () => _viewFile(context, filePath, contentType)
+                            : null,
+                        child: Text(
+                          filePath != null ? basename(filePath) : title,
+                          style: AppTextStyle.labelLarge,
+                        ),
                       ),
+                    )
+                  ],
                 ),
-              if (filePath != null)
-                const SizedBox(width: 16),
-              if (!widget.readOnly) ...[
-                Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: GestureDetector(
-                    onTap: () => filePath != null
-                        ? SharePlus.instance
-                            .share(ShareParams(files: [XFile(filePath)]))
-                        : null,
-                    child: Assets.icons.download
-                        .svg(width: 24, color: context.theme.iconTheme.color),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: GestureDetector(
-                      onTap: () =>
-                          _showDeleteConfirmationDialog(context, attachmentInfo),
-                      child: Assets.icons.trashCan
-                          .svg(width: 24, color: context.theme.iconTheme.color)),
-                ),
-              ],
+              ),
+              Row(
+                children: [
+                  if (filePath != null)
+                    Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: GestureDetector(
+                          onTap: () => _viewFile(context, filePath, contentType),
+                          child: const Icon(Icons.remove_red_eye_outlined)
+                          ),
+                    ),
+                  if (filePath != null)
+                    const SizedBox(width: 16),
+                  if (!widget.readOnly) ...[
+                    Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: GestureDetector(
+                        onTap: () => filePath != null
+                            ? SharePlus.instance
+                                .share(ShareParams(files: [XFile(filePath)]))
+                            : null,
+                        child: Assets.icons.download
+                            .svg(width: 24, color: context.theme.iconTheme.color),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: GestureDetector(
+                          onTap: () =>
+                              _showDeleteConfirmationDialog(context, attachmentInfo),
+                          child: Assets.icons.trashCan
+                              .svg(width: 24, color: context.theme.iconTheme.color)),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
+          if (sourceLabel != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 24, top: 2),
+              child: Text(
+                sourceLabel,
+                style: AppTextStyle.labelSmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
         ],
       ),
     );

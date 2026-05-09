@@ -1082,5 +1082,6 @@
     "deviceSyncLabel": "Gerätesync",
     "disconnectLabel": "Trennen",
     "changeLabel": "Ändern",
-    "minimizeToTray": "In Taskleiste minimieren"
+    "minimizeToTray": "In Taskleiste minimieren",
+    "currentRecord": "Aktueller Eintrag"
 }

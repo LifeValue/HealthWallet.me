@@ -2434,4 +2434,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get confirm => 'Confirm';
+
+  @override
+  String get currentRecord => 'Aktueller Eintrag';
 }

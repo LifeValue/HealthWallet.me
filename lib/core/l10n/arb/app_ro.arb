@@ -1121,5 +1121,6 @@
     "deviceSyncLabel": "Sincronizare dispozitiv",
     "disconnectLabel": "Deconectează",
     "changeLabel": "Schimbă",
-    "minimizeToTray": "Minimizează în bara de sistem"
+    "minimizeToTray": "Minimizează în bara de sistem",
+    "currentRecord": "Înregistrarea curentă"
 }

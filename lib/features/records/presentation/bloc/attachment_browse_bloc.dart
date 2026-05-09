@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -29,6 +30,7 @@ class AttachmentBrowseBloc
     AttachmentBrowseInitialised event,
     Emitter<AttachmentBrowseState> emit,
   ) async {
+    debugPrint('[BROWSE] _onInitialised called: sourceId=${event.sourceId}, sourceIds=${event.sourceIds}, resourceTypes=${event.resourceTypes}, specialty=${event.specialty}');
     final sourceRecords = event.sourceRecords.isNotEmpty
         ? event.sourceRecords
         : state.sourceRecords;
@@ -44,6 +46,7 @@ class AttachmentBrowseBloc
         sourceIds: event.sourceIds,
         resourceTypes: event.resourceTypes,
       );
+      debugPrint('[BROWSE] loadEntries returned ${entries.length} entries');
 
       if (event.specialty != null) {
         _specialtyClassifier.buildEncounterIndex(
@@ -62,10 +65,19 @@ class AttachmentBrowseBloc
 
       final timelineYears = _buildTimeline(entries);
 
+      final previousId = state.selectedIndex < state.records.length
+          ? state.records[state.selectedIndex].record.id
+          : null;
+      var restoredIndex = 0;
+      if (previousId != null) {
+        final found = entries.indexWhere((e) => e.record.id == previousId);
+        if (found >= 0) restoredIndex = found;
+      }
+
       AttachmentBrowseDetail? detail;
       if (entries.isNotEmpty) {
         detail = await _service.loadDetail(
-          entries[0].record,
+          entries[restoredIndex].record,
           sourceId: event.sourceId,
         );
       }
@@ -74,7 +86,7 @@ class AttachmentBrowseBloc
         status: AttachmentBrowseStatus.success,
         allRecords: entries,
         records: entries,
-        selectedIndex: 0,
+        selectedIndex: restoredIndex,
         selectedDetail: detail,
         timelineYears: timelineYears,
         searchQuery: '',
