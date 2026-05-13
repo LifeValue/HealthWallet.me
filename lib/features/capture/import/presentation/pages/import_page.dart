@@ -141,7 +141,10 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                         ),
                         const SizedBox(height: 16),
                         if (_isDesktop)
-                          _buildDesktopActions(context)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 76),
+                            child: _buildDesktopActions(context),
+                          )
                         else
                           Padding(
                             padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),

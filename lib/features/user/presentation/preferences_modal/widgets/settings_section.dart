@@ -129,7 +129,7 @@ class SettingsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              if (Platform.isMacOS) ...[
+              if (Platform.isMacOS || Platform.isWindows) ...[
                 const SizedBox(height: Insets.normal),
                 const StorageSection(),
               ],

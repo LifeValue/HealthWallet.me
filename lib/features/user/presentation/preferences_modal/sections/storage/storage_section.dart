@@ -15,7 +15,7 @@ class StorageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!Platform.isMacOS) return const SizedBox.shrink();
+    if (!Platform.isMacOS && !Platform.isWindows) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Insets.small),

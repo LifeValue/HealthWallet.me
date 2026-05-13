@@ -4,10 +4,14 @@ import 'dart:io';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 
 @lazySingleton
 class AttachmentSyncService {
+  final PathResolver _pathResolver;
   static const _uuid = Uuid();
+
+  AttachmentSyncService(this._pathResolver);
 
   Future<List<Map<String, dynamic>>> embedAttachments(
     List<Map<String, dynamic>> rows,
@@ -87,7 +91,8 @@ class AttachmentSyncService {
     final content = json['content'] as List?;
     if (content == null) return false;
 
-    final docsDir = await getApplicationDocumentsDirectory();
+    final docsPath = await _pathResolver.getDocumentsPath();
+    final docsDir = Directory(docsPath);
     var restored = false;
 
     for (final item in content) {
@@ -131,18 +136,19 @@ class AttachmentSyncService {
   }
 
   Future<File?> resolveFile(String storedPath) async {
-    final docsDir = await getApplicationDocumentsDirectory();
+    final docsPath = await _pathResolver.getDocumentsPath();
     final fileName = storedPath.split('/').last;
 
-    if (!storedPath.startsWith('/')) {
-      final resolved = File('${docsDir.path}/$storedPath');
+    if (!storedPath.startsWith('/') &&
+        !(storedPath.length >= 3 && storedPath[1] == ':')) {
+      final resolved = File('$docsPath/$storedPath');
       if (await resolved.exists()) return resolved;
     } else {
       final file = File(storedPath);
       if (await file.exists()) return file;
     }
 
-    final docsFile = File('${docsDir.path}/$fileName');
+    final docsFile = File('$docsPath/$fileName');
     if (await docsFile.exists()) return docsFile;
 
     final cacheDir = await getTemporaryDirectory();
@@ -151,6 +157,7 @@ class AttachmentSyncService {
 
     final match = RegExp(r'/Application/[^/]+/(.+)').firstMatch(storedPath);
     if (match != null) {
+      final docsDir = await getApplicationDocumentsDirectory();
       final containerBase = docsDir.parent.path;
       final resolved = File('$containerBase/${match.group(1)!}');
       if (await resolved.exists()) return resolved;

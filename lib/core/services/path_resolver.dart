@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 @lazySingleton
@@ -8,10 +11,16 @@ class PathResolver {
   static final _containerPattern =
       RegExp(r'/Containers/Data/Application/[^/]+/Documents/');
 
-  Future<String> _getDocumentsPath() async {
+  Future<String> getDocumentsPath() async {
     if (_documentsPath != null) return _documentsPath!;
     final dir = await getApplicationDocumentsDirectory();
-    _documentsPath = dir.path;
+    if (Platform.isWindows) {
+      final hwDir = Directory(p.join(dir.path, 'HealthWallet', 'Documents'));
+      if (!await hwDir.exists()) await hwDir.create(recursive: true);
+      _documentsPath = hwDir.path;
+    } else {
+      _documentsPath = dir.path;
+    }
     return _documentsPath!;
   }
 
@@ -32,7 +41,7 @@ class PathResolver {
   Future<String> toRelative(String path) async {
     if (path.isEmpty) return path;
 
-    final docsPath = await _getDocumentsPath();
+    final docsPath = await getDocumentsPath();
 
     if (_startsWithDocsPath(path, docsPath)) {
       return path.substring(docsPath.length + 1);
@@ -51,7 +60,7 @@ class PathResolver {
   Future<String> toAbsolute(String path) async {
     if (path.isEmpty) return path;
 
-    final docsPath = await _getDocumentsPath();
+    final docsPath = await getDocumentsPath();
 
     if (_isAbsolute(path)) {
       if (_startsWithDocsPath(path, docsPath)) return path;

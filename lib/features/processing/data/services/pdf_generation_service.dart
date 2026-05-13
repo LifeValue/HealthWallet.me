@@ -1,12 +1,15 @@
 import 'dart:io';
 import 'package:injectable/injectable.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart' as p;
+import 'package:health_wallet/core/services/path_resolver.dart';
 
 @injectable
 class PdfGenerationService {
+  final PathResolver _pathResolver;
+
+  PdfGenerationService(this._pathResolver);
   Future<String> createPdfFromImages({
     required List<String> imagePaths,
     required String fileName,
@@ -48,8 +51,8 @@ class PdfGenerationService {
         );
       }
 
-      final docsDir = await getApplicationDocumentsDirectory();
-      final pdfPath = path.join(docsDir.path, '$fileName.pdf');
+      final docsPath = await _pathResolver.getDocumentsPath();
+      final pdfPath = p.join(docsPath, '$fileName.pdf');
       final pdfFile = File(pdfPath);
 
       final pdfBytes = await pdf.save();
@@ -72,8 +75,8 @@ class PdfGenerationService {
         throw Exception('Source PDF not found: $sourcePdfPath');
       }
 
-      final docsDir = await getApplicationDocumentsDirectory();
-      final newPdfPath = path.join(docsDir.path, '$fileName.pdf');
+      final docsPath = await _pathResolver.getDocumentsPath();
+      final newPdfPath = p.join(docsPath, '$fileName.pdf');
 
       await sourceFile.copy(newPdfPath);
 
@@ -94,7 +97,7 @@ class PdfGenerationService {
     List<String> pdfPaths = [];
     List<String> imagePaths = [];
     for (final filePath in filePaths) {
-      if (path.extension(filePath) == ".pdf") {
+      if (p.extension(filePath) == ".pdf") {
         pdfPaths.add(filePath);
       } else {
         imagePaths.add(filePath);
@@ -122,7 +125,7 @@ class PdfGenerationService {
 
       for (int i = 0; i < pdfPaths.length; i++) {
         final originalPdfPath = pdfPaths[i];
-        final fileName = path.basenameWithoutExtension(originalPdfPath);
+        final fileName = p.basenameWithoutExtension(originalPdfPath);
 
         final pdfPath = await copyPdfWithNewName(
           sourcePdfPath: originalPdfPath,
@@ -159,7 +162,8 @@ class PdfGenerationService {
 
   Future<int> _getIncrementalNumberForDate(String dateStr) async {
     try {
-      final docsDir = await getApplicationDocumentsDirectory();
+      final docsPath = await _pathResolver.getDocumentsPath();
+      final docsDir = Directory(docsPath);
       final files = docsDir.listSync();
 
       final pattern = 'scanned_document_${dateStr}_';
@@ -167,7 +171,7 @@ class PdfGenerationService {
 
       for (final file in files) {
         if (file is File) {
-          final fileName = path.basename(file.path);
+          final fileName = p.basename(file.path);
           if (fileName.startsWith(pattern) && fileName.endsWith('.pdf')) {
             final numberPart = fileName.substring(
                 pattern.length, fileName.length - 4);
