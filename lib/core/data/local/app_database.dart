@@ -141,8 +141,10 @@ class AppDatabase extends _$AppDatabase {
 
 
   Future<void> _migrateToV11() async {
-    await customStatement(
-        'ALTER TABLE fhir_resource ADD COLUMN specialty_override TEXT');
+    try {
+      await customStatement(
+          'ALTER TABLE fhir_resource ADD COLUMN specialty_override TEXT');
+    } catch (_) {}
 
     final rows = await customSelect(
       "SELECT id, resource_raw FROM fhir_resource "
