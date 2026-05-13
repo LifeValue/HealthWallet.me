@@ -31,6 +31,7 @@ class AppSimpleDialog {
             : AppColors.textPrimary;
 
         return _DialogShell(
+          useResponsiveWidth: true,
           child: Padding(
             padding: const EdgeInsets.all(Insets.normal),
             child: Column(
@@ -352,44 +353,49 @@ class _ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showCancel = cancelText.isNotEmpty;
+
     return Row(
+      mainAxisAlignment: showCancel ? MainAxisAlignment.start : MainAxisAlignment.center,
       children: [
-        Expanded(
-          child: useCancelTextButton
-              ? TextButton(
-                  onPressed: onCancel,
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: Insets.small),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+        if (showCancel) ...[
+          Expanded(
+            child: useCancelTextButton
+                ? TextButton(
+                    onPressed: onCancel,
+                    style: TextButton.styleFrom(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: Insets.small),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    child: Text(
+                      cancelText,
+                      style: AppTextStyle.buttonSmall
+                          .copyWith(color: AppColors.primary),
+                    ),
+                  )
+                : OutlinedButton(
+                    onPressed: onCancel,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide.none,
+                      padding: const EdgeInsets.all(8),
+                      fixedSize: const Size.fromHeight(36),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    child: Text(
+                      cancelText,
+                      style: AppTextStyle.buttonSmall
+                          .copyWith(color: AppColors.primary),
                     ),
                   ),
-                  child: Text(
-                    cancelText,
-                    style: AppTextStyle.buttonSmall
-                        .copyWith(color: AppColors.primary),
-                  ),
-                )
-              : OutlinedButton(
-                  onPressed: onCancel,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: BorderSide.none,
-                    padding: const EdgeInsets.all(8),
-                    fixedSize: const Size.fromHeight(36),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  child: Text(
-                    cancelText,
-                    style: AppTextStyle.buttonSmall
-                        .copyWith(color: AppColors.primary),
-                  ),
-                ),
-        ),
-        const SizedBox(width: Insets.small),
+          ),
+          const SizedBox(width: Insets.small),
+        ],
         Expanded(
           child: ElevatedButton(
             onPressed: onConfirm,
