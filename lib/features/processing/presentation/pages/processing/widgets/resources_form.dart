@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
@@ -7,6 +8,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_date_picker.dart';
 import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
@@ -403,6 +405,103 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         );
                       },
                     )
+                  else if (descriptor.fieldType == FieldType.dropdown &&
+                      propertyKey == 'specialty')
+                    FormField<String>(
+                      key: ValueKey('${resource.id}_${propertyKey}_form_${descriptor.value}'),
+                      initialValue: descriptor.value,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validator: (value) =>
+                          (value == null || value.isEmpty) ? context.l10n.fieldCannotBeEmpty : null,
+                      builder: (field) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppDropdownField<MedicalSpecialty>(
+                            value: descriptor.value,
+                            items: MedicalSpecialty.values,
+                            openAbove: true,
+                            hasError: field.hasError,
+                            getDisplayText: (s) => s.displayName,
+                            onChanged: (MedicalSpecialty s) {
+                              onPropertyChanged?.call(propertyKey, s.displayName);
+                              field.didChange(s.displayName);
+                            },
+                            itemBuilder: (context, s, isSelected) => Row(
+                              children: [
+                                s.icon.svg(
+                                  width: 20,
+                                  height: 20,
+                                  colorFilter: ColorFilter.mode(
+                                    isSelected
+                                        ? context.colorScheme.primary
+                                        : context.colorScheme.onSurface,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    s.displayName,
+                                    style: AppTextStyle.bodyMedium.copyWith(
+                                      color: isSelected
+                                          ? context.colorScheme.primary
+                                          : context.colorScheme.onSurface,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            valueBuilder: (context, value) {
+                              final match = MedicalSpecialty.values
+                                  .where((s) => s.displayName == value)
+                                  .firstOrNull;
+                              if (match == null) {
+                                return Text(
+                                  value.isEmpty ? context.l10n.specialty : value,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyle.labelLarge.copyWith(
+                                    color: value.isEmpty
+                                        ? context.colorScheme.onSurface.withOpacity(0.5)
+                                        : context.colorScheme.onSurface,
+                                  ),
+                                );
+                              }
+                              return Row(
+                                children: [
+                                  match.icon.svg(
+                                    width: 18,
+                                    height: 18,
+                                    colorFilter: ColorFilter.mode(
+                                      context.colorScheme.onSurface,
+                                      BlendMode.srcIn,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    match.displayName,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyle.labelLarge.copyWith(
+                                      color: context.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          if (field.hasError && field.errorText != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 12),
+                              child: Text(
+                                field.errorText!,
+                                style: AppTextStyle.labelSmall.copyWith(
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
                   else if (descriptor.fieldType == FieldType.dropdown)
                     AppDropdownField<String>(
                       value: _getGenderDisplayValue(descriptor.value, context),
@@ -413,10 +512,10 @@ class _ResourcesFormState extends State<ResourcesForm> {
                       ],
                       getDisplayText: (item) => item,
                       onChanged: (String newValue) {
-                              final fhirValue =
-                                  _mapDisplayGenderToFhir(newValue, context);
-                              onPropertyChanged?.call(propertyKey, fhirValue);
-                            },
+                        final fhirValue =
+                            _mapDisplayGenderToFhir(newValue, context);
+                        onPropertyChanged?.call(propertyKey, fhirValue);
+                      },
                     )
                   else
                     TextFormField(

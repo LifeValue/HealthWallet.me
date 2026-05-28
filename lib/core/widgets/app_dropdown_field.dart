@@ -13,6 +13,7 @@ class AppDropdownField<T> extends StatefulWidget {
   final Widget Function(BuildContext, T, bool isSelected)? itemBuilder;
   final Widget Function(BuildContext, String)? valueBuilder;
   final bool hasError;
+  final bool openAbove;
 
   const AppDropdownField({
     super.key,
@@ -23,6 +24,7 @@ class AppDropdownField<T> extends StatefulWidget {
     this.itemBuilder,
     this.valueBuilder,
     this.hasError = false,
+    this.openAbove = false,
   });
 
   @override
@@ -68,7 +70,9 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
             child: CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
-              offset: Offset(0, size.height + 4),
+              targetAnchor: widget.openAbove ? Alignment.topLeft : Alignment.bottomLeft,
+              followerAnchor: widget.openAbove ? Alignment.bottomLeft : Alignment.topLeft,
+              offset: Offset(0, widget.openAbove ? -4 : 4),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),

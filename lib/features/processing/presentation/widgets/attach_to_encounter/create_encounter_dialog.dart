@@ -232,6 +232,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                       hasError: _specialtyError != null,
                       value: _selectedSpecialty,
                       items: MedicalSpecialty.values,
+                      openAbove: true,
                       getDisplayText: (s) => s.displayName,
                       onChanged: (s) =>
                           setState(() {

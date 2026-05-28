@@ -158,7 +158,6 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
   @override
   Widget build(BuildContext context) {
     final commState = _commState;
-    debugPrint('[ConnectionDialog] status=${commState.connectionStatus}, discovering=${commState.connectionStatus == ConnectionStatus.discovering}');
     return Padding(
       padding: const EdgeInsets.all(Insets.medium),
       child: SingleChildScrollView(
@@ -191,8 +190,6 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
         commState.connectionStatus == ConnectionStatus.connected;
     final isDiscovering =
         commState.connectionStatus == ConnectionStatus.discovering;
-    debugPrint('[ConnectionDialog] status=${commState.connectionStatus}, discovering=$isDiscovering, connected=$isConnected');
-
     final isDesktop = getIt<AppPlatform>().isDesktop;
     final remoteName = commState.connectedDeviceName ??
         (isDesktop ? null : commState.pairedDevice?.deviceName);

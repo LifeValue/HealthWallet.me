@@ -65,43 +65,45 @@ class _BackupCardState extends State<BackupCard> {
     final defaultName = '${context.l10n.desktopBackup} ${DateFormat('MMM d, yyyy').format(DateTime.now())}';
 
     if (!widget.backupState.hasUserSelectedPath) {
-      return Padding(
-        padding: const EdgeInsets.all(Insets.medium),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.folder_open,
-              size: 40,
-              color: context.colorScheme.onSurface.withValues(alpha: 0.15),
-            ),
-            const SizedBox(height: Insets.normal),
-            Text(
-              context.l10n.desktopChooseWhereToSave,
-              style: AppTextStyle.bodyMedium.copyWith(
-                color: context.colorScheme.onSurface,
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(Insets.medium),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.folder_open,
+                size: 40,
+                color: context.colorScheme.onSurface.withValues(alpha: 0.15),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: Insets.small),
-            Text(
-              context.l10n.desktopSelectBackupFolder,
-              style: AppTextStyle.labelSmall.copyWith(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.4),
-                fontSize: 12,
+              const SizedBox(height: Insets.normal),
+              Text(
+                context.l10n.desktopChooseWhereToSave,
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: context.colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: Insets.normal),
-            SizedBox(
-              width: 200,
-              child: AppButton(
-                label: context.l10n.desktopChooseLocation,
-                onPressed: () => _BackupLocationRow.pickAndSetDirectory(context),
-                height: 36,
+              const SizedBox(height: Insets.small),
+              Text(
+                context.l10n.desktopSelectBackupFolder,
+                style: AppTextStyle.labelSmall.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.4),
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              const SizedBox(height: Insets.normal),
+              SizedBox(
+                width: 200,
+                child: AppButton(
+                  label: context.l10n.desktopChooseLocation,
+                  onPressed: () => _BackupLocationRow.pickAndSetDirectory(context),
+                  height: 36,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }

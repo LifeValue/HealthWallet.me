@@ -233,7 +233,6 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
     _reconnectTimer?.cancel();
 
-    debugPrint('[Communication] Connection requested, emitting discovering');
     emit(state.copyWith(
       connectionStatus: ConnectionStatus.discovering,
       connectionTransport: ConnectionTransport.unknown,

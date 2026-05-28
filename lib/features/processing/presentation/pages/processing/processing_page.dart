@@ -237,118 +237,120 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
         return Scaffold(
           backgroundColor: context.colorScheme.surface,
-          body: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: _buildAppBar(context, displayedSession, canRetry, isStep2Retry).preferredSize.height + MediaQuery.of(context).padding.top,
-                    child: _buildAppBar(context, displayedSession, canRetry, isStep2Retry),
-                  ),
-                  Expanded(child: Builder(builder: (context) {
-            if (displayedSession == null) {
-              return Center(child: Text(context.l10n.sessionNotFound));
-            }
-
-            final sessionImages = state.sessionImagePaths[widget.sessionId] ??
-                state.allImagePathsForOCR;
-
-            final isConverting =
-                state.status == const PipelineStatus.convertingPdfs() &&
-                    sessionImages.isEmpty;
-
-            final isQueuedAndPreparing =
-                displayedSession.status == ProcessingStatus.pending &&
-                    sessionImages.isEmpty;
-
-            if (isConverting || isQueuedAndPreparing) {
-              return _buildLoadingIndicator(context.l10n.preparingPreview);
-            }
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(Insets.normal),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                SummaryCard(
-                  totalPagesForOcr: sessionImages.length,
-                ),
-                const SizedBox(height: Insets.normal),
-                if (sessionImages.isNotEmpty) ...[
-                  PreviewCard(
-                    imagePaths: sessionImages,
-                    pageController: _pageController,
-                    isEditable: true,
-                    onPagesChanged: (reordered) {
-                      context.read<ProcessingBloc>().add(PagesReordered(
-                            sessionId: widget.sessionId,
-                            reorderedPaths: reordered,
-                          ));
-                    },
-                  ),
-                  const SizedBox(height: Insets.small),
-                ],
-                const SizedBox(height: Insets.large),
-                ProcessingMappingSection(
-                  state: state,
-                  displayedSession: displayedSession,
-                  sessionId: widget.sessionId,
-                  onShowAiSettings: _showAiSettingsDialog,
-                  onRetryStep1: () => context.read<ProcessingBloc>().add(
-                        MappingInitiated(sessionId: widget.sessionId),
-                      ),
-                  onRetryStep2: () => context.read<ProcessingBloc>().add(
-                        ProcessRemainingResources(
-                          sessionId: widget.sessionId,
-                        ),
-                      ),
-                  onCancel: () => context.read<ProcessingBloc>().add(
-                        MappingCancelled(sessionId: widget.sessionId),
-                      ),
-                  checkModelExistence: () => getIt<ProcessingRepository>().checkModelExistence(),
-                  onProcessOnDesktop: () {
-                    HandoverUtils.initiateHandover(
-                      context,
-                      session: displayedSession,
-                    );
-                  },
-                  onAttachWithoutProcessing: () async {
-                    final result = await showDialog<AttachToEncounterResult>(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (ctx) => const AttachToEncounterWidget(),
-                    );
-                    if (result == null || !context.mounted) return;
-                    final (patient, encounter) = result;
-                    context.read<ProcessingBloc>().add(
-                          EncounterAttached(
-                            sessionId: widget.sessionId,
-                            patient: patient,
-                            encounter: encounter,
-                          ),
-                        );
-                    context.read<ProcessingBloc>().add(
-                          ResourceCreationInitiated(sessionId: widget.sessionId),
-                        );
-                  },
-                ),
-                ProcessingResourcesSection(
-                  state: state,
-                  displayedSession: displayedSession,
-                  sessionId: widget.sessionId,
-                  formKey: _formKey,
-                  encounterSectionKey: _encounterSectionKey,
-                  deviceCapability: _deviceCapability,
-                  onScrollToFormErrors: _scrollToFormErrors,
-                  onSaveResources: () => _saveResources(state),
-                ),
-                const SizedBox(height: Insets.large),
-              ]),
-            );
-          })),
-                ],
+          body: Column(
+            children: [
+              SizedBox(
+                height: _buildAppBar(context, displayedSession, canRetry, isStep2Retry).preferredSize.height + MediaQuery.of(context).padding.top,
+                child: _buildAppBar(context, displayedSession, canRetry, isStep2Retry),
               ),
-            ),
+              Expanded(child: Builder(builder: (context) {
+                if (displayedSession == null) {
+                  return Center(child: Text(context.l10n.sessionNotFound));
+                }
+
+                final sessionImages = state.sessionImagePaths[widget.sessionId] ??
+                    state.allImagePathsForOCR;
+
+                final isConverting =
+                    state.status == const PipelineStatus.convertingPdfs() &&
+                        sessionImages.isEmpty;
+
+                final isQueuedAndPreparing =
+                    displayedSession.status == ProcessingStatus.pending &&
+                        sessionImages.isEmpty;
+
+                if (isConverting || isQueuedAndPreparing) {
+                  return _buildLoadingIndicator(context.l10n.preparingPreview);
+                }
+
+                return SingleChildScrollView(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+                      child: Padding(
+                        padding: const EdgeInsets.all(Insets.normal),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          SummaryCard(
+                            totalPagesForOcr: sessionImages.length,
+                          ),
+                          const SizedBox(height: Insets.normal),
+                          if (sessionImages.isNotEmpty) ...[
+                            PreviewCard(
+                              imagePaths: sessionImages,
+                              pageController: _pageController,
+                              isEditable: true,
+                              onPagesChanged: (reordered) {
+                                context.read<ProcessingBloc>().add(PagesReordered(
+                                      sessionId: widget.sessionId,
+                                      reorderedPaths: reordered,
+                                    ));
+                              },
+                            ),
+                            const SizedBox(height: Insets.small),
+                          ],
+                          const SizedBox(height: Insets.large),
+                          ProcessingMappingSection(
+                            state: state,
+                            displayedSession: displayedSession,
+                            sessionId: widget.sessionId,
+                            onShowAiSettings: _showAiSettingsDialog,
+                            onRetryStep1: () => context.read<ProcessingBloc>().add(
+                                  MappingInitiated(sessionId: widget.sessionId),
+                                ),
+                            onRetryStep2: () => context.read<ProcessingBloc>().add(
+                                  ProcessRemainingResources(
+                                    sessionId: widget.sessionId,
+                                  ),
+                                ),
+                            onCancel: () => context.read<ProcessingBloc>().add(
+                                  MappingCancelled(sessionId: widget.sessionId),
+                                ),
+                            checkModelExistence: () => getIt<ProcessingRepository>().checkModelExistence(),
+                            onProcessOnDesktop: () {
+                              HandoverUtils.initiateHandover(
+                                context,
+                                session: displayedSession,
+                              );
+                            },
+                            onAttachWithoutProcessing: () async {
+                              final result = await showDialog<AttachToEncounterResult>(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (ctx) => const AttachToEncounterWidget(),
+                              );
+                              if (result == null || !context.mounted) return;
+                              final (patient, encounter) = result;
+                              context.read<ProcessingBloc>().add(
+                                    EncounterAttached(
+                                      sessionId: widget.sessionId,
+                                      patient: patient,
+                                      encounter: encounter,
+                                    ),
+                                  );
+                              context.read<ProcessingBloc>().add(
+                                    ResourceCreationInitiated(sessionId: widget.sessionId),
+                                  );
+                            },
+                          ),
+                          ProcessingResourcesSection(
+                            state: state,
+                            displayedSession: displayedSession,
+                            sessionId: widget.sessionId,
+                            formKey: _formKey,
+                            encounterSectionKey: _encounterSectionKey,
+                            deviceCapability: _deviceCapability,
+                            onScrollToFormErrors: _scrollToFormErrors,
+                            onSaveResources: () => _saveResources(state),
+                          ),
+                          const SizedBox(height: Insets.large),
+                        ]),
+                      ),
+                    ),
+                  ),
+                );
+              })),
+            ],
           ),
         );
       },

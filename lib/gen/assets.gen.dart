@@ -125,6 +125,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/filter.svg
   SvgGenImage get filter => const SvgGenImage('assets/icons/filter.svg');
 
+  /// File path: assets/icons/from-phone.svg
+  SvgGenImage get fromPhone =>
+      const SvgGenImage('assets/icons/from-phone.svg');
+
   /// File path: assets/icons/gender-female.svg
   SvgGenImage get genderFemale =>
       const SvgGenImage('assets/icons/gender-female.svg');
@@ -275,6 +279,7 @@ class $AssetsIconsGen {
         externalLink,
         faceMask,
         filter,
+        fromPhone,
         genderFemale,
         genderMale,
         heartFavorite,

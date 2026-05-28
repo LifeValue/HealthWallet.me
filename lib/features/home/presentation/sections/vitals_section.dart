@@ -47,7 +47,7 @@ class VitalsSection extends StatelessWidget {
   double _getChildAspectRatio(double screenWidth, bool isPortrait) {
     if (screenWidth >= 900) return isPortrait ? 3.0 : 3.6;
     if (screenWidth >= 600) return isPortrait ? 2.3 : 3.0;
-    return screenWidth < _breakpoint ? 1.88 : 1.9;
+    return screenWidth < _breakpoint ? 1.88 : 1.85;
   }
 
   @override
