@@ -10,6 +10,9 @@
 *.pem
 assets/certs/*
 !assets/certs/.gitkeep
+!assets/certs/android/
+assets/certs/android/*
+!assets/certs/android/.gitkeep
 *.jks
 *.keystore
 **/key.properties
@@ -74,6 +77,8 @@ app.*.map.json
 **/*.g.dart
 **/*.config.dart
 **/*.gr.dart
+
+pubspec_overrides.yaml
 
 # FVM Version Cache
 .fvm/

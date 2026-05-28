@@ -21,7 +21,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get settingsTitle => 'Setări';
 
   @override
-  String get welcomeMessage => 'Bine ați venit la HealthWallet.me!';
+  String get welcomeMessage => 'Bine ai venit la HealthWallet.me!';
 
   @override
   String get onboardingBack => 'Înapoi';
@@ -128,6 +128,9 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get syncTitle => 'Sincronizare';
+
+  @override
+  String get scanFastenQr => 'Scan Fasten Health QR';
 
   @override
   String get syncSuccessful => 'Sincronizare reușită!';
@@ -371,6 +374,13 @@ class AppLocalizationsRo extends AppLocalizations {
   String get actionCannotBeUndone => 'Această acțiune nu poate fi anulată.';
 
   @override
+  String get deleteSourceConfirmPrefix => 'This will permanently delete ';
+
+  @override
+  String get deleteSourceConfirmSuffix =>
+      ' and all its records. To confirm, type the source name below.';
+
+  @override
   String get deleteRecordConfirm =>
       'Ești sigur că vrei să ștergi această înregistrare?';
 
@@ -475,6 +485,29 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get synchronization => 'Sincronizare';
+
+  @override
+  String get desktopSyncAndBackup => 'Desktop Sync & Backup';
+
+  @override
+  String get desktopSyncDescription =>
+      'Sincronizează și salvează datele tale medicale.\nPredă documente pentru procesare digitală pe desktop.';
+
+  @override
+  String get processOnDesktop => 'Procesează pe desktop';
+
+  @override
+  String get sendToDesktop => 'Trimite pe desktop';
+
+  @override
+  String get continueImporting => 'Continuă importul';
+
+  @override
+  String get noAiModel => 'No AI model';
+
+  @override
+  String get noAiModelOnDesktop =>
+      'Nu există model AI pe Desktop. Te rugăm să descarci modelul AI pe aplicația desktop mai întâi.';
 
   @override
   String get syncMedicalRecords => 'Sincronizează Înregistrări Medicale';
@@ -695,6 +728,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get documentScanTitle => 'Scanare';
 
   @override
+  String get fromPhoneTab => 'De pe Telefon';
+
+  @override
   String get onboardingAiModelTitle => 'Activează Modelul AI';
 
   @override
@@ -809,6 +845,14 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get processingFailed => 'Procesare eșuată';
+
+  @override
+  String get modelNotFoundError =>
+      'Fișierul modelului nu a fost găsit. Descarcă modelul AI mai întâi.';
+
+  @override
+  String get modelCorruptedError =>
+      'Fișierul modelului este corupt. Re-descarcă modelul AI.';
 
   @override
   String get processingCancelled => 'Procesarea a fost anulată';
@@ -1131,7 +1175,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get medGemmaIncompatibleDevice =>
-      'Acest model necesită mai multă memorie decât are dispozitivul tău disponibil. Folosește modelul Standard în schimb.';
+      'Acest model necesită mai multă memorie decât are dispozitivul tău disponibil. Folosește modelul Lite în schimb.';
 
   @override
   String get deepScanDownloadTitle => 'Descarcă Modelul de Viziune';
@@ -1149,7 +1193,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get shareViewOnlyBanner =>
-      'DOAR VIZUALIZARE - Datele vor fi șterse când închideți sesiunea sau părăsiți zona de proximitate';
+      'DOAR VIZUALIZARE - Datele vor fi șterse când închizi sesiunea sau părăsești zona de proximitate';
 
   @override
   String get shareViewOnlyBannerViewing =>
@@ -1217,7 +1261,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get shareUnableToConnect =>
-      'Nu s-a putut conecta. Vă rugăm încercați din nou.';
+      'Nu s-a putut conecta. Te rugăm încearcă din nou.';
 
   @override
   String get shareNoDataReceived => 'Nu s-au primit date';
@@ -1260,7 +1304,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get shareConfirmExit => 'Confirmă Ieșirea';
 
   @override
-  String get shareDeleteSharedRecords => 'Ștergeți Înregistrările Partajate?';
+  String get shareDeleteSharedRecords => 'Ștergi Înregistrările Partajate?';
 
   @override
   String get shareDeleteWarning =>
@@ -1300,11 +1344,11 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get shareWifiToggleHint =>
-      'WiFi Direct nu răspunde. Dezactivați/activați WiFi, apoi apăsați Reîncercați.';
+      'WiFi Direct nu răspunde. Dezactivează/activează WiFi, apoi apasă Reîncearcă.';
 
   @override
   String get shareDiscoveryHint =>
-      'Asigurați-vă că celălalt dispozitiv are aplicația HealthWallet.me deschisă';
+      'Asigură-te că celălalt dispozitiv are aplicația HealthWallet.me deschisă';
 
   @override
   String get shareProximityHint =>
@@ -1319,7 +1363,7 @@ class AppLocalizationsRo extends AppLocalizations {
       'Nu s-au găsit înregistrări pentru filtrele aplicate';
 
   @override
-  String get shareTryClearingFilters => 'Încercați să ștergeți câteva filtre';
+  String get shareTryClearingFilters => 'Încearcă să ștergi câteva filtre';
 
   @override
   String get shareRecordsPageFiltersNoResults =>
@@ -1327,7 +1371,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get shareImportOrSyncRecords =>
-      'Importați sau sincronizați înregistrări pentru a le partaja';
+      'Importă sau sincronizează înregistrări pentru a le partaja';
 
   @override
   String get shareSessionTime => 'Durata sesiunii';
@@ -1392,7 +1436,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String shareDeviceWantsToShare(String deviceName) {
-    return '$deviceName dorește să partajeze înregistrări cu dvs.';
+    return '$deviceName dorește să partajeze înregistrări cu tine.';
   }
 
   @override
@@ -1449,4 +1493,945 @@ class AppLocalizationsRo extends AppLocalizations {
   String shareExtensionDurationRequested(String duration) {
     return '$duration solicitat';
   }
+
+  @override
+  String get desktopSyncNotYet => 'Nu încă';
+
+  @override
+  String get desktopSyncTransfer => 'Transfer';
+
+  @override
+  String desktopSyncTransferValue(int sentRows, int receivedRows) {
+    return '$sentRows trimise, $receivedRows primite';
+  }
+
+  @override
+  String get desktopSyncPending => 'În așteptare';
+
+  @override
+  String desktopSyncPendingValue(int count) {
+    return '$count modificări';
+  }
+
+  @override
+  String desktopSyncingTable(String tableName) {
+    return 'Se sincronizează $tableName...';
+  }
+
+  @override
+  String get desktopSyncing => 'Se sincronizează...';
+
+  @override
+  String get desktopSyncNow => 'Sincronizează acum';
+
+  @override
+  String get desktopSyncError => 'Eroare';
+
+  @override
+  String get desktopSyncInSync => 'Sincronizat';
+
+  @override
+  String get desktopSyncReady => 'Pregătit';
+
+  @override
+  String get desktopSyncOffline => 'Offline';
+
+  @override
+  String get desktopTableHealthRecords => 'Înregistrări medicale';
+
+  @override
+  String get desktopTableSources => 'Surse';
+
+  @override
+  String get desktopTableNotes => 'Notițe';
+
+  @override
+  String get desktopTableSessions => 'Sesiuni';
+
+  @override
+  String get desktopConnection => 'Conexiune';
+
+  @override
+  String get desktopGeneratePairingQr => 'Generează QR de asociere';
+
+  @override
+  String get desktopScanFromMobile => 'Scanează din pagina Sync de pe mobil';
+
+  @override
+  String get desktopDevice => 'Dispozitiv';
+
+  @override
+  String get desktopTransport => 'Transport';
+
+  @override
+  String get desktopIp => 'IP';
+
+  @override
+  String get desktopPort => 'Port';
+
+  @override
+  String get desktopNewPairing => 'Asociere nouă';
+
+  @override
+  String get desktopTransportTcp => 'TCP prin WiFi';
+
+  @override
+  String get desktopTransportMpc => 'MultipeerConnectivity (Direct)';
+
+  @override
+  String desktopConnectedTo(String name) {
+    return 'Conectat la $name';
+  }
+
+  @override
+  String get desktopConnected => 'Conectat';
+
+  @override
+  String desktopReconnectingTo(String name) {
+    return 'Reconectare la $name...';
+  }
+
+  @override
+  String get desktopReconnecting => 'Reconectare...';
+
+  @override
+  String desktopDisconnectedFrom(String name) {
+    return 'Deconectat de la $name';
+  }
+
+  @override
+  String get desktopDisconnected => 'Deconectat';
+
+  @override
+  String get desktopDisconnect => 'Deconectează';
+
+  @override
+  String get desktopReconnect => 'Reconectează';
+
+  @override
+  String get desktopVpnDetected =>
+      'VPN detectat. Deconectează VPN-ul pentru a sincroniza cu desktopul.';
+
+  @override
+  String get desktopPairing => 'Asociere';
+
+  @override
+  String get desktopLabel => 'Desktop';
+
+  @override
+  String get desktopScanFromPhoneToPair =>
+      'Scanează cu telefonul pentru a asocia';
+
+  @override
+  String get desktopNewQrCode => 'Cod QR nou';
+
+  @override
+  String get desktopGenerateQrCode => 'Generează cod QR';
+
+  @override
+  String get desktopScanQrCode => 'Scanează codul QR';
+
+  @override
+  String get desktopChooseWhereToSave =>
+      'Alege unde să salvezi copiile de siguranță';
+
+  @override
+  String get desktopSelectBackupFolder =>
+      'Selectează un folder pe computer pentru stocarea copiilor de siguranță';
+
+  @override
+  String get desktopChooseLocation => 'Alege locația';
+
+  @override
+  String get desktopChooseBackupLocation => 'Alege locația copiei de siguranță';
+
+  @override
+  String get desktopBackingUp => 'Se salvează...';
+
+  @override
+  String get desktopCreateBackup => 'Creează copie de siguranță';
+
+  @override
+  String get desktopSyncWithPhoneFirst =>
+      'Sincronizează mai întâi cu telefonul';
+
+  @override
+  String get desktopNotConnected => '(neconectat)';
+
+  @override
+  String get desktopStartBackup => 'Începe salvarea';
+
+  @override
+  String get desktopNoBackupsYet => 'Nicio copie de siguranță încă';
+
+  @override
+  String get desktopCreateFirstBackup =>
+      'Creează prima copie de siguranță pentru a-ți proteja datele medicale';
+
+  @override
+  String get desktopAllBackups => 'Toate copiile de siguranță';
+
+  @override
+  String get desktopDate => 'Dată';
+
+  @override
+  String get desktopSize => 'Dimensiune';
+
+  @override
+  String get desktopChecksum => 'Sumă de control';
+
+  @override
+  String get desktopRestoreThisBackup => 'Restaurează această copie';
+
+  @override
+  String get desktopRestoreBackupTitle => 'Restaurezi copia de siguranță?';
+
+  @override
+  String desktopRestoreBackupMessage(String name, int count) {
+    return 'Toate datele actuale de pe acest dispozitiv vor fi înlocuite cu \"$name\".\n\n$count înregistrări vor fi restaurate.\n\nDatele de pe telefonul asociat nu vor fi afectate.';
+  }
+
+  @override
+  String get desktopRestore => 'Restaurează';
+
+  @override
+  String get desktopDeleteBackupTitle => 'Ștergi copia de siguranță?';
+
+  @override
+  String desktopDeleteBackupMessage(String name) {
+    return 'Ștergi \"$name\"?\n\nAceastă acțiune nu poate fi anulată.';
+  }
+
+  @override
+  String get desktopDelete => 'Șterge';
+
+  @override
+  String get desktopBackupFrom => 'Copie din';
+
+  @override
+  String get desktopBackup => 'Copie de siguranță';
+
+  @override
+  String get desktopBackupLocation => 'Backup Location';
+
+  @override
+  String get desktopChange => 'Schimbă';
+
+  @override
+  String get desktopProcessingHistory => 'Istoric de procesare';
+
+  @override
+  String get desktopScannedOnPhone => 'Scanat pe telefon';
+
+  @override
+  String get desktopProcessedOnDesktop => 'Procesat pe desktop';
+
+  @override
+  String get desktopImportedOnDesktop => 'Importat pe desktop';
+
+  @override
+  String get desktopSyncRecent => 'Recente';
+
+  @override
+  String get desktopUnknownDevice => 'Dispozitiv necunoscut';
+
+  @override
+  String desktopSyncHistoryTransfer(int sentRows, int receivedRows) {
+    return '$sentRows trimise · $receivedRows primite';
+  }
+
+  @override
+  String get desktopNewDeviceConnecting => 'Dispozitiv nou se conectează';
+
+  @override
+  String desktopNewDeviceMessage(String address, String currentDevice) {
+    return 'Un dispozitiv nou ($address) dorește să se conecteze.\n\nAceasta va deconecta \"$currentDevice\".\n\nComuți pe noul dispozitiv?';
+  }
+
+  @override
+  String get desktopKeepCurrent => 'Păstrează actualul';
+
+  @override
+  String get desktopSwitch => 'Comută';
+
+  @override
+  String get desktopCurrentDevice => 'dispozitiv actual';
+
+  @override
+  String get desktopHandoverPreparing => 'Se pregătește...';
+
+  @override
+  String get desktopHandoverSendingFiles => 'Se trimit fișierele...';
+
+  @override
+  String get desktopHandoverProcessingOnDesktop =>
+      'Se procesează pe desktop...';
+
+  @override
+  String get desktopHandoverComplete => 'Finalizat!';
+
+  @override
+  String get desktopHandoverError => 'A apărut o eroare';
+
+  @override
+  String get desktopHandoverSending => 'Se trimite...';
+
+  @override
+  String get desktopHandoverSendingToDesktop => 'Se trimite pe desktop';
+
+  @override
+  String desktopHandoverFileCount(int count) {
+    return '$count fișiere';
+  }
+
+  @override
+  String get desktopHandoverSuccess => 'Predat pe desktop';
+
+  @override
+  String get desktopClose => 'Închide';
+
+  @override
+  String get desktopContinueImporting => 'Continuă importul';
+
+  @override
+  String get desktopConnectToDesktop => 'Conectează la desktop';
+
+  @override
+  String get desktopCouldNotReconnect =>
+      'Nu s-a putut reconecta. Scanează codul QR pentru a asocia din nou.';
+
+  @override
+  String get desktopScanQrToPair =>
+      'Scanează codul QR din aplicația desktop pentru a asocia.';
+
+  @override
+  String get desktopHandoverToDesktop => 'Predare pe desktop';
+
+  @override
+  String get desktopHandoverProcessingMessage =>
+      'Procesarea este în curs. Predarea va anula procesarea curentă și va trimite fișierele pe desktop.';
+
+  @override
+  String get desktopHandover => 'Predare';
+
+  @override
+  String get attachedDocuments => 'Documente atașate';
+
+  @override
+  String get cameraPermissionRequired => 'Permisiune cameră necesară';
+
+  @override
+  String get cameraPermissionRequiredMessage =>
+      'Această aplicație necesită acces la cameră pentru scanare. Te rugăm să acorzi permisiunea.';
+
+  @override
+  String get cameraPermissionDenied => 'Permisiune cameră refuzată';
+
+  @override
+  String get cameraPermissionDeniedMessage =>
+      'Permisiunea camerei a fost refuzată permanent. Activează-o din Setări pentru a folosi scanerul.';
+
+  @override
+  String get successTitle => 'Succes!';
+
+  @override
+  String attachmentSuccessMessage(int count) {
+    return '$count documente atașate cu succes la consultație.';
+  }
+
+  @override
+  String get encounterLabel => 'Consultație';
+
+  @override
+  String get viewRecords => 'Vezi înregistrările';
+
+  @override
+  String get errorTitle => 'Eroare';
+
+  @override
+  String get somethingWentWrong => 'Ceva nu a funcționat corect';
+
+  @override
+  String get importDocument => 'Importă document';
+
+  @override
+  String get pickImageFromGallery => 'Alege imagine din galerie';
+
+  @override
+  String get scanDocument => 'Scanează document';
+
+  @override
+  String get deleteSession => 'Șterge sesiunea';
+
+  @override
+  String get deleteSessionConfirmation =>
+      'Ești sigur că vrei să ștergi această sesiune?';
+
+  @override
+  String get delete => 'Șterge';
+
+  @override
+  String get canceling => 'Se anulează...';
+
+  @override
+  String get waitingForAiToFinish => 'Se așteaptă finalizarea IA...';
+
+  @override
+  String get logsCopied => 'Jurnale copiate';
+
+  @override
+  String get download => 'Descarcă';
+
+  @override
+  String get active => 'Activ';
+
+  @override
+  String get tapToSelect => 'Apasă pentru a selecta';
+
+  @override
+  String deviceInfoChip(
+    String platform,
+    String ramGB,
+    int cores,
+    int estimatedMB,
+  ) {
+    return '$platform  •  $ramGB GB RAM  •  $cores nuclee  •  ~$estimatedMB MB necesari';
+  }
+
+  @override
+  String get downloadContinuesInBackground =>
+      'Poți naviga liber — descărcarea continuă în fundal.\nVerifică notificările pentru progres.';
+
+  @override
+  String get continueWithoutAi => 'Continuă fără IA (descărcare în fundal)';
+
+  @override
+  String get continueUsingApp => 'Continuă să folosești aplicația';
+
+  @override
+  String get attachWithoutProcessing =>
+      'Vreau să atașez documentul fără procesare';
+
+  @override
+  String get currentPatientAndSource => 'Pacient și sursă curentă';
+
+  @override
+  String get createEncounter => 'Creează consultație';
+
+  @override
+  String get encounterName => 'Nume consultație';
+
+  @override
+  String get enterEncounterName => 'Introdu numele consultației';
+
+  @override
+  String get pleaseEnterEncounterName =>
+      'Te rugăm să introduci un nume pentru consultație';
+
+  @override
+  String get date => 'Dată';
+
+  @override
+  String get create => 'Creează';
+
+  @override
+  String get searchEncounters => 'Caută consultații...';
+
+  @override
+  String get noEncountersFound => 'Nicio consultație găsită';
+
+  @override
+  String get noEncountersFoundMessage =>
+      'Creează mai întâi o consultație nouă sau selectează un alt pacient.';
+
+  @override
+  String get newEncounterPrefix => 'Consultație nouă';
+
+  @override
+  String get scannedDocumentsTitle => 'Documente scanate';
+
+  @override
+  String scannedDocumentsPagesTitle(String count) {
+    return 'Documente scanate ($count pagini)';
+  }
+
+  @override
+  String pdfFileTitle(String fileName) {
+    return 'PDF: $fileName';
+  }
+
+  @override
+  String get labelOrganizationName => 'Numele organizației';
+
+  @override
+  String get labelAddress => 'Adresă';
+
+  @override
+  String get labelPhone => 'Telefon';
+
+  @override
+  String get labelEncounterName => 'Numele consultației';
+
+  @override
+  String get labelStartDate => 'Data începerii';
+
+  @override
+  String get labelFirstName => 'Prenume';
+
+  @override
+  String get labelFamilyName => 'Nume de familie';
+
+  @override
+  String get labelDateOfBirth => 'Data nașterii';
+
+  @override
+  String get labelGender => 'Gen';
+
+  @override
+  String get labelReportName => 'Numele raportului';
+
+  @override
+  String get labelConclusion => 'Concluzie';
+
+  @override
+  String get labelIssuedDate => 'Data emiterii';
+
+  @override
+  String get labelPractitionerName => 'Numele medicului';
+
+  @override
+  String get labelSpecialty => 'Specialitate';
+
+  @override
+  String get labelIdentifier => 'Identificator';
+
+  @override
+  String get labelConditionName => 'Numele diagnosticului';
+
+  @override
+  String get labelOnsetDate => 'Data debutului';
+
+  @override
+  String get labelClinicalStatus => 'Stare clinică';
+
+  @override
+  String get labelSubstance => 'Substanță';
+
+  @override
+  String get labelManifestation => 'Manifestare';
+
+  @override
+  String get labelCategory => 'Categorie';
+
+  @override
+  String get labelProcedureName => 'Numele procedurii';
+
+  @override
+  String get labelPerformedDate => 'Data efectuării';
+
+  @override
+  String get labelReason => 'Motiv';
+
+  @override
+  String get labelMedicationName => 'Numele medicamentului';
+
+  @override
+  String get labelDosage => 'Dozaj';
+
+  @override
+  String get labelObservationName => 'Numele observației';
+
+  @override
+  String get labelValue => 'Valoare';
+
+  @override
+  String get labelUnit => 'Unitate';
+
+  @override
+  String get labelReferenceRange => 'Interval de referință';
+
+  @override
+  String get permissionsRequired => 'Permisiuni necesare';
+
+  @override
+  String recordsSelectedCount(int count) {
+    return '$count selectate';
+  }
+
+  @override
+  String get noRecordsSelected => 'Nicio înregistrare selectată';
+
+  @override
+  String get select => 'Selectează';
+
+  @override
+  String get selectRecordsBeforeSharing =>
+      'Selectează înregistrări\nînainte de a partaja';
+
+  @override
+  String get selectRecordToViewDetails =>
+      'Selectează o înregistrare pentru a vedea detaliile';
+
+  @override
+  String get recordDetails => 'Detalii înregistrare';
+
+  @override
+  String get viewDocument => 'Vezi documentul';
+
+  @override
+  String get encounterDetails => 'Detalii consultație';
+
+  @override
+  String get relatedResources => 'Resurse asociate';
+
+  @override
+  String deletePlusRelated(int count) {
+    return 'Șterge + $count asociate';
+  }
+
+  @override
+  String get fileNotAvailable => 'Fișier indisponibil pe acest dispozitiv';
+
+  @override
+  String couldNotOpenFile(String message) {
+    return 'Fișierul nu a putut fi deschis: $message';
+  }
+
+  @override
+  String errorOpeningFile(String error) {
+    return 'Eroare la deschiderea fișierului: $error';
+  }
+
+  @override
+  String get failedToLoadImage => 'Imaginea nu a putut fi încărcată';
+
+  @override
+  String errorLoadingPdf(String error) {
+    return 'Eroare la încărcarea PDF: $error';
+  }
+
+  @override
+  String errorOnPage(String page, String error) {
+    return 'Eroare pe pagina $page: $error';
+  }
+
+  @override
+  String get notes => 'Notițe';
+
+  @override
+  String get noNotesAttached => 'Această înregistrare nu are notițe atașate';
+
+  @override
+  String get addNote => 'Adaugă notiță';
+
+  @override
+  String get editNote => 'Editează notiță';
+
+  @override
+  String get filters => 'Filtre';
+
+  @override
+  String get timeRange => 'Interval de timp';
+
+  @override
+  String get applyFilters => 'Aplică filtre';
+
+  @override
+  String get recordType => 'Tip înregistrare';
+
+  @override
+  String get specialty => 'Specialitate';
+
+  @override
+  String get allSpecialties => 'Toate specialitățile';
+
+  @override
+  String get selectedRange => 'Interval selectat';
+
+  @override
+  String get noRangeSelected => 'Niciun interval selectat';
+
+  @override
+  String get clearDateRange => 'Șterge intervalul';
+
+  @override
+  String get start => 'Început';
+
+  @override
+  String get end => 'Sfârșit';
+
+  @override
+  String fromDate(String date) {
+    return 'Din $date';
+  }
+
+  @override
+  String untilDate(String date) {
+    return 'Până la $date';
+  }
+
+  @override
+  String get day => 'Zi';
+
+  @override
+  String get month => 'Lună';
+
+  @override
+  String get year => 'An';
+
+  @override
+  String get mediaInfo => 'Info media';
+
+  @override
+  String get linkToEncounter => 'Leagă de consultație';
+
+  @override
+  String get noPdfDataAvailable => 'Nu sunt date PDF disponibile';
+
+  @override
+  String get failedToLoadPdf => 'Documentul PDF nu a putut fi încărcat';
+
+  @override
+  String get mediaInformation => 'Informații media';
+
+  @override
+  String get mediaInfoTitle => 'Titlu:';
+
+  @override
+  String get mediaInfoType => 'Tip:';
+
+  @override
+  String get mediaInfoStatus => 'Stare:';
+
+  @override
+  String get mediaInfoPatient => 'Pacient:';
+
+  @override
+  String get mediaInfoEncounter => 'Consultație:';
+
+  @override
+  String get mediaInfoFileSize => 'Dimensiune fișier:';
+
+  @override
+  String get mediaInfoCreated => 'Creat:';
+
+  @override
+  String get mediaInfoResourceId => 'ID resursă:';
+
+  @override
+  String get mediaInfoSource => 'Sursă:';
+
+  @override
+  String get close => 'Închide';
+
+  @override
+  String get linkMediaToEncounterDescription =>
+      'Leagă această resursă media de o consultație:';
+
+  @override
+  String get encounterId => 'ID consultație';
+
+  @override
+  String get encounterIdHint => 'ex., consultatie-123';
+
+  @override
+  String get mediaLinkedSuccess =>
+      'Resursă media legată cu succes de consultație';
+
+  @override
+  String failedToLinkMedia(String error) {
+    return 'Legarea a eșuat: $error';
+  }
+
+  @override
+  String get link => 'Leagă';
+
+  @override
+  String get connectionLabel => 'Conexiune';
+
+  @override
+  String get connectionStatusConnected => 'Conectat';
+
+  @override
+  String get connectionStatusConnecting => 'Se conectează...';
+
+  @override
+  String get connectionStatusDisconnected => 'Deconectat';
+
+  @override
+  String get connectionStatusNotPaired => 'Neasociat';
+
+  @override
+  String get syncLabel => 'Sincronizare';
+
+  @override
+  String get syncStatusSyncing => 'Se sincronizează...';
+
+  @override
+  String get syncStatusNotSynced => 'Nesincronizat';
+
+  @override
+  String get syncStatusInSync => 'Sincronizat';
+
+  @override
+  String syncStatusPending(int count) {
+    return '$count în așteptare';
+  }
+
+  @override
+  String get backupLabel => 'Copie de siguranță';
+
+  @override
+  String get backupStatusWorking => 'Se lucrează...';
+
+  @override
+  String get backupStatusNoBackup => 'Fără copie de siguranță';
+
+  @override
+  String get backupStatusBackingUp => 'Se salvează...';
+
+  @override
+  String get backupStatusRestoring => 'Se restaurează...';
+
+  @override
+  String get backupStatusWaiting => 'Se așteaptă...';
+
+  @override
+  String get backupStatusNotConnected => 'Neconectat';
+
+  @override
+  String get exportIpsPdf => 'Exportă IPS (PDF)';
+
+  @override
+  String get addIpsToAppleWallet => 'Adaugă IPS în Apple Wallet';
+
+  @override
+  String get addIpsToGoogleWallet => 'Adaugă IPS în Google Wallet';
+
+  @override
+  String get sourcesTitle => 'Surse';
+
+  @override
+  String get emergencyMedicalId => 'Card medical de urgență';
+
+  @override
+  String get phoneLabel => 'Telefon';
+
+  @override
+  String get allergiesLabel => 'Alergii';
+
+  @override
+  String get medicalConditionsLabel => 'Afecțiuni medicale';
+
+  @override
+  String get medicationsLabel => 'Medicamente';
+
+  @override
+  String get conditionsLabel => 'Afecțiuni';
+
+  @override
+  String get dateOfBirthLabel => 'Data nașterii';
+
+  @override
+  String get emergencyPhoneLabel => 'Telefon de urgență';
+
+  @override
+  String get openingScanner => 'Se deschide scanerul...';
+
+  @override
+  String get activeScanSessions => 'Sesiuni de scanare active:';
+
+  @override
+  String get noScansYet => 'Nicio scanare încă';
+
+  @override
+  String get scanOrImportToGetStarted =>
+      'Scanează sau importă documente pentru a începe';
+
+  @override
+  String pageOfTotal(String current, String total) {
+    return '$current din $total';
+  }
+
+  @override
+  String get fileNotFound => 'Fișier negăsit';
+
+  @override
+  String get fileIsEmpty => 'Fișierul este gol';
+
+  @override
+  String get importTitle => 'Import';
+
+  @override
+  String get activeImportSessions => 'Sesiuni de import active:';
+
+  @override
+  String get dropToImport => 'Trage pentru a importa';
+
+  @override
+  String get dropFilesHereToImport =>
+      'Trage fișierele aici pentru a le importa';
+
+  @override
+  String get supportedFileFormats => 'PDF, JPG, PNG, TIFF';
+
+  @override
+  String get browseFiles => 'Răsfoiește fișiere';
+
+  @override
+  String get noImportsYet => 'Niciun import încă';
+
+  @override
+  String get importOrScanToGetStarted =>
+      'Importă sau scanează documente pentru a începe';
+
+  @override
+  String get notificationsTitle => 'Notificări';
+
+  @override
+  String get noNotifications => 'Nicio notificare';
+
+  @override
+  String get cancelDownloadTitle => 'Anulează descărcarea';
+
+  @override
+  String get cancelDownloadMessage =>
+      'Ești sigur că vrei să anulezi descărcarea modelului IA? O poți relua mai târziu.';
+
+  @override
+  String get processingDone => 'Procesare finalizată';
+
+  @override
+  String pairedWithDevice(String deviceName) {
+    return 'Asociat cu $deviceName';
+  }
+
+  @override
+  String get deviceSyncLabel => 'Sincronizare dispozitiv';
+
+  @override
+  String get disconnectLabel => 'Deconectează';
+
+  @override
+  String get changeLabel => 'Schimbă';
+
+  @override
+  String get minimizeToTray => 'Minimizează în bara de sistem';
+
+  @override
+  String get changeSpecialty => 'Change Specialty';
+
+  @override
+  String get changeSpecialtyConfirm =>
+      'Are you sure you want to change the specialty to';
+
+  @override
+  String get removeSpecialtyConfirm =>
+      'Are you sure you want to remove the specialty from this record?';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get currentRecord => 'Înregistrarea curentă';
 }

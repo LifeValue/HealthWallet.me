@@ -8,6 +8,7 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/secti
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/animated_reorderable_list.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/widgets/unified_patient_card.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PatientSection extends StatefulWidget {
   const PatientSection({super.key});

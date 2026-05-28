@@ -10,12 +10,38 @@ import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_enc
 import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 
+class ApplePassLabels {
+  final String patient;
+  final String bloodType;
+  final String allergies;
+  final String gender;
+  final String dateOfBirth;
+  final String emergencyPhone;
+  final String conditions;
+  final String medications;
+
+  const ApplePassLabels({
+    required this.patient,
+    required this.bloodType,
+    required this.allergies,
+    required this.gender,
+    required this.dateOfBirth,
+    required this.emergencyPhone,
+    required this.conditions,
+    required this.medications,
+  });
+}
+
 @injectable
 class ApplePassBuilder {
   static const _certPath = 'assets/certs/pass_certificate.pem';
   static const _keyPath = 'assets/certs/private_key.pem';
 
-  Future<Uint8List> build(EmergencyCardData cardData, {required String patientId}) async {
+  Future<Uint8List> build(
+    EmergencyCardData cardData, {
+    required String patientId,
+    required ApplePassLabels labels,
+  }) async {
     final certificatePem = await _loadAssetString(_certPath);
     final privateKeyPem = await _loadAssetString(_keyPath);
 
@@ -35,7 +61,7 @@ class ApplePassBuilder {
       backgroundColor: css.Color.createRgba(87, 103, 255),
       labelColor: css.Color.createRgba(200, 210, 255),
       logoText: 'HealthWallet.me',
-      generic: _buildPassStructure(cardData),
+      generic: _buildPassStructure(cardData, labels),
       barcodes: [
         Barcode(
           format: PkPassBarcodeType.qr,
@@ -63,27 +89,27 @@ class ApplePassBuilder {
     return bytes;
   }
 
-  PassStructure _buildPassStructure(EmergencyCardData cardData) {
+  PassStructure _buildPassStructure(EmergencyCardData cardData, ApplePassLabels labels) {
     final primaryFields = <FieldDict>[
-      FieldDict(key: 'patient-name', label: 'Patient', value: cardData.patientName),
+      FieldDict(key: 'patient-name', label: labels.patient, value: cardData.patientName),
     ];
 
     final headerFields = <FieldDict>[];
     if (cardData.bloodType != null) {
       headerFields.add(
-        FieldDict(key: 'blood-type', label: 'Blood Type', value: cardData.bloodType!),
+        FieldDict(key: 'blood-type', label: labels.bloodType, value: cardData.bloodType!),
       );
     }
 
     final secondaryFields = <FieldDict>[];
     if (cardData.allergies.isNotEmpty) {
       secondaryFields.add(
-        FieldDict(key: 'allergies', label: 'Allergies', value: cardData.allergies.join(', ')),
+        FieldDict(key: 'allergies', label: labels.allergies, value: cardData.allergies.join(', ')),
       );
     }
     if (cardData.gender != null) {
       secondaryFields.add(
-        FieldDict(key: 'gender', label: 'Gender', value: cardData.gender!),
+        FieldDict(key: 'gender', label: labels.gender, value: cardData.gender!),
       );
     }
 
@@ -93,7 +119,7 @@ class ApplePassBuilder {
       auxiliaryFields.add(
         FieldDict(
           key: 'dob',
-          label: 'Date of Birth',
+          label: labels.dateOfBirth,
           value: '${DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!)} (Age $age)',
         ),
       );
@@ -102,7 +128,7 @@ class ApplePassBuilder {
       auxiliaryFields.add(
         FieldDict(
           key: 'emergency-contact',
-          label: 'Emergency Phone',
+          label: labels.emergencyPhone,
           value: PhoneDisplayFormatter.format(cardData.emergencyContactPhone!),
         ),
       );
@@ -111,12 +137,12 @@ class ApplePassBuilder {
     final backFields = <FieldDict>[];
     if (cardData.conditions.isNotEmpty) {
       backFields.add(
-        FieldDict(key: 'conditions', label: 'Conditions', value: cardData.conditions.join(', ')),
+        FieldDict(key: 'conditions', label: labels.conditions, value: cardData.conditions.join(', ')),
       );
     }
     if (cardData.medications.isNotEmpty) {
       backFields.add(
-        FieldDict(key: 'medications', label: 'Medications', value: cardData.medications.join(', ')),
+        FieldDict(key: 'medications', label: labels.medications, value: cardData.medications.join(', ')),
       );
     }
 

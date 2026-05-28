@@ -5,6 +5,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_input_field.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 import 'package:phone_numbers_parser/metadata.dart';
 import 'country_names.dart';
@@ -262,11 +263,11 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     return GestureDetector(
       onTap: enabled ? _openPicker : null,
       child: Container(
-        height: 36,
+        height: kInputFieldHeight,
         padding: const EdgeInsets.symmetric(horizontal: Insets.small),
         decoration: BoxDecoration(
-          border: Border.all(color: bColor, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: bColor, width: kInputBorderWidth),
+          borderRadius: BorderRadius.circular(kInputBorderRadius),
         ),
         child: Row(
           children: [
@@ -287,28 +288,32 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
 
   Widget _buildNumberField(Color bColor, Color tColor, bool enabled) {
     return Container(
-      height: 36,
+      height: kInputFieldHeight,
       decoration: BoxDecoration(
-        border: Border.all(color: bColor, width: 1.5),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: bColor, width: kInputBorderWidth),
+        borderRadius: BorderRadius.circular(kInputBorderRadius),
       ),
+      alignment: Alignment.center,
       child: TextField(
         controller: _numberCtrl,
         enabled: enabled,
         keyboardType: TextInputType.phone,
-        style: AppTextStyle.labelLarge.copyWith(color: tColor),
+        style: inputFieldTextStyle(context),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: Insets.small,
-            vertical: Insets.small,
+            horizontal: Insets.smallNormal,
           ),
           border: InputBorder.none,
-          isDense: true,
+          enabledBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          isCollapsed: true,
           hintText: _getPlaceholder(),
           hintStyle: AppTextStyle.labelLarge.copyWith(
             color: context.isDarkMode
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondary,
+            height: 1.0,
           ),
         ),
       ),

@@ -66,7 +66,7 @@ class FhirBundleMapper {
       final attachment = item['attachment'] as Map<String, dynamic>?;
       final url = attachment?['url'] as String?;
       if (url != null && url.startsWith('file://')) {
-        final resolvedFile = await _resolveFile(url.substring(7));
+        final resolvedFile = await _resolveFile(Uri.decodeComponent(url.substring(7)));
         if (resolvedFile != null) {
           final bytes = await resolvedFile.readAsBytes();
           attachment!['data'] = base64Encode(bytes);

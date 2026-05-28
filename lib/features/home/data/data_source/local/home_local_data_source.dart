@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
+import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+@Injectable(as: HomePreferencesRepository)
 class HomeLocalDataSourceImpl implements HomePreferencesRepository {
   Future<SharedPreferences> get _prefs async =>
       await SharedPreferences.getInstance();
@@ -34,6 +36,36 @@ class HomeLocalDataSourceImpl implements HomePreferencesRepository {
     final prefs = await _prefs;
     final jsonString = jsonEncode(recordsOrder);
     await prefs.setString(SharedPrefsConstants.recordsOrder, jsonString);
+  }
+
+  @override
+  Future<void> saveSpecialtiesOrder(List<String> specialtiesOrder) async {
+    final prefs = await _prefs;
+    final jsonString = jsonEncode(specialtiesOrder);
+    await prefs.setString(SharedPrefsConstants.specialtiesOrder, jsonString);
+  }
+
+  @override
+  Future<List<String>?> getSpecialtiesOrder() async {
+    final prefs = await _prefs;
+    final jsonString = prefs.getString(SharedPrefsConstants.specialtiesOrder);
+    if (jsonString == null) return null;
+    return List<String>.from(jsonDecode(jsonString));
+  }
+
+  @override
+  Future<void> saveSpecialtiesVisibility(Map<String, bool> visibility) async {
+    final prefs = await _prefs;
+    final jsonString = jsonEncode(visibility);
+    await prefs.setString(SharedPrefsConstants.specialtiesVisibility, jsonString);
+  }
+
+  @override
+  Future<Map<String, bool>?> getSpecialtiesVisibility() async {
+    final prefs = await _prefs;
+    final jsonString = prefs.getString(SharedPrefsConstants.specialtiesVisibility);
+    if (jsonString == null) return null;
+    return Map<String, bool>.from(jsonDecode(jsonString));
   }
 
   @override
@@ -102,5 +134,18 @@ class HomeLocalDataSourceImpl implements HomePreferencesRepository {
     await prefs.remove(SharedPrefsConstants.recordsOrder);
     await prefs.remove(SharedPrefsConstants.vitalsVisibility);
     await prefs.remove(SharedPrefsConstants.recordsVisibility);
+    await prefs.remove(SharedPrefsConstants.overviewViewMode);
+  }
+
+  @override
+  Future<void> saveOverviewViewMode(String mode) async {
+    final prefs = await _prefs;
+    await prefs.setString(SharedPrefsConstants.overviewViewMode, mode);
+  }
+
+  @override
+  Future<String?> getOverviewViewMode() async {
+    final prefs = await _prefs;
+    return prefs.getString(SharedPrefsConstants.overviewViewMode);
   }
 }

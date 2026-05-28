@@ -12,11 +12,9 @@ packages:
   airdrop:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: fec492cb10881eb000345e759182d9e3e422ec86
-      url: "ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git"
-    source: git
+      path: "../packages/airdrop"
+      relative: true
+    source: path
     version: "1.0.0"
   analyzer:
     dependency: transitive
@@ -394,6 +392,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.1"
+  console:
+    dependency: transitive
+    description:
+      name: console
+      sha256: e04e7824384c5b39389acdd6dc7d33f3efe6b232f6f16d7626f194f6a01ad69a
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.0"
   convert:
     dependency: transitive
     description:
@@ -450,6 +456,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.12"
+  desktop_drop:
+    dependency: "direct main"
+    description:
+      name: desktop_drop
+      sha256: d55a010fe46c8e8fcff4ea4b451a9ff84a162217bdb3b2a0aa1479776205e15d
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.4"
   device_info_plus:
     dependency: "direct main"
     description:
@@ -1027,10 +1041,10 @@ packages:
     dependency: "direct main"
     description:
       name: llamadart
-      sha256: e2bdcb4947ae54aaa0c53d63d5b26c8b44721c53a8a5142ee4d920bc82d0c7a4
+      sha256: "1fa139d41173d64123e3bfea7b32768a5667c88bfab39b49046b074bb52c92a3"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.7"
+    version: "0.6.8"
   local_auth:
     dependency: "direct main"
     description:
@@ -1103,6 +1117,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.1"
+  menu_base:
+    dependency: transitive
+    description:
+      name: menu_base
+      sha256: "820368014a171bd1241030278e6c2617354f492f5c703d7b7d4570a6b8b84405"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   meta:
     dependency: transitive
     description:
@@ -1143,6 +1165,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+  msix:
+    dependency: "direct dev"
+    description:
+      name: msix
+      sha256: edde648a8133bf301883c869d19d127049683037c65ff64173ba526ac7a8af2f
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.16.9"
   mustache_template:
     dependency: transitive
     description:
@@ -1583,6 +1613,46 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.8"
+  screen_retriever:
+    dependency: transitive
+    description:
+      name: screen_retriever
+      sha256: "570dbc8e4f70bac451e0efc9c9bb19fa2d6799a11e6ef04f946d7886d2e23d0c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
+  screen_retriever_linux:
+    dependency: transitive
+    description:
+      name: screen_retriever_linux
+      sha256: f7f8120c92ef0784e58491ab664d01efda79a922b025ff286e29aa123ea3dd18
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
+  screen_retriever_macos:
+    dependency: transitive
+    description:
+      name: screen_retriever_macos
+      sha256: "71f956e65c97315dd661d71f828708bd97b6d358e776f1a30d5aa7d22d78a149"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
+  screen_retriever_platform_interface:
+    dependency: transitive
+    description:
+      name: screen_retriever_platform_interface
+      sha256: ee197f4581ff0d5608587819af40490748e1e39e648d7680ecf95c05197240c0
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
+  screen_retriever_windows:
+    dependency: transitive
+    description:
+      name: screen_retriever_windows
+      sha256: "449ee257f03ca98a57288ee526a301a430a344a161f9202b4fcc38576716fe13"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   share_plus:
     dependency: "direct main"
     description:
@@ -1687,6 +1757,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.1"
+  shortid:
+    dependency: transitive
+    description:
+      name: shortid
+      sha256: d0b40e3dbb50497dad107e19c54ca7de0d1a274eb9b4404991e443dadb9ebedb
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   simple_gesture_detector:
     dependency: transitive
     description:
@@ -1860,6 +1938,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+  tray_manager:
+    dependency: "direct main"
+    description:
+      name: tray_manager
+      sha256: c5fd83b0ae4d80be6eaedfad87aaefab8787b333b8ebd064b0e442a81006035b
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.2"
   typed_data:
     dependency: transitive
     description:
@@ -2060,6 +2146,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.5"
+  window_manager:
+    dependency: "direct main"
+    description:
+      name: window_manager
+      sha256: "732896e1416297c63c9e3fb95aea72d0355f61390263982a47fd519169dc5059"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.3"
   xdg_directories:
     dependency: transitive
     description:

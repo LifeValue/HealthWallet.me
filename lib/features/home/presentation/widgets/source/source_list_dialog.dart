@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
@@ -98,7 +99,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
                         ),
                       ),
                       const SizedBox(width: Insets.small),
-                      Text('Sources',
+                      Text(context.l10n.sourcesTitle,
                           style: AppTextStyle.bodySmall
                               .copyWith(fontWeight: FontWeight.w500)),
                     ],
@@ -125,9 +126,29 @@ class _SourceListDialogState extends State<SourceListDialog> {
               child: ListView.builder(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: Insets.small),
-                itemCount: _getSortedSources().length,
+                itemCount: _getSectionedItems().length,
                 itemBuilder: (context, index) {
-                  final source = _getSortedSources()[index];
+                  final item = _getSectionedItems()[index];
+                  if (item is String) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        left: Insets.normal,
+                        top: Insets.smallNormal,
+                        bottom: Insets.extraSmall,
+                      ),
+                      child: Text(
+                        item,
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: context.isDarkMode
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    );
+                  }
+                  final source = item as Source;
                   final isSelected = source.id == widget.selectedSource;
                   final isWallet = source.id.startsWith('wallet-');
                   final isAll = source.id == 'All';
@@ -153,19 +174,14 @@ class _SourceListDialogState extends State<SourceListDialog> {
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: source.platformType == 'wallet'
-                                ? Assets.icons.wallet.svg(
+                            child: Assets.icons.wallet.svg(
                                     width: 18,
                                     height: 18,
-                                    colorFilter: const ColorFilter.mode(
-                                        Colors.green, BlendMode.srcIn),
-                                  )
-                                : Icon(
-                                    Icons.source,
-                                    size: 16,
-                                    color: isSelected
-                                        ? context.colorScheme.primary
-                                        : iconColor,
+                                    colorFilter: ColorFilter.mode(
+                                        isSelected
+                                            ? context.colorScheme.primary
+                                            : iconColor,
+                                        BlendMode.srcIn),
                                   ),
                           ),
                           const SizedBox(width: Insets.small),
@@ -203,10 +219,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (widget.onSourceEdit != null &&
-                                  !isAll &&
-                                  !(isWallet &&
-                                      source.platformType == 'wallet'))
+                              if (widget.onSourceEdit != null && !isAll)
                                 Padding(
                                   padding: const EdgeInsets.all(6),
                                   child: GestureDetector(
@@ -221,9 +234,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                   ),
                                 ),
                               if (widget.onSourceDelete != null &&
-                                  !isAll &&
-                                  !(isWallet &&
-                                      source.platformType == 'wallet')) ...[
+                                  !isAll) ...[
                                 const SizedBox(width: 16),
                                 Padding(
                                   padding: const EdgeInsets.all(6),
@@ -261,8 +272,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
     final walletSource = sources
         .where((s) =>
             s.platformType == 'wallet' &&
-            s.id != 'All' &&
-            s.id != 'demo_data')
+            s.id != 'All')
         .toList();
 
     final walletIds = walletSource.map((s) => s.id).toSet();
@@ -282,13 +292,54 @@ class _SourceListDialogState extends State<SourceListDialog> {
     return [...allSource, ...walletSource, ...otherSources];
   }
 
+  List<dynamic> _getSectionedItems() {
+    final sources = List<Source>.from(widget.sources);
+
+    final allSource = sources.where((s) => s.id == 'All').toList();
+
+    final walletSource = sources
+        .where((s) =>
+            s.platformType == 'wallet' &&
+            s.id != 'All')
+        .toList();
+
+    final walletIds = walletSource.map((s) => s.id).toSet();
+    final otherSources = sources
+        .where((s) =>
+            s.id != 'All' &&
+            !walletIds.contains(s.id) &&
+            s.platformType != 'wallet')
+        .toList();
+
+    otherSources.sort((a, b) {
+      final nameA = _getSourceDisplayName(context, a).toLowerCase();
+      final nameB = _getSourceDisplayName(context, b).toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
+    final items = <dynamic>[...allSource];
+    if (walletSource.isNotEmpty) {
+      items.add('WALLET');
+      items.addAll(walletSource);
+    }
+    if (otherSources.isNotEmpty) {
+      items.add('EHR SOURCES');
+      items.addAll(otherSources);
+    }
+    return items;
+  }
+
   String _getSourceDisplayName(BuildContext context, Source source) {
     if (source.id == 'All') {
       return 'All';
     }
 
     if (source.labelSource?.isNotEmpty == true) {
-      return source.labelSource!;
+      final label = source.labelSource!;
+      if (label.startsWith('Wallet - ')) {
+        return label.substring('Wallet - '.length);
+      }
+      return label;
     }
     if (source.platformName?.isNotEmpty == true) {
       return source.platformName!;
@@ -300,13 +351,161 @@ class _SourceListDialogState extends State<SourceListDialog> {
   }
 
   void _showDeleteConfirmationDialog(BuildContext context, Source source) {
-    DeleteConfirmationDialog.show(
+    final sourceName = _getSourceDisplayName(context, source);
+    final controller = TextEditingController();
+    final isConfirmed = ValueNotifier<bool>(false);
+
+    controller.addListener(() {
+      isConfirmed.value = controller.text.trim() == sourceName;
+    });
+
+    showDialog(
       context: context,
-      title:
-          'Are you sure you want to delete\n"${_getSourceDisplayName(context, source)}"?',
-      onConfirm: () {
-        widget.onSourceDelete!(source);
-        Navigator.of(context).pop();
+      builder: (dialogContext) {
+        final textColor = context.primaryTextColor;
+        final borderColor = context.theme.dividerColor;
+
+        return Dialog(
+          backgroundColor: context.colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: borderColor, width: 1),
+          ),
+          insetPadding: const EdgeInsets.all(Insets.medium),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(Insets.normal),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(Insets.smallNormal),
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: context.colorScheme.error.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: context.colorScheme.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: Insets.small),
+                      Expanded(
+                        child: Text(
+                          context.l10n.actionCannotBeUndone,
+                          style: AppTextStyle.regular.copyWith(
+                            color: context.colorScheme.error,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Insets.normal),
+                RichText(
+                  text: TextSpan(
+                    style: AppTextStyle.bodySmall.copyWith(color: textColor),
+                    children: [
+                      TextSpan(text: context.l10n.deleteSourceConfirmPrefix),
+                      TextSpan(
+                        text: sourceName,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      TextSpan(text: context.l10n.deleteSourceConfirmSuffix),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Insets.normal),
+                TextField(
+                  controller: controller,
+                  style: AppTextStyle.labelLarge,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: sourceName,
+                    hintStyle: AppTextStyle.labelLarge.copyWith(
+                      color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: context.colorScheme.error,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Insets.normal),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        child: Text(
+                          context.l10n.cancel,
+                          style: AppTextStyle.buttonMedium.copyWith(
+                            color: context.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: Insets.small),
+                    Expanded(
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: isConfirmed,
+                        builder: (_, confirmed, __) {
+                          return ElevatedButton(
+                            onPressed: confirmed
+                                ? () {
+                                    Navigator.of(dialogContext).pop();
+                                    widget.onSourceDelete!(source);
+                                    Navigator.of(context).pop();
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: context.colorScheme.error,
+                              disabledBackgroundColor:
+                                  context.colorScheme.error.withValues(alpha: 0.3),
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor:
+                                  Colors.white.withValues(alpha: 0.5),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: Insets.smallNormal),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(context.l10n.deletePage),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }

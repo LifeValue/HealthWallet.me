@@ -3,7 +3,7 @@
     "homeTitle": "Acasă",
     "profileTitle": "Profil",
     "settingsTitle": "Setări",
-    "welcomeMessage": "Bine ați venit la HealthWallet.me!",
+    "welcomeMessage": "Bine ai venit la HealthWallet.me!",
     "onboardingBack": "Înapoi",
     "onboardingGetStarted": "Începe",
     "onboardingNext": "Următorul",
@@ -177,6 +177,12 @@
     "connectionError": "Eroare de conexiune",
     "unknownSource": "Sursă Necunoscută",
     "synchronization": "Sincronizare",
+    "desktopSyncAndBackup": "Desktop Sync & Backup",
+    "desktopSyncDescription": "Sincronizează și salvează datele tale medicale.\nPredă documente pentru procesare digitală pe desktop.",
+    "processOnDesktop": "Procesează pe desktop",
+    "sendToDesktop": "Trimite pe desktop",
+    "continueImporting": "Continuă importul",
+    "noAiModelOnDesktop": "Nu există model AI pe Desktop. Te rugăm să descarci modelul AI pe aplicația desktop mai întâi.",
     "syncMedicalRecords": "Sincronizează Înregistrări Medicale",
     "syncLatestMedicalRecords": "Sincronizează cele mai recente înregistrări medicale de la furnizorul tău de servicii de sănătate folosind un token JWT securizat.",
     "neverSynced": "Niciodată sincronizat",
@@ -244,6 +250,7 @@
     "success": "Succes",
     "demoDataLoadedSuccessfully": "Datele demo au fost încărcate cu succes. Vei fi redirecționat către pagina principală.",
     "documentScanTitle": "Scanare",
+    "fromPhoneTab": "De pe Telefon",
     "onboardingAiModelTitle": "Activează Modelul AI",
     "onboardingAiModelDescription": "Descarcă un model AI securizat, pe dispozitiv, pentru a analiza și organiza automat înregistrările tale de sănătate. Alege între două opțiuni în funcție de nevoile și capacitatea dispozitivului tău. Aceasta este o configurare unică.\n\n**Datele tale rămân private pe dispozitivul tău.**",
     "onboardingAiModelSubtitle": "Deblochează scanarea cu AI",
@@ -279,6 +286,8 @@
     "sessionNotFound": "Sesiune negăsită!",
     "preparingPreview": "Se pregătește previzualizarea...",
     "processingFailed": "Procesare eșuată",
+    "modelNotFoundError": "Fișierul modelului nu a fost găsit. Descarcă modelul AI mai întâi.",
+    "modelCorruptedError": "Fișierul modelului este corupt. Re-descarcă modelul AI.",
     "processingCancelled": "Procesarea a fost anulată",
     "processingBasicDetails": "Se procesează detaliile de bază...",
     "processingPages": "Se procesează paginile...",
@@ -381,7 +390,7 @@
     "regionUS": "SUA",
     "regionEurope": "Europa",
     "regionUK": "Marea Britanie",
-    "medGemmaIncompatibleDevice": "Acest model necesită mai multă memorie decât are dispozitivul tău disponibil. Folosește modelul Standard în schimb.",
+    "medGemmaIncompatibleDevice": "Acest model necesită mai multă memorie decât are dispozitivul tău disponibil. Folosește modelul Lite în schimb.",
     "deepScanDownloadTitle": "Descarcă Modelul de Viziune",
     "deepScanDownloadMessage": "Scanarea Profundă necesită o descărcare suplimentară (~{size} MB). Descarci acum?",
     "@deepScanDownloadMessage": {
@@ -394,7 +403,7 @@
     "downloadingVisionModel": "Se descarcă modelul de viziune...",
 
     "shareUnknownDevice": "Dispozitiv Necunoscut",
-    "shareViewOnlyBanner": "DOAR VIZUALIZARE - Datele vor fi șterse când închideți sesiunea sau părăsiți zona de proximitate",
+    "shareViewOnlyBanner": "DOAR VIZUALIZARE - Datele vor fi șterse când închizi sesiunea sau părăsești zona de proximitate",
     "shareViewOnlyBannerViewing": "DOAR VIZUALIZARE - Datele vor fi șterse la ieșire",
     "shareInfoBannerMessage": "Înregistrările partajate sunt doar pentru vizualizare. Toate datele sunt șterse automat când sesiunea se termină sau limita de timp expiră.",
     "shareTitle": "Partajare",
@@ -415,7 +424,7 @@
     "shareSessionCompleteMessage": "Toate datele partajate au fost eliminate în siguranță de pe acest dispozitiv",
     "shareBackHome": "Înapoi Acasă",
     "shareConnectionFailed": "Conexiune Eșuată",
-    "shareUnableToConnect": "Nu s-a putut conecta. Vă rugăm încercați din nou.",
+    "shareUnableToConnect": "Nu s-a putut conecta. Te rugăm încearcă din nou.",
     "shareNoDataReceived": "Nu s-au primit date",
     "shareSearchRecords": "Caută înregistrări",
     "shareNoRecordsMatchFilters": "Nicio înregistrare nu corespunde filtrelor",
@@ -428,7 +437,7 @@
     "shareSendingRecords": "Se trimit înregistrările...",
     "shareReceivingRecords": "Se primesc înregistrările...",
     "shareConfirmExit": "Confirmă Ieșirea",
-    "shareDeleteSharedRecords": "Ștergeți Înregistrările Partajate?",
+    "shareDeleteSharedRecords": "Ștergi Înregistrările Partajate?",
     "shareDeleteWarning": "Înregistrarea partajată va fi ștearsă permanent de pe acest dispozitiv. Acțiunea nu poate fi anulată",
     "shareDeleteAndExit": "Șterge și Ieși",
     "shareIncomingTransfer": "Transfer Primit",
@@ -440,14 +449,14 @@
     "shareNoDevicesFound": "Nu s-au Găsit Dispozitive",
     "shareConnectionIssue": "Problemă de Conexiune",
     "shareWifiDirectUnresponsive": "WiFi Direct nu răspunde pe acest dispozitiv.",
-    "shareWifiToggleHint": "WiFi Direct nu răspunde. Dezactivați/activați WiFi, apoi apăsați Reîncercați.",
-    "shareDiscoveryHint": "Asigurați-vă că celălalt dispozitiv are aplicația HealthWallet.me deschisă",
+    "shareWifiToggleHint": "WiFi Direct nu răspunde. Dezactivează/activează WiFi, apoi apasă Reîncearcă.",
+    "shareDiscoveryHint": "Asigură-te că celălalt dispozitiv are aplicația HealthWallet.me deschisă",
     "shareProximityHint": "Dispozitivul receptor trebuie să aibă Proximitate Partajare ACTIVATĂ în Preferințe pentru a fi detectabil.",
     "shareNoRecordsMatchSelectedFilters": "Nicio înregistrare nu corespunde filtrelor selectate",
     "shareNoRecordsForAppliedFilters": "Nu s-au găsit înregistrări pentru filtrele aplicate",
-    "shareTryClearingFilters": "Încercați să ștergeți câteva filtre",
+    "shareTryClearingFilters": "Încearcă să ștergi câteva filtre",
     "shareRecordsPageFiltersNoResults": "Filtrele paginii de Înregistrări nu au returnat rezultate",
-    "shareImportOrSyncRecords": "Importați sau sincronizați înregistrări pentru a le partaja",
+    "shareImportOrSyncRecords": "Importă sau sincronizează înregistrări pentru a le partaja",
     "shareSessionTime": "Durata sesiunii",
     "shareSetAsDefault": "Setează ca implicit",
     "shareRecordsButton": "Partajează Înregistrări",
@@ -500,7 +509,7 @@
             }
         }
     },
-    "shareDeviceWantsToShare": "{deviceName} dorește să partajeze înregistrări cu dvs.",
+    "shareDeviceWantsToShare": "{deviceName} dorește să partajeze înregistrări cu tine.",
     "@shareDeviceWantsToShare": {
         "placeholders": {
             "deviceName": {
@@ -613,5 +622,505 @@
                 "type": "String"
             }
         }
-    }
+    },
+
+    "desktopSyncNotYet": "Nu încă",
+    "desktopSyncTransfer": "Transfer",
+    "desktopSyncTransferValue": "{sentRows} trimise, {receivedRows} primite",
+    "@desktopSyncTransferValue": {
+        "placeholders": {
+            "sentRows": {
+                "type": "int"
+            },
+            "receivedRows": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopSyncPending": "În așteptare",
+    "desktopSyncPendingValue": "{count} modificări",
+    "@desktopSyncPendingValue": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopSyncingTable": "Se sincronizează {tableName}...",
+    "@desktopSyncingTable": {
+        "placeholders": {
+            "tableName": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopSyncing": "Se sincronizează...",
+    "desktopSyncNow": "Sincronizează acum",
+    "desktopSyncError": "Eroare",
+    "desktopSyncInSync": "Sincronizat",
+    "desktopSyncReady": "Pregătit",
+    "desktopSyncOffline": "Offline",
+    "desktopTableHealthRecords": "Înregistrări medicale",
+    "desktopTableSources": "Surse",
+    "desktopTableNotes": "Notițe",
+    "desktopTableSessions": "Sesiuni",
+    "desktopConnection": "Conexiune",
+    "desktopGeneratePairingQr": "Generează QR de asociere",
+    "desktopScanFromMobile": "Scanează din pagina Sync de pe mobil",
+    "desktopDevice": "Dispozitiv",
+    "desktopTransport": "Transport",
+    "desktopIp": "IP",
+    "desktopPort": "Port",
+    "desktopNewPairing": "Asociere nouă",
+    "desktopTransportTcp": "TCP prin WiFi",
+    "desktopTransportMpc": "MultipeerConnectivity (Direct)",
+    "desktopConnectedTo": "Conectat la {name}",
+    "@desktopConnectedTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopConnected": "Conectat",
+    "desktopReconnectingTo": "Reconectare la {name}...",
+    "@desktopReconnectingTo": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopReconnecting": "Reconectare...",
+    "desktopDisconnectedFrom": "Deconectat de la {name}",
+    "@desktopDisconnectedFrom": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopDisconnected": "Deconectat",
+    "desktopDisconnect": "Deconectează",
+    "desktopReconnect": "Reconectează",
+    "desktopVpnDetected": "VPN detectat. Deconectează VPN-ul pentru a sincroniza cu desktopul.",
+    "desktopPairing": "Asociere",
+    "desktopLabel": "Desktop",
+    "desktopScanFromPhoneToPair": "Scanează cu telefonul pentru a asocia",
+    "desktopNewQrCode": "Cod QR nou",
+    "desktopGenerateQrCode": "Generează cod QR",
+    "desktopScanQrCode": "Scanează codul QR",
+    "desktopChooseWhereToSave": "Alege unde să salvezi copiile de siguranță",
+    "desktopSelectBackupFolder": "Selectează un folder pe computer pentru stocarea copiilor de siguranță",
+    "desktopChooseLocation": "Alege locația",
+    "desktopChooseBackupLocation": "Alege locația copiei de siguranță",
+    "desktopBackingUp": "Se salvează...",
+    "desktopCreateBackup": "Creează copie de siguranță",
+    "desktopSyncWithPhoneFirst": "Sincronizează mai întâi cu telefonul",
+    "desktopNotConnected": "(neconectat)",
+    "desktopStartBackup": "Începe salvarea",
+    "desktopNoBackupsYet": "Nicio copie de siguranță încă",
+    "desktopCreateFirstBackup": "Creează prima copie de siguranță pentru a-ți proteja datele medicale",
+    "desktopAllBackups": "Toate copiile de siguranță",
+    "desktopDate": "Dată",
+    "desktopSize": "Dimensiune",
+    "desktopChecksum": "Sumă de control",
+    "desktopRestoreThisBackup": "Restaurează această copie",
+    "desktopRestoreBackupTitle": "Restaurezi copia de siguranță?",
+    "desktopRestoreBackupMessage": "Toate datele actuale de pe acest dispozitiv vor fi înlocuite cu \"{name}\".\n\n{count} înregistrări vor fi restaurate.\n\nDatele de pe telefonul asociat nu vor fi afectate.",
+    "@desktopRestoreBackupMessage": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            },
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopRestore": "Restaurează",
+    "desktopDeleteBackupTitle": "Ștergi copia de siguranță?",
+    "desktopDeleteBackupMessage": "Ștergi \"{name}\"?\n\nAceastă acțiune nu poate fi anulată.",
+    "@desktopDeleteBackupMessage": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopDelete": "Șterge",
+    "desktopBackupFrom": "Copie din",
+    "desktopBackup": "Copie de siguranță",
+    "desktopChange": "Schimbă",
+    "desktopProcessingHistory": "Istoric de procesare",
+    "desktopScannedOnPhone": "Scanat pe telefon",
+    "desktopProcessedOnDesktop": "Procesat pe desktop",
+    "desktopImportedOnDesktop": "Importat pe desktop",
+    "desktopSyncRecent": "Recente",
+    "desktopUnknownDevice": "Dispozitiv necunoscut",
+    "desktopSyncHistoryTransfer": "{sentRows} trimise · {receivedRows} primite",
+    "@desktopSyncHistoryTransfer": {
+        "placeholders": {
+            "sentRows": {
+                "type": "int"
+            },
+            "receivedRows": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopNewDeviceConnecting": "Dispozitiv nou se conectează",
+    "desktopNewDeviceMessage": "Un dispozitiv nou ({address}) dorește să se conecteze.\n\nAceasta va deconecta \"{currentDevice}\".\n\nComuți pe noul dispozitiv?",
+    "@desktopNewDeviceMessage": {
+        "placeholders": {
+            "address": {
+                "type": "String"
+            },
+            "currentDevice": {
+                "type": "String"
+            }
+        }
+    },
+    "desktopKeepCurrent": "Păstrează actualul",
+    "desktopSwitch": "Comută",
+    "desktopCurrentDevice": "dispozitiv actual",
+    "desktopHandoverPreparing": "Se pregătește...",
+    "desktopHandoverSendingFiles": "Se trimit fișierele...",
+    "desktopHandoverProcessingOnDesktop": "Se procesează pe desktop...",
+    "desktopHandoverComplete": "Finalizat!",
+    "desktopHandoverError": "A apărut o eroare",
+    "desktopHandoverSending": "Se trimite...",
+    "desktopHandoverSendingToDesktop": "Se trimite pe desktop",
+    "desktopHandoverFileCount": "{count} fișiere",
+    "@desktopHandoverFileCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "desktopHandoverSuccess": "Predat pe desktop",
+    "desktopClose": "Închide",
+    "desktopContinueImporting": "Continuă importul",
+    "desktopConnectToDesktop": "Conectează la desktop",
+    "desktopCouldNotReconnect": "Nu s-a putut reconecta. Scanează codul QR pentru a asocia din nou.",
+    "desktopScanQrToPair": "Scanează codul QR din aplicația desktop pentru a asocia.",
+    "desktopHandoverToDesktop": "Predare pe desktop",
+    "desktopHandoverProcessingMessage": "Procesarea este în curs. Predarea va anula procesarea curentă și va trimite fișierele pe desktop.",
+    "desktopHandover": "Predare",
+
+    "attachedDocuments": "Documente atașate",
+    "cameraPermissionRequired": "Permisiune cameră necesară",
+    "cameraPermissionRequiredMessage": "Această aplicație necesită acces la cameră pentru scanare. Te rugăm să acorzi permisiunea.",
+    "cameraPermissionDenied": "Permisiune cameră refuzată",
+    "cameraPermissionDeniedMessage": "Permisiunea camerei a fost refuzată permanent. Activează-o din Setări pentru a folosi scanerul.",
+    "successTitle": "Succes!",
+    "attachmentSuccessMessage": "{count} documente atașate cu succes la consultație.",
+    "@attachmentSuccessMessage": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "encounterLabel": "Consultație",
+    "viewRecords": "Vezi înregistrările",
+    "errorTitle": "Eroare",
+    "somethingWentWrong": "Ceva nu a funcționat corect",
+    "importDocument": "Importă document",
+    "pickImageFromGallery": "Alege imagine din galerie",
+    "scanDocument": "Scanează document",
+    "deleteSession": "Șterge sesiunea",
+    "deleteSessionConfirmation": "Ești sigur că vrei să ștergi această sesiune?",
+    "delete": "Șterge",
+    "canceling": "Se anulează...",
+    "waitingForAiToFinish": "Se așteaptă finalizarea IA...",
+    "logsCopied": "Jurnale copiate",
+    "download": "Descarcă",
+    "active": "Activ",
+    "tapToSelect": "Apasă pentru a selecta",
+    "deviceInfoChip": "{platform}  •  {ramGB} GB RAM  •  {cores} nuclee  •  ~{estimatedMB} MB necesari",
+    "@deviceInfoChip": {
+        "placeholders": {
+            "platform": {
+                "type": "String"
+            },
+            "ramGB": {
+                "type": "String"
+            },
+            "cores": {
+                "type": "int"
+            },
+            "estimatedMB": {
+                "type": "int"
+            }
+        }
+    },
+    "downloadContinuesInBackground": "Poți naviga liber — descărcarea continuă în fundal.\nVerifică notificările pentru progres.",
+    "continueWithoutAi": "Continuă fără IA (descărcare în fundal)",
+    "continueUsingApp": "Continuă să folosești aplicația",
+    "attachWithoutProcessing": "Vreau să atașez documentul fără procesare",
+    "currentPatientAndSource": "Pacient și sursă curentă",
+    "createEncounter": "Creează consultație",
+    "encounterName": "Nume consultație",
+    "enterEncounterName": "Introdu numele consultației",
+    "pleaseEnterEncounterName": "Te rugăm să introduci un nume pentru consultație",
+    "date": "Dată",
+    "create": "Creează",
+    "searchEncounters": "Caută consultații...",
+    "noEncountersFound": "Nicio consultație găsită",
+    "noEncountersFoundMessage": "Creează mai întâi o consultație nouă sau selectează un alt pacient.",
+    "newEncounterPrefix": "Consultație nouă",
+    "scannedDocumentsTitle": "Documente scanate",
+    "scannedDocumentsPagesTitle": "Documente scanate ({count} pagini)",
+    "@scannedDocumentsPagesTitle": {
+        "placeholders": {
+            "count": {
+                "type": "String"
+            }
+        }
+    },
+    "pdfFileTitle": "PDF: {fileName}",
+    "@pdfFileTitle": {
+        "placeholders": {
+            "fileName": {
+                "type": "String"
+            }
+        }
+    },
+    "labelOrganizationName": "Numele organizației",
+    "labelAddress": "Adresă",
+    "labelPhone": "Telefon",
+    "labelEncounterName": "Numele consultației",
+    "labelStartDate": "Data începerii",
+    "labelFirstName": "Prenume",
+    "labelFamilyName": "Nume de familie",
+    "labelDateOfBirth": "Data nașterii",
+    "labelGender": "Gen",
+    "labelReportName": "Numele raportului",
+    "labelConclusion": "Concluzie",
+    "labelIssuedDate": "Data emiterii",
+    "labelPractitionerName": "Numele medicului",
+    "labelSpecialty": "Specialitate",
+    "labelIdentifier": "Identificator",
+    "labelConditionName": "Numele diagnosticului",
+    "labelOnsetDate": "Data debutului",
+    "labelClinicalStatus": "Stare clinică",
+    "labelSubstance": "Substanță",
+    "labelManifestation": "Manifestare",
+    "labelCategory": "Categorie",
+    "labelProcedureName": "Numele procedurii",
+    "labelPerformedDate": "Data efectuării",
+    "labelReason": "Motiv",
+    "labelMedicationName": "Numele medicamentului",
+    "labelDosage": "Dozaj",
+    "labelObservationName": "Numele observației",
+    "labelValue": "Valoare",
+    "labelUnit": "Unitate",
+    "labelReferenceRange": "Interval de referință",
+
+    "permissionsRequired": "Permisiuni necesare",
+    "recordsSelectedCount": "{count} selectate",
+    "@recordsSelectedCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "noRecordsSelected": "Nicio înregistrare selectată",
+    "select": "Selectează",
+    "selectRecordsBeforeSharing": "Selectează înregistrări\nînainte de a partaja",
+    "selectRecordToViewDetails": "Selectează o înregistrare pentru a vedea detaliile",
+    "recordDetails": "Detalii înregistrare",
+    "viewDocument": "Vezi documentul",
+    "encounterDetails": "Detalii consultație",
+    "relatedResources": "Resurse asociate",
+    "deletePlusRelated": "Șterge + {count} asociate",
+    "@deletePlusRelated": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "fileNotAvailable": "Fișier indisponibil pe acest dispozitiv",
+    "couldNotOpenFile": "Fișierul nu a putut fi deschis: {message}",
+    "@couldNotOpenFile": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "errorOpeningFile": "Eroare la deschiderea fișierului: {error}",
+    "@errorOpeningFile": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToLoadImage": "Imaginea nu a putut fi încărcată",
+    "errorLoadingPdf": "Eroare la încărcarea PDF: {error}",
+    "@errorLoadingPdf": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "errorOnPage": "Eroare pe pagina {page}: {error}",
+    "@errorOnPage": {
+        "placeholders": {
+            "page": {
+                "type": "String"
+            },
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "notes": "Notițe",
+    "noNotesAttached": "Această înregistrare nu are notițe atașate",
+    "addNote": "Adaugă notiță",
+    "editNote": "Editează notiță",
+    "filters": "Filtre",
+    "timeRange": "Interval de timp",
+    "applyFilters": "Aplică filtre",
+    "recordType": "Tip înregistrare",
+    "specialty": "Specialitate",
+    "allSpecialties": "Toate specialitățile",
+    "selectedRange": "Interval selectat",
+    "noRangeSelected": "Niciun interval selectat",
+    "clearDateRange": "Șterge intervalul",
+    "start": "Început",
+    "end": "Sfârșit",
+    "fromDate": "Din {date}",
+    "@fromDate": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "untilDate": "Până la {date}",
+    "@untilDate": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "day": "Zi",
+    "month": "Lună",
+    "year": "An",
+    "mediaInfo": "Info media",
+    "linkToEncounter": "Leagă de consultație",
+    "noPdfDataAvailable": "Nu sunt date PDF disponibile",
+    "failedToLoadPdf": "Documentul PDF nu a putut fi încărcat",
+    "mediaInformation": "Informații media",
+    "mediaInfoTitle": "Titlu:",
+    "mediaInfoType": "Tip:",
+    "mediaInfoStatus": "Stare:",
+    "mediaInfoPatient": "Pacient:",
+    "mediaInfoEncounter": "Consultație:",
+    "mediaInfoFileSize": "Dimensiune fișier:",
+    "mediaInfoCreated": "Creat:",
+    "mediaInfoResourceId": "ID resursă:",
+    "mediaInfoSource": "Sursă:",
+    "close": "Închide",
+    "linkMediaToEncounterDescription": "Leagă această resursă media de o consultație:",
+    "encounterId": "ID consultație",
+    "encounterIdHint": "ex., consultatie-123",
+    "mediaLinkedSuccess": "Resursă media legată cu succes de consultație",
+    "failedToLinkMedia": "Legarea a eșuat: {error}",
+    "@failedToLinkMedia": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "link": "Leagă",
+
+    "connectionLabel": "Conexiune",
+    "connectionStatusConnected": "Conectat",
+    "connectionStatusConnecting": "Se conectează...",
+    "connectionStatusDisconnected": "Deconectat",
+    "connectionStatusNotPaired": "Neasociat",
+    "syncLabel": "Sincronizare",
+    "syncStatusSyncing": "Se sincronizează...",
+    "syncStatusNotSynced": "Nesincronizat",
+    "syncStatusInSync": "Sincronizat",
+    "syncStatusPending": "{count} în așteptare",
+    "@syncStatusPending": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "backupLabel": "Copie de siguranță",
+    "backupStatusWorking": "Se lucrează...",
+    "backupStatusNoBackup": "Fără copie de siguranță",
+    "backupStatusBackingUp": "Se salvează...",
+    "backupStatusRestoring": "Se restaurează...",
+    "backupStatusWaiting": "Se așteaptă...",
+    "backupStatusNotConnected": "Neconectat",
+    "exportIpsPdf": "Exportă IPS (PDF)",
+    "addIpsToAppleWallet": "Adaugă IPS în Apple Wallet",
+    "addIpsToGoogleWallet": "Adaugă IPS în Google Wallet",
+    "sourcesTitle": "Surse",
+    "emergencyMedicalId": "Card medical de urgență",
+    "phoneLabel": "Telefon",
+    "allergiesLabel": "Alergii",
+    "medicalConditionsLabel": "Afecțiuni medicale",
+    "medicationsLabel": "Medicamente",
+    "conditionsLabel": "Afecțiuni",
+    "dateOfBirthLabel": "Data nașterii",
+    "emergencyPhoneLabel": "Telefon de urgență",
+    "openingScanner": "Se deschide scanerul...",
+    "activeScanSessions": "Sesiuni de scanare active:",
+    "noScansYet": "Nicio scanare încă",
+    "scanOrImportToGetStarted": "Scanează sau importă documente pentru a începe",
+    "pageOfTotal": "{current} din {total}",
+    "@pageOfTotal": {
+        "placeholders": {
+            "current": {
+                "type": "String"
+            },
+            "total": {
+                "type": "String"
+            }
+        }
+    },
+    "fileNotFound": "Fișier negăsit",
+    "fileIsEmpty": "Fișierul este gol",
+    "importTitle": "Import",
+    "activeImportSessions": "Sesiuni de import active:",
+    "dropToImport": "Trage pentru a importa",
+    "dropFilesHereToImport": "Trage fișierele aici pentru a le importa",
+    "supportedFileFormats": "PDF, JPG, PNG, TIFF",
+    "browseFiles": "Răsfoiește fișiere",
+    "noImportsYet": "Niciun import încă",
+    "importOrScanToGetStarted": "Importă sau scanează documente pentru a începe",
+    "notificationsTitle": "Notificări",
+    "noNotifications": "Nicio notificare",
+    "cancelDownloadTitle": "Anulează descărcarea",
+    "cancelDownloadMessage": "Ești sigur că vrei să anulezi descărcarea modelului IA? O poți relua mai târziu.",
+    "processingDone": "Procesare finalizată",
+    "pairedWithDevice": "Asociat cu {deviceName}",
+    "@pairedWithDevice": {
+        "placeholders": {
+            "deviceName": {
+                "type": "String"
+            }
+        }
+    },
+    "deviceSyncLabel": "Sincronizare dispozitiv",
+    "disconnectLabel": "Deconectează",
+    "changeLabel": "Schimbă",
+    "minimizeToTray": "Minimizează în bara de sistem",
+    "currentRecord": "Înregistrarea curentă"
 }

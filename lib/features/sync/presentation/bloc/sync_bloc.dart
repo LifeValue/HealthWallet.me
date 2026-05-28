@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
-import 'package:health_wallet/features/sync/domain/entities/sync_qr_data.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
@@ -13,7 +14,7 @@ part 'sync_event.dart';
 part 'sync_state.dart';
 part 'sync_bloc.freezed.dart';
 
-@injectable
+@lazySingleton
 class SyncBloc extends Bloc<SyncEvent, SyncState> {
   final SyncRepository _syncRepository;
   final RecordsRepository _recordsRepository;
@@ -66,6 +67,8 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     SyncData event,
     Emitter<SyncState> emit,
   ) async {
+    debugPrint('[SYNC] === SyncData event received ===');
+    debugPrint('[SYNC] QR data length: ${event.qrData.length}');
     emit(state.copyWith(
       isLoading: true,
       isQRScanning: false,
@@ -74,32 +77,46 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       successMessage: null,
     ));
     try {
+      debugPrint('[SYNC] Parsing QR JSON...');
       final qrDataJson = jsonDecode(event.qrData) as Map<String, dynamic>;
+      debugPrint('[SYNC] JSON keys: ${qrDataJson.keys.toList()}');
       final syncQrData = SyncQrData.fromJson(qrDataJson);
+      debugPrint('[SYNC] Parsed SyncQrData: token=${syncQrData.token.substring(0, syncQrData.token.length > 10 ? 10 : syncQrData.token.length)}... urls=${syncQrData.serverBaseUrls} endpoint=${syncQrData.syncEndpoint}');
 
+      debugPrint('[SYNC] Creating default patient...');
       await _defaultPatientService.createAndSetAsMain();
-
-      await _recordsRepository.clearDemoData();
+      debugPrint('[SYNC] Default patient created');
 
       Exception? exception;
       _syncRepository.setBearerToken(syncQrData.token);
+      debugPrint('[SYNC] Bearer token set');
+
       for (String baseUrl in syncQrData.serverBaseUrls) {
+        debugPrint('[SYNC] Trying server: $baseUrl');
         _syncRepository.setBaseUrl(baseUrl);
 
         try {
+          debugPrint('[SYNC] Syncing resources from endpoint: ${syncQrData.syncEndpoint}');
           await _syncRepository.syncResources(
               endpoint: syncQrData.syncEndpoint);
 
+          debugPrint('[SYNC] Sync SUCCESS with $baseUrl');
           exception = null;
           break;
         } on Exception catch (e) {
+          debugPrint('[SYNC] FAILED with $baseUrl: $e');
           exception = e;
           continue;
         }
       }
-      if (exception != null) throw exception;
+      if (exception != null) {
+        debugPrint('[SYNC] All servers failed, throwing last exception');
+        throw exception;
+      }
 
+      debugPrint('[SYNC] Saving sync QR data...');
       await _syncRepository.saveSyncQrData(syncQrData);
+      debugPrint('[SYNC] === Sync completed successfully ===');
 
       emit(state.copyWith(
         isLoading: false,
@@ -116,7 +133,10 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         sourceId: 'sync',
         isSuccess: true,
       ));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[SYNC] ERROR: $e');
+      debugPrint('[SYNC] Stack: ${stackTrace.toString().split('\n').take(5).join('\n')}');
+
       String errorMessage;
       if (e.toString().contains('HandshakeException') ||
           e.toString().contains('Connection refused') ||
@@ -134,6 +154,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         errorMessage = 'Data sync failed: $e';
       }
 
+      debugPrint('[SYNC] Emitting error: $errorMessage');
       emit(state.copyWith(
         isLoading: false,
         errorMessage: errorMessage,
@@ -145,6 +166,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
 
   Future<void> _onScanQRCode(
       SyncScanQRCode event, Emitter<SyncState> emit) async {
+    debugPrint('[SYNC] QR scanner opened');
     emit(state.copyWith(
       isQRScanning: true,
     ));

@@ -6,21 +6,15 @@
     "configurations": [
     
         {
-            "name": "health_wallet",
+            "name": "health_wallet (mobile)",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "health_wallet (profile mode)",
+            "name": "health_wallet (desktop)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "health_wallet (release mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
+            "program": "lib/main_desktop.dart"
         }
     ]
 }

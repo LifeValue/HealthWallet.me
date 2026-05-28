@@ -23,6 +23,7 @@ import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class ShareRecordsPage extends StatelessWidget {
@@ -161,10 +162,15 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
                       titleWidget: _buildSelectionAppBarContent(context, state),
                     )
                   : state.phase == SharePhase.viewingRecords
-                      ? CustomAppBar(
-                          automaticallyImplyLeading: false,
-                          titleWidget: _buildViewingAppBarContent(context, state),
-                        )
+                      ? (MediaQuery.of(context).size.width >= 600 &&
+                              MediaQuery.of(context).orientation !=
+                                  Orientation.portrait
+                          ? null
+                          : CustomAppBar(
+                              automaticallyImplyLeading: false,
+                              titleWidget:
+                                  _buildViewingAppBarContent(context, state),
+                            ))
                       : state.phase == SharePhase.sessionEnded
                           ? null
                           : state.phase == SharePhase.monitoringSession

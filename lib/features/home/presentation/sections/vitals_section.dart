@@ -44,14 +44,17 @@ class VitalsSection extends StatelessWidget {
     return screenWidth < _breakpoint ? 8 : 12;
   }
 
-  double _getChildAspectRatio(double screenWidth) {
-    return screenWidth < _breakpoint ? 1.88 : 2.0;
+  double _getChildAspectRatio(double screenWidth, bool isPortrait) {
+    if (screenWidth >= 900) return isPortrait ? 3.0 : 3.6;
+    if (screenWidth >= 600) return isPortrait ? 2.3 : 3.0;
+    return screenWidth < _breakpoint ? 1.88 : 1.85;
   }
 
   @override
   Widget build(BuildContext context) {
     final vitalsToShow = vitalsExpanded ? allAvailableVitals : vitals;
     final double screenWidth = MediaQuery.sizeOf(context).width;
+    final bool isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +80,7 @@ class VitalsSection extends StatelessWidget {
           crossAxisCount: _getCrossAxisCount(screenWidth),
           crossAxisSpacing: _getCrossAxisSpacing(screenWidth),
           mainAxisSpacing: _getCrossAxisSpacing(screenWidth),
-          childAspectRatio: _getChildAspectRatio(screenWidth),
+          childAspectRatio: _getChildAspectRatio(screenWidth, isPortrait),
           shrinkWrap: true,
           padding: EdgeInsets.zero,
           itemBuilder: (context, vital, index) {
@@ -154,10 +157,11 @@ class VitalsSection extends StatelessWidget {
     final String? status = vital.status;
 
     final bool isSmall = screenWidth < _breakpoint;
+    final bool isTabletLayout = screenWidth >= 600;
 
     final double iconSize = isSmall ? 14 : 16;
 
-    final double cardPadding = isSmall ? Insets.normal : Insets.normal;
+    final double cardPadding = isTabletLayout ? Insets.small : Insets.normal;
 
     final double iconTitleSpacing = isSmall ? 6 : Insets.smaller;
 
@@ -330,32 +334,20 @@ class VitalsSection extends StatelessWidget {
       }
     }
 
-    final TextStyle titleStyle = isSmall
-        ? AppTextStyle.bodySmall.copyWith(
-            fontSize: 12,
-            color: context.colorScheme.onSurface,
-          )
-        : AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface,
-          );
+    final TextStyle titleStyle = AppTextStyle.bodySmall.copyWith(
+      fontSize: isSmall ? 12 : 14,
+      color: context.colorScheme.onSurface,
+    );
 
-    final TextStyle valueStyle = isSmall
-        ? AppTextStyle.titleLarge.copyWith(
-            fontSize: 20,
-            color: context.colorScheme.onSurface,
-          )
-        : AppTextStyle.titleSmall.copyWith(
-            color: context.colorScheme.onSurface,
-          );
+    final TextStyle valueStyle = AppTextStyle.titleLarge.copyWith(
+      fontSize: isSmall ? 20 : 24,
+      color: context.colorScheme.onSurface,
+    );
 
-    final TextStyle unitStyle = isSmall
-        ? AppTextStyle.bodySmall.copyWith(
-            fontSize: 11,
-            color: context.colorScheme.onSurface.withOpacity(0.6),
-          )
-        : AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.6),
-          );
+    final TextStyle unitStyle = AppTextStyle.bodySmall.copyWith(
+      fontSize: isSmall ? 11 : 12,
+      color: context.colorScheme.onSurface.withOpacity(0.6),
+    );
 
     return Container(
       key: key,
@@ -369,54 +361,54 @@ class VitalsSection extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                SizedBox(height: iconSize, width: iconSize, child: icon),
-                SizedBox(width: iconTitleSpacing),
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStyle,
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  SizedBox(height: iconSize, width: iconSize, child: icon),
+                  SizedBox(width: iconTitleSpacing),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: titleStyle,
+                      ),
                     ),
                   ),
-                ),
-                if (statusIcon != null) ...[
-                  const SizedBox(width: 4),
-                  statusIcon,
+                  if (statusIcon != null) ...[
+                    const SizedBox(width: 4),
+                    statusIcon,
+                  ],
                 ],
-              ],
-            ),
-            const SizedBox(height: Insets.smallNormal),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Flexible(
-                  child: Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: valueStyle,
+              ),
+              const SizedBox(height: Insets.smallNormal),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Flexible(
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: valueStyle,
+                    ),
                   ),
-                ),
-                if (unit.isNotEmpty && !value.contains(unit)) ...[
-                  const SizedBox(width: 4),
-                  Text(
-                    unit,
-                    style: unitStyle,
-                  ),
+                  if (unit.isNotEmpty && !value.contains(unit)) ...[
+                    const SizedBox(width: 4),
+                    Text(unit, style: unitStyle),
+                  ],
                 ],
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

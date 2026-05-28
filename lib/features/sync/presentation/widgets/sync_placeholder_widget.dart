@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -12,6 +13,7 @@ import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
@@ -21,9 +23,10 @@ import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/import_actions.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/import_actions.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/form_fields.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SyncPlaceholderWidget extends StatefulWidget {
   final PageController? pageController;
@@ -422,7 +425,8 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   void _handleSyncRecords(BuildContext context) {
     if (context.mounted) {
-      context.router.push(const SyncRoute());
+      debugPrint('[SYNC] Opening QR scanner from placeholder');
+      context.read<SyncBloc>().add(const SyncScanQRCode());
     }
   }
 
@@ -586,7 +590,9 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
             side: BorderSide(color: borderColor, width: 1),
           ),
           insetPadding: const EdgeInsets.all(Insets.normal),
-          child: Padding(
+          child: SizedBox(
+            width: context.dialogWidth,
+            child: Padding(
             padding: const EdgeInsets.all(Insets.normal),
             child: AnimatedSize(
               duration: const Duration(milliseconds: 250),
@@ -597,6 +603,7 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
                 children: _buildStepContent(context, textColor, borderColor),
               ),
             ),
+          ),
           ),
         ),
       ),

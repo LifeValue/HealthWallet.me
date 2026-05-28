@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
@@ -13,13 +14,16 @@ import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart'
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/presentation/sections/medical_records_section.dart';
 import 'package:health_wallet/features/home/presentation/sections/recent_records_section.dart';
+import 'package:health_wallet/features/home/presentation/sections/specialties_section.dart';
 import 'package:health_wallet/features/home/presentation/sections/vitals_section.dart';
+import 'package:health_wallet/features/home/presentation/widgets/home_overview_toggle.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_dialog_controller.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_section_header.dart';
 import 'package:health_wallet/features/home/presentation/widgets/section_info_modal.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_selector_widget.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class HomeDashboardSections extends StatelessWidget {
   final HomeState state;
@@ -43,7 +47,7 @@ class HomeDashboardSections extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: context.screenHorizontalPadding),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
-          SizedBox(height: context.isTablet ? Insets.normal : Insets.small),
+          const SizedBox(height: Insets.small),
           if (state.hasDataLoaded || editMode)
             _buildVitalsSection(context, colorScheme),
           _buildResponsiveSpacing(context),
@@ -59,6 +63,7 @@ class HomeDashboardSections extends StatelessWidget {
   }
 
   Widget _buildResponsiveSpacing(BuildContext context) {
+    if (context.isTablet) return const SizedBox(height: Insets.normal);
     return SizedBox(
       height: MediaQuery.of(context).size.height < 700
           ? Insets.medium
@@ -136,9 +141,13 @@ class HomeDashboardSections extends StatelessWidget {
     return Column(
       children: [
         HomeSectionHeader(
-          title: context.l10n.overview,
-          subtitle: state.sources.isNotEmpty
-              ? SourceSelectorWidget(
+          titleWidget: HomeOverviewToggle(
+            mode: state.overviewViewMode,
+            onChanged: (mode) {
+              context.read<HomeBloc>().add(HomeOverviewViewModeChanged(mode));
+            },
+          ),
+          subtitle: SourceSelectorWidget(
                   sources: state.sources,
                   selectedSource: state.selectedSource,
                   onSourceChanged: (sourceId, patientSourceIds) {
@@ -176,18 +185,29 @@ class HomeDashboardSections extends StatelessWidget {
                           );
                     }
                   },
-                )
-              : null,
-          filterLabel: context.l10n.records,
-          onFilterTap: () => HomeDialogController.showEditRecordsDialog(
-            context,
-            state,
-            (newSelection) {
-              context
-                  .read<HomeBloc>()
-                  .add(HomeRecordsFiltersChanged(newSelection));
-            },
-          ),
+                ),
+          filterLabel: state.overviewViewMode == OverviewViewMode.specialties
+              ? context.l10n.specialty
+              : context.l10n.records,
+          onFilterTap: state.overviewViewMode == OverviewViewMode.specialties
+              ? () => HomeDialogController.showEditSpecialtiesDialog(
+                    context,
+                    state,
+                    (newSelection) {
+                      context
+                          .read<HomeBloc>()
+                          .add(HomeSpecialtiesFiltersChanged(newSelection));
+                    },
+                  )
+              : () => HomeDialogController.showEditRecordsDialog(
+                    context,
+                    state,
+                    (newSelection) {
+                      context
+                          .read<HomeBloc>()
+                          .add(HomeRecordsFiltersChanged(newSelection));
+                    },
+                  ),
           colorScheme: colorScheme,
           isEditMode: editMode,
           onInfoTap: () => SectionInfoModal.show(
@@ -197,29 +217,57 @@ class HomeDashboardSections extends StatelessWidget {
           ),
         ),
         _buildResponsiveSectionSpacing(context),
-        MedicalRecordsSection(
-          overviewCards: filteredCards,
-          editMode: editMode,
-          firstCardKey: highlightController.firstOverviewCardKey,
-          onLongPressCard: () => context
-              .read<HomeBloc>()
-              .add(const HomeEditModeChanged(true)),
-          onReorder: (oldIndex, newIndex) {
-            context
+        if (state.overviewViewMode == OverviewViewMode.specialties)
+          SpecialtiesSection(
+            specialtyCards: state.visibleSpecialtyCards,
+            editMode: editMode,
+            firstCardKey: highlightController.firstSpecialtyCardKey,
+            onLongPressCard: () => context
                 .read<HomeBloc>()
-                .add(HomeRecordsReordered(oldIndex, newIndex));
-          },
-          onTapCard: (card) {
-            context
-                .read<RecordsBloc>()
-                .add(RecordsFiltersApplied(card.category.resourceTypes));
-            pageController.animateToPage(
-              1,
-              duration: HomeConstants.pageTransitionDuration,
-              curve: Curves.ease,
-            );
-          },
-        ),
+                .add(const HomeEditModeChanged(true)),
+            onReorder: (oldIndex, newIndex) {
+              context
+                  .read<HomeBloc>()
+                  .add(HomeSpecialtiesReordered(oldIndex, newIndex));
+            },
+            onTapCard: (specialty) {
+              context
+                  .read<RecordsBloc>()
+                  .add(RecordsSpecialtyApplied([specialty]));
+              pageController.animateToPage(
+                1,
+                duration: HomeConstants.pageTransitionDuration,
+                curve: Curves.ease,
+              );
+            },
+          )
+        else
+          MedicalRecordsSection(
+            overviewCards: filteredCards,
+            editMode: editMode,
+            firstCardKey: highlightController.firstOverviewCardKey,
+            onLongPressCard: () => context
+                .read<HomeBloc>()
+                .add(const HomeEditModeChanged(true)),
+            onReorder: (oldIndex, newIndex) {
+              context
+                  .read<HomeBloc>()
+                  .add(HomeRecordsReordered(oldIndex, newIndex));
+            },
+            onTapCard: (card) {
+              context
+                  .read<RecordsBloc>()
+                  .add(const RecordsSpecialtyApplied([]));
+              context
+                  .read<RecordsBloc>()
+                  .add(RecordsFiltersApplied(card.category.resourceTypes));
+              pageController.animateToPage(
+                1,
+                duration: HomeConstants.pageTransitionDuration,
+                curve: Curves.ease,
+              );
+            },
+          ),
       ],
     );
   }

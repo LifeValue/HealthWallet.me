@@ -8,5 +8,6 @@ class WalletPassRequested extends WalletPassEvent
   const factory WalletPassRequested({
     required WalletPassType type,
     required String patientId,
+    ApplePassLabels? applePassLabels,
   }) = _WalletPassRequested;
 }

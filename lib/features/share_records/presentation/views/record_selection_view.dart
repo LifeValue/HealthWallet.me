@@ -10,6 +10,7 @@ import 'package:health_wallet/features/records/presentation/bloc/records_bloc.da
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/selectable_records_list.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/selection_bottom_bar.dart';
 
 class RecordSelectionView extends StatefulWidget {
@@ -149,9 +150,14 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
                         ),
                 ),
               ),
-              SelectionBottomBar(
-                shareState: shareState,
-                filterTypes: _filterTypes,
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: context.wideDialogWidth),
+                  child: SelectionBottomBar(
+                    shareState: shareState,
+                    filterTypes: _filterTypes,
+                  ),
+                ),
               ),
             ],
           ),

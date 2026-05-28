@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class QRScannerWidget extends StatefulWidget {
   final Function(String) onQRCodeDetected;
@@ -41,17 +42,34 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(0),
-      ),
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            context.l10n.scanQRMessage,
-            style: AppTextStyle.labelLarge,
+          Text.rich(
+            TextSpan(
+              style: AppTextStyle.labelLarge.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
+              children: [
+                const TextSpan(text: 'Scan a QR code from your '),
+                TextSpan(
+                  text: 'HealthWallet.me',
+                  style: AppTextStyle.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+                const TextSpan(text: ' desktop app or '),
+                TextSpan(
+                  text: 'Fasten Health',
+                  style: AppTextStyle.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+                const TextSpan(text: ' to sync your data.'),
+              ],
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: Insets.medium),
@@ -149,7 +167,6 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
             ),
           ),
         ],
-      ),
     );
   }
 }

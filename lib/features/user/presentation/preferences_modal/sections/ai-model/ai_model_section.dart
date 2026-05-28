@@ -11,12 +11,13 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/features/scan/presentation/pages/load_model/bloc/load_model_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/ai_settings/ai_settings_dialog.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/custom_progress_indicator.dart';
-import 'package:health_wallet/features/scan/presentation/widgets/model_management_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class AiModelSection extends StatefulWidget {
   const AiModelSection({super.key});
@@ -149,7 +150,7 @@ class _AiModelSectionState extends State<AiModelSection> {
   }
 
   Widget _buildModelSetupContent(BuildContext context, LoadModelState state) {
-    final hasDownloadedModel = state.medGemmaDownloaded || state.qwenDownloaded;
+    final hasDownloadedModel = state.downloadedVariants.values.any((v) => v);
 
     return Column(
       children: [
@@ -196,7 +197,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           width: 140,
           height: 140,
         ),
-        if (!state.medGemmaDownloaded && !state.qwenDownloaded) ...[
+        if (!state.downloadedVariants.values.any((v) => v)) ...[
           const SizedBox(height: Insets.small),
           _buildRichDescription(context, context.l10n.onboardingAiModelDescription),
         ],
@@ -248,10 +249,10 @@ class _AiModelSectionState extends State<AiModelSection> {
             )
           else
             AppButton(
-              label: (state.medGemmaDownloaded || state.qwenDownloaded)
+              label: state.downloadedVariants.values.any((v) => v)
                   ? context.l10n.aiModelSelect
                   : context.l10n.aiModelEnableDownload,
-              icon: Icon((state.medGemmaDownloaded || state.qwenDownloaded)
+              icon: Icon(state.downloadedVariants.values.any((v) => v)
                   ? Icons.swap_horiz
                   : Icons.download),
               variant: AppButtonVariant.primary,
@@ -451,7 +452,7 @@ class _AiModelSectionState extends State<AiModelSection> {
       case LoadModelStatus.modelLoaded:
         return context.l10n.aiModelReady;
       case LoadModelStatus.modelAbsent:
-        if (state.medGemmaDownloaded || state.qwenDownloaded) {
+        if (state.downloadedVariants.values.any((v) => v)) {
           return context.l10n.aiModelNotSelected;
         }
         return context.l10n.aiModelMissing;

@@ -262,9 +262,6 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
   @override
   Future<void> deleteSource(String sourceId) async {
-    if (sourceId == 'demo_data') {
-      throw Exception('Cannot delete the demo data source');
-    }
 
     // Delete from sources table
     await (_appDatabase.delete(_appDatabase.sources)

@@ -1,6 +1,6 @@
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/entities/sync_qr_data.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 
 abstract class SyncRepository {
   Future<List<Source>> getSources();

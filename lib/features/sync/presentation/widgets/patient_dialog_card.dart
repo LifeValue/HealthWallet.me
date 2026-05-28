@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/dialog_header.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/form_fields.dart';
 
@@ -44,7 +45,7 @@ class PatientDialogCard extends StatelessWidget {
     required this.saveLabel,
     required this.onCancel,
     required this.onSave,
-    this.width = 350,
+    this.width,
   });
 
   @override
@@ -54,7 +55,7 @@ class PatientDialogCard extends StatelessWidget {
         context.isDarkMode ? const Color(0xFFE0E0E0) : const Color(0xFF212121);
 
     return Container(
-      width: width,
+      width: width ?? context.contentMaxWidth,
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),

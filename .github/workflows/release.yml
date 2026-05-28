@@ -1,0 +1,184 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/ci.yml"
+
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: "Desktop platforms to build"
+        required: true
+        type: choice
+        options:
+          - windows
+          - all
+        default: all
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Extract version from pubspec.yaml for all jobs
+  version:
+    name: Get Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+  # Only run if triggered from a release/* branch merge or workflow_dispatch
+  should-release:
+    name: Check Release Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.check.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+      - name: Check if triggered by release branch merge
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "release=true" >> $GITHUB_OUTPUT
+            echo "Manual trigger — proceeding with release"
+          else
+            # Check if the merge commit came from a release/* branch
+            MERGE_MSG=$(git log -1 --pretty=%s)
+            if echo "$MERGE_MSG" | grep -qiE "release/"; then
+              echo "release=true" >> $GITHUB_OUTPUT
+              echo "Release branch merge detected: $MERGE_MSG"
+            else
+              echo "release=false" >> $GITHUB_OUTPUT
+              echo "Not a release branch merge: $MERGE_MSG"
+            fi
+          fi
+
+  build-windows:
+    needs: [version, should-release]
+    if: |
+      needs.should-release.outputs.release == 'true' &&
+      (github.event_name == 'push' || inputs.platforms == 'windows' || inputs.platforms == 'all')
+    name: Build Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH for private dependency
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add hosts to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 2822 git.techstackapps.com >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.7"
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run code generation
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Windows release
+        run: flutter build windows --release --target lib/main_desktop.dart
+
+      - name: Package portable zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "HealthWallet-Windows-v${{ needs.version.outputs.version }}-portable.zip"
+
+      - name: Create MSIX installer
+        run: dart run msix:create --version ${{ needs.version.outputs.version }}.0
+
+      - name: Copy MSIX to workspace root
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem -Path "build\windows\x64\runner\Release" -Filter "*.msix" -Recurse | Select-Object -First 1
+          if ($msix) {
+            Copy-Item $msix.FullName "HealthWallet-Windows-v${{ needs.version.outputs.version }}-setup.msix"
+          }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            HealthWallet-Windows-v${{ needs.version.outputs.version }}-portable.zip
+            HealthWallet-Windows-v${{ needs.version.outputs.version }}-setup.msix
+          retention-days: 1
+
+      - name: Cleanup
+        if: always()
+        run: rm -f .env
+
+  # Collect all desktop builds and create a single GitHub Release
+  create-release:
+    needs: [version, build-windows]
+    if: always() && needs.version.result == 'success'
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List release assets
+        run: ls -la release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ needs.version.outputs.version }}"
+          name: "v${{ needs.version.outputs.version }}"
+          files: release-assets/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          body: |
+            ## HealthWallet v${{ needs.version.outputs.version }}
+
+            ### Downloads
+            - **Windows Installer (.msix):** Double-click to install (Windows 10+)
+            - **Windows Portable (.zip):** Extract and run `health_wallet.exe`
+            - **iOS**: Available on [TestFlight / App Store]
+            - **Android**: Available on [Google Play Store]
+            - **macOS**: Available on [TestFlight / Mac App Store]
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

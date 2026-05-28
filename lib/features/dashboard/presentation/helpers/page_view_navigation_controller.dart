@@ -5,11 +5,13 @@ import 'package:injectable/injectable.dart';
 class PageViewNavigationController {
   final PageController _pageController;
   final ValueNotifier<int> _currentPageNotifier;
+  final ValueNotifier<bool> swipeEnabledNotifier;
   int? _targetPage;
 
   PageViewNavigationController()
       : _pageController = PageController(initialPage: 0),
-        _currentPageNotifier = ValueNotifier<int>(0) {
+        _currentPageNotifier = ValueNotifier<int>(0),
+        swipeEnabledNotifier = ValueNotifier<bool>(true) {
     _pageController.addListener(_onPageChanged);
   }
 
@@ -85,5 +87,6 @@ class PageViewNavigationController {
     _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
     _currentPageNotifier.dispose();
+    swipeEnabledNotifier.dispose();
   }
 }
