@@ -43,6 +43,7 @@ mixin AiInferenceHandler {
     if (maxImageDimension <= 0) return imagePath;
 
     final file = File(imagePath);
+    if (!await file.exists()) return imagePath;
     final bytes = await file.readAsBytes();
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return imagePath;
@@ -90,8 +91,12 @@ mixin AiInferenceHandler {
     final resizeSw = Stopwatch()..start();
     final resizedPaths = <String>[];
     for (final imgPath in imagePaths) {
-      final originalSize =
-          File(imgPath).existsSync() ? File(imgPath).lengthSync() : 0;
+      if (!File(imgPath).existsSync()) {
+        ProcessingLogBuffer.instance.log(
+            '[$ts][ScanAI] image skipped (not found): ${path.basename(imgPath)}');
+        continue;
+      }
+      final originalSize = File(imgPath).lengthSync();
       final resized = await resizeImageIfNeeded(imgPath);
       final resizedSize =
           File(resized).existsSync() ? File(resized).lengthSync() : 0;

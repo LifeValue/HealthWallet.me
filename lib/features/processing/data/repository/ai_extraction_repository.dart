@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_prompt.dart';
@@ -178,6 +179,11 @@ mixin AiExtractionRepository {
     final results = await Future.wait(
       preprocessed.map((p) => textRecognitionService.recognizeTextFromImage(p)),
     );
+    for (var i = 0; i < preprocessed.length; i++) {
+      if (preprocessed[i] != imagePaths[i]) {
+        try { await File(preprocessed[i]).delete(); } catch (_) {}
+      }
+    }
     return results.join('\n');
   }
 

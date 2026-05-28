@@ -90,6 +90,11 @@ class HandoverSenderService {
       if (_cancelled[sessionId] == true) return;
 
       final file = File(filePaths[i]);
+      if (!await file.exists()) {
+        _updateSession(sessionId, HandoverStatus.error,
+            error: 'File not found: ${p.basename(filePaths[i])}');
+        return;
+      }
       final bytes = await file.readAsBytes();
       final data = base64Encode(bytes);
       final fileName = p.basename(filePaths[i]);
