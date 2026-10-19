@@ -1,0 +1,304 @@
+# HealthWallet.me CI/CD — replaces the GitHub Actions workflows in .github/workflows/.
+#
+#   checks                  every MR + develop/master push      Linux instance runner (Docker)
+#   ios / android / macos   manual on develop and master        shell-macmini (fastlane)
+#   windows                 manual on develop and master        needs a `windows` runner (none yet)
+#                           → GitLab Release with zip + msix
+#   shorebird patches       manual on master                    shell-macmini
+#
+# Store uploads are never automatic: the Mac mini is shared with other projects' pipelines, and
+# every upload is a deliberate release decision. Each platform is its own manual job, which
+# replaces the GitHub "platform" dropdown (android / ios / macos / windows / both / all).
+#
+# One-time project setup — the pipeline cannot do these itself:
+#   1. Protect `develop` and `master` (Settings → Repository). Protected variables below are only
+#      exposed to protected branches, so the deploy jobs need both branches protected.
+#   2. In mobile/flutter/packages/flutter-airdrop and mobile/health-wallet/fhir-ips-export:
+#      Settings → CI/CD → Job token permissions → add mobile/health-wallet/app. The private pub
+#      dependencies are fetched with CI_JOB_TOKEN instead of an SSH deploy key.
+#   3. CI/CD variables (Settings → CI/CD → Variables), all PROTECTED. Copied from the GitHub
+#      Actions secrets under the same names, except where noted:
+#        ASC_KEY_ID, ASC_ISSUER_ID                    masked
+#        ASC_KEY_CONTENT                              masked — base64 of the .p8, single line
+#                                                     (GitHub held the raw .p8 text)
+#        MACOS_KEYCHAIN_PASSWORD                      masked — the Mac mini's login keychain
+#                                                     (same value ontrainer uses; NOT from GitHub)
+#        SHOREBIRD_TOKEN                              masked
+#        ENV_FILE_CONTENT                             FILE type — contents of .env
+#        APPLE_PASS_CERTIFICATE_BASE64                masked
+#        APPLE_PASS_PRIVATE_KEY_BASE64                masked
+#        GOOGLE_WALLET_SERVICE_ACCOUNT_BASE64         masked
+#        ANDROID_KEYSTORE_BASE64                      masked
+#        ANDROID_STORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS   masked
+#        PLAY_STORE_SERVICE_ACCOUNT_BASE64            masked
+#      Optional: ANDROID_JAVA_HOME pins the JDK for Gradle on the Mac mini (JDK 17).
+#   Copied from GitHub but unused (fastlane match was replaced by automatic signing, and the pub
+#   dependencies come through the job token): MATCH_GIT_URL, MATCH_PASSWORD, SSH_PRIVATE_KEY.
+#   Delete them once a TestFlight upload has succeeded without them.
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # develop and master always get their branch pipeline, even while an MR from them is open —
+    # the manual deploy jobs only exist on branch pipelines.
+    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master"
+    # Avoid duplicate pipelines: skip the branch pipeline when an MR is open for it.
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+default:
+  interruptible: true
+
+variables:
+  FLUTTER_VERSION: "3.38.7"
+  GIT_DEPTH: "20"
+
+stages:
+  - check
+  - deploy
+
+# The pubspec pins the private packages to ssh://git@git.techstackapps.com:2822/... URLs. Rewrite
+# them to HTTPS with the job token, through environment-scoped git config only: a `git config
+# --global` on the shared shell runner would persist into other projects' jobs with a dead token.
+.private_deps: &private_deps
+  - export GIT_CONFIG_COUNT=1
+  - export GIT_CONFIG_KEY_0="url.https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/.insteadOf"
+  - export GIT_CONFIG_VALUE_0="ssh://git@${CI_SERVER_HOST}:2822/"
+
+# =============================================================================
+# Checks — analyze + tests on every MR and every develop/master push
+# =============================================================================
+# Needs no secrets: every Envied field has a default, so codegen runs against an empty .env.
+checks:
+  stage: check
+  image: ghcr.io/cirruslabs/flutter:${FLUTTER_VERSION}
+  variables:
+    PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
+  cache:
+    - key: pub-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - pub-develop
+        - pub-master
+      paths:
+        - .pub-cache
+      when: always
+  before_script:
+    - *private_deps
+    # Declared asset directories that only hold secrets in release builds.
+    - mkdir -p assets/certs/android
+    - touch .env
+    - flutter pub get
+    - dart run build_runner build --delete-conflicting-outputs
+  script:
+    # Errors fail the job; the ~110 existing warnings (mostly unused imports) don't yet.
+    # Drop --no-fatal-warnings once they are cleaned up.
+    - flutter analyze --no-fatal-infos --no-fatal-warnings
+    - flutter test
+
+# =============================================================================
+# Mac mini — iOS, macOS and Android store uploads via fastlane
+# =============================================================================
+# GitLab's shell executor runs a non-login, non-interactive shell: ~/.zshrc is never read, so
+# every tool is put on PATH explicitly. Brew's ruby is keg-only (system ruby is 2.6), FVM's
+# Flutter and Shorebird live in the runner user's home.
+.macmini_toolchain: &macmini_toolchain
+  - export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/bin:$HOME/.shorebird/bin:$HOME/.pub-cache/bin:$PATH"
+  # CocoaPods and fastlane abort on a non-UTF-8 locale.
+  - export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+  # Gems vendored into the build tree, so another project's `brew upgrade` cannot move fastlane.
+  - export BUNDLE_PATH="$CI_PROJECT_DIR/vendor/bundle"
+  - |
+    missing=""
+    for tool in fvm shorebird pod bundle; do
+      command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
+    done
+    if [ -n "$missing" ]; then
+      echo "Missing on the Mac mini runner:$missing"
+      exit 1
+    fi
+  - fvm install "$FLUTTER_VERSION"
+  # The Android Fastfile calls plain `flutter`; make it the pinned version.
+  - export PATH="${FVM_CACHE_PATH:-$HOME/fvm}/versions/$FLUTTER_VERSION/bin:$PATH"
+  - flutter --version | grep -q "Flutter $FLUTTER_VERSION" || { echo "flutter on PATH is not $FLUTTER_VERSION"; exit 1; }
+
+.restore_app_secrets: &restore_app_secrets
+  - cp "$ENV_FILE_CONTENT" .env
+  - mkdir -p assets/certs/android
+  - printf '%s' "$APPLE_PASS_CERTIFICATE_BASE64" | base64 -d > assets/certs/pass_certificate.pem
+  - printf '%s' "$APPLE_PASS_PRIVATE_KEY_BASE64" | base64 -d > assets/certs/private_key.pem
+
+.restore_android_secrets: &restore_android_secrets
+  - printf '%s' "$GOOGLE_WALLET_SERVICE_ACCOUNT_BASE64" | base64 -d > assets/certs/android/service-account.json
+  - printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+  - |
+    cat > android/key.properties <<EOF
+    storePassword=$ANDROID_STORE_PASSWORD
+    keyPassword=$ANDROID_KEY_PASSWORD
+    keyAlias=$ANDROID_KEY_ALIAS
+    storeFile=upload-keystore.jks
+    EOF
+
+.android_env: &android_env
+  - export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+  - export ANDROID_SDK_ROOT="$ANDROID_HOME"
+  - if [ -n "$ANDROID_JAVA_HOME" ]; then export JAVA_HOME="$ANDROID_JAVA_HOME"; export PATH="$JAVA_HOME/bin:$PATH"; fi
+  - '[ -d "$ANDROID_HOME" ] || { echo "Android SDK not found at $ANDROID_HOME — set ANDROID_HOME or ANDROID_JAVA_HOME as a CI variable"; exit 1; }'
+
+# Automatic signing, as ontrainer does on this Mac: the distribution certificates for team
+# N668J5X92P are already in the runner's login keychain, and xcodebuild's -allowProvisioningUpdates
+# fetches the provisioning profiles with the App Store Connect API key (asc_xcargs in the
+# Fastfiles). xcodebuild needs the key as a file, so it is written to the build directory and
+# removed in after_script.
+.apple_signing: &apple_signing
+  # codesign must never block on a keychain prompt — there is no TTY. Both lines are quoted:
+  # `codesign: -s` would otherwise parse as a YAML mapping.
+  - 'security unlock-keychain -p "$MACOS_KEYCHAIN_PASSWORD" "$HOME/Library/Keychains/login.keychain-db"'
+  - 'security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_KEYCHAIN_PASSWORD" "$HOME/Library/Keychains/login.keychain-db" >/dev/null 2>&1 || true'
+  - printf '%s' "$ASC_KEY_CONTENT" | base64 -d > "$CI_PROJECT_DIR/AuthKey.p8"
+  - export ASC_KEY_PATH="$CI_PROJECT_DIR/AuthKey.p8"
+
+.macmini:
+  tags: [shell-macmini]
+  # A store upload must not be killed mid-flight by a newer push.
+  interruptible: false
+  needs: ["checks"]
+  cache:
+    - key: bundle-macos
+      paths:
+        - vendor/bundle
+  before_script:
+    - *macmini_toolchain
+    - *private_deps
+    - *restore_app_secrets
+    - fvm flutter pub get
+    - fvm dart run build_runner build --delete-conflicting-outputs
+  # The shell runner's build directory persists between jobs; never leave secrets behind.
+  after_script:
+    - rm -f .env assets/certs/*.pem assets/certs/android/service-account.json
+    - rm -f android/app/upload-keystore.jks android/key.properties android/fastlane/service-account.json
+    - rm -f AuthKey.p8
+
+# allow_failure: a manual job from `rules:` defaults to false, which would leave every develop/master
+# pipeline "blocked" until someone ran each deploy. Deploys are optional, so the pipeline passes on
+# checks alone.
+.on_develop_or_master: &on_develop_or_master
+  - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master"
+    when: manual
+    allow_failure: true
+
+.on_master: &on_master
+  - if: $CI_COMMIT_BRANCH == "master"
+    when: manual
+    allow_failure: true
+
+ios:testflight:
+  extends: .macmini
+  stage: deploy
+  rules: *on_develop_or_master
+  environment: { name: testflight-ios }
+  script:
+    - *apple_signing
+    - (cd ios && rm -rf Podfile.lock Pods && pod install --repo-update)
+    - cd ios
+    - bundle install --jobs 4 --retry 3
+    - bundle exec fastlane beta
+
+macos:testflight:
+  extends: .macmini
+  stage: deploy
+  rules: *on_develop_or_master
+  environment: { name: testflight-macos }
+  script:
+    - *apple_signing
+    - fvm flutter precache --macos
+    - (cd macos && rm -rf Podfile.lock Pods && pod install --repo-update)
+    - cd macos
+    - bundle install --jobs 4 --retry 3
+    - bundle exec fastlane beta
+
+android:play-internal:
+  extends: .macmini
+  stage: deploy
+  rules: *on_develop_or_master
+  environment: { name: play-internal }
+  script:
+    - *android_env
+    - *restore_android_secrets
+    - printf '%s' "$PLAY_STORE_SERVICE_ACCOUNT_BASE64" | base64 -d > android/fastlane/service-account.json
+    - cd android
+    - bundle install --jobs 4 --retry 3
+    - bundle exec fastlane beta
+
+# --- Shorebird over-the-air patches for the latest store release ----------------
+shorebird:patch-android:
+  extends: .macmini
+  stage: deploy
+  rules: *on_master
+  script:
+    - *android_env
+    - *restore_android_secrets
+    - shorebird patch --platforms android --release-version=latest --allow-asset-diffs
+
+shorebird:patch-ios:
+  extends: .macmini
+  stage: deploy
+  rules: *on_master
+  script:
+    - shorebird patch --platforms ios --release-version=latest --no-codesign --allow-asset-diffs
+
+# =============================================================================
+# Windows — build zip + MSIX, publish as a GitLab Release
+# =============================================================================
+# NO WINDOWS RUNNER IS REGISTERED YET. Until one with the `windows` tag exists, triggering this
+# job leaves it pending. Expected on that machine: Git for Windows, Flutter $FLUTTER_VERSION on
+# PATH, and the shell set to PowerShell (the runner default).
+#
+# develop → pre-release  v<version>-dev.<pipeline iid>
+# master  → release      v<version>
+# The zip and msix go to the project's generic package registry, and the GitLab Release links to
+# them. Unlike the GitHub workflow, the release tag is created on the commit that was built, not
+# on the default branch.
+windows:release:
+  stage: deploy
+  tags: [windows]
+  interruptible: false
+  needs: ["checks"]
+  rules: *on_develop_or_master
+  before_script:
+    - $env:GIT_CONFIG_COUNT = "1"
+    - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:$env:CI_JOB_TOKEN@$env:CI_SERVER_HOST/.insteadOf"
+    - $env:GIT_CONFIG_VALUE_0 = "ssh://git@$env:CI_SERVER_HOST:2822/"
+  script:
+    - if (-not ((flutter --version) -match "Flutter $env:FLUTTER_VERSION")) { throw "flutter on PATH is not $env:FLUTTER_VERSION" }
+    - Copy-Item $env:ENV_FILE_CONTENT .env
+    - flutter config --enable-windows-desktop
+    - flutter pub get
+    - dart run build_runner build --delete-conflicting-outputs
+    - flutter build windows --release --target lib/main_desktop.dart
+    - $version = ((Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)').Matches[0].Groups[1].Value)
+    - if ($env:CI_COMMIT_BRANCH -eq "master") { $tag = "v$version" } else { $tag = "v$version-dev.$env:CI_PIPELINE_IID" }
+    - $zip = "HealthWallet-Windows-v$version-portable.zip"
+    - $msixOut = "HealthWallet-Windows-v$version-setup.msix"
+    - Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath $zip -Force
+    - dart run msix:create --version "$version.0"
+    - $msix = Get-ChildItem -Path "build\windows\x64\runner\Release" -Filter "*.msix" -Recurse | Select-Object -First 1
+    - Copy-Item $msix.FullName $msixOut
+    - $headers = @{ "JOB-TOKEN" = $env:CI_JOB_TOKEN }
+    - $packageUrl = "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/packages/generic/healthwallet-windows/$tag"
+    - foreach ($file in @($msixOut, $zip)) { Invoke-RestMethod -Method Put -Uri "$packageUrl/$file" -Headers $headers -InFile $file }
+    - |
+      $release = @{
+        tag_name    = $tag
+        ref         = $env:CI_COMMIT_SHA
+        name        = $tag
+        description = "## HealthWallet $tag (Windows)`n`nBranch: ``$env:CI_COMMIT_BRANCH`` · Commit: ``$env:CI_COMMIT_SHA```n`n- **Installer (.msix):** double-click to install (Windows 10+)`n- **Portable (.zip):** extract and run ``health_wallet.exe``"
+        assets      = @{ links = @(
+          @{ name = $msixOut; url = "$packageUrl/$msixOut"; link_type = "package" },
+          @{ name = $zip;     url = "$packageUrl/$zip";     link_type = "package" }
+        ) }
+      } | ConvertTo-Json -Depth 5
+      Invoke-RestMethod -Method Post -Uri "$env:CI_API_V4_URL/projects/$env:CI_PROJECT_ID/releases" -Headers $headers -ContentType "application/json" -Body $release
+  after_script:
+    - Remove-Item -Force -ErrorAction SilentlyContinue .env
