@@ -1,7 +1,7 @@
 part of 'lww_sync_bloc.dart';
 
 @freezed
-class LwwSyncEvent with _$LwwSyncEvent {
+sealed class LwwSyncEvent with _$LwwSyncEvent {
   const factory LwwSyncEvent.initialised() = LwwSyncInitialised;
   const factory LwwSyncEvent.syncTriggered() = SyncTriggered;
   const factory LwwSyncEvent.deltaReceived({

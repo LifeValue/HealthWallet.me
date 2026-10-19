@@ -1,7 +1,7 @@
 part of 'focus_mode_bloc.dart';
 
 @freezed
-class FocusModeEvent with _$FocusModeEvent {
+sealed class FocusModeEvent with _$FocusModeEvent {
   const factory FocusModeEvent.started() = FocusModeStarted;
   const factory FocusModeEvent.countdownTicked({
     required int remainingSeconds,

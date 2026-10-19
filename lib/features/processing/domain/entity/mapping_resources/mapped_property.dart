@@ -9,7 +9,7 @@ import 'package:string_similarity/string_similarity.dart';
 part 'mapped_property.freezed.dart';
 
 @freezed
-class MappedProperty with _$MappedProperty {
+abstract class MappedProperty with _$MappedProperty {
   const MappedProperty._();
 
   const factory MappedProperty({

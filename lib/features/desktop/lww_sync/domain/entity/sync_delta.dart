@@ -4,7 +4,7 @@ part 'sync_delta.freezed.dart';
 part 'sync_delta.g.dart';
 
 @freezed
-class SyncDelta with _$SyncDelta {
+abstract class SyncDelta with _$SyncDelta {
   const factory SyncDelta({
     required String tableName,
     required List<Map<String, dynamic>> rows,

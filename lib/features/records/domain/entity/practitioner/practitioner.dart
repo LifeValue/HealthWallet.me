@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'practitioner.freezed.dart';
 
 @freezed
-class Practitioner with _$Practitioner implements IFhirResource {
+abstract class Practitioner with _$Practitioner implements IFhirResource {
   const Practitioner._();
 
   const factory Practitioner({

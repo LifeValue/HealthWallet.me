@@ -8,7 +8,7 @@ part 'device_pairing.freezed.dart';
 part 'device_pairing.g.dart';
 
 @freezed
-class DevicePairing with _$DevicePairing {
+abstract class DevicePairing with _$DevicePairing {
   const factory DevicePairing({
     required String deviceId,
     required String deviceName,

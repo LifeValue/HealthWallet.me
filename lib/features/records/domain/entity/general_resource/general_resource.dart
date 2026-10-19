@@ -7,7 +7,7 @@ import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 part 'general_resource.freezed.dart';
 
 @freezed
-class GeneralResource with _$GeneralResource implements IFhirResource {
+abstract class GeneralResource with _$GeneralResource implements IFhirResource {
   const GeneralResource._();
 
   const factory GeneralResource({

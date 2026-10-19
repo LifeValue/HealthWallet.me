@@ -5,13 +5,17 @@ abstract class PreviewEvent {
 }
 
 @freezed
-class PreviewPageChanged extends PreviewEvent with _$PreviewPageChanged {
+abstract class PreviewPageChanged extends PreviewEvent with _$PreviewPageChanged {
+  const PreviewPageChanged._();
+
   const factory PreviewPageChanged({required int pageIndex}) =
       _PreviewPageChanged;
 }
 
 @freezed
-class PreviewInitialized extends PreviewEvent with _$PreviewInitialized {
+abstract class PreviewInitialized extends PreviewEvent with _$PreviewInitialized {
+  const PreviewInitialized._();
+
   const factory PreviewInitialized({
     required int initialPageIndex,
     @Default([]) List<String> images,
@@ -19,19 +23,25 @@ class PreviewInitialized extends PreviewEvent with _$PreviewInitialized {
 }
 
 @freezed
-class PreviewPageRotated extends PreviewEvent with _$PreviewPageRotated {
+abstract class PreviewPageRotated extends PreviewEvent with _$PreviewPageRotated {
+  const PreviewPageRotated._();
+
   const factory PreviewPageRotated({required int pageIndex}) =
       _PreviewPageRotated;
 }
 
 @freezed
-class PreviewPageDeleted extends PreviewEvent with _$PreviewPageDeleted {
+abstract class PreviewPageDeleted extends PreviewEvent with _$PreviewPageDeleted {
+  const PreviewPageDeleted._();
+
   const factory PreviewPageDeleted({required int pageIndex}) =
       _PreviewPageDeleted;
 }
 
 @freezed
-class PreviewPagesReordered extends PreviewEvent with _$PreviewPagesReordered {
+abstract class PreviewPagesReordered extends PreviewEvent with _$PreviewPagesReordered {
+  const PreviewPagesReordered._();
+
   const factory PreviewPagesReordered({
     required int oldIndex,
     required int newIndex,
@@ -39,8 +49,10 @@ class PreviewPagesReordered extends PreviewEvent with _$PreviewPagesReordered {
 }
 
 @freezed
-class PreviewReorderModeToggled extends PreviewEvent
+abstract class PreviewReorderModeToggled extends PreviewEvent
     with _$PreviewReorderModeToggled {
+  const PreviewReorderModeToggled._();
+
   const factory PreviewReorderModeToggled({required bool enabled}) =
       _PreviewReorderModeToggled;
 }

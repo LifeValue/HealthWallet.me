@@ -13,7 +13,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_encounter.freezed.dart';
 
 @freezed
-class MappingEncounter with _$MappingEncounter implements MappingResource {
+abstract class MappingEncounter with _$MappingEncounter implements MappingResource {
   const MappingEncounter._();
 
   const factory MappingEncounter({

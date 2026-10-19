@@ -12,7 +12,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_procedure.freezed.dart';
 
 @freezed
-class MappingProcedure with _$MappingProcedure implements MappingResource {
+abstract class MappingProcedure with _$MappingProcedure implements MappingResource {
   const MappingProcedure._();
 
   const factory MappingProcedure({

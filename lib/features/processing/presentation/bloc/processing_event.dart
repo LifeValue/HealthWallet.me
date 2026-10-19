@@ -5,12 +5,16 @@ abstract class ProcessingEvent {
 }
 
 @freezed
-class ProcessingInitialised extends ProcessingEvent with _$ProcessingInitialised {
+abstract class ProcessingInitialised extends ProcessingEvent with _$ProcessingInitialised {
+  const ProcessingInitialised._();
+
   const factory ProcessingInitialised() = _ProcessingInitialised;
 }
 
 @freezed
-class CaptureButtonPressed extends ProcessingEvent with _$CaptureButtonPressed {
+abstract class CaptureButtonPressed extends ProcessingEvent with _$CaptureButtonPressed {
+  const CaptureButtonPressed._();
+
   const factory CaptureButtonPressed({
     @Default(CaptureMode.images) CaptureMode mode,
     @Default(5) int maxPages,
@@ -18,7 +22,9 @@ class CaptureButtonPressed extends ProcessingEvent with _$CaptureButtonPressed {
 }
 
 @freezed
-class DocumentImported extends ProcessingEvent with _$DocumentImported {
+abstract class DocumentImported extends ProcessingEvent with _$DocumentImported {
+  const DocumentImported._();
+
   const factory DocumentImported({
     required List<String> filePaths,
     @Default(ProcessingOrigin.import) ProcessingOrigin origin,
@@ -29,15 +35,19 @@ class DocumentImported extends ProcessingEvent with _$DocumentImported {
 }
 
 @freezed
-class SessionChangedProgress extends ProcessingEvent
+abstract class SessionChangedProgress extends ProcessingEvent
     with _$SessionChangedProgress {
+  const SessionChangedProgress._();
+
   const factory SessionChangedProgress({
     required ProcessingSession session,
   }) = _SessionChangedProgress;
 }
 
 @freezed
-class SessionCleared extends ProcessingEvent with _$SessionCleared {
+abstract class SessionCleared extends ProcessingEvent with _$SessionCleared {
+  const SessionCleared._();
+
   const factory SessionCleared({
     required ProcessingSession session,
   }) = _SessionCleared;
@@ -49,20 +59,26 @@ enum CaptureMode {
 }
 
 @freezed
-class SessionActivated extends ProcessingEvent with _$SessionActivated {
+abstract class SessionActivated extends ProcessingEvent with _$SessionActivated {
+  const SessionActivated._();
+
   const factory SessionActivated({
     required String sessionId,
   }) = _SessionActivated;
 }
 
 @freezed
-class MappingInitiated extends ProcessingEvent with _$MappingInitiated {
+abstract class MappingInitiated extends ProcessingEvent with _$MappingInitiated {
+  const MappingInitiated._();
+
   const factory MappingInitiated({required String sessionId}) =
       _MappingInitiated;
 }
 
 @freezed
-class ResourceChanged extends ProcessingEvent with _$ResourceChanged {
+abstract class ResourceChanged extends ProcessingEvent with _$ResourceChanged {
+  const ResourceChanged._();
+
   const factory ResourceChanged({
     required String sessionId,
     required int index,
@@ -75,38 +91,50 @@ class ResourceChanged extends ProcessingEvent with _$ResourceChanged {
 }
 
 @freezed
-class PatientReverted extends ProcessingEvent with _$PatientReverted {
+abstract class PatientReverted extends ProcessingEvent with _$PatientReverted {
+  const PatientReverted._();
+
   const factory PatientReverted({required String sessionId}) =
       _PatientReverted;
 }
 
 @freezed
-class ResourceRemoved extends ProcessingEvent with _$ResourceRemoved {
+abstract class ResourceRemoved extends ProcessingEvent with _$ResourceRemoved {
+  const ResourceRemoved._();
+
   const factory ResourceRemoved(
       {required String sessionId, required int index}) = _ResourceRemoved;
 }
 
 @freezed
-class ResourceCreationInitiated extends ProcessingEvent
+abstract class ResourceCreationInitiated extends ProcessingEvent
     with _$ResourceCreationInitiated {
+  const ResourceCreationInitiated._();
+
   const factory ResourceCreationInitiated({required String sessionId}) =
       _ResourceCreationInitiated;
 }
 
 @freezed
-class NotificationAcknowledged extends ProcessingEvent
+abstract class NotificationAcknowledged extends ProcessingEvent
     with _$NotificationAcknowledged {
+  const NotificationAcknowledged._();
+
   const factory NotificationAcknowledged() = _NotificationAcknowledged;
 }
 
 @freezed
-class MappingCancelled extends ProcessingEvent with _$MappingCancelled {
+abstract class MappingCancelled extends ProcessingEvent with _$MappingCancelled {
+  const MappingCancelled._();
+
   const factory MappingCancelled({required String sessionId}) =
       _MappingCancelled;
 }
 
 @freezed
-class ResourcesAdded extends ProcessingEvent with _$ResourcesAdded {
+abstract class ResourcesAdded extends ProcessingEvent with _$ResourcesAdded {
+  const ResourcesAdded._();
+
   const factory ResourcesAdded({
     required String sessionId,
     required List<String> resourceTypes,
@@ -114,7 +142,9 @@ class ResourcesAdded extends ProcessingEvent with _$ResourcesAdded {
 }
 
 @freezed
-class EncounterAttached extends ProcessingEvent with _$EncounterAttached {
+abstract class EncounterAttached extends ProcessingEvent with _$EncounterAttached {
+  const EncounterAttached._();
+
   const factory EncounterAttached({
     required String sessionId,
     required StagedPatient patient,
@@ -123,23 +153,29 @@ class EncounterAttached extends ProcessingEvent with _$EncounterAttached {
 }
 
 @freezed
-class ProcessRemainingResources extends ProcessingEvent
+abstract class ProcessRemainingResources extends ProcessingEvent
     with _$ProcessRemainingResources {
+  const ProcessRemainingResources._();
+
   const factory ProcessRemainingResources({
     required String sessionId,
   }) = _ProcessRemainingResources;
 }
 
 @freezed
-class DocumentAttached extends ProcessingEvent with _$DocumentAttached {
+abstract class DocumentAttached extends ProcessingEvent with _$DocumentAttached {
+  const DocumentAttached._();
+
   const factory DocumentAttached({
     required String sessionId,
   }) = _DocumentAttached;
 }
 
 @freezed
-class TokenCapacityUpdated extends ProcessingEvent
+abstract class TokenCapacityUpdated extends ProcessingEvent
     with _$TokenCapacityUpdated {
+  const TokenCapacityUpdated._();
+
   const factory TokenCapacityUpdated({
     required int newMaxTokens,
     required String sessionId,
@@ -147,13 +183,17 @@ class TokenCapacityUpdated extends ProcessingEvent
 }
 
 @freezed
-class VisionToggled extends ProcessingEvent with _$VisionToggled {
+abstract class VisionToggled extends ProcessingEvent with _$VisionToggled {
+  const VisionToggled._();
+
   const factory VisionToggled({required bool useVision}) =
       _VisionToggled;
 }
 
 @freezed
-class PagesReordered extends ProcessingEvent with _$PagesReordered {
+abstract class PagesReordered extends ProcessingEvent with _$PagesReordered {
+  const PagesReordered._();
+
   const factory PagesReordered({
     required String sessionId,
     required List<String> reorderedPaths,
@@ -161,8 +201,10 @@ class PagesReordered extends ProcessingEvent with _$PagesReordered {
 }
 
 @freezed
-class ContainerTypeSwitched extends ProcessingEvent
+abstract class ContainerTypeSwitched extends ProcessingEvent
     with _$ContainerTypeSwitched {
+  const ContainerTypeSwitched._();
+
   const factory ContainerTypeSwitched({
     required String sessionId,
   }) = _ContainerTypeSwitched;

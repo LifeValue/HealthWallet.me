@@ -4,7 +4,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 part 'share_selection.freezed.dart';
 
 @freezed
-class ShareSelection with _$ShareSelection {
+abstract class ShareSelection with _$ShareSelection {
   const ShareSelection._();
 
   const factory ShareSelection({

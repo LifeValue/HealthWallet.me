@@ -1,7 +1,7 @@
 part of 'tray_bloc.dart';
 
 @freezed
-class TrayState with _$TrayState {
+abstract class TrayState with _$TrayState {
   const factory TrayState({
     @Default(true) bool isWindowVisible,
     @Default(true) bool isMinimizeToTrayEnabled,

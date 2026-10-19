@@ -7,7 +7,7 @@ part 'timeline_resource_model.freezed.dart';
 
 /// Unified model for timeline resources that can be either encounters or standalone resources
 @freezed
-class TimelineResourceModel with _$TimelineResourceModel {
+abstract class TimelineResourceModel with _$TimelineResourceModel {
   const factory TimelineResourceModel({
     required String id,
     required String resourceType,

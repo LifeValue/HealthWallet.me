@@ -12,7 +12,7 @@ import 'package:intl/intl.dart';
 part 'binary.freezed.dart';
 
 @freezed
-class Binary with _$Binary implements IFhirResource {
+abstract class Binary with _$Binary implements IFhirResource {
   const Binary._();
 
   const factory Binary({

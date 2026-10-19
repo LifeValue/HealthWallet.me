@@ -3,7 +3,7 @@ part of 'attach_to_encounter_bloc.dart';
 enum AttachToEncounterStatus { loading, success, failure }
 
 @freezed
-class AttachToEncounterState with _$AttachToEncounterState {
+abstract class AttachToEncounterState with _$AttachToEncounterState {
   const factory AttachToEncounterState({
     @Default(AttachToEncounterStatus.loading) AttachToEncounterStatus status,
     @Default([]) List<Patient> existingPatients,

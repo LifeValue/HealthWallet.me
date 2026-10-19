@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'goal.freezed.dart';
 
 @freezed
-class Goal with _$Goal implements IFhirResource {
+abstract class Goal with _$Goal implements IFhirResource {
   const Goal._();
 
   const factory Goal({

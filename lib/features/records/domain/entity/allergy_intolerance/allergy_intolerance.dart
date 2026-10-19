@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'allergy_intolerance.freezed.dart';
 
 @freezed
-class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
+abstract class AllergyIntolerance with _$AllergyIntolerance implements IFhirResource {
   const AllergyIntolerance._();
 
   const factory AllergyIntolerance({

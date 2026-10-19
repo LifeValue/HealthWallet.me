@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_diagnostic_report.freezed.dart';
 
 @freezed
-class MappingDiagnosticReport
+abstract class MappingDiagnosticReport
     with _$MappingDiagnosticReport
     implements MappingResource {
   const MappingDiagnosticReport._();

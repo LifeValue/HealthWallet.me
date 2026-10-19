@@ -1,7 +1,7 @@
 part of 'communication_bloc.dart';
 
 @freezed
-class CommunicationEvent with _$CommunicationEvent {
+sealed class CommunicationEvent with _$CommunicationEvent {
   const factory CommunicationEvent.initialised() = CommunicationInitialised;
   const factory CommunicationEvent.pairingRequested() = CommunicationPairingRequested;
   const factory CommunicationEvent.pairingCompleted({

@@ -14,7 +14,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_patient.freezed.dart';
 
 @freezed
-class MappingPatient with _$MappingPatient implements MappingResource {
+abstract class MappingPatient with _$MappingPatient implements MappingResource {
   const MappingPatient._();
 
   const factory MappingPatient({

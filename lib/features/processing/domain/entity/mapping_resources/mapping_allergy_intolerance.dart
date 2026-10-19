@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_allergy_intolerance.freezed.dart';
 
 @freezed
-class MappingAllergyIntolerance
+abstract class MappingAllergyIntolerance
     with _$MappingAllergyIntolerance
     implements MappingResource {
   const MappingAllergyIntolerance._();

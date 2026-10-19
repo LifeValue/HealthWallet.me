@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'document_reference.freezed.dart';
 
 @freezed
-class DocumentReference with _$DocumentReference implements IFhirResource {
+abstract class DocumentReference with _$DocumentReference implements IFhirResource {
   const DocumentReference._();
 
   factory DocumentReference({

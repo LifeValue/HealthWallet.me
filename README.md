@@ -17,7 +17,7 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 
 [![Version](https://img.shields.io/badge/version-1.2.0-blue)](changelog.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.md)
-[![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?logo=flutter)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter)](https://flutter.dev)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E44D26)](https://hl7.org/fhir/R4/)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey)]()
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lifevalue)
@@ -196,7 +196,7 @@ lib/
 
 ## Development Setup
 
-**Prerequisites:** Flutter 3.38+ (managed via [FVM](https://fvm.app/))
+**Prerequisites:** Flutter 3.41+ (managed via [FVM](https://fvm.app/))
 
 ```bash
 dart pub global activate fvm

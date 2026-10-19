@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_observation.freezed.dart';
 
 @freezed
-class MappingObservation with _$MappingObservation implements MappingResource {
+abstract class MappingObservation with _$MappingObservation implements MappingResource {
   const MappingObservation._();
 
   const factory MappingObservation({

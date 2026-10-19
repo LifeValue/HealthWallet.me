@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_organization.freezed.dart';
 
 @freezed
-class MappingOrganization
+abstract class MappingOrganization
     with _$MappingOrganization
     implements MappingResource {
   const MappingOrganization._();

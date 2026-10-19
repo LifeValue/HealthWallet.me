@@ -1,7 +1,7 @@
 part of 'tray_bloc.dart';
 
 @freezed
-class TrayEvent with _$TrayEvent {
+sealed class TrayEvent with _$TrayEvent {
   const factory TrayEvent.initialised() = TrayInitialised;
   const factory TrayEvent.minimizeToTrayToggled({
     required bool enabled,

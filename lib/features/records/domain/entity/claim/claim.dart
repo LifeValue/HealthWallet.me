@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'claim.freezed.dart';
 
 @freezed
-class Claim with _$Claim implements IFhirResource {
+abstract class Claim with _$Claim implements IFhirResource {
   const Claim._();
 
   const factory Claim({

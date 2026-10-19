@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'media.freezed.dart';
 
 @freezed
-class Media with _$Media implements IFhirResource {
+abstract class Media with _$Media implements IFhirResource {
   const Media._();
 
   const factory Media({

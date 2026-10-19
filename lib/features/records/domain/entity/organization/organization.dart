@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'organization.freezed.dart';
 
 @freezed
-class Organization with _$Organization implements IFhirResource {
+abstract class Organization with _$Organization implements IFhirResource {
   const Organization._();
 
   const factory Organization({

@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_practitioner.freezed.dart';
 
 @freezed
-class MappingPractitioner
+abstract class MappingPractitioner
     with _$MappingPractitioner
     implements MappingResource {
   const MappingPractitioner._();

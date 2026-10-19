@@ -51,7 +51,7 @@ default:
   interruptible: true
 
 variables:
-  FLUTTER_VERSION: "3.38.7"
+  FLUTTER_VERSION: "3.41.9"
   GIT_DEPTH: "20"
 
 stages:

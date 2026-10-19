@@ -23,7 +23,7 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 
-@RoutePage<bool>()
+@RoutePage()
 class LoadModelPage extends StatefulWidget {
   const LoadModelPage({this.canAttachToEncounter = false, super.key});
 

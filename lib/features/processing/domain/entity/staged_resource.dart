@@ -9,7 +9,7 @@ import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 part 'staged_resource.freezed.dart';
 
 @freezed
-class StagedResource<D, F> with _$StagedResource<D, F> {
+abstract class StagedResource<D, F> with _$StagedResource<D, F> {
   const StagedResource._();
 
   const factory StagedResource({

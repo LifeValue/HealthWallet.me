@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_condition.freezed.dart';
 
 @freezed
-class MappingCondition with _$MappingCondition implements MappingResource {
+abstract class MappingCondition with _$MappingCondition implements MappingResource {
   const MappingCondition._();
 
   const factory MappingCondition({

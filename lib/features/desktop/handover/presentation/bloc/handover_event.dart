@@ -1,7 +1,7 @@
 part of 'handover_bloc.dart';
 
 @freezed
-class HandoverEvent with _$HandoverEvent {
+sealed class HandoverEvent with _$HandoverEvent {
   const factory HandoverEvent.initialised() = HandoverInitialised;
   const factory HandoverEvent.offerReceived({
     required HandoverSession session,

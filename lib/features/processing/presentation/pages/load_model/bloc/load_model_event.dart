@@ -5,42 +5,54 @@ abstract class LoadModelEvent {
 }
 
 @freezed
-class LoadModelInitialized extends LoadModelEvent
+abstract class LoadModelInitialized extends LoadModelEvent
     with _$LoadModelInitialized {
+  const LoadModelInitialized._();
+
   const factory LoadModelInitialized() = _LoadModelInitialized;
 }
 
 @freezed
-class LoadModelDownloadInitiated extends LoadModelEvent
+abstract class LoadModelDownloadInitiated extends LoadModelEvent
     with _$LoadModelDownloadInitiated {
+  const LoadModelDownloadInitiated._();
+
   const factory LoadModelDownloadInitiated({AiModelVariant? variant}) =
       _LoadModelDownloadInitiated;
 }
 
 @freezed
-class LoadModelServiceStateChanged extends LoadModelEvent
+abstract class LoadModelServiceStateChanged extends LoadModelEvent
     with _$LoadModelServiceStateChanged {
+  const LoadModelServiceStateChanged._();
+
   const factory LoadModelServiceStateChanged({
     required AiModelDownloadState serviceState,
   }) = _LoadModelServiceStateChanged;
 }
 
 @freezed
-class LoadModelDownloadCancelled extends LoadModelEvent
+abstract class LoadModelDownloadCancelled extends LoadModelEvent
     with _$LoadModelDownloadCancelled {
+  const LoadModelDownloadCancelled._();
+
   const factory LoadModelDownloadCancelled() = _LoadModelDownloadCancelled;
 }
 
 @freezed
-class LoadModelVariantSelected extends LoadModelEvent
+abstract class LoadModelVariantSelected extends LoadModelEvent
     with _$LoadModelVariantSelected {
+  const LoadModelVariantSelected._();
+
   const factory LoadModelVariantSelected(AiModelVariant variant) =
       _LoadModelVariantSelected;
 }
 
 @freezed
-class LoadModelDeleteRequested extends LoadModelEvent
+abstract class LoadModelDeleteRequested extends LoadModelEvent
     with _$LoadModelDeleteRequested {
+  const LoadModelDeleteRequested._();
+
   const factory LoadModelDeleteRequested(AiModelVariant variant) =
       _LoadModelDeleteRequested;
 }

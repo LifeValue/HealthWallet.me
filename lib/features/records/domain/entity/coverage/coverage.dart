@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'coverage.freezed.dart';
 
 @freezed
-class Coverage with _$Coverage implements IFhirResource {
+abstract class Coverage with _$Coverage implements IFhirResource {
   const Coverage._();
 
   const factory Coverage({

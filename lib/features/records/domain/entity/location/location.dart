@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'location.freezed.dart';
 
 @freezed
-class Location with _$Location implements IFhirResource {
+abstract class Location with _$Location implements IFhirResource {
   const Location._();
 
   const factory Location({

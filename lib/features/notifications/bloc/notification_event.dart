@@ -5,39 +5,51 @@ abstract class NotificationEvent {
 }
 
 @freezed
-class NotificationAdded extends NotificationEvent with _$NotificationAdded {
+abstract class NotificationAdded extends NotificationEvent with _$NotificationAdded {
+  const NotificationAdded._();
+
   const factory NotificationAdded({
     required Notification notification,
   }) = _NotificationAdded;
 }
 
 @freezed
-class NotificationPopupOpened extends NotificationEvent
+abstract class NotificationPopupOpened extends NotificationEvent
     with _$NotificationPopupOpened {
+  const NotificationPopupOpened._();
+
   const factory NotificationPopupOpened() = _NotificationPopupOpened;
 }
 
 @freezed
-class NotificationPopupClosed extends NotificationEvent
+abstract class NotificationPopupClosed extends NotificationEvent
     with _$NotificationPopupClosed {
+  const NotificationPopupClosed._();
+
   const factory NotificationPopupClosed() = _NotificationPopupClosed;
 }
 
 @freezed
-class NotificationCleared extends NotificationEvent with _$NotificationCleared {
+abstract class NotificationCleared extends NotificationEvent with _$NotificationCleared {
+  const NotificationCleared._();
+
   const factory NotificationCleared() = _NotificationCleared;
 }
 
 @freezed
-class NotificationRemoved extends NotificationEvent with _$NotificationRemoved {
+abstract class NotificationRemoved extends NotificationEvent with _$NotificationRemoved {
+  const NotificationRemoved._();
+
   const factory NotificationRemoved({
     required Notification notification,
   }) = _NotificationRemoved;
 }
 
 @freezed
-class NotificationMarkedAsRead extends NotificationEvent
+abstract class NotificationMarkedAsRead extends NotificationEvent
     with _$NotificationMarkedAsRead {
+  const NotificationMarkedAsRead._();
+
   const factory NotificationMarkedAsRead({
     required Notification notification,
   }) = _NotificationMarkedAsRead;
@@ -49,8 +61,10 @@ class NotificationsLoaded extends NotificationEvent {
 }
 
 @freezed
-class NotificationProgressUpdated extends NotificationEvent
+abstract class NotificationProgressUpdated extends NotificationEvent
     with _$NotificationProgressUpdated {
+  const NotificationProgressUpdated._();
+
   const factory NotificationProgressUpdated({
     required String id,
     required double progress,
@@ -58,8 +72,10 @@ class NotificationProgressUpdated extends NotificationEvent
 }
 
 @freezed
-class NotificationTypeUpdated extends NotificationEvent
+abstract class NotificationTypeUpdated extends NotificationEvent
     with _$NotificationTypeUpdated {
+  const NotificationTypeUpdated._();
+
   const factory NotificationTypeUpdated({
     required String id,
     required NotificationType type,
@@ -69,8 +85,10 @@ class NotificationTypeUpdated extends NotificationEvent
 }
 
 @freezed
-class NotificationRemovedById extends NotificationEvent
+abstract class NotificationRemovedById extends NotificationEvent
     with _$NotificationRemovedById {
+  const NotificationRemovedById._();
+
   const factory NotificationRemovedById({
     required String id,
   }) = _NotificationRemovedById;

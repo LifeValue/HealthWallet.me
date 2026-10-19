@@ -1,4 +1,6 @@
 import 'package:auto_route/auto_route.dart';
+// Used by the generated route args (ListEquality) in app_router.gr.dart.
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/features/dashboard/presentation/dashboard_page.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/processing_page.dart';
@@ -26,7 +28,7 @@ part 'app_router.gr.dart';
 
 @LazySingleton()
 @AutoRouterConfig()
-class AppRouter extends _$AppRouter {
+class AppRouter extends RootStackRouter {
   @override
   List<AutoRoute> get routes => [
         AutoRoute(page: SplashRoute.page, initial: true),

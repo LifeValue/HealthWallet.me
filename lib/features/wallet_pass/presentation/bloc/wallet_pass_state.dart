@@ -11,7 +11,7 @@ enum WalletPassStatus {
 }
 
 @freezed
-class WalletPassState with _$WalletPassState {
+abstract class WalletPassState with _$WalletPassState {
   const factory WalletPassState({
     @Default(WalletPassStatus.initial) WalletPassStatus status,
     EmergencyCardData? cardData,

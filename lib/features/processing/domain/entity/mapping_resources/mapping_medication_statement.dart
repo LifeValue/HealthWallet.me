@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_medication_statement.freezed.dart';
 
 @freezed
-class MappingMedicationStatement
+abstract class MappingMedicationStatement
     with _$MappingMedicationStatement
     implements MappingResource {
   const MappingMedicationStatement._();

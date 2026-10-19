@@ -5,37 +5,51 @@ abstract class SyncEvent {
 }
 
 @freezed
-class SyncInitialised extends SyncEvent with _$SyncInitialised {
+abstract class SyncInitialised extends SyncEvent with _$SyncInitialised {
+  const SyncInitialised._();
+
   const factory SyncInitialised() = _SyncInitialised;
 }
 
 @freezed
-class SyncData extends SyncEvent with _$SyncData {
+abstract class SyncData extends SyncEvent with _$SyncData {
+  const SyncData._();
+
   const factory SyncData({required String qrData}) = _SyncData;
 }
 
 @freezed
-class SyncScanQRCode extends SyncEvent with _$SyncScanQRCode {
+abstract class SyncScanQRCode extends SyncEvent with _$SyncScanQRCode {
+  const SyncScanQRCode._();
+
   const factory SyncScanQRCode() = _SyncScanQRCode;
 }
 
 @freezed
-class SyncScanNewPressed extends SyncEvent with _$SyncScanNewPressed {
+abstract class SyncScanNewPressed extends SyncEvent with _$SyncScanNewPressed {
+  const SyncScanNewPressed._();
+
   const factory SyncScanNewPressed() = _SyncScanNewPressed;
 }
 
 @freezed
-class SyncCancel extends SyncEvent with _$SyncCancel {
+abstract class SyncCancel extends SyncEvent with _$SyncCancel {
+  const SyncCancel._();
+
   const factory SyncCancel() = _SyncCancel;
 }
 
 @freezed
-class LoadDemoData extends SyncEvent with _$LoadDemoData {
+abstract class LoadDemoData extends SyncEvent with _$LoadDemoData {
+  const LoadDemoData._();
+
   const factory LoadDemoData() = _LoadDemoData;
 }
 
 @freezed
-class DataHandled extends SyncEvent with _$DataHandled {
+abstract class DataHandled extends SyncEvent with _$DataHandled {
+  const DataHandled._();
+
   const factory DataHandled({
     required String sourceId,
     required bool isSuccess,
@@ -44,21 +58,29 @@ class DataHandled extends SyncEvent with _$DataHandled {
 }
 
 @freezed
-class TriggerTutorial extends SyncEvent with _$TriggerTutorial {
+abstract class TriggerTutorial extends SyncEvent with _$TriggerTutorial {
+  const TriggerTutorial._();
+
   const factory TriggerTutorial() = _TriggerTutorial;
 }
 
 @freezed
-class ResetTutorial extends SyncEvent with _$ResetTutorial {
+abstract class ResetTutorial extends SyncEvent with _$ResetTutorial {
+  const ResetTutorial._();
+
   const factory ResetTutorial() = _ResetTutorial;
 }
 
 @freezed
-class DemoDataConfirmed extends SyncEvent with _$DemoDataConfirmed {
+abstract class DemoDataConfirmed extends SyncEvent with _$DemoDataConfirmed {
+  const DemoDataConfirmed._();
+
   const factory DemoDataConfirmed() = _DemoDataConfirmed;
 }
 
 @freezed
-class CreateWalletSource extends SyncEvent with _$CreateWalletSource {
+abstract class CreateWalletSource extends SyncEvent with _$CreateWalletSource {
+  const CreateWalletSource._();
+
   const factory CreateWalletSource() = _CreateWalletSource;
 }

@@ -1,7 +1,7 @@
 part of 'patient_bloc.dart';
 
 @freezed
-class PatientState with _$PatientState {
+abstract class PatientState with _$PatientState {
   const factory PatientState({
     @Default(PatientStatus.initial()) PatientStatus status,
     @Default([]) List<Patient> patients,
@@ -21,7 +21,7 @@ class PatientState with _$PatientState {
 }
 
 @freezed
-class PatientStatus with _$PatientStatus {
+sealed class PatientStatus with _$PatientStatus {
   const factory PatientStatus.initial() = _Initial;
   const factory PatientStatus.loading() = _Loading;
   const factory PatientStatus.success() = _Success;

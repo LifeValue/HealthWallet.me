@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'explanation_of_benefit.freezed.dart';
 
 @freezed
-class ExplanationOfBenefit
+abstract class ExplanationOfBenefit
     with _$ExplanationOfBenefit
     implements IFhirResource {
   const ExplanationOfBenefit._();

@@ -5,7 +5,7 @@ enum ConnectionStatus { disconnected, discovering, connected }
 enum ConnectionTransport { tcp, multipeerConnectivity, unknown }
 
 @freezed
-class DesktopSyncState with _$DesktopSyncState {
+abstract class DesktopSyncState with _$DesktopSyncState {
   const factory DesktopSyncState({
     @Default(ConnectionStatus.disconnected) ConnectionStatus connectionStatus,
     @Default(ConnectionTransport.unknown)

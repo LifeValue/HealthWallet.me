@@ -19,8 +19,8 @@ git diff --cached --name-only | grep -iE '\.(pem|p8|p12|key|jks|keystore)$|servi
 
 HealthWallet.me is a Flutter application for patient-controlled health record management. It aggregates medical data from multiple healthcare providers using FHIR R4 standards, with offline-first architecture and biometric security. The same codebase targets both **mobile** (iOS, Android) and **desktop** (macOS, Windows) via two entry points and a platform discriminator.
 
-- **Flutter 3.38.7** (managed via FVM — see `.fvmrc`)
-- **Dart SDK:** >=3.10.7 <4.0.0
+- **Flutter 3.41.9** (managed via FVM — see `.fvmrc`)
+- **Dart SDK:** >=3.11.5 <4.0.0
 - **Mobile platforms:** iOS 16.0+, Android SDK 24+
 - **Desktop platforms:** macOS (production), Windows (Store-packaged). Linux is not scaffolded (`linux/` removed); `Platform.isLinux` branches in Dart code are kept for a future port
 - **Package name:** `com.techstackapps.healthwallet`

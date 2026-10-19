@@ -9,7 +9,7 @@ part 'fhir_resource_dto.freezed.dart';
 part 'fhir_resource_dto.g.dart';
 
 @freezed
-class FhirResourceDto with _$FhirResourceDto {
+abstract class FhirResourceDto with _$FhirResourceDto {
   const FhirResourceDto._();
 
   const factory FhirResourceDto({

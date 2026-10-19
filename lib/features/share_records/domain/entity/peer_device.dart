@@ -12,7 +12,7 @@ enum PeerConnectionStatus {
 }
 
 @freezed
-class PeerDevice with _$PeerDevice {
+abstract class PeerDevice with _$PeerDevice {
   const PeerDevice._();
 
   const factory PeerDevice({
