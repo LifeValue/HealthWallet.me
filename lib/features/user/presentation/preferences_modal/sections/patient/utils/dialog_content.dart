@@ -9,6 +9,7 @@ import 'form_fields.dart';
 import 'phone_input_field.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class DialogContent extends StatelessWidget {
   final Patient patient;

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,12 +19,16 @@ import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/home/presentation/bloc/handlers/home_data_handler.dart';
 
 part 'home_bloc.freezed.dart';
 part 'home_event.dart';
 part 'home_state.dart';
 
+@lazySingleton
 class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   @override
   final RecordsRepository recordsRepository;
@@ -37,6 +42,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
   final PatientSelectionService patientSelectionService;
   @override
   final PatientVitalFactory patientVitalFactory = PatientVitalFactory();
+  final SpecialtyClassifier _specialtyClassifier;
+
+  @override
+  SpecialtyClassifier get specialtyClassifier => _specialtyClassifier;
 
   static const int _minVisibleVitalsCount = 4;
 
@@ -47,6 +56,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     this._syncRepository,
     this.deduplicationService,
     this.patientSelectionService,
+    this._specialtyClassifier,
   ) : super(const HomeState()) {
     on<HomeInitialised>(_onInitialised);
     on<HomeSourceChanged>(_onSourceChanged);
@@ -62,6 +72,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     on<HomeScanCompleted>(_onScanCompleted);
     on<HomeSourceLabelUpdated>(_onSourceLabelUpdated);
     on<HomeSourceDeleted>(_onSourceDeleted);
+    on<HomeOverviewViewModeChanged>(_onOverviewViewModeChanged);
+    on<HomeSpecialtiesReordered>(_onSpecialtiesReordered);
+    on<HomeSpecialtiesFiltersChanged>(_onSpecialtiesFiltersChanged);
   }
 
   bool hasData({
@@ -86,6 +99,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
       emit(state.copyWith(selectedSource: savedSource));
     } else {
       emit(state.copyWith(selectedSource: 'All'));
+    }
+
+    final savedViewMode = prefs.getString(SharedPrefsConstants.overviewViewMode);
+    if (savedViewMode != null) {
+      final mode = OverviewViewMode.values.firstWhere(
+        (m) => m.name == savedViewMode,
+        orElse: () => OverviewViewMode.specialties,
+      );
+      emit(state.copyWith(overviewViewMode: mode));
     }
 
     if (_hasExistingVitalsData() && !_shouldForceRefresh()) {
@@ -165,6 +187,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
     }
   }
 
+  Future<void> _onOverviewViewModeChanged(
+      HomeOverviewViewModeChanged e, Emitter<HomeState> emit) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SharedPrefsConstants.overviewViewMode, e.mode.name);
+    emit(state.copyWith(overviewViewMode: e.mode));
+  }
+
   Future<void> _onRecordsFiltersChanged(
       HomeRecordsFiltersChanged e, Emitter<HomeState> emit) async {
     final toSave = <String, bool>{
@@ -176,6 +205,32 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
         force: false,
         overrideSourceId:
             state.selectedSource != 'All' ? state.selectedSource : null);
+  }
+
+  Future<void> _onSpecialtiesFiltersChanged(
+      HomeSpecialtiesFiltersChanged e, Emitter<HomeState> emit) async {
+    final toSave = <String, bool>{
+      for (final entry in e.filters.entries) entry.key.name: entry.value
+    };
+    await homePreferences.saveSpecialtiesVisibility(toSave);
+    emit(state.copyWith(selectedSpecialties: e.filters));
+  }
+
+  Future<void> _onSpecialtiesReordered(
+      HomeSpecialtiesReordered e, Emitter<HomeState> emit) async {
+    try {
+      final cards = List.of(state.specialtyCards);
+      if (!_validateReorderIndices(e.oldIndex, e.newIndex, cards.length))
+        return;
+
+      final item = cards.removeAt(e.oldIndex);
+      cards.insert(e.newIndex, item);
+      await homePreferences.saveSpecialtiesOrder(
+          cards.map((c) => c.specialty.name).toList());
+      emit(state.copyWith(specialtyCards: cards));
+    } catch (err) {
+      logger.e('Specialties reorder error: $err');
+    }
   }
 
   Future<void> _onRecordsReordered(
@@ -257,6 +312,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
       final vitalsData = await processVitalsData(sourceId, patientSourceIds);
       final reorderedCards =
           await applyOverviewCardsOrder(overview.overviewCards);
+      final specialtyCards =
+          await classifyIntoSpecialties(overview.allEnabledResources);
+
+      final savedSpecialtiesVisibility =
+          await homePreferences.getSpecialtiesVisibility();
+      final updatedSelectedSpecialties =
+          Map<MedicalSpecialty, bool>.from(state.selectedSpecialties);
+      if (savedSpecialtiesVisibility != null) {
+        updatedSelectedSpecialties.updateAll((specialty, value) =>
+            savedSpecialtiesVisibility[specialty.name] ?? value);
+      }
 
       final hasDataResult = hasData(
         patientVitals: vitalsData.patientVitals,
@@ -282,6 +348,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
         selectedVitals: vitalsData.selectedVitals,
         selectedRecordTypes: overview.selectedRecordTypes,
         hasDataLoaded: hasDataResult,
+        specialtyCards: specialtyCards,
+        selectedSpecialties: updatedSelectedSpecialties,
       ));
     } catch (err, stackTrace) {
       logger.e('reloadHomeData error: $err');

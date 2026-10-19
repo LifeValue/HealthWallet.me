@@ -6,8 +6,10 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/widgets/app_date_picker.dart';
+import 'package:health_wallet/core/widgets/app_input_field.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class DateField extends StatelessWidget {
   final String label;
@@ -84,17 +86,18 @@ class DateField extends StatelessWidget {
         InkWell(
           onTap: onDateChanged != null ? () => _showDatePicker(context) : null,
           child: Container(
-            height: 36,
+            height: kInputFieldHeight,
+            alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(
-                horizontal: Insets.small, vertical: Insets.small),
+                horizontal: Insets.smallNormal),
             decoration: BoxDecoration(
               border: Border.all(
                 color: context.isDarkMode
                     ? AppColors.borderDark
                     : AppColors.border,
-                width: 1.5,
+                width: kInputBorderWidth,
               ),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(kInputBorderRadius),
             ),
             child: Row(
               children: [

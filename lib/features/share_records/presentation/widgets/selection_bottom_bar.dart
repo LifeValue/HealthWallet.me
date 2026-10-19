@@ -10,6 +10,7 @@ import 'package:health_wallet/features/share_records/presentation/bloc/share_rec
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/duration_wheel_picker.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SelectionBottomBar extends StatefulWidget {
   final ShareRecordsState shareState;
@@ -167,7 +168,7 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
                         ),
                         const SizedBox(width: 4),
                         Icon(
-                          _isDurationPickerExpanded ? Icons.expand_less : Icons.expand_more,
+                          _isDurationPickerExpanded ? Icons.expand_more : Icons.expand_less,
                           size: 20,
                           color: context.colorScheme.onSurface,
                         ),

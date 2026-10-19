@@ -3,17 +3,41 @@
     "onboardingRecordsContent",
     "onboardingRecordsBottom",
     "onboardingRequestIntegration",
+    "scanFastenQr",
     "walletHolder",
     "walletHolderDescription",
-    "documentScanTitle"
+    "deleteSourceConfirmPrefix",
+    "deleteSourceConfirmSuffix",
+    "noAiModel",
+    "documentScanTitle",
+    "desktopBackupLocation",
+    "changeSpecialty",
+    "changeSpecialtyConfirm",
+    "removeSpecialtyConfirm",
+    "confirm"
   ],
 
   "es": [
-    "onboardingRecordsContent",
-    "onboardingRecordsBottom",
-    "onboardingRequestIntegration",
-    "walletHolder",
-    "walletHolderDescription",
-    "documentScanTitle"
+    "scanFastenQr",
+    "deleteSourceConfirmPrefix",
+    "deleteSourceConfirmSuffix",
+    "noAiModel",
+    "desktopBackupLocation",
+    "changeSpecialty",
+    "changeSpecialtyConfirm",
+    "removeSpecialtyConfirm",
+    "confirm"
+  ],
+
+  "ro": [
+    "scanFastenQr",
+    "deleteSourceConfirmPrefix",
+    "deleteSourceConfirmSuffix",
+    "noAiModel",
+    "desktopBackupLocation",
+    "changeSpecialty",
+    "changeSpecialtyConfirm",
+    "removeSpecialtyConfirm",
+    "confirm"
   ]
 }

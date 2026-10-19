@@ -38,6 +38,15 @@ class ReorderableGrid<T> extends StatelessWidget {
         shrinkWrap: shrinkWrap,
         physics: physics ?? const NeverScrollableScrollPhysics(),
         padding: padding ?? EdgeInsets.zero,
+        placeholderBuilder: (dropIndex, dropInIndex, dragWidget) {
+          return const SizedBox();
+        },
+        dragWidgetBuilderV2: DragWidgetBuilderV2(
+          builder: (index, child, screenshot) => Material(
+            color: Colors.transparent,
+            child: child,
+          ),
+        ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: crossAxisSpacing,

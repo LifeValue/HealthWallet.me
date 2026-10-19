@@ -9,9 +9,14 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
+import 'package:health_wallet/features/home/presentation/widgets/specialty_picker.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -19,6 +24,7 @@ import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class RecordDetailsPage extends StatefulWidget {
@@ -38,15 +44,23 @@ class RecordDetailsPage extends StatefulWidget {
 class _RecordDetailsPageState extends State<RecordDetailsPage> {
   final PdfPreviewService _pdfPreviewService = getIt<PdfPreviewService>();
   late final bool _isEphemeral;
-  late final RecordsBloc _appRecordsBloc;
+  RecordsBloc? _appRecordsBloc;
   List<IFhirResource> _ephemeralRelatedResources = [];
+  late MedicalSpecialty? _currentSpecialty;
 
   @override
   void initState() {
     super.initState();
-    _appRecordsBloc = context.read<RecordsBloc>();
+    final parsed = MedicalSpecialty.values
+        .where((s) => s.name == widget.resource.specialtyOverride)
+        .firstOrNull;
+    _currentSpecialty = parsed ??
+        getIt<SpecialtyClassifier>().classify(widget.resource).firstOrNull;
     _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
         EphemeralSessionManager.instance.hasActiveSession;
+    if (!_isEphemeral) {
+      _appRecordsBloc = context.read<RecordsBloc>();
+    }
     if (_isEphemeral) {
       _ephemeralRelatedResources = _findRelatedInMemory();
     }
@@ -106,14 +120,23 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
       orElse: () => const GeneralResource(),
     );
 
-    final isEphemeral = widget.ephemeralRecords.isNotEmpty;
-
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Record Details',
-        actions: isEphemeral
+        title: context.l10n.recordDetails,
+        actions: _isEphemeral
             ? null
             : [
+                IconButton(
+                  icon: (_currentSpecialty?.icon ?? Assets.specialities.generalCare).svg(
+                    width: 22,
+                    height: 22,
+                    colorFilter: ColorFilter.mode(
+                      context.colorScheme.primary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  onPressed: () => _showSpecialtyPicker(context),
+                ),
                 IconButton(
                   icon: Assets.icons.trashCan.svg(
                     colorFilter: ColorFilter.mode(
@@ -190,7 +213,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: AppButton(
-                label: 'View Document',
+                label: context.l10n.viewDocument,
                 onPressed: () => _onViewDocument(widget.resource),
                 icon: const Icon(Icons.visibility_outlined),
                 variant: AppButtonVariant.outlined,
@@ -250,7 +273,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Encounter details", style: AppTextStyle.buttonSmall),
+        Text(context.l10n.encounterDetails, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 4),
         InkWell(
           onTap: () => context.router.push(RecordDetailsRoute(
@@ -272,7 +295,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Related resources", style: AppTextStyle.buttonSmall),
+        Text(context.l10n.relatedResources, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 16),
         ...resources.map((resource) => InkWell(
               onTap: () => context.router.push(RecordDetailsRoute(
@@ -289,7 +312,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: AppButton(
-                        label: 'View Document',
+                        label: context.l10n.viewDocument,
                         onPressed: () => _onViewDocument(resource),
                         icon: const Icon(Icons.visibility_outlined),
                         variant: AppButtonVariant.outlined,
@@ -347,8 +370,83 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     );
   }
 
+  void _showSpecialtyPicker(BuildContext outerContext) async {
+    final currentSpecialty = _currentSpecialty;
+
+    final selected = await showModalBottomSheet<MedicalSpecialty?>(
+      context: outerContext,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      isScrollControlled: true,
+      builder: (sheetContext) => SpecialtyPicker(
+        currentSpecialty: currentSpecialty,
+        onSelected: (specialty) async {
+          if (specialty == currentSpecialty) {
+            Navigator.of(sheetContext).pop();
+            return;
+          }
+
+          final isRemove = specialty == null && currentSpecialty != null;
+
+          final confirmed = await AppSimpleDialog.showConfirmation(
+            context: sheetContext,
+            title: outerContext.l10n.changeSpecialty,
+            message: isRemove
+                ? outerContext.l10n.removeSpecialtyConfirm
+                : outerContext.l10n.changeSpecialtyConfirm,
+            subtitleWidget: !isRemove && specialty != null
+                ? Row(
+                    children: [
+                      specialty.icon.svg(
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          Theme.of(sheetContext).colorScheme.onSurface,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        specialty.displayName,
+                        style: AppTextStyle.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(sheetContext).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
+            confirmText: outerContext.l10n.confirm,
+            cancelText: outerContext.l10n.cancel,
+            onConfirm: () {},
+            onCancel: () {},
+          );
+
+          if (confirmed == true && sheetContext.mounted) {
+            Navigator.of(sheetContext).pop(specialty);
+          }
+        },
+      ),
+    );
+
+    if (selected == null && currentSpecialty == null) return;
+    if (selected == currentSpecialty) return;
+
+    final repo = _appRecordsBloc?.recordsRepository ?? getIt<RecordsRepository>();
+    await repo.setSpecialtyOverride(widget.resource.id, selected?.name);
+
+    if (mounted) {
+      setState(() {
+        _currentSpecialty = selected;
+      });
+      outerContext.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+      outerContext.read<RecordsBloc>().add(RecordsRefreshRequested());
+    }
+  }
+
   void _showDeleteDialog(BuildContext context) async {
-    final relatedResources = await _appRecordsBloc.recordsRepository
+    final relatedResources = await _appRecordsBloc!.recordsRepository
         .getRelatedResourcesForDeletion(widget.resource.id);
 
     if (!context.mounted) return;
@@ -426,108 +524,114 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                     if (relatedResources.isNotEmpty) ...[
                       const SizedBox(height: Insets.normal),
                       Text(
-                        'Related resources',
+                        context.l10n.relatedResources,
                         style: AppTextStyle.labelLarge.copyWith(
                           color: textColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: Insets.small),
-                      ...relatedResources.map((resource) {
-                        final isSelected = selectedIds.contains(resource.id);
-                        return Padding(
-                          padding:
-                              const EdgeInsets.only(bottom: Insets.extraSmall),
-                          child: InkWell(
-                            onTap: () {
-                              setDialogState(() {
-                                if (isSelected) {
-                                  selectedIds.remove(resource.id);
-                                } else {
-                                  selectedIds.add(resource.id);
-                                }
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: Insets.smallNormal,
-                                vertical: Insets.small,
-                              ),
-                              decoration: BoxDecoration(
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: relatedResources.length,
+                          itemBuilder: (_, index) {
+                            final resource = relatedResources[index];
+                            final isSelected = selectedIds.contains(resource.id);
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: Insets.extraSmall),
+                              child: InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    if (isSelected) {
+                                      selectedIds.remove(resource.id);
+                                    } else {
+                                      selectedIds.add(resource.id);
+                                    }
+                                  });
+                                },
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? context.colorScheme.error
-                                          .withValues(alpha: 0.5)
-                                      : borderColor,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: Insets.smallNormal,
+                                    vertical: Insets.small,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? context.colorScheme.error
+                                              .withValues(alpha: 0.5)
+                                          : borderColor,
+                                    ),
+                                    color: isSelected
+                                        ? context.colorScheme.error
+                                            .withValues(alpha: 0.05)
+                                        : null,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Checkbox(
+                                          value: isSelected,
+                                          onChanged: (value) {
+                                            setDialogState(() {
+                                              if (value == true) {
+                                                selectedIds.add(resource.id);
+                                              } else {
+                                                selectedIds.remove(resource.id);
+                                              }
+                                            });
+                                          },
+                                          activeColor: context.colorScheme.error,
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                      ),
+                                      const SizedBox(width: Insets.small),
+                                      resource.fhirType.icon.svg(
+                                        width: 16,
+                                        color: context.colorScheme.onSurface
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                      const SizedBox(width: Insets.small),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              resource.displayTitle,
+                                              style:
+                                                  AppTextStyle.labelLarge.copyWith(
+                                                color: textColor,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              resource.fhirType.display,
+                                              style:
+                                                  AppTextStyle.labelSmall.copyWith(
+                                                color: context
+                                                    .colorScheme.onSurface
+                                                    .withValues(alpha: 0.5),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                color: isSelected
-                                    ? context.colorScheme.error
-                                        .withValues(alpha: 0.05)
-                                    : null,
                               ),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      onChanged: (value) {
-                                        setDialogState(() {
-                                          if (value == true) {
-                                            selectedIds.add(resource.id);
-                                          } else {
-                                            selectedIds.remove(resource.id);
-                                          }
-                                        });
-                                      },
-                                      activeColor: context.colorScheme.error,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ),
-                                  const SizedBox(width: Insets.small),
-                                  resource.fhirType.icon.svg(
-                                    width: 16,
-                                    color: context.colorScheme.onSurface
-                                        .withValues(alpha: 0.6),
-                                  ),
-                                  const SizedBox(width: Insets.small),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          resource.displayTitle,
-                                          style:
-                                              AppTextStyle.labelLarge.copyWith(
-                                            color: textColor,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          resource.fhirType.display,
-                                          style:
-                                              AppTextStyle.labelSmall.copyWith(
-                                            color: context
-                                                .colorScheme.onSurface
-                                                .withValues(alpha: 0.5),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
+                            );
+                          },
+                        ),
+                      ),
                     ],
                     if (selectedIds.isNotEmpty) ...[
                       const SizedBox(height: Insets.small),
@@ -556,7 +660,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                           ),
                         ),
                         child: Text(
-                          '${context.l10n.deletePage} + ${selectedIds.length} related',
+                          context.l10n.deletePlusRelated(selectedIds.length),
                         ),
                       ),
                     ],
@@ -599,7 +703,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     BuildContext context, {
     List<String> selectedRelatedIds = const [],
   }) {
-    _appRecordsBloc.add(
+    _appRecordsBloc!.add(
       RecordsResourceDeleted(
         resourceId: widget.resource.id,
         selectedRelatedIds: selectedRelatedIds,

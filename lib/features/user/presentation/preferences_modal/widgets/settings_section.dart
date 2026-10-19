@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
@@ -5,14 +7,19 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/minimize_to_tray_toggle.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/theme_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometric_toggle_button.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/share_proximity_row.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/storage/storage_section.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/region/region_dialog.dart';
 import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SettingsSection extends StatelessWidget {
   const SettingsSection({super.key});
@@ -122,6 +129,10 @@ class SettingsSection extends StatelessWidget {
                   ),
                 ),
               ),
+              if (Platform.isMacOS || Platform.isWindows) ...[
+                const SizedBox(height: Insets.normal),
+                const StorageSection(),
+              ],
               const SizedBox(height: Insets.normal),
               InkWell(
                 onTap: () {

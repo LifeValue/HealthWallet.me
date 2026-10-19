@@ -104,3 +104,14 @@ class RecordsResourceDeleted extends RecordsEvent
     @Default([]) List<String> selectedRelatedIds,
   }) = _RecordsResourceDeleted;
 }
+
+@freezed
+class RecordsSpecialtyApplied extends RecordsEvent
+    with _$RecordsSpecialtyApplied {
+  const factory RecordsSpecialtyApplied(List<MedicalSpecialty> specialties) =
+      _RecordsSpecialtyApplied;
+}
+
+class RecordsRefreshRequested extends RecordsEvent {}
+
+class RecordsClearAllFilters extends RecordsEvent {}

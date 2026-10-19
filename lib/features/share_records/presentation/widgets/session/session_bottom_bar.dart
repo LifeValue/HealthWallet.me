@@ -12,6 +12,7 @@ import 'package:health_wallet/features/share_records/presentation/bloc/share_rec
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/session/extend_request_card.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/session/session_timer_widget.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SessionBottomBar extends StatefulWidget {
   final ShareRecordsState state;

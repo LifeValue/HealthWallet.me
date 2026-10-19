@@ -5,6 +5,8 @@ import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -19,11 +21,15 @@ part 'records_bloc.freezed.dart';
 @injectable
 class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   final RecordsRepository _recordsRepository;
+  final SpecialtyClassifier _specialtyClassifier;
   RecordsRepository get recordsRepository => _recordsRepository;
   Timer? _searchDebounceTimer;
   bool _isSearching = false;
 
-  RecordsBloc(this._recordsRepository) : super(const RecordsState()) {
+  RecordsBloc(
+    this._recordsRepository,
+    this._specialtyClassifier,
+  ) : super(const RecordsState()) {
     on<RecordsInitialised>(_onInitialised);
     on<RecordsLoadMore>(_onLoadMore);
     on<RecordsSourceChanged>(_onSourceChanged);
@@ -40,6 +46,9 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsSelectionModeToggled>(_onSelectionModeToggled);
     on<RecordsDateRangeCleared>(_onDateRangeCleared);
     on<RecordsResourceDeleted>(_onResourceDeleted);
+    on<RecordsSpecialtyApplied>(_onSpecialtyApplied);
+    on<RecordsRefreshRequested>(_onRefreshRequested);
+    on<RecordsClearAllFilters>(_onClearAllFilters);
   }
 
   @override
@@ -94,12 +103,26 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         );
       }
 
+      List<IFhirResource> filteredResources = resources;
+      if (state.activeSpecialties.isNotEmpty) {
+        _specialtyClassifier.buildEncounterIndex(resources);
+        filteredResources = resources
+            .where((r) {
+              final override = MedicalSpecialty.values
+                  .where((s) => s.name == r.specialtyOverride)
+                  .firstOrNull;
+              final classified = _specialtyClassifier.classify(r, override: override);
+              return state.activeSpecialties.any((s) => classified.contains(s));
+            })
+            .toList();
+      }
+
       final List<IFhirResource> updatedResources;
       if (offset == 0) {
-        updatedResources = List<IFhirResource>.from(resources);
+        updatedResources = List<IFhirResource>.from(filteredResources);
       } else {
         updatedResources = List<IFhirResource>.from(state.resources);
-        updatedResources.addAll(resources);
+        updatedResources.addAll(filteredResources);
       }
 
       emit(
@@ -122,13 +145,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsInitialised event,
     Emitter<RecordsState> emit,
   ) async {
-    if (state.activeFilters.isEmpty) {
-      if (!event.isShareContext) {
-        emit(state.copyWith(
-            activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]));
-      }
+    if (state.activeFilters.isEmpty && !event.isShareContext) {
+      emit(state.copyWith(
+          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]));
     }
-
     await _loadResources(emit);
   }
 
@@ -166,11 +186,12 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     await _loadResources(emit);
   }
 
-  void _onFiltersApplied(
+  Future<void> _onFiltersApplied(
     RecordsFiltersApplied event,
     Emitter<RecordsState> emit,
   ) async {
     emit(state.copyWith(
+      status: const RecordsStatus.loading(),
       activeFilters: event.filters,
       dateFilter: event.dateFilter,
       resources: [],
@@ -179,12 +200,13 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     await _loadResources(emit);
   }
 
-  void _onFilterRemoved(
+  Future<void> _onFilterRemoved(
     RecordsFilterRemoved event,
     Emitter<RecordsState> emit,
   ) async {
+    final updatedFilters = [...state.activeFilters]..remove(event.filter);
     emit(state.copyWith(
-      activeFilters: [...state.activeFilters]..remove(event.filter),
+      activeFilters: updatedFilters,
       resources: [],
     ));
 
@@ -367,7 +389,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     ));
   }
 
-  void _onDateRangeCleared(
+  Future<void> _onDateRangeCleared(
     RecordsDateRangeCleared event,
     Emitter<RecordsState> emit,
   ) async {
@@ -417,5 +439,46 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     } catch (e) {
       emit(state.copyWith(status: RecordsStatus.failure(e)));
     }
+  }
+
+  Future<void> _onSpecialtyApplied(
+    RecordsSpecialtyApplied event,
+    Emitter<RecordsState> emit,
+  ) async {
+    emit(state.copyWith(
+      status: const RecordsStatus.loading(),
+      activeSpecialties: event.specialties,
+      activeFilters: event.specialties.isNotEmpty ? [] : state.activeFilters,
+      resources: [],
+    ));
+
+    await _loadResources(emit);
+  }
+
+  Future<void> _onRefreshRequested(
+    RecordsRefreshRequested event,
+    Emitter<RecordsState> emit,
+  ) async {
+    emit(state.copyWith(
+      status: const RecordsStatus.loading(),
+      resources: [],
+    ));
+
+    await _loadResources(emit);
+  }
+
+  Future<void> _onClearAllFilters(
+    RecordsClearAllFilters event,
+    Emitter<RecordsState> emit,
+  ) async {
+    emit(state.copyWith(
+      status: const RecordsStatus.loading(),
+      activeFilters: [],
+      activeSpecialties: [],
+      dateFilter: null,
+      resources: [],
+    ));
+
+    await _loadResources(emit);
   }
 }

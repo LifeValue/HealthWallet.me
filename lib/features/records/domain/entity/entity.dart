@@ -30,3 +30,7 @@ export 'related_person/related_person.dart';
 export 'service_request/service_request.dart';
 export 'specimen/specimen.dart';
 export 'i_fhir_resource.dart';
+export 'attachment_browse/attachment_browse_entry.dart';
+export 'attachment_browse/attachment_browse_detail.dart';
+export 'attachment_browse/attachment_browse_file.dart';
+export 'attachment_browse/timeline_models.dart';

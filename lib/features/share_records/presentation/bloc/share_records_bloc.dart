@@ -18,6 +18,7 @@ import 'package:health_wallet/features/share_records/domain/services/receive_mod
 import 'package:health_wallet/features/share_records/data/service/share_preferences_service.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
+import 'package:health_wallet/features/share_records/domain/services/share_log_buffer.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 

@@ -3,12 +3,17 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_input_field.dart';
 
 class AppDropdownField<T> extends StatefulWidget {
   final String value;
   final List<T> items;
   final String Function(T) getDisplayText;
   final ValueChanged<T>? onChanged;
+  final Widget Function(BuildContext, T, bool isSelected)? itemBuilder;
+  final Widget Function(BuildContext, String)? valueBuilder;
+  final bool hasError;
+  final bool openAbove;
 
   const AppDropdownField({
     super.key,
@@ -16,6 +21,10 @@ class AppDropdownField<T> extends StatefulWidget {
     required this.items,
     required this.getDisplayText,
     this.onChanged,
+    this.itemBuilder,
+    this.valueBuilder,
+    this.hasError = false,
+    this.openAbove = false,
   });
 
   @override
@@ -61,7 +70,9 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
             child: CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
-              offset: Offset(0, size.height + 4),
+              targetAnchor: widget.openAbove ? Alignment.topLeft : Alignment.bottomLeft,
+              followerAnchor: widget.openAbove ? Alignment.bottomLeft : Alignment.topLeft,
+              offset: Offset(0, widget.openAbove ? -4 : 4),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
@@ -95,6 +106,7 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                       items: widget.items,
                       selectedValue: widget.value,
                       getDisplayText: widget.getDisplayText,
+                      itemBuilder: widget.itemBuilder,
                       onSelected: (item) {
                         widget.onChanged?.call(item);
                         _hideMenu();
@@ -128,30 +140,34 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           width: double.infinity,
-          height: 42,
+          height: kInputFieldHeight,
           padding: const EdgeInsets.symmetric(
-              horizontal: Insets.smallNormal, vertical: Insets.small),
+              horizontal: Insets.smallNormal),
           decoration: BoxDecoration(
             border: Border.all(
-              color: _isOpen
-                  ? context.colorScheme.primary
-                  : context.isDarkMode
-                      ? AppColors.borderDark
-                      : AppColors.border,
-              width: 1.5,
+              color: widget.hasError
+                  ? context.colorScheme.error
+                  : _isOpen
+                      ? context.colorScheme.primary
+                      : context.isDarkMode
+                          ? AppColors.borderDark
+                          : AppColors.border,
+              width: kInputBorderWidth,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(kInputBorderRadius),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  widget.value,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.labelLarge
-                      .copyWith(color: context.colorScheme.onSurface),
-                ),
+                child: widget.valueBuilder != null
+                    ? widget.valueBuilder!(context, widget.value)
+                    : Text(
+                        widget.value,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyle.labelLarge
+                            .copyWith(color: context.colorScheme.onSurface),
+                      ),
               ),
               Icon(
                 _isOpen ? Icons.expand_less : Icons.expand_more,
@@ -171,12 +187,14 @@ class _MenuList<T> extends StatefulWidget {
   final String selectedValue;
   final String Function(T) getDisplayText;
   final ValueChanged<T> onSelected;
+  final Widget Function(BuildContext, T, bool isSelected)? itemBuilder;
 
   const _MenuList({
     required this.items,
     required this.selectedValue,
     required this.getDisplayText,
     required this.onSelected,
+    this.itemBuilder,
   });
 
   @override
@@ -245,15 +263,17 @@ class _MenuListState<T> extends State<_MenuList<T>> {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                itemText,
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: isSelected
-                      ? context.colorScheme.primary
-                      : context.colorScheme.onSurface,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: widget.itemBuilder != null
+                  ? widget.itemBuilder!(context, item, isSelected)
+                  : Text(
+                      itemText,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: isSelected
+                            ? context.colorScheme.primary
+                            : context.colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
             ),
           ),
         );

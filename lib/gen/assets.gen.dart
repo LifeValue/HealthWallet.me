@@ -48,6 +48,10 @@ class $AssetsIconsGen {
   SvgGenImage get attachment =>
       const SvgGenImage('assets/icons/attachment.svg');
 
+  /// File path: assets/icons/attachments-view.svg
+  SvgGenImage get attachmentsView =>
+      const SvgGenImage('assets/icons/attachments-view.svg');
+
   /// File path: assets/icons/blood-glucose.svg
   SvgGenImage get bloodGlucose =>
       const SvgGenImage('assets/icons/blood-glucose.svg');
@@ -121,6 +125,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/filter.svg
   SvgGenImage get filter => const SvgGenImage('assets/icons/filter.svg');
 
+  /// File path: assets/icons/from-phone.svg
+  SvgGenImage get fromPhone =>
+      const SvgGenImage('assets/icons/from-phone.svg');
+
   /// File path: assets/icons/gender-female.svg
   SvgGenImage get genderFemale =>
       const SvgGenImage('assets/icons/gender-female.svg');
@@ -157,6 +165,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/license-draft-notes.svg
   SvgGenImage get licenseDraftNotes =>
       const SvgGenImage('assets/icons/license-draft-notes.svg');
+
+  /// File path: assets/icons/list.svg
+  SvgGenImage get list => const SvgGenImage('assets/icons/list.svg');
 
   /// File path: assets/icons/medication.svg
   SvgGenImage get medication =>
@@ -268,6 +279,7 @@ class $AssetsIconsGen {
         externalLink,
         faceMask,
         filter,
+        fromPhone,
         genderFemale,
         genderMale,
         heartFavorite,
@@ -505,6 +517,31 @@ class $AssetsFontMatterFontGen {
       ];
 }
 
+class $AssetsSpecialitiesGen {
+  const $AssetsSpecialitiesGen();
+
+  SvgGenImage get allergology => const SvgGenImage('assets/specialities/allergology.svg');
+  SvgGenImage get cardiology => const SvgGenImage('assets/specialities/cardiology.svg');
+  SvgGenImage get dental => const SvgGenImage('assets/specialities/dental.svg');
+  SvgGenImage get dermatology => const SvgGenImage('assets/specialities/dermatology.svg');
+  SvgGenImage get emergencyMedicine => const SvgGenImage('assets/specialities/emergency-medicine.svg');
+  SvgGenImage get endocrinology => const SvgGenImage('assets/specialities/endocrinology.svg');
+  SvgGenImage get gastroenterology => const SvgGenImage('assets/specialities/gastroenterology.svg');
+  SvgGenImage get generalCare => const SvgGenImage('assets/specialities/general-care.svg');
+  SvgGenImage get gynecology => const SvgGenImage('assets/specialities/gynecology.svg');
+  SvgGenImage get nephrology => const SvgGenImage('assets/specialities/nephrology.svg');
+  SvgGenImage get neurology => const SvgGenImage('assets/specialities/neurology.svg');
+  SvgGenImage get oncology => const SvgGenImage('assets/specialities/oncology.svg');
+  SvgGenImage get ophthalmology => const SvgGenImage('assets/specialities/ophthalmology.svg');
+  SvgGenImage get orthopedics => const SvgGenImage('assets/specialities/orthopedics.svg');
+  SvgGenImage get psychiatry => const SvgGenImage('assets/specialities/psychiatry.svg');
+  SvgGenImage get pulmonology => const SvgGenImage('assets/specialities/pulmonology.svg');
+  SvgGenImage get rheumatology => const SvgGenImage('assets/specialities/rheumatology.svg');
+  SvgGenImage get urology => const SvgGenImage('assets/specialities/urology.svg');
+
+  List<SvgGenImage> get values => [allergology, cardiology, dental, dermatology, emergencyMedicine, endocrinology, gastroenterology, generalCare, gynecology, nephrology, neurology, oncology, ophthalmology, orthopedics, psychiatry, pulmonology, rheumatology, urology];
+}
+
 class Assets {
   const Assets._();
 
@@ -514,6 +551,7 @@ class Assets {
   static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
   static const $AssetsOnboardingGen onboarding = $AssetsOnboardingGen();
+  static const $AssetsSpecialitiesGen specialities = $AssetsSpecialitiesGen();
 
   /// List of all assets
   static List<String> get values => [demoData];

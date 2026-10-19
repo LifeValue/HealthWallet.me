@@ -9,6 +9,7 @@ import 'package:health_wallet/features/onboarding/presentation/widgets/onboardin
 import 'package:health_wallet/features/onboarding/presentation/widgets/onboarding_screen.dart';
 import 'package:health_wallet/features/onboarding/presentation/widgets/country_flags_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class OnboardingPage extends StatefulWidget {

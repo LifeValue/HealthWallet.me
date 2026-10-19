@@ -14,6 +14,7 @@ import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class UnifiedPatientCard extends StatefulWidget {
   final Patient patient;

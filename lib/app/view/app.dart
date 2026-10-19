@@ -1,9 +1,14 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
@@ -12,17 +17,12 @@ import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
-import 'package:health_wallet/features/home/data/data_source/local/home_local_data_source.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/features/scan/presentation/bloc/scan_bloc.dart';
-import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
-import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
-import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
+import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 
 class App extends StatefulWidget {
@@ -56,12 +56,26 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _startSymmetricDiscovery();
+      _reconnectDesktopIfNeeded();
     } else if (state == AppLifecycleState.paused) {
       _stopSymmetricDiscovery();
     }
   }
 
+  void _reconnectDesktopIfNeeded() {
+    if (getIt<AppPlatform>().isDesktop) return;
+    try {
+      final commBloc = getIt<CommunicationBloc>();
+      if (commBloc.state.pairedDevice != null &&
+          commBloc.state.connectionStatus == ConnectionStatus.disconnected) {
+        commBloc.add(const CommunicationConnectionRequested());
+      }
+    } catch (_) {}
+  }
+
   Future<void> _startSymmetricDiscovery() async {
+    if (getIt<AppPlatform>().isDesktop) return;
+
     final userRepository = getIt<UserRepository>();
     final user = await userRepository.getCurrentUser();
     if (!user.isReceiveModeEnabled) return;
@@ -84,6 +98,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   }
 
   Future<void> _stopSymmetricDiscovery() async {
+    if (getIt<AppPlatform>().isDesktop) return;
+
     final manager = getIt<ReceiveModeService>();
     if (manager.isListening) {
       await manager.stopListening();
@@ -102,54 +118,68 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         BlocProvider(
             create: (_) => getIt<SyncBloc>()..add(const SyncInitialised())),
         BlocProvider(create: (_) => getIt<RecordsBloc>()),
-        BlocProvider.value(value: getIt<ScanBloc>()),
-        BlocProvider(
-          create: (_) => HomeBloc(
-            getIt<GetSourcesUseCase>(),
-            HomeLocalDataSourceImpl(),
-            getIt<RecordsRepository>(),
-            getIt<SyncRepository>(),
-            getIt<PatientDeduplicationService>(),
-            getIt<PatientSelectionService>(),
-          )..add(const HomeInitialised()),
+        BlocProvider.value(value: getIt<ProcessingBloc>()),
+        BlocProvider.value(
+          value: getIt<HomeBloc>()..add(const HomeInitialised()),
         ),
         BlocProvider(
           create: (_) => getIt<PatientBloc>()..add(const PatientInitialised()),
         ),
         BlocProvider.value(value: getIt<NotificationBloc>()),
         BlocProvider(create: (_) => getIt<WalletPassBloc>()),
+        if (getIt<AppPlatform>().isDesktop)
+          BlocProvider.value(value: getIt<TrayBloc>()),
       ],
       child: MultiBlocListener(
-        listeners: [
-          BlocListener<SyncBloc, SyncState>(
-            listener: (context, state) {
-              _handleSyncBlocStateChange(context, state);
-            },
-          ),
-          BlocListener<ScanBloc, ScanState>(
-            listenWhen: (previous, current) =>
-                previous.status != current.status &&
-                current.status == const ScanStatus.success(),
-            listener: (context, state) {
-              _handleScanSuccess(context);
-            },
-          ),
-          BlocListener<RecordsBloc, RecordsState>(
-            listenWhen: (previous, current) =>
-                current.status == const RecordsStatus.deleted(),
-            listener: (context, state) {
-              context
-                  .read<PatientBloc>()
-                  .add(const PatientPatientsLoaded());
-              context
-                  .read<HomeBloc>()
-                  .add(const HomeRefreshPreservingOrder());
-            },
-          ),
-        ],
-        child: BlocBuilder<UserBloc, UserState>(
-          builder: (context, state) {
+          listeners: [
+            BlocListener<SyncBloc, SyncState>(
+              listenWhen: (previous, current) =>
+                  previous.syncStatus != current.syncStatus ||
+                  previous.shouldShowTutorial != current.shouldShowTutorial,
+              listener: (context, state) {
+                _handleSyncBlocStateChange(context, state);
+              },
+            ),
+            BlocListener<ProcessingBloc, ProcessingState>(
+              listenWhen: (previous, current) =>
+                  previous.status != current.status &&
+                  current.status == const PipelineStatus.success(),
+              listener: (context, state) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!context.mounted) return;
+                  _handleScanSuccess(context);
+                });
+              },
+            ),
+            BlocListener<RecordsBloc, RecordsState>(
+              listenWhen: (previous, current) =>
+                  current.status == const RecordsStatus.deleted(),
+              listener: (context, state) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!context.mounted) return;
+                  context
+                      .read<PatientBloc>()
+                      .add(const PatientPatientsLoaded());
+                  context
+                      .read<HomeBloc>()
+                      .add(const HomeRefreshPreservingOrder());
+                });
+              },
+            ),
+          ],
+          child: BlocBuilder<UserBloc, UserState>(
+            buildWhen: (previous, current) =>
+                previous.user.isDarkMode != current.user.isDarkMode ||
+                previous.appLocale != current.appLocale,
+            builder: (context, state) {
             return MaterialApp.router(
+              scrollBehavior: const MaterialScrollBehavior().copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
               title: 'HealthWallet.me',
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
@@ -180,13 +210,25 @@ void _handleScanSuccess(BuildContext context) {
 
 void _handleSyncBlocStateChange(BuildContext context, SyncState state) {
   if (state.shouldShowTutorial) {
-    context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+    });
   }
 
   if (state.syncStatus == SyncStatus.synced) {
-    context.read<RecordsBloc>().add(const RecordsInitialised());
-    context.read<UserBloc>().add(const UserDataUpdatedFromSync());
-    context.read<PatientBloc>().add(const PatientPatientsLoaded());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      context.read<RecordsBloc>().add(const RecordsInitialised());
+      context.read<UserBloc>().add(const UserDataUpdatedFromSync());
+      context.read<PatientBloc>().add(const PatientPatientsLoaded());
+
+      AppSimpleDialog.showSuccess(
+        context: context,
+        title: context.l10n.success,
+        message: context.l10n.syncDataLoadedSuccessfully,
+      );
+    });
 
     Future.delayed(const Duration(milliseconds: 500), () {
       if (context.mounted) {

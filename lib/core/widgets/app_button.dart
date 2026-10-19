@@ -9,6 +9,7 @@ enum AppButtonVariant {
   transparent,
   outlined,
   tinted,
+  dashed,
 }
 
 class AppButton extends StatelessWidget {
@@ -156,6 +157,45 @@ class AppButton extends StatelessWidget {
               style: style,
               child: labelWidget,
             );
+    } else if (variant == AppButtonVariant.dashed) {
+      final textColor = colorScheme.onSurface;
+      final borderColor = colorScheme.outline.withValues(alpha: 0.2);
+      final effectiveHeight = height ?? 48.0;
+
+      button = GestureDetector(
+        onTap: enabled ? onPressed : null,
+        child: CustomPaint(
+          painter: _DashedBorderPainter(
+            color: borderColor,
+            borderRadius: Insets.small,
+            dashWidth: 6,
+            dashGap: 6,
+            strokeWidth: 1,
+          ),
+          child: Container(
+            width: double.infinity,
+            height: effectiveHeight,
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  _buildIconWithColorFilter(icon!, textColor),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  label,
+                  style: AppTextStyle.buttonMedium.copyWith(
+                    color: textColor,
+                    fontSize: fontSize,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     } else {
       final bgColor = backgroundColor ??
           (variant == AppButtonVariant.primary
@@ -228,4 +268,50 @@ class AppButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double borderRadius;
+  final double dashWidth;
+  final double dashGap;
+  final double strokeWidth;
+
+  _DashedBorderPainter({
+    required this.color,
+    required this.borderRadius,
+    required this.dashWidth,
+    required this.dashGap,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(borderRadius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final end = (distance + dashWidth).clamp(0.0, metric.length);
+        final segment = metric.extractPath(distance, end);
+        canvas.drawPath(segment, paint);
+        distance += dashWidth + dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
+      color != oldDelegate.color || strokeWidth != oldDelegate.strokeWidth;
 }

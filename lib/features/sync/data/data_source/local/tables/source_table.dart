@@ -8,6 +8,7 @@ class Sources extends Table {
   TextColumn get platformType => text().withDefault(const Constant('wallet'))();
   DateTimeColumn get createdAt => dateTime().nullable()();
   DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

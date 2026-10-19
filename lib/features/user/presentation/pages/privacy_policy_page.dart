@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class PrivacyPolicyPage extends StatelessWidget {
@@ -21,7 +23,11 @@ class PrivacyPolicyPage extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(Insets.normal),
-        child: Column(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -328,6 +334,8 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
             const SizedBox(height: Insets.large),
           ],
+        ),
+          ),
         ),
       ),
     );

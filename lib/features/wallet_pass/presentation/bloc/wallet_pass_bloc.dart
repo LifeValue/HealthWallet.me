@@ -7,6 +7,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart'
+    show ApplePassLabels;
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
 import 'package:health_wallet/features/wallet_pass/domain/service/emergency_card_builder.dart';
@@ -40,7 +42,7 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
 
       switch (event.type) {
         case WalletPassType.apple:
-          await _handleApplePass(cardData, event.patientId, emit);
+          await _handleApplePass(cardData, event.patientId, emit, event.applePassLabels);
         case WalletPassType.google:
           await _handleGooglePass(cardData, event.patientId, emit);
       }
@@ -56,8 +58,23 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
     EmergencyCardData cardData,
     String patientId,
     Emitter<WalletPassState> emit,
+    ApplePassLabels? labels,
   ) async {
-    final passBytes = await _repository.generateApplePass(cardData: cardData, patientId: patientId);
+    final effectiveLabels = labels ?? const ApplePassLabels(
+      patient: 'Patient',
+      bloodType: 'Blood Type',
+      allergies: 'Allergies',
+      gender: 'Gender',
+      dateOfBirth: 'Date of Birth',
+      emergencyPhone: 'Emergency Phone',
+      conditions: 'Conditions',
+      medications: 'Medications',
+    );
+    final passBytes = await _repository.generateApplePass(
+      cardData: cardData,
+      patientId: patientId,
+      labels: effectiveLabels,
+    );
     emit(state.copyWith(
       status: WalletPassStatus.passGenerated,
       passBytes: passBytes,

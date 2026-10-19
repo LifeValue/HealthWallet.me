@@ -8,4 +8,6 @@ class RecordNotes extends Table {
   TextColumn get sourceId => text().nullable().references(Sources, #id)();
   TextColumn get content => text()();
   DateTimeColumn get timestamp => dateTime()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }

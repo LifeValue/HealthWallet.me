@@ -6,6 +6,7 @@ import 'package:health_wallet/gen/assets.gen.dart';
 
 class HomeSectionHeader extends StatelessWidget {
   final String title;
+  final Widget? titleWidget;
   final String? filterLabel;
   final VoidCallback? onFilterTap;
   final Widget? trailing;
@@ -19,7 +20,8 @@ class HomeSectionHeader extends StatelessWidget {
 
   const HomeSectionHeader({
     super.key,
-    required this.title,
+    this.title = '',
+    this.titleWidget,
     this.filterLabel,
     this.onFilterTap,
     this.trailing,
@@ -46,12 +48,15 @@ class HomeSectionHeader extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  Text(
-                    title,
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
+                  if (titleWidget != null)
+                    titleWidget!
+                  else
+                    Text(
+                      title,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
                     ),
-                  ),
                   if (onInfoTap != null) ...[
                     const SizedBox(width: 8),
                     GestureDetector(

@@ -12,6 +12,7 @@ import 'package:health_wallet/features/share_records/presentation/bloc/share_rec
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SessionEndedView extends StatelessWidget {
   final ShareRecordsState state;

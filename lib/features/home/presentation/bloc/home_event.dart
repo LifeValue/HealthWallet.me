@@ -79,3 +79,25 @@ class HomeSourceDeleted extends HomeEvent with _$HomeSourceDeleted {
     List<String>? patientSourceIds,
   }) = _HomeSourceDeleted;
 }
+
+@freezed
+class HomeOverviewViewModeChanged extends HomeEvent
+    with _$HomeOverviewViewModeChanged {
+  const factory HomeOverviewViewModeChanged(OverviewViewMode mode) =
+      _HomeOverviewViewModeChanged;
+}
+
+@freezed
+class HomeSpecialtiesReordered extends HomeEvent
+    with _$HomeSpecialtiesReordered {
+  const factory HomeSpecialtiesReordered(int oldIndex, int newIndex) =
+      _HomeSpecialtiesReordered;
+}
+
+@freezed
+class HomeSpecialtiesFiltersChanged extends HomeEvent
+    with _$HomeSpecialtiesFiltersChanged {
+  const factory HomeSpecialtiesFiltersChanged(
+    Map<MedicalSpecialty, bool> filters,
+  ) = _HomeSpecialtiesFiltersChanged;
+}

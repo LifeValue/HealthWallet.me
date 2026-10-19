@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:fhir_ips_export/fhir_ips_export.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
@@ -286,7 +289,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
       // Load demo data from assets
       final String demoDataJson =
-          await rootBundle.loadString('assets/demo_data.json');
+          await rootBundle.loadString('assets/demo_data/demo_data.json');
       final Map<String, dynamic> demoData = json.decode(demoDataJson);
 
       // Handle both FHIR Bundle format and simple resources format
@@ -332,10 +335,73 @@ class RecordsRepositoryImpl implements RecordsRepository {
           .toList();
 
       _syncLocalDataSource.cacheFhirResources(processedResources);
+
+      await _attachDemoPdf();
     } catch (e, stackTrace) {
       logger.e('Failed to load demo data: $e');
       logger.e('Stack trace: $stackTrace');
       throw Exception('Failed to load demo data: $e');
+    }
+  }
+
+  Future<void> _attachDemoPdf() async {
+    try {
+      final byteData = await rootBundle.load('assets/demo_data/pdf_preview_demo_data.pdf');
+      final docsDir = await getApplicationDocumentsDirectory();
+      final pdfFile = File('${docsDir.path}/demo_medical_report.pdf');
+      await pdfFile.writeAsBytes(byteData.buffer.asUint8List());
+
+      final docRefId = 'demo-doc-ref-pdf-001';
+      final docRef = <String, dynamic>{
+        'resourceType': 'DocumentReference',
+        'id': docRefId,
+        'status': 'current',
+        'type': {
+          'coding': [
+            {
+              'system': 'http://loinc.org',
+              'code': '34117-2',
+              'display': 'History and physical note',
+            }
+          ],
+          'text': 'Medical Report',
+        },
+        'subject': {
+          'reference': 'Patient/john-doe-patient-001',
+          'display': 'John Doe',
+        },
+        'date': DateTime.now().toIso8601String(),
+        'description': 'Demo Medical Report',
+        'content': [
+          {
+            'attachment': {
+              'contentType': 'application/pdf',
+              'url': 'file://${pdfFile.path}',
+              'title': 'Medical Report',
+            }
+          }
+        ],
+        'context': {
+          'encounter': [
+            {'reference': 'Encounter/demo-encounter-001'}
+          ],
+        },
+      };
+
+      final dto = FhirResourceDto.fromJson({
+        'id': docRefId,
+        'source_id': 'demo_data',
+        'source_resource_type': 'DocumentReference',
+        'source_resource_id': docRefId,
+        'sort_title': 'Medical Report',
+        'sort_date': DateTime.now().toIso8601String(),
+        'resource_raw': docRef,
+        'change_type': 'created',
+      }).populateEncounterIdFromRaw().populateSubjectIdFromRaw();
+
+      _syncLocalDataSource.cacheFhirResources([dto]);
+    } catch (e) {
+      debugPrint('[DEMO] Failed to attach demo PDF: $e');
     }
   }
 
@@ -646,5 +712,24 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final bytes = await renderer.render(ipsData: ipsData);
     return (bytes: bytes, patientName: patientName);
+  }
+
+  @override
+  Future<void> updateResourceRaw(String resourceId, String rawJson) async {
+    await (_database.update(_database.fhirResource)
+          ..where((tbl) => tbl.id.equals(resourceId)))
+        .write(FhirResourceCompanion(
+      resourceRaw: Value(rawJson),
+    ));
+  }
+
+  @override
+  Future<void> setSpecialtyOverride(
+      String resourceId, String? specialtyName) async {
+    await (_database.update(_database.fhirResource)
+          ..where((tbl) => tbl.id.equals(resourceId)))
+        .write(FhirResourceCompanion(
+      specialtyOverride: Value(specialtyName),
+    ));
   }
 }

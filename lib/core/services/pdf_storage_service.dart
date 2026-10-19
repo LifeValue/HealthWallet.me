@@ -30,8 +30,8 @@ class PdfStorageService {
       final fileName = customFileName ??
           'health_document_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
-      final directory = await getApplicationDocumentsDirectory();
-      final newPath = '${directory.path}/$fileName';
+      final docsPath = await _pathResolver.getDocumentsPath();
+      final newPath = '$docsPath/$fileName';
 
       await sourceFile.copy(newPath);
 
@@ -44,7 +44,8 @@ class PdfStorageService {
 
   Future<List<String>> getSavedPdfs() async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
+      final docsPath = await _pathResolver.getDocumentsPath();
+      final directory = Directory(docsPath);
       final allPdfs = <String>[];
 
       final files = directory.listSync();

@@ -1,5 +1,7 @@
 part of 'home_bloc.dart';
 
+enum OverviewViewMode { specialties, resources }
+
 @freezed
 class HomeState with _$HomeState {
   const HomeState._();
@@ -47,6 +49,29 @@ class HomeState with _$HomeState {
     @Default(false) bool editMode,
     @Default(false) bool vitalsExpanded,
     @Default(false) bool hasDataLoaded,
+    @Default([]) List<SpecialtyCard> specialtyCards,
+    @Default({
+      MedicalSpecialty.allergology: true,
+      MedicalSpecialty.cardiology: true,
+      MedicalSpecialty.dental: true,
+      MedicalSpecialty.dermatology: true,
+      MedicalSpecialty.emergencyMedicine: true,
+      MedicalSpecialty.endocrinology: true,
+      MedicalSpecialty.gastroenterology: true,
+      MedicalSpecialty.generalCare: true,
+      MedicalSpecialty.gynecology: true,
+      MedicalSpecialty.nephrology: true,
+      MedicalSpecialty.neurology: true,
+      MedicalSpecialty.oncology: true,
+      MedicalSpecialty.ophthalmology: true,
+      MedicalSpecialty.orthopedics: true,
+      MedicalSpecialty.psychiatry: true,
+      MedicalSpecialty.pulmonology: true,
+      MedicalSpecialty.rheumatology: true,
+      MedicalSpecialty.urology: true,
+    })
+    Map<MedicalSpecialty, bool> selectedSpecialties,
+    @Default(OverviewViewMode.specialties) OverviewViewMode overviewViewMode,
   }) = _HomeState;
 
   bool get shouldShowPlaceholder {
@@ -60,6 +85,11 @@ class HomeState with _$HomeState {
   List<OverviewCard> get visibleOverviewCards =>
       overviewCards
           .where((card) => selectedRecordTypes[card.category] ?? false)
+          .toList(growable: false);
+
+  List<SpecialtyCard> get visibleSpecialtyCards =>
+      specialtyCards
+          .where((card) => selectedSpecialties[card.specialty] ?? false)
           .toList(growable: false);
 }
 

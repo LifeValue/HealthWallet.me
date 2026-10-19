@@ -23,5 +23,7 @@ class AttachmentInfo with _$AttachmentInfo {
     required String title,
     String? contentType,
     String? filePath,
+    String? sourceRecordTitle,
+    String? sourceRecordType,
   }) = _AttachmentInfo;
 }

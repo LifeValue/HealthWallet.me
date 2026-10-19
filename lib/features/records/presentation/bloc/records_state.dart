@@ -19,6 +19,7 @@ class RecordsState with _$RecordsState {
     @Default({}) Set<String> selectedResourceIds,
     @Default(false) bool isSelectionMode,
     DateFilter? dateFilter,
+    @Default([]) List<MedicalSpecialty> activeSpecialties,
   }) = _RecordsState;
 }
 

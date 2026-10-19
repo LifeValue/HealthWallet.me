@@ -4,6 +4,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 
 class SectionInfoModal extends StatelessWidget {
   final String title;
@@ -36,7 +37,9 @@ class SectionInfoModal extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(Insets.normal),
-      child: Container(
+      child: SizedBox(
+        width: context.dialogWidth,
+        child: Container(
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
@@ -83,6 +86,7 @@ class SectionInfoModal extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

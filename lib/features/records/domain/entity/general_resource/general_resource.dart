@@ -19,6 +19,7 @@ class GeneralResource with _$GeneralResource implements IFhirResource {
     @Default({}) Map<String, dynamic> rawResource,
     @Default('') String encounterId,
     @Default('') String subjectId,
+    String? specialtyOverride,
   }) = _GeneralResource;
 
   @override
@@ -33,6 +34,7 @@ class GeneralResource with _$GeneralResource implements IFhirResource {
       date: data.date,
       encounterId: data.encounterId ?? '',
       subjectId: data.subjectId ?? '',
+      specialtyOverride: data.specialtyOverride,
     );
   }
 

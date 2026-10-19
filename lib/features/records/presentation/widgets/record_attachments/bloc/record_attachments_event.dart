@@ -16,7 +16,7 @@ class RecordAttachmentsInitialised extends RecordAttachmentsEvent
 @freezed
 class RecordAttachmentsFileAttached extends RecordAttachmentsEvent
     with _$RecordAttachmentsFileAttached {
-  const factory RecordAttachmentsFileAttached(File file) =
+  const factory RecordAttachmentsFileAttached(List<File> files) =
       _RecordAttachmentsFileAttached;
 }
 

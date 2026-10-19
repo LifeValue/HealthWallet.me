@@ -2,17 +2,26 @@ import 'package:flutter/widgets.dart';
 
 abstract final class Breakpoints {
   static const double tablet = 600;
+  static const double desktop = 1024;
   static const double smallPhone = 380;
 }
 
 extension ResponsiveExtension on BuildContext {
   double get screenWidth => MediaQuery.sizeOf(this).width;
+  bool get isDesktopWidth => screenWidth >= Breakpoints.desktop;
   bool get isTablet => screenWidth >= Breakpoints.tablet;
   bool get isSmallPhone => screenWidth < Breakpoints.smallPhone;
-  double get screenHorizontalPadding => isTablet ? 32.0 : 16.0;
-  double get dialogWidth => isTablet ? 450.0 : 350.0;
-  double get wideDialogWidth => isTablet ? 520.0 : 400.0;
-  double get contentMaxWidth => 500.0;
+  double get screenHorizontalPadding =>
+      isDesktopWidth ? 48.0 : isTablet ? 32.0 : 16.0;
+
+  double get dialogWidth =>
+      isDesktopWidth ? 480.0 : isTablet ? 450.0 : 350.0;
+
+  double get wideDialogWidth =>
+      isDesktopWidth ? 560.0 : isTablet ? 520.0 : 400.0;
+
+  double get contentMaxWidth =>
+      isDesktopWidth ? 700.0 : 600.0;
 }
 
 class ConstrainedContent extends StatelessWidget {
@@ -21,7 +30,7 @@ class ConstrainedContent extends StatelessWidget {
 
   const ConstrainedContent({
     super.key,
-    this.maxWidth = 500,
+    this.maxWidth = 700,
     required this.child,
   });
 
