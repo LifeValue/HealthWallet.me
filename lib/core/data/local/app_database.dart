@@ -49,7 +49,10 @@ class AppDatabase extends _$AppDatabase {
               await m.addColumn(schema.sources, schema.sources.platformType);
               await m.addColumn(schema.sources, schema.sources.createdAt);
               await m.addColumn(schema.sources, schema.sources.updatedAt);
-              await m.alterTable(TableMigration(schema.recordNotes));
+              await m.alterTable(TableMigration(
+                schema.recordNotes,
+                newColumns: [schema.recordNotes.sourceId],
+              ));
               await m.createTable(schema.processingSessions);
             },
             from5To6: (m, schema) async {},
@@ -117,33 +120,33 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> _migrateToV10() async {
     await customStatement(
-        'ALTER TABLE fhir_resource ADD COLUMN updated_at INTEGER');
+        'ALTER TABLE fhir_resource ADD COLUMN updated_at INTEGER NULL');
     await customStatement(
-        'ALTER TABLE fhir_resource ADD COLUMN deleted_at INTEGER');
+        'ALTER TABLE fhir_resource ADD COLUMN deleted_at INTEGER NULL');
     await customStatement(
-        'ALTER TABLE fhir_resource ADD COLUMN device_id TEXT');
+        'ALTER TABLE fhir_resource ADD COLUMN device_id TEXT NULL');
 
     await customStatement(
-        'ALTER TABLE sources ADD COLUMN deleted_at INTEGER');
+        'ALTER TABLE sources ADD COLUMN deleted_at INTEGER NULL');
 
     await customStatement(
-        'ALTER TABLE processing_sessions ADD COLUMN updated_at INTEGER');
+        'ALTER TABLE processing_sessions ADD COLUMN updated_at INTEGER NULL');
     await customStatement(
-        'ALTER TABLE processing_sessions ADD COLUMN deleted_at INTEGER');
+        'ALTER TABLE processing_sessions ADD COLUMN deleted_at INTEGER NULL');
     await customStatement(
-        'ALTER TABLE processing_sessions ADD COLUMN device_id TEXT');
+        'ALTER TABLE processing_sessions ADD COLUMN device_id TEXT NULL');
 
     await customStatement(
-        'ALTER TABLE record_notes ADD COLUMN updated_at INTEGER');
+        'ALTER TABLE record_notes ADD COLUMN updated_at INTEGER NULL');
     await customStatement(
-        'ALTER TABLE record_notes ADD COLUMN deleted_at INTEGER');
+        'ALTER TABLE record_notes ADD COLUMN deleted_at INTEGER NULL');
   }
 
 
   Future<void> _migrateToV11() async {
     try {
       await customStatement(
-          'ALTER TABLE fhir_resource ADD COLUMN specialty_override TEXT');
+          'ALTER TABLE fhir_resource ADD COLUMN specialty_override TEXT NULL');
     } catch (_) {}
 
     final rows = await customSelect(

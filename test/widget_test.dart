@@ -1,32 +1,30 @@
 import 'dart:typed_data';
 
+import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/app/app.dart';
-import 'package:health_wallet/core/di/injection.dart' hide PdfStorageService;
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
-import 'package:health_wallet/core/services/pdf_storage_service.dart';
+import 'package:health_wallet/core/services/bluetooth_state_service.dart';
+import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/core/config/constants/ai_model_config.dart';
-import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
-import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
-import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
-import 'package:health_wallet/features/capture/scan/presentation/bloc/scan_bloc.dart';
-import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
@@ -36,6 +34,7 @@ import 'package:health_wallet/features/user/domain/services/patient_selection_se
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
+import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -80,6 +79,7 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
     List<String>? sourceIds,
     int limit = 20,
     int offset = 0,
+    DateFilter? dateFilter,
   }) async =>
       [];
 
@@ -196,51 +196,35 @@ class FakeSyncRepository extends Fake implements SyncRepository {
   Future saveResources(List<IFhirResource> resources) async {}
 }
 
-class FakeProcessingRepository extends Fake implements ProcessingRepository {
+class FakeSyncLocalDataSource extends Fake implements SyncLocalDataSource {}
+
+class FakeBluetoothStateService extends Fake implements BluetoothStateService {
   @override
-  Future<List<ProcessingSession>> getProcessingSessions() async => [];
+  void startListening() {}
 
   @override
-  Future<int> editProcessingSession(ProcessingSession session) async => 0;
-
-  @override
-  Future<int> deleteProcessingSession(ProcessingSession session) async => 0;
-
-  @override
-  Future<bool> checkModelExistence() async => false;
-
-  @override
-  Stream<double> downloadMmprojForVariant(AiModelVariant variant) =>
-      const Stream.empty();
-
-  @override
-  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant) async =>
-      false;
-
-  @override
-  Future<void> cancelGeneration() async {}
-
-  @override
-  Future<void> waitForStreamCompletion() async {}
-
-  @override
-  Future disposeModel() async {}
+  Future<bool> isEnabled() async => false;
 }
 
-class FakeSyncLocalDataSource extends Fake implements SyncLocalDataSource {}
+class FakeReceiveModeService extends Fake implements ReceiveModeService {
+  @override
+  bool get isListening => false;
+}
 
 // ---------------------------------------------------------------------------
 // Mock classes for concrete types that cannot be easily constructed in tests
 // (e.g. they depend on native plugins or database connections)
 // ---------------------------------------------------------------------------
 
-class MockTextRecognitionService extends Mock
-    implements TextRecognitionService {}
-
-class MockDocumentReferenceService extends Mock
-    implements DocumentReferenceService {}
-
 class MockPatientEditService extends Mock implements PatientEditService {}
+
+class MockProcessingBloc extends MockBloc<ProcessingEvent, ProcessingState>
+    implements ProcessingBloc {}
+
+class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
+
+class MockWalletPassBloc extends MockBloc<WalletPassEvent, WalletPassState>
+    implements WalletPassBloc {}
 
 // ---------------------------------------------------------------------------
 // Test
@@ -259,36 +243,26 @@ void main() {
     final fakeBiometricAuth = FakeBiometricAuthService();
     final fakeRecordsRepo = FakeRecordsRepository();
     final fakeSyncRepo = FakeSyncRepository();
-    final fakeScanRepo = FakeProcessingRepository();
 
     final deduplicationService =
         PatientDeduplicationService(fakeRecordsRepo, fakeSyncRepo);
     final selectionService = PatientSelectionService(deduplicationService);
     final getSourcesUseCase = GetSourcesUseCase(fakeSyncRepo);
     final walletPatientService = WalletPatientService(fakeSyncRepo);
-    final sourceTypeService =
-        SourceTypeService(walletPatientService, fakeSyncRepo);
 
     // --- Blocs (constructed with fake dependencies) ---
     final userBloc = UserBloc(fakeUserRepo, fakeBiometricAuth);
     final syncBloc = SyncBloc(
       fakeSyncRepo,
       fakeRecordsRepo,
-      DefaultPatientService(fakeRecordsRepo, FakeSyncLocalDataSource()),
+      DefaultPatientService(
+        fakeRecordsRepo,
+        FakeSyncLocalDataSource(),
+        walletPatientService,
+      ),
     );
-    final recordsBloc = RecordsBloc(fakeRecordsRepo);
+    final recordsBloc = RecordsBloc(fakeRecordsRepo, SpecialtyClassifierImpl());
     final prefs = await SharedPreferences.getInstance();
-    final scanBloc = ScanBloc(
-      PdfStorageService(),
-      fakeScanRepo,
-      OcrProcessingHelper(MockTextRecognitionService()),
-      fakeSyncRepo,
-      MockDocumentReferenceService(),
-      deduplicationService,
-      sourceTypeService,
-      fakeRecordsRepo,
-      prefs,
-    );
     final notificationBloc = NotificationBloc(prefs);
     final patientBloc = PatientBloc(
       fakeRecordsRepo,
@@ -296,13 +270,32 @@ void main() {
       MockPatientEditService(),
     );
 
+    // Blocs with heavy dependency graphs (AI models, native plugins) are
+    // mocked; the smoke test only needs their initial state.
+    final processingBloc = MockProcessingBloc();
+    whenListen(processingBloc, const Stream<ProcessingState>.empty(),
+        initialState: const ProcessingState());
+    final homeBloc = MockHomeBloc();
+    whenListen(homeBloc, const Stream<HomeState>.empty(),
+        initialState: const HomeState());
+    final walletPassBloc = MockWalletPassBloc();
+    whenListen(walletPassBloc, const Stream<WalletPassState>.empty(),
+        initialState: const WalletPassState());
+
     // --- Register everything the App widget resolves from getIt ---
+    getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
     getIt.registerSingleton<AppRouter>(AppRouter());
     getIt.registerFactory<AppRouteObserver>(() => AppRouteObserver());
+    getIt.registerSingleton<BluetoothStateService>(FakeBluetoothStateService());
+    getIt.registerSingleton<ReceiveModeService>(FakeReceiveModeService());
+    getIt.registerFactory<UserRepository>(() => fakeUserRepo);
+    getIt.registerFactory<BiometricAuthService>(() => fakeBiometricAuth);
     getIt.registerFactory<UserBloc>(() => userBloc);
     getIt.registerFactory<SyncBloc>(() => syncBloc);
     getIt.registerFactory<RecordsBloc>(() => recordsBloc);
-    getIt.registerSingleton<ScanBloc>(scanBloc);
+    getIt.registerSingleton<ProcessingBloc>(processingBloc);
+    getIt.registerSingleton<HomeBloc>(homeBloc);
+    getIt.registerFactory<WalletPassBloc>(() => walletPassBloc);
     getIt.registerFactory<GetSourcesUseCase>(() => getSourcesUseCase);
     getIt.registerFactory<RecordsRepository>(() => fakeRecordsRepo);
     getIt.registerFactory<SyncRepository>(() => fakeSyncRepo);
@@ -321,12 +314,11 @@ void main() {
 
     expect(find.byType(MaterialApp), findsOneWidget);
 
-    // Cleanup
-    await userBloc.close();
-    await syncBloc.close();
-    await recordsBloc.close();
-    await scanBloc.close();
-    await notificationBloc.close();
-    await patientBloc.close();
+    // Cleanup: unmounting lets BlocProvider close the blocs it created.
+    // Awaiting bloc.close() directly would hang, because close() waits for
+    // in-flight handlers that never finish under the test's fake async zone.
+    // The extra pump lets the splash page's 1s minimum-display timer fire.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
   });
 }
