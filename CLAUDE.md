@@ -340,10 +340,10 @@ Managed via `envied` in `lib/core/config/env/env.dart`. All values obfuscated. R
 
 GitLab CI (`.gitlab-ci.yml`) on `git.techstackapps.com/mobile/health-wallet/app`. GitLab is the source of truth; the public GitHub repo (`LifeValue/HealthWallet.me`) is left untouched and its `.github/workflows/` are not used.
 
-- **checks** — every MR and every `develop`/`master` push, on the Linux instance runners (`ghcr.io/cirruslabs/flutter`): `pub get`, `build_runner`, `flutter analyze` (errors fatal, warnings not yet), `flutter test`. Needs no secrets.
-- **ios:testflight / macos:testflight / android:play-internal** — manual jobs on `develop` and `master`, on the shared `shell-macmini` runner via Fastlane (`beta` lanes). Automatic signing (no fastlane match): certificates are in the runner's login keychain, profiles are fetched with the App Store Connect API key via `-allowProvisioningUpdates`.
+- **checks** — every branch push, on the Linux instance runners (`ghcr.io/cirruslabs/flutter`): `pub get`, `build_runner`, `flutter analyze` (errors fatal, warnings not yet), `flutter test`. Needs no secrets.
+- **ios:testflight / macos:testflight / android:play-internal** — manual jobs on every branch pipeline (the branch must be protected to receive the protected CI/CD variables), on the shared `shell-macmini` runner via Fastlane (`beta` lanes). Automatic signing (no fastlane match): certificates are in the runner's login keychain, profiles are fetched with the App Store Connect API key via `-allowProvisioningUpdates`.
 - **shorebird:patch-android / shorebird:patch-ios** — manual on `master`.
-- **windows:release** — manual on `develop` (pre-release `v<version>-dev.<iid>`) and `master` (`v<version>`); uploads zip + msix to the generic package registry and creates a GitLab Release. Needs a runner tagged `windows` (none registered yet).
+- **windows:release** — manual on every branch: `master` → `v<version>`, other branches → pre-release `v<version>-dev.<iid>`; uploads zip + msix to the generic package registry and creates a GitLab Release. Needs a runner tagged `windows` (none registered yet).
 - Secrets are protected CI/CD variables (names listed at the top of `.gitlab-ci.yml`); private pub dependencies are fetched with `CI_JOB_TOKEN`.
 
 ---

@@ -1,18 +1,22 @@
 # HealthWallet.me CI/CD — replaces the GitHub Actions workflows in .github/workflows/.
 #
-#   checks                  every MR + develop/master push      Linux instance runner (Docker)
-#   ios / android / macos   manual on develop and master        shell-macmini (fastlane)
-#   windows                 manual on develop and master        needs a `windows` runner (none yet)
+#   checks                  every branch push                   Linux instance runner (Docker)
+#   ios / android / macos   manual on every branch              shell-macmini (fastlane)
+#   windows                 manual on every branch              needs a `windows` runner (none yet)
 #                           → GitLab Release with zip + msix
 #   shorebird patches       manual on master                    shell-macmini
+#
+# Deploy jobs need the PROTECTED CI/CD variables, which GitLab only exposes to protected branches.
+# To deploy from a working branch, protect it (or a wildcard such as `fix/*`) first; otherwise the
+# job stops at its first step and says so.
 #
 # Store uploads are never automatic: the Mac mini is shared with other projects' pipelines, and
 # every upload is a deliberate release decision. Each platform is its own manual job, which
 # replaces the GitHub "platform" dropdown (android / ios / macos / windows / both / all).
 #
 # One-time project setup — the pipeline cannot do these itself:
-#   1. Protect `develop` and `master` (Settings → Repository). Protected variables below are only
-#      exposed to protected branches, so the deploy jobs need both branches protected.
+#   1. Protect `develop` and `master` (Settings → Repository), plus any branch you want to deploy
+#      from. Protected variables below are only exposed to protected branches.
 #   2. In mobile/flutter/packages/flutter-airdrop and mobile/health-wallet/fhir-ips-export:
 #      Settings → CI/CD → Job token permissions → add mobile/health-wallet/app. The private pub
 #      dependencies are fetched with CI_JOB_TOKEN instead of an SSH deploy key.
@@ -36,15 +40,10 @@
 #   dependencies come through the job token): MATCH_GIT_URL, MATCH_PASSWORD, SSH_PRIVATE_KEY.
 #   Delete them once a TestFlight upload has succeeded without them.
 
+# Branch pipelines only, no separate merge request pipelines: every push gets one pipeline with the
+# manual deploy jobs on it, and an MR shows its source branch's pipeline.
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    # develop and master always get their branch pipeline, even while an MR from them is open —
-    # the manual deploy jobs only exist on branch pipelines.
-    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master"
-    # Avoid duplicate pipelines: skip the branch pipeline when an MR is open for it.
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-      when: never
     - if: $CI_COMMIT_BRANCH
     - if: $CI_COMMIT_TAG
 
@@ -68,7 +67,7 @@ stages:
   - export GIT_CONFIG_VALUE_0="ssh://git@${CI_SERVER_HOST}:2822/"
 
 # =============================================================================
-# Checks — analyze + tests on every MR and every develop/master push
+# Checks — analyze + tests on every branch push
 # =============================================================================
 # Needs no secrets: every Envied field has a default, so codegen runs against an empty .env.
 checks:
@@ -186,6 +185,7 @@ checks:
       paths:
         - vendor/bundle
   before_script:
+    - '[ -n "$ENV_FILE_CONTENT" ] || { echo "Protected CI/CD variables are not available on $CI_COMMIT_BRANCH. Protect this branch (Settings → Repository → Protected branches) to deploy from it."; exit 1; }'
     - *macmini_toolchain
     - *private_deps
     - *restore_app_secrets
@@ -197,11 +197,11 @@ checks:
     - rm -f android/app/upload-keystore.jks android/key.properties android/fastlane/service-account.json
     - rm -f AuthKey.p8
 
-# allow_failure: a manual job from `rules:` defaults to false, which would leave every develop/master
-# pipeline "blocked" until someone ran each deploy. Deploys are optional, so the pipeline passes on
-# checks alone.
-.on_develop_or_master: &on_develop_or_master
-  - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master"
+# allow_failure: a manual job from `rules:` defaults to false, which would leave every pipeline
+# "blocked" until someone ran each deploy. Deploys are optional, so the pipeline passes on checks
+# alone.
+.on_any_branch: &on_any_branch
+  - if: $CI_COMMIT_BRANCH
     when: manual
     allow_failure: true
 
@@ -213,7 +213,7 @@ checks:
 ios:testflight:
   extends: .macmini
   stage: deploy
-  rules: *on_develop_or_master
+  rules: *on_any_branch
   environment: { name: testflight-ios }
   script:
     - *apple_signing
@@ -225,7 +225,7 @@ ios:testflight:
 macos:testflight:
   extends: .macmini
   stage: deploy
-  rules: *on_develop_or_master
+  rules: *on_any_branch
   environment: { name: testflight-macos }
   script:
     - *apple_signing
@@ -238,7 +238,7 @@ macos:testflight:
 android:play-internal:
   extends: .macmini
   stage: deploy
-  rules: *on_develop_or_master
+  rules: *on_any_branch
   environment: { name: play-internal }
   script:
     - *android_env
@@ -273,8 +273,8 @@ shorebird:patch-ios:
 # job leaves it pending. Expected on that machine: Git for Windows, Flutter $FLUTTER_VERSION on
 # PATH, and the shell set to PowerShell (the runner default).
 #
-# develop → pre-release  v<version>-dev.<pipeline iid>
-# master  → release      v<version>
+# master       → release      v<version>
+# other branch → pre-release  v<version>-dev.<pipeline iid>
 # The zip and msix go to the project's generic package registry, and the GitLab Release links to
 # them. Unlike the GitHub workflow, the release tag is created on the commit that was built, not
 # on the default branch.
@@ -283,12 +283,13 @@ windows:release:
   tags: [windows]
   interruptible: false
   needs: ["checks"]
-  rules: *on_develop_or_master
+  rules: *on_any_branch
   before_script:
     - $env:GIT_CONFIG_COUNT = "1"
     - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:$env:CI_JOB_TOKEN@$env:CI_SERVER_HOST/.insteadOf"
     - $env:GIT_CONFIG_VALUE_0 = "ssh://git@$env:CI_SERVER_HOST:2822/"
   script:
+    - if (-not $env:ENV_FILE_CONTENT) { throw "Protected CI/CD variables are not available on $env:CI_COMMIT_BRANCH. Protect this branch to deploy from it." }
     - if (-not ((flutter --version) -match "Flutter $env:FLUTTER_VERSION")) { throw "flutter on PATH is not $env:FLUTTER_VERSION" }
     - Copy-Item $env:ENV_FILE_CONTENT .env
     - flutter config --enable-windows-desktop
