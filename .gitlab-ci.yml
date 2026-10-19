@@ -175,6 +175,19 @@ checks:
   - export PATH="$CI_PROJECT_DIR/.ci-bin:$PATH"
   - pod --version | grep -q '^1\.16\.' || { echo "pod on PATH is not the CocoaPods pinned in ios/Gemfile"; exit 1; }
 
+# Run from ios/ or macos/. Keeps the committed Podfile.lock, so the pod versions are the reviewed
+# ones and CocoaPods only fetches the specs it needs. Retried because the CocoaPods CDN
+# intermittently fails with "Error in the HTTP2 framing layer".
+.pod_install: &pod_install
+  - rm -rf Pods
+  - |
+    for attempt in 1 2 3; do
+      pod install && break
+      if [ "$attempt" = 3 ]; then exit 1; fi
+      echo "pod install failed (attempt $attempt of 3), retrying in 15s"
+      sleep 15
+    done
+
 .macmini:
   tags: [shell-macmini]
   # A store upload must not be killed mid-flight by a newer push.
@@ -184,6 +197,8 @@ checks:
     - key: bundle-macos
       paths:
         - vendor/bundle
+      # Saved even when the job fails, so a retried deploy doesn't reinstall every gem.
+      when: always
   before_script:
     - '[ -n "$ENV_FILE_CONTENT" ] || { echo "Protected CI/CD variables are not available on $CI_COMMIT_BRANCH. Protect this branch (Settings → Repository → Protected branches) to deploy from it."; exit 1; }'
     - *macmini_toolchain
@@ -219,7 +234,7 @@ ios:testflight:
     - *apple_signing
     - *ios_cocoapods
     - cd ios
-    - rm -rf Podfile.lock Pods && pod install --repo-update
+    - *pod_install
     - bundle exec fastlane beta
 
 macos:testflight:
@@ -230,8 +245,8 @@ macos:testflight:
   script:
     - *apple_signing
     - fvm flutter precache --macos
-    - (cd macos && rm -rf Podfile.lock Pods && pod install --repo-update)
     - cd macos
+    - *pod_install
     - bundle install --jobs 4 --retry 3
     - bundle exec fastlane beta
 
