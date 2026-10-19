@@ -22,7 +22,7 @@ HealthWallet.me is a Flutter application for patient-controlled health record ma
 - **Flutter 3.38.7** (managed via FVM — see `.fvmrc`)
 - **Dart SDK:** >=3.10.7 <4.0.0
 - **Mobile platforms:** iOS 16.0+, Android SDK 24+
-- **Desktop platforms:** macOS (production), Windows (Store-packaged), Linux (experimental)
+- **Desktop platforms:** macOS (production), Windows (Store-packaged). Linux is not scaffolded (`linux/` removed); `Platform.isLinux` branches in Dart code are kept for a future port
 - **Package name:** `com.techstackapps.healthwallet`
 
 ### Dual Entry Points
@@ -81,7 +81,7 @@ cd android && bundle exec fastlane beta      # Android → Play Store internal
 - **BLoC** — Each feature has its own BLoC with Freezed events/states. BLoCs are registered in DI with `@injectable` or `@LazySingleton()`. Event handlers use `transformer:` for concurrency control (`restartable()`, `sequential()`, `droppable()`).
 - **GetIt + Injectable** — DI in `core/di/injection.dart`. Entry point: `configureDependencies()`. Module registrations in `core/di/register_module.dart`.
 - **AutoRoute** — Type-safe routing in `core/navigation/app_router.dart`. Dashboard is parent route with nested children. Generated file: `app_router.gr.dart`.
-- **Drift** — SQLite in `core/data/local/app_database.dart`. Schema version: **8**. Step-by-step migrations. Tables: `FhirResource`, `Sources`, `RecordNotes`, `ProcessingSessions`. Schema files in `drift_schemas/`. LWW-synced tables: `fhir_resource`, `sources`, `record_notes` (NOT `processing_sessions`).
+- **Drift** — SQLite in `core/data/local/app_database.dart`. Schema version: **11** (production 1.2.x ships **9**). v1→8 use drift `stepByStep`; v9→11 are hand-written SQL in `onUpgrade` — declare added nullable columns as `TYPE NULL` so they match drift's schema snapshots. Tables: `FhirResource`, `Sources`, `RecordNotes`, `ProcessingSessions`. Schema snapshots in `drift_schemas/`; after a schema change run `dart run drift_dev schema dump lib/core/data/local/app_database.dart drift_schemas/my_database/` and `dart run drift_dev schema generate --data-classes --companions drift_schemas/my_database/ test/drift/my_database/generated/`, then add a migration test in `test/drift/`. LWW-synced tables: `fhir_resource`, `sources`, `record_notes` (NOT `processing_sessions`).
 - **Freezed** — Immutable data classes. Files: `*.freezed.dart` (generated).
 - **FHIR R4** — Healthcare data models via `fhir_r4` package. IPS export via private `fhir_ips_export` package.
 - **Localization** — ARB files in `core/l10n/arb/` (EN, ES, DE, RO). Access via `context.l10n.stringKey` extension. The generated Dart files (`app_localizations*.dart`) are committed and must be kept in sync with the ARB files.
@@ -221,10 +221,10 @@ If all three fail: `CommunicationConnectionFailed`. Mobile retries with exponent
 
 **Platform matrix:**
 
-| Mobile \ Desktop | macOS | Windows | Linux |
-|-----------------|-------|---------|-------|
-| iOS | MPC + TCP | TCP only | TCP only |
-| Android | TCP only | TCP only | TCP only |
+| Mobile \ Desktop | macOS | Windows |
+|-----------------|-------|---------|
+| iOS | MPC + TCP | TCP only |
+| Android | TCP only | TCP only |
 
 ### Wire Protocol
 
