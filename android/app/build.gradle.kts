@@ -22,8 +22,8 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace = "com.techstackapps.healthwallet"
-    compileSdk = 36
-    ndkVersion = "27.0.12077973"
+    compileSdk = 37
+    ndkVersion = "28.2.13676358"
 
     packaging {
         jniLibs {

@@ -19,9 +19,10 @@ git diff --cached --name-only | grep -iE '\.(pem|p8|p12|key|jks|keystore)$|servi
 
 HealthWallet.me is a Flutter application for patient-controlled health record management. It aggregates medical data from multiple healthcare providers using FHIR R4 standards, with offline-first architecture and biometric security. The same codebase targets both **mobile** (iOS, Android) and **desktop** (macOS, Windows) via two entry points and a platform discriminator.
 
-- **Flutter 3.41.9** (managed via FVM — see `.fvmrc`)
-- **Dart SDK:** >=3.11.5 <4.0.0
+- **Flutter 3.47.7** (managed via FVM — see `.fvmrc`)
+- **Dart SDK:** >=3.13.5 <4.0.0
 - **Mobile platforms:** iOS 16.0+, Android SDK 24+
+- **Android toolchain:** Gradle 9.4.1, AGP 9.2.1, Kotlin 2.4.0, compileSdk 37, NDK 28.2, JDK 17. AGP 9 runs in Flutter's compatibility mode (`android.builtInKotlin=false`, `android.newDsl=false` in `android/gradle.properties`) because most plugins still apply the Kotlin Gradle Plugin; `android/build.gradle.kts` raises plugins compiling below SDK 36
 - **Desktop platforms:** macOS (production), Windows (Store-packaged). Linux is not scaffolded (`linux/` removed); `Platform.isLinux` branches in Dart code are kept for a future port
 - **Package name:** `com.techstackapps.healthwallet`
 
@@ -42,8 +43,8 @@ HealthWallet.me is a Flutter application for patient-controlled health record ma
 fvm flutter pub get
 
 # Code generation — required after changing models, routes, DI, DB schemas, or env
-dart run build_runner build --delete-conflicting-outputs
-dart run build_runner watch --delete-conflicting-outputs
+dart run build_runner build
+dart run build_runner watch
 
 flutter test
 flutter test test/widget_test.dart
@@ -289,7 +290,7 @@ Decrypted payload starts with a 1-byte `MessageType`:
 
 Generated files excluded from analysis (`analysis_options.yaml`): `*.freezed.dart`, `*.g.dart`, `*.config.dart`, `*.gr.dart`.
 
-Run `dart run build_runner build --delete-conflicting-outputs` after changing:
+Run `dart run build_runner build` after changing:
 - Freezed models
 - AutoRoute routes
 - Injectable DI registrations

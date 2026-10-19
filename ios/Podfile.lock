@@ -1,8 +1,6 @@
 PODS:
   - airdrop (0.0.1):
     - Flutter
-  - battery_plus (1.0.0):
-    - Flutter
   - bonsoir_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -79,7 +77,6 @@ PODS:
 
 DEPENDENCIES:
   - airdrop (from `.symlinks/plugins/airdrop/ios`)
-  - battery_plus (from `.symlinks/plugins/battery_plus/ios`)
   - bonsoir_darwin (from `.symlinks/plugins/bonsoir_darwin/darwin`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - Flutter (from `Flutter`)
@@ -109,8 +106,6 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   airdrop:
     :path: ".symlinks/plugins/airdrop/ios"
-  battery_plus:
-    :path: ".symlinks/plugins/battery_plus/ios"
   bonsoir_darwin:
     :path: ".symlinks/plugins/bonsoir_darwin/darwin"
   device_info_plus:
@@ -134,10 +129,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   airdrop: 4fcb1b80cf0cfefe825cf6301e2db3dc6aee8ed3
-  battery_plus: 1f754123913841c027a12384d25b1463d113aae7
   bonsoir_darwin: 29c7ccf356646118844721f36e1de4b61f6cbd0e
   device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
-  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
   flutter_doc_scanner: d19aebec681eb0806931d56b960a35479a33325e
   google_mlkit_commons: a5e4ffae5bc59ea4c7b9025dc72cb6cb79dc1166
   google_mlkit_text_recognition: b3de5adb786ad7a0fe8e13618387b8d2df0f3c70

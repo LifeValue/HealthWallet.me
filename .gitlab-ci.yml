@@ -51,7 +51,7 @@ default:
   interruptible: true
 
 variables:
-  FLUTTER_VERSION: "3.41.9"
+  FLUTTER_VERSION: "3.47.7"
   GIT_DEPTH: "20"
 
 stages:
@@ -70,12 +70,20 @@ stages:
 # Checks — analyze + tests on every branch push
 # =============================================================================
 # Needs no secrets: every Envied field has a default, so codegen runs against an empty .env.
+#
+# Flutter is installed by the job rather than taken from a prebuilt image: the cirruslabs/flutter
+# images stop at 3.44.0. A shallow clone at the release tag is far smaller than the 1.5 GB release
+# archive, and the SDK (with the tools it downloads on first run) is cached per Flutter version.
 checks:
   stage: check
-  image: ghcr.io/cirruslabs/flutter:${FLUTTER_VERSION}
+  image: debian:bookworm-slim
   variables:
     PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
+    FLUTTER_HOME: "$CI_PROJECT_DIR/.flutter-sdk"
   cache:
+    - key: flutter-sdk-$FLUTTER_VERSION
+      paths:
+        - .flutter-sdk
     - key: pub-$CI_COMMIT_REF_SLUG
       fallback_keys:
         - pub-develop
@@ -84,12 +92,21 @@ checks:
         - .pub-cache
       when: always
   before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git curl unzip xz-utils ca-certificates > /dev/null
+    - |
+      if [ ! -x "$FLUTTER_HOME/bin/flutter" ]; then
+        rm -rf "$FLUTTER_HOME"
+        git clone --quiet --depth 1 --branch "$FLUTTER_VERSION" https://github.com/flutter/flutter.git "$FLUTTER_HOME"
+      fi
+    - git config --global --add safe.directory "$FLUTTER_HOME"
+    - export PATH="$FLUTTER_HOME/bin:$PATH"
+    - flutter --version
     - *private_deps
     # Declared asset directories that only hold secrets in release builds.
     - mkdir -p assets/certs/android
     - touch .env
     - flutter pub get
-    - dart run build_runner build --delete-conflicting-outputs
+    - dart run build_runner build
   script:
     # Errors fail the job; the ~110 existing warnings (mostly unused imports) don't yet.
     # Drop --no-fatal-warnings once they are cleaned up.
@@ -205,7 +222,7 @@ checks:
     - *private_deps
     - *restore_app_secrets
     - fvm flutter pub get
-    - fvm dart run build_runner build --delete-conflicting-outputs
+    - fvm dart run build_runner build
   # The shell runner's build directory persists between jobs; never leave secrets behind.
   after_script:
     - rm -f .env assets/certs/*.pem assets/certs/android/service-account.json
@@ -309,7 +326,7 @@ windows:release:
     - Copy-Item $env:ENV_FILE_CONTENT .env
     - flutter config --enable-windows-desktop
     - flutter pub get
-    - dart run build_runner build --delete-conflicting-outputs
+    - dart run build_runner build
     - flutter build windows --release --target lib/main_desktop.dart
     - $version = ((Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)').Matches[0].Groups[1].Value)
     - if ($env:CI_COMMIT_BRANCH -eq "master") { $tag = "v$version" } else { $tag = "v$version-dev.$env:CI_PIPELINE_IID" }

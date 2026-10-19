@@ -131,7 +131,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.41.9"
+          flutter-version: "3.47.7"
           cache: true
 
       - name: Create .env file
@@ -301,7 +301,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.41.9"
+          flutter-version: "3.47.7"
           cache: true
 
       - name: Enable Windows desktop
