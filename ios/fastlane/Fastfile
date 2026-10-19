@@ -3,6 +3,22 @@ Dotenv.load(File.join(File.dirname(__FILE__), '.env'))
 
 default_platform(:ios)
 
+# xcodebuild args for automatic signing on a headless runner: `-allowProvisioningUpdates` lets
+# Xcode fetch the provisioning profiles from Apple, authenticated with the App Store Connect API key
+# instead of a logged-in Xcode account. The certificates themselves are already in the runner's
+# keychain (same approach as ontrainer on the shared Mac mini). Locally, without ASC_KEY_PATH, Xcode
+# uses the signed-in account.
+def asc_xcargs
+  args = "-allowProvisioningUpdates"
+  key_path = ENV["ASC_KEY_PATH"].to_s
+  if !key_path.empty? && File.exist?(key_path)
+    args += " -authenticationKeyPath #{File.expand_path(key_path).shellescape}"
+    args += " -authenticationKeyID #{ENV['ASC_KEY_ID']}"
+    args += " -authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}"
+  end
+  args
+end
+
 platform :ios do
   desc "Read version name from pubspec.yaml"
   private_lane :get_version_name do
@@ -32,27 +48,8 @@ platform :ios do
     end
   end
 
-  desc "Sync certificates and provisioning profiles via Match"
-  lane :sync_certificates do
-    api_key = get_asc_api_key
-
-    match(
-      type: "appstore",
-      app_identifier: [
-        "com.techstackapps.healthwallet",
-        "com.techstackapps.healthwallet.Share-Extension"
-      ],
-      api_key: api_key,
-      readonly: is_ci,
-      skip_certificate_matching: !is_ci,
-      generate_apple_certs: false
-    )
-  end
-
   desc "Build and upload to TestFlight"
   lane :beta do
-    sync_certificates
-
     api_key = get_asc_api_key
 
     version_name = get_version_name
@@ -81,28 +78,11 @@ platform :ios do
       end
     end
 
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      path: "Runner.xcodeproj",
-      team_id: ENV["sigh_com.techstackapps.healthwallet_appstore_team-id"] || CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
-      targets: ["Runner"],
-      code_sign_identity: "iPhone Distribution",
-      profile_name: ENV["sigh_com.techstackapps.healthwallet_appstore_profile-name"]
-    )
-
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      path: "Runner.xcodeproj",
-      team_id: ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_team-id"] || CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
-      targets: ["Share Extension"],
-      code_sign_identity: "iPhone Distribution",
-      profile_name: ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_profile-name"]
-    )
-
     build_app(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
-      skip_package_ipa: true
+      skip_package_ipa: true,
+      xcargs: asc_xcargs
     )
 
     archive_path = lane_context[SharedValues::XCODEBUILD_ARCHIVE]
@@ -130,11 +110,10 @@ platform :ios do
       export_method: "app-store",
       skip_build_archive: true,
       archive_path: archive_path,
+      export_xcargs: asc_xcargs,
       export_options: {
-        provisioningProfiles: {
-          "com.techstackapps.healthwallet" => ENV["sigh_com.techstackapps.healthwallet_appstore_profile-name"],
-          "com.techstackapps.healthwallet.Share-Extension" => ENV["sigh_com.techstackapps.healthwallet.Share-Extension_appstore_profile-name"]
-        }
+        signingStyle: "automatic",
+        teamID: CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
       }
     )
 
