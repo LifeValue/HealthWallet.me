@@ -338,18 +338,22 @@ Managed via `envied` in `lib/core/config/env/env.dart`. All values obfuscated. R
 
 ## CI/CD
 
-- **ci.yml** — PR to `master`: analyze + test with coverage
-- **master-deploy.yml** — Push to `master`: parallel iOS (Fastlane beta → TestFlight) + Android (Fastlane beta → Play Store internal)
-- **develop-deploy.yml** — Push to `develop`: same as master deploy
-- CI restores `.env`, SSH keys, certificates, keystores from GitHub Secrets
+GitLab CI (`.gitlab-ci.yml`) on `git.techstackapps.com/mobile/health-wallet/app`. GitLab is the source of truth; the public GitHub repo (`LifeValue/HealthWallet.me`) is left untouched and its `.github/workflows/` are not used.
+
+- **checks** — every MR and every `develop`/`master` push, on the Linux instance runners (`ghcr.io/cirruslabs/flutter`): `pub get`, `build_runner`, `flutter analyze` (errors fatal, warnings not yet), `flutter test`. Needs no secrets.
+- **ios:testflight / macos:testflight / android:play-internal** — manual jobs on `develop` and `master`, on the shared `shell-macmini` runner via Fastlane (`beta` lanes). Automatic signing (no fastlane match): certificates are in the runner's login keychain, profiles are fetched with the App Store Connect API key via `-allowProvisioningUpdates`.
+- **shorebird:patch-android / shorebird:patch-ios** — manual on `master`.
+- **windows:release** — manual on `develop` (pre-release `v<version>-dev.<iid>`) and `master` (`v<version>`); uploads zip + msix to the generic package registry and creates a GitLab Release. Needs a runner tagged `windows` (none registered yet).
+- Secrets are protected CI/CD variables (names listed at the top of `.gitlab-ci.yml`); private pub dependencies are fetched with `CI_JOB_TOKEN`.
 
 ---
 
 ## Git Branch Strategy
 
-- `master` — Production (auto-deploys to stores)
-- `develop` — Staging (auto-deploys to internal tracks)
-- `dev/*`, `feature/*`, `fix/*` — Development branches (CI runs analyze + tests on PR)
+- `master` — Production (store uploads are manual pipeline jobs)
+- `develop` — Staging (internal-track uploads are manual pipeline jobs)
+- `dev/*`, `feature/*`, `fix/*` — Development branches (CI runs analyze + tests on MRs)
+- Merges always use a merge commit (`--no-ff`), never fast-forward
 - `release/*` — Release staging
 - `hotfix/*` — Urgent production fixes
 
@@ -357,8 +361,8 @@ Managed via `envied` in `lib/core/config/env/env.dart`. All values obfuscated. R
 
 ## Private Dependencies
 
-- `fhir_ips_export` — Private git dependency (SSH key access required, `SSH_PRIVATE_KEY` secret in CI)
-- `airdrop` — Private Flutter package for P2P file transfer and MultipeerConnectivity transport (same SSH access). Build fails if SSH key is unavailable.
+- `fhir_ips_export` — Private git dependency on `git.techstackapps.com` (SSH locally; `CI_JOB_TOKEN` in CI — the project must be on its job-token allowlist)
+- `airdrop` — Private Flutter package for P2P file transfer and MultipeerConnectivity transport (same access). Build fails if it can't be fetched.
 
 ---
 
