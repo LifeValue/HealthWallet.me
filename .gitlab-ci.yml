@@ -159,6 +159,23 @@ checks:
   - printf '%s' "$ASC_KEY_CONTENT" | base64 -d > "$CI_PROJECT_DIR/AuthKey.p8"
   - export ASC_KEY_PATH="$CI_PROJECT_DIR/AuthKey.p8"
 
+# Every `pod` call in an iOS job must use the CocoaPods pinned in ios/Gemfile: the runner's
+# Homebrew CocoaPods (1.15) cannot read the Share Extension's synchronized folder groups. A wrapper
+# first on PATH also covers the implicit `pod install` inside `flutter build ios` and
+# `shorebird release/patch`. It sets BUNDLE_* itself because fastlane runs the Flutter build with
+# Bundler's environment stripped (Bundler.with_unbundled_env).
+.ios_cocoapods: &ios_cocoapods
+  - (cd ios && bundle install --jobs 4 --retry 3)
+  - mkdir -p "$CI_PROJECT_DIR/.ci-bin"
+  - |
+    cat > "$CI_PROJECT_DIR/.ci-bin/pod" <<EOF
+    #!/bin/sh
+    exec env BUNDLE_GEMFILE="$CI_PROJECT_DIR/ios/Gemfile" BUNDLE_PATH="$BUNDLE_PATH" bundle exec pod "\$@"
+    EOF
+  - chmod +x "$CI_PROJECT_DIR/.ci-bin/pod"
+  - export PATH="$CI_PROJECT_DIR/.ci-bin:$PATH"
+  - pod --version | grep -q '^1\.16\.' || { echo "pod on PATH is not the CocoaPods pinned in ios/Gemfile"; exit 1; }
+
 .macmini:
   tags: [shell-macmini]
   # A store upload must not be killed mid-flight by a newer push.
@@ -200,9 +217,9 @@ ios:testflight:
   environment: { name: testflight-ios }
   script:
     - *apple_signing
-    - (cd ios && rm -rf Podfile.lock Pods && pod install --repo-update)
+    - *ios_cocoapods
     - cd ios
-    - bundle install --jobs 4 --retry 3
+    - rm -rf Podfile.lock Pods && pod install --repo-update
     - bundle exec fastlane beta
 
 macos:testflight:
@@ -246,6 +263,7 @@ shorebird:patch-ios:
   stage: deploy
   rules: *on_master
   script:
+    - *ios_cocoapods
     - shorebird patch --platforms ios --release-version=latest --no-codesign --allow-asset-diffs
 
 # =============================================================================
