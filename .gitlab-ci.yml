@@ -161,6 +161,10 @@ checks:
   - export ANDROID_SDK_ROOT="$ANDROID_HOME"
   - if [ -n "$ANDROID_JAVA_HOME" ]; then export JAVA_HOME="$ANDROID_JAVA_HOME"; export PATH="$JAVA_HOME/bin:$PATH"; fi
   - '[ -d "$ANDROID_HOME" ] || { echo "Android SDK not found at $ANDROID_HOME — set ANDROID_HOME or ANDROID_JAVA_HOME as a CI variable"; exit 1; }'
+  # Gradle 9.4 / AGP 9.2 need JDK 17+; the Gradle daemon is the largest process of the build.
+  - java -version 2>&1 | head -1
+  - fvm flutter doctor -v 2>/dev/null | grep -iE "Java (binary|version)" || true
+  - 'echo "RAM: $(( $(sysctl -n hw.memsize) / 1073741824 )) GB, $(memory_pressure | tail -1)"'
 
 # Automatic signing, as ontrainer does on this Mac: the distribution certificates for team
 # N668J5X92P are already in the runner's login keychain, and xcodebuild's -allowProvisioningUpdates
@@ -280,6 +284,12 @@ android:play-internal:
     - cd android
     - bundle install --jobs 4 --retry 3
     - bundle exec fastlane beta
+  artifacts:
+    # A crashed Gradle daemon leaves its JVM crash report in android/; the next job's checkout deletes it.
+    when: on_failure
+    expire_in: 1 week
+    paths:
+      - android/hs_err_pid*.log
 
 # --- Shorebird over-the-air patches for the latest store release ----------------
 shorebird:patch-android:
