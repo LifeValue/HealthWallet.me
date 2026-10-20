@@ -365,11 +365,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
     try {
       await Future.delayed(const Duration(milliseconds: 100));
 
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
-        allowCompression: false,
-        withData: false,
-        withReadStream: false,
+      final files = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: [
           'pdf',
@@ -383,10 +379,10 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
         ],
       );
 
-      if (result != null && result.files.isNotEmpty) {
+      if (files.isNotEmpty) {
         final validPaths = <String>[];
 
-        for (final file in result.files) {
+        for (final file in files) {
           if (file.path == null || file.path!.isEmpty) continue;
           if (await File(file.path!).exists()) {
             validPaths.add(file.path!);

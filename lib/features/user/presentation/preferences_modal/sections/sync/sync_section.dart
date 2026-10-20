@@ -565,7 +565,7 @@ class _BackupLocationRow extends StatelessWidget {
         'title': 'Choose Backup Location',
       });
     } else {
-      result = await FilePicker.platform.getDirectoryPath(
+      result = await FilePicker.getDirectoryPath(
         dialogTitle: 'Choose Backup Location',
         initialDirectory: initialPath,
       );

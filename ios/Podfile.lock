@@ -4,8 +4,6 @@ PODS:
   - bonsoir_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
-  - device_info_plus (0.0.1):
-    - Flutter
   - Flutter (1.0.0)
   - flutter_doc_scanner (0.0.17):
     - Flutter
@@ -21,7 +19,6 @@ PODS:
 DEPENDENCIES:
   - airdrop (from `.symlinks/plugins/airdrop/ios`)
   - bonsoir_darwin (from `.symlinks/plugins/bonsoir_darwin/darwin`)
-  - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - Flutter (from `Flutter`)
   - flutter_doc_scanner (from `.symlinks/plugins/flutter_doc_scanner/ios`)
   - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
@@ -34,8 +31,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/airdrop/ios"
   bonsoir_darwin:
     :path: ".symlinks/plugins/bonsoir_darwin/darwin"
-  device_info_plus:
-    :path: ".symlinks/plugins/device_info_plus/ios"
   Flutter:
     :path: Flutter
   flutter_doc_scanner:
@@ -52,7 +47,6 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   airdrop: 4fcb1b80cf0cfefe825cf6301e2db3dc6aee8ed3
   bonsoir_darwin: 29c7ccf356646118844721f36e1de4b61f6cbd0e
-  device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
   flutter_doc_scanner: d19aebec681eb0806931d56b960a35479a33325e
   open_file_ios: 46184d802ee7959203f6392abcfa0dd49fdb5be0
