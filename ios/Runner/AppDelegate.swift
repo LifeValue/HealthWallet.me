@@ -6,6 +6,7 @@ import CoreBluetooth
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
     private let screenSecurity = ScreenSecurityHandler()
+    private let textRecognition = TextRecognitionHandler()
     private var bluetoothDelegate: BluetoothStateDelegate?
 
     override func application(
@@ -22,6 +23,7 @@ import CoreBluetooth
 
         let messenger = engineBridge.applicationRegistrar.messenger()
         screenSecurity.register(with: messenger, windowProvider: { AppDelegate.activeWindow() })
+        textRecognition.register(with: messenger)
 
         let walletChannel = FlutterMethodChannel(
             name: "com.techstackapps.healthwallet/apple_wallet",

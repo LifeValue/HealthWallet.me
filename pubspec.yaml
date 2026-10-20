@@ -77,7 +77,6 @@ dependencies:
   open_file: ^3.5.10
   image_picker: ^1.0.7
   battery_plus: ^7.1.2
-  google_mlkit_text_recognition: ^0.15.0
   pdfx: ^2.9.2
   printing: ^5.13.4
   llamadart: ^0.6.8

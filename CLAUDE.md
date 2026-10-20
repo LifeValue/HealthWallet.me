@@ -112,7 +112,7 @@ After capture, files are handed to `ProcessingBloc` via `DocumentImported` event
 The platform-agnostic brain. Orchestrates the full document-to-FHIR pipeline.
 
 **Pipeline stages:**
-1. **OCR** — `OcrProcessingService` wraps ML Kit (`MobileTextRecognitionService`) on mobile and `DesktopTextRecognitionService` on desktop.
+1. **OCR** — `NativeTextRecognitionService` calls the `dev.lifevalue.healthwallet/ocr` method channel, implemented natively per runner: Apple Vision on iOS (`ios/Runner/TextRecognitionHandler.swift`) and macOS (`macos/Runner/AppDelegate.swift`), ML Kit on Android (`ocr/TextRecognitionHandler.kt`), `Windows.Media.Ocr` on Windows (`windows/runner/windows_ocr_plugin.cpp`). There is no OCR Flutter plugin, so iOS has no ML Kit pods and runs on arm64 simulators.
 2. **Vision AI (Phase 1)** — `ScanNetworkDataSource.runVisionPrompt()` runs `Qwen3-VL-2B-Instruct` (Q4\_K\_M GGUF) via `llamadart`. Extracts patient demographics, encounter details, and a primary diagnostic report.
 3. **Vision AI (Phase 2)** — `runVisionPrompt()` again for remaining resource types (medications, immunizations, allergies, vitals, etc.).
 4. **Text fallback** — If vision fails, `runTextPrompt()` uses OCR text with the existing prompt templates.
@@ -126,7 +126,7 @@ The platform-agnostic brain. Orchestrates the full document-to-FHIR pipeline.
 | `ProcessingHandler` | `presentation/bloc/handlers/` | Mixin handling `DocumentImported`, `SessionActivated`, `ProcessRemainingResources` |
 | `SessionHandler` | `presentation/bloc/handlers/` | Mixin handling session lifecycle events |
 | `AiModelDownloadService` | `data/services/` | Downloads model + mmproj files from HuggingFace; tracks progress |
-| `OcrProcessingService` | `data/services/` | Selects platform-specific OCR implementation |
+| `NativeTextRecognitionService` | `data/services/` | OCR over the native `ocr` channel; PDF pages rasterised first |
 | `ProcessingRepository` | `data/repository/` | Runs the full pipeline; writes FHIR rows to Drift |
 | `ProcessingSession` | domain entity | Persisted in `ProcessingSessions` Drift table |
 | `MappingResources` | `domain/entity/mapping_resources/` | Intermediate staged types (patient, encounter, diagnostic report, etc.) |

@@ -82,3 +82,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // On-device OCR behind the dev.lifevalue.healthwallet/ocr channel (ocr/TextRecognitionHandler.kt)
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+}
