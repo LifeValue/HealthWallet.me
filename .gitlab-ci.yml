@@ -35,7 +35,6 @@
 #        ANDROID_KEYSTORE_BASE64                      masked
 #        ANDROID_STORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS   masked
 #        PLAY_STORE_SERVICE_ACCOUNT_BASE64            masked
-#      Optional: ANDROID_JAVA_HOME pins the JDK for Gradle on the Mac mini (JDK 17).
 #   Copied from GitHub but unused (fastlane match was replaced by automatic signing, and the pub
 #   dependencies come through the job token): MATCH_GIT_URL, MATCH_PASSWORD, SSH_PRIVATE_KEY.
 #   Delete them once a TestFlight upload has succeeded without them.
@@ -53,6 +52,10 @@ default:
 variables:
   FLUTTER_VERSION: "3.47.7"
   GIT_DEPTH: "20"
+  # JDK for Gradle in the Android jobs (see .android_env).
+  ANDROID_JDK_VERSION: "17.0.20.1+1"
+  ANDROID_JDK_URL: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.20.1_1.tar.gz"
+  ANDROID_JDK_SHA256: "196d13ba5f10414bef7f6a05a9b3f00edacb18ebacef2b99485db9e2ee18f0e8"
 
 stages:
   - check
@@ -159,12 +162,24 @@ checks:
 .android_env: &android_env
   - export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
   - export ANDROID_SDK_ROOT="$ANDROID_HOME"
-  - if [ -n "$ANDROID_JAVA_HOME" ]; then export JAVA_HOME="$ANDROID_JAVA_HOME"; export PATH="$JAVA_HOME/bin:$PATH"; fi
-  - '[ -d "$ANDROID_HOME" ] || { echo "Android SDK not found at $ANDROID_HOME — set ANDROID_HOME or ANDROID_JAVA_HOME as a CI variable"; exit 1; }'
-  # Gradle 9.4 / AGP 9.2 need JDK 17+; the Gradle daemon is the largest process of the build.
+  - '[ -d "$ANDROID_HOME" ] || { echo "Android SDK not found at $ANDROID_HOME — set ANDROID_HOME as a CI variable"; exit 1; }'
+  # Gradle runs on a pinned Temurin JDK 17 kept in the job cache, not on a JDK of the shared Mac
+  # mini. Flutter would pick Android Studio's bundled JBR 17.0.9, which crashes the Gradle daemon on
+  # Apple Silicon with recent macOS (JDK-8327860, fixed in 17.0.11). JAVA_HOME alone does not help:
+  # Flutter prefers Android Studio's JDK and passes it to Gradle, but org.gradle.java.home wins.
+  - |
+    jdk_dir="$CI_PROJECT_DIR/.ci-jdk/jdk-$ANDROID_JDK_VERSION"
+    if [ ! -x "$jdk_dir/Contents/Home/bin/java" ]; then
+      rm -rf "$CI_PROJECT_DIR/.ci-jdk" && mkdir -p "$jdk_dir"
+      curl -fsSL --retry 3 -o "$CI_PROJECT_DIR/.ci-jdk/jdk.tar.gz" "$ANDROID_JDK_URL"
+      echo "$ANDROID_JDK_SHA256  $CI_PROJECT_DIR/.ci-jdk/jdk.tar.gz" | shasum -a 256 -c -
+      tar -xzf "$CI_PROJECT_DIR/.ci-jdk/jdk.tar.gz" -C "$jdk_dir" --strip-components 1
+      rm "$CI_PROJECT_DIR/.ci-jdk/jdk.tar.gz"
+    fi
+    export JAVA_HOME="$jdk_dir/Contents/Home"
+    export PATH="$JAVA_HOME/bin:$PATH"
+    printf '\norg.gradle.java.home=%s\n' "$JAVA_HOME" >> android/gradle.properties
   - java -version 2>&1 | head -1
-  - fvm flutter doctor -v 2>/dev/null | grep -iE "Java (binary|version)" || true
-  - 'echo "RAM: $(( $(sysctl -n hw.memsize) / 1073741824 )) GB, $(memory_pressure | tail -1)"'
 
 # Automatic signing, as ontrainer does on this Mac: the distribution certificates for team
 # N668J5X92P are already in the runner's login keychain, and xcodebuild's -allowProvisioningUpdates
@@ -215,7 +230,8 @@ checks:
   interruptible: false
   needs: ["checks"]
   cache:
-    - key: bundle-macos
+    - &bundle_cache
+      key: bundle-macos
       paths:
         - vendor/bundle
       # Saved even when the job fails, so a retried deploy doesn't reinstall every gem.
@@ -277,6 +293,12 @@ android:play-internal:
   stage: deploy
   rules: *on_any_branch
   environment: { name: play-internal }
+  cache:
+    - *bundle_cache
+    - key: jdk-temurin-$ANDROID_JDK_VERSION
+      paths:
+        - .ci-jdk/
+      when: always
   script:
     - *android_env
     - *restore_android_secrets
@@ -296,6 +318,12 @@ shorebird:patch-android:
   extends: .macmini
   stage: deploy
   rules: *on_master
+  cache:
+    - *bundle_cache
+    - key: jdk-temurin-$ANDROID_JDK_VERSION
+      paths:
+        - .ci-jdk/
+      when: always
   script:
     - *android_env
     - *restore_android_secrets
