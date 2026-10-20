@@ -57,8 +57,10 @@ abstract class MappingProcedure with _$MappingProcedure implements MappingResour
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     fhir_r4.Procedure procedure = fhir_r4.Procedure(
+      meta: meta,
       code: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(procedureName.value)),
       performedX: performedDateTime.value.isNotEmpty

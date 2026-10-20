@@ -55,8 +55,10 @@ abstract class MappingOrganization
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     fhir_r4.Organization organization = fhir_r4.Organization(
+      meta: meta,
       name: fhir_r4.FhirString(organizationName.value),
       address: [fhir_r4.Address(text: fhir_r4.FhirString(address.value))],
       telecom: [fhir_r4.ContactPoint(value: fhir_r4.FhirString(phone.value))],

@@ -214,6 +214,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     final name = observationName.value.trim();
     final bpMatch = _bpCombinedPattern.firstMatch(value.value.trim());
@@ -292,6 +293,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
     }
 
     fhir_r4.Observation observation = fhir_r4.Observation(
+      meta: meta,
       code: codeableConcept,
       valueX: valueX,
       status: fhir_r4.ObservationStatus.unknown,

@@ -104,6 +104,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     final identifierCoding = _mapLabelToFhirCode(identifierLabel);
     final profile = CountryIdentifier.forCurrentLocale();
@@ -112,6 +113,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         : 'http://healthwallet.me/mrn';
 
     fhir_r4.Patient patient = fhir_r4.Patient(
+      meta: meta,
       name: [
         fhir_r4.HumanName(
           family: fhir_r4.FhirString(familyName.value),

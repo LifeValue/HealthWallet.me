@@ -74,6 +74,7 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     fhir_r4.Encounter encounter = fhir_r4.Encounter(
         type: [
@@ -91,17 +92,18 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
                 text: fhir_r4.FhirString(specialty.value),
               )
             : null,
-        meta: specialty.value.isNotEmpty
-            ? fhir_r4.FhirMeta(
-                tag: [
-                  fhir_r4.Coding(
-                    system: fhir_r4.FhirUri('http://healthwallet.me/specialty'),
-                    code: fhir_r4.FhirCode(_getSpecialtyEnumName(specialty.value)),
-                    display: fhir_r4.FhirString(specialty.value),
-                  ),
-                ],
-              )
-            : null,
+        meta: meta ??
+            (specialty.value.isNotEmpty
+                ? fhir_r4.FhirMeta(
+                    tag: [
+                      fhir_r4.Coding(
+                        system: fhir_r4.FhirUri('http://healthwallet.me/specialty'),
+                        code: fhir_r4.FhirCode(_getSpecialtyEnumName(specialty.value)),
+                        display: fhir_r4.FhirString(specialty.value),
+                      ),
+                    ],
+                  )
+                : null),
         period: periodStart.value.isNotEmpty
             ? fhir_r4.Period(
                 start: fhir_r4.FhirDateTime.fromString(periodStart.value),

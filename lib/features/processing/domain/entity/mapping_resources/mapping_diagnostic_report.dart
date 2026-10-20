@@ -58,8 +58,10 @@ abstract class MappingDiagnosticReport
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     fhir_r4.DiagnosticReport diagnosticReport = fhir_r4.DiagnosticReport(
+      meta: meta,
       code: fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reportName.value)),
       conclusion: fhir_r4.FhirString(conclusion.value),
       issued: fhir_r4.FhirInstant.fromDateTime(
