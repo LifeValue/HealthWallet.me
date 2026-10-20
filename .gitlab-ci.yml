@@ -250,6 +250,7 @@ ios:testflight:
   script:
     - *apple_signing
     - *ios_cocoapods
+    - fvm flutter precache --ios
     - cd ios
     - *pod_install
     - bundle exec fastlane beta
