@@ -342,7 +342,7 @@ Managed via `envied` in `lib/core/config/env/env.dart`. All values obfuscated. R
 GitLab CI (`.gitlab-ci.yml`) on `git.techstackapps.com/mobile/health-wallet/app`. GitLab is the source of truth; the public GitHub repo (`LifeValue/HealthWallet.me`) is left untouched and its `.github/workflows/` are not used.
 
 - **checks** — every branch push, on the Linux instance runners (`ghcr.io/cirruslabs/flutter`): `pub get`, `build_runner`, `flutter analyze` (errors fatal, warnings not yet), `flutter test`. Needs no secrets.
-- **ios:testflight / macos:testflight / android:play-internal** — manual jobs on every branch pipeline (the branch must be protected to receive the protected CI/CD variables), on the shared `shell-macmini` runner via Fastlane (`beta` lanes). Automatic signing (no fastlane match): certificates are in the runner's login keychain, profiles are fetched with the App Store Connect API key via `-allowProvisioningUpdates`. The Android jobs run Gradle on a pinned Temurin JDK 17 (`ANDROID_JDK_*` variables, cached per runner, set through `org.gradle.java.home`), because the JDK Flutter would pick on the Mac mini (Android Studio's JBR 17.0.9) crashes the Gradle daemon.
+- **ios:testflight / macos:testflight / android:play-internal** — beta uploads, automatic on every push to `develop` and manual on other branches (the branch must be protected to receive the protected CI/CD variables); one `resource_group` per job so overlapping pipelines don't pick the same build number. They run on the shared `shell-macmini` runner via Fastlane (`beta` lanes). Automatic signing (no fastlane match): certificates are in the runner's login keychain, profiles are fetched with the App Store Connect API key via `-allowProvisioningUpdates`. The Android jobs run Gradle on a pinned Temurin JDK 17 (`ANDROID_JDK_*` variables, cached per runner, set through `org.gradle.java.home`), because the JDK Flutter would pick on the Mac mini (Android Studio's JBR 17.0.9) crashes the Gradle daemon. There are no production jobs or `release` lanes: a tested beta is promoted to production by hand in App Store Connect and Play Console.
 - **shorebird:patch-android / shorebird:patch-ios** — manual on `master`.
 - **windows:release** — manual on every branch: `master` → `v<version>`, other branches → pre-release `v<version>-dev.<iid>`; uploads zip + msix to the generic package registry and creates a GitLab Release. Needs a runner tagged `windows` (none registered yet).
 - Secrets are protected CI/CD variables (names listed at the top of `.gitlab-ci.yml`); private pub dependencies are fetched with `CI_JOB_TOKEN`.
@@ -351,8 +351,8 @@ GitLab CI (`.gitlab-ci.yml`) on `git.techstackapps.com/mobile/health-wallet/app`
 
 ## Git Branch Strategy
 
-- `master` — Production (store uploads are manual pipeline jobs)
-- `develop` — Staging (internal-track uploads are manual pipeline jobs)
+- `master` — Production (builds are promoted from TestFlight / Play internal by hand in the store consoles)
+- `develop` — Staging (every push uploads betas to TestFlight and Play internal)
 - `dev/*`, `feature/*`, `fix/*` — Development branches (CI runs analyze + tests on MRs)
 - Merges always use a merge commit (`--no-ff`), never fast-forward
 - `release/*` — Release staging

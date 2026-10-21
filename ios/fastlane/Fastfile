@@ -122,9 +122,4 @@ platform :ios do
       skip_waiting_for_build_processing: true
     )
   end
-
-  desc "Release — uploads to TestFlight (production promotion is manual in ASC)"
-  lane :release do
-    beta
-  end
 end
