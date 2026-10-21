@@ -14,7 +14,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_patient.freezed.dart';
 
 @freezed
-class MappingPatient with _$MappingPatient implements MappingResource {
+abstract class MappingPatient with _$MappingPatient implements MappingResource {
   const MappingPatient._();
 
   const factory MappingPatient({
@@ -104,6 +104,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     final identifierCoding = _mapLabelToFhirCode(identifierLabel);
     final profile = CountryIdentifier.forCurrentLocale();
@@ -112,6 +113,7 @@ class MappingPatient with _$MappingPatient implements MappingResource {
         : 'http://healthwallet.me/mrn';
 
     fhir_r4.Patient patient = fhir_r4.Patient(
+      meta: meta,
       name: [
         fhir_r4.HumanName(
           family: fhir_r4.FhirString(familyName.value),

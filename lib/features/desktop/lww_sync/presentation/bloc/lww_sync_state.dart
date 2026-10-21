@@ -3,7 +3,7 @@ part of 'lww_sync_bloc.dart';
 enum LwwSyncStatus { idle, syncing, error }
 
 @freezed
-class LwwSyncState with _$LwwSyncState {
+abstract class LwwSyncState with _$LwwSyncState {
   const factory LwwSyncState({
     @Default(LwwSyncStatus.idle) LwwSyncStatus syncStatus,
     DateTime? lastSyncTime,

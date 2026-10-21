@@ -3,7 +3,7 @@ part of 'home_bloc.dart';
 enum OverviewViewMode { specialties, resources }
 
 @freezed
-class HomeState with _$HomeState {
+abstract class HomeState with _$HomeState {
   const HomeState._();
 
   const factory HomeState({
@@ -94,7 +94,7 @@ class HomeState with _$HomeState {
 }
 
 @freezed
-class HomeStatus with _$HomeStatus {
+sealed class HomeStatus with _$HomeStatus {
   const factory HomeStatus.initial() = _Initial;
   const factory HomeStatus.loading() = _Loading;
   const factory HomeStatus.success() = _Success;

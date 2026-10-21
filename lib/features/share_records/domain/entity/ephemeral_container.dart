@@ -5,7 +5,7 @@ import 'package:health_wallet/features/records/domain/entity/record_note/record_
 part 'ephemeral_container.freezed.dart';
 
 @freezed
-class EphemeralRecordsContainer with _$EphemeralRecordsContainer {
+abstract class EphemeralRecordsContainer with _$EphemeralRecordsContainer {
   const EphemeralRecordsContainer._();
 
   const factory EphemeralRecordsContainer({

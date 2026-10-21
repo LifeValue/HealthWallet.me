@@ -3,7 +3,7 @@ part of 'attachment_browse_bloc.dart';
 enum AttachmentBrowseStatus { loading, success, error }
 
 @freezed
-class AttachmentBrowseState with _$AttachmentBrowseState {
+abstract class AttachmentBrowseState with _$AttachmentBrowseState {
   const AttachmentBrowseState._();
 
   const factory AttachmentBrowseState({

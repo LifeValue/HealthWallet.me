@@ -35,3 +35,8 @@ analyzer:
     - '**/*.g.dart'
     - '**/*.config.dart'
     - '**/*.gr.dart'
+    - build/**
+    - android/**
+    - ios/**
+    - windows/**
+    - macos/**

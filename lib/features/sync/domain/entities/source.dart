@@ -5,7 +5,7 @@ part 'source.g.dart';
 
 /// Domain Source entity for sync operations
 @freezed
-class Source with _$Source {
+abstract class Source with _$Source {
   const factory Source({
     required String id,
     String? platformName,

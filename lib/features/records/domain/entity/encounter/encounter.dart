@@ -15,7 +15,7 @@ import 'package:intl/intl.dart';
 part 'encounter.freezed.dart';
 
 @freezed
-class Encounter with _$Encounter implements IFhirResource {
+abstract class Encounter with _$Encounter implements IFhirResource {
   const Encounter._();
 
   const factory Encounter({

@@ -5,7 +5,7 @@ import 'package:health_wallet/features/records/domain/entity/attachment_browse/a
 part 'attachment_browse_detail.freezed.dart';
 
 @freezed
-class AttachmentBrowseDetail with _$AttachmentBrowseDetail {
+abstract class AttachmentBrowseDetail with _$AttachmentBrowseDetail {
   const factory AttachmentBrowseDetail({
     required IFhirResource record,
     @Default([]) List<AttachmentBrowseFile> attachments,

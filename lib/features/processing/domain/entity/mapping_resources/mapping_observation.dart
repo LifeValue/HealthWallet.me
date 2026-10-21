@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_observation.freezed.dart';
 
 @freezed
-class MappingObservation with _$MappingObservation implements MappingResource {
+abstract class MappingObservation with _$MappingObservation implements MappingResource {
   const MappingObservation._();
 
   const factory MappingObservation({
@@ -214,6 +214,7 @@ class MappingObservation with _$MappingObservation implements MappingResource {
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     final name = observationName.value.trim();
     final bpMatch = _bpCombinedPattern.firstMatch(value.value.trim());
@@ -292,6 +293,7 @@ class MappingObservation with _$MappingObservation implements MappingResource {
     }
 
     fhir_r4.Observation observation = fhir_r4.Observation(
+      meta: meta,
       code: codeableConcept,
       valueX: valueX,
       status: fhir_r4.ObservationStatus.unknown,

@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 
-class WindowsOcrChannel {
+/// On-device OCR implemented by each runner: Apple Vision on iOS and macOS,
+/// ML Kit on Android, Windows.Media.Ocr on Windows.
+class OcrChannel {
   static const _channel = MethodChannel('dev.lifevalue.healthwallet/ocr');
 
   Future<String> recognizeText(String imagePath) async {

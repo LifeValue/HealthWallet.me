@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import com.techstackapps.healthwallet.no_screenshot.ScreenSecurityHandler
+import com.techstackapps.healthwallet.ocr.TextRecognitionHandler
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -14,10 +15,12 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterFragmentActivity() {
     private var bluetoothReceiver: BroadcastReceiver? = null
+    private var textRecognition: TextRecognitionHandler? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         ScreenSecurityHandler(window).register(flutterEngine)
+        textRecognition = TextRecognitionHandler(applicationContext).also { it.register(flutterEngine) }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.techstackapps.healthwallet/bluetooth")
             .setMethodCallHandler { call, result ->
@@ -57,5 +60,11 @@ class MainActivity : FlutterFragmentActivity() {
                     }
                 }
             })
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        textRecognition?.close()
+        textRecognition = null
+        super.cleanUpFlutterEngine(flutterEngine)
     }
 }

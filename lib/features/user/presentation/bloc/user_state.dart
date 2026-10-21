@@ -1,7 +1,7 @@
 part of 'user_bloc.dart';
 
 @freezed
-class UserState with _$UserState {
+abstract class UserState with _$UserState {
   const factory UserState({
     @Default(UserStatus.initial()) UserStatus status,
     @Default(User()) User user,
@@ -14,7 +14,7 @@ class UserState with _$UserState {
 }
 
 @freezed
-class UserStatus with _$UserStatus {
+sealed class UserStatus with _$UserStatus {
   const factory UserStatus.initial() = _Initial;
   const factory UserStatus.loading() = _Loading;
   const factory UserStatus.success() = _Success;

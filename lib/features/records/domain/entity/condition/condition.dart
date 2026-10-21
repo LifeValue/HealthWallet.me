@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'condition.freezed.dart';
 
 @freezed
-class Condition with _$Condition implements IFhirResource {
+abstract class Condition with _$Condition implements IFhirResource {
   const Condition._();
 
   const factory Condition({

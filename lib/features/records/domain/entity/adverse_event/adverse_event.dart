@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'adverse_event.freezed.dart';
 
 @freezed
-class AdverseEvent with _$AdverseEvent implements IFhirResource {
+abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
   const AdverseEvent._();
 
   const factory AdverseEvent({

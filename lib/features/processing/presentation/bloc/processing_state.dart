@@ -1,7 +1,7 @@
 part of 'processing_bloc.dart';
 
 @freezed
-class PipelineStatus with _$PipelineStatus {
+sealed class PipelineStatus with _$PipelineStatus {
   const factory PipelineStatus.initial() = Initial;
   const factory PipelineStatus.loading() = Loading;
   const factory PipelineStatus.sessionCreated(
@@ -15,7 +15,7 @@ class PipelineStatus with _$PipelineStatus {
 }
 
 @freezed
-class ProcessingState with _$ProcessingState {
+abstract class ProcessingState with _$ProcessingState {
   const ProcessingState._();
 
   const factory ProcessingState({

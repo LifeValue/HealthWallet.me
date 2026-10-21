@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_practitioner.freezed.dart';
 
 @freezed
-class MappingPractitioner
+abstract class MappingPractitioner
     with _$MappingPractitioner
     implements MappingResource {
   const MappingPractitioner._();
@@ -55,8 +55,10 @@ class MappingPractitioner
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     fhir_r4.Practitioner practitioner = fhir_r4.Practitioner(
+      meta: meta,
       name: [
         fhir_r4.HumanName(text: fhir_r4.FhirString(practitionerName.value))
       ],

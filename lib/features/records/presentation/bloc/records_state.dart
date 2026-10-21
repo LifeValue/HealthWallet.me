@@ -1,7 +1,7 @@
 part of 'records_bloc.dart';
 
 @freezed
-class RecordsState with _$RecordsState {
+abstract class RecordsState with _$RecordsState {
   const factory RecordsState({
     @Default(RecordsStatus.initial()) RecordsStatus status,
     @Default([]) List<IFhirResource> resources,
@@ -24,7 +24,7 @@ class RecordsState with _$RecordsState {
 }
 
 @freezed
-class RecordsStatus with _$RecordsStatus {
+sealed class RecordsStatus with _$RecordsStatus {
   const factory RecordsStatus.initial() = _Initial;
   const factory RecordsStatus.loading() = _Loading;
   const factory RecordsStatus.success() = _Success;
@@ -33,7 +33,7 @@ class RecordsStatus with _$RecordsStatus {
 }
 
 @freezed
-class RecordDetailStatus with _$RecordDetailStatus {
+sealed class RecordDetailStatus with _$RecordDetailStatus {
   const factory RecordDetailStatus.initial() = _DetailInitial;
   const factory RecordDetailStatus.loading() = _DetailLoading;
   const factory RecordDetailStatus.success() = _DetailSuccess;

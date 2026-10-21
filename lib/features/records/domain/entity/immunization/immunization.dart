@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'immunization.freezed.dart';
 
 @freezed
-class Immunization with _$Immunization implements IFhirResource {
+abstract class Immunization with _$Immunization implements IFhirResource {
   const Immunization._();
 
   const factory Immunization({

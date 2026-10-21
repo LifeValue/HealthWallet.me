@@ -24,7 +24,7 @@ enum SharePhase {
 }
 
 @freezed
-class ShareRecordsState with _$ShareRecordsState {
+abstract class ShareRecordsState with _$ShareRecordsState {
   const ShareRecordsState._();
 
   const factory ShareRecordsState({

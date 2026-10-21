@@ -680,7 +680,7 @@ class _BackupLocationRow extends StatelessWidget {
         'title': context.l10n.desktopChooseBackupLocation,
       });
     } else {
-      result = await FilePicker.platform.getDirectoryPath(
+      result = await FilePicker.getDirectoryPath(
         dialogTitle: context.l10n.desktopChooseBackupLocation,
         initialDirectory: initialPath,
       );

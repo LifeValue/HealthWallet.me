@@ -5,35 +5,45 @@ abstract class RecordNotesEvent {
 }
 
 @freezed
-class RecordNotesInitialised extends RecordNotesEvent
+abstract class RecordNotesInitialised extends RecordNotesEvent
     with _$RecordNotesInitialised {
+  const RecordNotesInitialised._();
+
   const factory RecordNotesInitialised({required IFhirResource resource}) =
       _RecordNotesInitialised;
 }
 
 @freezed
-class RecordNotesInputInitialised extends RecordNotesEvent
+abstract class RecordNotesInputInitialised extends RecordNotesEvent
     with _$RecordNotesInputInitialised {
+  const RecordNotesInputInitialised._();
+
   const factory RecordNotesInputInitialised({RecordNote? editNote}) =
       _RecordNotesInputInitialised;
 }
 
 @freezed
-class RecordNotesInputCanceled extends RecordNotesEvent
+abstract class RecordNotesInputCanceled extends RecordNotesEvent
     with _$RecordNotesInputCanceled {
+  const RecordNotesInputCanceled._();
+
   const factory RecordNotesInputCanceled() = _RecordNotesInputCanceled;
 }
 
 @freezed
-class RecordNotesInputDone extends RecordNotesEvent
+abstract class RecordNotesInputDone extends RecordNotesEvent
     with _$RecordNotesInputDone {
+  const RecordNotesInputDone._();
+
   const factory RecordNotesInputDone({required String content}) =
       _RecordNotesInputDone;
 }
 
 @freezed
-class RecordNotesNoteDeleted extends RecordNotesEvent
+abstract class RecordNotesNoteDeleted extends RecordNotesEvent
     with _$RecordNotesNoteDeleted {
+  const RecordNotesNoteDeleted._();
+
   const factory RecordNotesNoteDeleted({required RecordNote note}) =
       _RecordNotesNoteDeleted;
 }

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart' hide Notification;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -379,25 +380,21 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
             .firstOrNull;
         specialtyEnumName = match?.name ?? 'generalCare';
       }
+      final specialtyMeta = specialtyValue.isNotEmpty
+          ? fhir_r4.FhirMeta(tag: [
+              fhir_r4.Coding(
+                system: fhir_r4.FhirUri('http://healthwallet.me/specialty'),
+                code: fhir_r4.FhirCode(specialtyEnumName),
+                display: fhir_r4.FhirString(specialtyValue),
+              ),
+            ])
+          : null;
       List<IFhirResource> fhirResources = otherResources
-          .map((resource) {
-            final fhirResource = resource.toFhirResource(
-                sourceId: sourceId,
-                subjectId: subjectId,
-                encounterId: finalContainer.id);
-            if (specialtyValue.isNotEmpty) {
-              final json = fhirResource.rawResource;
-              json['meta'] ??= {};
-              (json['meta'] as Map<String, dynamic>)['tag'] = [
-                {
-                  'system': 'http://healthwallet.me/specialty',
-                  'code': specialtyEnumName,
-                  'display': specialtyValue,
-                }
-              ];
-            }
-            return fhirResource;
-          })
+          .map((resource) => resource.toFhirResource(
+              sourceId: sourceId,
+              subjectId: subjectId,
+              encounterId: finalContainer.id,
+              meta: specialtyMeta))
           .toList();
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);

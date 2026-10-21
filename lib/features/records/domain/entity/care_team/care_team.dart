@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'care_team.freezed.dart';
 
 @freezed
-class CareTeam with _$CareTeam implements IFhirResource {
+abstract class CareTeam with _$CareTeam implements IFhirResource {
   const CareTeam._();
 
   const factory CareTeam({

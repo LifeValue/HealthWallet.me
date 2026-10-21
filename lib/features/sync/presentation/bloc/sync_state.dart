@@ -7,7 +7,7 @@ enum SyncStatus {
 }
 
 @freezed
-class SyncState with _$SyncState {
+abstract class SyncState with _$SyncState {
   const factory SyncState({
     SyncQrData? syncQrData,
     @Default(false) bool isLoading,

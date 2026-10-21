@@ -1,7 +1,7 @@
 part of 'focus_mode_bloc.dart';
 
 @freezed
-class FocusModeState with _$FocusModeState {
+abstract class FocusModeState with _$FocusModeState {
   const factory FocusModeState({
     @Default(10) int remainingSeconds,
     @Default(false) bool isScreenDarkened,

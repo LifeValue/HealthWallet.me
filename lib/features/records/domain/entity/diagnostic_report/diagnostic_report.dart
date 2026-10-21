@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'diagnostic_report.freezed.dart';
 
 @freezed
-class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
+abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
   const DiagnosticReport._();
 
   const factory DiagnosticReport({

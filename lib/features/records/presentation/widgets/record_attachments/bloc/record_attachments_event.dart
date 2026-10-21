@@ -5,8 +5,10 @@ abstract class RecordAttachmentsEvent {
 }
 
 @freezed
-class RecordAttachmentsInitialised extends RecordAttachmentsEvent
+abstract class RecordAttachmentsInitialised extends RecordAttachmentsEvent
     with _$RecordAttachmentsInitialised {
+  const RecordAttachmentsInitialised._();
+
   const factory RecordAttachmentsInitialised({
     required IFhirResource resource,
     @Default([]) List<IFhirResource> ephemeralRecords,
@@ -14,15 +16,19 @@ class RecordAttachmentsInitialised extends RecordAttachmentsEvent
 }
 
 @freezed
-class RecordAttachmentsFileAttached extends RecordAttachmentsEvent
+abstract class RecordAttachmentsFileAttached extends RecordAttachmentsEvent
     with _$RecordAttachmentsFileAttached {
+  const RecordAttachmentsFileAttached._();
+
   const factory RecordAttachmentsFileAttached(List<File> files) =
       _RecordAttachmentsFileAttached;
 }
 
 @freezed
-class RecordAttachmentsFileDeleted extends RecordAttachmentsEvent
+abstract class RecordAttachmentsFileDeleted extends RecordAttachmentsEvent
     with _$RecordAttachmentsFileDeleted {
+  const RecordAttachmentsFileDeleted._();
+
   const factory RecordAttachmentsFileDeleted(IFhirResource attachment) =
       _RecordAttachmentsFileDeleted;
 }

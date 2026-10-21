@@ -1,7 +1,7 @@
 part of 'backup_bloc.dart';
 
 @freezed
-class BackupEvent with _$BackupEvent {
+sealed class BackupEvent with _$BackupEvent {
   const factory BackupEvent.backupRequested({String? name}) = BackupRequested;
   const factory BackupEvent.restoreRequested({required String backupId}) =
       RestoreRequested;

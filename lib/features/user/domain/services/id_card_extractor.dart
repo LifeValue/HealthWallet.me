@@ -53,6 +53,12 @@ class IdCardExtractor {
       }
     }
 
+    // The card's issuing country decides its layout; the passed-in country
+    // (the user's or the phone's region) is only the fallback.
+    if (mrzResult?.countryCode == null) {
+      upperCountry = _detectCountryFromText(text) ?? upperCountry;
+    }
+
     final profile = CountryIdentifier.forCountry(upperCountry);
 
     var result = _extractByCountry(text, upperCountry) ??
@@ -102,6 +108,39 @@ class IdCardExtractor {
       identifierValue: result.identifierValue,
       identifierLabel: result.identifierLabel ?? profile.identifierLabel,
     );
+  }
+
+  static final Map<String, List<RegExp>> _countryMarkers = {
+    'RO': [r'ROM[ÂA]NIA', r'CARTE\s+DE\s+IDENTITATE', r'\bCNP\b', r'\bROU\b'],
+    'DE': [r'BUNDESREPUBLIK\s+DEUTSCHLAND', r'PERSONALAUSWEIS'],
+    'AT': [r'REPUBLIK\s+[ÖO]STERREICH', r'[ÖO]STERREICH'],
+    'CH': [r'SCHWEIZ', r'SUISSE', r'SVIZZERA', r'CONFOEDERATIO\s+HELVETICA'],
+    'ES': [r'ESPA[ÑN]A', r'DOCUMENTO\s+NACIONAL\s+DE\s+IDENTIDAD', r'\bDNI\b'],
+    'FR': [r'R[ÉE]PUBLIQUE\s+FRAN[ÇC]AISE', r'CARTE\s+NATIONALE\s+D.IDENTIT[ÉE]'],
+    'IT': [r'REPUBBLICA\s+ITALIANA', r'CARTA\s+D.IDENTIT[ÀA]'],
+    'GB': [r'UNITED\s+KINGDOM', r'DRIVING\s+LICENCE'],
+    'NL': [r'KONINKRIJK\s+DER\s+NEDERLANDEN', r'IDENTITEITSKAART'],
+    'PL': [r'RZECZPOSPOLITA\s+POLSKA', r'DOW[ÓO]D\s+OSOBISTY'],
+    'SE': [r'SVERIGE', r'IDENTITETSKORT'],
+    'US': [r'UNITED\s+STATES', r"DRIVER'?S?\s+LICENSE"],
+  }.map((country, patterns) => MapEntry(
+        country,
+        patterns.map((p) => RegExp(p, caseSensitive: false)).toList(),
+      ));
+
+  /// The issuing country named on the card itself (e.g. "ROMÂNIA",
+  /// "PERSONALAUSWEIS"), or null when no country's markers appear.
+  static String? _detectCountryFromText(String text) {
+    String? best;
+    var bestScore = 0;
+    for (final entry in _countryMarkers.entries) {
+      final score = entry.value.where((marker) => marker.hasMatch(text)).length;
+      if (score > bestScore) {
+        best = entry.key;
+        bestScore = score;
+      }
+    }
+    return best;
   }
 
   static IdCardExtractionResult? _extractByCountry(

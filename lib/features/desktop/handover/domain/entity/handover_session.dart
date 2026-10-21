@@ -14,7 +14,7 @@ enum HandoverStatus {
 }
 
 @freezed
-class HandoverSession with _$HandoverSession {
+abstract class HandoverSession with _$HandoverSession {
   const factory HandoverSession({
     required String sessionId,
     @Default(HandoverStatus.receiving) HandoverStatus status,

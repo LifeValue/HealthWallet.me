@@ -124,11 +124,9 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                               borderRadius: BorderRadiusGeometry.circular(6)),
                         ),
                         onPressed: () async {
-                          FilePickerResult? result =
-                              await FilePicker.platform.pickFiles(allowMultiple: true);
-                          if (result == null) return;
+                          final picked = await FilePicker.pickFiles();
 
-                          final files = result.files
+                          final files = picked
                               .where((f) => f.path != null)
                               .map((f) => File(f.path!))
                               .toList();

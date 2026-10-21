@@ -1,7 +1,7 @@
 part of 'import_bloc.dart';
 
 @freezed
-class ImportState with _$ImportState {
+abstract class ImportState with _$ImportState {
   const factory ImportState({
     @Default(false) bool isImporting,
     String? error,

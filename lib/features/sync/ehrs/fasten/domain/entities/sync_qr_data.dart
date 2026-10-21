@@ -5,7 +5,7 @@ part 'sync_qr_data.freezed.dart';
 part 'sync_qr_data.g.dart';
 
 @freezed
-class SyncQrData with _$SyncQrData {
+abstract class SyncQrData with _$SyncQrData {
   const SyncQrData._();
 
   const factory SyncQrData({
@@ -35,7 +35,7 @@ class SyncQrData with _$SyncQrData {
 }
 
 @freezed
-class SyncTokenMetaData with _$SyncTokenMetaData {
+abstract class SyncTokenMetaData with _$SyncTokenMetaData {
   const factory SyncTokenMetaData({
     @JsonKey(name: 'full_name') @Default('') String fullName,
     @JsonKey(name: 'picture') @Default('') String picture,

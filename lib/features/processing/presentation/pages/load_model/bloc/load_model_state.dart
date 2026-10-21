@@ -1,7 +1,7 @@
 part of 'load_model_bloc.dart';
 
 @freezed
-class LoadModelState with _$LoadModelState {
+abstract class LoadModelState with _$LoadModelState {
   const LoadModelState._();
 
   const factory LoadModelState({

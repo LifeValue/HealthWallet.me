@@ -4,7 +4,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 part 'record_note.freezed.dart';
 
 @freezed
-class RecordNote with _$RecordNote {
+abstract class RecordNote with _$RecordNote {
   const RecordNote._(); // Private constructor for getters
 
   const factory RecordNote({

@@ -4,7 +4,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 part 'attachment_browse_entry.freezed.dart';
 
 @freezed
-class AttachmentBrowseEntry with _$AttachmentBrowseEntry {
+abstract class AttachmentBrowseEntry with _$AttachmentBrowseEntry {
   const factory AttachmentBrowseEntry({
     required IFhirResource record,
     String? thumbnailPath,

@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_allergy_intolerance.freezed.dart';
 
 @freezed
-class MappingAllergyIntolerance
+abstract class MappingAllergyIntolerance
     with _$MappingAllergyIntolerance
     implements MappingResource {
   const MappingAllergyIntolerance._();
@@ -54,8 +54,15 @@ class MappingAllergyIntolerance
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
+    // The AI may leave the category empty or invent one; FHIR only allows these codes.
+    final categoryCode = category.value.trim().toLowerCase();
+    final hasValidCategory = const {'food', 'medication', 'environment', 'biologic'}
+        .contains(categoryCode);
+
     fhir_r4.AllergyIntolerance allergyIntolerance = fhir_r4.AllergyIntolerance(
+      meta: meta,
       code: fhir_r4.CodeableConcept(text: fhir_r4.FhirString(substance.value)),
       reaction: [
         fhir_r4.AllergyIntoleranceReaction(
@@ -65,7 +72,9 @@ class MappingAllergyIntolerance
           ],
         ),
       ],
-      category: [fhir_r4.AllergyIntoleranceCategory(category.value)],
+      category: hasValidCategory
+          ? [fhir_r4.AllergyIntoleranceCategory(categoryCode)]
+          : null,
       patient: fhir_r4.Reference(
           reference: fhir_r4.FhirString('Patient/$subjectId')),
       encounter: fhir_r4.Reference(

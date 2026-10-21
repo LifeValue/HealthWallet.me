@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'service_request.freezed.dart';
 
 @freezed
-class ServiceRequest with _$ServiceRequest implements IFhirResource {
+abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
   const ServiceRequest._();
 
   const factory ServiceRequest({

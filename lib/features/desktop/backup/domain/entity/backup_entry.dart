@@ -4,7 +4,7 @@ part 'backup_entry.freezed.dart';
 part 'backup_entry.g.dart';
 
 @freezed
-class BackupEntry with _$BackupEntry {
+abstract class BackupEntry with _$BackupEntry {
   const factory BackupEntry({
     required String id,
     required DateTime timestamp,

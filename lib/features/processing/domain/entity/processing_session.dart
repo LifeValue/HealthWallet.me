@@ -16,7 +16,7 @@ import 'package:health_wallet/features/processing/domain/entity/staged_resource.
 part 'processing_session.freezed.dart';
 
 @freezed
-class ProcessingSession
+abstract class ProcessingSession
     with _$ProcessingSession
     implements Comparable<ProcessingSession> {
   const ProcessingSession._();

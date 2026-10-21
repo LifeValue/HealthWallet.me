@@ -16,7 +16,7 @@ import 'package:intl/intl.dart';
 part 'observation.freezed.dart';
 
 @freezed
-class Observation with _$Observation implements IFhirResource {
+abstract class Observation with _$Observation implements IFhirResource {
   const Observation._();
 
   const factory Observation({

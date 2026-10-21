@@ -4,22 +4,30 @@ import PassKit
 import CoreBluetooth
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
     private let screenSecurity = ScreenSecurityHandler()
+    private let textRecognition = TextRecognitionHandler()
     private var bluetoothDelegate: BluetoothStateDelegate?
 
     override func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        GeneratedPluginRegistrant.register(with: self)
+        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
 
-        let controller = window?.rootViewController as! FlutterViewController
-        screenSecurity.register(with: controller, window: window)
+    // With the UIScene lifecycle the scene creates the Flutter engine after launch, so plugins and
+    // the app's own channels are registered here, once the engine exists.
+    func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+        GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+
+        let messenger = engineBridge.applicationRegistrar.messenger()
+        screenSecurity.register(with: messenger, windowProvider: { AppDelegate.activeWindow() })
+        textRecognition.register(with: messenger)
 
         let walletChannel = FlutterMethodChannel(
             name: "com.techstackapps.healthwallet/apple_wallet",
-            binaryMessenger: controller.binaryMessenger
+            binaryMessenger: messenger
         )
         walletChannel.setMethodCallHandler { [weak self] (call, result) in
             if call.method == "addPass" {
@@ -38,7 +46,7 @@ import CoreBluetooth
 
         let bluetoothChannel = FlutterMethodChannel(
             name: "com.techstackapps.healthwallet/bluetooth",
-            binaryMessenger: controller.binaryMessenger
+            binaryMessenger: messenger
         )
         bluetoothChannel.setMethodCallHandler { [weak self] (call, result) in
             switch call.method {
@@ -56,11 +64,17 @@ import CoreBluetooth
 
         let bluetoothEventChannel = FlutterEventChannel(
             name: "com.techstackapps.healthwallet/bluetooth_state",
-            binaryMessenger: controller.binaryMessenger
+            binaryMessenger: messenger
         )
         bluetoothEventChannel.setStreamHandler(bluetoothDelegate)
+    }
 
-        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    /// The foreground scene's window. With the UIScene lifecycle the window belongs to the scene;
+    /// the app delegate's `window` is nil.
+    static func activeWindow() -> UIWindow? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let scene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+        return scene?.windows.first { $0.isKeyWindow } ?? scene?.windows.first
     }
 
     private func addPassToWallet(filePath: String, result: @escaping FlutterResult) {
@@ -76,7 +90,7 @@ import CoreBluetooth
                 return
             }
 
-            let rootVC = window?.rootViewController
+            let rootVC = AppDelegate.activeWindow()?.rootViewController
             var topVC = rootVC
             while let presented = topVC?.presentedViewController {
                 topVC = presented

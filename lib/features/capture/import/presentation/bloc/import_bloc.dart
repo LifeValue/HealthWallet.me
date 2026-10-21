@@ -33,16 +33,12 @@ class ImportBloc extends Bloc<ImportEvent, ImportState> {
     emit(state.copyWith(isImporting: true, error: null));
 
     try {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
-        allowCompression: false,
-        withData: false,
-        withReadStream: false,
+      final files = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: _allowedExtensions,
       );
 
-      final validPaths = await _validateFiles(result);
+      final validPaths = await _validateFiles(files);
       if (validPaths.isNotEmpty) {
         _processingBloc.add(DocumentImported(filePaths: validPaths));
       }
@@ -90,11 +86,9 @@ class ImportBloc extends Bloc<ImportEvent, ImportState> {
     }
   }
 
-  Future<List<String>> _validateFiles(FilePickerResult? result) async {
-    if (result == null || result.files.isEmpty) return [];
-
+  Future<List<String>> _validateFiles(List<PlatformFile> files) async {
     final validPaths = <String>[];
-    for (final file in result.files) {
+    for (final file in files) {
       if (file.path == null || file.path!.isEmpty) continue;
       if (await File(file.path!).exists()) {
         validPaths.add(file.path!);

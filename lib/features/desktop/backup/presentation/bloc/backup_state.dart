@@ -1,7 +1,7 @@
 part of 'backup_bloc.dart';
 
 @freezed
-class BackupState with _$BackupState {
+abstract class BackupState with _$BackupState {
   const factory BackupState({
     @Default([]) List<BackupEntry> backupHistory,
     @Default(false) bool isBackingUp,

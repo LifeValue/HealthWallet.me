@@ -19,9 +19,10 @@ git diff --cached --name-only | grep -iE '\.(pem|p8|p12|key|jks|keystore)$|servi
 
 HealthWallet.me is a Flutter application for patient-controlled health record management. It aggregates medical data from multiple healthcare providers using FHIR R4 standards, with offline-first architecture and biometric security. The same codebase targets both **mobile** (iOS, Android) and **desktop** (macOS, Windows) via two entry points and a platform discriminator.
 
-- **Flutter 3.38.7** (managed via FVM — see `.fvmrc`)
-- **Dart SDK:** >=3.10.7 <4.0.0
+- **Flutter 3.47.7** (managed via FVM — see `.fvmrc`)
+- **Dart SDK:** >=3.13.5 <4.0.0
 - **Mobile platforms:** iOS 16.0+, Android SDK 24+
+- **Android toolchain:** Gradle 9.4.1, AGP 9.2.1, Kotlin 2.4.0, compileSdk 37, NDK 28.2, JDK 17. AGP 9 runs in Flutter's compatibility mode (`android.builtInKotlin=false`, `android.newDsl=false` in `android/gradle.properties`) because most plugins still apply the Kotlin Gradle Plugin; `android/build.gradle.kts` raises plugins compiling below SDK 36
 - **Desktop platforms:** macOS (production), Windows (Store-packaged). Linux is not scaffolded (`linux/` removed); `Platform.isLinux` branches in Dart code are kept for a future port
 - **Package name:** `com.techstackapps.healthwallet`
 
@@ -42,8 +43,8 @@ HealthWallet.me is a Flutter application for patient-controlled health record ma
 fvm flutter pub get
 
 # Code generation — required after changing models, routes, DI, DB schemas, or env
-dart run build_runner build --delete-conflicting-outputs
-dart run build_runner watch --delete-conflicting-outputs
+dart run build_runner build
+dart run build_runner watch
 
 flutter test
 flutter test test/widget_test.dart
@@ -111,7 +112,7 @@ After capture, files are handed to `ProcessingBloc` via `DocumentImported` event
 The platform-agnostic brain. Orchestrates the full document-to-FHIR pipeline.
 
 **Pipeline stages:**
-1. **OCR** — `OcrProcessingService` wraps ML Kit (`MobileTextRecognitionService`) on mobile and `DesktopTextRecognitionService` on desktop.
+1. **OCR** — `NativeTextRecognitionService` calls the `dev.lifevalue.healthwallet/ocr` method channel, implemented natively per runner: Apple Vision on iOS (`ios/Runner/TextRecognitionHandler.swift`) and macOS (`macos/Runner/AppDelegate.swift`), ML Kit on Android (`ocr/TextRecognitionHandler.kt`), `Windows.Media.Ocr` on Windows (`windows/runner/windows_ocr_plugin.cpp`). There is no OCR Flutter plugin, so iOS has no ML Kit pods and runs on arm64 simulators.
 2. **Vision AI (Phase 1)** — `ScanNetworkDataSource.runVisionPrompt()` runs `Qwen3-VL-2B-Instruct` (Q4\_K\_M GGUF) via `llamadart`. Extracts patient demographics, encounter details, and a primary diagnostic report.
 3. **Vision AI (Phase 2)** — `runVisionPrompt()` again for remaining resource types (medications, immunizations, allergies, vitals, etc.).
 4. **Text fallback** — If vision fails, `runTextPrompt()` uses OCR text with the existing prompt templates.
@@ -125,7 +126,7 @@ The platform-agnostic brain. Orchestrates the full document-to-FHIR pipeline.
 | `ProcessingHandler` | `presentation/bloc/handlers/` | Mixin handling `DocumentImported`, `SessionActivated`, `ProcessRemainingResources` |
 | `SessionHandler` | `presentation/bloc/handlers/` | Mixin handling session lifecycle events |
 | `AiModelDownloadService` | `data/services/` | Downloads model + mmproj files from HuggingFace; tracks progress |
-| `OcrProcessingService` | `data/services/` | Selects platform-specific OCR implementation |
+| `NativeTextRecognitionService` | `data/services/` | OCR over the native `ocr` channel; PDF pages rasterised first |
 | `ProcessingRepository` | `data/repository/` | Runs the full pipeline; writes FHIR rows to Drift |
 | `ProcessingSession` | domain entity | Persisted in `ProcessingSessions` Drift table |
 | `MappingResources` | `domain/entity/mapping_resources/` | Intermediate staged types (patient, encounter, diagnostic report, etc.) |
@@ -289,7 +290,7 @@ Decrypted payload starts with a 1-byte `MessageType`:
 
 Generated files excluded from analysis (`analysis_options.yaml`): `*.freezed.dart`, `*.g.dart`, `*.config.dart`, `*.gr.dart`.
 
-Run `dart run build_runner build --delete-conflicting-outputs` after changing:
+Run `dart run build_runner build` after changing:
 - Freezed models
 - AutoRoute routes
 - Injectable DI registrations
@@ -340,18 +341,18 @@ Managed via `envied` in `lib/core/config/env/env.dart`. All values obfuscated. R
 
 GitLab CI (`.gitlab-ci.yml`) on `git.techstackapps.com/mobile/health-wallet/app`. GitLab is the source of truth; the public GitHub repo (`LifeValue/HealthWallet.me`) is left untouched and its `.github/workflows/` are not used.
 
-- **checks** — every MR and every `develop`/`master` push, on the Linux instance runners (`ghcr.io/cirruslabs/flutter`): `pub get`, `build_runner`, `flutter analyze` (errors fatal, warnings not yet), `flutter test`. Needs no secrets.
-- **ios:testflight / macos:testflight / android:play-internal** — manual jobs on `develop` and `master`, on the shared `shell-macmini` runner via Fastlane (`beta` lanes). Automatic signing (no fastlane match): certificates are in the runner's login keychain, profiles are fetched with the App Store Connect API key via `-allowProvisioningUpdates`.
+- **checks** — every branch push, on the Linux instance runners (`ghcr.io/cirruslabs/flutter`): `pub get`, `build_runner`, `flutter analyze` (errors fatal, warnings not yet), `flutter test`. Needs no secrets.
+- **ios:testflight / macos:testflight / android:play-internal** — beta uploads, automatic on every push to `develop` and manual on other branches (the branch must be protected to receive the protected CI/CD variables); one `resource_group` per job so overlapping pipelines don't pick the same build number. They run on the shared `shell-macmini` runner via Fastlane (`beta` lanes). Automatic signing (no fastlane match): certificates are in the runner's login keychain, profiles are fetched with the App Store Connect API key via `-allowProvisioningUpdates`. The Android jobs run Gradle on a pinned Temurin JDK 17 (`ANDROID_JDK_*` variables, cached per runner, set through `org.gradle.java.home`), because the JDK Flutter would pick on the Mac mini (Android Studio's JBR 17.0.9) crashes the Gradle daemon. There are no production jobs or `release` lanes: a tested beta is promoted to production by hand in App Store Connect and Play Console.
 - **shorebird:patch-android / shorebird:patch-ios** — manual on `master`.
-- **windows:release** — manual on `develop` (pre-release `v<version>-dev.<iid>`) and `master` (`v<version>`); uploads zip + msix to the generic package registry and creates a GitLab Release. Needs a runner tagged `windows` (none registered yet).
+- **windows:release** — manual on every branch: `master` → `v<version>`, other branches → pre-release `v<version>-dev.<iid>`; uploads zip + msix to the generic package registry and creates a GitLab Release. Needs a runner tagged `windows` (none registered yet).
 - Secrets are protected CI/CD variables (names listed at the top of `.gitlab-ci.yml`); private pub dependencies are fetched with `CI_JOB_TOKEN`.
 
 ---
 
 ## Git Branch Strategy
 
-- `master` — Production (store uploads are manual pipeline jobs)
-- `develop` — Staging (internal-track uploads are manual pipeline jobs)
+- `master` — Production (builds are promoted from TestFlight / Play internal by hand in the store consoles)
+- `develop` — Staging (every push uploads betas to TestFlight and Play internal)
 - `dev/*`, `feature/*`, `fix/*` — Development branches (CI runs analyze + tests on MRs)
 - Merges always use a merge commit (`--no-ff`), never fast-forward
 - `release/*` — Release staging

@@ -11,7 +11,7 @@ enum NotificationType {
 }
 
 @freezed
-class Notification with _$Notification {
+abstract class Notification with _$Notification {
   const Notification._();
 
   const factory Notification({

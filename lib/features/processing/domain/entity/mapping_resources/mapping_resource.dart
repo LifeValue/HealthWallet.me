@@ -1,3 +1,4 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_allergy_intolerance.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_condition.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
@@ -76,6 +77,7 @@ abstract class MappingResource {
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   });
 
   Map<String, TextFieldDescriptor> getFieldDescriptors();

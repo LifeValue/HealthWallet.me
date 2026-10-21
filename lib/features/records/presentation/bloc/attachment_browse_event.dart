@@ -1,10 +1,14 @@
 part of 'attachment_browse_bloc.dart';
 
-abstract class AttachmentBrowseEvent {}
+abstract class AttachmentBrowseEvent {
+  const AttachmentBrowseEvent();
+}
 
 @freezed
-class AttachmentBrowseInitialised extends AttachmentBrowseEvent
+abstract class AttachmentBrowseInitialised extends AttachmentBrowseEvent
     with _$AttachmentBrowseInitialised {
+  const AttachmentBrowseInitialised._();
+
   const factory AttachmentBrowseInitialised({
     String? sourceId,
     List<String>? sourceIds,
@@ -16,21 +20,27 @@ class AttachmentBrowseInitialised extends AttachmentBrowseEvent
 }
 
 @freezed
-class AttachmentBrowseSelected extends AttachmentBrowseEvent
+abstract class AttachmentBrowseSelected extends AttachmentBrowseEvent
     with _$AttachmentBrowseSelected {
+  const AttachmentBrowseSelected._();
+
   const factory AttachmentBrowseSelected(int index) = _AttachmentBrowseSelected;
 }
 
 @freezed
-class AttachmentBrowseMonthSelected extends AttachmentBrowseEvent
+abstract class AttachmentBrowseMonthSelected extends AttachmentBrowseEvent
     with _$AttachmentBrowseMonthSelected {
+  const AttachmentBrowseMonthSelected._();
+
   const factory AttachmentBrowseMonthSelected(int year, int month) =
       _AttachmentBrowseMonthSelected;
 }
 
 @freezed
-class AttachmentBrowseSearchChanged extends AttachmentBrowseEvent
+abstract class AttachmentBrowseSearchChanged extends AttachmentBrowseEvent
     with _$AttachmentBrowseSearchChanged {
+  const AttachmentBrowseSearchChanged._();
+
   const factory AttachmentBrowseSearchChanged(String query) =
       _AttachmentBrowseSearchChanged;
 }

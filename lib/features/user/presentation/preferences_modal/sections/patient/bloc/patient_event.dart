@@ -5,12 +5,16 @@ abstract class PatientEvent {
 }
 
 @freezed
-class PatientInitialised extends PatientEvent with _$PatientInitialised {
+abstract class PatientInitialised extends PatientEvent with _$PatientInitialised {
+  const PatientInitialised._();
+
   const factory PatientInitialised() = _PatientInitialised;
 }
 
 @freezed
-class PatientPatientsLoaded extends PatientEvent with _$PatientPatientsLoaded {
+abstract class PatientPatientsLoaded extends PatientEvent with _$PatientPatientsLoaded {
+  const PatientPatientsLoaded._();
+
   const factory PatientPatientsLoaded({
     @Default(false) bool preserveOrder,
     String? preservePatientId,
@@ -18,28 +22,38 @@ class PatientPatientsLoaded extends PatientEvent with _$PatientPatientsLoaded {
 }
 
 @freezed
-class PatientReorder extends PatientEvent with _$PatientReorder {
+abstract class PatientReorder extends PatientEvent with _$PatientReorder {
+  const PatientReorder._();
+
   const factory PatientReorder(String patientId) = _PatientReorder;
 }
 
 @freezed
-class PatientDataUpdatedFromSync extends PatientEvent
+abstract class PatientDataUpdatedFromSync extends PatientEvent
     with _$PatientDataUpdatedFromSync {
+  const PatientDataUpdatedFromSync._();
+
   const factory PatientDataUpdatedFromSync() = _PatientDataUpdatedFromSync;
 }
 
 @freezed
-class PatientEditStarted extends PatientEvent with _$PatientEditStarted {
+abstract class PatientEditStarted extends PatientEvent with _$PatientEditStarted {
+  const PatientEditStarted._();
+
   const factory PatientEditStarted(String patientId) = _PatientEditStarted;
 }
 
 @freezed
-class PatientEditCancelled extends PatientEvent with _$PatientEditCancelled {
+abstract class PatientEditCancelled extends PatientEvent with _$PatientEditCancelled {
+  const PatientEditCancelled._();
+
   const factory PatientEditCancelled() = _PatientEditCancelled;
 }
 
 @freezed
-class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
+abstract class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
+  const PatientEditSaved._();
+
   const factory PatientEditSaved({
     required String patientId,
     required String sourceId,
@@ -55,8 +69,10 @@ class PatientEditSaved extends PatientEvent with _$PatientEditSaved {
 }
 
 @freezed
-class PatientSelectionChanged extends PatientEvent
+abstract class PatientSelectionChanged extends PatientEvent
     with _$PatientSelectionChanged {
+  const PatientSelectionChanged._();
+
   const factory PatientSelectionChanged({
     required String patientId,
   }) = _PatientSelectionChanged;

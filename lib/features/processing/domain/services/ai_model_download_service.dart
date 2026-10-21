@@ -18,7 +18,7 @@ enum AiModelDownloadStatus {
 }
 
 @freezed
-class AiModelDownloadState with _$AiModelDownloadState {
+abstract class AiModelDownloadState with _$AiModelDownloadState {
   const factory AiModelDownloadState({
     @Default(AiModelDownloadStatus.idle) AiModelDownloadStatus status,
     @Default(0.0) double progress,

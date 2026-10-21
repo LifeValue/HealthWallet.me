@@ -2,3 +2,7 @@ source "https://rubygems.org"
 
 gem "fastlane"
 gem "dotenv"
+
+# Pinned instead of the runner's Homebrew CocoaPods: the Share Extension uses Xcode's
+# synchronized folder groups, which CocoaPods < 1.16 (xcodeproj < 1.27) cannot read.
+gem "cocoapods", "~> 1.16"

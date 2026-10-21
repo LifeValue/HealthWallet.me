@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_condition.freezed.dart';
 
 @freezed
-class MappingCondition with _$MappingCondition implements MappingResource {
+abstract class MappingCondition with _$MappingCondition implements MappingResource {
   const MappingCondition._();
 
   const factory MappingCondition({
@@ -56,8 +56,10 @@ class MappingCondition with _$MappingCondition implements MappingResource {
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     fhir_r4.Condition condition = fhir_r4.Condition(
+      meta: meta,
       code: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(conditionName.value)),
       onsetX: onsetDateTime.value.isNotEmpty

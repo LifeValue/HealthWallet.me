@@ -23,7 +23,7 @@ class OcrProcessingHelper {
       final text =
           await _textRecognitionService.recognizeTextFromImage(imagePath);
 
-      if (text.isNotEmpty && !text.startsWith('Error recognizing text:')) {
+      if (text.isNotEmpty) {
         pageTexts.add(text);
       }
     }

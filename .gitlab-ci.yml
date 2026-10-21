@@ -1,18 +1,24 @@
 # HealthWallet.me CI/CD — replaces the GitHub Actions workflows in .github/workflows/.
 #
-#   checks                  every MR + develop/master push      Linux instance runner (Docker)
-#   ios / android / macos   manual on develop and master        shell-macmini (fastlane)
-#   windows                 manual on develop and master        needs a `windows` runner (none yet)
+#   checks                  every branch push                   Linux instance runner (Docker)
+#   ios / android / macos   automatic on develop,               shell-macmini (fastlane)
+#                           manual on every other branch
+#   windows                 manual on every branch              needs a `windows` runner (none yet)
 #                           → GitLab Release with zip + msix
 #   shorebird patches       manual on master                    shell-macmini
 #
-# Store uploads are never automatic: the Mac mini is shared with other projects' pipelines, and
-# every upload is a deliberate release decision. Each platform is its own manual job, which
-# replaces the GitHub "platform" dropdown (android / ios / macos / windows / both / all).
+# Deploy jobs need the PROTECTED CI/CD variables, which GitLab only exposes to protected branches.
+# To deploy from a working branch, protect it (or a wildcard such as `fix/*`) first; otherwise the
+# job stops at its first step and says so.
+#
+# Every push to develop uploads a beta to TestFlight (iOS, macOS) and the Play internal track.
+# On other branches each platform is its own manual job, which replaces the GitHub "platform"
+# dropdown (android / ios / macos / windows / both / all). Nothing goes to production from CI: a
+# tested beta is promoted to the App Store / Play production in App Store Connect and Play Console.
 #
 # One-time project setup — the pipeline cannot do these itself:
-#   1. Protect `develop` and `master` (Settings → Repository). Protected variables below are only
-#      exposed to protected branches, so the deploy jobs need both branches protected.
+#   1. Protect `develop` and `master` (Settings → Repository), plus any branch you want to deploy
+#      from. Protected variables below are only exposed to protected branches.
 #   2. In mobile/flutter/packages/flutter-airdrop and mobile/health-wallet/fhir-ips-export:
 #      Settings → CI/CD → Job token permissions → add mobile/health-wallet/app. The private pub
 #      dependencies are fetched with CI_JOB_TOKEN instead of an SSH deploy key.
@@ -31,20 +37,14 @@
 #        ANDROID_KEYSTORE_BASE64                      masked
 #        ANDROID_STORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS   masked
 #        PLAY_STORE_SERVICE_ACCOUNT_BASE64            masked
-#      Optional: ANDROID_JAVA_HOME pins the JDK for Gradle on the Mac mini (JDK 17).
 #   Copied from GitHub but unused (fastlane match was replaced by automatic signing, and the pub
 #   dependencies come through the job token): MATCH_GIT_URL, MATCH_PASSWORD, SSH_PRIVATE_KEY.
 #   Delete them once a TestFlight upload has succeeded without them.
 
+# Branch pipelines only, no separate merge request pipelines: every push gets one pipeline with the
+# manual deploy jobs on it, and an MR shows its source branch's pipeline.
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    # develop and master always get their branch pipeline, even while an MR from them is open —
-    # the manual deploy jobs only exist on branch pipelines.
-    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master"
-    # Avoid duplicate pipelines: skip the branch pipeline when an MR is open for it.
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-      when: never
     - if: $CI_COMMIT_BRANCH
     - if: $CI_COMMIT_TAG
 
@@ -52,8 +52,12 @@ default:
   interruptible: true
 
 variables:
-  FLUTTER_VERSION: "3.38.7"
+  FLUTTER_VERSION: "3.47.7"
   GIT_DEPTH: "20"
+  # JDK for Gradle in the Android jobs (see .android_env).
+  ANDROID_JDK_VERSION: "17.0.20.1+1"
+  ANDROID_JDK_URL: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.20.1_1.tar.gz"
+  ANDROID_JDK_SHA256: "196d13ba5f10414bef7f6a05a9b3f00edacb18ebacef2b99485db9e2ee18f0e8"
 
 stages:
   - check
@@ -68,15 +72,23 @@ stages:
   - export GIT_CONFIG_VALUE_0="ssh://git@${CI_SERVER_HOST}:2822/"
 
 # =============================================================================
-# Checks — analyze + tests on every MR and every develop/master push
+# Checks — analyze + tests on every branch push
 # =============================================================================
 # Needs no secrets: every Envied field has a default, so codegen runs against an empty .env.
+#
+# Flutter is installed by the job rather than taken from a prebuilt image: the cirruslabs/flutter
+# images stop at 3.44.0. A shallow clone at the release tag is far smaller than the 1.5 GB release
+# archive, and the SDK (with the tools it downloads on first run) is cached per Flutter version.
 checks:
   stage: check
-  image: ghcr.io/cirruslabs/flutter:${FLUTTER_VERSION}
+  image: debian:bookworm-slim
   variables:
     PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
+    FLUTTER_HOME: "$CI_PROJECT_DIR/.flutter-sdk"
   cache:
+    - key: flutter-sdk-$FLUTTER_VERSION
+      paths:
+        - .flutter-sdk
     - key: pub-$CI_COMMIT_REF_SLUG
       fallback_keys:
         - pub-develop
@@ -85,12 +97,21 @@ checks:
         - .pub-cache
       when: always
   before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git curl unzip xz-utils ca-certificates > /dev/null
+    - |
+      if [ ! -x "$FLUTTER_HOME/bin/flutter" ]; then
+        rm -rf "$FLUTTER_HOME"
+        git clone --quiet --depth 1 --branch "$FLUTTER_VERSION" https://github.com/flutter/flutter.git "$FLUTTER_HOME"
+      fi
+    - git config --global --add safe.directory "$FLUTTER_HOME"
+    - export PATH="$FLUTTER_HOME/bin:$PATH"
+    - flutter --version
     - *private_deps
     # Declared asset directories that only hold secrets in release builds.
     - mkdir -p assets/certs/android
     - touch .env
     - flutter pub get
-    - dart run build_runner build --delete-conflicting-outputs
+    - dart run build_runner build
   script:
     # Errors fail the job; the ~110 existing warnings (mostly unused imports) don't yet.
     # Drop --no-fatal-warnings once they are cleaned up.
@@ -143,8 +164,24 @@ checks:
 .android_env: &android_env
   - export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
   - export ANDROID_SDK_ROOT="$ANDROID_HOME"
-  - if [ -n "$ANDROID_JAVA_HOME" ]; then export JAVA_HOME="$ANDROID_JAVA_HOME"; export PATH="$JAVA_HOME/bin:$PATH"; fi
-  - '[ -d "$ANDROID_HOME" ] || { echo "Android SDK not found at $ANDROID_HOME — set ANDROID_HOME or ANDROID_JAVA_HOME as a CI variable"; exit 1; }'
+  - '[ -d "$ANDROID_HOME" ] || { echo "Android SDK not found at $ANDROID_HOME — set ANDROID_HOME as a CI variable"; exit 1; }'
+  # Gradle runs on a pinned Temurin JDK 17 kept in the job cache, not on a JDK of the shared Mac
+  # mini. Flutter would pick Android Studio's bundled JBR 17.0.9, which crashes the Gradle daemon on
+  # Apple Silicon with recent macOS (JDK-8327860, fixed in 17.0.11). JAVA_HOME alone does not help:
+  # Flutter prefers Android Studio's JDK and passes it to Gradle, but org.gradle.java.home wins.
+  - |
+    jdk_dir="$CI_PROJECT_DIR/.ci-jdk/jdk-$ANDROID_JDK_VERSION"
+    if [ ! -x "$jdk_dir/Contents/Home/bin/java" ]; then
+      rm -rf "$CI_PROJECT_DIR/.ci-jdk" && mkdir -p "$jdk_dir"
+      curl -fsSL --retry 3 -o "$CI_PROJECT_DIR/.ci-jdk/jdk.tar.gz" "$ANDROID_JDK_URL"
+      echo "$ANDROID_JDK_SHA256  $CI_PROJECT_DIR/.ci-jdk/jdk.tar.gz" | shasum -a 256 -c -
+      tar -xzf "$CI_PROJECT_DIR/.ci-jdk/jdk.tar.gz" -C "$jdk_dir" --strip-components 1
+      rm "$CI_PROJECT_DIR/.ci-jdk/jdk.tar.gz"
+    fi
+    export JAVA_HOME="$jdk_dir/Contents/Home"
+    export PATH="$JAVA_HOME/bin:$PATH"
+    printf '\norg.gradle.java.home=%s\n' "$JAVA_HOME" >> android/gradle.properties
+  - java -version 2>&1 | head -1
 
 # Automatic signing, as ontrainer does on this Mac: the distribution certificates for team
 # N668J5X92P are already in the runner's login keychain, and xcodebuild's -allowProvisioningUpdates
@@ -159,32 +196,73 @@ checks:
   - printf '%s' "$ASC_KEY_CONTENT" | base64 -d > "$CI_PROJECT_DIR/AuthKey.p8"
   - export ASC_KEY_PATH="$CI_PROJECT_DIR/AuthKey.p8"
 
+# Every `pod` call in an iOS or macOS job must use the CocoaPods pinned in ios/Gemfile: the
+# runner's Homebrew CocoaPods (1.15) cannot read the Share Extension's synchronized folder groups,
+# and both Podfile.locks are written by 1.16. A wrapper first on PATH also covers the implicit
+# `pod install` inside `flutter build ios/macos` and `shorebird release/patch`. It sets BUNDLE_* itself because fastlane runs the Flutter build with
+# Bundler's environment stripped (Bundler.with_unbundled_env).
+.ios_cocoapods: &ios_cocoapods
+  - (cd ios && bundle install --jobs 4 --retry 3)
+  - mkdir -p "$CI_PROJECT_DIR/.ci-bin"
+  - |
+    cat > "$CI_PROJECT_DIR/.ci-bin/pod" <<EOF
+    #!/bin/sh
+    exec env BUNDLE_GEMFILE="$CI_PROJECT_DIR/ios/Gemfile" BUNDLE_PATH="$BUNDLE_PATH" bundle exec pod "\$@"
+    EOF
+  - chmod +x "$CI_PROJECT_DIR/.ci-bin/pod"
+  - export PATH="$CI_PROJECT_DIR/.ci-bin:$PATH"
+  - pod --version | grep -q '^1\.16\.' || { echo "pod on PATH is not the CocoaPods pinned in ios/Gemfile"; exit 1; }
+
+# Run from ios/ or macos/. Keeps the committed Podfile.lock, so the pod versions are the reviewed
+# ones and CocoaPods only fetches the specs it needs. Retried because the CocoaPods CDN
+# intermittently fails with "Error in the HTTP2 framing layer".
+.pod_install: &pod_install
+  - rm -rf Pods
+  - |
+    for attempt in 1 2 3; do
+      pod install && break
+      if [ "$attempt" = 3 ]; then exit 1; fi
+      echo "pod install failed (attempt $attempt of 3), retrying in 15s"
+      sleep 15
+    done
+
 .macmini:
   tags: [shell-macmini]
   # A store upload must not be killed mid-flight by a newer push.
   interruptible: false
   needs: ["checks"]
   cache:
-    - key: bundle-macos
+    - &bundle_cache
+      key: bundle-macos
       paths:
         - vendor/bundle
+      # Saved even when the job fails, so a retried deploy doesn't reinstall every gem.
+      when: always
   before_script:
+    - '[ -n "$ENV_FILE_CONTENT" ] || { echo "Protected CI/CD variables are not available on $CI_COMMIT_BRANCH. Protect this branch (Settings → Repository → Protected branches) to deploy from it."; exit 1; }'
     - *macmini_toolchain
     - *private_deps
     - *restore_app_secrets
     - fvm flutter pub get
-    - fvm dart run build_runner build --delete-conflicting-outputs
+    - fvm dart run build_runner build
   # The shell runner's build directory persists between jobs; never leave secrets behind.
   after_script:
     - rm -f .env assets/certs/*.pem assets/certs/android/service-account.json
     - rm -f android/app/upload-keystore.jks android/key.properties android/fastlane/service-account.json
     - rm -f AuthKey.p8
 
-# allow_failure: a manual job from `rules:` defaults to false, which would leave every develop/master
-# pipeline "blocked" until someone ran each deploy. Deploys are optional, so the pipeline passes on
-# checks alone.
-.on_develop_or_master: &on_develop_or_master
-  - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master"
+# allow_failure: a manual job from `rules:` defaults to false, which would leave every pipeline
+# "blocked" until someone ran each deploy. Deploys are optional, so the pipeline passes on checks
+# alone.
+.on_any_branch: &on_any_branch
+  - if: $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+# Beta uploads: automatic on develop, so every merge reaches testers; manual elsewhere.
+.on_develop: &on_develop
+  - if: $CI_COMMIT_BRANCH == "develop"
+  - if: $CI_COMMIT_BRANCH
     when: manual
     allow_failure: true
 
@@ -196,33 +274,50 @@ checks:
 ios:testflight:
   extends: .macmini
   stage: deploy
-  rules: *on_develop_or_master
+  rules: *on_develop
+  # One upload per platform at a time: the next build number is read from the store, so two
+  # overlapping pipelines would pick the same one.
+  resource_group: ios:testflight
   environment: { name: testflight-ios }
   script:
     - *apple_signing
-    - (cd ios && rm -rf Podfile.lock Pods && pod install --repo-update)
+    - *ios_cocoapods
+    - fvm flutter precache --ios
     - cd ios
-    - bundle install --jobs 4 --retry 3
+    - *pod_install
     - bundle exec fastlane beta
 
 macos:testflight:
   extends: .macmini
   stage: deploy
-  rules: *on_develop_or_master
+  rules: *on_develop
+  # One upload per platform at a time: the next build number is read from the store, so two
+  # overlapping pipelines would pick the same one.
+  resource_group: macos:testflight
   environment: { name: testflight-macos }
   script:
     - *apple_signing
+    - *ios_cocoapods
     - fvm flutter precache --macos
-    - (cd macos && rm -rf Podfile.lock Pods && pod install --repo-update)
     - cd macos
+    - *pod_install
     - bundle install --jobs 4 --retry 3
     - bundle exec fastlane beta
 
 android:play-internal:
   extends: .macmini
   stage: deploy
-  rules: *on_develop_or_master
+  rules: *on_develop
+  # One upload per platform at a time: the next build number is read from the store, so two
+  # overlapping pipelines would pick the same one.
+  resource_group: android:play-internal
   environment: { name: play-internal }
+  cache:
+    - *bundle_cache
+    - key: jdk-temurin-$ANDROID_JDK_VERSION
+      paths:
+        - .ci-jdk/
+      when: always
   script:
     - *android_env
     - *restore_android_secrets
@@ -230,12 +325,24 @@ android:play-internal:
     - cd android
     - bundle install --jobs 4 --retry 3
     - bundle exec fastlane beta
+  artifacts:
+    # A crashed Gradle daemon leaves its JVM crash report in android/; the next job's checkout deletes it.
+    when: on_failure
+    expire_in: 1 week
+    paths:
+      - android/hs_err_pid*.log
 
 # --- Shorebird over-the-air patches for the latest store release ----------------
 shorebird:patch-android:
   extends: .macmini
   stage: deploy
   rules: *on_master
+  cache:
+    - *bundle_cache
+    - key: jdk-temurin-$ANDROID_JDK_VERSION
+      paths:
+        - .ci-jdk/
+      when: always
   script:
     - *android_env
     - *restore_android_secrets
@@ -246,6 +353,7 @@ shorebird:patch-ios:
   stage: deploy
   rules: *on_master
   script:
+    - *ios_cocoapods
     - shorebird patch --platforms ios --release-version=latest --no-codesign --allow-asset-diffs
 
 # =============================================================================
@@ -255,8 +363,8 @@ shorebird:patch-ios:
 # job leaves it pending. Expected on that machine: Git for Windows, Flutter $FLUTTER_VERSION on
 # PATH, and the shell set to PowerShell (the runner default).
 #
-# develop → pre-release  v<version>-dev.<pipeline iid>
-# master  → release      v<version>
+# master       → release      v<version>
+# other branch → pre-release  v<version>-dev.<pipeline iid>
 # The zip and msix go to the project's generic package registry, and the GitLab Release links to
 # them. Unlike the GitHub workflow, the release tag is created on the commit that was built, not
 # on the default branch.
@@ -265,17 +373,18 @@ windows:release:
   tags: [windows]
   interruptible: false
   needs: ["checks"]
-  rules: *on_develop_or_master
+  rules: *on_any_branch
   before_script:
     - $env:GIT_CONFIG_COUNT = "1"
     - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:$env:CI_JOB_TOKEN@$env:CI_SERVER_HOST/.insteadOf"
     - $env:GIT_CONFIG_VALUE_0 = "ssh://git@$env:CI_SERVER_HOST:2822/"
   script:
+    - if (-not $env:ENV_FILE_CONTENT) { throw "Protected CI/CD variables are not available on $env:CI_COMMIT_BRANCH. Protect this branch to deploy from it." }
     - if (-not ((flutter --version) -match "Flutter $env:FLUTTER_VERSION")) { throw "flutter on PATH is not $env:FLUTTER_VERSION" }
     - Copy-Item $env:ENV_FILE_CONTENT .env
     - flutter config --enable-windows-desktop
     - flutter pub get
-    - dart run build_runner build --delete-conflicting-outputs
+    - dart run build_runner build
     - flutter build windows --release --target lib/main_desktop.dart
     - $version = ((Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)').Matches[0].Groups[1].Value)
     - if ($env:CI_COMMIT_BRANCH -eq "master") { $tag = "v$version" } else { $tag = "v$version-dev.$env:CI_PIPELINE_IID" }

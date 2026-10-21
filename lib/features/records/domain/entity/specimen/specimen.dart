@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'specimen.freezed.dart';
 
 @freezed
-class Specimen with _$Specimen implements IFhirResource {
+abstract class Specimen with _$Specimen implements IFhirResource {
   const Specimen._();
 
   const factory Specimen({

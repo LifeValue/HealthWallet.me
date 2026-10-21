@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 part 'mapping_medication_statement.freezed.dart';
 
 @freezed
-class MappingMedicationStatement
+abstract class MappingMedicationStatement
     with _$MappingMedicationStatement
     implements MappingResource {
   const MappingMedicationStatement._();
@@ -55,9 +55,11 @@ class MappingMedicationStatement
     String? sourceId,
     String? encounterId,
     String? subjectId,
+    fhir_r4.FhirMeta? meta,
   }) {
     fhir_r4.MedicationStatement medicationStatement =
         fhir_r4.MedicationStatement(
+      meta: meta,
       medicationX: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(medicationName.value)),
       dosage: [

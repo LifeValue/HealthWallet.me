@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 part 'procedure.freezed.dart';
 
 @freezed
-class Procedure with _$Procedure implements IFhirResource {
+abstract class Procedure with _$Procedure implements IFhirResource {
   const Procedure._();
 
   const factory Procedure({

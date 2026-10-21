@@ -1,7 +1,7 @@
 part of 'record_notes_bloc.dart';
 
 @freezed
-class RecordNotesState with _$RecordNotesState {
+abstract class RecordNotesState with _$RecordNotesState {
   const factory RecordNotesState({
     @Default(RecordNotesStatus.loading()) RecordNotesStatus status,
     @Default(GeneralResource()) IFhirResource resource,
@@ -13,7 +13,7 @@ class RecordNotesState with _$RecordNotesState {
 }
 
 @freezed
-class RecordNotesStatus with _$RecordNotesStatus {
+sealed class RecordNotesStatus with _$RecordNotesStatus {
   const factory RecordNotesStatus.loading() = _Loading;
   const factory RecordNotesStatus.success() = _Success;
   const factory RecordNotesStatus.error(Object? e) = _Error;

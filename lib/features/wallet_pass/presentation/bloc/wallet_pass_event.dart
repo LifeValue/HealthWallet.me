@@ -1,10 +1,14 @@
 part of 'wallet_pass_bloc.dart';
 
-abstract class WalletPassEvent {}
+abstract class WalletPassEvent {
+  const WalletPassEvent();
+}
 
 @freezed
-class WalletPassRequested extends WalletPassEvent
+abstract class WalletPassRequested extends WalletPassEvent
     with _$WalletPassRequested {
+  const WalletPassRequested._();
+
   const factory WalletPassRequested({
     required WalletPassType type,
     required String patientId,
