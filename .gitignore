@@ -1,6 +1,9 @@
 # Claude Code
 .claude/
 
+# BMad install (each developer runs the BMad installer; planning output in _bmad-output/ stays tracked)
+_bmad/
+
 # Secrets & Signing Keys - NEVER commit these
 **/private_keys/
 **/service-account*.json
