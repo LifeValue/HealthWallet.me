@@ -102,10 +102,10 @@ packages:
     dependency: transitive
     description:
       name: archive
-      sha256: "2fde1607386ab523f7a36bb3e7edb43bd58e6edaf2ffb29d8a6d578b297fdbbd"
+      sha256: "0d58d1fa1fddf6588251ccf2819f3fb3b6d0452c1b2813ac7413a05592bfbefe"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.7"
+    version: "4.5.2"
   args:
     dependency: transitive
     description:
@@ -494,10 +494,10 @@ packages:
     dependency: transitive
     description:
       name: dinja
-      sha256: "34d4e569ceb3d900ab061f16cae947223968cc63d2484a8a4710d5ecfa4ae3a2"
+      sha256: "8bb2dfdb481901a0b360fec4a8ffd108d11c5441577f4ebd9309d3b667a1d0a6"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.0"
+    version: "1.3.0"
   dio:
     dependency: "direct main"
     description:
@@ -603,14 +603,22 @@ packages:
       url: "ssh://git@git.techstackapps.com:2822/mobile/health-wallet/fhir-ips-export.git"
     source: git
     version: "0.0.1"
+  fhir_node:
+    dependency: transitive
+    description:
+      name: fhir_node
+      sha256: "3fec7f3d5dcc0e699b42b9f64c292acc794f27caf729811e0f984abd26ca4f95"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.1"
   fhir_r4:
     dependency: "direct main"
     description:
       name: fhir_r4
-      sha256: "0ebdfe2212a45f2214fedc0f9ac1095c9dd64aed3caf3258a73c624fa1d479d9"
+      sha256: eec0907c6d8cb4bff1a8f46eaa4511da46cd65028d411484337694e1bf0f0f68
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.4"
+    version: "0.6.1"
   file:
     dependency: transitive
     description:
@@ -753,10 +761,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_native_splash
-      sha256: "4fb9f4113350d3a80841ce05ebf1976a36de622af7d19aca0ca9a9911c7ff002"
+      sha256: "9db4b80b044e9af17cc4b1272137fc7ace0054d879ef8210a76adc34aaf4cdff"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.7"
+    version: "2.4.8"
   flutter_pdfview:
     dependency: "direct main"
     description:
@@ -907,10 +915,10 @@ packages:
     dependency: "direct main"
     description:
       name: image
-      sha256: "4e973fcf4caae1a4be2fa0a13157aa38a8f9cb049db6529aa00b4d71abc4d928"
+      sha256: "89ed75b2f8231fe676808c5564f9590d728024ded7ac782a7ed8474f1c95b72a"
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.4"
+    version: "4.12.0"
   image_picker:
     dependency: "direct main"
     description:
@@ -1075,10 +1083,10 @@ packages:
     dependency: "direct main"
     description:
       name: llamadart
-      sha256: "1fa139d41173d64123e3bfea7b32768a5667c88bfab39b49046b074bb52c92a3"
+      sha256: "0a9fc3fa30a39cc826644d89b62ce851a0e57c92a67500f5eb010b4455d0cb66"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.8"
+    version: "0.15.6"
   local_auth:
     dependency: "direct main"
     description:
@@ -1443,10 +1451,10 @@ packages:
     dependency: transitive
     description:
       name: pdf
-      sha256: "28eacad99bffcce2e05bba24e50153890ad0255294f4dd78a17075a2ba5c8416"
+      sha256: "6e40827f370d196e97c6611724d923a3d86c431ce8e2ce1e59edd03a67a1a6e6"
       url: "https://pub.dev"
     source: hosted
-    version: "3.11.3"
+    version: "3.13.1"
   pdf_widget_wrapper:
     dependency: transitive
     description:
@@ -1523,10 +1531,10 @@ packages:
     dependency: transitive
     description:
       name: petitparser
-      sha256: "1a97266a94f7350d30ae522c0af07890c70b8e62c71e8e3920d1db4d23c057d1"
+      sha256: "2f1564aadb14215e478563b5406cb80729d022158c01dc50c96013c2f7eb4790"
       url: "https://pub.dev"
     source: hosted
-    version: "7.0.1"
+    version: "7.1.0"
   phone_numbers_parser:
     dependency: "direct main"
     description:
@@ -1595,10 +1603,10 @@ packages:
     dependency: "direct main"
     description:
       name: printing
-      sha256: "482cd5a5196008f984bb43ed0e47cbfdca7373490b62f3b27b3299275bf22a93"
+      sha256: "0f72f29f2e08b8453b7a45b6c7781eb792b1da3468bf0910be0eb3b1d6781f49"
       url: "https://pub.dev"
     source: hosted
-    version: "5.14.2"
+    version: "5.15.1"
   provider:
     dependency: transitive
     description:
@@ -2112,10 +2120,10 @@ packages:
     dependency: transitive
     description:
       name: vector_graphics_compiler
-      sha256: d354a7ec6931e6047785f4db12a1f61ec3d43b207fc0790f863818543f8ff0dc
+      sha256: a8e2c19796144da2f81bcc96dad1bb19c4677b561c452081b97ee737b9faed65
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.19"
+    version: "1.3.2"
   vector_math:
     dependency: transitive
     description:
@@ -2216,10 +2224,10 @@ packages:
     dependency: transitive
     description:
       name: xml
-      sha256: "971043b3a0d3da28727e40ed3e0b5d18b742fa5a68665cca88e74b7876d5e025"
+      sha256: "67f0aff7be013d107995e9b75bf4e7f2c3ef2dfdb2c8e68024bba0a7fd5756a4"
       url: "https://pub.dev"
     source: hosted
-    version: "6.6.1"
+    version: "7.0.1"
   xxh3:
     dependency: transitive
     description:

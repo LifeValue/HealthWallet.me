@@ -596,7 +596,10 @@ class AiInferenceDataSourceImpl
 
     final loadSw = Stopwatch()..start();
     try {
-      await _engine!.loadModel(modelPath, modelParams: params);
+      await _engine!.setModel(
+        LlamaModel(ModelSource.path(modelPath)),
+        params: params,
+      );
       loadSw.stop();
       ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] model loaded in ${(loadSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
@@ -620,7 +623,8 @@ class AiInferenceDataSourceImpl
         }
         final mmprojSw = Stopwatch()..start();
         try {
-          await _engine!.loadMultimodalProjector(mmprojPath);
+          await _engine!
+              .loadMultimodalProjectorSource(ModelSource.path(mmprojPath));
           _hasVisionProjector = true;
           mmprojSw.stop();
           ProcessingLogBuffer.instance.log(

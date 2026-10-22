@@ -5,9 +5,9 @@ Reference for work in `lib/features/processing/`, `lib/features/capture/` and `l
 ## Platforms and toolchain
 
 - Flutter 3.47.7 via FVM (`.fvmrc`); Dart SDK `>=3.13.5 <4.0.0` (`pubspec.yaml`).
-- Mobile: iOS 16.0+, Android minSdk 24. Package name `com.techstackapps.healthwallet`.
+- Mobile: iOS 16.4+ (llamadart 0.15 floor), Android minSdk 24. Package name `com.techstackapps.healthwallet`.
 - Android: Gradle 9.4.1, AGP 9.2.1, Kotlin 2.4.0, compileSdk 37, NDK 28.2. Code compiles to Java 11; CI runs Gradle on Temurin JDK 17. AGP 9 runs in Flutter's compatibility mode (`android.builtInKotlin=false`, `android.newDsl=false` in `android/gradle.properties`); `android/build.gradle.kts` raises plugins compiling below SDK 36 to 37 and fills in missing namespaces.
-- Desktop: macOS (production) and Windows (Store-packaged MSIX). Linux is not scaffolded; `Platform.isLinux` branches are kept for a future port.
+- Desktop: macOS 14+ (production; llamadart 0.15 floor) and Windows (Store-packaged MSIX). Linux is not scaffolded; `Platform.isLinux` branches are kept for a future port.
 
 ## Entry points
 
