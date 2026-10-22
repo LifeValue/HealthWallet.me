@@ -24,7 +24,7 @@ Reference for work in `lib/features/processing/`, `lib/features/capture/` and `l
 fvm flutter pub get
 fvm dart run build_runner build      # or: watch
 fvm flutter analyze
-fvm flutter test                     # whole suite: 71 tests, under a minute
+fvm flutter test                     # whole suite: 119 tests, under a minute
 fvm flutter test test/widget_test.dart
 
 fvm flutter build apk --release
@@ -93,6 +93,15 @@ Models (`lib/core/config/constants/ai_model_config.dart`), downloaded on demand 
 | Qwen3-VL-2B-Instruct Q4_K_M | 1056 MB | 445 MB | Default vision model |
 | MedGemma 4B-IT Q4_K_M | 2490 MB | 851 MB | Advanced; skips the device check |
 | Qwen3-VL-8B | 4560 MB | 815 MB | Desktop only; skips the device check |
+
+### Extraction benchmark
+
+`tool/extraction_bench/` measures the pipeline's document→FHIR accuracy; usage, dataset layout, scoring and the de-identification rule for real documents are in `tool/extraction_bench/README.md`.
+
+- `bench.dart` (pure Dart, `fvm dart run tool/extraction_bench/bench.dart`): `generate` writes seeded synthetic lab reports and discharge letters (EN/ES/DE/RO) as PDF plus a gold FHIR R4 Bundle; `score` matches predicted to gold resources per type (Hungarian), scores fields with FHIR-aware comparators (UCUM, partial dates, code tiers) and reports per-document F1 with document-level bootstrap CIs per stratum; `compare` runs a paired bootstrap between two runs; `oracle` writes gold-as-prediction as a sanity check.
+- `integration_test/extraction_bench_test.dart` runs the production classes on a desktop or device (`--dart-define=BENCH_MODEL=<variant>`), reading `<documents>/extraction_bench/dataset/` and writing `<documents>/extraction_bench/results/<runId>/predictions.jsonl`. It mirrors `ProcessingHandler` (phase 1, `docCategory` from the container, phase 2) but skips the OCR pre-match against existing patients.
+- The only production seam is `AiInferenceDataSource.lastGenerationStats` (`GenerationStats`: prompt/completion tokens, time to first token, prompt eval, duration), reset at the start of every `runVisionPrompt` / `runTextPrompt`. Image-encode time is read from llama.cpp's mtmd log lines, which only the runner subscribes to through `LlamaLogging.configure`.
+- Datasets, results, models and real documents are never committed; keep them under `build/` or outside the repository.
 
 ## Database
 

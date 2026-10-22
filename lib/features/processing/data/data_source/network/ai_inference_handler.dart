@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:health_wallet/core/config/constants/app_constants.dart';
+import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:image/image.dart' as img;
 import 'package:llamadart/llamadart.dart';
@@ -21,6 +22,31 @@ mixin AiInferenceHandler {
 
   bool isGenerating = false;
   bool pendingDisposal = false;
+
+  /// Stats of the most recent generation; null until it completes.
+  GenerationStats? lastGenerationStats;
+
+  Future<GenerationStats> buildGenerationStats(
+    GenerationMode mode,
+    LlamaGenerationUsage? usage,
+  ) async {
+    BackendPerfContextData? perf;
+    try {
+      perf = await engine?.getPerformanceContext();
+    } catch (_) {}
+    return GenerationStats(
+      mode: mode,
+      promptTokens: usage?.promptTokens,
+      completionTokens: usage?.completionTokens,
+      timeToFirstTokenMs: usage?.timeToFirstToken == null
+          ? null
+          : usage!.timeToFirstToken!.inMicroseconds / 1000.0,
+      promptEvalMs: perf?.promptEvalMs,
+      durationMs: usage?.duration == null
+          ? null
+          : usage!.duration!.inMicroseconds / 1000.0,
+    );
+  }
 
   Future<void> disposeModel() async {
     pendingDisposal = true;
@@ -75,6 +101,7 @@ mixin AiInferenceHandler {
     int? maxTokens,
     String? grammar,
   }) async {
+    lastGenerationStats = null;
     if (engine == null) {
       throw Exception('Model not initialized. Call initModel() first.');
     }
@@ -134,6 +161,7 @@ mixin AiInferenceHandler {
     try {
       final buffer = StringBuffer();
       int tokenCount = 0;
+      LlamaGenerationUsage? usage;
       ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] encoding image + prompt (native, no callbacks available)...');
 
@@ -157,6 +185,7 @@ mixin AiInferenceHandler {
         ),
         enableThinking: false,
       )) {
+        usage = chunk.usage ?? usage;
         final text = chunk.choices.first.delta.content;
         if (text != null) {
           buffer.write(text);
@@ -182,6 +211,8 @@ mixin AiInferenceHandler {
 
       heartbeat?.cancel();
       sw.stop();
+      lastGenerationStats =
+          await buildGenerationStats(GenerationMode.vision, usage);
       final totalSec = sw.elapsedMilliseconds / 1000.0;
       final tokPerSec = tokenCount > 0
           ? (tokenCount / totalSec).toStringAsFixed(1)
@@ -217,6 +248,7 @@ mixin AiInferenceHandler {
     int? maxTokens,
     String? grammar,
   }) async {
+    lastGenerationStats = null;
     if (engine == null) {
       throw Exception('Model not initialized. Call initModel() first.');
     }
@@ -244,6 +276,7 @@ mixin AiInferenceHandler {
     try {
       final buffer = StringBuffer();
       int tokenCount = 0;
+      LlamaGenerationUsage? usage;
 
       heartbeat = Timer.periodic(const Duration(seconds: 5), (_) {
         final elapsed =
@@ -271,6 +304,7 @@ mixin AiInferenceHandler {
         ),
         enableThinking: false,
       )) {
+        usage = chunk.usage ?? usage;
         final text = chunk.choices.first.delta.content;
         if (text != null) {
           buffer.write(text);
@@ -285,6 +319,8 @@ mixin AiInferenceHandler {
 
       heartbeat.cancel();
       sw.stop();
+      lastGenerationStats =
+          await buildGenerationStats(GenerationMode.text, usage);
       final totalSec = sw.elapsedMilliseconds / 1000.0;
       final tokPerSec = tokenCount > 0
           ? (tokenCount / totalSec).toStringAsFixed(1)

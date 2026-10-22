@@ -108,7 +108,13 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   flutter_lints: ^3.0.1
+
+  # Extraction benchmark (tool/extraction_bench, integration_test/)
+  args: ^2.7.0
+  pdf: ^3.13.1
 
   # Code Generation
   build_runner: ^2.15.0

@@ -10,6 +10,7 @@ import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_handler.dart';
+import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:injectable/injectable.dart';
 import 'package:llamadart/llamadart.dart';
 import 'package:path_provider/path_provider.dart';
@@ -59,6 +60,11 @@ abstract class AiInferenceDataSource {
     int? maxTokens,
     String? grammar,
   });
+
+  /// Token counts and timings of the last [runVisionPrompt] or
+  /// [runTextPrompt] call. Reset when a call starts; null when the call
+  /// failed or none has run.
+  GenerationStats? get lastGenerationStats;
 
   Future<void> initModel({
     bool withVision = true,
