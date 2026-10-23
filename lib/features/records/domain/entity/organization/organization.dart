@@ -107,7 +107,7 @@ abstract class Organization with _$Organization implements IFhirResource {
     // Type (Hospital, Insurance Company, Government, etc.)
     if (type != null && type!.isNotEmpty) {
       final typeDisplay = type!
-          .map((t) => FhirFieldExtractor.extractCodeableConceptText(t))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((t) => t != null && t.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -276,7 +276,7 @@ abstract class Organization with _$Organization implements IFhirResource {
     // Endpoints (technical connections)
     if (endpoint != null && endpoint!.isNotEmpty) {
       final endpointDisplay = endpoint!
-          .map((e) => FhirFieldExtractor.extractReferenceDisplay(e))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((e) => e != null && e.isNotEmpty)
           .take(3)
           .join(', ');

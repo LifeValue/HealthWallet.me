@@ -112,7 +112,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
                   .where((s) => s.name == r.specialtyOverride)
                   .firstOrNull;
               final classified = _specialtyClassifier.classify(r, override: override);
-              return state.activeSpecialties.any((s) => classified.contains(s));
+              return state.activeSpecialties.any(classified.contains);
             })
             .toList();
       }

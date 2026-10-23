@@ -41,7 +41,7 @@ class PatientNameBuilder {
             ? fhir_r4.FhirString(finalFamily)
             : null,
         given: finalGiven.isNotEmpty
-            ? finalGiven.map((n) => fhir_r4.FhirString(n)).toList()
+            ? finalGiven.map(fhir_r4.FhirString.new).toList()
             : null,
       ),
     ];

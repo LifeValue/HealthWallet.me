@@ -216,7 +216,7 @@ abstract class Goal with _$Goal implements IFhirResource {
     // Category (Type of goal)
     if (category != null && category!.isNotEmpty) {
       final categoryDisplay = category!
-          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((c) => c != null && c.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -256,7 +256,7 @@ abstract class Goal with _$Goal implements IFhirResource {
     // Addresses (What conditions/issues this goal addresses)
     if (addresses != null && addresses!.isNotEmpty) {
       final addressesDisplay = addresses!
-          .map((a) => FhirFieldExtractor.extractReferenceDisplay(a))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((a) => a != null && a.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -280,7 +280,7 @@ abstract class Goal with _$Goal implements IFhirResource {
     // Outcome Code (Results of pursuing this goal)
     if (outcomeCode != null && outcomeCode!.isNotEmpty) {
       final outcomeDisplay = outcomeCode!
-          .map((o) => FhirFieldExtractor.extractCodeableConceptText(o))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((o) => o != null && o.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -294,7 +294,7 @@ abstract class Goal with _$Goal implements IFhirResource {
     // Outcome Reference (Links to observation/results)
     if (outcomeReference != null && outcomeReference!.isNotEmpty) {
       final outcomeRefDisplay = outcomeReference!
-          .map((o) => FhirFieldExtractor.extractReferenceDisplay(o))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((o) => o != null && o.isNotEmpty)
           .take(3)
           .join(', ');

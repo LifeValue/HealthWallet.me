@@ -122,7 +122,7 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
     // Relationship
     if (relationship != null && relationship!.isNotEmpty) {
       final relationDisplay = relationship!
-          .map((r) => FhirFieldExtractor.extractCodeableConceptText(r))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((r) => r != null && r.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(

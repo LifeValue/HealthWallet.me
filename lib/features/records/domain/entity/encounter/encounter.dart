@@ -324,7 +324,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       if (hospitalization!.dietPreference != null && 
           hospitalization!.dietPreference!.isNotEmpty) {
         final dietDisplay = hospitalization!.dietPreference!
-            .map((d) => FhirFieldExtractor.extractCodeableConceptText(d))
+            .map(FhirFieldExtractor.extractCodeableConceptText)
             .where((d) => d != null && d.isNotEmpty)
             .join(', ');
         ResourceFieldMapper.addIfNotNull(
@@ -339,7 +339,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       if (hospitalization!.specialArrangement != null && 
           hospitalization!.specialArrangement!.isNotEmpty) {
         final arrangementsDisplay = hospitalization!.specialArrangement!
-            .map((a) => FhirFieldExtractor.extractCodeableConceptText(a))
+            .map(FhirFieldExtractor.extractCodeableConceptText)
             .where((a) => a != null && a.isNotEmpty)
             .join(', ');
         ResourceFieldMapper.addIfNotNull(
@@ -372,7 +372,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
     // Appointment reference
     if (appointment != null && appointment!.isNotEmpty) {
       final appointmentDisplay = appointment!
-          .map((a) => FhirFieldExtractor.extractReferenceDisplay(a))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((a) => a != null && a.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -386,7 +386,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
     // Episode of Care
     if (episodeOfCare != null && episodeOfCare!.isNotEmpty) {
       final episodeDisplay = episodeOfCare!
-          .map((e) => FhirFieldExtractor.extractReferenceDisplay(e))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((e) => e != null && e.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(

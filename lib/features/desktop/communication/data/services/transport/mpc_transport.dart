@@ -24,9 +24,7 @@ class MpcTransport implements CommunicationService {
       }
     });
 
-    _dataSub = _airdrop.syncDataStream.listen((data) {
-      _dataController.add(data);
-    });
+    _dataSub = _airdrop.syncDataStream.listen(_dataController.add);
   }
 
   @override

@@ -63,7 +63,7 @@ abstract class MappedProperty with _$MappedProperty {
     final valueTokens = _extractTokens(normalizedValue);
     if (valueTokens.isNotEmpty) {
       final matchedTokens =
-          valueTokens.where((t) => normalizedInput.contains(t)).length;
+          valueTokens.where(normalizedInput.contains).length;
       final tokenRatio = matchedTokens / valueTokens.length;
       if (tokenRatio >= 0.8) {
         return copyWith(confidenceLevel: 0.9);

@@ -262,7 +262,7 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
     if (savedOrder != null && savedOrder.isNotEmpty) {
       final map = {for (final v in vitals) v.title: v};
       final ordered = <PatientVital>[
-        ...savedOrder.map((t) => map.remove(t)).whereType<PatientVital>(),
+        ...savedOrder.map(map.remove).whereType<PatientVital>(),
         ...map.values,
       ];
       return ordered;
@@ -290,7 +290,7 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
 
     final map = {for (final c in cards) c.category.display: c};
     return [
-      ...savedOrder.map((t) => map.remove(t)).whereType<OverviewCard>(),
+      ...savedOrder.map(map.remove).whereType<OverviewCard>(),
       ...map.values,
     ];
   }

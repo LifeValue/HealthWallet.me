@@ -277,7 +277,7 @@ class PatientPostProcessor {
       'plz ',
       'hausnr',
     ];
-    final matchCount = patterns.where((p) => lower.contains(p)).length;
+    final matchCount = patterns.where(lower.contains).length;
     return matchCount >= 2;
   }
 

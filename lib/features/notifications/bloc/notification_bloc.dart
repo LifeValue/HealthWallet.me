@@ -49,7 +49,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       final persistableNotifications = notifications
           .where((n) => n.type != NotificationType.progress)
           .toList();
-      final jsonList = persistableNotifications.map((n) => _toJson(n)).toList();
+      final jsonList = persistableNotifications.map(_toJson).toList();
       _prefs.setString(_storageKey, jsonEncode(jsonList));
     } catch (e) {}
   }

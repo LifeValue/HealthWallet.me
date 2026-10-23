@@ -384,7 +384,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
     // Program Eligibility
     if (programEligibility != null && programEligibility!.isNotEmpty) {
       final eligibilityDisplay = programEligibility!
-          .map((e) => FhirFieldExtractor.extractCodeableConceptText(e))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((e) => e != null && e.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -419,7 +419,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
     final isSubpotentValue = isSubpotent?.valueBoolean;
     if (isSubpotentValue == true) {
       final subpotentReasonDisplay = subpotentReason
-          ?.map((r) => FhirFieldExtractor.extractCodeableConceptText(r))
+          ?.map(FhirFieldExtractor.extractCodeableConceptText)
           .where((r) => r != null && r.isNotEmpty)
           .join(', ');
       

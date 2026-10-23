@@ -172,7 +172,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
     // Insurance Company / Payor
     if (payor != null && payor!.isNotEmpty) {
       final payorDisplay = payor!
-          .map((p) => FhirFieldExtractor.extractReferenceDisplay(p))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((p) => p != null && p.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -355,7 +355,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
     // Contract References
     if (contract != null && contract!.isNotEmpty) {
       final contractDisplay = contract!
-          .map((c) => FhirFieldExtractor.extractReferenceDisplay(c))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((c) => c != null && c.isNotEmpty)
           .take(3)
           .join(', ');

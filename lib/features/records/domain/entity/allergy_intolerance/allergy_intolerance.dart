@@ -125,7 +125,7 @@ abstract class AllergyIntolerance with _$AllergyIntolerance implements IFhirReso
     if (reaction != null && reaction!.isNotEmpty) {
       final reactionManifestations = reaction!
           .expand((r) => r.manifestation)
-          .map((m) => FhirFieldExtractor.extractCodeableConceptText(m))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((m) => m != null && m.isNotEmpty)
           .take(3)
           .join(', ');

@@ -197,7 +197,7 @@ mixin PdfConversionMixin implements TextRecognitionService {
       '.tiff'
     ];
     final lowerPath = filePath.toLowerCase();
-    return imageExtensions.any((ext) => lowerPath.endsWith(ext));
+    return imageExtensions.any(lowerPath.endsWith);
   }
 
   @override

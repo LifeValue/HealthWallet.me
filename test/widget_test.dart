@@ -285,7 +285,7 @@ void main() {
     // --- Register everything the App widget resolves from getIt ---
     getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
     getIt.registerSingleton<AppRouter>(AppRouter());
-    getIt.registerFactory<AppRouteObserver>(() => AppRouteObserver());
+    getIt.registerFactory<AppRouteObserver>(AppRouteObserver.new);
     getIt.registerSingleton<BluetoothStateService>(FakeBluetoothStateService());
     getIt.registerSingleton<ReceiveModeService>(FakeReceiveModeService());
     getIt.registerFactory<UserRepository>(() => fakeUserRepo);

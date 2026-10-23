@@ -264,7 +264,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (hasMember != null && hasMember!.isNotEmpty) {
       final memberDisplay = hasMember!
-          .map((m) => FhirFieldExtractor.extractReferenceDisplay(m))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((m) => m != null && m.isNotEmpty)
           .take(3)
           .join(', ');
@@ -281,7 +281,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (derivedFrom != null && derivedFrom!.isNotEmpty) {
       final derivedDisplay = derivedFrom!
-          .map((d) => FhirFieldExtractor.extractReferenceDisplay(d))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((d) => d != null && d.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -294,7 +294,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (basedOn != null && basedOn!.isNotEmpty) {
       final basedOnDisplay = basedOn!
-          .map((b) => FhirFieldExtractor.extractReferenceDisplay(b))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((b) => b != null && b.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -318,7 +318,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
       if (range.appliesTo != null && range.appliesTo!.isNotEmpty) {
         final appliesDisplay = range.appliesTo!
-            .map((a) => FhirFieldExtractor.extractCodeableConceptText(a))
+            .map(FhirFieldExtractor.extractCodeableConceptText)
             .where((a) => a != null && a.isNotEmpty)
             .join(', ');
         ResourceFieldMapper.addIfNotNull(
@@ -516,7 +516,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (hasMember != null && hasMember!.isNotEmpty) {
       final memberDisplay = hasMember!
-          .map((m) => FhirFieldExtractor.extractReferenceDisplay(m))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((m) => m != null && m.isNotEmpty)
           .take(3)
           .join(', ');
@@ -535,7 +535,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (derivedFrom != null && derivedFrom!.isNotEmpty) {
       final derivedDisplay = derivedFrom!
-          .map((d) => FhirFieldExtractor.extractReferenceDisplay(d))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((d) => d != null && d.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -548,7 +548,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (basedOn != null && basedOn!.isNotEmpty) {
       final basedOnDisplay = basedOn!
-          .map((b) => FhirFieldExtractor.extractReferenceDisplay(b))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((b) => b != null && b.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -572,7 +572,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
       if (range.appliesTo != null && range.appliesTo!.isNotEmpty) {
         final appliesDisplay = range.appliesTo!
-            .map((a) => FhirFieldExtractor.extractCodeableConceptText(a))
+            .map(FhirFieldExtractor.extractCodeableConceptText)
             .where((a) => a != null && a.isNotEmpty)
             .join(', ');
         ResourceFieldMapper.addIfNotNull(

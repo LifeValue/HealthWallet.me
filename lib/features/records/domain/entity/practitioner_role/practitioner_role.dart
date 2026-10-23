@@ -149,7 +149,7 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
     // Specialty
     if (specialty != null && specialty!.isNotEmpty) {
       final specialtyDisplay = specialty!
-          .map((s) => FhirFieldExtractor.extractCodeableConceptText(s))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((s) => s != null && s.isNotEmpty)
           .take(3)
           .join(', ');

@@ -125,7 +125,7 @@ abstract class DocumentReference with _$DocumentReference implements IFhirResour
     // Category
     if (category != null && category!.isNotEmpty) {
       final categoryDisplay = category!
-          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((c) => c != null && c.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -146,7 +146,7 @@ abstract class DocumentReference with _$DocumentReference implements IFhirResour
     // Author
     if (author != null && author!.isNotEmpty) {
       final authorDisplay = author!
-          .map((a) => FhirFieldExtractor.extractReferenceDisplay(a))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((a) => a != null && a.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -242,7 +242,7 @@ abstract class DocumentReference with _$DocumentReference implements IFhirResour
     // Context Event (Encounter/Episode codes)
     if (context != null && context!.event != null && context!.event!.isNotEmpty) {
       final eventDisplay = context!.event!
-          .map((e) => FhirFieldExtractor.extractCodeableConceptText(e))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((e) => e != null && e.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -275,7 +275,7 @@ abstract class DocumentReference with _$DocumentReference implements IFhirResour
     // Security Label
     if (securityLabel != null && securityLabel!.isNotEmpty) {
       final securityDisplay = securityLabel!
-          .map((s) => FhirFieldExtractor.extractCodeableConceptText(s))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((s) => s != null && s.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(

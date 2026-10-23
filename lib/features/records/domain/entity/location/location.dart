@@ -119,7 +119,7 @@ abstract class Location with _$Location implements IFhirResource {
     // Type (Hospital, Clinic, etc. - CRITICAL)
     if (type != null && type!.isNotEmpty) {
       final typeDisplay = type!
-          .map((t) => FhirFieldExtractor.extractCodeableConceptText(t))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((t) => t != null && t.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(

@@ -146,7 +146,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
     // Communication/Languages
     if (communication != null && communication!.isNotEmpty) {
       final languages = communication!
-          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((l) => l != null && l.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(

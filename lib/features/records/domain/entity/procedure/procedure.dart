@@ -174,7 +174,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Body Site (Where on body - IMPORTANT)
     if (bodySite != null && bodySite!.isNotEmpty) {
       final bodySiteDisplay = bodySite!
-          .map((b) => FhirFieldExtractor.extractCodeableConceptText(b))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((b) => b != null && b.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -240,7 +240,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Reason Reference (Link to condition/observation)
     if (reasonReference != null && reasonReference!.isNotEmpty) {
       final reasonRefDisplay = reasonReference!
-          .map((r) => FhirFieldExtractor.extractReferenceDisplay(r))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((r) => r != null && r.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -272,7 +272,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Complications (Problems during/after - WARNING)
     if (complication != null && complication!.isNotEmpty) {
       final complicationDisplay = complication!
-          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((c) => c != null && c.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -292,7 +292,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Complication Details (Link to detailed conditions)
     if (complicationDetail != null && complicationDetail!.isNotEmpty) {
       final complicationDetailDisplay = complicationDetail!
-          .map((c) => FhirFieldExtractor.extractReferenceDisplay(c))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((c) => c != null && c.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -306,7 +306,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Follow-up Required
     if (followUp != null && followUp!.isNotEmpty) {
       final followUpDisplay = followUp!
-          .map((f) => FhirFieldExtractor.extractCodeableConceptText(f))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((f) => f != null && f.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -338,7 +338,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Items Used (Supplies/medications)
     if (usedReference != null && usedReference!.isNotEmpty) {
       final usedDisplay = usedReference!
-          .map((u) => FhirFieldExtractor.extractReferenceDisplay(u))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((u) => u != null && u.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -352,7 +352,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Used Code (Coded items/supplies)
     if (usedCode != null && usedCode!.isNotEmpty) {
       final usedCodeDisplay = usedCode!
-          .map((u) => FhirFieldExtractor.extractCodeableConceptText(u))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((u) => u != null && u.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -366,7 +366,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Report (Links to procedure reports)
     if (report != null && report!.isNotEmpty) {
       final reportDisplay = report!
-          .map((r) => FhirFieldExtractor.extractReferenceDisplay(r))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((r) => r != null && r.isNotEmpty)
           .take(3)
           .join(', ');
@@ -381,7 +381,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Part Of (Parent procedure if this is a sub-procedure)
     if (partOf != null && partOf!.isNotEmpty) {
       final partOfDisplay = partOf!
-          .map((p) => FhirFieldExtractor.extractReferenceDisplay(p))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((p) => p != null && p.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -395,7 +395,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     // Based On (Order/Request that led to this procedure)
     if (basedOn != null && basedOn!.isNotEmpty) {
       final basedOnDisplay = basedOn!
-          .map((b) => FhirFieldExtractor.extractReferenceDisplay(b))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((b) => b != null && b.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(

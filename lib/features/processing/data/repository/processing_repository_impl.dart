@@ -176,7 +176,7 @@ class ProcessingRepositoryImpl extends Object
 
       final documentPaths = files
           .map((file) => file.path)
-          .where((path) => _isValidDocumentFile(path))
+          .where(_isValidDocumentFile)
           .toList();
 
       documentPaths.sort((a, b) {

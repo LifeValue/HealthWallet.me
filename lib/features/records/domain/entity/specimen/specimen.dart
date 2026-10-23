@@ -133,7 +133,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
     // Condition (Hemolyzed, clotted, etc. - important for lab quality)
     if (condition != null && condition!.isNotEmpty) {
       final conditionDisplay = condition!
-          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((c) => c != null && c.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -262,7 +262,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         // Additive is just a list of References
         final additive = proc.additive != null && proc.additive!.isNotEmpty
             ? proc.additive!
-                .map((a) => FhirFieldExtractor.extractReferenceDisplay(a))
+                .map(FhirFieldExtractor.extractReferenceDisplay)
                 .where((a) => a != null && a.isNotEmpty)
                 .join(', ')
             : null;
@@ -349,7 +349,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
     // Parent Specimen (if derived from another specimen)
     if (parent != null && parent!.isNotEmpty) {
       final parentDisplay = parent!
-          .map((p) => FhirFieldExtractor.extractReferenceDisplay(p))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((p) => p != null && p.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
@@ -363,7 +363,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
     // Request (Orders that requested this specimen)
     if (request != null && request!.isNotEmpty) {
       final requestDisplay = request!
-          .map((r) => FhirFieldExtractor.extractReferenceDisplay(r))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((r) => r != null && r.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(

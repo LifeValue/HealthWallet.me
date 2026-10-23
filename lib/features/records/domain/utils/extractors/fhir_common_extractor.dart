@@ -82,7 +82,7 @@ class FhirCommonExtractor {
     }
 
     final texts = codeableConceptArray
-        .map((concept) => extractCodeableConceptText(concept))
+        .map(extractCodeableConceptText)
         .where((text) => text != null && text.isNotEmpty)
         .toList();
 

@@ -136,9 +136,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               listenWhen: (previous, current) =>
                   previous.syncStatus != current.syncStatus ||
                   previous.shouldShowTutorial != current.shouldShowTutorial,
-              listener: (context, state) {
-                _handleSyncBlocStateChange(context, state);
-              },
+              listener: _handleSyncBlocStateChange,
             ),
             BlocListener<ProcessingBloc, ProcessingState>(
               listenWhen: (previous, current) =>

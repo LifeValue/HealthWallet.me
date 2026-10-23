@@ -148,7 +148,7 @@ class RecordAttachmentsBloc
         attachmentInfos = infos;
       } else {
         attachmentInfos = await Future.wait(
-            relatedDocuments.map((doc) => _extractAttachmentInfo(doc)));
+            relatedDocuments.map(_extractAttachmentInfo));
       }
 
       emit(state.copyWith(

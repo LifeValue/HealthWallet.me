@@ -235,7 +235,7 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
             children: [
               GestureDetector(
                 onTap: () {
-                  setState(() => _filterTypes.clear());
+                  setState(_filterTypes.clear);
                   widget.onFilterChanged({});
                 },
                 child: Container(

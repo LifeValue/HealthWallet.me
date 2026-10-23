@@ -462,9 +462,7 @@ class TcpService {
       onError: (_) {
         _handleDisconnect();
       },
-      onDone: () {
-        _handleDisconnect();
-      },
+      onDone: _handleDisconnect,
     );
   }
 
