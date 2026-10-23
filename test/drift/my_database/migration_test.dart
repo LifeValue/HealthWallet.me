@@ -3,7 +3,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart' hide isNull, isNotNull;
-import 'package:drift_dev/api/migrations.dart';
+import 'package:drift_dev/api/migrations_native.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'generated/schema.dart';
@@ -135,7 +135,7 @@ void main() {
         // Matches the LIKE filter but is not valid JSON: must be skipped.
         insert.execute(
             ['malformed', '{"broken": "healthwallet.me/specialty"']);
-        insert.dispose();
+        insert.close();
         raw.execute(
           'INSERT INTO record_notes (resource_id, source_id, content, timestamp) '
           "VALUES ('untagged', 'src-1', 'note', 1700000000)",

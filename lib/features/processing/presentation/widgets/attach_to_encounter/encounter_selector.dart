@@ -254,12 +254,15 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                 style: AppTextStyle.bodySmall.copyWith(color: textColor),
               ),
             ),
-            Radio<bool>(
-              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-              value: true,
+            RadioGroup<bool>(
               groupValue: isSelected,
               onChanged: (_) => _handleSelect(context, encounter),
-              activeColor: context.colorScheme.primary,
+              child: Radio<bool>(
+                visualDensity:
+                    const VisualDensity(horizontal: -4, vertical: -4),
+                value: true,
+                activeColor: context.colorScheme.primary,
+              ),
             ),
           ],
         ),

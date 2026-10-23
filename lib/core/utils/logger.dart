@@ -11,7 +11,7 @@ class AppLogger {
         lineLength: 80,
         colors: false,
         printEmojis: false,
-        printTime: false,
+        dateTimeFormat: DateTimeFormat.none,
       ),
     ),
   );

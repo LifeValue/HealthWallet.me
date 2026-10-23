@@ -119,6 +119,8 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
             final isExpanded =
                 blocState.expandedPatientIds.contains(currentPatient.id);
 
+            final cardScale = widget.isExpanding ? 1.02 : 1.0;
+
             return MultiBlocListener(
                 listeners: [
                   BlocListener<PatientBloc, PatientState>(
@@ -146,8 +148,8 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
                   curve: Curves.easeInOutCubic,
                   padding: const EdgeInsets.all(Insets.small),
                   margin: const EdgeInsets.only(bottom: Insets.small),
-                  transform: Matrix4.identity()
-                    ..scale(widget.isExpanding ? 1.02 : 1.0),
+                  transform: Matrix4.diagonal3Values(
+                      cardScale, cardScale, cardScale),
                   decoration: BoxDecoration(
                     color: _getCardColor(context, currentPatient),
                     border: Border.all(
