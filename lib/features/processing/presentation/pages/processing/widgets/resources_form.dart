@@ -126,8 +126,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   context,
                   canRemove: false,
                   resource: encounter!.mode == ImportMode.createNew
-                      ? encounter!.draft!
-                      : MappingEncounter.fromFhirResource(encounter!.existing!),
+                      ? encounter.draft!
+                      : MappingEncounter.fromFhirResource(encounter.existing!),
                   isStagedResource: true,
                   isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>

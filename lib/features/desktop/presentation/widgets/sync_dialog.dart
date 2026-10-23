@@ -101,7 +101,7 @@ class SyncSection extends StatelessWidget {
   final DesktopSyncState commState;
   final LwwSyncState syncState;
 
-  const SyncSection({
+  const SyncSection({super.key, 
     required this.commState,
     required this.syncState,
   });

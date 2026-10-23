@@ -30,7 +30,7 @@ class _EphemeralDesktopDetailsPanelState
   static const double _kDefaultWidth = 400.0;
 
   double _panelWidth = _kDefaultWidth;
-  bool _isOpen = true;
+  final bool _isOpen = true;
 
   @override
   Widget build(BuildContext context) {

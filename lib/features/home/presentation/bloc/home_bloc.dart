@@ -171,8 +171,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
       HomeVitalsReordered e, Emitter<HomeState> emit) async {
     try {
       final master = List.of(state.allAvailableVitals);
-      if (!_validateReorderIndices(e.oldIndex, e.newIndex, master.length))
+      if (!_validateReorderIndices(e.oldIndex, e.newIndex, master.length)) {
         return;
+      }
 
       final moved = master.removeAt(e.oldIndex);
       master.insert(e.newIndex, moved);
@@ -219,8 +220,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
       HomeSpecialtiesReordered e, Emitter<HomeState> emit) async {
     try {
       final cards = List.of(state.specialtyCards);
-      if (!_validateReorderIndices(e.oldIndex, e.newIndex, cards.length))
+      if (!_validateReorderIndices(e.oldIndex, e.newIndex, cards.length)) {
         return;
+      }
 
       final item = cards.removeAt(e.oldIndex);
       cards.insert(e.newIndex, item);
@@ -236,8 +238,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
       HomeRecordsReordered e, Emitter<HomeState> emit) async {
     try {
       final cards = List.of(state.overviewCards);
-      if (!_validateReorderIndices(e.oldIndex, e.newIndex, cards.length))
+      if (!_validateReorderIndices(e.oldIndex, e.newIndex, cards.length)) {
         return;
+      }
 
       final item = cards.removeAt(e.oldIndex);
       cards.insert(e.newIndex, item);

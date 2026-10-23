@@ -316,6 +316,16 @@ class HomeViewState extends State<HomeView> {
         horizontal: context.screenHorizontalPadding,
         vertical: 12,
       ),
+      body: CustomScrollView(
+        slivers: [
+          HomeDashboardSections(
+            state: state,
+            editMode: state.editMode,
+            highlightController: _highlightController,
+            pageController: widget.pageController,
+          ),
+        ],
+      ),
       children: [
         Stack(
           children: [
@@ -346,16 +356,6 @@ class HomeViewState extends State<HomeView> {
           ],
         ),
       ],
-      body: CustomScrollView(
-        slivers: [
-          HomeDashboardSections(
-            state: state,
-            editMode: state.editMode,
-            highlightController: _highlightController,
-            pageController: widget.pageController,
-          ),
-        ],
-      ),
     );
   }
 

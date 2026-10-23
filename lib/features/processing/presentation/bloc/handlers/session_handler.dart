@@ -225,7 +225,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           cachedImages.isNotEmpty &&
           await File(cachedImages.first).exists();
       if (cachedValid) {
-        allImages = cachedImages!;
+        allImages = cachedImages;
       } else {
         if (!anotherSessionProcessing) {
           emit(state.copyWith(status: const PipelineStatus.convertingPdfs()));

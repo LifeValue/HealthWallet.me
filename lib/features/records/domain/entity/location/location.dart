@@ -284,8 +284,8 @@ abstract class Location with _$Location implements IFhirResource {
 
     // GPS Coordinates
     if (position != null) {
-      final latitude = position!.latitude?.valueString;
-      final longitude = position!.longitude?.valueString;
+      final latitude = position!.latitude.valueString;
+      final longitude = position!.longitude.valueString;
       
       if (latitude != null && longitude != null) {
         // Parse to format as needed

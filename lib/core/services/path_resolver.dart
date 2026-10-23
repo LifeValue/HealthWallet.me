@@ -28,7 +28,9 @@ class PathResolver {
     if (path.startsWith('/')) return true;
     if (path.length >= 3 &&
         path[1] == ':' &&
-        (path[2] == '\\' || path[2] == '/')) return true;
+        (path[2] == '\\' || path[2] == '/')) {
+      return true;
+    }
     return false;
   }
 

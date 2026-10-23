@@ -417,12 +417,10 @@ abstract class Immunization with _$Immunization implements IFhirResource {
     // Is Subpotent (reduced efficacy)
     final isSubpotentValue = isSubpotent?.valueBoolean;
     if (isSubpotentValue == true) {
-      final subpotentReasonDisplay = subpotentReason != null
-          ? subpotentReason!
-              .map((r) => FhirFieldExtractor.extractCodeableConceptText(r))
-              .where((r) => r != null && r.isNotEmpty)
-              .join(', ')
-          : null;
+      final subpotentReasonDisplay = subpotentReason
+          ?.map((r) => FhirFieldExtractor.extractCodeableConceptText(r))
+          .where((r) => r != null && r.isNotEmpty)
+          .join(', ');
       
       ResourceFieldMapper.addIfNotNull(
         infoLines,

@@ -2,7 +2,7 @@ import 'package:injectable/injectable.dart';
 
 @lazySingleton
 class ExternalFilesService {
-  List<String> _filePaths = [];
+  final List<String> _filePaths = [];
 
   void addFilePaths(List<String> paths) {
     _filePaths.addAll(paths);

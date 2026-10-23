@@ -613,34 +613,6 @@ class _RecordsViewState extends State<RecordsView> {
             top: MediaQuery.of(context).padding.top + Insets.small,
             bottom: 0,
           ),
-          children: [
-            _buildTitleRow(context, appBarState),
-            const SizedBox(height: Insets.extraSmall),
-            RecordsToolbar(
-              viewMode: _viewMode,
-              onViewModeChanged: (mode) {
-                _setViewMode(mode);
-                if (mode == RecordsViewMode.attachments) {
-                  final filters = context.read<RecordsBloc>().state.activeFilters;
-                  _reloadAttachmentBrowse(context, resourceTypes: filters);
-                }
-              },
-              onFilterTap: () => _showFilterSheet(context),
-            ),
-            BlocBuilder<RecordsBloc, RecordsState>(
-              buildWhen: (previous, current) =>
-                  previous.activeFilters != current.activeFilters ||
-                  previous.dateFilter != current.dateFilter ||
-                  previous.activeSpecialties != current.activeSpecialties,
-              builder: (context, recordsState) {
-                return RecordsActiveFiltersBar(
-                  activeFilters: recordsState.activeFilters,
-                  dateFilter: recordsState.dateFilter,
-                  activeSpecialties: recordsState.activeSpecialties,
-                );
-              },
-            ),
-          ],
           body: BlocBuilder<RecordsBloc, RecordsState>(
             buildWhen: (previous, current) =>
                 previous.status != current.status ||
@@ -674,6 +646,34 @@ class _RecordsViewState extends State<RecordsView> {
               );
             },
           ),
+          children: [
+            _buildTitleRow(context, appBarState),
+            const SizedBox(height: Insets.extraSmall),
+            RecordsToolbar(
+              viewMode: _viewMode,
+              onViewModeChanged: (mode) {
+                _setViewMode(mode);
+                if (mode == RecordsViewMode.attachments) {
+                  final filters = context.read<RecordsBloc>().state.activeFilters;
+                  _reloadAttachmentBrowse(context, resourceTypes: filters);
+                }
+              },
+              onFilterTap: () => _showFilterSheet(context),
+            ),
+            BlocBuilder<RecordsBloc, RecordsState>(
+              buildWhen: (previous, current) =>
+                  previous.activeFilters != current.activeFilters ||
+                  previous.dateFilter != current.dateFilter ||
+                  previous.activeSpecialties != current.activeSpecialties,
+              builder: (context, recordsState) {
+                return RecordsActiveFiltersBar(
+                  activeFilters: recordsState.activeFilters,
+                  dateFilter: recordsState.dateFilter,
+                  activeSpecialties: recordsState.activeSpecialties,
+                );
+              },
+            ),
+          ],
         );
       },
       ),
@@ -694,7 +694,7 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
   static const double _kDefaultWidth = 400.0;
 
   double _panelWidth = _kDefaultWidth;
-  bool _isOpen = true;
+  final bool _isOpen = true;
   List<IFhirResource> _relatedResources = [];
   String _loadedResourceId = '';
 

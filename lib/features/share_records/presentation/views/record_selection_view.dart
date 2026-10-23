@@ -121,6 +121,14 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
               Expanded(
                 child: AnimatedStickyHeader(
                   padding: EdgeInsets.zero,
+                  body: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : SelectableRecordsList(
+                          filteredRecords: _filteredRecords,
+                          shareState: shareState,
+                          hasActiveFilters: _filterTypes.isNotEmpty,
+                          hasAppliedFilters: widget.appliedFilters?.isNotEmpty ?? false,
+                        ),
                   children: [
                     RecordFilterHeader(
                       records: _allRecords,
@@ -140,14 +148,6 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
                       },
                     ),
                   ],
-                  body: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : SelectableRecordsList(
-                          filteredRecords: _filteredRecords,
-                          shareState: shareState,
-                          hasActiveFilters: _filterTypes.isNotEmpty,
-                          hasAppliedFilters: widget.appliedFilters?.isNotEmpty ?? false,
-                        ),
                 ),
               ),
               Center(

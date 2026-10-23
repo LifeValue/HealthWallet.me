@@ -408,7 +408,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
     if (statusHistory != null && statusHistory!.isNotEmpty && statusHistory!.length > 1) {
       final statusChanges = statusHistory!
           .map((h) {
-            final status = h.status?.valueString;
+            final status = h.status.valueString;
             final period = FhirFieldExtractor.extractPeriodFormatted(h.period);
             return status != null && period != null
                 ? '$status: $period'

@@ -32,11 +32,9 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
   FixedExtentScrollController _getHoursController(int hours) {
     final items = <int>[0, 1, 2, 3];
     final index = items.indexOf(hours);
-    if (_hoursController == null) {
-      _hoursController = FixedExtentScrollController(
+    _hoursController ??= FixedExtentScrollController(
         initialItem: index >= 0 ? index : 0,
       );
-    }
     return _hoursController!;
   }
 
@@ -46,11 +44,9 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
       items.add(i);
     }
     final index = items.indexOf(minutes);
-    if (_minutesController == null) {
-      _minutesController = FixedExtentScrollController(
+    _minutesController ??= FixedExtentScrollController(
         initialItem: index >= 0 ? index : 0,
       );
-    }
     return _minutesController!;
   }
 

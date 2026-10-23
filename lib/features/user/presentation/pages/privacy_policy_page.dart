@@ -367,7 +367,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         children: [
           const Align(
             alignment: Alignment.topCenter,
-            child: Container(
+            child: SizedBox(
               width: 20,
               child: Text('• ', style: TextStyle(fontSize: 16)),
             ),
@@ -392,7 +392,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         children: [
           const Align(
             alignment: Alignment.topCenter,
-            child: Container(
+            child: SizedBox(
               width: 20,
               child: Text('• ', style: TextStyle(fontSize: 16)),
             ),

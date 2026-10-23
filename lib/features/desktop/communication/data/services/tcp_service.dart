@@ -619,8 +619,9 @@ class TcpService {
 
   Uint8List _deriveKey(String pairingKey) {
     final keyBytes = base64Url.decode(pairingKey);
-    if (keyBytes.length >= 32)
+    if (keyBytes.length >= 32) {
       return Uint8List.fromList(keyBytes.sublist(0, 32));
+    }
     final padded = Uint8List(32);
     padded.setAll(0, keyBytes);
     return padded;

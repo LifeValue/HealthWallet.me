@@ -255,7 +255,7 @@ abstract class DocumentReference with _$DocumentReference implements IFhirResour
     // Related Documents
     if (relatesTo != null && relatesTo!.isNotEmpty) {
       for (final relation in relatesTo!) {
-        final relationCode = relation.code?.valueString;
+        final relationCode = relation.code.valueString;
         final targetDisplay = FhirFieldExtractor.extractReferenceDisplay(
             relation.target);
         

@@ -161,25 +161,43 @@ class FhirPatientExtractor {
                 coding.first.display?.toString().toUpperCase() ?? '';
             final combined = '$displayText $codingDisplay';
             if (combined.contains('CNP') ||
-                combined.contains('COD NUMERIC PERSONAL')) return 'CNP';
+                combined.contains('COD NUMERIC PERSONAL')) {
+              return 'CNP';
+            }
             if (combined.contains('SVNR') ||
-                combined.contains('SOZIALVERSICHERUNGSNUMMER')) return 'SVNr';
+                combined.contains('SOZIALVERSICHERUNGSNUMMER')) {
+              return 'SVNr';
+            }
             if (combined.contains('KVNR') ||
-                combined.contains('KRANKENVERSICHERTENNUMMER')) return 'KVNR';
+                combined.contains('KRANKENVERSICHERTENNUMMER')) {
+              return 'KVNR';
+            }
             if (combined.contains('NHS')) return 'NHS';
             if (combined.contains('CIP') ||
-                combined.contains('CÓDIGO DE IDENTIFICACIÓN PERSONAL')) return 'CIP';
+                combined.contains('CÓDIGO DE IDENTIFICACIÓN PERSONAL')) {
+              return 'CIP';
+            }
             if (combined.contains('NIR') ||
-                combined.contains('SÉCURITÉ SOCIALE')) return 'NIR';
+                combined.contains('SÉCURITÉ SOCIALE')) {
+              return 'NIR';
+            }
             if (combined.contains('CODICE FISCALE') ||
-                combined.contains(' CF')) return 'CF';
+                combined.contains(' CF')) {
+              return 'CF';
+            }
             if (combined.contains('BSN') ||
-                combined.contains('BURGERSERVICENUMMER')) return 'BSN';
+                combined.contains('BURGERSERVICENUMMER')) {
+              return 'BSN';
+            }
             if (combined.contains('PESEL')) return 'PESEL';
             if (combined.contains('PERSONNUMMER') ||
-                combined.contains('PNR')) return 'PNR';
+                combined.contains('PNR')) {
+              return 'PNR';
+            }
             if (combined.contains('AHV') ||
-                combined.contains('HINTERLASSENENVERSICHERUNG')) return 'AHV';
+                combined.contains('HINTERLASSENENVERSICHERUNG')) {
+              return 'AHV';
+            }
             final system = id.system?.toString() ?? '';
             final systemLabel = CountryIdentifier.labelFromSystem(system);
             if (systemLabel != null) return systemLabel;

@@ -243,10 +243,10 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
         diagnosticReport: const StagedDiagnosticReport(),
         updateDb: true,
       );
-    } else if (session.encounter?.draft != null ||
-        session.encounter?.existing != null) {
-      final enc = session.encounter!.draft ??
-          MappingEncounter.fromFhirResource(session.encounter!.existing!);
+    } else if (session.encounter.draft != null ||
+        session.encounter.existing != null) {
+      final enc = session.encounter.draft ??
+          MappingEncounter.fromFhirResource(session.encounter.existing!);
       final report = MappingDiagnosticReport(
         id: enc.id,
         reportName: MappedProperty(

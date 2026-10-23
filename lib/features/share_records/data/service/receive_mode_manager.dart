@@ -38,21 +38,28 @@ class ReceiveModeManager implements ReceiveModeService {
     this._notificationBloc,
   );
 
+  @override
   bool get isListening => _isListening;
 
+  @override
   String? get pendingInvitationId => _pendingInvitationId;
+  @override
   String? get pendingInvitationDeviceName => _pendingInvitationDeviceName;
+  @override
   EphemeralRecordsContainer? get pendingReceivedData => _pendingReceivedData;
 
+  @override
   void clearPendingInvitation() {
     _pendingInvitationId = null;
     _pendingInvitationDeviceName = null;
   }
 
+  @override
   void clearPendingReceivedData() {
     _pendingReceivedData = null;
   }
 
+  @override
   Future<void> startListening() async {
     if (_isListening) {
       debugPrint('[ReceiveMode] Already listening, skipping start');
@@ -82,6 +89,7 @@ class ReceiveModeManager implements ReceiveModeService {
     }
   }
 
+  @override
   Future<void> stopListening() async {
     if (!_isListening) {
       debugPrint('[ReceiveMode] Not listening, skipping stop');
@@ -108,6 +116,7 @@ class ReceiveModeManager implements ReceiveModeService {
     }
   }
 
+  @override
   void pauseListening() {
     _invitationSubscription?.cancel();
     _invitationSubscription = null;
@@ -118,6 +127,7 @@ class ReceiveModeManager implements ReceiveModeService {
     debugPrint('[ReceiveMode] Paused all listening (bloc took over)');
   }
 
+  @override
   Future<void> resumeListening() async {
     if (!_isListening) return;
     _invitationSubscription?.cancel();
@@ -379,6 +389,7 @@ class ReceiveModeManager implements ReceiveModeService {
     );
   }
 
+  @override
   @disposeMethod
   Future<void> dispose() async {
     await stopListening();

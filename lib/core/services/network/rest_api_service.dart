@@ -42,6 +42,7 @@ class RestApiServiceImpl implements RestApiService {
       AccessTokenInterceptor(),
     ]);
 
+  @override
   Future<T> request<T>({
     required RestMethod method,
     required String path,

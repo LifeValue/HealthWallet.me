@@ -93,10 +93,12 @@ class PatientVitalFactory {
 
   String _normalizeTitle(String title) {
     final t = title.trim().toLowerCase();
-    if (t == 'body height' || t == 'height')
+    if (t == 'body height' || t == 'height') {
       return PatientVitalType.height.title;
-    if (t == 'body weight' || t == 'weight')
+    }
+    if (t == 'body weight' || t == 'weight') {
       return PatientVitalType.weight.title;
+    }
     if (t == 'body mass index' || t == 'bmi' || t == 'body mass index (bmi)') {
       return PatientVitalType.bmi.title;
     }

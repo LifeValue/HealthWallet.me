@@ -281,9 +281,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
             .any((e) => e.value && e.key != variant);
 
         var effectiveSelected = state.selectedVariant;
-        if (effectiveSelected == null) {
-          effectiveSelected = _autoSelectSingleModel(updatedDownloaded);
-        }
+        effectiveSelected ??= _autoSelectSingleModel(updatedDownloaded);
 
         final selectedIsLoaded = effectiveSelected != null &&
             (updatedDownloaded[effectiveSelected] ?? false);
