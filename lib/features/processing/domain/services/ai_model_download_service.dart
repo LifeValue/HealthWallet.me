@@ -121,6 +121,8 @@ class AiModelDownloadService with WidgetsBindingObserver {
 
     try {
       final stream = _repository.downloadModel();
+      // Kept in _variantSubscriptions, which cancels it.
+      // ignore: cancel_subscriptions
       final sub = stream.listen(
         (progress) {
           _updateState(AiModelDownloadState(
