@@ -490,8 +490,9 @@ class SyncSection extends StatelessWidget {
     if (lww.syncStatus == LwwSyncStatus.syncing) return l10n.syncStatusSyncing;
     if (lww.isSynced && isConnected) return l10n.syncStatusInSync;
     if (isConnected) return l10n.connectionStatusConnected;
-    if (lww.pendingChangeCount > 0)
+    if (lww.pendingChangeCount > 0) {
       return l10n.syncStatusPending(lww.pendingChangeCount);
+    }
     if (lww.lastSyncTime != null) {
       return DateFormatUtils.getSincePretty(lww.lastSyncTime!);
     }
@@ -533,8 +534,9 @@ class SyncSection extends StatelessWidget {
     if (state.isBackingUp || state.isRestoring) return AppColors.primary;
     if (state.backupHistory.isNotEmpty) return AppColors.success;
     if (state.desktopLastBackupTime != null) return AppColors.success;
-    if (comm.connectionStatus == ConnectionStatus.connected)
+    if (comm.connectionStatus == ConnectionStatus.connected) {
       return AppColors.textSecondary;
+    }
     return AppColors.textSecondary;
   }
 

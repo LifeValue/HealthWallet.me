@@ -204,8 +204,9 @@ class LwwSyncService {
     final values = columns.map((col) {
       final value = row[col];
       if (value == null) return null;
-      if (value is int || value is double || value is bool || value is String)
+      if (value is int || value is double || value is bool || value is String) {
         return value;
+      }
       return value.toString();
     }).toList();
 

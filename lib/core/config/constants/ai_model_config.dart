@@ -86,8 +86,9 @@ class AiModelConfig {
     if (name == AiModelVariant.qwen.name) return qwen;
     if (name == AiModelVariant.qwen7b.name) return qwen7b;
     if (profile != null) return fromVariant(recommendedVariant(profile));
-    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows)
+    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
       return qwen7b;
+    }
     return qwen;
   }
 

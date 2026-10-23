@@ -369,8 +369,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
                                           builder: (ctx) =>
                                               const AttachToEncounterWidget(),
                                         );
-                                    if (result == null || !context.mounted)
+                                    if (result == null || !context.mounted) {
                                       return;
+                                    }
                                     final (patient, encounter) = result;
                                     context.read<ProcessingBloc>().add(
                                       EncounterAttached(

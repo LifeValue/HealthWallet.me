@@ -282,8 +282,9 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {});
-          if (_pageController.hasClients)
+          if (_pageController.hasClients) {
             _pageController.jumpToPage(_currentPage);
+          }
           _notifyFileName();
         }
       });

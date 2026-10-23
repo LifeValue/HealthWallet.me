@@ -201,8 +201,9 @@ class FhirPatientExtractor {
             final systemLabel = CountryIdentifier.labelFromSystem(system);
             if (systemLabel != null) return systemLabel;
             final profile = CountryIdentifier.forCurrentLocale();
-            if (profile.identifierFhirCode == 'SS')
+            if (profile.identifierFhirCode == 'SS') {
               return profile.identifierLabel;
+            }
             return 'ID';
           case 'NI':
             final displayText = id.type?.text?.toString().toUpperCase() ?? '';

@@ -143,8 +143,9 @@ class SyncStatusCard extends StatelessWidget {
   ) {
     if (hasError) return (AppColors.error, context.l10n.desktopSyncError);
     if (syncing) return (AppColors.warning, context.l10n.desktopSyncing);
-    if (isSynced && connected)
+    if (isSynced && connected) {
       return (AppColors.success, context.l10n.desktopSyncInSync);
+    }
     if (connected) return (AppColors.success, context.l10n.desktopSyncReady);
     return (AppColors.error, context.l10n.desktopSyncOffline);
   }

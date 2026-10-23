@@ -617,8 +617,9 @@ Rules:
       if (value.isEmpty) return false;
       if (_booleanValues.contains(value.toLowerCase())) return true;
       if (!_numericValue.hasMatch(value) &&
-          value.split(RegExp(r'\s+')).length > 2)
+          value.split(RegExp(r'\s+')).length > 2) {
         return true;
+      }
     }
 
     if (type == 'Condition') {

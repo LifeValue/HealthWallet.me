@@ -429,8 +429,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with HomeDataHandler {
 
   String? _resolveSourceId(String? input) {
     if (input == null || input == 'All') return null;
-    if (input == HomeDataHandler.demoSourceId)
+    if (input == HomeDataHandler.demoSourceId) {
       return HomeDataHandler.demoSourceId;
+    }
     if (input.startsWith('wallet-')) return input;
     return input;
   }

@@ -68,8 +68,9 @@ class DeviceCapabilityService {
     }
     if (Platform.isAndroid) {
       if (ramMB < _minRamAndroidMB) return DeviceAiCapability.unsupported;
-      if (ramMB < _minRamForVisionAndroidMB)
+      if (ramMB < _minRamForVisionAndroidMB) {
         return DeviceAiCapability.basicOnly;
+      }
       return DeviceAiCapability.full;
     }
     return DeviceAiCapability.full;
