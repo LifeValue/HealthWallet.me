@@ -6,7 +6,6 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -14,7 +13,6 @@ import 'package:health_wallet/features/home/domain/services/specialty_classifier
 import 'package:health_wallet/features/home/presentation/widgets/specialty_picker.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
-import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';

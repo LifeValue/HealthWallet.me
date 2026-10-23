@@ -6,7 +6,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';

@@ -14,7 +14,6 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/secti
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/dialog_content.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
-import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';

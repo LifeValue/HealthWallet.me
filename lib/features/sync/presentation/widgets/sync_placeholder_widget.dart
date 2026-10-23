@@ -1,25 +1,20 @@
 import 'dart:async';
 
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/widgets/patient_setup_dialog.dart';
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';

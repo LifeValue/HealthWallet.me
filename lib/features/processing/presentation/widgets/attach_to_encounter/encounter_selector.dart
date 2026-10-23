@@ -12,7 +12,6 @@ import 'package:health_wallet/features/processing/domain/entity/staged_resource.
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/create_encounter_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 class EncounterSelector extends StatefulWidget {
   const EncounterSelector({super.key});

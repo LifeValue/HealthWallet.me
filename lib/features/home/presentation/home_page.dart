@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -19,8 +18,6 @@ import 'package:health_wallet/features/desktop/presentation/widgets/connection_d
 import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/sync_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/backup_card.dart';
-import 'package:health_wallet/features/notifications/notification_widget.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/preference_modal.dart';
 import 'package:health_wallet/features/home/presentation/widgets/share_options_sheet.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/gen/assets.gen.dart';

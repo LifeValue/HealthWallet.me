@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
@@ -11,7 +10,6 @@ import 'package:health_wallet/features/user/domain/repository/user_repository.da
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:injectable/injectable.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'user_bloc.freezed.dart';

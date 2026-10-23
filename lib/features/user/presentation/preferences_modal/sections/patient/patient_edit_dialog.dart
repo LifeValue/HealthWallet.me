@@ -18,7 +18,6 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/secti
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
 import 'utils/dialog_content.dart';
-import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';

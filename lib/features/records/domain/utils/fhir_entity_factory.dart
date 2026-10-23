@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 
 /// Centralized factory for creating FHIR entities from raw data
 /// Eliminates code duplication and provides consistent entity creation

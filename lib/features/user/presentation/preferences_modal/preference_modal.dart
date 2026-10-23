@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -9,7 +8,6 @@ import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/ai-model/ai_model_section.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/storage/storage_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/user/user_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/patient_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/sync/sync_section.dart';

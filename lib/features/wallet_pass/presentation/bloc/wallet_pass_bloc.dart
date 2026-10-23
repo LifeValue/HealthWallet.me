@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter_google_wallet/flutter_google_wallet_plugin.dart';

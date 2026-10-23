@@ -26,7 +26,6 @@ import 'package:health_wallet/features/records/presentation/pages/records_page.d
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 

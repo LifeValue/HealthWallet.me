@@ -7,7 +7,6 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
-import 'package:health_wallet/core/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 

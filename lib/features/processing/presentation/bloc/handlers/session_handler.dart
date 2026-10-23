@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

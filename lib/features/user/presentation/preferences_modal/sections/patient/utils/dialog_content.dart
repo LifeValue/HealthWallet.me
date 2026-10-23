@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';

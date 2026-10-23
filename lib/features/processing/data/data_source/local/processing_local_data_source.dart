@@ -1,5 +1,4 @@
 import 'package:health_wallet/core/data/local/app_database.dart';
-import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:injectable/injectable.dart';
 
 abstract class ProcessingLocalDataSource {

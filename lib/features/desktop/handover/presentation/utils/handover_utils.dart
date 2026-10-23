@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
-import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_reconnect_dialog.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';

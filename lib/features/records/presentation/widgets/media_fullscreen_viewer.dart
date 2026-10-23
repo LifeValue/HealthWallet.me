@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
