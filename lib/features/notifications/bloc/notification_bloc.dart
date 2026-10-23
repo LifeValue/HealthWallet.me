@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,7 +52,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           .toList();
       final jsonList = persistableNotifications.map(_toJson).toList();
       _prefs.setString(_storageKey, jsonEncode(jsonList));
-    } catch (e) {}
+    } catch (e, s) {
+      logger.w('Persisting notifications failed', e, s);
+    }
   }
 
   Map<String, dynamic> _toJson(Notification n) => {

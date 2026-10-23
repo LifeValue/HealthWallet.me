@@ -9,6 +9,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
@@ -249,7 +250,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
           if (notification.route.routeName.isNotEmpty) {
             context.router.push(notification.route);
           }
-        } catch (e) {}
+        } catch (e, s) {
+          logger.w('Opening the notification route failed', e, s);
+        }
       },
       child: Container(
         color: Colors.transparent,

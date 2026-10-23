@@ -10,6 +10,7 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -432,7 +433,8 @@ class _PatientEditDialogState extends State<PatientEditDialog>
         context.popDialog();
         widget.onDismiss?.call();
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('Saving the patient failed', e, s);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
