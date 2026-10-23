@@ -50,8 +50,8 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       successMessage: null,
     ));
     try {
-      SyncQrData? qrData = await _syncRepository.getCurrentSyncQrData();
-      String? lastSyncTime = await _syncRepository.getLastSyncTimestamp();
+      final SyncQrData? qrData = await _syncRepository.getCurrentSyncQrData();
+      final String? lastSyncTime = await _syncRepository.getLastSyncTimestamp();
 
       emit(state.copyWith(
         syncQrData: qrData,

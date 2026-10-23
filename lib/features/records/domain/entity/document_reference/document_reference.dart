@@ -112,7 +112,7 @@ abstract class DocumentReference with _$DocumentReference implements IFhirResour
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     final documentDetailsStartIndex = infoLines.length;
 
     // Type (What kind of document - CRITICAL)

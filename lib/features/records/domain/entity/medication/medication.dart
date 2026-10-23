@@ -95,7 +95,7 @@ abstract class Medication with _$Medication implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Medication Details'));
 
     // Medication Code (already in title, but could show NDC or other codes here)

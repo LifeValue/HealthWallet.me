@@ -245,8 +245,8 @@ class FhirObservationExtractor {
     final sortedObservations =
         observations.where((obs) => obs.code?.coding != null).toList()
           ..sort((a, b) {
-            DateTime aDate = a.date ?? DateTime.now();
-            DateTime bDate = b.date ?? DateTime.now();
+            final DateTime aDate = a.date ?? DateTime.now();
+            final DateTime bDate = b.date ?? DateTime.now();
             return bDate.compareTo(aDate);
           });
 

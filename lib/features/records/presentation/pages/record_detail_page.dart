@@ -113,7 +113,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
 
   Widget _buildScaffold(
       BuildContext context, List<IFhirResource> relatedResources) {
-    IFhirResource? encounter = relatedResources.firstWhere(
+    final IFhirResource encounter = relatedResources.firstWhere(
       (resource) => resource.fhirType == FhirType.Encounter,
       orElse: () => const GeneralResource(),
     );

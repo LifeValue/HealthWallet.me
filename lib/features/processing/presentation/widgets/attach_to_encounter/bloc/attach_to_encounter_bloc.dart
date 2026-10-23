@@ -43,7 +43,7 @@ class AttachToEncounterBloc
       );
 
       _allPatients = allPatientsResources.whereType<Patient>().toList();
-      List<Patient> uniquePatients =
+      final List<Patient> uniquePatients =
           _deduplicationService.getUniquePatients(_allPatients);
 
       if (uniquePatients.isEmpty) {
@@ -142,7 +142,7 @@ class AttachToEncounterBloc
         limit: 100,
       );
 
-      List<Encounter> encounters = resources.whereType<Encounter>().toList();
+      final List<Encounter> encounters = resources.whereType<Encounter>().toList();
 
       emit(state.copyWith(
         status: AttachToEncounterStatus.success,

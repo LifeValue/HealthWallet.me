@@ -26,7 +26,7 @@ mixin PdfConversionMixin implements TextRecognitionService {
             throw Exception('Failed to decode PNG for page $index');
           }
 
-          var whiteBg = img.Image(width: decoded.width, height: decoded.height);
+          final whiteBg = img.Image(width: decoded.width, height: decoded.height);
           img.fill(whiteBg, color: img.ColorRgba8(255, 255, 255, 255));
           img.compositeImage(whiteBg, decoded);
           final pngOut = img.encodePng(whiteBg, level: 6);

@@ -126,7 +126,7 @@ abstract class MedicationDispense with _$MedicationDispense implements IFhirReso
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(

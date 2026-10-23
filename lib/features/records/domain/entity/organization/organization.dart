@@ -101,7 +101,7 @@ abstract class Organization with _$Organization implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     final orgDetailsStartIndex = infoLines.length;
 
     // Type (Hospital, Insurance Company, Government, etc.)

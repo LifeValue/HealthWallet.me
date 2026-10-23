@@ -104,7 +104,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
           }
         },
         builder: (context, state) {
-          List<ProcessingSession> importSessions = state.sessions
+          final List<ProcessingSession> importSessions = state.sessions
               .where((element) => element.origin == ProcessingOrigin.import)
               .toList();
 

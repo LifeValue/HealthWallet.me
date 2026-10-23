@@ -113,7 +113,7 @@ abstract class Condition with _$Condition implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Clinical Status
     final statusDisplay =

@@ -57,7 +57,7 @@ abstract class MappingCondition with _$MappingCondition implements MappingResour
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.Condition condition = fhir_r4.Condition(
+    final fhir_r4.Condition condition = fhir_r4.Condition(
       meta: meta,
       code: fhir_r4.CodeableConcept(
           text: fhir_r4.FhirString(conditionName.value)),
@@ -72,7 +72,7 @@ abstract class MappingCondition with _$MappingCondition implements MappingResour
           reference: fhir_r4.FhirString('Encounter/$encounterId')),
     );
 
-    Map<String, dynamic> rawResource = condition.toJson();
+    final Map<String, dynamic> rawResource = condition.toJson();
 
     return Condition(
       id: id,

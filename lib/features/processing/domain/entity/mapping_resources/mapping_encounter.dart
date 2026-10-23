@@ -76,7 +76,7 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.Encounter encounter = fhir_r4.Encounter(
+    final fhir_r4.Encounter encounter = fhir_r4.Encounter(
         type: [
           fhir_r4.CodeableConcept(text: fhir_r4.FhirString(encounterType.value))
         ],
@@ -114,7 +114,7 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
         subject: fhir_r4.Reference(
             reference: fhir_r4.FhirString('Patient/$subjectId')));
 
-    Map<String, dynamic> rawResource = encounter.toJson();
+    final Map<String, dynamic> rawResource = encounter.toJson();
 
     return Encounter(
       id: id,

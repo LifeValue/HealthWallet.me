@@ -135,7 +135,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Procedure Details'));
 
     // Performed Date/Period (CRITICAL - When it happened)

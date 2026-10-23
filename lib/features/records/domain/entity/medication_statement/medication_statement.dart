@@ -114,7 +114,7 @@ abstract class MedicationStatement with _$MedicationStatement implements IFhirRe
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(

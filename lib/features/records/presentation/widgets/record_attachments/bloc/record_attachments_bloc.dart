@@ -210,7 +210,7 @@ class RecordAttachmentsBloc
         return;
       }
 
-      Directory appDirectory = await getApplicationDocumentsDirectory();
+      final Directory appDirectory = await getApplicationDocumentsDirectory();
       final subjectId = _extractSubjectId(state.resource);
       final encounterId = _extractEncounterId(state.resource);
       final effectiveSourceId = await _getEffectiveSourceId(
@@ -219,8 +219,8 @@ class RecordAttachmentsBloc
       );
 
       for (final file in event.files) {
-        String originalFileName = basename(file.path);
-        String newFilePath = join(appDirectory.path, originalFileName);
+        final String originalFileName = basename(file.path);
+        final String newFilePath = join(appDirectory.path, originalFileName);
 
         await file.copy(newFilePath);
 

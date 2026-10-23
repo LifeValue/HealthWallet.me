@@ -14,7 +14,7 @@ class FhirResourceDatasource {
     int? limit,
     int? offset,
   }) async {
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
         db.select(db.fhirResource)..orderBy([(f) => OrderingTerm.desc(f.date)]);
 
     if (sourceId != null) {
@@ -38,7 +38,7 @@ class FhirResourceDatasource {
     required String encounterId,
     String? sourceId,
   }) async {
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query = db
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query = db
         .select(db.fhirResource)
       ..where((f) => f.encounterId.equals(encounterId));
 
@@ -157,7 +157,7 @@ class FhirResourceDatasource {
       return [];
     }
 
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> selectQuery =
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> selectQuery =
         db.select(db.fhirResource)..orderBy([(f) => OrderingTerm.desc(f.date)]);
 
     if (sourceId != null) {

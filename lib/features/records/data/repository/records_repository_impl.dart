@@ -99,10 +99,10 @@ class RecordsRepositoryImpl implements RecordsRepository {
   Future<List<IFhirResource>> getRelatedResources({
     required IFhirResource resource,
   }) async {
-    List<IFhirResource> resources = [];
+    final List<IFhirResource> resources = [];
 
     for (String? reference in resource.resourceReferences) {
-      IFhirResource? resource = await resolveReference(reference!);
+      final IFhirResource? resource = await resolveReference(reference!);
       if (resource == null) continue;
 
       resources.add(resource);
@@ -113,7 +113,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<IFhirResource?> resolveReference(String reference) async {
-    FhirResourceLocalDto? localDto =
+    final FhirResourceLocalDto? localDto =
         await _datasource.resolveReference(reference);
     if (localDto == null) return null;
     return IFhirResource.fromLocalDto(localDto);
@@ -681,16 +681,16 @@ class RecordsRepositoryImpl implements RecordsRepository {
           .toList();
     }
 
-    List<FhirResourceLocalDto> resourceDtos = await _datasource.getResources(
+    final List<FhirResourceLocalDto> resourceDtos = await _datasource.getResources(
       resourceTypes: [],
       sourceId: sourceId,
       sourceIds: patientSourceIds,
     );
 
-    List<IFhirResource> resources =
+    final List<IFhirResource> resources =
         resourceDtos.map(IFhirResource.fromLocalDto).toList();
 
-    Patient? patient = patientId != null
+    final Patient? patient = patientId != null
         ? resources.whereType<Patient>().where((p) => p.id == patientId).firstOrNull
         : resources.whereType<Patient>().firstOrNull;
 
@@ -703,8 +703,8 @@ class RecordsRepositoryImpl implements RecordsRepository {
         )?.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_') ??
         'Unknown';
 
-    FhirIpsBuilder builder = FhirIpsBuilder();
-    FhirIpsPdfRenderer renderer = FhirIpsPdfRenderer();
+    final FhirIpsBuilder builder = FhirIpsBuilder();
+    final FhirIpsPdfRenderer renderer = FhirIpsPdfRenderer();
 
     final ipsData = await builder.buildFromRawResources(
       rawResources: resources.map((r) => r.rawResource).toList(),

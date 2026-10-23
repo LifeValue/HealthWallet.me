@@ -111,7 +111,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         ? profile.fhirIdentifierSystem
         : 'http://healthwallet.me/mrn';
 
-    fhir_r4.Patient patient = fhir_r4.Patient(
+    final fhir_r4.Patient patient = fhir_r4.Patient(
       meta: meta,
       name: [
         fhir_r4.HumanName(

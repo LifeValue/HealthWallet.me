@@ -130,7 +130,7 @@ mixin AiExtractionRepository {
   ) {
     final cleaned = _stripMarkdownFences(response ?? '');
     final repaired = _repairTruncatedJsonArray(cleaned);
-    List<dynamic> jsonList = jsonDecode(repaired);
+    final List<dynamic> jsonList = jsonDecode(repaired);
 
     String? aiCategory;
     for (final json in jsonList) {
@@ -140,7 +140,7 @@ mixin AiExtractionRepository {
       }
     }
 
-    List<MappingResource> resources = [];
+    final List<MappingResource> resources = [];
     for (Map<String, dynamic> json in jsonList) {
       MappingResource resource = MappingResource.fromJson(json);
       if (inputTextForConfidence.isNotEmpty) {
@@ -165,7 +165,7 @@ mixin AiExtractionRepository {
       documentCategory: documentCategory,
     );
 
-    MappingPatient patient =
+    final MappingPatient patient =
         resources.firstWhereOrNull((resource) => resource is MappingPatient)
                 as MappingPatient? ??
             MappingPatient.empty();
@@ -540,10 +540,10 @@ Rules:
   ) {
     final cleaned = _stripMarkdownFences(response ?? '');
     final repaired = _repairTruncatedJsonArray(cleaned);
-    List<dynamic> jsonList = jsonDecode(repaired);
+    final List<dynamic> jsonList = jsonDecode(repaired);
     final deduplicated = _deduplicateResources(jsonList);
 
-    List<MappingResource> resources = [];
+    final List<MappingResource> resources = [];
     for (final json in deduplicated) {
       if (_shouldSkipResource(json)) {
         ProcessingLogBuffer.instance.log('[ScanAI] skipped ${json['resourceType']}: ${json['conditionName'] ?? json['observationName'] ?? json['value'] ?? ''}');

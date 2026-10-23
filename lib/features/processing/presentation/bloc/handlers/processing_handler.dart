@@ -283,7 +283,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final savedContextSize = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize);
       final useVision =
           prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
-      Stream<MappingResourcesWithProgress> stream =
+      final Stream<MappingResourcesWithProgress> stream =
           processingRepository.mapRemainingResources(sessionImages,
               documentCategory: docCategory,
               useVision: useVision,
@@ -389,7 +389,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               ),
             ])
           : null;
-      List<IFhirResource> fhirResources = otherResources
+      final List<IFhirResource> fhirResources = otherResources
           .map((resource) => resource.toFhirResource(
               sourceId: sourceId,
               subjectId: subjectId,
@@ -438,11 +438,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   ) async {
     String subjectId;
     String sourceId;
-    List<IFhirResource> resourcesToSave = [];
+    final List<IFhirResource> resourcesToSave = [];
     final availableSources = await syncRepository.getSources();
     if (activeSession.patient.mode == ImportMode.linkExisting &&
         activeSession.patient.existing != null) {
-      Patient existingPatient = activeSession.patient.existing!;
+      final Patient existingPatient = activeSession.patient.existing!;
       final walletSource =
           await sourceTypeService.ensureWalletSourceForPatient(
               patientId: existingPatient.id,
@@ -460,7 +460,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
             encounterId: ''));
       }
     } else {
-      MappingPatient draftPatient = activeSession.patient.draft!;
+      final MappingPatient draftPatient = activeSession.patient.draft!;
       final walletSource =
           await sourceTypeService.ensureWalletSourceForPatient(
               patientId: draftPatient.id,
@@ -474,7 +474,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     }
     IFhirResource finalContainer;
     if (activeSession.isDiagnosticReportContainer) {
-      MappingDiagnosticReport draftReport =
+      final MappingDiagnosticReport draftReport =
           activeSession.diagnosticReport!.draft!;
       finalContainer = draftReport.toFhirResource(
           sourceId: sourceId,
@@ -484,7 +484,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     } else if (activeSession.encounter.existing != null) {
       finalContainer = activeSession.encounter.existing!;
     } else {
-      MappingEncounter draftEncounter = activeSession.encounter.draft!;
+      final MappingEncounter draftEncounter = activeSession.encounter.draft!;
       finalContainer = draftEncounter.toFhirResource(
           sourceId: sourceId,
           subjectId: subjectId,

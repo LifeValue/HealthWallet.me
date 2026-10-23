@@ -11,9 +11,9 @@ abstract class SourceMapper {
 class SourceMapperImpl implements SourceMapper {
   @override
   Source mapToEntity(SourceDto dto) {
-    String platformName = _generatePlatformName(dto.platformType ?? 'fasten');
-    String? labelSource = platformName;
-    String platformType = 'fasten';
+    final String platformName = _generatePlatformName(dto.platformType ?? 'fasten');
+    final String labelSource = platformName;
+    final String platformType = 'fasten';
 
     DateTime? createdAt;
     DateTime? updatedAt;

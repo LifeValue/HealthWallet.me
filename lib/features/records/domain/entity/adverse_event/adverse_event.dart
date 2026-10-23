@@ -119,7 +119,7 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Actuality
     final actualityDisplay = actuality?.valueString;

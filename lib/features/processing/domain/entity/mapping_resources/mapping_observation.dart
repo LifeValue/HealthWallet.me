@@ -292,7 +292,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
       );
     }
 
-    fhir_r4.Observation observation = fhir_r4.Observation(
+    final fhir_r4.Observation observation = fhir_r4.Observation(
       meta: meta,
       code: codeableConcept,
       valueX: valueX,
@@ -305,7 +305,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
       interpretation: fhirInterpretation,
     );
 
-    Map<String, dynamic> rawResource = observation.toJson();
+    final Map<String, dynamic> rawResource = observation.toJson();
 
     return Observation(
       id: id,

@@ -135,7 +135,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Vaccination Details'));
 
     // Vaccine Name (already in title via vaccineCode)

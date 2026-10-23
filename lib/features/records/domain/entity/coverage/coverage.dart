@@ -113,7 +113,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     final coverageDetailsStartIndex = infoLines.length;
 
     // Subscriber ID / Member ID (MOST CRITICAL)

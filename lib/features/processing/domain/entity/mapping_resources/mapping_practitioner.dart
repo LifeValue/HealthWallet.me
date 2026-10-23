@@ -57,7 +57,7 @@ abstract class MappingPractitioner
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.Practitioner practitioner = fhir_r4.Practitioner(
+    final fhir_r4.Practitioner practitioner = fhir_r4.Practitioner(
       meta: meta,
       name: [
         fhir_r4.HumanName(text: fhir_r4.FhirString(practitionerName.value))
@@ -73,7 +73,7 @@ abstract class MappingPractitioner
       ],
     );
 
-    Map<String, dynamic> rawResource = practitioner.toJson();
+    final Map<String, dynamic> rawResource = practitioner.toJson();
 
     return Practitioner(
       id: id,

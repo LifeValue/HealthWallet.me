@@ -117,7 +117,7 @@ abstract class ExplanationOfBenefit
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     ResourceFieldMapper.addIfNotNull(

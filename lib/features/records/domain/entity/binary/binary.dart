@@ -81,7 +81,7 @@ abstract class Binary with _$Binary implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     final typeDisplay = contentType?.valueString;
     if (typeDisplay != null) {

@@ -339,7 +339,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     }
 
     if (event.isDraftDiagnosticReport == true) {
-      MappingDiagnosticReport draftReport =
+      final MappingDiagnosticReport draftReport =
           activeSession.diagnosticReport?.draft ??
               const MappingDiagnosticReport();
 
@@ -357,7 +357,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     }
 
     if (event.isDraftEncounter == true) {
-      MappingEncounter draftEncounter =
+      final MappingEncounter draftEncounter =
           activeSession.encounter.draft ?? const MappingEncounter();
 
       updateSession(
@@ -371,7 +371,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       return;
     }
 
-    MappingResource updatedResource =
+    final MappingResource updatedResource =
         activeSession.resources[event.index].copyWithMap({
       event.propertyKey: event.newValue,
     });
@@ -429,7 +429,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     final List<MappingResource> newResources = [];
 
     for (final resourceType in event.resourceTypes) {
-      MappingResource newResource = MappingResource.empty(resourceType);
+      final MappingResource newResource = MappingResource.empty(resourceType);
       newResources.add(newResource);
     }
 

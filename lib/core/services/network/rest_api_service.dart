@@ -73,7 +73,7 @@ class RestApiServiceImpl implements RestApiService {
         ),
       );
 
-      dynamic data =
+      final dynamic data =
           (onExtract != null) ? onExtract(response.data) : response.data;
       return (decoder != null) ? decoder(data) : data;
     } catch (exception) {

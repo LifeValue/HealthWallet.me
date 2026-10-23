@@ -60,7 +60,7 @@ abstract class MappingDiagnosticReport
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.DiagnosticReport diagnosticReport = fhir_r4.DiagnosticReport(
+    final fhir_r4.DiagnosticReport diagnosticReport = fhir_r4.DiagnosticReport(
       meta: meta,
       code: fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reportName.value)),
       conclusion: fhir_r4.FhirString(conclusion.value),
@@ -73,7 +73,7 @@ abstract class MappingDiagnosticReport
           reference: fhir_r4.FhirString('Encounter/$encounterId')),
     );
 
-    Map<String, dynamic> rawResource = diagnosticReport.toJson();
+    final Map<String, dynamic> rawResource = diagnosticReport.toJson();
 
     return DiagnosticReport(
       id: id,

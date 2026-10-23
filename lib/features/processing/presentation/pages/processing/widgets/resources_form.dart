@@ -186,7 +186,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
     bool isStagedResource = false,
     bool isLocked = false,
   }) {
-    Map<String, TextFieldDescriptor> textFields =
+    final Map<String, TextFieldDescriptor> textFields =
         resource.getFieldDescriptors();
 
     return Container(

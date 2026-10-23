@@ -110,7 +110,7 @@ abstract class AllergyIntolerance with _$AllergyIntolerance implements IFhirReso
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     final keyInfoStartIndex = infoLines.length;
 
     // Criticality (MOST CRITICAL - safety concern)

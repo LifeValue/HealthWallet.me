@@ -105,7 +105,7 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;

@@ -129,7 +129,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Result'));
 
     final valueDisplay = FhirFieldExtractor.extractObservationValue(valueX);
@@ -347,7 +347,7 @@ abstract class Observation with _$Observation implements IFhirResource {
   }
 
   List<RecordInfoLine> additionalInfoForRegion(RegionPreset region) {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Result'));
 
     final valueDisplay =

@@ -120,7 +120,7 @@ abstract class MedicationAdministration
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(

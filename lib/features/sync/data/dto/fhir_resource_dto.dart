@@ -53,7 +53,7 @@ abstract class FhirResourceDto with _$FhirResourceDto {
   }
 
   FhirResourceDto populateSubjectIdFromRaw() {
-    String? subjectId = extractReferenceId('subject');
+    final String? subjectId = extractReferenceId('subject');
 
     if (subjectId == null) return this;
 
@@ -63,8 +63,8 @@ abstract class FhirResourceDto with _$FhirResourceDto {
   String? extractReferenceId(String key) {
     if (!(resourceRaw?.containsKey(key) ?? false)) return null;
 
-    Reference reference = Reference.fromJson(resourceRaw![key]);
-    String? refString = reference.reference?.valueString;
+    final Reference reference = Reference.fromJson(resourceRaw![key]);
+    final String? refString = reference.reference?.valueString;
     if (refString == null) return null;
 
     return FhirReferenceUtils.extractReferenceId(refString);

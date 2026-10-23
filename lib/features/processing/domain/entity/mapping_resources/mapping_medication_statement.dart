@@ -57,7 +57,7 @@ abstract class MappingMedicationStatement
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.MedicationStatement medicationStatement =
+    final fhir_r4.MedicationStatement medicationStatement =
         fhir_r4.MedicationStatement(
       meta: meta,
       medicationX: fhir_r4.CodeableConcept(
@@ -73,7 +73,7 @@ abstract class MappingMedicationStatement
       status: fhir_r4.MedicationStatementStatusCodes.unknown,
     );
 
-    Map<String, dynamic> rawResource = medicationStatement.toJson();
+    final Map<String, dynamic> rawResource = medicationStatement.toJson();
 
     return MedicationStatement(
       id: id,

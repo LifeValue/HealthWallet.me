@@ -153,7 +153,7 @@ class _AttachmentTimelineScrubberState
     if (_isSyncing) return;
     if (!_scrollController.hasClients) return;
 
-    double offset = _scrollController.offset;
+    final double offset = _scrollController.offset;
     double cumulative = 0;
     int foundIndex = 0;
     for (int i = 0; i < _items.length; i++) {

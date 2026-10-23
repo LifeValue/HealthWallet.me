@@ -476,7 +476,7 @@ class IdCardExtractor {
       }
     }
 
-    String? nirValue = nirMatch?.group(1)?.replaceAll(' ', '');
+    final String? nirValue = nirMatch?.group(1)?.replaceAll(' ', '');
 
     return IdCardExtractionResult(
       familyName: nomMatch?.group(1),
@@ -921,7 +921,7 @@ class IdCardExtractor {
       return null;
     }
 
-    var yy = int.parse(pesel.substring(0, 2));
+    final yy = int.parse(pesel.substring(0, 2));
     var mm = int.parse(pesel.substring(2, 4));
     final dd = int.parse(pesel.substring(4, 6));
 

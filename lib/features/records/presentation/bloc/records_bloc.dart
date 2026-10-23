@@ -348,7 +348,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       final date = region.formatDate(DateTime.now());
       final fileName = '$name - IPS Summary - $date';
 
-      File pdfFile = await File(
+      final File pdfFile = await File(
         '${(await getTemporaryDirectory()).path}/$fileName.pdf',
       ).writeAsBytes(export.bytes);
 

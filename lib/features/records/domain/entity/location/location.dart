@@ -113,7 +113,7 @@ abstract class Location with _$Location implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     final facilityDetailsStartIndex = infoLines.length;
 
     // Type (Hospital, Clinic, etc. - CRITICAL)

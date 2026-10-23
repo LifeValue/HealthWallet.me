@@ -105,7 +105,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Specimen Details'));
 
     // Type (What kind of specimen - CRITICAL)

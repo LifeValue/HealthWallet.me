@@ -112,7 +112,7 @@ abstract class Goal with _$Goal implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Goal Details'));
 
     // Description (What is the goal - CRITICAL)

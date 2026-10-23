@@ -100,7 +100,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     final professionalInfoStartIndex = infoLines.length;
 
     // Active Status

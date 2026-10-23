@@ -123,7 +123,7 @@ abstract class Media with _$Media implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;

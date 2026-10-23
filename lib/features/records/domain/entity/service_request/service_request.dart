@@ -145,7 +145,7 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;

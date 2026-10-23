@@ -144,7 +144,7 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('How to Take'));
 
     // Medication Name

@@ -193,7 +193,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Visit Details'));
 
     // Class (Inpatient/Outpatient/Emergency - CRITICAL)

@@ -266,7 +266,7 @@ class _ScanViewState extends State<ScanView>
   }
 
   Widget _buildMainView(BuildContext context, ProcessingState state) {
-    List<ProcessingSession> scanSessions = state.sessions
+    final List<ProcessingSession> scanSessions = state.sessions
         .where((element) => element.origin == ProcessingOrigin.scan)
         .toList();
 

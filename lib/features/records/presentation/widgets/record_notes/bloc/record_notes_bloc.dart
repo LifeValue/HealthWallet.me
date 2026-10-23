@@ -29,7 +29,7 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
 
     try {
       // Get notes for this resource directly
-      List<RecordNote> notes =
+      final List<RecordNote> notes =
           await _recordsRepository.getRecordNotes(event.resource.id);
 
       emit(state.copyWith(

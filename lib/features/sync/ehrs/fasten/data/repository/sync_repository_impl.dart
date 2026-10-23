@@ -31,7 +31,7 @@ class SyncRepositoryImpl implements SyncRepository {
 
   @override
   Future<void> syncResources({required String endpoint}) async {
-    List<FhirResourceDto> resources =
+    final List<FhirResourceDto> resources =
         await _remoteDataSource.getResources(endpoint: endpoint);
 
     await _localDataSource.cacheFhirResources(resources

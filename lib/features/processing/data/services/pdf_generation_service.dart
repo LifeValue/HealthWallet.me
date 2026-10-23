@@ -95,8 +95,8 @@ class PdfGenerationService {
   }) async {
     final List<DocumentGroup> groups = [];
 
-    List<String> pdfPaths = [];
-    List<String> imagePaths = [];
+    final List<String> pdfPaths = [];
+    final List<String> imagePaths = [];
     for (final filePath in filePaths) {
       if (p.extension(filePath) == '.pdf') {
         pdfPaths.add(filePath);

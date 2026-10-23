@@ -61,7 +61,7 @@ abstract class MappingAllergyIntolerance
     final hasValidCategory = const {'food', 'medication', 'environment', 'biologic'}
         .contains(categoryCode);
 
-    fhir_r4.AllergyIntolerance allergyIntolerance = fhir_r4.AllergyIntolerance(
+    final fhir_r4.AllergyIntolerance allergyIntolerance = fhir_r4.AllergyIntolerance(
       meta: meta,
       code: fhir_r4.CodeableConcept(text: fhir_r4.FhirString(substance.value)),
       reaction: [
@@ -81,7 +81,7 @@ abstract class MappingAllergyIntolerance
           reference: fhir_r4.FhirString('Encounter/$encounterId')),
     );
 
-    Map<String, dynamic> rawResource = allergyIntolerance.toJson();
+    final Map<String, dynamic> rawResource = allergyIntolerance.toJson();
 
     return AllergyIntolerance(
       id: id,
