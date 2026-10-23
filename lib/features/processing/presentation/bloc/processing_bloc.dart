@@ -4,7 +4,6 @@ import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -34,7 +33,6 @@ part 'processing_bloc.freezed.dart';
 @LazySingleton()
 class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     with SessionHandler, ProcessingHandler {
-  final PdfStorageService _pdfStorageService;
   final ProcessingRepository _repository;
   final OcrProcessingHelper _ocrProcessingHelper;
   final SyncRepository _syncRepository;
@@ -71,7 +69,6 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   SharedPreferences get prefs => _prefs;
 
   ProcessingBloc(
-    this._pdfStorageService,
     this._repository,
     this._ocrProcessingHelper,
     this._syncRepository,

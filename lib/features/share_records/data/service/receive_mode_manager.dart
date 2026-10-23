@@ -10,7 +10,6 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
@@ -20,7 +19,6 @@ import 'package:injectable/injectable.dart';
 @Singleton(as: ReceiveModeService)
 class ReceiveModeManager implements ReceiveModeService {
   final ShareRecordsService _shareRecordsService;
-  final NotificationBloc _notificationBloc;
 
   StreamSubscription<Map<String, dynamic>>? _invitationSubscription;
   StreamSubscription<ReceivedData>? _receivedDataSubscription;
@@ -33,10 +31,7 @@ class ReceiveModeManager implements ReceiveModeService {
 
   EphemeralRecordsContainer? _pendingReceivedData;
 
-  ReceiveModeManager(
-    this._shareRecordsService,
-    this._notificationBloc,
-  );
+  ReceiveModeManager(this._shareRecordsService);
 
   @override
   bool get isListening => _isListening;

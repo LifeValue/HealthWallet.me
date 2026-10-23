@@ -7,7 +7,6 @@ import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import 'package:health_wallet/features/desktop/communication/data/services/chunk_transfer_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
@@ -18,7 +17,6 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 @lazySingleton
 class HandoverService {
   final MessageRouter _messageRouter;
-  final ChunkTransferService _chunkTransferService;
   final TcpService _tcpService;
   final ProcessingBloc _processingBloc;
 
@@ -36,7 +34,6 @@ class HandoverService {
 
   HandoverService(
     this._messageRouter,
-    this._chunkTransferService,
     this._tcpService,
     this._processingBloc,
   );
@@ -61,7 +58,6 @@ class HandoverService {
   ) {
     final sessionId = payload['session_id'] as String;
     final fileCount = payload['file_count'] as int;
-    final totalBytes = payload['total_bytes'] as int;
 
     final session = HandoverSession(
       sessionId: sessionId,
@@ -87,7 +83,6 @@ class HandoverService {
     void Function(String sessionId) onProcessingComplete,
   ) async {
     final sessionId = payload['session_id'] as String;
-    final fileIndex = payload['file_index'] as int;
     final fileName = payload['file_name'] as String;
     final data = payload['data'] as String;
 
