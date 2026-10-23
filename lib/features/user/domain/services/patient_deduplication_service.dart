@@ -277,9 +277,7 @@ class PatientDeduplicationService {
           _normalizeValue(draftPatient.givenName.value);
 
       DateTime? draftDOB;
-      try {
-        draftDOB = DateTime.parse(draftPatient.dateOfBirth.value);
-      } catch (e) {}
+      draftDOB = DateTime.tryParse(draftPatient.dateOfBirth.value);
 
       final nameMatches = allPatients.where((patient) {
         final patientFamily = FhirFieldExtractor.extractPatientFamily(patient);
