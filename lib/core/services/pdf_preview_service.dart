@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 @injectable
 class PdfPreviewService {

@@ -1,18 +1,18 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
-import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/core/utils/blood_observation_utils.dart';
-import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/services/patient_name_builder.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/blood_observation_utils.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/sync/domain/entities/source.dart';
+import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/services/patient_name_builder.dart';
 import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 @injectable

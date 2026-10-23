@@ -1,6 +1,6 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
-import 'package:intl/intl.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
+import 'package:intl/intl.dart';
 
 class FhirTemporalExtractor {
   static String? extractPeriod(fhir_r4.Period? period) {

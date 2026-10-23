@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/exceptions/remote_exception.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/services/network/interceptors/access_token_interceptor.dart';
 import 'package:injectable/injectable.dart';
-import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 
 enum RestMethod { get, post, put, patch, delete }
 

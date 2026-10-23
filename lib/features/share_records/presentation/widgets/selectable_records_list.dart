@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
-import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/resource_card.dart';
+import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SelectableRecordsList extends StatelessWidget {
   final List<IFhirResource> filteredRecords;

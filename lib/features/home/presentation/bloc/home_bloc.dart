@@ -1,27 +1,27 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:injectable/injectable.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:health_wallet/core/utils/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
+import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
 import 'package:health_wallet/features/home/domain/factory/patient_vitals_factory.dart';
+import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
+import 'package:health_wallet/features/home/presentation/bloc/handlers/home_data_handler.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/sync/domain/use_case/get_sources_use_case.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
-import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
-import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
-import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
-import 'package:health_wallet/features/home/presentation/bloc/handlers/home_data_handler.dart';
+import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'home_bloc.freezed.dart';
 part 'home_event.dart';

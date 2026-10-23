@@ -1,16 +1,14 @@
 import 'dart:io';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+
 import 'package:collection/collection.dart';
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
-import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
@@ -19,7 +17,10 @@ import 'package:health_wallet/features/processing/domain/entity/staged_resource.
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';

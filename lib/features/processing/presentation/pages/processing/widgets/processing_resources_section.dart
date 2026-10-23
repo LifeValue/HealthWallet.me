@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/resources_form.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ProcessingResourcesSection extends StatelessWidget {
   final ProcessingState state;

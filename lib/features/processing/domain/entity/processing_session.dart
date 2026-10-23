@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 
 part 'processing_session.freezed.dart';
 

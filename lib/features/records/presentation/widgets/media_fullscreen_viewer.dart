@@ -2,15 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:get_it/get_it.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
-import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:get_it/get_it.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:path_provider/path_provider.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 class MediaFullscreenViewer extends StatelessWidget {
   final entities.Media media;

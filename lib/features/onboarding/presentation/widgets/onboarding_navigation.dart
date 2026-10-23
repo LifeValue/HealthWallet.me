@@ -2,18 +2,18 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class OnboardingNavigation extends StatelessWidget {
   final PageController pageController;

@@ -1,3 +1,4 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -5,7 +6,6 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/procedure/procedure.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:uuid/uuid.dart';
 
 part 'mapping_procedure.freezed.dart';

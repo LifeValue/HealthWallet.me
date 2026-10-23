@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
+import 'package:health_wallet/features/processing/data/model/grammar/gbnf_grammars.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_vision_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/remaining_resources_vision_prompt.dart';
@@ -13,7 +15,6 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
-import 'package:health_wallet/features/processing/data/model/grammar/gbnf_grammars.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 

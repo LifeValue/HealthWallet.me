@@ -1,6 +1,6 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 
 class FhirPatientExtractor {

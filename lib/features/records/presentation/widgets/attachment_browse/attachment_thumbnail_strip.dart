@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/pdf_thumbnail_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
-import 'package:health_wallet/core/utils/pdf_thumbnail_utils.dart';
 
 class AttachmentThumbnailStrip extends StatelessWidget {
   final List<AttachmentBrowseEntry> records;

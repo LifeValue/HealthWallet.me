@@ -1,7 +1,7 @@
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:android_intent_plus/android_intent.dart';
 
 class BiometricAuthService {
   final LocalAuthentication _auth = LocalAuthentication();

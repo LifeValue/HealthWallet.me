@@ -4,24 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
-import 'package:health_wallet/core/constants/blood_types.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
-import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
 import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
-import 'utils/dialog_content.dart';
 import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'utils/dialog_content.dart';
 
 class PatientEditDialog extends StatefulWidget {
   final Patient patient;

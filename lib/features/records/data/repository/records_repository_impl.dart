@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:fhir_ips_export/fhir_ips_export.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/data/data_source/fhir_resource_datasource.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
@@ -15,12 +18,10 @@ import 'package:health_wallet/features/records/domain/repository/records_reposit
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
-import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/sync/domain/services/demo_data_extractor.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:injectable/injectable.dart';
-import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @Injectable(as: RecordsRepository)
 class RecordsRepositoryImpl implements RecordsRepository {

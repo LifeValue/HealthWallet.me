@@ -5,9 +5,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
@@ -18,7 +19,6 @@ import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dar
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ConnectionDialog extends StatefulWidget {
   static void openQRScanner(BuildContext context) {

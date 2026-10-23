@@ -1,20 +1,20 @@
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_google_wallet/flutter_google_wallet_plugin.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:injectable/injectable.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart'
     show ApplePassLabels;
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
 import 'package:health_wallet/features/wallet_pass/domain/service/emergency_card_builder.dart';
+import 'package:injectable/injectable.dart';
+import 'package:path_provider/path_provider.dart';
 
+part 'wallet_pass_bloc.freezed.dart';
 part 'wallet_pass_event.dart';
 part 'wallet_pass_state.dart';
-part 'wallet_pass_bloc.freezed.dart';
 
 @injectable
 class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {

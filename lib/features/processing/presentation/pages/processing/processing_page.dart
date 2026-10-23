@@ -6,12 +6,16 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
-import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
+import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
@@ -19,14 +23,10 @@ import 'package:health_wallet/features/processing/presentation/pages/processing/
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_resources_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
-import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
-import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/debug_log_sheet.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/summary_card.dart';
-import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class ProcessingPage extends StatefulWidget {

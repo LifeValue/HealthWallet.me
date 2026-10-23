@@ -4,22 +4,22 @@ import 'dart:ui';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
-import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/processing/domain/services/ai_model_download_service.dart';
+import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_token_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_vision_toggle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
 
 class AiSettingsResult {
   final int maxTokens;

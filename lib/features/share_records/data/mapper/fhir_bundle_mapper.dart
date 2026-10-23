@@ -2,13 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:uuid/uuid.dart';
-
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class FhirBundleMapper {
   static const _uuid = Uuid();

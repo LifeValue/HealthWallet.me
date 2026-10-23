@@ -6,8 +6,8 @@ import 'package:health_wallet/core/config/constants/app_constants.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:image/image.dart' as img;
 import 'package:llamadart/llamadart.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 mixin AiInferenceHandler {
   LlamaEngine? get engine;

@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
@@ -7,9 +7,9 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
 import 'package:injectable/injectable.dart';
 
+part 'attachment_browse_bloc.freezed.dart';
 part 'attachment_browse_event.dart';
 part 'attachment_browse_state.dart';
-part 'attachment_browse_bloc.freezed.dart';
 
 @injectable
 class AttachmentBrowseBloc

@@ -1,32 +1,31 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/core/services/screen_security_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
-import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
-import 'package:health_wallet/features/share_records/presentation/widgets/ephemeral_desktop_details_panel.dart';
 import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/resource_card.dart';
+import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
 import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/share_records/data/service/ephemeral_attachment_browse_service.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/ephemeral_desktop_details_panel.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/session/session_bottom_bar.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class EphemeralViewerView extends StatefulWidget {

@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
-import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';

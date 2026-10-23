@@ -1,6 +1,9 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -10,9 +13,6 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:auto_route/auto_route.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ProcessingMappingSection extends StatelessWidget {
   final ProcessingState state;

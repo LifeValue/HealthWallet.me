@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
-import 'package:health_wallet/core/services/path_resolver.dart';
 
 @lazySingleton
 class AttachmentSyncService {

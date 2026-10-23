@@ -1,14 +1,14 @@
 import 'dart:typed_data';
 
+import 'package:csslib/parser.dart' as css;
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:health_wallet/core/config/env/env.dart';
+import 'package:health_wallet/core/utils/phone_formatter.dart';
+import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:injectable/injectable.dart';
 import 'package:intl/intl.dart';
-import 'package:csslib/parser.dart' as css;
 import 'package:passkit/passkit.dart';
-import 'package:health_wallet/core/config/env/env.dart';
-import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
-import 'package:health_wallet/core/utils/phone_formatter.dart';
-import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 
 class ApplePassLabels {
   final String patient;

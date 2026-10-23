@@ -1,6 +1,6 @@
-import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
-import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir;
+import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 
 class BloodObservationUtils {
   static Observation createBloodTypeObservation({

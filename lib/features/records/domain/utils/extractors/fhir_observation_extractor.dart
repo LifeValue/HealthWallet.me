@@ -1,9 +1,9 @@
-import 'package:health_wallet/core/config/constants/region_preset.dart';
-import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
-import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
+import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
 
 class FhirObservationExtractor {
   static String? extractObservationValue(dynamic valueX) {

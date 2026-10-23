@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/processing/data/data_source/local/processing_local_data_source.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
@@ -9,12 +13,9 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
-import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 @LazySingleton(as: ProcessingRepository)

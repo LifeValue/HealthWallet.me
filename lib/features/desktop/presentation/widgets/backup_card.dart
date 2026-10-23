@@ -1,12 +1,13 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
@@ -14,7 +15,7 @@ import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_b
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
 class BackupCard extends StatefulWidget {
   final DesktopSyncState syncState;

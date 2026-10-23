@@ -5,8 +5,8 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pointycastle/export.dart';
 

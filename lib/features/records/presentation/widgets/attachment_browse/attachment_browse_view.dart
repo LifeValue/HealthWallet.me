@@ -1,12 +1,13 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_detail_panel.dart';
-import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_timeline_scrubber.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_thumbnail_strip.dart';
+import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_timeline_scrubber.dart';
 
 const double kThumbnailItemWidth = 100.0;
 const double kThumbnailGap = 16.0;

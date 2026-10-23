@@ -1,13 +1,14 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/preview/bloc/preview_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final String imagePath;

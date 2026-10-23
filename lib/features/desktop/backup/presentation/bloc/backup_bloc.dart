@@ -5,9 +5,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:injectable/injectable.dart';
-import 'package:intl/intl.dart';
-
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
@@ -15,10 +12,12 @@ import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:injectable/injectable.dart';
+import 'package:intl/intl.dart';
 
+part 'backup_bloc.freezed.dart';
 part 'backup_event.dart';
 part 'backup_state.dart';
-part 'backup_bloc.freezed.dart';
 
 @lazySingleton
 class BackupBloc extends Bloc<BackupEvent, BackupState> {

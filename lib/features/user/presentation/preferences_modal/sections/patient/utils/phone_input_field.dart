@@ -6,8 +6,9 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_input_field.dart';
-import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 import 'package:phone_numbers_parser/metadata.dart';
+import 'package:phone_numbers_parser/phone_numbers_parser.dart';
+
 import 'country_names.dart';
 import 'country_picker_dialog.dart';
 

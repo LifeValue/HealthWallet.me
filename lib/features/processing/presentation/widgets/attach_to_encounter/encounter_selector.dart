@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/create_encounter_dialog.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class EncounterSelector extends StatefulWidget {

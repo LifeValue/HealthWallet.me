@@ -1,8 +1,8 @@
-import 'package:injectable/injectable.dart';
+import 'package:health_wallet/features/home/data/services/specialty_code_registry.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
-import 'package:health_wallet/features/home/data/services/specialty_code_registry.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:injectable/injectable.dart';
 
 @LazySingleton(as: SpecialtyClassifier)
 class SpecialtyClassifierImpl implements SpecialtyClassifier {

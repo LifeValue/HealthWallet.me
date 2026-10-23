@@ -1,18 +1,18 @@
-import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
 
+part 'attach_to_encounter_bloc.freezed.dart';
 part 'attach_to_encounter_event.dart';
 part 'attach_to_encounter_state.dart';
-part 'attach_to_encounter_bloc.freezed.dart';
 
 @injectable
 class AttachToEncounterBloc

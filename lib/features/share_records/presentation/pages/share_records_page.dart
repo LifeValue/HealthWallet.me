@@ -1,12 +1,15 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/widgets/custom_app_bar.dart';
+import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
@@ -18,11 +21,7 @@ import 'package:health_wallet/features/share_records/presentation/views/session_
 import 'package:health_wallet/features/share_records/presentation/views/session_monitoring_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/transfer_views.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/exit_confirmation_dialog.dart';
-import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
-import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class ShareRecordsPage extends StatelessWidget {

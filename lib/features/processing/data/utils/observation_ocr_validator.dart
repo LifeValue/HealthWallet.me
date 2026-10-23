@@ -1,7 +1,7 @@
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_observation.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:uuid/uuid.dart';
 
 class _OcrObservation {

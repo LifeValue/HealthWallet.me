@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:drift/drift.dart';
-import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
-import 'package:injectable/injectable.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:injectable/injectable.dart';
 
 @injectable
 class DocumentReferenceService {

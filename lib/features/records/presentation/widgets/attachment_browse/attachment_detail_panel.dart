@@ -1,27 +1,28 @@
 import 'dart:io';
-import 'dart:ui';
 import 'dart:typed_data';
+import 'dart:ui';
+
+import 'package:auto_route/auto_route.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
-import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:auto_route/auto_route.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
-import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 double _panelHPad(double width) {
   if (width >= 1024) return 48.0;

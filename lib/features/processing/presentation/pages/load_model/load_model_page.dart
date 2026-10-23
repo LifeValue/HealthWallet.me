@@ -4,24 +4,24 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/core/services/device_capability_service.dart';
-import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class LoadModelPage extends StatefulWidget {

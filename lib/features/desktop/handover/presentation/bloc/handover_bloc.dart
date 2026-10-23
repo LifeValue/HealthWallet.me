@@ -2,14 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:injectable/injectable.dart';
-
 import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
+import 'package:injectable/injectable.dart';
 
+part 'handover_bloc.freezed.dart';
 part 'handover_event.dart';
 part 'handover_state.dart';
-part 'handover_bloc.freezed.dart';
 
 @lazySingleton
 class HandoverBloc extends Bloc<HandoverEvent, HandoverState> {

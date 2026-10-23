@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
-import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_handler.dart';
+import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:injectable/injectable.dart';
 import 'package:llamadart/llamadart.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class AiInferenceDataSource {

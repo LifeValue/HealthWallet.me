@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
@@ -11,16 +12,15 @@ import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 
+part 'record_attachments_bloc.freezed.dart';
 part 'record_attachments_event.dart';
 part 'record_attachments_state.dart';
-part 'record_attachments_bloc.freezed.dart';
 
 @injectable
 class RecordAttachmentsBloc

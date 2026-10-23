@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:collection/collection.dart';
-import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
-import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 class HandoverSendDialog extends StatefulWidget {
   final List<String> filePaths;

@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -19,16 +19,17 @@ import 'package:health_wallet/features/processing/domain/services/document_refer
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/processing_handler.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/session_handler.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-part 'processing_state.dart';
-part 'processing_event.dart';
 part 'processing_bloc.freezed.dart';
+part 'processing_event.dart';
+part 'processing_state.dart';
 
 @LazySingleton()
 class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>

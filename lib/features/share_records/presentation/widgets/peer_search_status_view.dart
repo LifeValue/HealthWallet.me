@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PeerSearchStatusView extends StatelessWidget {
   final bool hasTimedOut;

@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_active_filters_bar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_toolbar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
-import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
 
 class RecordsAttachmentsBody extends StatefulWidget {
   final RecordsState appBarState;

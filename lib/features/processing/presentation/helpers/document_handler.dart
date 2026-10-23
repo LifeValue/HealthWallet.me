@@ -1,20 +1,20 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
-import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:auto_route/auto_route.dart';
 
 mixin DocumentHandler<T extends StatefulWidget> on State<T> {
   Future<void> navigateToFhirMapper(

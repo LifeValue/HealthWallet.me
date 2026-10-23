@@ -1,15 +1,15 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:health_wallet/features/onboarding/presentation/models/onboarding_screen_data.dart';
+import 'package:health_wallet/features/onboarding/presentation/widgets/country_flags_widget.dart';
 import 'package:health_wallet/features/onboarding/presentation/widgets/onboarding_navigation.dart';
 import 'package:health_wallet/features/onboarding/presentation/widgets/onboarding_screen.dart';
-import 'package:health_wallet/features/onboarding/presentation/widgets/country_flags_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class OnboardingPage extends StatefulWidget {

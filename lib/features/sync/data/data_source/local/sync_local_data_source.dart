@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart' as db;
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart'
     as domain;
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

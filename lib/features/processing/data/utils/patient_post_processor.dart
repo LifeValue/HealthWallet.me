@@ -1,7 +1,7 @@
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 
 class PatientPostProcessor {
   static String get _ts => DateTime.now().toIso8601String().substring(11, 23);

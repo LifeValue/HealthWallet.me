@@ -4,10 +4,10 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift_dev/api/migrations_native.dart';
-import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'generated/schema.dart';
+import 'package:health_wallet/core/data/local/app_database.dart';
 
+import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
 

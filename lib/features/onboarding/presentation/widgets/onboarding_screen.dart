@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -9,7 +10,6 @@ import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_b
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/widgets/biometrics_setup_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class OnboardingScreen extends StatelessWidget {
   final String title;

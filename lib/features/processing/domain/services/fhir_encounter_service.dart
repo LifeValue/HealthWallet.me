@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+
 import 'package:drift/drift.dart';
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 
 class BiometricToggleButton extends StatelessWidget {

@@ -1,21 +1,22 @@
 import 'dart:convert';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
-import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_loading_widget.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @RoutePage()

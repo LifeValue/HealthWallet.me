@@ -8,7 +8,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
-import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
@@ -16,10 +15,11 @@ import 'package:health_wallet/features/desktop/communication/data/services/tcp_s
 import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/transport/mpc_transport.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/transport/transport_selector.dart';
+import 'package:health_wallet/features/desktop/handover/data/services/handover_service.dart';
 
+part 'communication_bloc.freezed.dart';
 part 'communication_event.dart';
 part 'communication_state.dart';
-part 'communication_bloc.freezed.dart';
 
 class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   final AppPlatform _platform;

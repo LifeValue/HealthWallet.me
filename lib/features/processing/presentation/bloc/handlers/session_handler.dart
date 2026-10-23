@@ -1,8 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
@@ -11,6 +10,7 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';

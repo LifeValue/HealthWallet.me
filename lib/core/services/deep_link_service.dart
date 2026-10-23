@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:injectable/injectable.dart';
+
 import 'package:app_links/app_links.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/external_files_service.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
+import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 @lazySingleton
 class DeepLinkService {

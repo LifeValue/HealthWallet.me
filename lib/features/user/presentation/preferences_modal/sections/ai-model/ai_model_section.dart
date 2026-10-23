@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -17,7 +18,6 @@ import 'package:health_wallet/features/processing/presentation/widgets/custom_pr
 import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class AiModelSection extends StatefulWidget {
   const AiModelSection({super.key});

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -7,38 +8,36 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
+import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
-import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
-
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/records/presentation/pages/records_attachments_body.dart';
+import 'package:health_wallet/features/records/presentation/pages/records_list_body.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_active_filters_bar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_toolbar.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-
-import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
-import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
-import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
-import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
-import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/features/records/presentation/pages/records_list_body.dart';
-import 'package:health_wallet/features/records/presentation/pages/records_attachments_body.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
+import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @RoutePage()
 class RecordsPage extends StatelessWidget {

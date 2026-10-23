@@ -1,9 +1,10 @@
 import 'dart:io';
+
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path/path.dart' as p;
-import 'package:health_wallet/core/services/path_resolver.dart';
 
 @injectable
 class PdfGenerationService {

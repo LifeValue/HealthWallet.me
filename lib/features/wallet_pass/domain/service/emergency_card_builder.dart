@@ -1,8 +1,8 @@
-import 'package:injectable/injectable.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:injectable/injectable.dart';
 
 @injectable
 class EmergencyCardBuilder {

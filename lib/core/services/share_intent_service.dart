@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:injectable/injectable.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/external_files_service.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 @lazySingleton
 class ShareIntentService {

@@ -5,29 +5,29 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
-import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
-import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
-import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
+import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
-import 'package:health_wallet/features/notifications/domain/entities/notification.dart'
-    as notification_entity;
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/pages/handover_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
+import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart'
+    as notification_entity;
+import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 
 @RoutePage()
 class DashboardPage extends StatefulWidget {

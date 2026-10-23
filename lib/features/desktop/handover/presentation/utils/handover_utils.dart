@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -9,7 +10,6 @@ import 'package:health_wallet/features/desktop/handover/presentation/widgets/han
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class HandoverUtils {
   static Future<void> initiateHandover(

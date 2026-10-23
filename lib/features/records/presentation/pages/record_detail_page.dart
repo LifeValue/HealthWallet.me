@@ -1,28 +1,28 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/presentation/widgets/specialty_picker.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
-import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
-import 'package:health_wallet/core/services/pdf_preview_service.dart';
-import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class RecordDetailsPage extends StatefulWidget {
