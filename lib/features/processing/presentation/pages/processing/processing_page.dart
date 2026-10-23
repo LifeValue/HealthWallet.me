@@ -198,7 +198,6 @@ class _ProcessingPageState extends State<ProcessingPage> {
               displayedSession.origin == ProcessingOrigin.handover;
           final scanBloc = context.read<ProcessingBloc>();
           final navController = getIt<PageViewNavigationController>();
-          final router = context.router;
           final isDesktop = getIt<AppPlatform>().isDesktop;
           final dialogResult = await AppSimpleDialog.showConfirmation(
             context: context,

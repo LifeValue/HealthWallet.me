@@ -67,7 +67,6 @@ class DesktopBackupReceiver {
   }
 
   Future<void> _handleChunk(Map<String, dynamic> payload) async {
-    final seq = payload['seq'] as int;
     final total = payload['total'] as int;
     final data = payload['data'] as String;
 

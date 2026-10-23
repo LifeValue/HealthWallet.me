@@ -48,10 +48,6 @@ class ProcessingResourcesSection extends StatelessWidget {
       return const SizedBox();
     }
 
-    final isPatientMatched =
-        displayedSession.patient.mode == ImportMode.linkExisting &&
-            displayedSession.patient.existing != null;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

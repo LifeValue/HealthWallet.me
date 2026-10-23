@@ -36,7 +36,6 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
   final _nameController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String _selectedSpecialty = '';
-  final _formKey = GlobalKey<FormState>();
   String? _nameError;
 
   @override

@@ -150,8 +150,6 @@ class _AiModelSectionState extends State<AiModelSection> {
   }
 
   Widget _buildModelSetupContent(BuildContext context, LoadModelState state) {
-    final hasDownloadedModel = state.downloadedVariants.values.any((v) => v);
-
     return Column(
       children: [
         Row(

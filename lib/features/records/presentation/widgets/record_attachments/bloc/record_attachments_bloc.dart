@@ -59,8 +59,6 @@ class RecordAttachmentsBloc
         return;
       }
 
-      final encounterId = _extractEncounterId(event.resource);
-
       final isEncounter = event.resource.fhirType == FhirType.Encounter;
 
       final List<IFhirResource> relatedDocuments;

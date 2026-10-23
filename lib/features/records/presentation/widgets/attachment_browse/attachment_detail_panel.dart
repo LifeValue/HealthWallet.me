@@ -45,12 +45,10 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   String _currentFileName = '';
   int _currentPage = 0;
   bool _startFromEnd = false;
-  String _lastRecordId = '';
 
   @override
   void initState() {
     super.initState();
-    _lastRecordId = widget.detail.record.id;
     _currentFileName = widget.detail.attachments.isNotEmpty
         ? widget.detail.attachments.first.title
         : '';
@@ -64,7 +62,6 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
         oldWidget.detail.attachments.length != widget.detail.attachments.length;
     if (idChanged) {
       _startFromEnd = false;
-      _lastRecordId = widget.detail.record.id;
     }
     if (idChanged || attachmentsChanged) {
       _currentFileName = widget.detail.attachments.isNotEmpty
@@ -364,7 +361,6 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   void _notifyFileName() {
     if (_pages.isNotEmpty) {
       widget.onFileNameChanged?.call(_pages[_currentPage].title);
-      final currentResourceId = _pages[_currentPage].resource.resourceId;
       int fileIndex = 0;
       String? lastResourceId;
       for (int i = 0; i <= _currentPage && i < _pages.length; i++) {

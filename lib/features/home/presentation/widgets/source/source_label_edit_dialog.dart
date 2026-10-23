@@ -98,7 +98,6 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
     final textColor = context.primaryTextColor;
-    final iconColor = context.secondaryTextColor;
 
     return Dialog(
       backgroundColor: Colors.transparent,
