@@ -1,5 +1,6 @@
 # Claude Code
 .claude/
+.mcp.json
 
 # BMad install (each developer runs the BMad installer; planning output in _bmad-output/ stays tracked)
 _bmad/
