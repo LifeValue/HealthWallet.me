@@ -1,0 +1,7 @@
+# Bulk formatting commits that git blame should skip.
+# Enable once per clone with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format all Dart sources with dart format
+32931e7688bf142401d3a44e267a8a7a914eb50c
+# style: format YAML, JSON, ARB and Markdown files with Prettier
+620fc676e0fc4da62ec0282c643bbe2d1b327986
