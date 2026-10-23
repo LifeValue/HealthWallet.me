@@ -171,8 +171,8 @@ abstract class Goal with _$Goal implements IFhirResource {
 
         // Build target display
         final targetDisplay = [
-          if (measure != null) measure,
-          if (targetValue != null) targetValue,
+          ?measure,
+          ?targetValue,
           if (dueDate != null) 'by $dueDate',
         ].join(': ');
 

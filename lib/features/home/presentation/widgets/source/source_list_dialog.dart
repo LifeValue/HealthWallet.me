@@ -442,7 +442,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
                     Expanded(
                       child: ValueListenableBuilder<bool>(
                         valueListenable: isConfirmed,
-                        builder: (_, confirmed, __) {
+                        builder: (_, confirmed, _) {
                           return ElevatedButton(
                             onPressed: confirmed
                                 ? () {

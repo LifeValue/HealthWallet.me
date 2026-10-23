@@ -489,7 +489,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
                   fit: BoxFit.contain,
                   width: double.infinity,
                   height: double.infinity,
-                  errorBuilder: (_, __, ___) => Center(
+                  errorBuilder: (_, _, _) => Center(
                     child: Icon(
                       Icons.broken_image,
                       size: 48,

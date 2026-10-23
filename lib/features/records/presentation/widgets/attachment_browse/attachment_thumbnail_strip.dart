@@ -37,7 +37,7 @@ class AttachmentThumbnailStrip extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: kThumbnailPadding),
       itemCount: records.length,
-      separatorBuilder: (_, __) => const SizedBox(width: kThumbnailGap),
+      separatorBuilder: (_, _) => const SizedBox(width: kThumbnailGap),
       itemBuilder: (context, index) {
         final entry = records[index];
         final isCurrent = index == selectedIndex;
@@ -153,7 +153,7 @@ class _ThumbnailContentState extends State<_ThumbnailContent> {
         fit: BoxFit.cover,
         width: 100,
         height: 100,
-        errorBuilder: (_, __, ___) {
+        errorBuilder: (_, _, _) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _onImageError());
           return _TitleFallback(title: widget.entry.record.title);
         },

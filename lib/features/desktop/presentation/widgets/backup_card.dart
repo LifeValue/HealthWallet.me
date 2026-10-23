@@ -351,7 +351,7 @@ class _BackupList extends StatelessWidget {
       child: ListView.separated(
         shrinkWrap: true,
         itemCount: backups.length,
-        separatorBuilder: (_, __) => Divider(
+        separatorBuilder: (_, _) => Divider(
           height: 1,
           color: context.theme.dividerColor,
         ),
@@ -676,7 +676,7 @@ class _BackupLocationRow extends StatelessWidget {
     String? result;
     if (Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
-        if (initialPath != null) 'initialDirectory': initialPath,
+        'initialDirectory': ?initialPath,
         'title': context.l10n.desktopChooseBackupLocation,
       });
     } else {

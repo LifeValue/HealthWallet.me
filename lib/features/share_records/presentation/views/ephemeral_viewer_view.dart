@@ -168,7 +168,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
         return RecordsFilterBottomSheet(
           activeFilters: _filterTypes,
           availableFilters: availableTypes,
-          onApply: (filters, _, __) {
+          onApply: (filters, _, _) {
             setState(() => _filterTypes = filters);
             if (_viewMode == RecordsViewMode.attachments) {
               _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(

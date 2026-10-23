@@ -312,7 +312,7 @@ class _ReorderGrid extends StatelessWidget {
         opaque: false,
         barrierColor: Colors.black87,
         barrierDismissible: true,
-        pageBuilder: (_, __, ___) => _QuickPreviewOverlay(
+        pageBuilder: (_, _, _) => _QuickPreviewOverlay(
           path: path,
           index: index,
           total: images.length,
@@ -375,7 +375,7 @@ class _GridTile extends StatelessWidget {
                 File(path),
                 fit: BoxFit.cover,
                 width: double.infinity,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: Colors.grey[800],
                   child: const Icon(Icons.image,
                       color: Colors.white38, size: 32),
@@ -544,7 +544,7 @@ class _QuickPreviewOverlay extends StatelessWidget {
               child: Image.file(
                 File(path),
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
+                errorBuilder: (_, _, _) => const Icon(
                   Icons.error_outline,
                   color: Colors.white,
                   size: 64,

@@ -64,7 +64,7 @@ class HandoverSenderService {
       'session_id': sessionId,
       'file_count': filePaths.length,
       'total_bytes': totalBytes,
-      if (phase1Data != null) 'phase1_data': phase1Data,
+      'phase1_data': ?phase1Data,
     });
 
     final acceptCompleter = Completer<void>();

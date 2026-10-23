@@ -281,8 +281,8 @@ class HandoverService {
       final resultPayload = {
         'session_id': sessionId,
         'resources': resources,
-        if (patientJson != null) 'patient': patientJson,
-        if (encounterJson != null) 'encounter': encounterJson,
+        'patient': ?patientJson,
+        'encounter': ?encounterJson,
       };
 
       _pendingResults[sessionId] = (type: 'handover.result', payload: resultPayload);

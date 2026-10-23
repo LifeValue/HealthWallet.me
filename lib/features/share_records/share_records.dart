@@ -1,4 +1,4 @@
-library share_records;
+library;
 
 export 'domain/entity/entity.dart';
 

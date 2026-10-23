@@ -561,7 +561,7 @@ class _BackupLocationRow extends StatelessWidget {
     String? result;
     if (Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
-        if (initialPath != null) 'initialDirectory': initialPath,
+        'initialDirectory': ?initialPath,
         'title': 'Choose Backup Location',
       });
     } else {
