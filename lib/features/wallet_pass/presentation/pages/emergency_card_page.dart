@@ -207,44 +207,6 @@ class EmergencyCardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Insets.smallNormal),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(Insets.smallNormal),
-        decoration: BoxDecoration(
-          border: Border.all(color: context.theme.dividerColor),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: context.colorScheme.onSurface.withValues(alpha: 0.6)),
-            const SizedBox(width: Insets.smallNormal),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(value, style: AppTextStyle.bodyMedium),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmergencyContact(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: Insets.smallNormal),

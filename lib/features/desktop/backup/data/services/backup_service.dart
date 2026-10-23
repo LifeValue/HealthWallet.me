@@ -191,17 +191,5 @@ class BackupService {
     if (await metaFile.exists()) await metaFile.delete();
   }
 
-  Future<void> _deleteWithRetry(File file, {int attempts = 5}) async {
-    for (var i = 0; i < attempts; i++) {
-      try {
-        await file.delete();
-        return;
-      } on FileSystemException {
-        if (i == attempts - 1) rethrow;
-        await Future<void>.delayed(Duration(milliseconds: 200 * (i + 1)));
-      }
-    }
-  }
-
   String _metadataPathFor(String dbPath) => '$dbPath.meta.json';
 }

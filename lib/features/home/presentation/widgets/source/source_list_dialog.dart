@@ -149,7 +149,6 @@ class _SourceListDialogState extends State<SourceListDialog> {
                   }
                   final source = item as Source;
                   final isSelected = source.id == widget.selectedSource;
-                  final isWallet = source.id.startsWith('wallet-');
                   final isAll = source.id == 'All';
 
                   return InkWell(
@@ -261,34 +260,6 @@ class _SourceListDialogState extends State<SourceListDialog> {
         ),
       ),
     );
-  }
-
-  List<Source> _getSortedSources() {
-    final sources = List<Source>.from(widget.sources);
-
-    final allSource = sources.where((s) => s.id == 'All').toList();
-
-    final walletSource = sources
-        .where((s) =>
-            s.platformType == 'wallet' &&
-            s.id != 'All')
-        .toList();
-
-    final walletIds = walletSource.map((s) => s.id).toSet();
-    final otherSources = sources
-        .where((s) =>
-            s.id != 'All' &&
-            !walletIds.contains(s.id) &&
-            s.platformType != 'wallet')
-        .toList();
-
-    otherSources.sort((a, b) {
-      final nameA = _getSourceDisplayName(context, a).toLowerCase();
-      final nameB = _getSourceDisplayName(context, b).toLowerCase();
-      return nameA.compareTo(nameB);
-    });
-
-    return [...allSource, ...walletSource, ...otherSources];
   }
 
   List<dynamic> _getSectionedItems() {
