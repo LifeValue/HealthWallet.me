@@ -182,7 +182,8 @@ class _SyncPageState extends State<SyncPage> {
           Future.delayed(const Duration(milliseconds: 400), () {
             try {
               context.read<SyncBloc>().add(const TriggerTutorial());
-            } catch (e) {
+            } catch (_) {
+              // The page was closed before the delay ended; skip the tutorial.
             }
           });
         }

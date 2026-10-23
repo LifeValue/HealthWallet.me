@@ -418,7 +418,9 @@ class RecordAttachmentsBloc
             }
           }
         }
-      } catch (e) {}
+      } catch (_) {
+        // Best-effort cleanup; a leftover file is harmless.
+      }
 
       add(RecordAttachmentsInitialised(resource: state.resource));
     } catch (e) {

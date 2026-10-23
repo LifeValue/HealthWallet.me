@@ -109,7 +109,9 @@ class AiModelDownloadService with WidgetsBindingObserver {
         ));
         return;
       }
-    } catch (e) {}
+    } catch (_) {
+      // The existence check failed; fall through and download the model.
+    }
 
     await _prefs.setBool(_downloadInProgressKey, true);
 
@@ -182,7 +184,9 @@ class AiModelDownloadService with WidgetsBindingObserver {
         ));
         return;
       }
-    } catch (e) {}
+    } catch (_) {
+      // The existence check failed; fall through and download the model.
+    }
 
     await _prefs.setBool(_downloadInProgressKey, true);
 
@@ -298,7 +302,9 @@ class AiModelDownloadService with WidgetsBindingObserver {
         ));
         return;
       }
-    } catch (e) {}
+    } catch (_) {
+      // The existence check failed; fall through and download the model.
+    }
 
     _updateState(AiModelDownloadState(
       status: AiModelDownloadStatus.downloading,

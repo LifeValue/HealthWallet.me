@@ -224,7 +224,9 @@ class ProcessingRepositoryImpl extends Object
             if (await file.exists()) {
               await file.delete();
             }
-          } catch (e) {}
+          } catch (_) {
+            // Best-effort cleanup; a leftover temp file is harmless.
+          }
         }
       }
 
@@ -235,7 +237,9 @@ class ProcessingRepositoryImpl extends Object
             if (await file.exists()) {
               await file.delete();
             }
-          } catch (e) {}
+          } catch (_) {
+            // Best-effort cleanup; a leftover temp file is harmless.
+          }
         }
       }
     } catch (e) {

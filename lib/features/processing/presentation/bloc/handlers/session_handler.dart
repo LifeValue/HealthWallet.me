@@ -171,7 +171,8 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         try {
           await processingRepository.cancelGeneration();
           await processingRepository.waitForStreamCompletion();
-        } catch (e) {
+        } catch (_) {
+          // Generation may already have stopped; nothing left to cancel.
         }
       }
 

@@ -15,7 +15,9 @@ class FhirCommonExtractor {
     try {
       final text = codeableConcept.text?.toString();
       if (text != null && text.isNotEmpty) return text;
-    } catch (e) {}
+    } catch (_) {
+      // Malformed text; try the coding display next.
+    }
 
     try {
       final coding = codeableConcept.coding;
@@ -23,7 +25,9 @@ class FhirCommonExtractor {
         final display = coding!.first.display?.toString();
         if (display != null && display.isNotEmpty) return display;
       }
-    } catch (e) {}
+    } catch (_) {
+      // Malformed coding; there is no display text to return.
+    }
 
     return null;
   }
