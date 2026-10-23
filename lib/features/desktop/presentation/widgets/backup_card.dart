@@ -696,6 +696,7 @@ class _BackupLocationRow extends StatelessWidget {
     final initialPath = path != null && await Directory(path!).exists()
         ? path!
         : null;
+    if (!context.mounted) return;
     await pickAndSetDirectory(context, initialPath: initialPath);
   }
 }

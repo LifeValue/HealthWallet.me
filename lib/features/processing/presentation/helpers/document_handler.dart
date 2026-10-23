@@ -127,6 +127,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     try {
       final homeState = context.read<HomeBloc>().state;
       final patientState = context.read<PatientBloc>().state;
+      final attachedDocumentsTitle = context.l10n.attachedDocuments;
 
       final selectedPatient = patientState.patients.isNotEmpty
           ? patientState.patients.firstWhere(
@@ -160,7 +161,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         patientId: patientId,
         encounter: encounter,
         sourceId: walletSource.id,
-        title: context.l10n.attachedDocuments,
+        title: attachedDocumentsTitle,
       );
 
       if (context.mounted) {

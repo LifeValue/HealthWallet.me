@@ -302,6 +302,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
     if (_isLoading || _currentPatient == null) return;
 
     setState(() => _isLoading = true);
+    final l10n = context.l10n;
 
     try {
       if (_countryCode != null) {
@@ -314,7 +315,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
         newGender: _selectedGender,
         newBloodType: _selectedBloodType,
         newIdentifierValue: _selectedIdentifier,
-        l10n: context.l10n,
+        l10n: l10n,
       );
       final hasNameChanges =
           _extractGiven(_currentPatient!) != _givenController.text ||
@@ -355,7 +356,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
       final nameChanged = givenChanged || familyChanged;
       final birthDateChanged = currentBirthDate != _selectedBirthDate;
       final genderChanged =
-          GenderMapper.mapFhirGenderToDisplay(currentGender, context.l10n) !=
+          GenderMapper.mapFhirGenderToDisplay(currentGender, l10n) !=
               _selectedGender;
       final bloodTypeChanged = currentBloodType != _selectedBloodType;
       final identifierChanged = currentIdentifier != currentIdentifierValue;

@@ -165,6 +165,7 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
       }
       return;
     }
+    if (!context.mounted) return;
 
     final ext = extension(filePath).toLowerCase();
     final isImage = contentType?.startsWith('image/') == true ||

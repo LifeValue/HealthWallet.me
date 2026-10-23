@@ -155,7 +155,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
       }
     }
 
-    if (!mounted) return;
+    if (!mounted || !context.mounted) return;
     context.read<UserBloc>().add(UserReceiveModeToggled(!isEnabled));
   }
 

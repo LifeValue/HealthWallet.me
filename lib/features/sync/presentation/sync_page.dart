@@ -154,11 +154,14 @@ class _SyncPageState extends State<SyncPage> {
     final pairingStorage = getIt<PairingStorageService>();
 
     await pairingStorage.savePairing(pairing);
-    context.read<SyncBloc>().add(const SyncCancel());
+    if (context.mounted) {
+      context.read<SyncBloc>().add(const SyncCancel());
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.pairedWithDevice(pairing.deviceName))),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(context.l10n.pairedWithDevice(pairing.deviceName))),
+      );
+    }
 
     final commBloc = getIt<CommunicationBloc>();
     commBloc.add(CommunicationPairingCompleted(pairing: pairing));
@@ -167,6 +170,7 @@ class _SyncPageState extends State<SyncPage> {
   Future<void> _handleSyncCompletion(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final onboardingShown = prefs.getBool('onboarding_shown') ?? false;
+    if (!context.mounted) return;
 
     await AppSimpleDialog.showSuccess(
       context: context,
@@ -180,6 +184,7 @@ class _SyncPageState extends State<SyncPage> {
 
         if (!onboardingShown) {
           Future.delayed(const Duration(milliseconds: 400), () {
+            if (!context.mounted) return;
             try {
               context.read<SyncBloc>().add(const TriggerTutorial());
             } catch (_) {

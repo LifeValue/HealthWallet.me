@@ -90,7 +90,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
           : const Duration(milliseconds: 200);
 
       Future.delayed(delay, () {
-        if (!mounted) {
+        if (!mounted || !context.mounted) {
           return;
         }
 
@@ -98,14 +98,14 @@ class _FocusModeViewState extends State<_FocusModeView> {
           final modalRoute = ModalRoute.of(context);
 
           if (modalRoute?.isCurrent == true || modalRoute?.isActive == true) {
-            if (mounted && context.router.canPop()) {
+            if (context.router.canPop()) {
               context.router.pop();
             } else if (Navigator.of(context, rootNavigator: false).canPop()) {
               Navigator.of(context, rootNavigator: false).pop();
             }
           }
         } catch (e) {
-          if (mounted && context.router.canPop()) {
+          if (context.mounted && context.router.canPop()) {
             context.router.pop();
           }
         }

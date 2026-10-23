@@ -59,11 +59,13 @@ class PdfPreviewService {
   ) async {
     try {
       final result = await OpenFile.open(filePath);
+      if (!context.mounted) return;
 
       if (result.type != ResultType.done) {
         _showWarningSnackBar(context, 'Could not open PDF: ${result.message}');
       }
     } catch (e) {
+      if (!context.mounted) return;
       _showErrorSnackBar(context, 'Error opening PDF: $e');
     }
   }
@@ -115,17 +117,18 @@ class PdfPreviewService {
         filePath = await _extractMediaPath(rawResource, resource.displayTitle);
       }
 
+      if (!context.mounted) return;
       if (filePath == null) {
         _showErrorSnackBar(context, 'No file path found');
         return;
       }
 
-      if (!await File(filePath).exists()) {
+      final exists = await File(filePath).exists();
+      if (!context.mounted) return;
+      if (!exists) {
         _showErrorSnackBar(context, 'File not available on this device');
         return;
       }
-
-      if (!context.mounted) return;
 
       final extension = path.extension(filePath).toLowerCase();
       final isImage = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}

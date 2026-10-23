@@ -434,7 +434,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     final repo = _appRecordsBloc?.recordsRepository ?? getIt<RecordsRepository>();
     await repo.setSpecialtyOverride(widget.resource.id, selected?.name);
 
-    if (mounted) {
+    if (mounted && outerContext.mounted) {
       setState(() {
         _currentSpecialty = selected;
       });

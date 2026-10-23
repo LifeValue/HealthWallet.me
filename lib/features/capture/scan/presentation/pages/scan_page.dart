@@ -103,11 +103,10 @@ class _ScanViewState extends State<ScanView>
 
   Future<void> _handleCaptureButtonPressed(BuildContext context) async {
     final cameraStatus = await Permission.camera.request();
+    if (!context.mounted) return;
 
     if (cameraStatus.isGranted) {
-      if (context.mounted) {
-        context.read<ProcessingBloc>().add(const CaptureButtonPressed());
-      }
+      context.read<ProcessingBloc>().add(const CaptureButtonPressed());
     } else if (cameraStatus.isPermanentlyDenied) {
       DialogHelper.showPermissionDeniedDialog(context);
     } else {
@@ -381,11 +380,10 @@ class _ScanViewState extends State<ScanView>
 
   Future<void> _handleDirectScan(BuildContext context) async {
     final cameraStatus = await Permission.camera.request();
+    if (!context.mounted) return;
 
     if (cameraStatus.isGranted) {
-      if (context.mounted) {
-        context.read<ProcessingBloc>().add(const CaptureButtonPressed());
-      }
+      context.read<ProcessingBloc>().add(const CaptureButtonPressed());
     } else if (cameraStatus.isPermanentlyDenied) {
       DialogHelper.showPermissionDeniedDialog(context);
     } else {

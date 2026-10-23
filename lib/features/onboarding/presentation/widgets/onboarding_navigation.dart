@@ -48,6 +48,7 @@ class OnboardingNavigation extends StatelessWidget {
               if (isLastPage) {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setBool('hasSeenOnboarding', true);
+                if (!context.mounted) return;
                 unawaited(context.appRouter.replace(const DashboardRoute()));
               } else {
                 context.read<OnboardingBloc>().add(const OnboardingNextPage());

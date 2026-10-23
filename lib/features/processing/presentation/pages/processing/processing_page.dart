@@ -128,7 +128,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
       ),
     );
 
-    if (result == null || !context.mounted) return;
+    if (result == null || !mounted) return;
 
     final (patient, encounter) = result;
 
@@ -163,6 +163,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
       await prefs.setInt(SharedPrefsConstants.aiGpuLayers, result.gpuLayers);
       await prefs.setInt(SharedPrefsConstants.aiThreads, result.threads);
       await prefs.setInt(SharedPrefsConstants.aiContextSize, result.contextSize);
+      if (!mounted) return;
 
       final bloc = context.read<ProcessingBloc>();
       bloc.add(VisionToggled(useVision: result.useVision));

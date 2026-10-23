@@ -440,10 +440,10 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
       final walletPatient = await _waitForWalletPatient(patientBloc);
 
-      if (!mounted) return;
+      if (!context.mounted) return;
 
       if (walletPatient != null) {
-        if (mounted) {
+        if (context.mounted) {
           PatientSetupDialog.show(
             context,
             walletPatient,

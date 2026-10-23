@@ -101,6 +101,7 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
       }
       return;
     }
+    if (!mounted) return;
 
     final countryCode = scanCountryCode ?? context.read<UserBloc>().state.countryCode;
     final result = IdCardExtractor.extract(ocrText, countryCode);
