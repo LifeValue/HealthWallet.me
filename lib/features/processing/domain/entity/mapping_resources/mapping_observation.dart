@@ -23,7 +23,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
 
   factory MappingObservation.fromJson(Map<String, dynamic> json) {
     return MappingObservation(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       observationName: MappedProperty.fromJson(json['observationName']),
       value: MappedProperty.fromJson(json['value']),
       unit: MappedProperty.fromJson(json['unit']),

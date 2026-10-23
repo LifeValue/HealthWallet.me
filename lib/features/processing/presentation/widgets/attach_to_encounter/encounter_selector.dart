@@ -209,7 +209,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
     String title = '';
 
     if (encounter is MappingEncounter) {
-      title = "${context.l10n.newEncounterPrefix}: ${encounter.encounterType.value}";
+      title = '${context.l10n.newEncounterPrefix}: ${encounter.encounterType.value}';
     } else if (encounter is Encounter) {
       title = encounter.displayTitle;
     } else {

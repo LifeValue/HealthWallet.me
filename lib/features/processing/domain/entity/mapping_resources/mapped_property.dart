@@ -22,8 +22,8 @@ abstract class MappedProperty with _$MappedProperty {
     }
 
     return MappedProperty(
-      value: json["value"] ?? '',
-      confidenceLevel: json["confidenceLevel"] ?? 0.0,
+      value: json['value'] ?? '',
+      confidenceLevel: json['confidenceLevel'] ?? 0.0,
     );
   }
 
@@ -170,9 +170,9 @@ enum ConfidenceLevel {
       };
 
   String getString() => switch (this) {
-        ConfidenceLevel.high => "",
-        ConfidenceLevel.medium => "Medium confidence",
-        ConfidenceLevel.low => "Low confidence",
+        ConfidenceLevel.high => '',
+        ConfidenceLevel.medium => 'Medium confidence',
+        ConfidenceLevel.low => 'Low confidence',
       };
 
   SvgGenImage? getIcon() => switch (this) {

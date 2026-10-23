@@ -127,7 +127,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         hasSyncedData: true,
         syncDialogShown: true,
         errorMessage: null,
-        successMessage: "Data was succesfully synced!",
+        successMessage: 'Data was succesfully synced!',
       ));
 
       add(const DataHandled(

@@ -25,7 +25,7 @@ abstract class MappingMedicationStatement
 
   factory MappingMedicationStatement.fromJson(Map<String, dynamic> json) {
     return MappingMedicationStatement(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       medicationName: MappedProperty.fromJson(json['medicationName']),
       dosage: MappedProperty.fromJson(json['dosage']),
       reason: MappedProperty.fromJson(json['reason']),

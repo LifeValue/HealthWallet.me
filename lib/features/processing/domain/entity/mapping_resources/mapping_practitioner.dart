@@ -25,7 +25,7 @@ abstract class MappingPractitioner
 
   factory MappingPractitioner.fromJson(Map<String, dynamic> json) {
     return MappingPractitioner(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       practitionerName: MappedProperty.fromJson(json['practitionerName']),
       specialty: MappedProperty.fromJson(json['specialty']),
       identifier: MappedProperty.fromJson(json['identifier']),

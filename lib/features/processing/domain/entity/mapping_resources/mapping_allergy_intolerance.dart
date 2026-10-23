@@ -24,7 +24,7 @@ abstract class MappingAllergyIntolerance
 
   factory MappingAllergyIntolerance.fromJson(Map<String, dynamic> json) {
     return MappingAllergyIntolerance(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       substance: MappedProperty.fromJson(json['substance']),
       manifestation: MappedProperty.fromJson(json['manifestation']),
       category: MappedProperty.fromJson(json['category']),

@@ -26,7 +26,7 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
   factory MappingEncounter.fromJson(Map<String, dynamic> json) {
     final rawPeriodStart = MappedProperty.fromJson(json['periodStart']);
     return MappingEncounter(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       encounterType: MappedProperty.fromJson(json['encounterType']),
       periodStart: rawPeriodStart.copyWith(
         value: MappingResource.normalizeDateValue(rawPeriodStart.value),
@@ -110,7 +110,7 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
               )
             : null,
         status: fhir_r4.EncounterStatus.unknown,
-        class_: fhir_r4.Coding(code: fhir_r4.FhirCode("AMB")),
+        class_: fhir_r4.Coding(code: fhir_r4.FhirCode('AMB')),
         subject: fhir_r4.Reference(
             reference: fhir_r4.FhirString('Patient/$subjectId')));
 

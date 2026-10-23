@@ -391,7 +391,7 @@ class _ResourceCardState extends State<ResourceCard> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Text(
-                              "${resource.fhirType.display}: ${resource.title}",
+                              '${resource.fhirType.display}: ${resource.title}',
                               style: AppTextStyle.bodySmall.copyWith(
                                 color: context.colorScheme.onSurface,
                               ),
@@ -494,7 +494,7 @@ class _ResourceCardState extends State<ResourceCard> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: Text(
-                            "${resource.fhirType.display}: ${resource.title}",
+                            '${resource.fhirType.display}: ${resource.title}',
                             style: AppTextStyle.bodySmall.copyWith(
                               color: context.colorScheme.onSurface,
                             ),

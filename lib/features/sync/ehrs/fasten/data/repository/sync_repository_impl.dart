@@ -108,8 +108,8 @@ class SyncRepositoryImpl implements SyncRepository {
 
   @override
   void setBaseUrl(String baseUrl) {
-    if (!baseUrl.endsWith("/")) {
-      baseUrl += "/";
+    if (!baseUrl.endsWith('/')) {
+      baseUrl += '/';
     }
     _remoteDataSource.updateBaseUrl(baseUrl);
     _sourceRemoteDataSource.updateBaseUrl(baseUrl);
@@ -173,7 +173,7 @@ class SyncRepositoryImpl implements SyncRepository {
   }
 
   Future<void> clearToken() async {
-    log("remove");
+    log('remove');
     await _prefs.remove(_tokenKey);
   }
 

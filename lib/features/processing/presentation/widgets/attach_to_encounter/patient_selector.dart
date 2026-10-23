@@ -70,8 +70,8 @@ class PatientSelector extends StatelessWidget {
 
     String getDisplayText(dynamic item) {
       if (item is MappingPatient) {
-        final name = "${item.familyName.value} ${item.givenName.value}";
-        return "${context.l10n.newLabel}: $name";
+        final name = '${item.familyName.value} ${item.givenName.value}';
+        return '${context.l10n.newLabel}: $name';
       } else if (item is Patient) {
         return item.displayTitle;
       }

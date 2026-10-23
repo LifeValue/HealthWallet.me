@@ -311,7 +311,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           updateDb: true);
       emit(state.copyWith(
         notification: Notification(
-          text: "${session.origin} processing finished",
+          text: '${session.origin} processing finished',
           route: ProcessingRoute(sessionId: event.sessionId),
           time: DateTime.now(),
         ),
@@ -465,7 +465,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           await sourceTypeService.ensureWalletSourceForPatient(
               patientId: draftPatient.id,
               patientName:
-                  "${draftPatient.givenName.value} ${draftPatient.familyName.value}",
+                  '${draftPatient.givenName.value} ${draftPatient.familyName.value}',
               availableSources: availableSources);
       subjectId = draftPatient.id;
       sourceId = walletSource.id;

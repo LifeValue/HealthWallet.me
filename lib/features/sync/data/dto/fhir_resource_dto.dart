@@ -13,25 +13,25 @@ abstract class FhirResourceDto with _$FhirResourceDto {
   const FhirResourceDto._();
 
   const factory FhirResourceDto({
-    @JsonKey(name: "id") String? id,
-    @JsonKey(name: "source_id") String? sourceId,
-    @JsonKey(name: "source_resource_type") String? resourceType,
-    @JsonKey(name: "source_resource_id") String? resourceId,
-    @JsonKey(name: "sort_title") String? title,
-    @JsonKey(name: "sort_date", fromJson: dateTimeFromJson) DateTime? date,
-    @JsonKey(name: "resource_raw") Map<String, dynamic>? resourceRaw,
+    @JsonKey(name: 'id') String? id,
+    @JsonKey(name: 'source_id') String? sourceId,
+    @JsonKey(name: 'source_resource_type') String? resourceType,
+    @JsonKey(name: 'source_resource_id') String? resourceId,
+    @JsonKey(name: 'sort_title') String? title,
+    @JsonKey(name: 'sort_date', fromJson: dateTimeFromJson) DateTime? date,
+    @JsonKey(name: 'resource_raw') Map<String, dynamic>? resourceRaw,
     String? encounterId,
     String? subjectId,
-    @JsonKey(name: "deleted_at", fromJson: dateTimeFromJson)
+    @JsonKey(name: 'deleted_at', fromJson: dateTimeFromJson)
     DateTime? deletedAt,
-    @JsonKey(name: "change_type") String? changeType,
+    @JsonKey(name: 'change_type') String? changeType,
   }) = _FhirResourceDto;
 
   factory FhirResourceDto.fromJson(Map<String, dynamic> json) =>
       _$FhirResourceDtoFromJson(json);
 
   FhirResourceDto populateEncounterIdFromRaw() {
-    String? encounterId = extractReferenceId("encounter");
+    String? encounterId = extractReferenceId('encounter');
 
     if (encounterId == null) {
       final context = resourceRaw?['context'] as Map<String, dynamic>?;
@@ -53,7 +53,7 @@ abstract class FhirResourceDto with _$FhirResourceDto {
   }
 
   FhirResourceDto populateSubjectIdFromRaw() {
-    String? subjectId = extractReferenceId("subject");
+    String? subjectId = extractReferenceId('subject');
 
     if (subjectId == null) return this;
 

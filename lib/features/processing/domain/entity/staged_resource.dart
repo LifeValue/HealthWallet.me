@@ -28,7 +28,7 @@ enum ImportMode {
 
   factory ImportMode.fromString(String string) {
     switch (string) {
-      case "createNew":
+      case 'createNew':
         return ImportMode.createNew;
       default:
         return ImportMode.linkExisting;
@@ -39,9 +39,9 @@ enum ImportMode {
   String toString() {
     switch (this) {
       case ImportMode.createNew:
-        return "createNew";
+        return 'createNew';
       case ImportMode.linkExisting:
-        return "linkExisting";
+        return 'linkExisting';
     }
   }
 }

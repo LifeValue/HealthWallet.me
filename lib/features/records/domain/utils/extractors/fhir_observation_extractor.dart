@@ -9,7 +9,7 @@ class FhirObservationExtractor {
   static String? extractObservationValue(dynamic valueX) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
-      return "${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${valueQuantity.unit}";
+      return '${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${valueQuantity.unit}';
     }
 
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
@@ -35,12 +35,12 @@ class FhirObservationExtractor {
 
     final valueRange = valueX?.isAs<fhir_r4.Range>();
     if (valueRange != null) {
-      return "${valueRange.low?.value?.valueDouble?.toStringAsFixed(2)} - ${valueRange.high?.value?.valueDouble?.toStringAsFixed(2)}";
+      return '${valueRange.low?.value?.valueDouble?.toStringAsFixed(2)} - ${valueRange.high?.value?.valueDouble?.toStringAsFixed(2)}';
     }
 
     final valueRatio = valueX?.isAs<fhir_r4.Ratio>();
     if (valueRatio != null) {
-      return "${valueRatio.numerator?.value?.valueDouble?.toStringAsFixed(2)} / ${valueRatio.denominator?.value?.valueDouble?.toStringAsFixed(2)}";
+      return '${valueRatio.numerator?.value?.valueDouble?.toStringAsFixed(2)} / ${valueRatio.denominator?.value?.valueDouble?.toStringAsFixed(2)}';
     }
 
     final valueTime = valueX?.isAs<fhir_r4.FhirTime>();
@@ -55,7 +55,7 @@ class FhirObservationExtractor {
 
     final valuePeriod = valueX?.isAs<fhir_r4.Period>();
     if (valuePeriod != null) {
-      return "${valuePeriod.start} - ${valuePeriod.end}";
+      return '${valuePeriod.start} - ${valuePeriod.end}';
     }
 
     return null;
@@ -77,9 +77,9 @@ class FhirObservationExtractor {
           return converted.unit;
         }
         final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-        return "${converted.value.toStringAsFixed(2)} ${converted.unit}";
+        return '${converted.value.toStringAsFixed(2)} ${converted.unit}';
       }
-      return "${rawValue?.toStringAsFixed(2)} $rawUnit";
+      return '${rawValue?.toStringAsFixed(2)} $rawUnit';
     }
 
     return extractObservationValue(valueX);

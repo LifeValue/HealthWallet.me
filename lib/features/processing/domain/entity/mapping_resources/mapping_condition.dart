@@ -23,7 +23,7 @@ abstract class MappingCondition with _$MappingCondition implements MappingResour
   factory MappingCondition.fromJson(Map<String, dynamic> json) {
     final rawOnset = MappedProperty.fromJson(json['onsetDateTime']);
     return MappingCondition(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       conditionName: MappedProperty.fromJson(json['conditionName']),
       onsetDateTime: rawOnset.copyWith(
         value: MappingResource.normalizeDateValue(rawOnset.value),

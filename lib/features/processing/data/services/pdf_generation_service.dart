@@ -98,7 +98,7 @@ class PdfGenerationService {
     List<String> pdfPaths = [];
     List<String> imagePaths = [];
     for (final filePath in filePaths) {
-      if (p.extension(filePath) == ".pdf") {
+      if (p.extension(filePath) == '.pdf') {
         pdfPaths.add(filePath);
       } else {
         imagePaths.add(filePath);

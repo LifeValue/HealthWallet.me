@@ -66,7 +66,7 @@ class BackupService {
     final fileName = '$prefix$id.db';
     final snapshotPath = p.join(backupDir.path, fileName);
 
-    await _database.customStatement("VACUUM INTO ?", [snapshotPath]);
+    await _database.customStatement('VACUUM INTO ?', [snapshotPath]);
 
     final snapshotFile = File(snapshotPath);
     final sizeBytes = await snapshotFile.length();

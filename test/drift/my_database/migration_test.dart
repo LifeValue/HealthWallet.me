@@ -116,7 +116,7 @@ void main() {
       final db = await migrateFrom(9, (schema) {
         final raw = schema.rawDatabase;
         raw.execute(
-          "INSERT INTO sources (id, platform_name, platform_type) "
+          'INSERT INTO sources (id, platform_name, platform_type) '
           "VALUES ('src-1', 'Epic', 'ehr')",
         );
         final insert = raw.prepare(

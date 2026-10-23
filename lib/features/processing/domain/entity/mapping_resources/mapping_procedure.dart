@@ -24,7 +24,7 @@ abstract class MappingProcedure with _$MappingProcedure implements MappingResour
   factory MappingProcedure.fromJson(Map<String, dynamic> json) {
     final rawPerformed = MappedProperty.fromJson(json['performedDateTime']);
     return MappingProcedure(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       procedureName: MappedProperty.fromJson(json['procedureName']),
       performedDateTime: rawPerformed.copyWith(
         value: MappingResource.normalizeDateValue(rawPerformed.value),

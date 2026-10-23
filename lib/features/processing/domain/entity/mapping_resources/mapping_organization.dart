@@ -25,7 +25,7 @@ abstract class MappingOrganization
 
   factory MappingOrganization.fromJson(Map<String, dynamic> json) {
     return MappingOrganization(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       organizationName: MappedProperty.fromJson(json['organizationName']),
       address: MappedProperty.fromJson(json['address']),
       phone: MappedProperty.fromJson(json['phone']),

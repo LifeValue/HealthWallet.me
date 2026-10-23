@@ -101,7 +101,7 @@ class AppDatabase extends _$AppDatabase {
     final newSourceId = 'wallet-$patientId';
 
     await customStatement(
-      "INSERT OR IGNORE INTO sources (id, platform_name, label_source, platform_type, created_at, updated_at) "
+      'INSERT OR IGNORE INTO sources (id, platform_name, label_source, platform_type, created_at, updated_at) '
       "SELECT '$newSourceId', platform_name, "
       "CASE WHEN label_source = 'Wallet' THEN 'Wallet' ELSE label_source END, "
       "platform_type, created_at, updated_at FROM sources WHERE id = 'wallet'",
@@ -150,7 +150,7 @@ class AppDatabase extends _$AppDatabase {
     } catch (_) {}
 
     final rows = await customSelect(
-      "SELECT id, resource_raw FROM fhir_resource "
+      'SELECT id, resource_raw FROM fhir_resource '
       "WHERE resource_raw LIKE '%healthwallet.me/specialty%'",
     ).get();
 

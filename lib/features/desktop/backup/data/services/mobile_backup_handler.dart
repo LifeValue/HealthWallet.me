@@ -77,7 +77,7 @@ class MobileBackupHandler {
       'healthwallet_backup_${DateTime.now().millisecondsSinceEpoch}.db',
     );
 
-    await _database.customStatement("VACUUM INTO ?", [snapshotPath]);
+    await _database.customStatement('VACUUM INTO ?', [snapshotPath]);
 
     return snapshotPath;
   }

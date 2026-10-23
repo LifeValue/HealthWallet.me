@@ -33,7 +33,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     final rawLabel = (json['identifierLabel'] as String?)?.trim() ?? '';
     final rawDob = MappedProperty.fromJson(json['dateOfBirth']);
     return MappingPatient(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       familyName: MappedProperty.fromJson(json['familyName']),
       givenName: MappedProperty.fromJson(json['givenName']),
       dateOfBirth: rawDob.copyWith(
@@ -150,7 +150,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     return Patient(
       id: id,
       resourceId: id,
-      title: "${givenName.value} ${familyName.value}",
+      title: '${givenName.value} ${familyName.value}',
       sourceId: sourceId ?? '',
       encounterId: encounterId ?? '',
       subjectId: subjectId ?? '',

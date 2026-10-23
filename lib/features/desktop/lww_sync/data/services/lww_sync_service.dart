@@ -136,7 +136,7 @@ class LwwSyncService {
 
   Future<bool> _localHasBrokenAttachment(String id) async {
     final rows = await _db.customSelect(
-      "SELECT resource_raw, resource_type FROM fhir_resource WHERE id = ?",
+      'SELECT resource_raw, resource_type FROM fhir_resource WHERE id = ?',
       variables: [Variable.withString(id)],
     ).get();
 

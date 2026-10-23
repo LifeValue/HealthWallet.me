@@ -142,7 +142,7 @@ class SettingsSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        "Send us your feedback",
+                        'Send us your feedback',
                         style: AppTextStyle.bodySmall,
                       ),
                       Assets.icons.externalLink.svg(

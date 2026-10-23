@@ -695,7 +695,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
         : resources.whereType<Patient>().firstOrNull;
 
     if (patient == null) {
-      throw Exception("Patient not found");
+      throw Exception('Patient not found');
     }
 
     final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(

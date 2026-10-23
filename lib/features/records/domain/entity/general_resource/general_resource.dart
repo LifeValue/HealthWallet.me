@@ -52,7 +52,7 @@ abstract class GeneralResource with _$GeneralResource implements IFhirResource {
       );
 
   @override
-  String get displayTitle => "Resource";
+  String get displayTitle => 'Resource';
 
   @override
   List<RecordInfoLine> get additionalInfo => [];

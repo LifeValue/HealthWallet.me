@@ -296,7 +296,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
                       ),
                       if (confidenceLevel != ConfidenceLevel.high)
                         Text(
-                          "(${confidenceLevel.getString()})",
+                          '(${confidenceLevel.getString()})',
                           style: AppTextStyle.labelSmall.copyWith(
                               color: confidenceLevel.getColor(context),
                               fontStyle: FontStyle.italic),

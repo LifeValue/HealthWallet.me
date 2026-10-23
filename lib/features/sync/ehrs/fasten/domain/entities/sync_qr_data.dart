@@ -16,21 +16,21 @@ abstract class SyncQrData with _$SyncQrData {
   }) = _SyncQrData;
 
   factory SyncQrData.fromJson(Map<String, dynamic> json) {
-    final decodedToken = JwtService.decodeJWT(json["token"] as String);
+    final decodedToken = JwtService.decodeJWT(json['token'] as String);
 
     return SyncQrData(
-      token: json["token"] as String,
+      token: json['token'] as String,
       tokenMeta: SyncTokenMetaData.fromJson(decodedToken ?? {}),
       serverBaseUrls:
-          (json["server_base_urls"] as List).whereType<String>().toList(),
-      syncEndpoint: json["sync_endpoint"] as String,
+          (json['server_base_urls'] as List).whereType<String>().toList(),
+      syncEndpoint: json['sync_endpoint'] as String,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        "token": token,
-        "server_base_urls": serverBaseUrls,
-        "sync_endpoint": syncEndpoint,
+        'token': token,
+        'server_base_urls': serverBaseUrls,
+        'sync_endpoint': syncEndpoint,
       };
 }
 
