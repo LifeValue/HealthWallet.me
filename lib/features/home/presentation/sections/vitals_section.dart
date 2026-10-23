@@ -270,8 +270,8 @@ class VitalsSection extends StatelessWidget {
         case 'Optimal':
         case 'Normal':
           cardColor = context.isDarkMode
-              ? AppColors.successDark.withOpacity(0.08)
-              : AppColors.success.withOpacity(0.08);
+              ? AppColors.successDark.withValues(alpha: 0.08)
+              : AppColors.success.withValues(alpha: 0.08);
           statusIconColor = AppColors.success;
           statusIcon = Assets.icons.checkmarkCircleOutline.svg(
             width: iconSize,
@@ -282,8 +282,8 @@ class VitalsSection extends StatelessWidget {
         case 'Elevated':
         case 'Abnormal':
           cardColor = context.isDarkMode
-              ? AppColors.warningDark.withOpacity(0.08)
-              : AppColors.warning.withOpacity(0.08);
+              ? AppColors.warningDark.withValues(alpha: 0.08)
+              : AppColors.warning.withValues(alpha: 0.08);
           statusIconColor = AppColors.warning;
           statusIcon = Assets.icons.warning.svg(
             width: iconSize,
@@ -294,8 +294,8 @@ class VitalsSection extends StatelessWidget {
         case 'High':
         case 'Low':
           cardColor = context.isDarkMode
-              ? AppColors.errorDark.withOpacity(0.08)
-              : AppColors.error.withOpacity(0.08);
+              ? AppColors.errorDark.withValues(alpha: 0.08)
+              : AppColors.error.withValues(alpha: 0.08);
           statusIconColor = AppColors.error;
           statusIcon = Assets.icons.warning.svg(
             width: iconSize,
@@ -307,8 +307,8 @@ class VitalsSection extends StatelessWidget {
         case 'Critically High':
         case 'Critically Low':
           cardColor = context.isDarkMode
-              ? AppColors.errorDark.withOpacity(0.12)
-              : AppColors.error.withOpacity(0.12);
+              ? AppColors.errorDark.withValues(alpha: 0.12)
+              : AppColors.error.withValues(alpha: 0.12);
           statusIconColor = AppColors.error;
           statusIcon = Assets.icons.warning.svg(
             width: iconSize,
@@ -319,8 +319,8 @@ class VitalsSection extends StatelessWidget {
         case 'Uncertain':
         case 'Intermediate':
           cardColor = context.isDarkMode
-              ? AppColors.warningDark.withOpacity(0.08)
-              : AppColors.warning.withOpacity(0.08);
+              ? AppColors.warningDark.withValues(alpha: 0.08)
+              : AppColors.warning.withValues(alpha: 0.08);
           statusIconColor = AppColors.warning;
           statusIcon = Assets.icons.warning.svg(
             width: iconSize,
@@ -346,7 +346,7 @@ class VitalsSection extends StatelessWidget {
 
     final TextStyle unitStyle = AppTextStyle.bodySmall.copyWith(
       fontSize: isSmall ? 11 : 12,
-      color: context.colorScheme.onSurface.withOpacity(0.6),
+      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
     );
 
     return Container(

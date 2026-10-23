@@ -238,7 +238,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
                             child: Text(
                               context.l10n.tapToViewProgress,
                               style: AppTextStyle.bodyMedium.copyWith(
-                                color: Colors.white.withOpacity(0.5),
+                                color: Colors.white.withValues(alpha: 0.5),
                               ),
                             ),
                           ),
@@ -366,7 +366,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
               value: progress,
               minHeight: 8,
               borderRadius: BorderRadius.circular(4),
-              backgroundColor: Colors.white.withOpacity(0.1),
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation<Color>(
                 context.colorScheme.primary,
               ),
@@ -435,7 +435,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
     return Text(
       context.l10n.plugInChargerEllipsis,
       style: AppTextStyle.bodySmall.copyWith(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         fontWeight: FontWeight.w400,
       ),
       textAlign: TextAlign.center,

@@ -210,9 +210,9 @@ class _AiModelSectionState extends State<AiModelSection> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.08),
+                color: AppColors.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +239,7 @@ class _AiModelSectionState extends State<AiModelSection> {
                     child: Text(
                       context.l10n.aiModelNotAvailableForDeviceDescription,
                       style: AppTextStyle.labelSmall.copyWith(
-                        color: AppColors.error.withOpacity(0.8),
+                        color: AppColors.error.withValues(alpha: 0.8),
                         fontSize: 11,
                       ),
                     ),

@@ -27,7 +27,7 @@ class PatientSelector extends StatelessWidget {
         return Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: context.colorScheme.surfaceVariant.withOpacity(0.5),
+            color: context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(

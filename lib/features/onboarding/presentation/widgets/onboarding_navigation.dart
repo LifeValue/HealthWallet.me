@@ -113,7 +113,7 @@ class OnboardingNavigation extends StatelessWidget {
         child: Text(
           context.l10n.onboardingRequestIntegration,
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             decoration: TextDecoration.underline,
             letterSpacing: -0.2,
           ),
@@ -133,7 +133,7 @@ class OnboardingNavigation extends StatelessWidget {
         child: Text(
           context.l10n.privacyPolicy,
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             decoration: TextDecoration.underline,
             letterSpacing: -0.2,
           ),
@@ -159,10 +159,10 @@ class OnboardingNavigation extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           color: currentPage == index
               ? context.colorScheme.primary
-                  .withOpacity(context.isDarkMode ? 0.9 : 1.0)
-              : context.colorScheme.onSurface.withOpacity(0.3),
+                  .withValues(alpha: context.isDarkMode ? 0.9 : 1.0)
+              : context.colorScheme.onSurface.withValues(alpha: 0.3),
           border: Border.all(
-            color: context.colorScheme.onSurface.withOpacity(0.15),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.15),
             width: currentPage == index ? 0 : 1,
           ),
         ),
@@ -344,7 +344,7 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                         value: loadModelState.downloadProgress! / 100,
                         minHeight: 6,
                         backgroundColor:
-                            context.colorScheme.primary.withOpacity(0.1),
+                            context.colorScheme.primary.withValues(alpha: 0.1),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           context.colorScheme.primary,
                         ),
@@ -354,7 +354,7 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                     Text(
                       'Downloading... ${loadModelState.downloadProgress!.toStringAsFixed(0)}%',
                       style: AppTextStyle.labelSmall.copyWith(
-                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -376,13 +376,13 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                   Icon(
                     Icons.memory,
                     size: 20,
-                    color: context.colorScheme.onSurface.withOpacity(0.7),
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     context.l10n.aiModelEnableDownload,
                     style: AppTextStyle.bodySmall.copyWith(
-                      color: context.colorScheme.onSurface.withOpacity(0.7),
+                      color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                       decoration: TextDecoration.underline,
                     ),
                   ),

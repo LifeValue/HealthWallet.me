@@ -181,7 +181,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
               vertical: Insets.extraSmall,
             ),
             decoration: BoxDecoration(
-              color: context.colorScheme.onSurface.withOpacity(0.1),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -245,7 +245,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                       padding: const EdgeInsets.only(top: 2),
                       child: infoLine.icon.svg(
                         width: 16,
-                        color: context.colorScheme.onSurface.withOpacity(0.7),
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -348,14 +348,14 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                   children: [
                     infoLine.icon.svg(
                       width: 16,
-                      color: context.colorScheme.onSurface.withOpacity(0.6),
+                      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         infoLine.info,
                         style: AppTextStyle.labelLarge.copyWith(
-                          color: context.colorScheme.onSurface.withOpacity(0.6),
+                          color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     )

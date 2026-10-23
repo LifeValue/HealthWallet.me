@@ -104,7 +104,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                             child: Icon(
                               Icons.close,
                               size: 20,
-                              color: textColor.withOpacity(0.6),
+                              color: textColor.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -119,10 +119,10 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                             vertical: Insets.small,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.08),
+                            color: AppColors.warning.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: AppColors.warning.withOpacity(0.3),
+                              color: AppColors.warning.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -135,7 +135,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                                   context.l10n
                                       .aiModelNotAvailableForDeviceDescription,
                                   style: AppTextStyle.labelSmall.copyWith(
-                                    color: textColor.withOpacity(0.8),
+                                    color: textColor.withValues(alpha: 0.8),
                                     fontSize: 11,
                                   ),
                                 ),
@@ -204,7 +204,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
   }) {
     final isActiveAndLoaded = isActive && isDownloaded;
     final cardBorderColor = incompatible
-        ? AppColors.error.withOpacity(0.5)
+        ? AppColors.error.withValues(alpha: 0.5)
         : isActiveAndLoaded
             ? AppColors.success
             : borderColor;
@@ -246,7 +246,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.warning.withOpacity(0.15),
+                          color: AppColors.warning.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -275,7 +275,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                     width: 18,
                     height: 18,
                     colorFilter: ColorFilter.mode(
-                      AppColors.error.withOpacity(0.7),
+                      AppColors.error.withValues(alpha: 0.7),
                       BlendMode.srcIn,
                     ),
                   ),
@@ -286,7 +286,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
           Text(
             config.description,
             style: AppTextStyle.labelSmall.copyWith(
-              color: textColor.withOpacity(0.6),
+              color: textColor.withValues(alpha: 0.6),
             ),
           ),
           if (incompatible && incompatibleMessage != null) ...[
@@ -297,7 +297,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                 vertical: Insets.extraSmall,
               ),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.08),
+                color: AppColors.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
@@ -325,7 +325,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
               child: LinearProgressIndicator(
                 value: (progress ?? 0) / 100,
                 minHeight: 6,
-                backgroundColor: AppColors.primary.withOpacity(0.1),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 valueColor:
                     const AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),

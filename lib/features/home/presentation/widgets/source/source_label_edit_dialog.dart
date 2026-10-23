@@ -233,7 +233,7 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
                               icon: Assets.icons.close.svg(
                                 colorFilter: ColorFilter.mode(
                                   context.colorScheme.onSurface
-                                      .withOpacity(0.6),
+                                      .withValues(alpha: 0.6),
                                   BlendMode.srcIn,
                                 ),
                                 width: 16,

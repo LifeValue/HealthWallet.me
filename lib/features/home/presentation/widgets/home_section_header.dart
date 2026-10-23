@@ -92,7 +92,7 @@ class HomeSectionHeader extends StatelessWidget {
                       Assets.icons.filter.svg(
                         colorFilter: ColorFilter.mode(
                           isFilterDisabled
-                              ? colorScheme.onSurface.withOpacity(0.38)
+                              ? colorScheme.onSurface.withValues(alpha: 0.38)
                               : colorScheme.primary,
                           BlendMode.srcIn,
                         ),
@@ -104,7 +104,7 @@ class HomeSectionHeader extends StatelessWidget {
                         filterLabel!,
                         style: AppTextStyle.bodySmall.copyWith(
                           color: isFilterDisabled
-                              ? colorScheme.onSurface.withOpacity(0.38)
+                              ? colorScheme.onSurface.withValues(alpha: 0.38)
                               : colorScheme.primary,
                         ),
                       ),

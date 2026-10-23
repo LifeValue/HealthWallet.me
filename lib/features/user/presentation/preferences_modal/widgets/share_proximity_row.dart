@@ -184,7 +184,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
                   Text(
                     'Advertise to nearby devices',
                     style: AppTextStyle.labelSmall.copyWith(
-                      color: context.colorScheme.onSurface.withOpacity(0.6),
+                      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],

@@ -54,7 +54,7 @@ class SessionList extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
                         color: isThisSessionDeleting
-                            ? context.colorScheme.error.withOpacity(0.5)
+                            ? context.colorScheme.error.withValues(alpha: 0.5)
                             : session.isProcessing
                                 ? borderColor
                                 : context.theme.dividerColor,
@@ -151,7 +151,7 @@ class SessionList extends StatelessWidget {
                             child: Container(
                               decoration: BoxDecoration(
                                 color: context.colorScheme.surface
-                                    .withOpacity(0.7),
+                                    .withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Center(

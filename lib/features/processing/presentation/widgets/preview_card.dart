@@ -150,7 +150,7 @@ class _PageIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final isFirstPage = currentPage == 0;
     final isLastPage = currentPage >= totalPages - 1;
-    final disabledColor = context.colorScheme.onSurface.withOpacity(0.3);
+    final disabledColor = context.colorScheme.onSurface.withValues(alpha: 0.3);
     final enabledColor = context.colorScheme.onSurface;
 
     return Padding(
@@ -226,7 +226,7 @@ class _PreviewButton extends StatelessWidget {
             left: 12,
           ),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.6),
+            color: const Color(0xFF1E1E1E).withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(222),
           ),
           child: Row(

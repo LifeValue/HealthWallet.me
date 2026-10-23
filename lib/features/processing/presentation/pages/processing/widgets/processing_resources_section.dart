@@ -130,8 +130,8 @@ class _AddResourceButton extends StatelessWidget {
       options: RoundedRectDottedBorderOptions(
         radius: const Radius.circular(8),
         dashPattern: [6, 6],
-        color: context.colorScheme.outline.withOpacity(
-          context.isDarkMode ? 0.4 : 0.2,
+        color: context.colorScheme.outline.withValues(
+          alpha: context.isDarkMode ? 0.4 : 0.2,
         ),
       ),
       child: GestureDetector(
@@ -395,10 +395,10 @@ class _VisionNotAvailableBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(Insets.normal),
       decoration: BoxDecoration(
-        color: context.colorScheme.tertiaryContainer.withOpacity(0.3),
+        color: context.colorScheme.tertiaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: context.colorScheme.tertiary.withOpacity(0.5),
+          color: context.colorScheme.tertiary.withValues(alpha: 0.5),
         ),
       ),
       child: Column(

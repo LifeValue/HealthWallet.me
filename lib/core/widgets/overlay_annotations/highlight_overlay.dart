@@ -140,7 +140,7 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
                   painter: _HighlightPainter(
                     rects: _highlightRects,
                     borderRadius: widget.highlightBorderRadius,
-                    overlayColor: Colors.black.withOpacity(0.9),
+                    overlayColor: Colors.black.withValues(alpha: 0.9),
                   ),
                 ),
               ),
@@ -204,7 +204,7 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -227,7 +227,7 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
                 child: Text(
                   widget.subtitle!,
                   style: AppTextStyle.bodySmall.copyWith(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ),

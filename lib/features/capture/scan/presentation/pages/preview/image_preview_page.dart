@@ -425,7 +425,7 @@ class _BottomActionBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E).withOpacity(0.85),
+        color: const Color(0xFF1E1E1E).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white10),
       ),

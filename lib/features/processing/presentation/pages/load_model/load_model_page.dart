@@ -189,7 +189,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
           context.l10n.aiModelDownloadInfo,
           textAlign: TextAlign.center,
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             height: 1.5,
             letterSpacing: -0.2,
           ),
@@ -247,10 +247,10 @@ class _LoadModelPageState extends State<LoadModelPage> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: context.colorScheme.errorContainer.withOpacity(0.3),
+                color: context.colorScheme.errorContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: context.colorScheme.error.withOpacity(0.5),
+                  color: context.colorScheme.error.withValues(alpha: 0.5),
                 ),
               ),
               child: Column(
@@ -277,7 +277,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
                     child: Text(
                       context.l10n.aiModelNotAvailableForDeviceDescription,
                       style: AppTextStyle.labelSmall.copyWith(
-                        color: context.colorScheme.error.withOpacity(0.8),
+                        color: context.colorScheme.error.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -384,7 +384,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
           text: segments[i],
           style: i.isOdd
               ? AppTextStyle.bodySmall.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.85),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.85),
                   height: 1.5,
                   letterSpacing: -0.2,
                   fontWeight: FontWeight.w700,
@@ -396,7 +396,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
         textAlign: TextAlign.center,
         text: TextSpan(
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             height: 1.5,
             letterSpacing: -0.2,
           ),
@@ -408,7 +408,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
       description,
       textAlign: TextAlign.center,
       style: AppTextStyle.bodySmall.copyWith(
-        color: context.colorScheme.onSurface.withOpacity(0.7),
+        color: context.colorScheme.onSurface.withValues(alpha: 0.7),
         height: 1.5,
         letterSpacing: -0.2,
       ),

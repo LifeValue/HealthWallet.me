@@ -461,7 +461,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTextStyle.labelLarge.copyWith(
                                     color: value.isEmpty
-                                        ? context.colorScheme.onSurface.withOpacity(0.5)
+                                        ? context.colorScheme.onSurface.withValues(alpha: 0.5)
                                         : context.colorScheme.onSurface,
                                   ),
                                 );

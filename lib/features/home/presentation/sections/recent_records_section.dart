@@ -102,7 +102,7 @@ class RecentRecordsSection extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color:
-                                context.colorScheme.onSurface.withOpacity(0.08),
+                                context.colorScheme.onSurface.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -156,7 +156,7 @@ class RecentRecordsSection extends StatelessWidget {
                           width: 16,
                           height: 16,
                           colorFilter: ColorFilter.mode(
-                            context.colorScheme.onSurface.withOpacity(0.6),
+                            context.colorScheme.onSurface.withValues(alpha: 0.6),
                             BlendMode.srcIn,
                           ),
                         ),
@@ -182,7 +182,7 @@ class RecentRecordsSection extends StatelessWidget {
                         width: 16,
                         height: 16,
                         colorFilter: ColorFilter.mode(
-                          context.colorScheme.onSurface.withOpacity(0.6),
+                          context.colorScheme.onSurface.withValues(alpha: 0.6),
                           BlendMode.srcIn,
                         ),
                       ),

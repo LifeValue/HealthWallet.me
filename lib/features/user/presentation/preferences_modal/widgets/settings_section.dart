@@ -120,7 +120,7 @@ class SettingsSection extends StatelessWidget {
                       Icon(
                         Icons.arrow_forward_ios,
                         size: 16,
-                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ],
                   ),
@@ -147,7 +147,7 @@ class SettingsSection extends StatelessWidget {
                       ),
                       Assets.icons.externalLink.svg(
                         colorFilter: ColorFilter.mode(
-                          context.colorScheme.onSurface.withOpacity(0.6),
+                          context.colorScheme.onSurface.withValues(alpha: 0.6),
                           BlendMode.srcIn,
                         ),
                       ),
@@ -173,7 +173,7 @@ class SettingsSection extends StatelessWidget {
                       Icon(
                         Icons.arrow_forward_ios,
                         size: 16,
-                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ],
                   ),

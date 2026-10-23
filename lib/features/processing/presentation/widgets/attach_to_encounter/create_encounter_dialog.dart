@@ -183,7 +183,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                         isDense: true,
                         hintText: context.l10n.enterEncounterName,
                         hintStyle: AppTextStyle.labelLarge.copyWith(
-                          color: context.colorScheme.onSurface.withOpacity(0.5),
+                          color: context.colorScheme.onSurface.withValues(alpha: 0.5),
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -276,7 +276,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                             style: AppTextStyle.labelLarge.copyWith(
                               color: value.isEmpty
                                   ? context.colorScheme.onSurface
-                                      .withOpacity(0.5)
+                                      .withValues(alpha: 0.5)
                                   : context.colorScheme.onSurface,
                             ),
                           );

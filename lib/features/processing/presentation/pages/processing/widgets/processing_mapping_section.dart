@@ -125,12 +125,12 @@ class ProcessingMappingSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: isNoModel
                 ? AppColors.warning.withValues(alpha: 0.08)
-                : context.colorScheme.errorContainer.withOpacity(0.3),
+                : context.colorScheme.errorContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isNoModel
                   ? AppColors.warning.withValues(alpha: 0.4)
-                  : context.colorScheme.error.withOpacity(0.5),
+                  : context.colorScheme.error.withValues(alpha: 0.5),
             ),
           ),
           child: Column(
@@ -196,10 +196,10 @@ class ProcessingMappingSection extends StatelessWidget {
           padding: const EdgeInsets.all(Insets.normal),
           decoration: BoxDecoration(
             color:
-                context.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-                color: context.colorScheme.outline.withOpacity(0.5)),
+                color: context.colorScheme.outline.withValues(alpha: 0.5)),
           ),
           child: Row(
             children: [
@@ -279,10 +279,10 @@ class ProcessingMappingSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(Insets.normal),
           decoration: BoxDecoration(
-            color: context.colorScheme.errorContainer.withOpacity(0.3),
+            color: context.colorScheme.errorContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(8),
             border:
-                Border.all(color: context.colorScheme.error.withOpacity(0.5)),
+                Border.all(color: context.colorScheme.error.withValues(alpha: 0.5)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +315,7 @@ class ProcessingMappingSection extends StatelessWidget {
               Text(
                 context.l10n.processingFailedCapacitySuggestion,
                 style: AppTextStyle.labelSmall.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.7),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],

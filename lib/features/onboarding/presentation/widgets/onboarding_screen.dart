@@ -186,14 +186,14 @@ class OnboardingScreen extends StatelessWidget {
           textAlign: TextAlign.center,
           text: TextSpan(
             style: AppTextStyle.regular.copyWith(
-              color: context.colorScheme.onSurface.withOpacity(0.7),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             children: [
               TextSpan(text: beforeLink),
               TextSpan(
                 text: linkText,
                 style: AppTextStyle.regular.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.7),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                   decoration: TextDecoration.underline,
                 ),
                 recognizer: TapGestureRecognizer()
@@ -221,14 +221,14 @@ class OnboardingScreen extends StatelessWidget {
         textAlign: TextAlign.center,
         text: TextSpan(
           style: AppTextStyle.regular.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
           children: [
             TextSpan(text: beforeBold),
             TextSpan(
               text: boldText,
               style: AppTextStyle.regular.copyWith(
-                color: context.colorScheme.onSurface.withOpacity(0.7),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -241,7 +241,7 @@ class OnboardingScreen extends StatelessWidget {
         subtitle,
         textAlign: TextAlign.center,
         style: AppTextStyle.regular.copyWith(
-          color: context.colorScheme.onSurface.withOpacity(0.7),
+          color: context.colorScheme.onSurface.withValues(alpha: 0.7),
         ),
       );
     }
@@ -278,14 +278,14 @@ class OnboardingScreen extends StatelessWidget {
           textAlign: textAlign,
           text: TextSpan(
             style: AppTextStyle.regular.copyWith(
-              color: context.colorScheme.onSurface.withOpacity(0.7),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             children: [
               TextSpan(text: beforeLink),
               TextSpan(
                 text: linkText,
                 style: AppTextStyle.regular.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.7),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                   decoration: TextDecoration.underline,
                 ),
                 recognizer: TapGestureRecognizer()
@@ -311,7 +311,7 @@ class OnboardingScreen extends StatelessWidget {
           text: segments[i],
           style: i.isOdd
               ? AppTextStyle.regular.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.85),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.85),
                   fontWeight: FontWeight.w700,
                 )
               : null,
@@ -321,7 +321,7 @@ class OnboardingScreen extends StatelessWidget {
         textAlign: textAlign,
         text: TextSpan(
           style: AppTextStyle.regular.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
           children: spans,
         ),
@@ -331,7 +331,7 @@ class OnboardingScreen extends StatelessWidget {
         description,
         textAlign: textAlign,
         style: AppTextStyle.regular.copyWith(
-          color: context.colorScheme.onSurface.withOpacity(0.7),
+          color: context.colorScheme.onSurface.withValues(alpha: 0.7),
         ),
       );
     }
@@ -372,7 +372,7 @@ class OnboardingScreen extends StatelessWidget {
             TextSpan(
               text: linkText,
               style: AppTextStyle.regular.copyWith(
-                color: context.colorScheme.onSurface.withOpacity(0.7),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                 decoration: TextDecoration.underline,
               ),
               recognizer: TapGestureRecognizer()
@@ -414,7 +414,7 @@ class OnboardingScreen extends StatelessWidget {
         textAlign: textAlign,
         text: TextSpan(
           style: AppTextStyle.regular.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             height: 1.4,
           ),
           children: inlineSpans,

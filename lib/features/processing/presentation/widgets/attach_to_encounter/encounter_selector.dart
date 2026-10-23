@@ -69,7 +69,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                   isDense: true,
                   hintText: context.l10n.searchEncounters,
                   hintStyle: AppTextStyle.labelLarge.copyWith(
-                    color: context.colorScheme.onSurface.withOpacity(0.6),
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   prefixIcon: Padding(
                     padding: const EdgeInsets.all(12),
@@ -93,7 +93,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                             width: Insets.normal,
                             height: Insets.normal,
                             colorFilter: ColorFilter.mode(
-                              context.colorScheme.onSurface.withOpacity(0.6),
+                              context.colorScheme.onSurface.withValues(alpha: 0.6),
                               BlendMode.srcIn,
                             ),
                           ),
@@ -223,7 +223,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
         border: BoxBorder.all(
           color: isSelected
               ? context.colorScheme.primary
-              : borderColor.withOpacity(0.3),
+              : borderColor.withValues(alpha: 0.3),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(8),

@@ -65,7 +65,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                         borderRadius: BorderRadius.circular(Insets.smallNormal),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             blurRadius: 24,
                             offset: const Offset(0, 8),
                             spreadRadius: 0,
@@ -133,7 +133,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                                       context.l10n.noNotifications,
                                       style: AppTextStyle.bodySmall.copyWith(
                                         color: colorScheme.onSurface
-                                            .withOpacity(0.6),
+                                            .withValues(alpha: 0.6),
                                         decoration: TextDecoration.none,
                                       ),
                                     ),
@@ -290,7 +290,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                             ? '${context.l10n.aiModelDownloading} ${notification.progress?.toStringAsFixed(0) ?? 0}%'
                             : context.l10n.chooseResourcesDescription),
                     style: AppTextStyle.regular.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.6),
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
                       decoration: TextDecoration.none,
                     ),
                   ),
@@ -303,7 +303,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                             ? notification.progress! / 100
                             : null,
                         minHeight: 6,
-                        backgroundColor: colorScheme.primary.withOpacity(0.1),
+                        backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           colorScheme.primary,
                         ),
@@ -339,7 +339,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -418,7 +418,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
             onPressed: () => _toggleOverlay(state),
             style: IconButton.styleFrom(
               backgroundColor: _isOverlayOpen
-                  ? colorScheme.primary.withOpacity(0.05)
+                  ? colorScheme.primary.withValues(alpha: 0.05)
                   : Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

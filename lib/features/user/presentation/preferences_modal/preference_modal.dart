@@ -127,7 +127,7 @@ class PreferenceModal extends StatelessWidget {
                                 '${context.l10n.version}: v${snap.data!.version} (${snap.data!.buildNumber})',
                                 style: AppTextStyle.labelSmall.copyWith(
                                   color: context.colorScheme.onSurface
-                                      .withOpacity(0.5),
+                                      .withValues(alpha: 0.5),
                                 ),
                               ),
                             ),

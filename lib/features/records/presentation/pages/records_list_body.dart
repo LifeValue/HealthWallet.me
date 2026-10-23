@@ -53,7 +53,7 @@ class RecordsListBody extends StatelessWidget {
               Icon(
                 Icons.search_off,
                 size: 64,
-                color: context.colorScheme.onSurface.withOpacity(0.4),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 16),
               Text(
@@ -66,7 +66,7 @@ class RecordsListBody extends StatelessWidget {
               Text(
                 context.l10n.tryDifferentKeywords,
                 style: AppTextStyle.bodyMedium.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.6),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),

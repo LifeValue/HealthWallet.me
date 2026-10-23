@@ -166,7 +166,7 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: canProceed
                                 ? AppColors.primary
-                                : context.colorScheme.surfaceVariant,
+                                : context.colorScheme.surfaceContainerHighest,
                             foregroundColor: canProceed
                                 ? Colors.white
                                 : context.colorScheme.onSurfaceVariant,

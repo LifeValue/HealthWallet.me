@@ -166,7 +166,7 @@ class _ReorderablePageItem extends StatelessWidget {
               padding: const EdgeInsets.all(Insets.smallNormal),
               child: Icon(
                 Icons.drag_handle,
-                color: context.colorScheme.onSurface.withOpacity(0.5),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ),

@@ -100,7 +100,7 @@ class MedicalRecordsSection extends StatelessWidget {
 
     final TextStyle categoryStyle = AppTextStyle.bodySmall.copyWith(
       fontSize: isSmall ? 10 : 14,
-      color: context.colorScheme.onSurface.withOpacity(0.6),
+      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
     );
 
     final TextStyle countStyle = AppTextStyle.bodyMedium.copyWith(

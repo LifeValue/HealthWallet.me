@@ -54,7 +54,7 @@ class _PatientSectionState extends State<PatientSection> {
   @override
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
-    final iconColor = context.colorScheme.onSurface.withOpacity(0.6);
+    final iconColor = context.colorScheme.onSurface.withValues(alpha: 0.6);
     final textColor = context.colorScheme.onSurface;
 
     return BlocBuilder<PatientBloc, PatientState>(

@@ -343,7 +343,7 @@ class _ResourceCardState extends State<ResourceCard> {
           boxShadow: [
             BoxShadow(
               offset: const Offset(0, 1),
-              color: context.colorScheme.onSurface.withOpacity(0.3),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.3),
               blurRadius: 5,
             ),
           ],
@@ -359,7 +359,7 @@ class _ResourceCardState extends State<ResourceCard> {
                       width: 32,
                       height: 32,
                       colorFilter: ColorFilter.mode(
-                        context.colorScheme.onSurface.withOpacity(0.5),
+                        context.colorScheme.onSurface.withValues(alpha: 0.5),
                         BlendMode.srcIn,
                       ),
                     ),
@@ -367,7 +367,7 @@ class _ResourceCardState extends State<ResourceCard> {
                     Text(
                       'No related resources found',
                       style: AppTextStyle.labelLarge.copyWith(
-                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -423,7 +423,7 @@ class _ResourceCardState extends State<ResourceCard> {
             boxShadow: [
               BoxShadow(
                 offset: const Offset(0, 1),
-                color: context.colorScheme.onSurface.withOpacity(0.3),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.3),
                 blurRadius: 5,
               ),
             ]),
@@ -462,7 +462,7 @@ class _ResourceCardState extends State<ResourceCard> {
                       width: 32,
                       height: 32,
                       colorFilter: ColorFilter.mode(
-                        context.colorScheme.onSurface.withOpacity(0.5),
+                        context.colorScheme.onSurface.withValues(alpha: 0.5),
                         BlendMode.srcIn,
                       ),
                     ),
@@ -470,7 +470,7 @@ class _ResourceCardState extends State<ResourceCard> {
                     Text(
                       'No related resources found for this encounter',
                       style: AppTextStyle.labelLarge.copyWith(
-                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),

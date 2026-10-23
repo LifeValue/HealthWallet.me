@@ -306,10 +306,10 @@ class _AppDialogState extends State<AppDialog> {
                               color: Theme.of(context)
                                   .colorScheme
                                   .errorContainer
-                                  .withOpacity(0.1),
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                  color: AppColors.error.withOpacity(0.3),
+                                  color: AppColors.error.withValues(alpha: 0.3),
                                   width: 1),
                             ),
                             child: Row(
@@ -369,7 +369,7 @@ class _AppDialogState extends State<AppDialog> {
                                   backgroundColor: _canConfirm()
                                       ? (widget.confirmButtonColor ??
                                           AppColors.primary)
-                                      : textColor.withOpacity(0.2),
+                                      : textColor.withValues(alpha: 0.2),
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                       vertical: Insets.small),
@@ -383,7 +383,7 @@ class _AppDialogState extends State<AppDialog> {
                                   style: AppTextStyle.buttonSmall.copyWith(
                                     color: _canConfirm()
                                         ? Colors.white
-                                        : textColor.withOpacity(0.6),
+                                        : textColor.withValues(alpha: 0.6),
                                   ),
                                 ),
                               ),
@@ -403,7 +403,7 @@ class _AppDialogState extends State<AppDialog> {
                   child: Material(
                     elevation: 8,
                     borderRadius: BorderRadius.circular(12),
-                    shadowColor: Colors.black.withOpacity(0.12),
+                    shadowColor: Colors.black.withValues(alpha: 0.12),
                     child: Container(
                       width: context.dialogWidth - 32,
                       decoration: BoxDecoration(
