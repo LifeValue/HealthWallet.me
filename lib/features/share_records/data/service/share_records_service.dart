@@ -128,7 +128,7 @@ class ShareRecordsService {
       final bytes = await file.readAsBytes();
       await file.delete();
       debugPrint('[TRANSFER] Deleted temp file: $filePath');
-      return _parsePayloadBytes(bytes);
+      return await _parsePayloadBytes(bytes);
     } catch (e) {
       debugPrint('[TRANSFER] Error parsing received file: $e');
       try {
