@@ -26,7 +26,10 @@ Patient-controlled health record app in Flutter: FHIR R4 records from providers 
 - Run Flutter and Dart through FVM (`fvm flutter …`, `fvm dart …`); the pinned version is in `.fvmrc`.
 - After changing Freezed models, routes, injectable registrations, Drift tables or envied variables, run `fvm dart run build_runner build`. Its outputs are gitignored, so never commit them.
 - Desktop builds and runs need the desktop entry point (`fvm flutter build macos --release --target lib/main_desktop.dart`, same for `windows`, and `fvm flutter run -d macos -t lib/main_desktop.dart`); without it you build the mobile app.
-- Run `fvm flutter analyze` and `fvm flutter test` before committing; the CI `checks` job fails only on analyzer errors, so warnings you add are not caught.
+- Run `scripts/check.sh` before committing (`--fix` formats first): it runs `dart format`, Prettier, `fvm flutter analyze` and `fvm flutter test`, and must pass with no issues, infos included. The CI `checks` job fails only on analyzer errors, so it won't catch what this script does.
+- Dart is formatted by `dart format` (settings under `formatter:` in `analysis_options.yaml`); YAML, JSON, ARB and Markdown by Prettier, pinned in `package.json` (`npm install` once). Generated files are skipped: `app_localizations*.dart`, `*.gen.dart` and `test/drift/my_database/generated/`.
+- Fix lints rather than silencing them; when a rule is wrong for one line, use `// ignore: <rule>` with a comment saying why. Never write an empty `catch`: log the error with `logger` or comment why it is safe to ignore.
+- `git config core.hooksPath .githooks` enables a pre-commit hook that runs the checks, plus the secrets check, on staged files.
 - `pub get` needs SSH access to `git.techstackapps.com` for `fhir_ips_export` and `airdrop`; if it fails, tell the user rather than removing or stubbing the dependency.
 
 ## Conventions that differ from defaults

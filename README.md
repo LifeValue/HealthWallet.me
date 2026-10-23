@@ -206,6 +206,17 @@ dart run build_runner build --delete-conflicting-outputs
 flutter test
 ```
 
+### Code quality
+
+Dart is formatted with `dart format` and checked with `flutter analyze` (rules in `analysis_options.yaml`). YAML, JSON, ARB and Markdown files are formatted with [Prettier](https://prettier.io/), pinned in `package.json` (needs Node).
+
+```bash
+npm install                       # once, installs Prettier
+git config core.hooksPath .githooks   # once, runs the checks on staged files before each commit
+scripts/check.sh                  # format check, Prettier, analyze and tests
+scripts/check.sh --fix            # format everything first, then check
+```
+
 ---
 
 ## Roadmap
