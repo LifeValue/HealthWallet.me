@@ -26,7 +26,7 @@ class ProcessingLocalDataSourceImpl implements ProcessingLocalDataSource {
 
   @override
   Future<List<ProcessingSessionDto>> getProcessingSessions() async {
-    return (appDatabase.select(appDatabase.processingSessions)).get();
+    return appDatabase.select(appDatabase.processingSessions).get();
   }
 
   @override

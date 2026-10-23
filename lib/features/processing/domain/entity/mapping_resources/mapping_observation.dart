@@ -164,7 +164,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
       if (lbMatch != null) {
         final lb = double.tryParse(lbMatch.group(1)!) ?? 0;
         final oz = double.tryParse(lbMatch.group(2) ?? '0') ?? 0;
-        final kg = (lb * 0.453592 + oz * 0.0283495);
+        final kg = lb * 0.453592 + oz * 0.0283495;
         return (double.parse(kg.toStringAsFixed(1)), 'kg');
       }
     }
@@ -179,7 +179,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
       if (ftMatch != null) {
         final ft = double.tryParse(ftMatch.group(1)!) ?? 0;
         final inches = double.tryParse(ftMatch.group(2) ?? '0') ?? 0;
-        final cm = (ft * 30.48 + inches * 2.54);
+        final cm = ft * 30.48 + inches * 2.54;
         return (double.parse(cm.toStringAsFixed(1)), 'cm');
       }
     }

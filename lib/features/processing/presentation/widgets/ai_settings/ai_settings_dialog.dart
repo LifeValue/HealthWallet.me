@@ -273,7 +273,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     final secondaryTextColor = context.secondaryTextColor;
 
     final activeModel = widget.activeModelConfig;
-    final kvCache = (_contextSize * 170 ~/ 1024);
+    final kvCache = _contextSize * 170 ~/ 1024;
     final overhead = activeModel.modelSizeMB >= 2000 ? 700 : 400;
     final visionMB = _useVision ? activeModel.mmprojSizeMB : 0;
     final estimatedMB =
