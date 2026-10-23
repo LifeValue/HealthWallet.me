@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
@@ -130,7 +132,7 @@ class BiometricsSetupDialog extends StatelessWidget {
                               await biometricService.openDeviceSettings();
                           if (!opened) {
                             if (context.mounted) {
-                              showDialog(
+                              unawaited(showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   title:
@@ -146,7 +148,7 @@ class BiometricsSetupDialog extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                              );
+                              ));
                             }
                           }
                         } catch (e) {

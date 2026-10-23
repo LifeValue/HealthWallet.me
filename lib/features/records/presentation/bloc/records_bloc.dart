@@ -352,11 +352,11 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         '${(await getTemporaryDirectory()).path}/$fileName.pdf',
       ).writeAsBytes(export.bytes);
 
-      SharePlus.instance.share(ShareParams(
+      unawaited(SharePlus.instance.share(ShareParams(
         title: fileName,
         files: [XFile(pdfFile.path)],
         sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
-      ));
+      )));
     } catch (_) {}
   }
 

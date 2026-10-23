@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -335,7 +336,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
               }).populateEncounterIdFromRaw().populateSubjectIdFromRaw())
           .toList();
 
-      _syncLocalDataSource.cacheFhirResources(processedResources);
+      unawaited(_syncLocalDataSource.cacheFhirResources(processedResources));
 
       await _attachDemoPdf();
     } catch (e, stackTrace) {
@@ -400,7 +401,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
         'change_type': 'created',
       }).populateEncounterIdFromRaw().populateSubjectIdFromRaw();
 
-      _syncLocalDataSource.cacheFhirResources([dto]);
+      unawaited(_syncLocalDataSource.cacheFhirResources([dto]));
     } catch (e) {
       debugPrint('[DEMO] Failed to attach demo PDF: $e');
     }

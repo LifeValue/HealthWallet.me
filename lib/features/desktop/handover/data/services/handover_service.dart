@@ -163,7 +163,7 @@ class HandoverService {
     var sessionActivated = false;
     var phase2Triggered = false;
 
-    _processingBlocSub?.cancel();
+    unawaited(_processingBlocSub?.cancel());
     _processingBlocSub = _processingBloc.stream.listen((processingState) {
       final newSession = processingState.sessions.firstWhereOrNull(
         (s) => s.origin == ProcessingOrigin.handover,
@@ -298,7 +298,7 @@ class HandoverService {
       _sessions[sessionId] = completedSession;
       _sessionUpdateController.add(completedSession);
 
-      _processingBlocSub?.cancel();
+      unawaited(_processingBlocSub?.cancel());
       _processingBlocSub = null;
 
       onProcessingComplete(sessionId);

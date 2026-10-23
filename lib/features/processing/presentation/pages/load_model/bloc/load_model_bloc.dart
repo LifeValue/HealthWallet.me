@@ -226,7 +226,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       ),
     ));
 
-    _downloadService.startDownloadForVariant(variant);
+    unawaited(_downloadService.startDownloadForVariant(variant));
   }
 
   void _onServiceStateChanged(

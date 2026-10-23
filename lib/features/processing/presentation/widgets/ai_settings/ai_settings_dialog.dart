@@ -244,7 +244,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     if (!mounted) return;
 
     final sizeMB = widget.activeModelConfig.mmprojSizeMB;
-    AppSimpleDialog.showConfirmation(
+    unawaited(AppSimpleDialog.showConfirmation(
       context: context,
       title: context.l10n.deepScanDownloadTitle,
       message: context.l10n.deepScanDownloadMessage(sizeMB),
@@ -253,7 +253,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
       onConfirm: () {
         _downloadService.startMmprojDownloadForVariant(variant);
       },
-    );
+    ));
   }
 
   void _apply() {

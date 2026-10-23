@@ -171,7 +171,7 @@ class _DashboardPageState extends State<DashboardPage> {
           },
           listener: (context, syncState) async {
             if (syncState.shouldShowTutorial) {
-              _navigationController.navigateToPage(0);
+              unawaited(_navigationController.navigateToPage(0));
             }
           },
         ),

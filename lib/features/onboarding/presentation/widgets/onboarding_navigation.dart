@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -47,7 +48,7 @@ class OnboardingNavigation extends StatelessWidget {
               if (isLastPage) {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setBool('hasSeenOnboarding', true);
-                context.appRouter.replace(const DashboardRoute());
+                unawaited(context.appRouter.replace(const DashboardRoute()));
               } else {
                 context.read<OnboardingBloc>().add(const OnboardingNextPage());
                 pageController.nextPage(

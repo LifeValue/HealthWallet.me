@@ -396,7 +396,7 @@ class AiInferenceDataSourceImpl
 
     final completer = Completer<void>();
 
-    FileDownloader().download(
+    unawaited(FileDownloader().download(
       task,
       onProgress: (progress) {
         final percent = (progress * 100).round();
@@ -420,7 +420,7 @@ class AiInferenceDataSourceImpl
           }
         }
       },
-    );
+    ));
 
     await completer.future;
   }

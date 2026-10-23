@@ -263,7 +263,7 @@ class _RecordsViewState extends State<RecordsView> {
           context
               .read<ProcessingBloc>()
               .add(DocumentImported(filePaths: validPaths));
-          getIt<PageViewNavigationController>().navigateToPage(3);
+          unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
         }
       }
     } catch (_) {}
@@ -285,7 +285,7 @@ class _RecordsViewState extends State<RecordsView> {
         context
             .read<ProcessingBloc>()
             .add(DocumentImported(filePaths: validPaths));
-        getIt<PageViewNavigationController>().navigateToPage(3);
+        unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
       }
     } catch (_) {}
   }
@@ -541,12 +541,12 @@ class _RecordsViewState extends State<RecordsView> {
         .toList();
     final activeFilters = recordsState.activeFilters;
 
-    context.router.push(
+    unawaited(context.router.push(
       ShareRecordsSendRoute(
         preSelectedResources: selectedResources,
         appliedFilters: activeFilters.isNotEmpty ? activeFilters : null,
       ),
-    );
+    ));
   }
 
   void _showFilterSheet(BuildContext context) {

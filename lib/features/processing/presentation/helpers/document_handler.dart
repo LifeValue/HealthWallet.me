@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,11 +31,11 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       if (!context.mounted) return;
 
       if (isModelLoaded) {
-        context.router.push(ProcessingRoute(sessionId: session.id));
+        unawaited(context.router.push(ProcessingRoute(sessionId: session.id)));
         return;
       }
 
-      navigateToLoadModel(context, session);
+      unawaited(navigateToLoadModel(context, session));
     } catch (e) {
       if (context.mounted) {
         DialogHelper.showErrorDialog(context, 'Failed to create encounter: $e');
@@ -50,7 +52,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     if (!context.mounted) return;
 
     if (result == true) {
-      context.router.push(ProcessingRoute(sessionId: session.id));
+      unawaited(context.router.push(ProcessingRoute(sessionId: session.id)));
     } else {
       if (result == false) {
         final result = await showDialog<AttachToEncounterResult>(
@@ -96,7 +98,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
             subjectId: existingPatient.subjectId,
           ) as Encounter;
 
-          getIt<SyncRepository>().saveResources([finalEncounter]);
+          unawaited(getIt<SyncRepository>().saveResources([finalEncounter]));
         } else {
           finalEncounter = encounter.existing!;
         }
@@ -166,7 +168,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       }
 
       if (context.mounted) {
-        context.router.replaceAll([RecordsRoute()]);
+        unawaited(context.router.replaceAll([RecordsRoute()]));
       }
     } catch (e) {
       if (context.mounted) Navigator.of(context).pop();

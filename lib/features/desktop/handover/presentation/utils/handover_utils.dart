@@ -88,7 +88,7 @@ class HandoverUtils {
     });
 
     final result = await completer.future;
-    sub.cancel();
+    unawaited(sub.cancel());
     timer.cancel();
     return result;
   }

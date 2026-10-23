@@ -37,12 +37,12 @@ class ShareIntentService {
       },
     );
 
-    ReceiveSharingIntent.instance.getInitialMedia().then((sharedFiles) async {
+    unawaited(ReceiveSharingIntent.instance.getInitialMedia().then((sharedFiles) async {
       if (sharedFiles.isNotEmpty) {
         await _processSharedFiles(sharedFiles);
-        ReceiveSharingIntent.instance.reset();
+        unawaited(ReceiveSharingIntent.instance.reset());
       }
-    });
+    }));
   }
 
   Future<void> _processSharedFiles(List<SharedMediaFile> sharedFiles) async {
@@ -78,11 +78,11 @@ class ShareIntentService {
 
       if (processedPaths.isNotEmpty) {
         _externalFileService.addFilePaths(processedPaths);
-        _router.replaceAll([const DashboardRoute()]);
+        unawaited(_router.replaceAll([const DashboardRoute()]));
         if (_navigationController.currentPage == 3) {
           _navigationController.jumpToPage(0);
         }
-        _navigationController.navigateToPage(3);
+        unawaited(_navigationController.navigateToPage(3));
       }
     } catch (e) {
       logger.e('Error processing shared files: $e');

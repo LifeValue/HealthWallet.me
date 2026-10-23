@@ -178,7 +178,7 @@ class TcpService {
   }
 
   static Future<void> _isolateServer(_IsolateServerConfig config) async {
-    runZonedGuarded(() => _isolateServerImpl(config), (_, _) {});
+    unawaited(runZonedGuarded(() => _isolateServerImpl(config), (_, _) {}));
   }
 
   static Future<void> _isolateServerImpl(_IsolateServerConfig config) async {

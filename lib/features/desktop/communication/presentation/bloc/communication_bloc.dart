@@ -254,7 +254,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
     debugPrint('[Communication] Step 1: MPC (Apple direct)');
     await _mpcTransport!.disconnect();
-    _mpcTransport!.connect(address: '', port: 0);
+    unawaited(_mpcTransport!.connect(address: '', port: 0));
 
     for (var i = 0; i < _mpcTimeout.inSeconds; i++) {
       await Future.delayed(const Duration(seconds: 1));

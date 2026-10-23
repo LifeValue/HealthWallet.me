@@ -125,9 +125,9 @@ class ReceiveModeManager implements ReceiveModeService {
   @override
   Future<void> resumeListening() async {
     if (!_isListening) return;
-    _invitationSubscription?.cancel();
-    _receivedDataSubscription?.cancel();
-    _receivedFilesSubscription?.cancel();
+    unawaited(_invitationSubscription?.cancel());
+    unawaited(_receivedDataSubscription?.cancel());
+    unawaited(_receivedFilesSubscription?.cancel());
 
     try {
       await _shareRecordsService.startSymmetricDiscovery();

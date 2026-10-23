@@ -307,9 +307,9 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     if (state.isBackingUp) return;
 
     if (!state.hasUserSelectedPath) {
-      _tcpService.sendData('backup.error', {
+      unawaited(_tcpService.sendData('backup.error', {
         'error': 'No backup location set on desktop. Open the desktop app and choose a backup folder first.',
-      });
+      }));
       return;
     }
 
@@ -319,11 +319,11 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
 
     await Future<void>.delayed(const Duration(seconds: 2));
 
-    _tcpService.sendData('backup.status', {
+    unawaited(_tcpService.sendData('backup.status', {
       'ready': true,
       'backing_up': true,
       'count': state.backupHistory.length,
-    });
+    }));
 
     final name = 'Remote ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
     add(BackupRequested(name: name));

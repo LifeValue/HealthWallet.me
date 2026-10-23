@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -179,7 +180,7 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
         MaterialPageRoute(builder: (_) => _PdfViewer(filePath: filePath)),
       );
     } else {
-      _openFileExternal(context, filePath);
+      unawaited(_openFileExternal(context, filePath));
     }
   }
 

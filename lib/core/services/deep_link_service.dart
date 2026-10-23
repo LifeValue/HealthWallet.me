@@ -68,12 +68,12 @@ class DeepLinkService {
       final filePath =
           await downloadFile(fileUrl, customFileName: documentName);
       _externalFilesService.addFilePaths([filePath]);
-      _router.replaceAll([const DashboardRoute()]);
+      unawaited(_router.replaceAll([const DashboardRoute()]));
 
       if (_navigationController.currentPage == 3) {
         _navigationController.jumpToPage(0);
       }
-      _navigationController.navigateToPage(3);
+      unawaited(_navigationController.navigateToPage(3));
     } catch (_) {}
   }
 

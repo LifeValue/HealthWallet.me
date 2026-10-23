@@ -67,7 +67,7 @@ class HandoverSenderService {
     });
 
     final acceptCompleter = Completer<void>();
-    _acceptSub?.cancel();
+    unawaited(_acceptSub?.cancel());
     _acceptSub = _messageRouter.on('handover.accept').listen((payload) {
       final acceptedId = payload['session_id'] as String?;
       if (acceptedId == sessionId && !acceptCompleter.isCompleted) {

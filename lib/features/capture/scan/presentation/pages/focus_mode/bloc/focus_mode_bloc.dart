@@ -38,7 +38,7 @@ class FocusModeBloc extends Bloc<FocusModeEvent, FocusModeState> {
       final batteryState = await _battery.batteryState;
       emit(state.copyWith(batteryState: batteryState));
 
-      _batterySubscription?.cancel();
+      unawaited(_batterySubscription?.cancel());
       _batterySubscription = _battery.onBatteryStateChanged.listen((state) {
         add(FocusModeBatteryStateChanged(batteryState: state));
       });

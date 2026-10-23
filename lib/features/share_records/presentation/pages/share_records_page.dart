@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -505,7 +507,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
     } else if (state.mode != ShareMode.idle) {
       bloc.add(const ShareRecordsEvent.modeCleared());
     } else {
-      context.maybePop();
+      unawaited(context.maybePop());
     }
   }
 

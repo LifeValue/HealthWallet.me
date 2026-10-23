@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:health_wallet/app/view/app.dart';
@@ -39,8 +41,8 @@ void main() async {
 
   getIt<CommunicationBloc>().add(const CommunicationInitialised());
 
-  getIt<ShareIntentService>().initialize();
-  getIt<DeepLinkService>().initialize();
+  unawaited(getIt<ShareIntentService>().initialize());
+  unawaited(getIt<DeepLinkService>().initialize());
   getIt<ProcessingBloc>().add(const ProcessingInitialised());
 
   getIt<LwwSyncBloc>().add(const LwwSyncInitialised());

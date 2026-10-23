@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
@@ -105,12 +106,12 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
     ));
 
     final plugin = FlutterGoogleWalletPlugin();
-    plugin.initWalletClient();
+    unawaited(plugin.initWalletClient());
 
-    plugin.savePassesJwt(
+    unawaited(plugin.savePassesJwt(
       jsonPass: passJson,
       addToGoogleWalletRequestCode: 1,
-    );
+    ));
 
     emit(state.copyWith(status: WalletPassStatus.passAddedToWallet));
   }

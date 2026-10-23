@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -33,7 +35,7 @@ class _SplashPageState extends State<SplashPage> {
 
     await minSplash;
     if (!mounted) return;
-    context.appRouter.replace(destination);
+    unawaited(context.appRouter.replace(destination));
   }
 
   Future<PageRouteInfo> _resolveDestination() async {
