@@ -64,12 +64,14 @@ class DateField extends StatelessWidget {
   Widget _buildFieldLabel(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: Insets.smaller),
-      child: Text(label,
-          style: AppTextStyle.bodySmall.copyWith(
-            color: context.isDarkMode
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimary,
-          )),
+      child: Text(
+        label,
+        style: AppTextStyle.bodySmall.copyWith(
+          color: context.isDarkMode
+              ? AppColors.textPrimaryDark
+              : AppColors.textPrimary,
+        ),
+      ),
     );
   }
 
@@ -88,8 +90,7 @@ class DateField extends StatelessWidget {
           child: Container(
             height: kInputFieldHeight,
             alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(
-                horizontal: Insets.smallNormal),
+            padding: const EdgeInsets.symmetric(horizontal: Insets.smallNormal),
             decoration: BoxDecoration(
               border: Border.all(
                 color: context.isDarkMode
@@ -107,19 +108,20 @@ class DateField extends StatelessWidget {
                     style: AppTextStyle.labelLarge.copyWith(
                       color: selectedDate != null
                           ? (context.isDarkMode
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimary)
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimary)
                           : (context.isDarkMode
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary),
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondary),
                     ),
                   ),
                 ),
                 const SizedBox(width: Insets.smaller),
                 Assets.icons.calendar.svg(
-                    width: 16.0,
-                    height: 16.0,
-                    colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn)),
+                  width: 16.0,
+                  height: 16.0,
+                  colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                ),
               ],
             ),
           ),

@@ -101,9 +101,13 @@ class _ShareDebugLogSheetState extends State<ShareDebugLogSheet> {
                   const Spacer(),
                   if (hasPersistedLogs)
                     GestureDetector(
-                      onTap: () => setState(() => _showPersisted = !_showPersisted),
+                      onTap: () =>
+                          setState(() => _showPersisted = !_showPersisted),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: _showPersisted
                               ? const Color(0xFF4A3000)
@@ -118,7 +122,9 @@ class _ShareDebugLogSheetState extends State<ShareDebugLogSheet> {
                         child: Text(
                           'File',
                           style: TextStyle(
-                            color: _showPersisted ? Colors.orange : Colors.white38,
+                            color: _showPersisted
+                                ? Colors.orange
+                                : Colors.white38,
                             fontSize: 10,
                           ),
                         ),
@@ -188,7 +194,8 @@ class _ShareDebugLogSheetState extends State<ShareDebugLogSheet> {
                     : NotificationListener<ScrollNotification>(
                         onNotification: (notification) {
                           if (notification is UserScrollNotification) {
-                            final atBottom = _scrollController.position.pixels >=
+                            final atBottom =
+                                _scrollController.position.pixels >=
                                 _scrollController.position.maxScrollExtent - 20;
                             if (_autoScroll != atBottom) {
                               setState(() => _autoScroll = atBottom);
@@ -202,8 +209,10 @@ class _ShareDebugLogSheetState extends State<ShareDebugLogSheet> {
                           itemCount: logs.length,
                           itemBuilder: (context, index) {
                             final line = logs[index];
-                            final isHeader = line.contains('===') || line.contains('---');
-                            final isWarning = line.contains('WARNING') ||
+                            final isHeader =
+                                line.contains('===') || line.contains('---');
+                            final isWarning =
+                                line.contains('WARNING') ||
                                 line.contains('FAILED') ||
                                 line.contains('ERROR');
 
@@ -218,11 +227,13 @@ class _ShareDebugLogSheetState extends State<ShareDebugLogSheet> {
                                   color: isWarning
                                       ? const Color(0xFFFF6B6B)
                                       : isHeader
-                                          ? const Color(0xFF7EC8E3)
-                                          : Colors.white70,
+                                      ? const Color(0xFF7EC8E3)
+                                      : Colors.white70,
                                   fontSize: 10,
                                   fontFamily: 'monospace',
-                                  fontWeight: isHeader ? FontWeight.w600 : FontWeight.normal,
+                                  fontWeight: isHeader
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                                   height: 1.4,
                                 ),
                               ),

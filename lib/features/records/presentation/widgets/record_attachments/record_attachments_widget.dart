@@ -41,10 +41,12 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
   @override
   void initState() {
-    _bloc.add(RecordAttachmentsInitialised(
-      resource: widget.resource,
-      ephemeralRecords: widget.ephemeralRecords,
-    ));
+    _bloc.add(
+      RecordAttachmentsInitialised(
+        resource: widget.resource,
+        ephemeralRecords: widget.ephemeralRecords,
+      ),
+    );
     super.initState();
   }
 
@@ -56,7 +58,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
         builder: (context, state) {
           return ConstrainedBox(
             constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height / 1.5),
+              maxHeight: MediaQuery.sizeOf(context).height / 1.5,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,26 +70,36 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                   )
                 else ...[
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
+                    ),
                     decoration: BoxDecoration(
                       border: Border(
-                          bottom: BorderSide(
-                              color: context.theme.dividerColor, width: 1)),
+                        bottom: BorderSide(
+                          color: context.theme.dividerColor,
+                          width: 1,
+                        ),
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(context.l10n.attachments,
-                            style: context.textTheme.bodyMedium ??
-                                AppTextStyle.bodyMedium),
+                        Text(
+                          context.l10n.attachments,
+                          style:
+                              context.textTheme.bodyMedium ??
+                              AppTextStyle.bodyMedium,
+                        ),
                         IconButton(
                           iconSize: 20,
-                          visualDensity:
-                              const VisualDensity(horizontal: -4, vertical: -4),
+                          visualDensity: const VisualDensity(
+                            horizontal: -4,
+                            vertical: -4,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                           icon: const Icon(Icons.close),
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -107,8 +120,10 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                         child: ListView(
                           shrinkWrap: true,
                           children: [
-                            ...state.attachments.map((attachment) =>
-                                _buildAttachmentRow(context, attachment))
+                            ...state.attachments.map(
+                              (attachment) =>
+                                  _buildAttachmentRow(context, attachment),
+                            ),
                           ],
                         ),
                       ),
@@ -122,7 +137,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.all(10),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadiusGeometry.circular(6)),
+                            borderRadius: BorderRadiusGeometry.circular(6),
+                          ),
                         ),
                         onPressed: () async {
                           final picked = await FilePicker.pickFiles();
@@ -138,16 +154,20 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Assets.icons.attachment
-                                .svg(width: 16, color: Colors.white),
+                            Assets.icons.attachment.svg(
+                              width: 16,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 4),
-                            Text(context.l10n.attachFile,
-                                style: AppTextStyle.buttonSmall),
+                            Text(
+                              context.l10n.attachFile,
+                              style: AppTextStyle.buttonSmall,
+                            ),
                           ],
                         ),
                       ),
                     ),
-                ]
+                ],
               ],
             ),
           );
@@ -156,7 +176,11 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     );
   }
 
-  void _viewFile(BuildContext context, String filePath, String? contentType) async {
+  void _viewFile(
+    BuildContext context,
+    String filePath,
+    String? contentType,
+  ) async {
     if (!await File(filePath).exists()) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -168,7 +192,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     if (!context.mounted) return;
 
     final ext = extension(filePath).toLowerCase();
-    final isImage = contentType?.startsWith('image/') == true ||
+    final isImage =
+        contentType?.startsWith('image/') == true ||
         {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}.contains(ext);
     final isPdf = contentType == 'application/pdf' || ext == '.pdf';
 
@@ -209,7 +234,9 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   }
 
   Widget _buildAttachmentRow(
-      BuildContext context, AttachmentInfo attachmentInfo) {
+    BuildContext context,
+    AttachmentInfo attachmentInfo,
+  ) {
     final filePath = attachmentInfo.filePath;
     final title = attachmentInfo.title;
     final contentType = attachmentInfo.contentType;
@@ -236,8 +263,10 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
               Expanded(
                 child: Row(
                   children: [
-                    Assets.icons.documentFile
-                        .svg(width: 16, color: context.theme.iconTheme.color),
+                    Assets.icons.documentFile.svg(
+                      width: 16,
+                      color: context.theme.iconTheme.color,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: GestureDetector(
@@ -249,7 +278,7 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                           style: AppTextStyle.labelLarge,
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -259,32 +288,39 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                     Padding(
                       padding: const EdgeInsets.all(6),
                       child: GestureDetector(
-                          onTap: () => _viewFile(context, filePath, contentType),
-                          child: const Icon(Icons.remove_red_eye_outlined)
-                          ),
+                        onTap: () => _viewFile(context, filePath, contentType),
+                        child: const Icon(Icons.remove_red_eye_outlined),
+                      ),
                     ),
-                  if (filePath != null)
-                    const SizedBox(width: 16),
+                  if (filePath != null) const SizedBox(width: 16),
                   if (!widget.readOnly) ...[
                     Padding(
                       padding: const EdgeInsets.all(6),
                       child: GestureDetector(
                         onTap: () => filePath != null
-                            ? SharePlus.instance
-                                .share(ShareParams(files: [XFile(filePath)]))
+                            ? SharePlus.instance.share(
+                                ShareParams(files: [XFile(filePath)]),
+                              )
                             : null,
-                        child: Assets.icons.download
-                            .svg(width: 24, color: context.theme.iconTheme.color),
+                        child: Assets.icons.download.svg(
+                          width: 24,
+                          color: context.theme.iconTheme.color,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Padding(
                       padding: const EdgeInsets.all(6),
                       child: GestureDetector(
-                          onTap: () =>
-                              _showDeleteConfirmationDialog(context, attachmentInfo),
-                          child: Assets.icons.trashCan
-                              .svg(width: 24, color: context.theme.iconTheme.color)),
+                        onTap: () => _showDeleteConfirmationDialog(
+                          context,
+                          attachmentInfo,
+                        ),
+                        child: Assets.icons.trashCan.svg(
+                          width: 24,
+                          color: context.theme.iconTheme.color,
+                        ),
+                      ),
                     ),
                   ],
                 ],
@@ -307,7 +343,9 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   }
 
   void _showDeleteConfirmationDialog(
-      BuildContext context, AttachmentInfo attachmentInfo) {
+    BuildContext context,
+    AttachmentInfo attachmentInfo,
+  ) {
     AppSimpleDialog.showDestructiveConfirmation(
       context: context,
       title: context.l10n.deletePage,
@@ -316,8 +354,9 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
       confirmText: context.l10n.deletePage,
       cancelText: context.l10n.cancel,
       onConfirm: () {
-        _bloc.add(RecordAttachmentsFileDeleted(
-            attachmentInfo.documentReference));
+        _bloc.add(
+          RecordAttachmentsFileDeleted(attachmentInfo.documentReference),
+        );
       },
     );
   }
@@ -390,14 +429,20 @@ class _PdfViewer extends StatelessWidget {
               onError: (error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(context.l10n.errorLoadingPdf('$error'))),
+                    SnackBar(
+                      content: Text(context.l10n.errorLoadingPdf('$error')),
+                    ),
                   );
                 }
               },
               onPageError: (page, error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(context.l10n.errorOnPage('$page', '$error'))),
+                    SnackBar(
+                      content: Text(
+                        context.l10n.errorOnPage('$page', '$error'),
+                      ),
+                    ),
                   );
                 }
               },

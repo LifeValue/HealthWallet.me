@@ -117,8 +117,9 @@ class PeerSearchStatusView extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: Insets.normal),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Insets.normal,
+                  ),
                   child: AppButton(
                     onPressed: onRetry,
                     label: context.l10n.retry,
@@ -157,8 +158,7 @@ class PeerSearchStatusView extends StatelessWidget {
               Text(
                 context.l10n.shareWifiDirectUnresponsive,
                 style: AppTextStyle.bodyMedium.copyWith(
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -172,8 +172,7 @@ class PeerSearchStatusView extends StatelessWidget {
         Expanded(
           child: Center(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: Insets.normal),
+              padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -245,8 +244,7 @@ class _DiscoveryHintHeader extends StatelessWidget {
           Text(
             context.l10n.shareDiscoveryHint,
             style: AppTextStyle.bodyMedium.copyWith(
-              color:
-                  context.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: Insets.small),

@@ -13,20 +13,20 @@ class ConnectionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, label, icon) = switch (state.connectionStatus) {
       ConnectionStatus.connected => (
-          AppColors.success,
-          _connectedLabel(state),
-          Icons.link,
-        ),
+        AppColors.success,
+        _connectedLabel(state),
+        Icons.link,
+      ),
       ConnectionStatus.discovering => (
-          AppColors.warning,
-          'Discovering...',
-          Icons.search,
-        ),
+        AppColors.warning,
+        'Discovering...',
+        Icons.search,
+      ),
       ConnectionStatus.disconnected => (
-          AppColors.error,
-          'Disconnected',
-          Icons.link_off,
-        ),
+        AppColors.error,
+        'Disconnected',
+        Icons.link_off,
+      ),
     };
 
     return Container(

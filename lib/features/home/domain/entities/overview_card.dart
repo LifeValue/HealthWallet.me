@@ -77,12 +77,14 @@ enum HomeRecordsCategory {
     resourceTypes: [
       FhirType.Claim,
       FhirType.ExplanationOfBenefit,
-      FhirType.Coverage
+      FhirType.Coverage,
     ],
   );
 
-  const HomeRecordsCategory(
-      {required this.display, required this.resourceTypes});
+  const HomeRecordsCategory({
+    required this.display,
+    required this.resourceTypes,
+  });
 
   final String display;
   final List<FhirType> resourceTypes;

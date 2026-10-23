@@ -52,9 +52,11 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     final parsed = MedicalSpecialty.values
         .where((s) => s.name == widget.resource.specialtyOverride)
         .firstOrNull;
-    _currentSpecialty = parsed ??
+    _currentSpecialty =
+        parsed ??
         getIt<SpecialtyClassifier>().classify(widget.resource).firstOrNull;
-    _isEphemeral = widget.ephemeralRecords.isNotEmpty ||
+    _isEphemeral =
+        widget.ephemeralRecords.isNotEmpty ||
         EphemeralSessionManager.instance.hasActiveSession;
     if (!_isEphemeral) {
       _appRecordsBloc = context.read<RecordsBloc>();
@@ -112,7 +114,9 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   }
 
   Widget _buildScaffold(
-      BuildContext context, List<IFhirResource> relatedResources) {
+    BuildContext context,
+    List<IFhirResource> relatedResources,
+  ) {
     final IFhirResource encounter = relatedResources.firstWhere(
       (resource) => resource.fhirType == FhirType.Encounter,
       orElse: () => const GeneralResource(),
@@ -125,14 +129,17 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
             ? null
             : [
                 IconButton(
-                  icon: (_currentSpecialty?.icon ?? Assets.specialities.generalCare).svg(
-                    width: 22,
-                    height: 22,
-                    colorFilter: ColorFilter.mode(
-                      context.colorScheme.primary,
-                      BlendMode.srcIn,
-                    ),
-                  ),
+                  icon:
+                      (_currentSpecialty?.icon ??
+                              Assets.specialities.generalCare)
+                          .svg(
+                            width: 22,
+                            height: 22,
+                            colorFilter: ColorFilter.mode(
+                              context.colorScheme.primary,
+                              BlendMode.srcIn,
+                            ),
+                          ),
                   onPressed: () => _showSpecialtyPicker(context),
                 ),
                 IconButton(
@@ -245,7 +252,9 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                       padding: const EdgeInsets.only(top: 2),
                       child: infoLine.icon.svg(
                         width: 16,
-                        color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -256,7 +265,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                           color: context.colorScheme.onSurface,
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ],
@@ -274,10 +283,12 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
         Text(context.l10n.encounterDetails, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 4),
         InkWell(
-          onTap: () => context.router.push(RecordDetailsRoute(
-            resource: encounter,
-            ephemeralRecords: widget.ephemeralRecords,
-          )),
+          onTap: () => context.router.push(
+            RecordDetailsRoute(
+              resource: encounter,
+              ephemeralRecords: widget.ephemeralRecords,
+            ),
+          ),
           child: _buildRelatedResourceInfo(context, encounter),
         ),
         Padding(
@@ -289,48 +300,55 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
   }
 
   Widget _buildRelatedResourcesSection(
-      BuildContext context, List<IFhirResource> resources) {
+    BuildContext context,
+    List<IFhirResource> resources,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(context.l10n.relatedResources, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 16),
-        ...resources.map((resource) => InkWell(
-              onTap: () => context.router.push(RecordDetailsRoute(
+        ...resources.map(
+          (resource) => InkWell(
+            onTap: () => context.router.push(
+              RecordDetailsRoute(
                 resource: resource,
                 ephemeralRecords: widget.ephemeralRecords,
-              )),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(resource.displayTitle,
-                      style: AppTextStyle.labelLarge),
-                  if (resource.fhirType == FhirType.Media ||
-                      resource.fhirType == FhirType.DocumentReference)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: AppButton(
-                        label: context.l10n.viewDocument,
-                        onPressed: () => _onViewDocument(resource),
-                        icon: const Icon(Icons.visibility_outlined),
-                        variant: AppButtonVariant.outlined,
-                        fullWidth: false,
-                        height: 36,
-                        fontSize: 12,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                    ),
-                  _buildRelatedResourceInfo(context, resource),
-                  const SizedBox(height: 16),
-                ],
               ),
-            ))
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(resource.displayTitle, style: AppTextStyle.labelLarge),
+                if (resource.fhirType == FhirType.Media ||
+                    resource.fhirType == FhirType.DocumentReference)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: AppButton(
+                      label: context.l10n.viewDocument,
+                      onPressed: () => _onViewDocument(resource),
+                      icon: const Icon(Icons.visibility_outlined),
+                      variant: AppButtonVariant.outlined,
+                      fullWidth: false,
+                      height: 36,
+                      fontSize: 12,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  ),
+                _buildRelatedResourceInfo(context, resource),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildRelatedResourceInfo(
-      BuildContext context, IFhirResource resource) {
+    BuildContext context,
+    IFhirResource resource,
+  ) {
     final infoLines = resource.additionalInfo
         .where((line) => !line.isSection)
         .take(2)
@@ -348,17 +366,21 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                   children: [
                     infoLine.icon.svg(
                       width: 16,
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         infoLine.info,
                         style: AppTextStyle.labelLarge.copyWith(
-                          color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: context.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ],
@@ -431,7 +453,8 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     if (selected == null && currentSpecialty == null) return;
     if (selected == currentSpecialty) return;
 
-    final repo = _appRecordsBloc?.recordsRepository ?? getIt<RecordsRepository>();
+    final repo =
+        _appRecordsBloc?.recordsRepository ?? getIt<RecordsRepository>();
     await repo.setSpecialtyOverride(widget.resource.id, selected?.name);
 
     if (mounted && outerContext.mounted) {
@@ -509,7 +532,8 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                         backgroundColor: context.colorScheme.error,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                            vertical: Insets.smallNormal),
+                          vertical: Insets.smallNormal,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -535,9 +559,13 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                           itemCount: relatedResources.length,
                           itemBuilder: (_, index) {
                             final resource = relatedResources[index];
-                            final isSelected = selectedIds.contains(resource.id);
+                            final isSelected = selectedIds.contains(
+                              resource.id,
+                            );
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: Insets.extraSmall),
+                              padding: const EdgeInsets.only(
+                                bottom: Insets.extraSmall,
+                              ),
                               child: InkWell(
                                 onTap: () {
                                   setDialogState(() {
@@ -559,12 +587,13 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                                     border: Border.all(
                                       color: isSelected
                                           ? context.colorScheme.error
-                                              .withValues(alpha: 0.5)
+                                                .withValues(alpha: 0.5)
                                           : borderColor,
                                     ),
                                     color: isSelected
-                                        ? context.colorScheme.error
-                                            .withValues(alpha: 0.05)
+                                        ? context.colorScheme.error.withValues(
+                                            alpha: 0.05,
+                                          )
                                         : null,
                                   ),
                                   child: Row(
@@ -583,7 +612,8 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                                               }
                                             });
                                           },
-                                          activeColor: context.colorScheme.error,
+                                          activeColor:
+                                              context.colorScheme.error,
                                           materialTapTargetSize:
                                               MaterialTapTargetSize.shrinkWrap,
                                           visualDensity: VisualDensity.compact,
@@ -603,21 +633,22 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                                           children: [
                                             Text(
                                               resource.displayTitle,
-                                              style:
-                                                  AppTextStyle.labelLarge.copyWith(
-                                                color: textColor,
-                                              ),
+                                              style: AppTextStyle.labelLarge
+                                                  .copyWith(
+                                                    color: textColor,
+                                                  ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                             Text(
                                               resource.fhirType.display,
-                                              style:
-                                                  AppTextStyle.labelSmall.copyWith(
-                                                color: context
-                                                    .colorScheme.onSurface
-                                                    .withValues(alpha: 0.5),
-                                              ),
+                                              style: AppTextStyle.labelSmall
+                                                  .copyWith(
+                                                    color: context
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withValues(alpha: 0.5),
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -648,11 +679,13 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: context.colorScheme.error,
                           side: BorderSide(
-                            color: context.colorScheme.error
-                                .withValues(alpha: 0.3),
+                            color: context.colorScheme.error.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                           padding: const EdgeInsets.symmetric(
-                              vertical: Insets.smallNormal),
+                            vertical: Insets.smallNormal,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),

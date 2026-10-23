@@ -89,14 +89,14 @@ class _ResourcesFormState extends State<ResourcesForm> {
                 patientVersion: _patientVersion,
                 onPropertyChanged: (propertyKey, newValue) =>
                     context.read<ProcessingBloc>().add(
-                          ResourceChanged(
-                            sessionId: sessionId,
-                            index: 0,
-                            propertyKey: propertyKey,
-                            newValue: newValue,
-                            isDraftPatient: true,
-                          ),
-                        ),
+                      ResourceChanged(
+                        sessionId: sessionId,
+                        index: 0,
+                        propertyKey: propertyKey,
+                        newValue: newValue,
+                        isDraftPatient: true,
+                      ),
+                    ),
               ),
             if (diagnosticReport?.hasSelection == true)
               KeyedSubtree(
@@ -109,14 +109,14 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
                       context.read<ProcessingBloc>().add(
-                            ResourceChanged(
-                              sessionId: sessionId,
-                              index: 0,
-                              propertyKey: propertyKey,
-                              newValue: newValue,
-                              isDraftDiagnosticReport: true,
-                            ),
-                          ),
+                        ResourceChanged(
+                          sessionId: sessionId,
+                          index: 0,
+                          propertyKey: propertyKey,
+                          newValue: newValue,
+                          isDraftDiagnosticReport: true,
+                        ),
+                      ),
                 ),
               )
             else if (encounter?.hasSelection == true)
@@ -132,14 +132,14 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   isLocked: widget.isAttachmentLocked,
                   onPropertyChanged: (propertyKey, newValue) =>
                       context.read<ProcessingBloc>().add(
-                            ResourceChanged(
-                              sessionId: sessionId,
-                              index: 0,
-                              propertyKey: propertyKey,
-                              newValue: newValue,
-                              isDraftEncounter: true,
-                            ),
-                          ),
+                        ResourceChanged(
+                          sessionId: sessionId,
+                          index: 0,
+                          propertyKey: propertyKey,
+                          newValue: newValue,
+                          isDraftEncounter: true,
+                        ),
+                      ),
                 ),
               ),
             ...resources.indexed.map((entry) {
@@ -152,24 +152,25 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   resource: resource,
                   onPropertyChanged: (propertyKey, newValue) =>
                       context.read<ProcessingBloc>().add(
-                            ResourceChanged(
-                              sessionId: sessionId,
-                              index: index,
-                              propertyKey: propertyKey,
-                              newValue: newValue,
-                            ),
-                          ),
+                        ResourceChanged(
+                          sessionId: sessionId,
+                          index: index,
+                          propertyKey: propertyKey,
+                          newValue: newValue,
+                        ),
+                      ),
                   onResourceRemoved: () => DeleteConfirmationDialog.show(
                     context: context,
                     title: 'Delete Resources',
                     onConfirm: () {
-                      context.read<ProcessingBloc>().add(ResourceRemoved(
-                          sessionId: sessionId, index: index));
+                      context.read<ProcessingBloc>().add(
+                        ResourceRemoved(sessionId: sessionId, index: index),
+                      );
                     },
                   ),
                 ),
               );
-            })
+            }),
           ],
         ),
       ),
@@ -186,21 +187,22 @@ class _ResourcesFormState extends State<ResourcesForm> {
     bool isStagedResource = false,
     bool isLocked = false,
   }) {
-    final Map<String, TextFieldDescriptor> textFields =
-        resource.getFieldDescriptors();
+    final Map<String, TextFieldDescriptor> textFields = resource
+        .getFieldDescriptors();
 
     return Container(
       key: ValueKey('${resource.id}_v$patientVersion'),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isLocked
-                ? context.colorScheme.primary.withValues(alpha: 0.4)
-                : context.theme.dividerColor,
-          ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
           color: isLocked
-              ? context.colorScheme.primary.withValues(alpha: 0.04)
-              : null),
+              ? context.colorScheme.primary.withValues(alpha: 0.4)
+              : context.theme.dividerColor,
+        ),
+        color: isLocked
+            ? context.colorScheme.primary.withValues(alpha: 0.04)
+            : null,
+      ),
       margin: const EdgeInsets.only(bottom: 24),
       child: Padding(
         padding: const EdgeInsets.all(Insets.normal),
@@ -221,9 +223,11 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         child: GestureDetector(
                           onTap: () => _openAttachDialog(context),
                           child: Assets.icons.attachment.svg(
-                              width: 20,
-                              color: context.theme.iconTheme.color ??
-                                  context.colorScheme.onSurface),
+                            width: 20,
+                            color:
+                                context.theme.iconTheme.color ??
+                                context.colorScheme.onSurface,
+                          ),
                         ),
                       ),
                     if (isStagedResource &&
@@ -233,8 +237,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         padding: const EdgeInsetsGeometry.all(6),
                         child: GestureDetector(
                           onTap: () => context.read<ProcessingBloc>().add(
-                                ContainerTypeSwitched(sessionId: widget.sessionId),
-                              ),
+                            ContainerTypeSwitched(sessionId: widget.sessionId),
+                          ),
                           child: Tooltip(
                             message: resource is MappingEncounter
                                 ? 'Switch to Diagnostic Report'
@@ -242,7 +246,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                             child: Icon(
                               Icons.swap_horiz,
                               size: 20,
-                              color: context.theme.iconTheme.color ??
+                              color:
+                                  context.theme.iconTheme.color ??
                                   context.colorScheme.onSurface,
                             ),
                           ),
@@ -254,9 +259,11 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         child: GestureDetector(
                           onTap: () => onResourceRemoved?.call(),
                           child: Assets.icons.trashCan.svg(
-                              width: 20,
-                              color: context.theme.iconTheme.color ??
-                                  context.colorScheme.onSurface),
+                            width: 20,
+                            color:
+                                context.theme.iconTheme.color ??
+                                context.colorScheme.onSurface,
+                          ),
                         ),
                       ),
                   ],
@@ -270,8 +277,9 @@ class _ResourcesFormState extends State<ResourcesForm> {
               final propertyKey = entry.key;
               final descriptor = entry.value;
 
-              final confidenceLevel =
-                  ConfidenceLevel.fromDouble(descriptor.confidenceLevel);
+              final confidenceLevel = ConfidenceLevel.fromDouble(
+                descriptor.confidenceLevel,
+              );
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,16 +306,18 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         Text(
                           '(${confidenceLevel.getString()})',
                           style: AppTextStyle.labelSmall.copyWith(
-                              color: confidenceLevel.getColor(context),
-                              fontStyle: FontStyle.italic),
-                        )
+                            color: confidenceLevel.getColor(context),
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   if (descriptor.fieldType == FieldType.date)
                     FormField<String>(
                       key: ValueKey(
-                          '${resource.id}_${propertyKey}_form_${descriptor.value}'),
+                        '${resource.id}_${propertyKey}_form_${descriptor.value}',
+                      ),
                       initialValue: descriptor.value,
                       validator: (value) {
                         final error = descriptor.validate(value);
@@ -345,7 +355,9 @@ class _ResourcesFormState extends State<ResourcesForm> {
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                     color: hasError
@@ -362,16 +374,19 @@ class _ResourcesFormState extends State<ResourcesForm> {
                                       child: Text(
                                         descriptor.value.isNotEmpty
                                             ? _formatDateForDisplay(
-                                                descriptor.value, context)
+                                                descriptor.value,
+                                                context,
+                                              )
                                             : context.l10n.selectDate,
                                         style: AppTextStyle.labelLarge.copyWith(
                                           color: descriptor.value.isNotEmpty
                                               ? (context.isDarkMode
-                                                  ? AppColors.textPrimaryDark
-                                                  : AppColors.textPrimary)
+                                                    ? AppColors.textPrimaryDark
+                                                    : AppColors.textPrimary)
                                               : (context.isDarkMode
-                                                  ? AppColors.textSecondaryDark
-                                                  : AppColors.textSecondary),
+                                                    ? AppColors
+                                                          .textSecondaryDark
+                                                    : AppColors.textSecondary),
                                         ),
                                       ),
                                     ),
@@ -391,8 +406,10 @@ class _ResourcesFormState extends State<ResourcesForm> {
                             ),
                             if (hasError && errorText != null)
                               Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 4, left: 12),
+                                padding: const EdgeInsets.only(
+                                  top: 4,
+                                  left: 12,
+                                ),
                                 child: Text(
                                   errorText,
                                   style: AppTextStyle.labelSmall.copyWith(
@@ -407,11 +424,14 @@ class _ResourcesFormState extends State<ResourcesForm> {
                   else if (descriptor.fieldType == FieldType.dropdown &&
                       propertyKey == 'specialty')
                     FormField<String>(
-                      key: ValueKey('${resource.id}_${propertyKey}_form_${descriptor.value}'),
+                      key: ValueKey(
+                        '${resource.id}_${propertyKey}_form_${descriptor.value}',
+                      ),
                       initialValue: descriptor.value,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) =>
-                          (value == null || value.isEmpty) ? context.l10n.fieldCannotBeEmpty : null,
+                      validator: (value) => (value == null || value.isEmpty)
+                          ? context.l10n.fieldCannotBeEmpty
+                          : null,
                       builder: (field) => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -422,7 +442,10 @@ class _ResourcesFormState extends State<ResourcesForm> {
                             hasError: field.hasError,
                             getDisplayText: (s) => s.displayName,
                             onChanged: (MedicalSpecialty s) {
-                              onPropertyChanged?.call(propertyKey, s.displayName);
+                              onPropertyChanged?.call(
+                                propertyKey,
+                                s.displayName,
+                              );
                               field.didChange(s.displayName);
                             },
                             itemBuilder: (context, s, isSelected) => Row(
@@ -457,11 +480,14 @@ class _ResourcesFormState extends State<ResourcesForm> {
                                   .firstOrNull;
                               if (match == null) {
                                 return Text(
-                                  value.isEmpty ? context.l10n.specialty : value,
+                                  value.isEmpty
+                                      ? context.l10n.specialty
+                                      : value,
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTextStyle.labelLarge.copyWith(
                                     color: value.isEmpty
-                                        ? context.colorScheme.onSurface.withValues(alpha: 0.5)
+                                        ? context.colorScheme.onSurface
+                                              .withValues(alpha: 0.5)
                                         : context.colorScheme.onSurface,
                                   ),
                                 );
@@ -511,8 +537,10 @@ class _ResourcesFormState extends State<ResourcesForm> {
                       ],
                       getDisplayText: (item) => item,
                       onChanged: (String newValue) {
-                        final fhirValue =
-                            _mapDisplayGenderToFhir(newValue, context);
+                        final fhirValue = _mapDisplayGenderToFhir(
+                          newValue,
+                          context,
+                        );
                         onPropertyChanged?.call(propertyKey, fhirValue);
                       },
                     )
@@ -533,17 +561,20 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         helperStyle: const TextStyle(height: 0, fontSize: 0),
                         disabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                              color: confidenceLevel.getColor(context)),
+                            color: confidenceLevel.getColor(context),
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                              color: confidenceLevel.getColor(context)),
+                            color: confidenceLevel.getColor(context),
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                              color: confidenceLevel.getColor(context)),
+                            color: confidenceLevel.getColor(context),
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         errorBorder: OutlineInputBorder(
@@ -551,12 +582,16 @@ class _ResourcesFormState extends State<ResourcesForm> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
-                          borderSide:
-                              const BorderSide(color: Colors.red, width: 1.5),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                     ),
                   if (entry.key != textFields.entries.last.key)
@@ -628,18 +663,21 @@ class _ResourcesFormState extends State<ResourcesForm> {
   }
 
   void _swapPatient(
-      BuildContext context, StagedPatient patient, ImportMode targetMode) {
+    BuildContext context,
+    StagedPatient patient,
+    ImportMode targetMode,
+  ) {
     context.read<ProcessingBloc>().add(
-          EncounterAttached(
-            sessionId: widget.sessionId,
-            patient: StagedPatient(
-              draft: patient.draft,
-              existing: patient.existing,
-              mode: targetMode,
-            ),
-            encounter: widget.encounter ?? const StagedEncounter(),
-          ),
-        );
+      EncounterAttached(
+        sessionId: widget.sessionId,
+        patient: StagedPatient(
+          draft: patient.draft,
+          existing: patient.existing,
+          mode: targetMode,
+        ),
+        encounter: widget.encounter ?? const StagedEncounter(),
+      ),
+    );
   }
 
   Future<void> _openAttachDialog(BuildContext context) async {
@@ -656,12 +694,12 @@ class _ResourcesFormState extends State<ResourcesForm> {
 
     final (patient, encounter) = result;
     context.read<ProcessingBloc>().add(
-          EncounterAttached(
-            sessionId: widget.sessionId,
-            patient: patient,
-            encounter: encounter,
-          ),
-        );
+      EncounterAttached(
+        sessionId: widget.sessionId,
+        patient: patient,
+        encounter: encounter,
+      ),
+    );
   }
 
   MappingPatient _resolvePatient(StagedPatient patient) {
@@ -690,7 +728,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
     if (isNewPatient) {
       final draftName = patient.draft != null
           ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'
-              .trim()
+                .trim()
           : '';
       return _buildBanner(
         context,
@@ -705,7 +743,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
     if (isNewWithExisting) {
       final draftName = patient.draft != null
           ? '${patient.draft!.givenName.value} ${patient.draft!.familyName.value}'
-              .trim()
+                .trim()
           : '';
       return _buildBanner(
         context,
@@ -731,8 +769,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
           color: AppColors.success,
           text: context.l10n.patientSavingModified(displayName),
           onAction: () => context.read<ProcessingBloc>().add(
-                PatientReverted(sessionId: widget.sessionId),
-              ),
+            PatientReverted(sessionId: widget.sessionId),
+          ),
         );
       }
 
@@ -743,8 +781,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
           color: AppColors.warning,
           text: context.l10n.patientModifiedUpdating(displayName),
           onAction: () => context.read<ProcessingBloc>().add(
-                PatientReverted(sessionId: widget.sessionId),
-              ),
+            PatientReverted(sessionId: widget.sessionId),
+          ),
         );
       }
 

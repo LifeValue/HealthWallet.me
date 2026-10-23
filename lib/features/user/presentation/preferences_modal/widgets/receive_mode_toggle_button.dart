@@ -44,8 +44,8 @@ class ReceiveModeToggleButton extends StatelessWidget {
                       style: context.textTheme.bodySmall?.copyWith(
                         color: !isReceiveModeEnabled
                             ? (context.isDarkMode
-                                ? Colors.white
-                                : colorScheme.onPrimary)
+                                  ? Colors.white
+                                  : colorScheme.onPrimary)
                             : colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
@@ -68,8 +68,8 @@ class ReceiveModeToggleButton extends StatelessWidget {
                       style: context.textTheme.bodySmall?.copyWith(
                         color: isReceiveModeEnabled
                             ? (context.isDarkMode
-                                ? Colors.white
-                                : colorScheme.onPrimary)
+                                  ? Colors.white
+                                  : colorScheme.onPrimary)
                             : colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                       ),

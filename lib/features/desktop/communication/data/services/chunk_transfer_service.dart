@@ -24,8 +24,9 @@ class ChunkTransferService {
 
     for (var i = 0; i < totalChunks; i++) {
       final start = i * _chunkSize;
-      final end =
-          (start + _chunkSize > bytes.length) ? bytes.length : start + _chunkSize;
+      final end = (start + _chunkSize > bytes.length)
+          ? bytes.length
+          : start + _chunkSize;
       final chunk = bytes.sublist(start, end);
       final encoded = base64Encode(chunk);
 

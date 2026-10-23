@@ -3,6 +3,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+
 import 'date_range_filter_model.dart';
 
 class DateGridDropdown extends StatefulWidget {
@@ -80,13 +81,15 @@ class _DateGridDropdownState extends State<DateGridDropdown> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2)),
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, -2),
+                    ),
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, -4)),
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, -4),
+                    ),
                   ],
                 ),
                 child: Material(
@@ -186,8 +189,9 @@ class _DateGridDropdownState extends State<DateGridDropdown> {
         Text(
           widget.label,
           style: AppTextStyle.labelSmall.copyWith(
-            color: context.colorScheme.onSurface
-                .withValues(alpha: widget.enabled ? 0.7 : 0.4),
+            color: context.colorScheme.onSurface.withValues(
+              alpha: widget.enabled ? 0.7 : 0.4,
+            ),
           ),
         ),
         const SizedBox(height: 4),
@@ -199,7 +203,9 @@ class _DateGridDropdownState extends State<DateGridDropdown> {
             child: Container(
               height: 48,
               padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.small, vertical: Insets.small),
+                horizontal: Insets.small,
+                vertical: Insets.small,
+              ),
               decoration: BoxDecoration(
                 color: widget.enabled
                     ? context.colorScheme.surface
@@ -208,8 +214,8 @@ class _DateGridDropdownState extends State<DateGridDropdown> {
                   color: _isOpen
                       ? context.colorScheme.primary
                       : context.isDarkMode
-                          ? AppColors.borderDark
-                          : AppColors.border,
+                      ? AppColors.borderDark
+                      : AppColors.border,
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -224,8 +230,9 @@ class _DateGridDropdownState extends State<DateGridDropdown> {
                       style: AppTextStyle.labelLarge.copyWith(
                         color: widget.enabled
                             ? context.colorScheme.onSurface
-                            : context.colorScheme.onSurface
-                                .withValues(alpha: 0.4),
+                            : context.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
                       ),
                     ),
                   ),

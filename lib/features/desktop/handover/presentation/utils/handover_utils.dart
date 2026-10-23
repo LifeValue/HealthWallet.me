@@ -104,8 +104,9 @@ class HandoverUtils {
         if (session.encounter.draft != null)
           'encounter': stagedEncounterToJson(session.encounter),
         if (session.diagnosticReport != null)
-          'diagnosticReport':
-              stagedDiagnosticReportToJson(session.diagnosticReport!),
+          'diagnosticReport': stagedDiagnosticReportToJson(
+            session.diagnosticReport!,
+          ),
       };
     }
 
@@ -114,7 +115,8 @@ class HandoverUtils {
       session.filePaths,
       sourceSessionId: session.id,
       phase1Data: phase1Data,
-      continueLabel: session.origin == ProcessingOrigin.import ||
+      continueLabel:
+          session.origin == ProcessingOrigin.import ||
               session.origin == ProcessingOrigin.handover
           ? context.l10n.desktopContinueImporting
           : null,

@@ -8,7 +8,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 class DialogHelper {
   static void showPermissionRequiredDialog(
-      BuildContext context, VoidCallback onRetry) {
+    BuildContext context,
+    VoidCallback onRetry,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -63,7 +65,11 @@ class DialogHelper {
   }
 
   static Widget buildAttachmentSuccessDialog(
-      BuildContext context, int count, Encounter encounter, ProcessingBloc bloc) {
+    BuildContext context,
+    int count,
+    Encounter encounter,
+    ProcessingBloc bloc,
+  ) {
     return AlertDialog(
       title: Row(
         children: [
@@ -105,7 +111,11 @@ class DialogHelper {
   }
 
   static void showAttachmentSuccessDialog(
-      BuildContext context, int count, Encounter encounter, ProcessingBloc bloc) {
+    BuildContext context,
+    int count,
+    Encounter encounter,
+    ProcessingBloc bloc,
+  ) {
     showDialog(
       context: context,
       builder: (context) =>

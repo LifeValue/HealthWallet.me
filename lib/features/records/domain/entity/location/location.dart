@@ -88,16 +88,16 @@ abstract class Location with _$Location implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Location',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Location',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -125,8 +125,9 @@ abstract class Location with _$Location implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createCategoryLine(
-            typeDisplay.isNotEmpty ? typeDisplay : null,
-            prefix: 'Type'),
+          typeDisplay.isNotEmpty ? typeDisplay : null,
+          prefix: 'Type',
+        ),
       );
     }
 
@@ -148,8 +149,11 @@ abstract class Location with _$Location implements IFhirResource {
     if (telecom != null && telecom!.isNotEmpty) {
       // Main Phone
       final mainPhone = telecom!
-          .where((t) => t.system?.valueString == 'phone' && 
-                       (t.use == null || t.use?.valueString != 'fax'))
+          .where(
+            (t) =>
+                t.system?.valueString == 'phone' &&
+                (t.use == null || t.use?.valueString != 'fax'),
+          )
           .firstOrNull
           ?.value
           ?.valueString;
@@ -160,32 +164,43 @@ abstract class Location with _$Location implements IFhirResource {
 
       // Emergency Phone
       final emergencyPhone = telecom!
-          .where((t) => t.system?.valueString == 'phone' && 
-                       t.use?.valueString == 'emergency')
+          .where(
+            (t) =>
+                t.system?.valueString == 'phone' &&
+                t.use?.valueString == 'emergency',
+          )
           .firstOrNull
           ?.value
           ?.valueString;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createWarningLine(emergencyPhone, prefix: 'Emergency'),
+        ResourceFieldMapper.createWarningLine(
+          emergencyPhone,
+          prefix: 'Emergency',
+        ),
       );
     }
 
     // Add section header only if we added content
     if (infoLines.length > facilityDetailsStartIndex) {
-      infoLines.insert(facilityDetailsStartIndex,
-        ResourceFieldMapper.createSectionHeader('Facility Details'));
+      infoLines.insert(
+        facilityDetailsStartIndex,
+        ResourceFieldMapper.createSectionHeader('Facility Details'),
+      );
     }
 
     final basicInfoStartIndex = infoLines.length;
 
     // Operational Status (Operational, Closed, etc.)
-    final operationalStatusDisplay =
-        FhirFieldExtractor.extractCodingDisplay(operationalStatus);
+    final operationalStatusDisplay = FhirFieldExtractor.extractCodingDisplay(
+      operationalStatus,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(operationalStatusDisplay,
-          prefix: 'Operational Status'),
+      ResourceFieldMapper.createStatusLine(
+        operationalStatusDisplay,
+        prefix: 'Operational Status',
+      ),
     );
 
     // Mode (Instance, Kind)
@@ -196,21 +211,27 @@ abstract class Location with _$Location implements IFhirResource {
     );
 
     // Physical Type (Building, Wing, Room, Bed, etc.)
-    final physicalTypeDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(physicalType);
+    final physicalTypeDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      physicalType,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(physicalTypeDisplay,
-          prefix: 'Physical Type'),
+      ResourceFieldMapper.createCategoryLine(
+        physicalTypeDisplay,
+        prefix: 'Physical Type',
+      ),
     );
 
     // Managing Organization
-    final organizationDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(managingOrganization);
+    final organizationDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      managingOrganization,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(organizationDisplay,
-          prefix: 'Managing Organization'),
+      ResourceFieldMapper.createOrganizationLine(
+        organizationDisplay,
+        prefix: 'Managing Organization',
+      ),
     );
 
     // Part Of (parent location)
@@ -222,8 +243,10 @@ abstract class Location with _$Location implements IFhirResource {
 
     // Add section header only if we added content
     if (infoLines.length > basicInfoStartIndex) {
-      infoLines.insert(basicInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Basic Information'));
+      infoLines.insert(
+        basicInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Basic Information'),
+      );
     }
 
     final additionalInfoStartIndex = infoLines.length;
@@ -237,8 +260,9 @@ abstract class Location with _$Location implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            aliasText.isNotEmpty ? aliasText : null,
-            prefix: 'Also Known As'),
+          aliasText.isNotEmpty ? aliasText : null,
+          prefix: 'Also Known As',
+        ),
       );
     }
 
@@ -246,8 +270,10 @@ abstract class Location with _$Location implements IFhirResource {
     final descriptionText = description?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(descriptionText,
-          prefix: 'Description'),
+      ResourceFieldMapper.createNotesLine(
+        descriptionText,
+        prefix: 'Description',
+      ),
     );
 
     // Hours of Operation
@@ -257,10 +283,10 @@ abstract class Location with _$Location implements IFhirResource {
             ?.map((d) => d.valueString)
             .where((d) => d != null)
             .join(', ');
-        
+
         final allDay = hours.allDay?.valueBoolean;
         String? hoursDisplay;
-        
+
         if (allDay == true) {
           hoursDisplay = '24/7';
         } else {
@@ -270,15 +296,14 @@ abstract class Location with _$Location implements IFhirResource {
             hoursDisplay = '$openingTime - $closingTime';
           }
         }
-        
+
         final fullDisplay = daysOfWeek != null && hoursDisplay != null
             ? '$daysOfWeek: $hoursDisplay'
             : hoursDisplay ?? daysOfWeek;
-        
+
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createTimeLine(fullDisplay,
-              prefix: 'Hours'),
+          ResourceFieldMapper.createTimeLine(fullDisplay, prefix: 'Hours'),
         );
       }
     }
@@ -287,19 +312,25 @@ abstract class Location with _$Location implements IFhirResource {
     if (position != null) {
       final latitude = position!.latitude.valueString;
       final longitude = position!.longitude.valueString;
-      
+
       if (latitude != null && longitude != null) {
         // Parse to format as needed
         final latDouble = double.tryParse(latitude);
         final lonDouble = double.tryParse(longitude);
-        
-        final latDisplay = latDouble != null ? latDouble.toStringAsFixed(4) : latitude;
-        final lonDisplay = lonDouble != null ? lonDouble.toStringAsFixed(4) : longitude;
-        
+
+        final latDisplay = latDouble != null
+            ? latDouble.toStringAsFixed(4)
+            : latitude;
+        final lonDisplay = lonDouble != null
+            ? lonDouble.toStringAsFixed(4)
+            : longitude;
+
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createLocationLine('$latDisplay° N, $lonDisplay° W',
-              prefix: 'GPS Coordinates'),
+          ResourceFieldMapper.createLocationLine(
+            '$latDisplay° N, $lonDisplay° W',
+            prefix: 'GPS Coordinates',
+          ),
         );
       }
     }
@@ -344,27 +375,33 @@ abstract class Location with _$Location implements IFhirResource {
     final availabilityExceptionsText = availabilityExceptions?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(availabilityExceptionsText,
-          prefix: 'Availability Exceptions'),
+      ResourceFieldMapper.createNotesLine(
+        availabilityExceptionsText,
+        prefix: 'Availability Exceptions',
+      ),
     );
 
     // Add section header only if we added content
     if (infoLines.length > additionalInfoStartIndex) {
-      infoLines.insert(additionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Additional Information'));
+      infoLines.insert(
+        additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'),
+      );
     }
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     return infoLines;
   }
-  
+
   @override
   List<String?> get resourceReferences {
     return {

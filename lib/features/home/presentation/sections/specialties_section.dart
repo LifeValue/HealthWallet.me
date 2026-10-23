@@ -57,7 +57,9 @@ class SpecialtiesSection extends StatelessWidget {
       itemBuilder: (context, card, index) {
         final isFirstCard = index == 0 && !editMode;
         final cardContent = _buildSpecialtyCard(
-          context, card, screenWidth,
+          context,
+          card,
+          screenWidth,
           key: isFirstCard ? firstCardKey : null,
         );
 

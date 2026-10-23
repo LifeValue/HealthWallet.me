@@ -324,8 +324,11 @@ class _ImageWithRetryState extends State<_ImageWithRetry> {
               return const Center(child: CircularProgressIndicator());
             }
             return const Center(
-              child: Icon(Icons.image_not_supported_outlined,
-                  size: 40, color: Colors.grey),
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                size: 40,
+                color: Colors.grey,
+              ),
             );
           },
         );

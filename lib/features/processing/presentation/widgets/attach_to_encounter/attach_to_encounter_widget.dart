@@ -29,10 +29,12 @@ class AttachToEncounterWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<AttachToEncounterBloc>()
-        ..add(AttachToEncounterStarted(
-          patient: patient ?? const StagedPatient(),
-          encounter: encounter ?? const StagedEncounter(),
-        )),
+        ..add(
+          AttachToEncounterStarted(
+            patient: patient ?? const StagedPatient(),
+            encounter: encounter ?? const StagedEncounter(),
+          ),
+        ),
       child: _AttachToEncounterView(confirmText: confirmText),
     );
   }
@@ -92,14 +94,15 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(context.l10n.attachToEncounter,
-                            style: AppTextStyle.bodyMedium),
+                        child: Text(
+                          context.l10n.attachToEncounter,
+                          style: AppTextStyle.bodyMedium,
+                        ),
                       ),
                       IconButton(
                         onPressed: _handleCancel,
@@ -115,14 +118,13 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                 ),
                 Container(height: 1, color: borderColor),
 
-
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                          PatientSelector(
+                        PatientSelector(
                           title: context.l10n.currentPatientAndSource,
                         ),
                         const SizedBox(height: 24),
@@ -133,7 +135,6 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                 ),
 
                 Container(height: 1, color: borderColor),
-
 
                 Padding(
                   padding: const EdgeInsets.all(Insets.normal),
@@ -147,13 +148,16 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                             foregroundColor: AppColors.primary,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(
-                                vertical: Insets.small),
+                              vertical: Insets.small,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
-                          child:
-                              Text(context.l10n.cancel, style: AppTextStyle.buttonSmall),
+                          child: Text(
+                            context.l10n.cancel,
+                            style: AppTextStyle.buttonSmall,
+                          ),
                         ),
                       ),
                       const SizedBox(width: Insets.small),
@@ -161,7 +165,10 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                         child: ElevatedButton(
                           onPressed: canProceed
                               ? () => _handleDone(
-                                  context, state.patient, state.encounter)
+                                  context,
+                                  state.patient,
+                                  state.encounter,
+                                )
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: canProceed
@@ -172,13 +179,16 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
                                 : context.colorScheme.onSurfaceVariant,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(
-                                vertical: Insets.small),
+                              vertical: Insets.small,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
-                          child:
-                              Text(widget.confirmText ?? context.l10n.save, style: AppTextStyle.buttonSmall),
+                          child: Text(
+                            widget.confirmText ?? context.l10n.save,
+                            style: AppTextStyle.buttonSmall,
+                          ),
                         ),
                       ),
                     ],

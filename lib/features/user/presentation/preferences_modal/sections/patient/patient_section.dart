@@ -30,19 +30,20 @@ class _PatientSectionState extends State<PatientSection> {
         final currentSelectedPatientId = patientBloc.state.selectedPatientId;
 
         context.read<PatientBloc>().add(
-              PatientPatientsLoaded(
-                preserveOrder: true,
-                preservePatientId: currentSelectedPatientId,
-              ),
-            );
+          PatientPatientsLoaded(
+            preserveOrder: true,
+            preservePatientId: currentSelectedPatientId,
+          ),
+        );
       });
     }
   }
 
   void _handlePatientTap(String patientId) {
     final currentState = context.read<PatientBloc>().state;
-    final isCurrentlyExpanded =
-        currentState.expandedPatientIds.contains(patientId);
+    final isCurrentlyExpanded = currentState.expandedPatientIds.contains(
+      patientId,
+    );
 
     if (isCurrentlyExpanded) {
       return;

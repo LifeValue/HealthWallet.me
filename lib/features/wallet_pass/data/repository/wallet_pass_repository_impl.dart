@@ -20,7 +20,11 @@ class WalletPassRepositoryImpl implements WalletPassRepository {
     required String patientId,
     required ApplePassLabels labels,
   }) async {
-    return _applePassBuilder.build(cardData, patientId: patientId, labels: labels);
+    return _applePassBuilder.build(
+      cardData,
+      patientId: patientId,
+      labels: labels,
+    );
   }
 
   @override

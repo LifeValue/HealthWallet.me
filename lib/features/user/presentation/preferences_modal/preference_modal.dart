@@ -52,94 +52,95 @@ class PreferenceModal extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
         child: Container(
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: borderColor,
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Insets.normal,
-                vertical: Insets.small,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    context.l10n.preferences,
-                    style: AppTextStyle.bodyMedium,
-                  ),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: IconButton(
-                      icon: Assets.icons.close.svg(
-                        colorFilter: ColorFilter.mode(
-                          context.colorScheme.onSurface,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                      onPressed: () {
-                        context.popDialog();
-                      },
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Divider(
-              height: 1,
+          decoration: BoxDecoration(
+            color: context.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
               color: borderColor,
+              width: 1,
             ),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Insets.normal,
+                  vertical: Insets.small,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const SizedBox(height: Insets.normal),
-                    const UserSection(),
-                    const SizedBox(height: Insets.medium),
-                    const PatientSection(),
-                    const SizedBox(height: Insets.medium),
-                    const SyncSection(),
-                    const SizedBox(height: Insets.medium),
-                    const AiModelSection(),
-                    const SizedBox(height: Insets.medium),
-                    const SettingsSection(),
-                    const SizedBox(height: Insets.medium),
-                    FutureBuilder<PackageInfo>(
-                      future: PackageInfo.fromPlatform(),
-                      builder: (context, snap) => !snap.hasData
-                          ? const SizedBox(height: 40)
-                          : Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: Insets.normal),
-                              child: Text(
-                                '${context.l10n.version}: v${snap.data!.version} (${snap.data!.buildNumber})',
-                                style: AppTextStyle.labelSmall.copyWith(
-                                  color: context.colorScheme.onSurface
-                                      .withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ),
+                    Text(
+                      context.l10n.preferences,
+                      style: AppTextStyle.bodyMedium,
                     ),
-                    const SizedBox(height: Insets.normal),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: IconButton(
+                        icon: Assets.icons.close.svg(
+                          colorFilter: ColorFilter.mode(
+                            context.colorScheme.onSurface,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        onPressed: () {
+                          context.popDialog();
+                        },
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+              Divider(
+                height: 1,
+                color: borderColor,
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: Insets.normal),
+                      const UserSection(),
+                      const SizedBox(height: Insets.medium),
+                      const PatientSection(),
+                      const SizedBox(height: Insets.medium),
+                      const SyncSection(),
+                      const SizedBox(height: Insets.medium),
+                      const AiModelSection(),
+                      const SizedBox(height: Insets.medium),
+                      const SettingsSection(),
+                      const SizedBox(height: Insets.medium),
+                      FutureBuilder<PackageInfo>(
+                        future: PackageInfo.fromPlatform(),
+                        builder: (context, snap) => !snap.hasData
+                            ? const SizedBox(height: 40)
+                            : Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: Insets.normal,
+                                ),
+                                child: Text(
+                                  '${context.l10n.version}: v${snap.data!.version} (${snap.data!.buildNumber})',
+                                  style: AppTextStyle.labelSmall.copyWith(
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: Insets.normal),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

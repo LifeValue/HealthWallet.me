@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -142,8 +143,9 @@ class AppSimpleDialog {
                     children: [
                       Text(
                         title,
-                        style:
-                            AppTextStyle.bodyMedium.copyWith(color: textColor),
+                        style: AppTextStyle.bodyMedium.copyWith(
+                          color: textColor,
+                        ),
                       ),
                       SizedBox(
                         width: 36,
@@ -169,12 +171,14 @@ class AppSimpleDialog {
                       Container(
                         padding: const EdgeInsets.all(Insets.smallNormal),
                         decoration: BoxDecoration(
-                          color: context.colorScheme.error
-                              .withValues(alpha: 0.1),
+                          color: context.colorScheme.error.withValues(
+                            alpha: 0.1,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: context.colorScheme.error
-                                .withValues(alpha: 0.3),
+                            color: context.colorScheme.error.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                         ),
                         child: Column(
@@ -182,8 +186,9 @@ class AppSimpleDialog {
                           children: [
                             Text(
                               message,
-                              style: AppTextStyle.bodyMedium
-                                  .copyWith(color: textColor),
+                              style: AppTextStyle.bodyMedium.copyWith(
+                                color: textColor,
+                              ),
                             ),
                             if (warningText != null) ...[
                               const SizedBox(height: Insets.smallNormal),
@@ -262,8 +267,9 @@ class AppSimpleDialog {
               children: [
                 Text(
                   title,
-                  style: AppTextStyle.titleLarge
-                      .copyWith(fontWeight: FontWeight.bold),
+                  style: AppTextStyle.titleLarge.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: Insets.normal),
@@ -289,8 +295,9 @@ class AppSimpleDialog {
                   ),
                   child: Text(
                     'OK',
-                    style: AppTextStyle.buttonSmall
-                        .copyWith(color: Colors.white),
+                    style: AppTextStyle.buttonSmall.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -356,7 +363,9 @@ class _ActionButtons extends StatelessWidget {
     final showCancel = cancelText.isNotEmpty;
 
     return Row(
-      mainAxisAlignment: showCancel ? MainAxisAlignment.start : MainAxisAlignment.center,
+      mainAxisAlignment: showCancel
+          ? MainAxisAlignment.start
+          : MainAxisAlignment.center,
       children: [
         if (showCancel) ...[
           Expanded(
@@ -364,16 +373,18 @@ class _ActionButtons extends StatelessWidget {
                 ? TextButton(
                     onPressed: onCancel,
                     style: TextButton.styleFrom(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: Insets.small),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: Insets.small,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                     child: Text(
                       cancelText,
-                      style: AppTextStyle.buttonSmall
-                          .copyWith(color: AppColors.primary),
+                      style: AppTextStyle.buttonSmall.copyWith(
+                        color: AppColors.primary,
+                      ),
                     ),
                   )
                 : OutlinedButton(
@@ -389,8 +400,9 @@ class _ActionButtons extends StatelessWidget {
                     ),
                     child: Text(
                       cancelText,
-                      style: AppTextStyle.buttonSmall
-                          .copyWith(color: AppColors.primary),
+                      style: AppTextStyle.buttonSmall.copyWith(
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
           ),
@@ -405,8 +417,7 @@ class _ActionButtons extends StatelessWidget {
               padding: useCancelTextButton
                   ? const EdgeInsets.symmetric(vertical: Insets.small)
                   : const EdgeInsets.all(8),
-              fixedSize:
-                  useCancelTextButton ? null : const Size.fromHeight(36),
+              fixedSize: useCancelTextButton ? null : const Size.fromHeight(36),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
               ),
@@ -414,8 +425,7 @@ class _ActionButtons extends StatelessWidget {
             ),
             child: Text(
               confirmText,
-              style:
-                  AppTextStyle.buttonSmall.copyWith(color: Colors.white),
+              style: AppTextStyle.buttonSmall.copyWith(color: Colors.white),
             ),
           ),
         ),

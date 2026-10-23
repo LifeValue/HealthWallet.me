@@ -72,16 +72,16 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Practitioner',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Practitioner',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -109,18 +109,21 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            activeStatus ? 'Active' : 'Inactive',
-            prefix: 'Status'),
+          activeStatus ? 'Active' : 'Inactive',
+          prefix: 'Status',
+        ),
       );
     }
 
     // Qualification
     if (qualification != null && qualification!.isNotEmpty) {
       for (final qual in qualification!) {
-        final qualCode = FhirFieldExtractor.extractCodeableConceptText(qual.code);
+        final qualCode = FhirFieldExtractor.extractCodeableConceptText(
+          qual.code,
+        );
         final issuer = FhirFieldExtractor.extractReferenceDisplay(qual.issuer);
         final period = FhirFieldExtractor.extractPeriodFormatted(qual.period);
-        
+
         String? qualDisplay = qualCode;
         if (issuer != null && qualCode != null) {
           qualDisplay = '$qualCode (issued by $issuer)';
@@ -128,10 +131,13 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
         if (period != null && qualDisplay != null) {
           qualDisplay = '$qualDisplay - Valid: $period';
         }
-        
+
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createStatusLine(qualDisplay, prefix: 'Qualification'),
+          ResourceFieldMapper.createStatusLine(
+            qualDisplay,
+            prefix: 'Qualification',
+          ),
         );
       }
     }
@@ -152,22 +158,26 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            languages.isNotEmpty ? languages : null,
-            prefix: 'Languages'),
+          languages.isNotEmpty ? languages : null,
+          prefix: 'Languages',
+        ),
       );
     }
 
     // Add section header only if we added content
     if (infoLines.length > professionalInfoStartIndex) {
-      infoLines.insert(professionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Professional Information'));
+      infoLines.insert(
+        professionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Professional Information'),
+      );
     }
 
     final contactInfoStartIndex = infoLines.length;
 
     // Address
-    final addressDisplay =
-        FhirFieldExtractor.formatAddress(address?.firstOrNull);
+    final addressDisplay = FhirFieldExtractor.formatAddress(
+      address?.firstOrNull,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
@@ -211,8 +221,10 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
 
     // Add section header only if we added content
     if (infoLines.length > contactInfoStartIndex) {
-      infoLines.insert(contactInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Contact Information'));
+      infoLines.insert(
+        contactInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Contact Information'),
+      );
     }
 
     final additionalInfoStartIndex = infoLines.length;
@@ -221,21 +233,28 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
     final birthDateDisplay = birthDate?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(birthDateDisplay, prefix: 'Birth Date'),
+      ResourceFieldMapper.createDateLine(
+        birthDateDisplay,
+        prefix: 'Birth Date',
+      ),
     );
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Add section header only if we added content
     if (infoLines.length > additionalInfoStartIndex) {
-      infoLines.insert(additionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Additional Information'));
+      infoLines.insert(
+        additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'),
+      );
     }
 
     return infoLines;

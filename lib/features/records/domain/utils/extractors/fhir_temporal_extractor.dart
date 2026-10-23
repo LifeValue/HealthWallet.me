@@ -233,8 +233,8 @@ class FhirTemporalExtractor {
     try {
       final dateTime = DateTime.parse(dateTimeString);
 
-      final hasTime = dateTimeString.contains('T') ||
-                     dateTimeString.contains(':');
+      final hasTime =
+          dateTimeString.contains('T') || dateTimeString.contains(':');
 
       if (hasTime) {
         final formatter = DateFormat('MMM d, yyyy, h:mm a');
@@ -382,7 +382,8 @@ class FhirTemporalExtractor {
     final effectiveTiming = effectiveX.isAs<fhir_r4.Timing>();
     if (effectiveTiming != null && effectiveTiming.code != null) {
       return FhirCommonExtractor.extractCodeableConceptText(
-          effectiveTiming.code);
+        effectiveTiming.code,
+      );
     }
 
     return null;
@@ -407,7 +408,8 @@ class FhirTemporalExtractor {
     final occurrenceTiming = occurrenceX.isAs<fhir_r4.Timing>();
     if (occurrenceTiming != null && occurrenceTiming.code != null) {
       return FhirCommonExtractor.extractCodeableConceptText(
-          occurrenceTiming.code);
+        occurrenceTiming.code,
+      );
     }
 
     return null;

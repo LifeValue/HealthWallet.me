@@ -74,16 +74,16 @@ abstract class Organization with _$Organization implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Organization',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Organization',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -113,8 +113,9 @@ abstract class Organization with _$Organization implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createCategoryLine(
-            typeDisplay.isNotEmpty ? typeDisplay : null,
-            prefix: 'Type'),
+          typeDisplay.isNotEmpty ? typeDisplay : null,
+          prefix: 'Type',
+        ),
       );
     }
 
@@ -124,22 +125,26 @@ abstract class Organization with _$Organization implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            activeStatus ? 'Active' : 'Inactive',
-            prefix: 'Status'),
+          activeStatus ? 'Active' : 'Inactive',
+          prefix: 'Status',
+        ),
       );
     }
 
     // Add section header only if we added content
     if (infoLines.length > orgDetailsStartIndex) {
-      infoLines.insert(orgDetailsStartIndex,
-        ResourceFieldMapper.createSectionHeader('Organization Details'));
+      infoLines.insert(
+        orgDetailsStartIndex,
+        ResourceFieldMapper.createSectionHeader('Organization Details'),
+      );
     }
 
     final contactInfoStartIndex = infoLines.length;
 
     // Address
-    final addressDisplay =
-        FhirFieldExtractor.formatFullAddress(address?.firstOrNull);
+    final addressDisplay = FhirFieldExtractor.formatFullAddress(
+      address?.firstOrNull,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
@@ -197,23 +202,27 @@ abstract class Organization with _$Organization implements IFhirResource {
       for (final contactPerson in contact!) {
         final name = FhirFieldExtractor.extractHumanName(contactPerson.name);
         final purpose = FhirFieldExtractor.extractCodeableConceptText(
-            contactPerson.purpose);
-        
+          contactPerson.purpose,
+        );
+
         String? contactDisplay = name;
         if (purpose != null && name != null) {
           contactDisplay = '$name ($purpose)';
         } else {
           contactDisplay = name ?? purpose;
         }
-        
+
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createUserLine(contactDisplay,
-              prefix: 'Contact Person'),
+          ResourceFieldMapper.createUserLine(
+            contactDisplay,
+            prefix: 'Contact Person',
+          ),
         );
 
         // Contact person's telecom
-        if (contactPerson.telecom != null && contactPerson.telecom!.isNotEmpty) {
+        if (contactPerson.telecom != null &&
+            contactPerson.telecom!.isNotEmpty) {
           final contactPhone = contactPerson.telecom!
               .where((t) => t.system?.valueString == 'phone')
               .firstOrNull
@@ -222,8 +231,10 @@ abstract class Organization with _$Organization implements IFhirResource {
           if (contactPhone != null) {
             ResourceFieldMapper.addIfNotNull(
               infoLines,
-              ResourceFieldMapper.createStatusLine(contactPhone,
-                  prefix: '  Contact Phone'),
+              ResourceFieldMapper.createStatusLine(
+                contactPhone,
+                prefix: '  Contact Phone',
+              ),
             );
           }
 
@@ -235,8 +246,10 @@ abstract class Organization with _$Organization implements IFhirResource {
           if (contactEmail != null) {
             ResourceFieldMapper.addIfNotNull(
               infoLines,
-              ResourceFieldMapper.createStatusLine(contactEmail,
-                  prefix: '  Contact Email'),
+              ResourceFieldMapper.createStatusLine(
+                contactEmail,
+                prefix: '  Contact Email',
+              ),
             );
           }
         }
@@ -245,8 +258,10 @@ abstract class Organization with _$Organization implements IFhirResource {
 
     // Add section header only if we added content
     if (infoLines.length > contactInfoStartIndex) {
-      infoLines.insert(contactInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Contact Information'));
+      infoLines.insert(
+        contactInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Contact Information'),
+      );
     }
 
     final additionalInfoStartIndex = infoLines.length;
@@ -260,8 +275,9 @@ abstract class Organization with _$Organization implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            aliasText.isNotEmpty ? aliasText : null,
-            prefix: 'Also Known As'),
+          aliasText.isNotEmpty ? aliasText : null,
+          prefix: 'Also Known As',
+        ),
       );
     }
 
@@ -269,8 +285,10 @@ abstract class Organization with _$Organization implements IFhirResource {
     final partOfDisplay = FhirFieldExtractor.extractReferenceDisplay(partOf);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(partOfDisplay,
-          prefix: 'Part Of'),
+      ResourceFieldMapper.createOrganizationLine(
+        partOfDisplay,
+        prefix: 'Part Of',
+      ),
     );
 
     // Endpoints (technical connections)
@@ -280,33 +298,42 @@ abstract class Organization with _$Organization implements IFhirResource {
           .where((e) => e != null && e.isNotEmpty)
           .take(3)
           .join(', ');
-      
+
       if (endpointDisplay.isNotEmpty) {
-        final suffix = endpoint!.length > 3 ? ' (${endpoint!.length - 3} more)' : '';
+        final suffix = endpoint!.length > 3
+            ? ' (${endpoint!.length - 3} more)'
+            : '';
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createStatusLine(endpointDisplay + suffix,
-              prefix: 'Endpoints'),
+          ResourceFieldMapper.createStatusLine(
+            endpointDisplay + suffix,
+            prefix: 'Endpoints',
+          ),
         );
       }
     }
 
     // Add section header only if we added content
     if (infoLines.length > additionalInfoStartIndex) {
-      infoLines.insert(additionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Additional Information'));
+      infoLines.insert(
+        additionalInfoStartIndex,
+        ResourceFieldMapper.createSectionHeader('Additional Information'),
+      );
     }
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     return infoLines;
   }
+
   @override
   List<String?> get resourceReferences {
     return {

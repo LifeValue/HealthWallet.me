@@ -27,20 +27,24 @@ class PdfPreviewService {
   }
 
   Future<String?> _extractDocumentReferencePath(
-      Map<String, dynamic> rawResource) async {
+    Map<String, dynamic> rawResource,
+  ) async {
     final contentList = rawResource['content'] as List?;
     if (contentList == null || contentList.isEmpty) return null;
     final attachment = (contentList[0] as Map?)?['attachment'] as Map?;
     final url = attachment?['url'] as String?;
     if (url == null) return null;
     final rawPath = Uri.decodeComponent(
-        url.startsWith('file://') ? url.substring(7) : url);
+      url.startsWith('file://') ? url.substring(7) : url,
+    );
     final resolved = await _pathResolver.toAbsolute(rawPath);
     return resolved;
   }
 
   Future<String?> _extractMediaPath(
-      Map<String, dynamic> rawResource, String displayTitle) async {
+    Map<String, dynamic> rawResource,
+    String displayTitle,
+  ) async {
     final content = rawResource['content'];
     if (content == null) return null;
 
@@ -71,7 +75,9 @@ class PdfPreviewService {
   }
 
   Future<String> _saveBase64ToTempFile(
-      String base64Data, String fileName) async {
+    String base64Data,
+    String fileName,
+  ) async {
     try {
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -131,8 +137,14 @@ class PdfPreviewService {
       }
 
       final extension = path.extension(filePath).toLowerCase();
-      final isImage = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
-          .contains(extension);
+      final isImage = {
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.gif',
+        '.bmp',
+        '.webp',
+      }.contains(extension);
 
       if (isImage) {
         Navigator.of(context).push(

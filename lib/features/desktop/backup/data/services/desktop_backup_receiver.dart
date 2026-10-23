@@ -11,7 +11,14 @@ import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:pointycastle/export.dart';
 
-enum BackupReceiveStatus { idle, receivingMeta, receivingChunks, verifying, complete, failed }
+enum BackupReceiveStatus {
+  idle,
+  receivingMeta,
+  receivingChunks,
+  verifying,
+  complete,
+  failed,
+}
 
 @lazySingleton
 class DesktopBackupReceiver {
@@ -47,7 +54,9 @@ class DesktopBackupReceiver {
   void start() {
     _metaSubscription = _messageRouter.on('backup.meta').listen(_handleMeta);
     _chunkSubscription = _messageRouter.on('backup.chunk').listen(_handleChunk);
-    _completeSubscription = _messageRouter.on('backup.complete').listen(_handleComplete);
+    _completeSubscription = _messageRouter
+        .on('backup.complete')
+        .listen(_handleComplete);
   }
 
   Future<void> requestBackup() async {

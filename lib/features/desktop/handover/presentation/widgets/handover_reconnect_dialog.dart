@@ -102,8 +102,7 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
                   child: Icon(
                     Icons.close,
                     size: 20,
-                    color:
-                        context.colorScheme.onSurface.withValues(alpha: 0.4),
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                 ),
               ],
@@ -121,10 +120,12 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
               ),
               const SizedBox(height: Insets.small),
               Text(
-                context.l10n.desktopReconnectingTo(_commBloc.state.pairedDevice?.deviceName ?? context.l10n.desktopLabel),
+                context.l10n.desktopReconnectingTo(
+                  _commBloc.state.pairedDevice?.deviceName ??
+                      context.l10n.desktopLabel,
+                ),
                 style: AppTextStyle.labelSmall.copyWith(
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.5),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(height: Insets.normal),
@@ -144,8 +145,7 @@ class _HandoverReconnectDialogState extends State<HandoverReconnectDialog> {
                     ? context.l10n.desktopCouldNotReconnect
                     : context.l10n.desktopScanQrToPair,
                 style: AppTextStyle.bodySmall.copyWith(
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),

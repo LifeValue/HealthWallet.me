@@ -44,8 +44,8 @@ class BiometricToggleButton extends StatelessWidget {
                       style: context.textTheme.bodySmall?.copyWith(
                         color: !isBiometricEnabled
                             ? (context.isDarkMode
-                                ? Colors.white
-                                : colorScheme.onPrimary)
+                                  ? Colors.white
+                                  : colorScheme.onPrimary)
                             : colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
@@ -68,8 +68,8 @@ class BiometricToggleButton extends StatelessWidget {
                       style: context.textTheme.bodySmall?.copyWith(
                         color: isBiometricEnabled
                             ? (context.isDarkMode
-                                ? Colors.white
-                                : colorScheme.onPrimary)
+                                  ? Colors.white
+                                  : colorScheme.onPrimary)
                             : colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                       ),

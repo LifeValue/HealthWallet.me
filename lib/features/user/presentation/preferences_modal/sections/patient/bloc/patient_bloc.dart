@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
@@ -59,15 +60,16 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     PatientGroup oldGroup,
   ) {
     final oldRepresentative = oldGroup.representativePatient;
-    
+
     for (final group in newGroups.values) {
-      final hasMatchingResourceId = group.allPatientInstances
-          .any((p) => p.resourceId == oldRepresentative.resourceId);
-      
+      final hasMatchingResourceId = group.allPatientInstances.any(
+        (p) => p.resourceId == oldRepresentative.resourceId,
+      );
+
       if (hasMatchingResourceId) {
         return group;
       }
-      
+
       final oldIdentifiers = oldRepresentative.identifier
           ?.where((id) => id.value?.isNotEmpty == true)
           .map((id) => id.value)
@@ -76,14 +78,14 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           ?.where((id) => id.value?.isNotEmpty == true)
           .map((id) => id.value)
           .toSet();
-      
+
       if (oldIdentifiers != null &&
           newIdentifiers != null &&
           oldIdentifiers.intersection(newIdentifiers).isNotEmpty) {
         return group;
       }
     }
-    
+
     return null;
   }
 
@@ -97,8 +99,9 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     try {
       int? oldPosition;
       if (preserveOrder && preservePatientId != null) {
-        oldPosition =
-            state.patients.indexWhere((p) => p.id == preservePatientId);
+        oldPosition = state.patients.indexWhere(
+          (p) => p.id == preservePatientId,
+        );
       }
 
       final allPatientsResources = await _recordsRepository.getResources(
@@ -108,17 +111,19 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
 
       final allPatients = allPatientsResources.whereType<Patient>().toList();
 
-      final uniquePatients =
-          _deduplicationService.getUniquePatients(allPatients);
-
-      final patientGroups =
-          _deduplicationService.deduplicatePatients(allPatients);
-
-      final enhancedPatientGroups =
-          await _deduplicationService.enhancePatientGroupsWithSubjectId(
-        patientGroups,
+      final uniquePatients = _deduplicationService.getUniquePatients(
         allPatients,
       );
+
+      final patientGroups = _deduplicationService.deduplicatePatients(
+        allPatients,
+      );
+
+      final enhancedPatientGroups = await _deduplicationService
+          .enhancePatientGroupsWithSubjectId(
+            patientGroups,
+            allPatients,
+          );
 
       final savedPatientId = await _loadSelectedPatient();
 
@@ -158,8 +163,9 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           oldPosition >= 0) {
         final patient = patientToPreserve;
         final position = oldPosition;
-        final newPatientIndex =
-            uniquePatients.indexWhere((p) => p.id == patient.id);
+        final newPatientIndex = uniquePatients.indexWhere(
+          (p) => p.id == patient.id,
+        );
         if (newPatientIndex != -1) {
           uniquePatients.removeAt(newPatientIndex);
           final insertIndex = position < uniquePatients.length
@@ -170,8 +176,9 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       } else {
         if (savedPatientId != null &&
             uniquePatients.any((p) => p.id == savedPatientId)) {
-          final savedPatient =
-              uniquePatients.firstWhere((p) => p.id == savedPatientId);
+          final savedPatient = uniquePatients.firstWhere(
+            (p) => p.id == savedPatientId,
+          );
           expandedIds = {savedPatient.id};
           selectedPatientId = savedPatient.id;
 
@@ -189,14 +196,16 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         }
       }
 
-      emit(state.copyWith(
-        status: const PatientStatus.success(),
-        patients: uniquePatients,
-        allPatientsAcrossSources: allPatients,
-        patientGroups: enhancedPatientGroups,
-        expandedPatientIds: expandedIds,
-        selectedPatientId: selectedPatientId,
-      ));
+      emit(
+        state.copyWith(
+          status: const PatientStatus.success(),
+          patients: uniquePatients,
+          allPatientsAcrossSources: allPatients,
+          patientGroups: enhancedPatientGroups,
+          expandedPatientIds: expandedIds,
+          selectedPatientId: selectedPatientId,
+        ),
+      );
 
       if (selectedPatientId != null) {
         await _saveSelectedPatient(selectedPatientId);
@@ -211,9 +220,11 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
     PatientPatientsLoaded event,
     Emitter<PatientState> emit,
   ) async {
-    await _loadPatients(emit,
-        preserveOrder: event.preserveOrder,
-        preservePatientId: event.preservePatientId);
+    await _loadPatients(
+      emit,
+      preserveOrder: event.preserveOrder,
+      preservePatientId: event.preservePatientId,
+    );
   }
 
   Future<void> _onPatientReorder(
@@ -232,34 +243,42 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       orElse: () => currentPatients.first,
     );
 
-    emit(state.copyWith(
-      animationPhase: PatientAnimationPhase.collapsing,
-      animatingPatientId: event.patientId,
-    ));
+    emit(
+      state.copyWith(
+        animationPhase: PatientAnimationPhase.collapsing,
+        animatingPatientId: event.patientId,
+      ),
+    );
 
     if (currentExpandedIds.isNotEmpty) {
       final collapsingPatientId = currentExpandedIds.first;
 
-      emit(state.copyWith(
-        collapsingPatientId: collapsingPatientId,
-      ));
+      emit(
+        state.copyWith(
+          collapsingPatientId: collapsingPatientId,
+        ),
+      );
 
       await Future.delayed(const Duration(milliseconds: 560));
 
       currentExpandedIds.clear();
-      emit(state.copyWith(
-        expandedPatientIds: currentExpandedIds,
-        collapsingPatientId: '',
-      ));
+      emit(
+        state.copyWith(
+          expandedPatientIds: currentExpandedIds,
+          collapsingPatientId: '',
+        ),
+      );
 
       await Future.delayed(const Duration(milliseconds: 840));
     }
 
-    emit(state.copyWith(
-      animationPhase: PatientAnimationPhase.swapping,
-      swappingFromPatientId: currentPatients[0].id,
-      swappingToPatientId: event.patientId,
-    ));
+    emit(
+      state.copyWith(
+        animationPhase: PatientAnimationPhase.swapping,
+        swappingFromPatientId: currentPatients[0].id,
+        swappingToPatientId: event.patientId,
+      ),
+    );
 
     await Future.delayed(const Duration(milliseconds: 140));
 
@@ -268,38 +287,46 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
 
     await _saveSelectedPatient(selectedPatient.id);
 
-    emit(state.copyWith(
-      patients: currentPatients,
-      selectedPatientId: selectedPatient.id,
-      swappingFromPatientId: '',
-      swappingToPatientId: '',
-    ));
+    emit(
+      state.copyWith(
+        patients: currentPatients,
+        selectedPatientId: selectedPatient.id,
+        swappingFromPatientId: '',
+        swappingToPatientId: '',
+      ),
+    );
 
     await Future.delayed(const Duration(milliseconds: 560));
 
     currentExpandedIds.add(event.patientId);
-    emit(state.copyWith(
-      animationPhase: PatientAnimationPhase.expanding,
-      expandedPatientIds: currentExpandedIds,
-      expandingPatientId: event.patientId,
-    ));
+    emit(
+      state.copyWith(
+        animationPhase: PatientAnimationPhase.expanding,
+        expandedPatientIds: currentExpandedIds,
+        expandingPatientId: event.patientId,
+      ),
+    );
 
     await Future.delayed(const Duration(milliseconds: 840));
 
-    emit(state.copyWith(
-      expandingPatientId: '',
-    ));
+    emit(
+      state.copyWith(
+        expandingPatientId: '',
+      ),
+    );
 
     await Future.delayed(const Duration(milliseconds: 140));
 
-    emit(state.copyWith(
-      animationPhase: PatientAnimationPhase.none,
-      animatingPatientId: '',
-      collapsingPatientId: '',
-      expandingPatientId: '',
-      swappingFromPatientId: '',
-      swappingToPatientId: '',
-    ));
+    emit(
+      state.copyWith(
+        animationPhase: PatientAnimationPhase.none,
+        animatingPatientId: '',
+        collapsingPatientId: '',
+        expandingPatientId: '',
+        swappingFromPatientId: '',
+        swappingToPatientId: '',
+      ),
+    );
   }
 
   Future<void> _onDataUpdatedFromSync(
@@ -316,20 +343,24 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       orElse: () => state.patients.first,
     );
 
-    emit(state.copyWith(
-      isEditingPatient: true,
-      editingPatient: patient,
-    ));
+    emit(
+      state.copyWith(
+        isEditingPatient: true,
+        editingPatient: patient,
+      ),
+    );
   }
 
   Future<void> _onEditCancelled(
     PatientEditCancelled event,
     Emitter<PatientState> emit,
   ) async {
-    emit(state.copyWith(
-      isEditingPatient: false,
-      editingPatient: null,
-    ));
+    emit(
+      state.copyWith(
+        isEditingPatient: false,
+        editingPatient: null,
+      ),
+    );
   }
 
   Future<void> _onEditSaved(
@@ -365,11 +396,13 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         preservePatientId: event.patientId,
       );
 
-      final finalExpandedIds =
-          wasExpanded ? state.expandedPatientIds : <String>{};
+      final finalExpandedIds = wasExpanded
+          ? state.expandedPatientIds
+          : <String>{};
 
-      final currentBloodType =
-          await _patientEditService.getCurrentBloodType(currentPatient);
+      final currentBloodType = await _patientEditService.getCurrentBloodType(
+        currentPatient,
+      );
       if (currentBloodType != event.bloodType) {
         await _patientEditService.updateBloodTypeObservation(
           currentPatient,
@@ -377,24 +410,28 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         );
       }
 
-      emit(state.copyWith(
-        isEditingPatient: false,
-        editingPatient: null,
-        expandedPatientIds: finalExpandedIds,
-        animationPhase: PatientAnimationPhase.none,
-        animatingPatientId: '',
-        collapsingPatientId: '',
-        expandingPatientId: '',
-        swappingFromPatientId: '',
-        swappingToPatientId: '',
-      ));
+      emit(
+        state.copyWith(
+          isEditingPatient: false,
+          editingPatient: null,
+          expandedPatientIds: finalExpandedIds,
+          animationPhase: PatientAnimationPhase.none,
+          animatingPatientId: '',
+          collapsingPatientId: '',
+          expandingPatientId: '',
+          swappingFromPatientId: '',
+          swappingToPatientId: '',
+        ),
+      );
     } catch (e) {
       logger.e('Error in _onEditSaved: $e');
-      emit(state.copyWith(
-        status: PatientStatus.failure(e),
-        isEditingPatient: false,
-        editingPatient: null,
-      ));
+      emit(
+        state.copyWith(
+          status: PatientStatus.failure(e),
+          isEditingPatient: false,
+          editingPatient: null,
+        ),
+      );
     }
   }
 
@@ -412,16 +449,20 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         updatedPatients.insert(0, patient);
       }
 
-      emit(state.copyWith(
-        patients: updatedPatients,
-        selectedPatientId: event.patientId,
-        expandedPatientIds: {event.patientId},
-      ));
+      emit(
+        state.copyWith(
+          patients: updatedPatients,
+          selectedPatientId: event.patientId,
+          expandedPatientIds: {event.patientId},
+        ),
+      );
     } catch (e) {
       logger.e('Error in _onSelectionChanged: $e');
-      emit(state.copyWith(
-        status: PatientStatus.failure(e),
-      ));
+      emit(
+        state.copyWith(
+          status: PatientStatus.failure(e),
+        ),
+      );
     }
   }
 }

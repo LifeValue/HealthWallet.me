@@ -29,13 +29,17 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
 
     try {
       // Get notes for this resource directly
-      final List<RecordNote> notes =
-          await _recordsRepository.getRecordNotes(event.resource.id);
+      final List<RecordNote> notes = await _recordsRepository.getRecordNotes(
+        event.resource.id,
+      );
 
-      emit(state.copyWith(
+      emit(
+        state.copyWith(
           notes: notes,
           resource: event.resource,
-          status: const RecordNotesStatus.success()));
+          status: const RecordNotesStatus.success(),
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(status: RecordNotesStatus.error(e)));
     }
@@ -45,20 +49,24 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
     RecordNotesInputInitialised event,
     Emitter<RecordNotesState> emit,
   ) {
-    emit(state.copyWith(
-      status: const RecordNotesStatus.input(),
-      editNote: event.editNote,
-    ));
+    emit(
+      state.copyWith(
+        status: const RecordNotesStatus.input(),
+        editNote: event.editNote,
+      ),
+    );
   }
 
   void _onRecordNotesInputCanceled(
     RecordNotesInputCanceled event,
     Emitter<RecordNotesState> emit,
   ) {
-    emit(state.copyWith(
-      status: const RecordNotesStatus.success(),
-      editNote: null,
-    ));
+    emit(
+      state.copyWith(
+        status: const RecordNotesStatus.success(),
+        editNote: null,
+      ),
+    );
   }
 
   Future<void> _onRecordNotesInputDone(
@@ -69,8 +77,9 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
 
     try {
       if (state.editNote != null) {
-        await _recordsRepository
-            .editRecordNote(state.editNote!.copyWith(content: event.content));
+        await _recordsRepository.editRecordNote(
+          state.editNote!.copyWith(content: event.content),
+        );
       } else {
         // Add note directly to the resource
         await _recordsRepository.addRecordNote(
@@ -80,12 +89,14 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
         );
       }
 
-      emit(state.copyWith(
-        status: const RecordNotesStatus.success(),
-        editNote: null,
-        selectedNoteId: null,
-        notes: [],
-      ));
+      emit(
+        state.copyWith(
+          status: const RecordNotesStatus.success(),
+          editNote: null,
+          selectedNoteId: null,
+          notes: [],
+        ),
+      );
 
       add(RecordNotesInitialised(resource: state.resource));
     } catch (e) {
@@ -102,10 +113,12 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
     try {
       await _recordsRepository.deleteRecordNote(event.note);
 
-      emit(state.copyWith(
-        status: const RecordNotesStatus.success(),
-        notes: [],
-      ));
+      emit(
+        state.copyWith(
+          status: const RecordNotesStatus.success(),
+          notes: [],
+        ),
+      );
 
       add(RecordNotesInitialised(resource: state.resource));
     } catch (e) {

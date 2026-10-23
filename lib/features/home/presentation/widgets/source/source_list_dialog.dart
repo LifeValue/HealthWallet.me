@@ -78,7 +78,9 @@ class _SourceListDialogState extends State<SourceListDialog> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.normal, vertical: Insets.small),
+                horizontal: Insets.normal,
+                vertical: Insets.small,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -88,31 +90,40 @@ class _SourceListDialogState extends State<SourceListDialog> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                         child: IconButton(
                           icon: Assets.icons.settings.svg(
-                            colorFilter:
-                                ColorFilter.mode(textColor, BlendMode.srcIn),
+                            colorFilter: ColorFilter.mode(
+                              textColor,
+                              BlendMode.srcIn,
+                            ),
                           ),
                           onPressed: () => Navigator.of(context).pop(),
                           padding: EdgeInsets.zero,
                         ),
                       ),
                       const SizedBox(width: Insets.small),
-                      Text(context.l10n.sourcesTitle,
-                          style: AppTextStyle.bodySmall
-                              .copyWith(fontWeight: FontWeight.w500)),
+                      Text(
+                        context.l10n.sourcesTitle,
+                        style: AppTextStyle.bodySmall.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
                   Container(
                     width: 36,
                     height: 36,
-                    decoration:
-                        BoxDecoration(borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     child: IconButton(
                       icon: Assets.icons.close.svg(
-                        colorFilter:
-                            ColorFilter.mode(textColor, BlendMode.srcIn),
+                        colorFilter: ColorFilter.mode(
+                          textColor,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                       padding: EdgeInsets.zero,
@@ -159,10 +170,12 @@ class _SourceListDialogState extends State<SourceListDialog> {
                     },
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      margin:
-                          const EdgeInsets.symmetric(horizontal: Insets.small),
-                      padding:
-                          const EdgeInsets.symmetric(vertical: Insets.small),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: Insets.small,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: Insets.small,
+                      ),
                       child: Row(
                         children: [
                           Container(
@@ -174,14 +187,15 @@ class _SourceListDialogState extends State<SourceListDialog> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Assets.icons.wallet.svg(
-                                    width: 18,
-                                    height: 18,
-                                    colorFilter: ColorFilter.mode(
-                                        isSelected
-                                            ? context.colorScheme.primary
-                                            : iconColor,
-                                        BlendMode.srcIn),
-                                  ),
+                              width: 18,
+                              height: 18,
+                              colorFilter: ColorFilter.mode(
+                                isSelected
+                                    ? context.colorScheme.primary
+                                    : iconColor,
+                                BlendMode.srcIn,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: Insets.small),
                           Expanded(
@@ -195,8 +209,8 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                     fontWeight: isSelected
                                         ? FontWeight.w600
                                         : (source.platformType == 'wallet'
-                                            ? FontWeight.w600
-                                            : FontWeight.normal),
+                                              ? FontWeight.w600
+                                              : FontWeight.normal),
                                     color: isSelected
                                         ? context.colorScheme.primary
                                         : textColor,
@@ -227,22 +241,25 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                     },
                                     child: Assets.icons.edit.svg(
                                       width: 20,
-                                      color: context.theme.iconTheme.color ??
+                                      color:
+                                          context.theme.iconTheme.color ??
                                           context.colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
-                              if (widget.onSourceDelete != null &&
-                                  !isAll) ...[
+                              if (widget.onSourceDelete != null && !isAll) ...[
                                 const SizedBox(width: 16),
                                 Padding(
                                   padding: const EdgeInsets.all(6),
                                   child: GestureDetector(
                                     onTap: () => _showDeleteConfirmationDialog(
-                                        context, source),
+                                      context,
+                                      source,
+                                    ),
                                     child: Assets.icons.trashCan.svg(
                                       width: 20,
-                                      color: context.theme.iconTheme.color ??
+                                      color:
+                                          context.theme.iconTheme.color ??
                                           context.colorScheme.onSurface,
                                     ),
                                   ),
@@ -269,17 +286,17 @@ class _SourceListDialogState extends State<SourceListDialog> {
     final allSource = sources.where((s) => s.id == 'All').toList();
 
     final walletSource = sources
-        .where((s) =>
-            s.platformType == 'wallet' &&
-            s.id != 'All')
+        .where((s) => s.platformType == 'wallet' && s.id != 'All')
         .toList();
 
     final walletIds = walletSource.map((s) => s.id).toSet();
     final otherSources = sources
-        .where((s) =>
-            s.id != 'All' &&
-            !walletIds.contains(s.id) &&
-            s.platformType != 'wallet')
+        .where(
+          (s) =>
+              s.id != 'All' &&
+              !walletIds.contains(s.id) &&
+              s.platformType != 'wallet',
+        )
         .toList();
 
     otherSources.sort((a, b) {
@@ -403,7 +420,9 @@ class _SourceListDialogState extends State<SourceListDialog> {
                     isDense: true,
                     hintText: sourceName,
                     hintStyle: AppTextStyle.labelLarge.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.3,
+                      ),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -454,13 +473,15 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                 : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: context.colorScheme.error,
-                              disabledBackgroundColor:
-                                  context.colorScheme.error.withValues(alpha: 0.3),
+                              disabledBackgroundColor: context.colorScheme.error
+                                  .withValues(alpha: 0.3),
                               foregroundColor: Colors.white,
-                              disabledForegroundColor:
-                                  Colors.white.withValues(alpha: 0.5),
+                              disabledForegroundColor: Colors.white.withValues(
+                                alpha: 0.5,
+                              ),
                               padding: const EdgeInsets.symmetric(
-                                  vertical: Insets.smallNormal),
+                                vertical: Insets.smallNormal,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),

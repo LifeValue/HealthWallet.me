@@ -5,7 +5,8 @@ abstract class RecordsEvent {
 }
 
 @freezed
-abstract class RecordsInitialised extends RecordsEvent with _$RecordsInitialised {
+abstract class RecordsInitialised extends RecordsEvent
+    with _$RecordsInitialised {
   const RecordsInitialised._();
 
   const factory RecordsInitialised({
@@ -21,7 +22,8 @@ abstract class RecordsLoadMore extends RecordsEvent with _$RecordsLoadMore {
 }
 
 @freezed
-abstract class RecordsSourceChanged extends RecordsEvent with _$RecordsSourceChanged {
+abstract class RecordsSourceChanged extends RecordsEvent
+    with _$RecordsSourceChanged {
   const RecordsSourceChanged._();
 
   const factory RecordsSourceChanged(
@@ -32,7 +34,8 @@ abstract class RecordsSourceChanged extends RecordsEvent with _$RecordsSourceCha
 }
 
 @freezed
-abstract class RecordsFiltersApplied extends RecordsEvent with _$RecordsFiltersApplied {
+abstract class RecordsFiltersApplied extends RecordsEvent
+    with _$RecordsFiltersApplied {
   const RecordsFiltersApplied._();
 
   const factory RecordsFiltersApplied(
@@ -42,14 +45,16 @@ abstract class RecordsFiltersApplied extends RecordsEvent with _$RecordsFiltersA
 }
 
 @freezed
-abstract class RecordsFilterRemoved extends RecordsEvent with _$RecordsFilterRemoved {
+abstract class RecordsFilterRemoved extends RecordsEvent
+    with _$RecordsFilterRemoved {
   const RecordsFilterRemoved._();
 
   const factory RecordsFilterRemoved(FhirType filter) = _RecordsFilterRemoved;
 }
 
 @freezed
-abstract class RecordDetailLoaded extends RecordsEvent with _$RecordDetailLoaded {
+abstract class RecordDetailLoaded extends RecordsEvent
+    with _$RecordDetailLoaded {
   const RecordDetailLoaded._();
 
   const factory RecordDetailLoaded(IFhirResource resource) =
@@ -78,14 +83,16 @@ abstract class RecordsSearch extends RecordsEvent with _$RecordsSearch {
 }
 
 @freezed
-abstract class RecordsSearchExecuted extends RecordsEvent with _$RecordsSearchExecuted {
+abstract class RecordsSearchExecuted extends RecordsEvent
+    with _$RecordsSearchExecuted {
   const RecordsSearchExecuted._();
 
   const factory RecordsSearchExecuted(String query) = _RecordsSearchExecuted;
 }
 
 @freezed
-abstract class RecordsSharePressed extends RecordsEvent with _$RecordsSharePressed {
+abstract class RecordsSharePressed extends RecordsEvent
+    with _$RecordsSharePressed {
   const RecordsSharePressed._();
 
   const factory RecordsSharePressed({

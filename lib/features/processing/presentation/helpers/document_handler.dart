@@ -47,8 +47,9 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     BuildContext context,
     ProcessingSession session,
   ) async {
-    final result = await context.router
-        .push<bool>(LoadModelRoute(canAttachToEncounter: true));
+    final result = await context.router.push<bool>(
+      LoadModelRoute(canAttachToEncounter: true),
+    );
     if (!context.mounted) return;
 
     if (result == true) {
@@ -84,14 +85,13 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
           final patientName =
               patientForSource?.displayTitle ?? 'Unknown Patient';
 
-          final sourceTypeService =
-              getIt<SourceTypeService>();
-          final walletSource =
-              await sourceTypeService.getWritableSourceForPatient(
-            patientId: patientId,
-            patientName: patientName,
-            availableSources: homeState.sources,
-          );
+          final sourceTypeService = getIt<SourceTypeService>();
+          final walletSource = await sourceTypeService
+              .getWritableSourceForPatient(
+                patientId: patientId,
+                patientName: patientName,
+                availableSources: homeState.sources,
+              );
 
           finalEncounter = encounter.draft!.toFhirResource(
             sourceId: walletSource.id,
@@ -108,17 +108,22 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         try {
           await attachToEncounter(context, session.filePaths, finalEncounter);
           if (context.mounted) {
-            context.read<ProcessingBloc>().add(SessionCleared(session: session));
+            context.read<ProcessingBloc>().add(
+              SessionCleared(session: session),
+            );
           }
         } catch (e) {
           if (context.mounted) {
-            context.read<ProcessingBloc>().add(SessionCleared(session: session));
+            context.read<ProcessingBloc>().add(
+              SessionCleared(session: session),
+            );
           }
           rethrow;
         }
       }
     }
   }
+
   Future<void> attachToEncounter(
     BuildContext context,
     List<String> filePaths,
@@ -149,12 +154,11 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
 
       if (context.mounted) {
         context.read<PatientBloc>().add(
-              const PatientPatientsLoaded(),
-            );
+          const PatientPatientsLoaded(),
+        );
       }
 
-      final documentReferenceService =
-          getIt<DocumentReferenceService>();
+      final documentReferenceService = getIt<DocumentReferenceService>();
 
       await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: filePaths,

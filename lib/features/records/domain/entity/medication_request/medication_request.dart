@@ -15,7 +15,9 @@ import 'package:intl/intl.dart';
 part 'medication_request.freezed.dart';
 
 @freezed
-abstract class MedicationRequest with _$MedicationRequest implements IFhirResource {
+abstract class MedicationRequest
+    with _$MedicationRequest
+    implements IFhirResource {
   const MedicationRequest._();
 
   const factory MedicationRequest({
@@ -68,8 +70,9 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
 
   factory MedicationRequest.fromLocalData(FhirResourceLocalDto data) {
     final resourceJson = jsonDecode(data.resourceRaw);
-    final fhirMedicationRequest =
-        fhir_r4.MedicationRequest.fromJson(resourceJson);
+    final fhirMedicationRequest = fhir_r4.MedicationRequest.fromJson(
+      resourceJson,
+    );
 
     return MedicationRequest(
       id: data.id,
@@ -119,16 +122,16 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'MedicationRequest',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'MedicationRequest',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -149,15 +152,20 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
 
     // Medication Name
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
-        medicationX?.isAs<CodeableConcept>());
+      medicationX?.isAs<CodeableConcept>(),
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createMedicationLine(medicationDisplay, prefix: 'Medication'),
+      ResourceFieldMapper.createMedicationLine(
+        medicationDisplay,
+        prefix: 'Medication',
+      ),
     );
 
     // Dosage Instructions (CRITICAL - How to Take)
-    final dosageDisplay =
-        FhirFieldExtractor.extractDosageInstructions(dosageInstruction);
+    final dosageDisplay = FhirFieldExtractor.extractDosageInstructions(
+      dosageInstruction,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
@@ -166,18 +174,22 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
     // Dispense Request Details (Refills, Quantity, Days Supply)
     if (dispenseRequest != null) {
       // Refills
-      final numberOfRepeatsAllowed = dispenseRequest!.numberOfRepeatsAllowed?.element;
+      final numberOfRepeatsAllowed =
+          dispenseRequest!.numberOfRepeatsAllowed?.element;
       if (numberOfRepeatsAllowed != null) {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createValueLine(
-              '$numberOfRepeatsAllowed refills remaining',
-              prefix: 'Refills'),
+            '$numberOfRepeatsAllowed refills remaining',
+            prefix: 'Refills',
+          ),
         );
       }
 
       // Quantity
-      final quantity = FhirFieldExtractor.extractQuantity(dispenseRequest!.quantity);
+      final quantity = FhirFieldExtractor.extractQuantity(
+        dispenseRequest!.quantity,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createValueLine(quantity, prefix: 'Quantity'),
@@ -185,16 +197,20 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
 
       // Days Supply
       final expectedSupplyDuration = FhirFieldExtractor.extractQuantity(
-          dispenseRequest!.expectedSupplyDuration);
+        dispenseRequest!.expectedSupplyDuration,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createValueLine(expectedSupplyDuration,
-            prefix: 'Days Supply'),
+        ResourceFieldMapper.createValueLine(
+          expectedSupplyDuration,
+          prefix: 'Days Supply',
+        ),
       );
 
       // Validity Period (Duration)
       if (dispenseRequest!.validityPeriod != null) {
-        final validityStart = dispenseRequest!.validityPeriod!.start?.valueString;
+        final validityStart =
+            dispenseRequest!.validityPeriod!.start?.valueString;
         final validityEnd = dispenseRequest!.validityPeriod!.end?.valueString;
         if (validityStart != null || validityEnd != null) {
           final validityDisplay = validityEnd != null
@@ -202,8 +218,10 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
               : 'Valid from $validityStart';
           ResourceFieldMapper.addIfNotNull(
             infoLines,
-            ResourceFieldMapper.createTimelineLine(validityDisplay,
-                prefix: 'Duration'),
+            ResourceFieldMapper.createTimelineLine(
+              validityDisplay,
+              prefix: 'Duration',
+            ),
           );
         }
       }
@@ -222,20 +240,26 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
     final authoredOnDisplay = FhirFieldExtractor.formatFhirDateTime(authoredOn);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(authoredOnDisplay, prefix: 'Prescribed'),
+      ResourceFieldMapper.createDateLine(
+        authoredOnDisplay,
+        prefix: 'Prescribed',
+      ),
     );
 
     // Prescribed By (Requester)
-    final requesterDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(requester);
+    final requesterDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      requester,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(requesterDisplay, prefix: 'Prescribed By'),
+      ResourceFieldMapper.createUserLine(
+        requesterDisplay,
+        prefix: 'Prescribed By',
+      ),
     );
 
     // Reason
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
@@ -245,7 +269,10 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
     final priorityDisplay = FhirFieldExtractor.extractPriority(priority);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(priorityDisplay, prefix: 'Priority'),
+      ResourceFieldMapper.createWarningLine(
+        priorityDisplay,
+        prefix: 'Priority',
+      ),
     );
 
     // Category
@@ -253,11 +280,15 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader('Additional Information'),
+    );
 
     // Intent
     final intentDisplay = FhirFieldExtractor.extractIntent(intent);
@@ -267,8 +298,9 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
     );
 
     // Performer (Intended Dispenser)
-    final performerDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(performer);
+    final performerDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      performer,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
@@ -283,29 +315,37 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
             : 'Brand name required - no substitution';
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createStatusLine(substitutionDisplay,
-              prefix: 'Substitution'),
+          ResourceFieldMapper.createStatusLine(
+            substitutionDisplay,
+            prefix: 'Substitution',
+          ),
         );
       } else {
         // Check CodeableConcept
         final substitutionCodeDisplay =
             FhirFieldExtractor.extractCodeableConceptText(
-                substitution!.allowedCodeableConcept);
+              substitution!.allowedCodeableConcept,
+            );
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createStatusLine(substitutionCodeDisplay,
-              prefix: 'Substitution'),
+          ResourceFieldMapper.createStatusLine(
+            substitutionCodeDisplay,
+            prefix: 'Substitution',
+          ),
         );
       }
     }
 
     // Course of Therapy Type
-    final courseDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(courseOfTherapyType);
+    final courseDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      courseOfTherapyType,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTimelineLine(courseDisplay,
-          prefix: 'Course of Therapy'),
+      ResourceFieldMapper.createTimelineLine(
+        courseDisplay,
+        prefix: 'Course of Therapy',
+      ),
     );
 
     // Do Not Perform
@@ -313,14 +353,17 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
     if (doNotPerformValue == true) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createWarningLine('Do NOT perform this request',
-            prefix: '⚠️ Alert'),
+        ResourceFieldMapper.createWarningLine(
+          'Do NOT perform this request',
+          prefix: '⚠️ Alert',
+        ),
       );
     }
 
     // Recorder
-    final recorderDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(recorder);
+    final recorderDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      recorder,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
@@ -328,10 +371,12 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes
@@ -353,8 +398,9 @@ abstract class MedicationRequest with _$MedicationRequest implements IFhirResour
       performer?.reference?.valueString,
       recorder?.reference?.valueString,
       priorPrescription?.reference?.valueString,
-      ...?supportingInformation
-          ?.map((reference) => reference.reference?.valueString),
+      ...?supportingInformation?.map(
+        (reference) => reference.reference?.valueString,
+      ),
       ...?reasonReference?.map((reference) => reference.reference?.valueString),
       ...?basedOn?.map((reference) => reference.reference?.valueString),
       ...?detectedIssue?.map((reference) => reference.reference?.valueString),

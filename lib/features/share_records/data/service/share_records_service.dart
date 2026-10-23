@@ -117,7 +117,9 @@ class ShareRecordsService {
     return sessionDir.path;
   }
 
-  Future<EphemeralRecordsContainer?> parseReceivedData(ReceivedData receivedData) {
+  Future<EphemeralRecordsContainer?> parseReceivedData(
+    ReceivedData receivedData,
+  ) {
     return _parsePayloadBytes(receivedData.data);
   }
 
@@ -201,17 +203,23 @@ class ShareRecordsService {
 
   Stream<void> get sessionEndedStream => _airdropService.sessionEndedStream;
 
-  Stream<int> get sessionExtendRequestStream => _airdropService.sessionExtendRequestStream;
+  Stream<int> get sessionExtendRequestStream =>
+      _airdropService.sessionExtendRequestStream;
 
-  Stream<int> get sessionExtendAcceptedStream => _airdropService.sessionExtendAcceptedStream;
+  Stream<int> get sessionExtendAcceptedStream =>
+      _airdropService.sessionExtendAcceptedStream;
 
-  Stream<void> get sessionExtendRejectedStream => _airdropService.sessionExtendRejectedStream;
+  Stream<void> get sessionExtendRejectedStream =>
+      _airdropService.sessionExtendRejectedStream;
 
   Stream<void> get viewingStartedStream => _airdropService.viewingStartedStream;
 
-  Stream<void> get invitationRejectedStream => _airdropService.invitationRejectedStream;
+  Stream<void> get invitationRejectedStream =>
+      _airdropService.invitationRejectedStream;
 
-  Stream<void> get wifiToggleNeededStream => _airdropService.wifiToggleNeededStream;
+  Stream<void> get wifiToggleNeededStream =>
+      _airdropService.wifiToggleNeededStream;
 
-  Stream<Map<String, dynamic>> get connectionHealthStream => _airdropService.connectionHealthStream;
+  Stream<Map<String, dynamic>> get connectionHealthStream =>
+      _airdropService.connectionHealthStream;
 }

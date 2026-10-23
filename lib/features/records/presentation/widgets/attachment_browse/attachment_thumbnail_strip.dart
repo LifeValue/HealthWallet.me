@@ -189,10 +189,10 @@ class _ThumbnailFrame extends StatelessWidget {
     final fillColor = isChecked
         ? AppColors.primary.withValues(alpha: 0.15)
         : context.isDarkMode
-            ? context.colorScheme.surface
-            : hasFile
-                ? Colors.white
-                : Colors.grey.shade100;
+        ? context.colorScheme.surface
+        : hasFile
+        ? Colors.white
+        : Colors.grey.shade100;
 
     final child = SizedBox(
       width: kThumbnailItemWidth,
@@ -246,8 +246,8 @@ class _ThumbnailFrame extends StatelessWidget {
           color: isChecked
               ? AppColors.primary
               : isCurrent
-                  ? AppColors.primary
-                  : context.colorScheme.onSurface.withValues(alpha: 0.24),
+              ? AppColors.primary
+              : context.colorScheme.onSurface.withValues(alpha: 0.24),
           width: isChecked || isCurrent ? 3 : 1,
         ),
       ),
@@ -299,8 +299,7 @@ class _DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
-      color != oldDelegate.color ||
-      strokeWidth != oldDelegate.strokeWidth;
+      color != oldDelegate.color || strokeWidth != oldDelegate.strokeWidth;
 }
 
 class _TitleFallback extends StatelessWidget {

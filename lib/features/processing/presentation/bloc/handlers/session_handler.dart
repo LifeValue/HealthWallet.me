@@ -41,9 +41,10 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     emit(state.copyWith(status: const PipelineStatus.loading()));
 
     try {
-      final scannedResult = await FlutterDocScanner().getScannedDocumentAsImages(
-        page: event.maxPages,
-      );
+      final scannedResult = await FlutterDocScanner()
+          .getScannedDocumentAsImages(
+            page: event.maxPages,
+          );
 
       if (scannedResult == null) {
         emit(state.copyWith(status: const PipelineStatus.initial()));
@@ -52,9 +53,11 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       final imagePaths = scannedResult.images
           .where((path) => path.isNotEmpty)
-          .map((path) => path.startsWith('file:///')
-              ? Uri.parse(path).toFilePath()
-              : path)
+          .map(
+            (path) => path.startsWith('file:///')
+                ? Uri.parse(path).toFilePath()
+                : path,
+          )
           .toList();
 
       if (imagePaths.isEmpty) {
@@ -71,14 +74,21 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         }
       }
 
-      final sessionPaths = persistedPaths.isNotEmpty ? persistedPaths : imagePaths;
+      final sessionPaths = persistedPaths.isNotEmpty
+          ? persistedPaths
+          : imagePaths;
 
-      await createSession(emit,
-          filePaths: sessionPaths, origin: ProcessingOrigin.scan);
+      await createSession(
+        emit,
+        filePaths: sessionPaths,
+        origin: ProcessingOrigin.scan,
+      );
     } catch (e) {
-      emit(state.copyWith(
-        status: PipelineStatus.failure(error: 'Scan failed: $e'),
-      ));
+      emit(
+        state.copyWith(
+          status: PipelineStatus.failure(error: 'Scan failed: $e'),
+        ),
+      );
     }
   }
 
@@ -99,9 +109,11 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       }
 
       if (persistedPaths.isEmpty) {
-        emit(state.copyWith(
-          status: const PipelineStatus.failure(error: 'No valid files found'),
-        ));
+        emit(
+          state.copyWith(
+            status: const PipelineStatus.failure(error: 'No valid files found'),
+          ),
+        );
         return;
       }
 
@@ -109,23 +121,28 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           ? await _autoReorderByPageNumber(persistedPaths)
           : persistedPaths;
 
-      await createSession(emit,
-          filePaths: orderedPaths, origin: event.origin);
+      await createSession(emit, filePaths: orderedPaths, origin: event.origin);
 
       if (event.phase1Patient != null) {
         final session = state.sessions.first;
-        updateSession(emit,
-            sessionId: session.id,
-            status: ProcessingStatus.patientExtracted,
-            patient: event.phase1Patient!,
-            encounter: event.phase1Encounter,
-            diagnosticReport: event.phase1DiagnosticReport,
-            updateDb: true);
+        updateSession(
+          emit,
+          sessionId: session.id,
+          status: ProcessingStatus.patientExtracted,
+          patient: event.phase1Patient!,
+          encounter: event.phase1Encounter,
+          diagnosticReport: event.phase1DiagnosticReport,
+          updateDb: true,
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: PipelineStatus.failure(error: 'Failed to import document: $e'),
-      ));
+      emit(
+        state.copyWith(
+          status: PipelineStatus.failure(
+            error: 'Failed to import document: $e',
+          ),
+        ),
+      );
     }
   }
 
@@ -135,12 +152,16 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     required ProcessingOrigin origin,
   }) async {
     final session = await processingRepository.createProcessingSession(
-        filePaths: filePaths, origin: origin);
+      filePaths: filePaths,
+      origin: origin,
+    );
 
-    emit(state.copyWith(
-      status: PipelineStatus.sessionCreated(session: session),
-      sessions: [session, ...state.sessions],
-    ));
+    emit(
+      state.copyWith(
+        status: PipelineStatus.sessionCreated(session: session),
+        sessions: [session, ...state.sessions],
+      ),
+    );
   }
 
   void onSessionChangedProgress(
@@ -163,10 +184,12 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   ) async {
     try {
       if (event.session.isProcessing) {
-        emit(state.copyWith(
-          status: const PipelineStatus.loading(),
-          deletingSessionId: event.session.id,
-        ));
+        emit(
+          state.copyWith(
+            status: const PipelineStatus.loading(),
+            deletingSessionId: event.session.id,
+          ),
+        );
 
         try {
           await processingRepository.cancelGeneration();
@@ -179,16 +202,18 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       final newSessions = [...state.sessions]
         ..removeWhere((session) => session.id == event.session.id);
 
-      final updatedImageMap =
-          Map<String, List<String>>.from(state.sessionImagePaths)
-            ..remove(event.session.id);
+      final updatedImageMap = Map<String, List<String>>.from(
+        state.sessionImagePaths,
+      )..remove(event.session.id);
 
-      emit(state.copyWith(
-        sessions: newSessions,
-        sessionImagePaths: updatedImageMap,
-        status: const PipelineStatus.initial(),
-        deletingSessionId: null,
-      ));
+      emit(
+        state.copyWith(
+          sessions: newSessions,
+          sessionImagePaths: updatedImageMap,
+          status: const PipelineStatus.initial(),
+          deletingSessionId: null,
+        ),
+      );
 
       await processingRepository.deleteProcessingSession(event.session);
 
@@ -201,10 +226,12 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         startNextPendingSession();
       }
     } on Exception catch (e) {
-      emit(state.copyWith(
-        status: PipelineStatus.failure(error: e.toString()),
-        deletingSessionId: null,
-      ));
+      emit(
+        state.copyWith(
+          status: PipelineStatus.failure(error: e.toString()),
+          deletingSessionId: null,
+        ),
+      );
     }
   }
 
@@ -217,12 +244,12 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     );
 
     try {
-      final session =
-          state.sessions.firstWhere((s) => s.id == event.sessionId);
+      final session = state.sessions.firstWhere((s) => s.id == event.sessionId);
       final cachedImages = state.sessionImagePaths[event.sessionId];
 
       List<String> allImages;
-      final cachedValid = cachedImages != null &&
+      final cachedValid =
+          cachedImages != null &&
           cachedImages.isNotEmpty &&
           await File(cachedImages.first).exists();
       if (cachedValid) {
@@ -240,32 +267,39 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         state.sessionImagePaths,
       )..[event.sessionId] = allImages;
 
-      emit(state.copyWith(
-        allImagePathsForOCR: allImages,
-        sessionImagePaths: updatedImageMap,
-      ));
+      emit(
+        state.copyWith(
+          allImagePathsForOCR: allImages,
+          sessionImagePaths: updatedImageMap,
+        ),
+      );
 
       if (anotherSessionProcessing &&
           session.status != ProcessingStatus.draft) {
         return;
       }
 
-      emit(state.copyWith(
-        displayedSessionId: event.sessionId,
-      ));
+      emit(
+        state.copyWith(
+          displayedSessionId: event.sessionId,
+        ),
+      );
 
       if (session.status == ProcessingStatus.pending) {
         try {
-          final isModelLoaded = await processingRepository.checkModelExistence();
+          final isModelLoaded = await processingRepository
+              .checkModelExistence();
 
           if (isModelLoaded) {
             add(MappingInitiated(sessionId: event.sessionId));
           } else {
-            emit(state.copyWith(
-              status: const PipelineStatus.failure(
-                error: 'Model file not found. Please download the AI model first.',
+            emit(
+              state.copyWith(
+                status: const PipelineStatus.failure(
+                  error: 'Model file not found. Please download the AI model first.',
+                ),
               ),
-            ));
+            );
           }
         } catch (e) {
           emit(state.copyWith(status: const PipelineStatus.initial()));
@@ -280,23 +314,27 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     PagesReordered event,
     Emitter<ProcessingState> emit,
   ) async {
-    final sessionIndex =
-        state.sessions.indexWhere((s) => s.id == event.sessionId);
+    final sessionIndex = state.sessions.indexWhere(
+      (s) => s.id == event.sessionId,
+    );
     if (sessionIndex == -1) return;
 
-    final updatedSession = state.sessions[sessionIndex]
-        .copyWith(filePaths: event.reorderedPaths);
+    final updatedSession = state.sessions[sessionIndex].copyWith(
+      filePaths: event.reorderedPaths,
+    );
     final updatedSessions = [...state.sessions];
     updatedSessions[sessionIndex] = updatedSession;
 
-    final updatedImageMap =
-        Map<String, List<String>>.from(state.sessionImagePaths)
-          ..[event.sessionId] = event.reorderedPaths;
+    final updatedImageMap = Map<String, List<String>>.from(
+      state.sessionImagePaths,
+    )..[event.sessionId] = event.reorderedPaths;
 
-    emit(state.copyWith(
-      sessions: updatedSessions,
-      sessionImagePaths: updatedImageMap,
-    ));
+    emit(
+      state.copyWith(
+        sessions: updatedSessions,
+        sessionImagePaths: updatedImageMap,
+      ),
+    );
 
     await processingRepository.editProcessingSession(updatedSession);
   }
@@ -305,8 +343,9 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     ResourceChanged event,
     Emitter<ProcessingState> emit,
   ) {
-    final activeSession =
-        state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final activeSession = state.sessions.firstWhere(
+      (s) => s.id == event.sessionId,
+    );
 
     if (event.isDraftPatient == true) {
       MappingPatient draftPatient;
@@ -314,11 +353,13 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       if (activeSession.patient.mode == ImportMode.linkExisting &&
           activeSession.patient.existing != null) {
-        draftPatient = activeSession.patient.draft ??
+        draftPatient =
+            activeSession.patient.draft ??
             MappingPatient.fromFhirResource(activeSession.patient.existing!);
         newMode = ImportMode.linkExisting;
         ProcessingLogBuffer.instance.log(
-          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] patient modified: ${event.propertyKey} changed, will create new patient');
+          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] patient modified: ${event.propertyKey} changed, will create new patient',
+        );
       } else {
         draftPatient = activeSession.patient.draft ?? const MappingPatient();
         newMode = activeSession.patient.mode;
@@ -328,9 +369,9 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         emit,
         sessionId: event.sessionId,
         patient: StagedPatient(
-          draft: draftPatient
-                  .copyWithMap({event.propertyKey: event.newValue})
-              as MappingPatient,
+          draft: draftPatient.copyWithMap({
+            event.propertyKey: event.newValue,
+          }) as MappingPatient,
           existing: activeSession.patient.existing,
           mode: newMode,
         ),
@@ -342,17 +383,18 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     if (event.isDraftDiagnosticReport == true) {
       final MappingDiagnosticReport draftReport =
           activeSession.diagnosticReport?.draft ??
-              const MappingDiagnosticReport();
+          const MappingDiagnosticReport();
 
       updateSession(
         emit,
         sessionId: event.sessionId,
-        diagnosticReport: (activeSession.diagnosticReport ??
-                const StagedDiagnosticReport())
-            .copyWith(
-                draft: draftReport.copyWithMap(
-                        {event.propertyKey: event.newValue})
-                    as MappingDiagnosticReport),
+        diagnosticReport:
+            (activeSession.diagnosticReport ?? const StagedDiagnosticReport())
+                .copyWith(
+                  draft: draftReport.copyWithMap({
+                    event.propertyKey: event.newValue,
+                  }) as MappingDiagnosticReport,
+                ),
       );
       return;
     }
@@ -365,33 +407,37 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         emit,
         sessionId: event.sessionId,
         encounter: activeSession.encounter.copyWith(
-            draft: draftEncounter
-                    .copyWithMap({event.propertyKey: event.newValue})
-                as MappingEncounter),
+          draft: draftEncounter.copyWithMap({
+            event.propertyKey: event.newValue,
+          }) as MappingEncounter,
+        ),
       );
       return;
     }
 
-    final MappingResource updatedResource =
-        activeSession.resources[event.index].copyWithMap({
-      event.propertyKey: event.newValue,
-    });
+    final MappingResource updatedResource = activeSession.resources[event.index]
+        .copyWithMap({
+          event.propertyKey: event.newValue,
+        });
 
     final newResources = [...activeSession.resources];
     newResources[event.index] = updatedResource;
 
-    updateSession(emit,
-        sessionId: event.sessionId,
-        resources: newResources,
-        updateDb: true);
+    updateSession(
+      emit,
+      sessionId: event.sessionId,
+      resources: newResources,
+      updateDb: true,
+    );
   }
 
   void onPatientReverted(
     PatientReverted event,
     Emitter<ProcessingState> emit,
   ) {
-    final activeSession =
-        state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final activeSession = state.sessions.firstWhere(
+      (s) => s.id == event.sessionId,
+    );
     if (activeSession.patient.existing == null) return;
 
     updateSession(
@@ -409,23 +455,27 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     ResourceRemoved event,
     Emitter<ProcessingState> emit,
   ) {
-    final activeSession =
-        state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final activeSession = state.sessions.firstWhere(
+      (s) => s.id == event.sessionId,
+    );
     final newResources = [...activeSession.resources];
     newResources.removeAt(event.index);
 
-    updateSession(emit,
-        sessionId: event.sessionId,
-        resources: newResources,
-        updateDb: true);
+    updateSession(
+      emit,
+      sessionId: event.sessionId,
+      resources: newResources,
+      updateDb: true,
+    );
   }
 
   void onResourcesAdded(
     ResourcesAdded event,
     Emitter<ProcessingState> emit,
   ) {
-    final activeSession =
-        state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final activeSession = state.sessions.firstWhere(
+      (s) => s.id == event.sessionId,
+    );
 
     final List<MappingResource> newResources = [];
 
@@ -483,33 +533,35 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       final entries = <_PageEntry>[];
 
       for (int i = 0; i < paths.length; i++) {
-        final text =
-            await ocrProcessingHelper.processOcrForImages([paths[i]]);
+        final text = await ocrProcessingHelper.processOcrForImages([paths[i]]);
         final match = pagePattern.firstMatch(text);
 
         if (match != null) {
           final pageNum = int.tryParse(match.group(1)!);
           final totalPages = int.tryParse(match.group(2)!);
           if (pageNum != null && totalPages != null) {
-            entries.add(_PageEntry(
-              path: paths[i],
-              pageNumber: pageNum,
-              totalPages: totalPages,
-              originalIndex: i,
-            ));
+            entries.add(
+              _PageEntry(
+                path: paths[i],
+                pageNumber: pageNum,
+                totalPages: totalPages,
+                originalIndex: i,
+              ),
+            );
             continue;
           }
         }
-        entries.add(_PageEntry(
-          path: paths[i],
-          pageNumber: null,
-          totalPages: null,
-          originalIndex: i,
-        ));
+        entries.add(
+          _PageEntry(
+            path: paths[i],
+            pageNumber: null,
+            totalPages: null,
+            originalIndex: i,
+          ),
+        );
       }
 
-      final detected =
-          entries.where((e) => e.pageNumber != null).toList();
+      final detected = entries.where((e) => e.pageNumber != null).toList();
       if (detected.length < 2) return paths;
 
       final totals = detected.map((e) => e.totalPages).toSet();

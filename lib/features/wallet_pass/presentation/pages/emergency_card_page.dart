@@ -115,8 +115,11 @@ class EmergencyCardPage extends StatelessWidget {
               if (cardData.bloodType != null)
                 const SizedBox(width: Insets.small),
               if (gender != null) ...[
-                _buildBadge(gender, Colors.white.withValues(alpha: 0.2),
-                    Colors.white),
+                _buildBadge(
+                  gender,
+                  Colors.white.withValues(alpha: 0.2),
+                  Colors.white,
+                ),
                 const SizedBox(width: Insets.small),
               ],
               if (cardData.dateOfBirth != null)
@@ -186,7 +189,9 @@ class EmergencyCardPage extends StatelessWidget {
                   Text(
                     label,
                     style: AppTextStyle.labelSmall.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -232,7 +237,9 @@ class EmergencyCardPage extends StatelessWidget {
                   Text(
                     context.l10n.emergencyContact,
                     style: AppTextStyle.labelSmall.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -299,22 +306,24 @@ class EmergencyCardPage extends StatelessWidget {
               spacing: Insets.small,
               runSpacing: Insets.small,
               children: items
-                  .map((item) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Insets.smallNormal,
-                          vertical: Insets.smaller,
+                  .map(
+                    (item) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Insets.smallNormal,
+                        vertical: Insets.smaller,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        item,
+                        style: AppTextStyle.labelMedium.copyWith(
+                          color: badgeColor,
                         ),
-                        decoration: BoxDecoration(
-                          color: badgeColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          item,
-                          style: AppTextStyle.labelMedium.copyWith(
-                            color: badgeColor,
-                          ),
-                        ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ],

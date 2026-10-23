@@ -6,7 +6,9 @@ class BasicInfoPrompt {
   BasicInfoPrompt({this.countryCode});
 
   String buildPrompt(String ocrText) {
-    final truncated = ocrText.length > 1500 ? ocrText.substring(0, 1500) : ocrText;
+    final truncated = ocrText.length > 1500
+        ? ocrText.substring(0, 1500)
+        : ocrText;
 
     final profile = countryCode != null
         ? CountryIdentifier.forCountry(countryCode)

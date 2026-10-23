@@ -59,7 +59,8 @@ class ProcessingMappingSection extends StatelessWidget {
       content = const SizedBox.shrink();
     }
 
-    final showDesktopLink = !getIt<AppPlatform>().isDesktop &&
+    final showDesktopLink =
+        !getIt<AppPlatform>().isDesktop &&
         displayedSession.status != ProcessingStatus.draft &&
         displayedSession.status != ProcessingStatus.patientExtracted &&
         onProcessOnDesktop != null;
@@ -75,8 +76,11 @@ class ProcessingMappingSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.computer,
-                  size: 20, color: context.colorScheme.primary),
+              Icon(
+                Icons.computer,
+                size: 20,
+                color: context.colorScheme.primary,
+              ),
               const SizedBox(width: Insets.small),
               Text(
                 'Process on Desktop',
@@ -103,13 +107,14 @@ class ProcessingMappingSection extends StatelessWidget {
       return context.l10n.modelCorruptedError;
     }
     if (error.contains('Exception:')) {
-      return error.replaceAll(RegExp(r'Exception:\s*'), '').replaceAll(RegExp(r'/[\w/\-\.]+/'), '');
+      return error
+          .replaceAll(RegExp(r'Exception:\s*'), '')
+          .replaceAll(RegExp(r'/[\w/\-\.]+/'), '');
     }
     return error;
   }
 
-  bool _isModelNotFound(String error) =>
-      error.contains('Model file not found');
+  bool _isModelNotFound(String error) => error.contains('Model file not found');
 
   Widget _buildFailure(BuildContext context, String error) {
     final isNoModel = _isModelNotFound(error);
@@ -139,7 +144,9 @@ class ProcessingMappingSection extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    isNoModel ? Icons.warning_amber_rounded : Icons.error_outline,
+                    isNoModel
+                        ? Icons.warning_amber_rounded
+                        : Icons.error_outline,
                     color: isNoModel
                         ? AppColors.warning
                         : context.colorScheme.error,
@@ -195,11 +202,13 @@ class ProcessingMappingSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(Insets.normal),
           decoration: BoxDecoration(
-            color:
-                context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            color: context.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.5,
+            ),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-                color: context.colorScheme.outline.withValues(alpha: 0.5)),
+              color: context.colorScheme.outline.withValues(alpha: 0.5),
+            ),
           ),
           child: Row(
             children: [
@@ -239,11 +248,11 @@ class ProcessingMappingSection extends StatelessWidget {
               : context.l10n.processingPages,
           secondaryText:
               displayedSession.status == ProcessingStatus.processingPatient
-                  ? context.l10n.extractingPatientInfo
-                  : context.l10n.pleaseWait,
+              ? context.l10n.extractingPatientInfo
+              : context.l10n.pleaseWait,
           showProgressBar:
               displayedSession.status == ProcessingStatus.processing &&
-                  state.useVision,
+              state.useVision,
         ),
         const SizedBox(height: Insets.normal),
         Row(
@@ -281,8 +290,9 @@ class ProcessingMappingSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.colorScheme.errorContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(8),
-            border:
-                Border.all(color: context.colorScheme.error.withValues(alpha: 0.5)),
+            border: Border.all(
+              color: context.colorScheme.error.withValues(alpha: 0.5),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,8 +362,11 @@ class _QueuedMessage extends StatelessWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.hourglass_empty,
-                color: context.colorScheme.primary, size: 20),
+            Icon(
+              Icons.hourglass_empty,
+              color: context.colorScheme.primary,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               asyncSnapshot.data!
@@ -362,7 +375,7 @@ class _QueuedMessage extends StatelessWidget {
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.primary,
               ),
-            )
+            ),
           ],
         );
       },

@@ -48,8 +48,8 @@ class _GreetingLabel extends StatelessWidget {
             final displayName = userState.user.name.isNotEmpty
                 ? userState.user.name
                 : (syncState.syncQrData?.tokenMeta.fullName.isNotEmpty == true
-                    ? syncState.syncQrData!.tokenMeta.fullName
-                    : 'User');
+                      ? syncState.syncQrData!.tokenMeta.fullName
+                      : 'User');
             return RichText(
               text: TextSpan(
                 style: AppTextStyle.titleMedium.copyWith(
@@ -88,14 +88,14 @@ class _PatientLabelState extends State<_PatientLabel> {
     if (_isMenuOpen) return;
     final box = _tapKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final pos = box.localToGlobal(Offset.zero, ancestor: overlay);
 
     setState(() => _isMenuOpen = true);
 
     final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
-        widget.homeState.patient?.name?.first);
+      widget.homeState.patient?.name?.first,
+    );
 
     showShareOptionsMenu(
       context,
@@ -114,8 +114,10 @@ class _PatientLabelState extends State<_PatientLabel> {
 
   @override
   Widget build(BuildContext context) {
-    final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
-            widget.homeState.patient?.name?.first) ??
+    final patientName =
+        FhirFieldExtractor.extractHumanNameFamilyFirst(
+          widget.homeState.patient?.name?.first,
+        ) ??
         'Loading...';
 
     return GestureDetector(

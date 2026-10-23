@@ -18,7 +18,10 @@ class DeepLinkService {
   final PageViewNavigationController _navigationController;
 
   DeepLinkService(
-      this._router, this._externalFilesService, this._navigationController);
+    this._router,
+    this._externalFilesService,
+    this._navigationController,
+  );
 
   final _appLinks = AppLinks();
   StreamSubscription? _linkSubscription;
@@ -65,8 +68,10 @@ class DeepLinkService {
     }
 
     try {
-      final filePath =
-          await downloadFile(fileUrl, customFileName: documentName);
+      final filePath = await downloadFile(
+        fileUrl,
+        customFileName: documentName,
+      );
       _externalFilesService.addFilePaths([filePath]);
       unawaited(_router.replaceAll([const DashboardRoute()]));
 
@@ -91,13 +96,15 @@ class DeepLinkService {
     }
 
     final appDocDir = await getApplicationDocumentsDirectory();
-    final downloadsDir =
-        Directory(path.join(appDocDir.path, 'provider_downloads'));
+    final downloadsDir = Directory(
+      path.join(appDocDir.path, 'provider_downloads'),
+    );
     if (!await downloadsDir.exists()) {
       await downloadsDir.create(recursive: true);
     }
 
-    final fileName = customFileName ??
+    final fileName =
+        customFileName ??
         'provider_doc_${DateTime.now().millisecondsSinceEpoch}${_getExtensionFromUrl(fileUrl)}';
     final filePath = path.join(downloadsDir.path, fileName);
 

@@ -59,8 +59,9 @@ class ThemeToggleButton extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
                     decoration: BoxDecoration(
-                      color:
-                          isDarkMode ? colorScheme.primary : Colors.transparent,
+                      color: isDarkMode
+                          ? colorScheme.primary
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Center(

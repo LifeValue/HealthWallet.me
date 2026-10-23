@@ -81,7 +81,9 @@ class FhirDateExtractor {
 
   /// Extract date from specific FHIR resource types
   static DateTime? extractFromResource(
-      String resourceType, Map<String, dynamic> resourceData) {
+    String resourceType,
+    Map<String, dynamic> resourceData,
+  ) {
     switch (resourceType) {
       case 'Patient':
         return extractFromFhirDateTime(resourceData['birthDate']);

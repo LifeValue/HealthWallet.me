@@ -16,7 +16,10 @@ import 'package:health_wallet/features/records/presentation/bloc/attachment_brow
 class EphemeralDesktopDetailsPanel extends StatefulWidget {
   final AttachmentBrowseBloc? attachmentBrowseBloc;
 
-  const EphemeralDesktopDetailsPanel({super.key, required this.attachmentBrowseBloc});
+  const EphemeralDesktopDetailsPanel({
+    super.key,
+    required this.attachmentBrowseBloc,
+  });
 
   @override
   State<EphemeralDesktopDetailsPanel> createState() =>
@@ -72,7 +75,10 @@ class _EphemeralDesktopDetailsPanelState
                           : Center(
                               child: Padding(
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: (_panelWidth * 0.1).clamp(16.0, 32.0),
+                                  horizontal: (_panelWidth * 0.1).clamp(
+                                    16.0,
+                                    32.0,
+                                  ),
                                 ),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -107,8 +113,10 @@ class _EphemeralDesktopDetailsPanelState
                   child: GestureDetector(
                     onHorizontalDragUpdate: (d) {
                       setState(() {
-                        _panelWidth = (_panelWidth - d.delta.dx)
-                            .clamp(_kPanelMinWidth, _kPanelMaxWidth);
+                        _panelWidth = (_panelWidth - d.delta.dx).clamp(
+                          _kPanelMinWidth,
+                          _kPanelMaxWidth,
+                        );
                       });
                     },
                     child: Container(
@@ -125,8 +133,10 @@ class _EphemeralDesktopDetailsPanelState
                 behavior: HitTestBehavior.opaque,
                 onHorizontalDragUpdate: (d) {
                   setState(() {
-                    _panelWidth = (_panelWidth - d.delta.dx)
-                        .clamp(_kPanelMinWidth, _kPanelMaxWidth);
+                    _panelWidth = (_panelWidth - d.delta.dx).clamp(
+                      _kPanelMinWidth,
+                      _kPanelMaxWidth,
+                    );
                   });
                 },
                 onHorizontalDragEnd: (_) {},
@@ -152,11 +162,19 @@ class _EphemeralDesktopDetailsPanelState
                       children: [
                         Transform.translate(
                           offset: const Offset(3, 0),
-                          child: Icon(Icons.chevron_right, size: 16, color: onSurface),
+                          child: Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: onSurface,
+                          ),
                         ),
                         Transform.translate(
                           offset: const Offset(-3, 0),
-                          child: Icon(Icons.chevron_left, size: 16, color: onSurface),
+                          child: Icon(
+                            Icons.chevron_left,
+                            size: 16,
+                            color: onSurface,
+                          ),
                         ),
                       ],
                     ),
@@ -337,7 +355,9 @@ class _PanelContentState extends State<_PanelContent> {
                     Expanded(
                       child: Text(
                         info.info,
-                        style: AppTextStyle.labelLarge.copyWith(color: onSurface),
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: onSurface,
+                        ),
                       ),
                     ),
                   ],
@@ -357,10 +377,12 @@ class _PanelContentState extends State<_PanelContent> {
         Text(context.l10n.encounterDetails, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 4),
         InkWell(
-          onTap: () => context.router.push(RecordDetailsRoute(
-            resource: encounter,
-            ephemeralRecords: widget.sourceRecords,
-          )),
+          onTap: () => context.router.push(
+            RecordDetailsRoute(
+              resource: encounter,
+              ephemeralRecords: widget.sourceRecords,
+            ),
+          ),
           child: _buildResourceInfo(context, encounter),
         ),
         Padding(
@@ -371,72 +393,89 @@ class _PanelContentState extends State<_PanelContent> {
     );
   }
 
-  Widget _buildRelatedSection(BuildContext context, List<IFhirResource> resources) {
+  Widget _buildRelatedSection(
+    BuildContext context,
+    List<IFhirResource> resources,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(context.l10n.relatedResources, style: AppTextStyle.buttonSmall),
         const SizedBox(height: 16),
-        ...resources.map((resource) => InkWell(
-              onTap: () => context.router.push(RecordDetailsRoute(
+        ...resources.map(
+          (resource) => InkWell(
+            onTap: () => context.router.push(
+              RecordDetailsRoute(
                 resource: resource,
                 ephemeralRecords: widget.sourceRecords,
-              )),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(resource.displayTitle, style: AppTextStyle.labelLarge),
-                  if (resource.fhirType == FhirType.Media ||
-                      resource.fhirType == FhirType.DocumentReference)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: AppButton(
-                        label: context.l10n.viewDocument,
-                        onPressed: () => _pdfService.previewInApp(context, resource),
-                        icon: const Icon(Icons.visibility_outlined),
-                        variant: AppButtonVariant.outlined,
-                        fullWidth: false,
-                        height: 36,
-                        fontSize: 12,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                    ),
-                  _buildResourceInfo(context, resource),
-                  const SizedBox(height: 16),
-                ],
               ),
-            )),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(resource.displayTitle, style: AppTextStyle.labelLarge),
+                if (resource.fhirType == FhirType.Media ||
+                    resource.fhirType == FhirType.DocumentReference)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: AppButton(
+                      label: context.l10n.viewDocument,
+                      onPressed: () =>
+                          _pdfService.previewInApp(context, resource),
+                      icon: const Icon(Icons.visibility_outlined),
+                      variant: AppButtonVariant.outlined,
+                      fullWidth: false,
+                      height: 36,
+                      fontSize: 12,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  ),
+                _buildResourceInfo(context, resource),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildResourceInfo(BuildContext context, IFhirResource resource) {
     final dimColor = context.colorScheme.onSurface.withValues(alpha: 0.6);
-    final lines = resource.additionalInfo.where((l) => !l.isSection).take(2).toList();
+    final lines = resource.additionalInfo
+        .where((l) => !l.isSection)
+        .take(2)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: lines.map((info) => Column(
-            children: [
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  info.icon.svg(
-                    width: 16,
-                    colorFilter: ColorFilter.mode(dimColor, BlendMode.srcIn),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      info.info,
-                      style: AppTextStyle.labelLarge.copyWith(color: dimColor),
+      children: lines
+          .map(
+            (info) => Column(
+              children: [
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    info.icon.svg(
+                      width: 16,
+                      colorFilter: ColorFilter.mode(dimColor, BlendMode.srcIn),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          )).toList(),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        info.info,
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: dimColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          )
+          .toList(),
     );
   }
 }

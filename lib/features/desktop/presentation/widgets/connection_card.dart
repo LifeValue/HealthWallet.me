@@ -28,13 +28,12 @@ class ConnectionCard extends StatelessWidget {
             AppButton(
               label: context.l10n.desktopGeneratePairingQr,
               onPressed: () {
-                context
-                    .read<CommunicationBloc>()
-                    .add(const CommunicationPairingRequested());
+                context.read<CommunicationBloc>().add(
+                  const CommunicationPairingRequested(),
+                );
               },
             ),
-          ] else if (state.connectionStatus !=
-              ConnectionStatus.connected) ...[
+          ] else if (state.connectionStatus != ConnectionStatus.connected) ...[
             Container(
               padding: const EdgeInsets.all(Insets.normal),
               decoration: BoxDecoration(
@@ -66,25 +65,35 @@ class ConnectionCard extends StatelessWidget {
             const SizedBox(height: Insets.small),
             Text(
               state.pairedDevice!.deviceName,
-              style: AppTextStyle.bodyMedium
-                  .copyWith(color: context.colorScheme.onSurface),
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
             ),
           ],
           if (state.pairedDevice != null) ...[
             const SizedBox(height: Insets.normal),
-            InfoRow(label: context.l10n.desktopDevice, value: state.pairedDevice!.deviceName),
-            InfoRow(label: context.l10n.desktopTransport, value: _transportLabel(context, state)),
+            InfoRow(
+              label: context.l10n.desktopDevice,
+              value: state.pairedDevice!.deviceName,
+            ),
+            InfoRow(
+              label: context.l10n.desktopTransport,
+              value: _transportLabel(context, state),
+            ),
             if (state.connectedIp != null)
               InfoRow(label: context.l10n.desktopIp, value: state.connectedIp!),
             if (state.connectedPort != null)
-              InfoRow(label: context.l10n.desktopPort, value: '${state.connectedPort}'),
+              InfoRow(
+                label: context.l10n.desktopPort,
+                value: '${state.connectedPort}',
+              ),
             const SizedBox(height: Insets.small),
             AppButton(
               label: context.l10n.desktopNewPairing,
               onPressed: () {
-                context
-                    .read<CommunicationBloc>()
-                    .add(const CommunicationPairingRequested());
+                context.read<CommunicationBloc>().add(
+                  const CommunicationPairingRequested(),
+                );
               },
               fullWidth: false,
               height: 36,

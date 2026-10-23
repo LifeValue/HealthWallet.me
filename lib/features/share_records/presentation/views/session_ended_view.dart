@@ -21,8 +21,9 @@ class SessionEndedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusMessage = state.statusMessage?.toLowerCase() ?? '';
-    final isRejected = statusMessage.contains('declined') ||
-                       statusMessage.contains('rejected');
+    final isRejected =
+        statusMessage.contains('declined') ||
+        statusMessage.contains('rejected');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Insets.large),
@@ -38,7 +39,9 @@ class SessionEndedView extends StatelessWidget {
               : Assets.images.completeCheck.svg(width: 64, height: 64),
           const SizedBox(height: Insets.large),
           Text(
-            isRejected ? context.l10n.shareInvitationDeclined : context.l10n.shareSessionComplete,
+            isRejected
+                ? context.l10n.shareInvitationDeclined
+                : context.l10n.shareSessionComplete,
             style: AppTextStyle.titleMedium.copyWith(
               color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w600,
@@ -109,8 +112,8 @@ class ErrorView extends StatelessWidget {
               fullWidth: true,
               onPressed: () {
                 context.read<ShareRecordsBloc>().add(
-                      const ShareRecordsEvent.connectionRetried(),
-                    );
+                  const ShareRecordsEvent.connectionRetried(),
+                );
               },
             ),
             const SizedBox(height: Insets.small),
@@ -120,10 +123,10 @@ class ErrorView extends StatelessWidget {
               fullWidth: true,
               onPressed: () {
                 context.read<ShareRecordsBloc>().add(
-                      state.mode == ShareMode.sending
-                          ? const ShareRecordsEvent.sendModeSelected()
-                          : const ShareRecordsEvent.modeCleared(),
-                    );
+                  state.mode == ShareMode.sending
+                      ? const ShareRecordsEvent.sendModeSelected()
+                      : const ShareRecordsEvent.modeCleared(),
+                );
               },
             ),
           ],

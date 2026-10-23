@@ -21,17 +21,18 @@ abstract class SyncQrData with _$SyncQrData {
     return SyncQrData(
       token: json['token'] as String,
       tokenMeta: SyncTokenMetaData.fromJson(decodedToken ?? {}),
-      serverBaseUrls:
-          (json['server_base_urls'] as List).whereType<String>().toList(),
+      serverBaseUrls: (json['server_base_urls'] as List)
+          .whereType<String>()
+          .toList(),
       syncEndpoint: json['sync_endpoint'] as String,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'token': token,
-        'server_base_urls': serverBaseUrls,
-        'sync_endpoint': syncEndpoint,
-      };
+    'token': token,
+    'server_base_urls': serverBaseUrls,
+    'sync_endpoint': syncEndpoint,
+  };
 }
 
 @freezed

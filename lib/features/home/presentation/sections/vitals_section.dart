@@ -54,7 +54,8 @@ class VitalsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final vitalsToShow = vitalsExpanded ? allAvailableVitals : vitals;
     final double screenWidth = MediaQuery.sizeOf(context).width;
-    final bool isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final bool isPortrait =
+        MediaQuery.of(context).orientation == Orientation.portrait;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,10 +68,12 @@ class VitalsSection extends StatelessWidget {
               onReorder?.call(oldIndex, newIndex);
             } else {
               final vitalToMove = vitals[oldIndex];
-              final oldMasterIndex = allAvailableVitals
-                  .indexWhere((v) => v.title == vitalToMove.title);
-              final newMasterIndex = allAvailableVitals
-                  .indexWhere((v) => v.title == vitals[newIndex].title);
+              final oldMasterIndex = allAvailableVitals.indexWhere(
+                (v) => v.title == vitalToMove.title,
+              );
+              final newMasterIndex = allAvailableVitals.indexWhere(
+                (v) => v.title == vitals[newIndex].title,
+              );
 
               if (oldMasterIndex != -1 && newMasterIndex != -1) {
                 onReorder?.call(oldMasterIndex, newMasterIndex);
@@ -149,8 +152,11 @@ class VitalsSection extends StatelessWidget {
   }
 
   Widget _buildVitalSignCard(
-      BuildContext context, PatientVital vital, double screenWidth,
-      {Key? key}) {
+    BuildContext context,
+    PatientVital vital,
+    double screenWidth, {
+    Key? key,
+  }) {
     final String title = vital.title;
     final String value = vital.value;
     final String unit = vital.unit;

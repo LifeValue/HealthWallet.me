@@ -84,8 +84,9 @@ class _ScanViewState extends State<ScanView>
     _hasAutoScanned = true;
 
     final currentState = context.read<ProcessingBloc>().state;
-    final hasAnySessions = currentState.sessions
-        .any((session) => session.origin == ProcessingOrigin.scan);
+    final hasAnySessions = currentState.sessions.any(
+      (session) => session.origin == ProcessingOrigin.scan,
+    );
 
     if (!hasAnySessions) {
       await _handleCaptureButtonPressed(context);
@@ -273,63 +274,65 @@ class _ScanViewState extends State<ScanView>
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
         child: Padding(
-      padding: EdgeInsets.only(
-        left: context.screenHorizontalPadding,
-        right: context.screenHorizontalPadding,
-        top: context.isTablet ? 24.0 : 16.0,
-        bottom: 16.0,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          if (scanSessions.isNotEmpty)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.activeScanSessions,
-                    style: AppTextStyle.titleMedium,
+          padding: EdgeInsets.only(
+            left: context.screenHorizontalPadding,
+            right: context.screenHorizontalPadding,
+            top: context.isTablet ? 24.0 : 16.0,
+            bottom: 16.0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              if (scanSessions.isNotEmpty)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.activeScanSessions,
+                        style: AppTextStyle.titleMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        context.l10n.onlyOneSessionAtTime,
+                        style: AppTextStyle.bodySmall,
+                      ),
+                      const SizedBox(height: 24),
+                      Expanded(
+                        child: SessionList(
+                          sessions: scanSessions,
+                          showSendToDesktop: _isDesktopConnected(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).padding.bottom + 76,
+                        ),
+                        child: AppButton(
+                          label: context.l10n.scanDocument,
+                          icon: Assets.icons.scan.svg(),
+                          variant: AppButtonVariant.primary,
+                          onPressed: () => _handleDirectScan(context),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    context.l10n.onlyOneSessionAtTime,
-                    style: AppTextStyle.bodySmall,
-                  ),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: SessionList(
-                      sessions: scanSessions,
-                      showSendToDesktop: _isDesktopConnected(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
-                    child: AppButton(
-                      label: context.l10n.scanDocument,
-                      icon: Assets.icons.scan.svg(),
-                      variant: AppButtonVariant.primary,
-                      onPressed: () => _handleDirectScan(context),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (scanSessions.isEmpty)
-            if (context.isTablet)
-              Expanded(
-                child: Align(
-                  alignment: const Alignment(0, -0.3),
-                  child: _buildEmptyState(context),
                 ),
-              )
-            else
-              Center(child: _buildEmptyState(context)),
-        ],
+              if (scanSessions.isEmpty)
+                if (context.isTablet)
+                  Expanded(
+                    child: Align(
+                      alignment: const Alignment(0, -0.3),
+                      child: _buildEmptyState(context),
+                    ),
+                  )
+                else
+                  Center(child: _buildEmptyState(context)),
+            ],
+          ),
+        ),
       ),
-    ),
-    ),
     );
   }
 

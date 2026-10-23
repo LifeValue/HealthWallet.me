@@ -32,8 +32,8 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
     final items = <int>[0, 1, 2, 3];
     final index = items.indexOf(hours);
     _hoursController ??= FixedExtentScrollController(
-        initialItem: index >= 0 ? index : 0,
-      );
+      initialItem: index >= 0 ? index : 0,
+    );
     return _hoursController!;
   }
 
@@ -44,8 +44,8 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
     }
     final index = items.indexOf(minutes);
     _minutesController ??= FixedExtentScrollController(
-        initialItem: index >= 0 ? index : 0,
-      );
+      initialItem: index >= 0 ? index : 0,
+    );
     return _minutesController!;
   }
 
@@ -144,8 +144,12 @@ class _DurationWheelPickerState extends State<DurationWheelPicker> {
                     style: AppTextStyle.titleMedium.copyWith(
                       color: isSelected
                           ? context.colorScheme.onSurface
-                          : context.colorScheme.onSurface.withValues(alpha: 0.4),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.4,
+                            ),
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 );

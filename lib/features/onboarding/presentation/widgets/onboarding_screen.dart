@@ -52,9 +52,9 @@ class OnboardingScreen extends StatelessWidget {
                         !current.isBiometricAuthEnabled;
                   },
                   listener: (context, userState) {
-                    context
-                        .read<UserBloc>()
-                        .add(const UserBiometricsSetupShown());
+                    context.read<UserBloc>().add(
+                      const UserBiometricsSetupShown(),
+                    );
                     showDialog(
                       context: context,
                       builder: (context) => const BiometricsSetupDialog(),
@@ -75,82 +75,95 @@ class OnboardingScreen extends StatelessWidget {
                           minHeight: availableHeight - 40,
                         ),
                         child: Column(
-                        children: [
-                          image.svg(height: 250),
-                          if (!showBiometricToggle)
-                            const SizedBox(height: Insets.large),
-                          Text(
-                            title,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyle.titleLarge.copyWith(
-                              color: context.colorScheme.onSurface,
+                          children: [
+                            image.svg(height: 250),
+                            if (!showBiometricToggle)
+                              const SizedBox(height: Insets.large),
+                            Text(
+                              title,
+                              textAlign: TextAlign.center,
+                              style: AppTextStyle.titleLarge.copyWith(
+                                color: context.colorScheme.onSurface,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: Insets.large),
-                          _buildRichSubtitle(context, subtitle),
-                          const SizedBox(height: Insets.large),
-                          if (content != null) ...[
-                            _buildRichDescription(
-                                context, content!, TextAlign.left),
-                            if (bottom != null) ...[
-                              const SizedBox(height: Insets.medium),
+                            const SizedBox(height: Insets.large),
+                            _buildRichSubtitle(context, subtitle),
+                            const SizedBox(height: Insets.large),
+                            if (content != null) ...[
                               _buildRichDescription(
-                                  context, bottom!, TextAlign.center),
+                                context,
+                                content!,
+                                TextAlign.left,
+                              ),
+                              if (bottom != null) ...[
+                                const SizedBox(height: Insets.medium),
+                                _buildRichDescription(
+                                  context,
+                                  bottom!,
+                                  TextAlign.center,
+                                ),
+                              ],
+                            ] else ...[
+                              _buildRichDescription(
+                                context,
+                                description,
+                                TextAlign.center,
+                              ),
                             ],
-                          ] else ...[
-                            _buildRichDescription(
-                                context, description, TextAlign.center),
+                            if (showBiometricToggle) ...[
+                              const SizedBox(height: Insets.large),
+                              BlocBuilder<UserBloc, UserState>(
+                                builder: (context, userState) {
+                                  return TextButton(
+                                    onPressed: () {
+                                      final isEnabled =
+                                          userState.isBiometricAuthEnabled;
+                                      if (isEnabled) {
+                                        AppSimpleDialog.showConfirmation(
+                                          context: context,
+                                          title: context
+                                              .l10n
+                                              .confirmDisableBiometric,
+                                          confirmText: context.l10n.disable,
+                                          cancelText: context.l10n.cancel,
+                                          onConfirm: () {
+                                            context.read<UserBloc>().add(
+                                              const UserBiometricAuthToggled(
+                                                false,
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      } else {
+                                        context.read<UserBloc>().add(
+                                          const UserBiometricAuthToggled(true),
+                                        );
+                                      }
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor:
+                                          context.colorScheme.primary,
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      userState.isBiometricAuthEnabled
+                                          ? context.l10n.disableBiometricAuth
+                                          : context.l10n.enableBiometricAuth,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                            if (customWidget != null) ...[
+                              const SizedBox(height: Insets.large),
+                              customWidget!,
+                            ],
                           ],
-                          if (showBiometricToggle) ...[
-                            const SizedBox(height: Insets.large),
-                            BlocBuilder<UserBloc, UserState>(
-                              builder: (context, userState) {
-                                return TextButton(
-                                  onPressed: () {
-                                    final isEnabled =
-                                        userState.isBiometricAuthEnabled;
-                                    if (isEnabled) {
-                                      AppSimpleDialog.showConfirmation(
-                                        context: context,
-                                        title: context
-                                            .l10n.confirmDisableBiometric,
-                                        confirmText: context.l10n.disable,
-                                        cancelText: context.l10n.cancel,
-                                        onConfirm: () {
-                                          context.read<UserBloc>().add(
-                                              const UserBiometricAuthToggled(false));
-                                        },
-                                      );
-                                    } else {
-                                      context
-                                          .read<UserBloc>()
-                                          .add(const UserBiometricAuthToggled(true));
-                                    }
-                                  },
-                                  style: TextButton.styleFrom(
-                                    foregroundColor:
-                                        context.colorScheme.primary,
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  child: Text(
-                                    userState.isBiometricAuthEnabled
-                                        ? context.l10n.disableBiometricAuth
-                                        : context.l10n.enableBiometricAuth,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                          if (customWidget != null) ...[
-                            const SizedBox(height: Insets.large),
-                            customWidget!,
-                          ],
-                        ],
-                      ),
+                        ),
                       ),
                     ),
                   );
@@ -202,8 +215,8 @@ class OnboardingScreen extends StatelessWidget {
                         ? 'https://healthwallet.me'
                         : 'https://github.com/fastenhealth/fasten-onprem';
                     context.read<OnboardingBloc>().add(
-                          OnboardingLaunchUrl(url),
-                        );
+                      OnboardingLaunchUrl(url),
+                    );
                   },
               ),
               TextSpan(text: afterLink),
@@ -294,8 +307,8 @@ class OnboardingScreen extends StatelessWidget {
                         ? 'https://healthwallet.me'
                         : 'https://github.com/fastenhealth/fasten-onprem';
                     context.read<OnboardingBloc>().add(
-                          OnboardingLaunchUrl(url),
-                        );
+                      OnboardingLaunchUrl(url),
+                    );
                   },
               ),
               TextSpan(text: afterLink),
@@ -307,15 +320,19 @@ class OnboardingScreen extends StatelessWidget {
       final segments = description.split('**');
       final spans = <TextSpan>[];
       for (int i = 0; i < segments.length; i++) {
-        spans.add(TextSpan(
-          text: segments[i],
-          style: i.isOdd
-              ? AppTextStyle.regular.copyWith(
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.85),
-                  fontWeight: FontWeight.w700,
-                )
-              : null,
-        ));
+        spans.add(
+          TextSpan(
+            text: segments[i],
+            style: i.isOdd
+                ? AppTextStyle.regular.copyWith(
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.85,
+                    ),
+                    fontWeight: FontWeight.w700,
+                  )
+                : null,
+          ),
+        );
       }
       return RichText(
         textAlign: textAlign,
@@ -356,9 +373,11 @@ class OnboardingScreen extends StatelessWidget {
           inlineSpans.add(TextSpan(text: beforeBullet));
         }
         inlineSpans.add(const TextSpan(text: '•'));
-        inlineSpans.add(const WidgetSpan(
-          child: SizedBox(width: 8),
-        ));
+        inlineSpans.add(
+          const WidgetSpan(
+            child: SizedBox(width: 8),
+          ),
+        );
 
         if (afterBullet.contains('<link>') && afterBullet.contains('</link>')) {
           final parts = afterBullet.split('<link>');
@@ -381,8 +400,8 @@ class OnboardingScreen extends StatelessWidget {
                       ? 'https://healthwallet.me'
                       : 'https://github.com/fastenhealth/fasten-onprem';
                   context.read<OnboardingBloc>().add(
-                        OnboardingLaunchUrl(url),
-                      );
+                    OnboardingLaunchUrl(url),
+                  );
                 },
             ),
           );
@@ -423,4 +442,3 @@ class OnboardingScreen extends StatelessWidget {
     );
   }
 }
-

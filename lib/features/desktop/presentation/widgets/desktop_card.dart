@@ -23,8 +23,9 @@ class DesktopCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTextStyle.bodyMedium
-                .copyWith(color: context.colorScheme.onSurface),
+            style: AppTextStyle.bodyMedium.copyWith(
+              color: context.colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: Insets.normal),
           child,

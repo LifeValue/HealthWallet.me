@@ -111,7 +111,9 @@ class _SyncPageState extends State<SyncPage> {
   }
 
   void _handleQRCodeDetected(BuildContext context, String qrData) {
-    debugPrint('[QR_SCAN] Raw QR data (${qrData.length} chars): ${qrData.substring(0, qrData.length > 200 ? 200 : qrData.length)}...');
+    debugPrint(
+      '[QR_SCAN] Raw QR data (${qrData.length} chars): ${qrData.substring(0, qrData.length > 200 ? 200 : qrData.length)}...',
+    );
 
     try {
       final json = jsonDecode(qrData) as Map<String, dynamic>;
@@ -159,7 +161,8 @@ class _SyncPageState extends State<SyncPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(context.l10n.pairedWithDevice(pairing.deviceName))),
+          content: Text(context.l10n.pairedWithDevice(pairing.deviceName)),
+        ),
       );
     }
 

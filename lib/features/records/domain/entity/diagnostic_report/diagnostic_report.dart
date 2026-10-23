@@ -15,7 +15,9 @@ import 'package:intl/intl.dart';
 part 'diagnostic_report.freezed.dart';
 
 @freezed
-abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource {
+abstract class DiagnosticReport
+    with _$DiagnosticReport
+    implements IFhirResource {
   const DiagnosticReport._();
 
   const factory DiagnosticReport({
@@ -54,8 +56,9 @@ abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource
 
   factory DiagnosticReport.fromLocalData(FhirResourceLocalDto data) {
     final resourceJson = jsonDecode(data.resourceRaw);
-    final fhirDiagnosticReport =
-        fhir_r4.DiagnosticReport.fromJson(resourceJson);
+    final fhirDiagnosticReport = fhir_r4.DiagnosticReport.fromJson(
+      resourceJson,
+    );
 
     return DiagnosticReport(
       id: data.id,
@@ -91,16 +94,16 @@ abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'DiagnosticReport',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'DiagnosticReport',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -130,8 +133,10 @@ abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Performer
@@ -147,8 +152,10 @@ abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource
         FhirFieldExtractor.extractMultipleReferenceDisplays(resultsInterpreter);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(interpreterDisplay,
-          prefix: 'Interpreter'),
+      ResourceFieldMapper.createUserLine(
+        interpreterDisplay,
+        prefix: 'Interpreter',
+      ),
     );
 
     // Effective Date
@@ -170,16 +177,20 @@ abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(conclusionCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLabLine(conclusionCodeDisplay,
-          prefix: 'Conclusion Code'),
+      ResourceFieldMapper.createLabLine(
+        conclusionCodeDisplay,
+        prefix: 'Conclusion Code',
+      ),
     );
 
     // Number of Results
     if (result != null && result!.isNotEmpty) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createLabLine('${result!.length} result(s)',
-            prefix: 'Results'),
+        ResourceFieldMapper.createLabLine(
+          '${result!.length} result(s)',
+          prefix: 'Results',
+        ),
       );
     }
 
@@ -187,8 +198,10 @@ abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource
     if (specimen != null && specimen!.isNotEmpty) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createLabLine('${specimen!.length} specimen(s)',
-            prefix: 'Specimens'),
+        ResourceFieldMapper.createLabLine(
+          '${specimen!.length} specimen(s)',
+          prefix: 'Specimens',
+        ),
       );
     }
 
@@ -196,17 +209,21 @@ abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource
     if (media != null && media!.isNotEmpty) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createImageLine('${media!.length} image(s)',
-            prefix: 'Media'),
+        ResourceFieldMapper.createImageLine(
+          '${media!.length} image(s)',
+          prefix: 'Media',
+        ),
       );
     }
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     return infoLines;
@@ -219,8 +236,9 @@ abstract class DiagnosticReport with _$DiagnosticReport implements IFhirResource
       encounter?.reference?.valueString,
       ...?basedOn?.map((reference) => reference.reference?.valueString),
       ...?performer?.map((reference) => reference.reference?.valueString),
-      ...?resultsInterpreter
-          ?.map((reference) => reference.reference?.valueString),
+      ...?resultsInterpreter?.map(
+        (reference) => reference.reference?.valueString,
+      ),
       ...?specimen?.map((reference) => reference.reference?.valueString),
       ...?result?.map((reference) => reference.reference?.valueString),
       ...?imagingStudy?.map((reference) => reference.reference?.valueString),

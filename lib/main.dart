@@ -17,7 +17,8 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
-  final WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  final WidgetsBinding widgetsBinding =
+      WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
   if (prefs.containsKey('lww_offline_queue')) {

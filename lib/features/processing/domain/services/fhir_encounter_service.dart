@@ -66,7 +66,8 @@ class FhirEncounterHelper {
     String? subjectId;
     if (fhirEncounter.subject?.reference?.valueString != null) {
       subjectId = FhirReferenceUtils.extractReferenceId(
-          fhirEncounter.subject!.reference!.valueString!);
+        fhirEncounter.subject!.reference!.valueString!,
+      );
     }
 
     final dto = FhirResourceCompanion.insert(

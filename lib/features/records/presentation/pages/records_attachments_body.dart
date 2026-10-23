@@ -62,12 +62,11 @@ class _RecordsAttachmentsBodyState extends State<RecordsAttachmentsBody> {
             child: AttachmentBrowseView(
               isSelectionMode: widget.appBarState.isSelectionMode,
               selectedResourceIds: widget.appBarState.selectedResourceIds,
-              onSelectionToggle: (id) => context
-                  .read<RecordsBloc>()
-                  .add(RecordsSelectionToggled(id)),
-              onSelectionModeToggled: () => context
-                  .read<RecordsBloc>()
-                  .add(const RecordsSelectionModeToggled()),
+              onSelectionToggle: (id) =>
+                  context.read<RecordsBloc>().add(RecordsSelectionToggled(id)),
+              onSelectionModeToggled: () => context.read<RecordsBloc>().add(
+                const RecordsSelectionModeToggled(),
+              ),
             ),
           ),
           Positioned(
@@ -173,7 +172,9 @@ class _HeaderWidget extends StatelessWidget {
                     previous.dateFilter != current.dateFilter ||
                     previous.activeSpecialties != current.activeSpecialties,
                 builder: (context, recordsState) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) => onLayout());
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) => onLayout(),
+                  );
                   return RecordsActiveFiltersBar(
                     activeFilters: recordsState.activeFilters,
                     dateFilter: recordsState.dateFilter,

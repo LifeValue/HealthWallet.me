@@ -190,8 +190,7 @@ class FhirPatientExtractor {
               return 'BSN';
             }
             if (combined.contains('PESEL')) return 'PESEL';
-            if (combined.contains('PERSONNUMMER') ||
-                combined.contains('PNR')) {
+            if (combined.contains('PERSONNUMMER') || combined.contains('PNR')) {
               return 'PNR';
             }
             if (combined.contains('AHV') ||
@@ -202,7 +201,8 @@ class FhirPatientExtractor {
             final systemLabel = CountryIdentifier.labelFromSystem(system);
             if (systemLabel != null) return systemLabel;
             final profile = CountryIdentifier.forCurrentLocale();
-            if (profile.identifierFhirCode == 'SS') return profile.identifierLabel;
+            if (profile.identifierFhirCode == 'SS')
+              return profile.identifierLabel;
             return 'ID';
           case 'NI':
             final displayText = id.type?.text?.toString().toUpperCase() ?? '';
@@ -321,7 +321,8 @@ class FhirPatientExtractor {
   }
 
   static String? extractCommunicationLanguages(
-      List<fhir_r4.PatientCommunication>? communication) {
+    List<fhir_r4.PatientCommunication>? communication,
+  ) {
     if (communication == null || communication.isEmpty) return null;
 
     final languages = communication
@@ -345,7 +346,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractIdentifierByType(
-      List<fhir_r4.Identifier>? identifiers, String typeCode) {
+    List<fhir_r4.Identifier>? identifiers,
+    String typeCode,
+  ) {
     if (identifiers == null) return null;
 
     for (final id in identifiers) {
@@ -358,8 +361,10 @@ class FhirPatientExtractor {
   }
 
   static String? extractTelecomBySystem(
-      List<fhir_r4.ContactPoint>? telecom, String system,
-      {String? use}) {
+    List<fhir_r4.ContactPoint>? telecom,
+    String system, {
+    String? use,
+  }) {
     if (telecom == null) return null;
 
     for (final contact in telecom) {
@@ -373,7 +378,9 @@ class FhirPatientExtractor {
   }
 
   static List<Map<String, String>> extractAllTelecomBySystem(
-      List<fhir_r4.ContactPoint>? telecom, String system) {
+    List<fhir_r4.ContactPoint>? telecom,
+    String system,
+  ) {
     if (telecom == null) return [];
 
     final results = <Map<String, String>>[];
@@ -448,7 +455,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractRaceOrEthnicity(
-      Map<String, dynamic> rawResource, String extensionUrl) {
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) {
     final extensions = rawResource['extension'] as List<dynamic>?;
     if (extensions == null) return null;
 
@@ -474,7 +483,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractExtensionValue(
-      Map<String, dynamic> rawResource, String extensionUrl) {
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) {
     final extensions = rawResource['extension'] as List<dynamic>?;
     if (extensions == null) return null;
 

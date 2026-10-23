@@ -29,14 +29,20 @@ class SessionTimerWidget extends StatelessWidget {
     final seconds = remaining.inSeconds % 60;
     String timeText;
     if (hours > 0) {
-      timeText = context.l10n.shareTimerHoursMinutesSeconds(hours, minutes, seconds);
+      timeText = context.l10n.shareTimerHoursMinutesSeconds(
+        hours,
+        minutes,
+        seconds,
+      );
     } else if (minutes > 0) {
       timeText = context.l10n.shareTimerMinutesSeconds(minutes, seconds);
     } else {
       timeText = context.l10n.shareTimerSeconds(seconds);
     }
 
-    final timerColor = isWarning ? AppColors.error : context.colorScheme.onSurface;
+    final timerColor = isWarning
+        ? AppColors.error
+        : context.colorScheme.onSurface;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

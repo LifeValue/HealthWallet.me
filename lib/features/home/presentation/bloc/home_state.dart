@@ -75,22 +75,21 @@ abstract class HomeState with _$HomeState {
   }) = _HomeState;
 
   bool get shouldShowPlaceholder {
-    final hasVitalData = patientVitals
-        .any((vital) => vital.value != 'N/A' && vital.observationId != null);
+    final hasVitalData = patientVitals.any(
+      (vital) => vital.value != 'N/A' && vital.observationId != null,
+    );
     final hasOverviewData = overviewCards.any((card) => card.count != '0');
     final hasRecent = recentRecords.isNotEmpty;
     return !(hasVitalData || hasOverviewData || hasRecent);
   }
 
-  List<OverviewCard> get visibleOverviewCards =>
-      overviewCards
-          .where((card) => selectedRecordTypes[card.category] ?? false)
-          .toList(growable: false);
+  List<OverviewCard> get visibleOverviewCards => overviewCards
+      .where((card) => selectedRecordTypes[card.category] ?? false)
+      .toList(growable: false);
 
-  List<SpecialtyCard> get visibleSpecialtyCards =>
-      specialtyCards
-          .where((card) => selectedSpecialties[card.specialty] ?? false)
-          .toList(growable: false);
+  List<SpecialtyCard> get visibleSpecialtyCards => specialtyCards
+      .where((card) => selectedSpecialties[card.specialty] ?? false)
+      .toList(growable: false);
 }
 
 @freezed

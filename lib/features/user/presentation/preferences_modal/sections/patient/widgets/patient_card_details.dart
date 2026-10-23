@@ -57,8 +57,7 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildIdentifierAndAgeRows(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds:
-            isExpanding ? 400 : (isCollapsing ? 600 : 200),
+        milliseconds: isExpanding ? 400 : (isCollapsing ? 600 : 200),
       ),
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: Column(
@@ -95,8 +94,7 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildGenderBloodAndContactRows(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds:
-            isExpanding ? 600 : (isCollapsing ? 400 : 300),
+        milliseconds: isExpanding ? 600 : (isCollapsing ? 400 : 300),
       ),
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: Column(
@@ -127,8 +125,7 @@ class PatientCardDetails extends StatelessWidget {
   Widget _buildEditButton(BuildContext context) {
     return AnimatedOpacity(
       duration: Duration(
-        milliseconds:
-            isExpanding ? 800 : (isCollapsing ? 200 : 400),
+        milliseconds: isExpanding ? 800 : (isCollapsing ? 200 : 400),
       ),
       opacity: (isExpanding || isCollapsing) ? 0.0 : 1.0,
       child: SizedBox(
@@ -136,8 +133,8 @@ class PatientCardDetails extends StatelessWidget {
         child: ElevatedButton.icon(
           onPressed: () {
             context.read<PatientBloc>().add(
-                  PatientEditStarted(currentPatient.id),
-                );
+              PatientEditStarted(currentPatient.id),
+            );
             PatientEditDialog.show(
               context,
               currentPatient,
@@ -225,7 +222,9 @@ class PatientCardDetails extends StatelessWidget {
 
   Widget _buildEmergencyContactRow(BuildContext context, Patient patient) {
     final phone = FhirFieldExtractor.extractTelecomBySystem(
-        patient.contact?.firstOrNull?.telecom, 'phone');
+      patient.contact?.firstOrNull?.telecom,
+      'phone',
+    );
     final display = (phone != null && phone.isNotEmpty)
         ? PhoneDisplayFormatter.format(phone)
         : '-';

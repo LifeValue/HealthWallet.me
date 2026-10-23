@@ -4,8 +4,9 @@ part of 'processing_bloc.dart';
 sealed class PipelineStatus with _$PipelineStatus {
   const factory PipelineStatus.initial() = Initial;
   const factory PipelineStatus.loading() = Loading;
-  const factory PipelineStatus.sessionCreated(
-      {required ProcessingSession session}) = SessionCreated;
+  const factory PipelineStatus.sessionCreated({
+    required ProcessingSession session,
+  }) = SessionCreated;
   const factory PipelineStatus.failure({required String error}) = Failure;
   const factory PipelineStatus.capacityFailure({required String sessionId}) =
       CapacityFailure;

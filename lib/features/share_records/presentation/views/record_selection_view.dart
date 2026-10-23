@@ -35,9 +35,9 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
   @override
   void initState() {
     super.initState();
-    context
-        .read<RecordsBloc>()
-        .add(const RecordsInitialised(isShareContext: true));
+    context.read<RecordsBloc>().add(
+      const RecordsInitialised(isShareContext: true),
+    );
     _loadRecords();
     if (widget.appliedFilters != null && widget.appliedFilters!.isNotEmpty) {
       _filterTypes.addAll(widget.appliedFilters!);
@@ -70,7 +70,9 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
     var records = _allRecords;
 
     if (_filterTypes.isNotEmpty) {
-      records = records.where((r) => _filterTypes.contains(r.fhirType)).toList();
+      records = records
+          .where((r) => _filterTypes.contains(r.fhirType))
+          .toList();
     }
 
     if (_searchQuery.isNotEmpty && _searchQuery.length >= 2) {
@@ -85,9 +87,9 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
             .toLowerCase();
 
         return title.contains(query) ||
-               displayTitle.contains(query) ||
-               statusDisplay.contains(query) ||
-               additionalInfoText.contains(query);
+            displayTitle.contains(query) ||
+            statusDisplay.contains(query) ||
+            additionalInfoText.contains(query);
       }).toList();
     }
 
@@ -126,7 +128,8 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
                           filteredRecords: _filteredRecords,
                           shareState: shareState,
                           hasActiveFilters: _filterTypes.isNotEmpty,
-                          hasAppliedFilters: widget.appliedFilters?.isNotEmpty ?? false,
+                          hasAppliedFilters:
+                              widget.appliedFilters?.isNotEmpty ?? false,
                         ),
                   children: [
                     RecordFilterHeader(
@@ -151,7 +154,9 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
               ),
               Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: context.wideDialogWidth),
+                  constraints: BoxConstraints(
+                    maxWidth: context.wideDialogWidth,
+                  ),
                   child: SelectionBottomBar(
                     shareState: shareState,
                     filterTypes: _filterTypes,

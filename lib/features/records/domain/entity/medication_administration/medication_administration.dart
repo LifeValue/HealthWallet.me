@@ -95,16 +95,16 @@ abstract class MedicationAdministration
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'MedicationAdministration',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'MedicationAdministration',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -124,7 +124,8 @@ abstract class MedicationAdministration
 
     // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
-        medicationX?.isAs<CodeableConcept>());
+      medicationX?.isAs<CodeableConcept>(),
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createMedicationLine(medicationDisplay),
@@ -142,17 +143,22 @@ abstract class MedicationAdministration
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(statusReason);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusReasonDisplay,
-          prefix: 'Status Reason'),
+      ResourceFieldMapper.createStatusLine(
+        statusReasonDisplay,
+        prefix: 'Status Reason',
+      ),
     );
 
     // Category
-    final categoryDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(category);
+    final categoryDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      category,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Effective Time
@@ -171,8 +177,9 @@ abstract class MedicationAdministration
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createUserLine(
-            performerDisplay.isNotEmpty ? performerDisplay : null,
-            prefix: 'Performer'),
+          performerDisplay.isNotEmpty ? performerDisplay : null,
+          prefix: 'Performer',
+        ),
       );
     }
 
@@ -184,7 +191,9 @@ abstract class MedicationAdministration
         ResourceFieldMapper.createValueLine(doseText, prefix: 'Dosage'),
       );
 
-      final route = FhirFieldExtractor.extractCodeableConceptText(dosage!.route);
+      final route = FhirFieldExtractor.extractCodeableConceptText(
+        dosage!.route,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createActivityLine(route, prefix: 'Route'),
@@ -198,8 +207,7 @@ abstract class MedicationAdministration
     }
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
@@ -207,10 +215,12 @@ abstract class MedicationAdministration
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes
@@ -230,8 +240,9 @@ abstract class MedicationAdministration
       context?.reference?.valueString,
       request?.reference?.valueString,
       ...?partOf?.map((reference) => reference.reference?.valueString),
-      ...?supportingInformation
-          ?.map((reference) => reference.reference?.valueString),
+      ...?supportingInformation?.map(
+        (reference) => reference.reference?.valueString,
+      ),
       ...?reasonReference?.map((reference) => reference.reference?.valueString),
       ...?device?.map((reference) => reference.reference?.valueString),
       ...?eventHistory?.map((reference) => reference.reference?.valueString),

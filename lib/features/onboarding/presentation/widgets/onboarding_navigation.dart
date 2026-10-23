@@ -40,64 +40,73 @@ class OnboardingNavigation extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: Insets.medium),
           child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: isSmallScreen ? Insets.extraSmall : Insets.smaller),
-          ElevatedButton(
-            onPressed: () async {
-              if (isLastPage) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('hasSeenOnboarding', true);
-                if (!context.mounted) return;
-                unawaited(context.appRouter.replace(const DashboardRoute()));
-              } else {
-                context.read<OnboardingBloc>().add(const OnboardingNextPage());
-                pageController.nextPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: context.colorScheme.primary,
-              foregroundColor: context.isDarkMode
-                  ? Colors.white
-                  : context.colorScheme.onPrimary,
-              padding: EdgeInsets.all(isSmallScreen ? 10 : Insets.small),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadiusGeometry.circular(8)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  !isLastPage
-                      ? context.l10n.continueButton
-                      : context.l10n.getStarted,
-                  style: AppTextStyle.buttonMedium,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: isSmallScreen ? Insets.extraSmall : Insets.smaller,
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (isLastPage) {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('hasSeenOnboarding', true);
+                    if (!context.mounted) return;
+                    unawaited(
+                      context.appRouter.replace(const DashboardRoute()),
+                    );
+                  } else {
+                    context.read<OnboardingBloc>().add(
+                      const OnboardingNextPage(),
+                    );
+                    pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.ease,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colorScheme.primary,
+                  foregroundColor: context.isDarkMode
+                      ? Colors.white
+                      : context.colorScheme.onPrimary,
+                  padding: EdgeInsets.all(isSmallScreen ? 10 : Insets.small),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadiusGeometry.circular(8),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                if (!isLastPage) const Icon(Icons.arrow_forward),
-              ],
-            ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      !isLastPage
+                          ? context.l10n.continueButton
+                          : context.l10n.getStarted,
+                      style: AppTextStyle.buttonMedium,
+                    ),
+                    const SizedBox(width: 8),
+                    if (!isLastPage) const Icon(Icons.arrow_forward),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: isSmallScreen ? 32 : 40,
+                child: Center(
+                  child: _buildMiddleContent(context, isLastPage),
+                ),
+              ),
+              SizedBox(
+                height: isSmallScreen ? Insets.extraSmall : Insets.small,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  totalPages,
+                  (index) => _buildDot(index, context, currentPage),
+                ),
+              ),
+            ],
           ),
-          SizedBox(
-            height: isSmallScreen ? 32 : 40,
-            child: Center(
-              child: _buildMiddleContent(context, isLastPage),
-            ),
-          ),
-          SizedBox(height: isSmallScreen ? Insets.extraSmall : Insets.small),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              totalPages,
-              (index) => _buildDot(index, context, currentPage),
-            ),
-          ),
-        ],
-      ),
-      ),
+        ),
       ),
     );
   }
@@ -107,10 +116,10 @@ class OnboardingNavigation extends StatelessWidget {
       return GestureDetector(
         onTap: () {
           context.read<OnboardingBloc>().add(
-                const OnboardingLaunchUrl(
-                  'https://healthwallet.me/#contact',
-                ),
-              );
+            const OnboardingLaunchUrl(
+              'https://healthwallet.me/#contact',
+            ),
+          );
         },
         child: Text(
           context.l10n.onboardingRequestIntegration,
@@ -160,8 +169,9 @@ class OnboardingNavigation extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           color: currentPage == index
-              ? context.colorScheme.primary
-                  .withValues(alpha: context.isDarkMode ? 0.9 : 1.0)
+              ? context.colorScheme.primary.withValues(
+                  alpha: context.isDarkMode ? 0.9 : 1.0,
+                )
               : context.colorScheme.onSurface.withValues(alpha: 0.3),
           border: Border.all(
             color: context.colorScheme.onSurface.withValues(alpha: 0.15),
@@ -345,8 +355,9 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                       child: LinearProgressIndicator(
                         value: loadModelState.downloadProgress! / 100,
                         minHeight: 6,
-                        backgroundColor:
-                            context.colorScheme.primary.withValues(alpha: 0.1),
+                        backgroundColor: context.colorScheme.primary.withValues(
+                          alpha: 0.1,
+                        ),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           context.colorScheme.primary,
                         ),
@@ -356,7 +367,9 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                     Text(
                       'Downloading... ${loadModelState.downloadProgress!.toStringAsFixed(0)}%',
                       style: AppTextStyle.labelSmall.copyWith(
-                        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],
@@ -384,7 +397,9 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                   Text(
                     context.l10n.aiModelEnableDownload,
                     style: AppTextStyle.bodySmall.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.7,
+                      ),
                       decoration: TextDecoration.underline,
                     ),
                   ),

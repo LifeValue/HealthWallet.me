@@ -84,10 +84,8 @@ class RecordsListBody extends StatelessWidget {
           pageController: pageController,
           recordTypeName: state.activeFilters.isNotEmpty
               ? state.activeFilters.length == 1
-                  ? state.activeFilters.first.display
-                  : state.activeFilters
-                      .map((f) => f.display)
-                      .join(', ')
+                    ? state.activeFilters.first.display
+                    : state.activeFilters.map((f) => f.display).join(', ')
               : null,
           onImportDocument: onImportDocument,
           onPickImage: onPickImage,
@@ -128,10 +126,8 @@ class RecordsListBody extends StatelessWidget {
       controller: scrollController,
       padding: EdgeInsets.only(
         top: 8,
-        bottom: bottomSafeInset +
-            bottomBarHeight +
-            bottomBarOffset +
-            extraSpacing,
+        bottom:
+            bottomSafeInset + bottomBarHeight + bottomBarOffset + extraSpacing,
       ),
       itemCount: resources.length + (state.hasMorePages ? 1 : 0),
       itemBuilder: (context, index) {
@@ -149,8 +145,7 @@ class RecordsListBody extends StatelessWidget {
 
         final resource = resources[index];
         return TimelineEntry(
-          key: ValueKey(
-              'timeline-${resource.fhirType}-${resource.id}-$index'),
+          key: ValueKey('timeline-${resource.fhirType}-${resource.id}-$index'),
           isFirst: index == 0,
           isLast: index == resources.length - 1,
           isSelected: state.selectedResourceIds.contains(resource.id),
@@ -158,8 +153,8 @@ class RecordsListBody extends StatelessWidget {
           onTap: () {
             if (state.isSelectionMode) {
               context.read<RecordsBloc>().add(
-                    RecordsSelectionToggled(resource.id),
-                  );
+                RecordsSelectionToggled(resource.id),
+              );
             } else {
               context.router.push(
                 RecordDetailsRoute(resource: resource),
@@ -183,8 +178,8 @@ class RecordsListBody extends StatelessWidget {
                     ? null
                     : () {
                         context.read<RecordsBloc>().add(
-                              RecordsFiltersApplied([resource.fhirType]),
-                            );
+                          RecordsFiltersApplied([resource.fhirType]),
+                        );
                       },
               ),
               const SizedBox(height: Insets.small),

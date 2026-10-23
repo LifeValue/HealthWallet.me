@@ -18,11 +18,15 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
     List<String>? sourceIds,
     List<FhirType> resourceTypes = const [],
   }) async {
-    debugPrint('[EPHEMERAL_BROWSE] loadEntries resourceTypes=$resourceTypes, records=${_records.length}');
+    debugPrint(
+      '[EPHEMERAL_BROWSE] loadEntries resourceTypes=$resourceTypes, records=${_records.length}',
+    );
 
     var filtered = _records.toList();
     if (resourceTypes.isNotEmpty) {
-      filtered = filtered.where((r) => resourceTypes.contains(r.fhirType)).toList();
+      filtered = filtered
+          .where((r) => resourceTypes.contains(r.fhirType))
+          .toList();
     }
 
     filtered.sort((a, b) {
@@ -45,12 +49,16 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       final docs = related
           .where((r) => r.fhirType == FhirType.DocumentReference)
           .toList();
-      debugPrint('[EPHEMERAL_BROWSE] record=${record.resourceId} type=${record.fhirType} related=${related.length} docs=${docs.length}');
+      debugPrint(
+        '[EPHEMERAL_BROWSE] record=${record.resourceId} type=${record.fhirType} related=${related.length} docs=${docs.length}',
+      );
 
       String? thumbnailPath;
       for (final doc in docs) {
         final content = doc.rawResource['content'] as List<dynamic>?;
-        debugPrint('[EPHEMERAL_BROWSE]   doc=${doc.resourceId} contentItems=${content?.length}');
+        debugPrint(
+          '[EPHEMERAL_BROWSE]   doc=${doc.resourceId} contentItems=${content?.length}',
+        );
         if (content == null || content.isEmpty) continue;
 
         for (final item in content) {
@@ -65,9 +73,12 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
                   contentType == 'application/pdf')) {
             if (url != null && url.isNotEmpty) {
               final rawPath = Uri.decodeComponent(
-                  url.startsWith('file://') ? url.substring(7) : url);
+                url.startsWith('file://') ? url.substring(7) : url,
+              );
               final exists = File(rawPath).existsSync();
-              debugPrint('[EPHEMERAL_BROWSE]   rawPath=$rawPath exists=$exists');
+              debugPrint(
+                '[EPHEMERAL_BROWSE]   rawPath=$rawPath exists=$exists',
+              );
               if (exists) {
                 thumbnailPath = rawPath;
               }
@@ -79,11 +90,13 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       }
 
       debugPrint('[EPHEMERAL_BROWSE]   thumbnailPath=$thumbnailPath');
-      entries.add(AttachmentBrowseEntry(
-        record: record,
-        thumbnailPath: thumbnailPath,
-        attachmentCount: docs.length,
-      ));
+      entries.add(
+        AttachmentBrowseEntry(
+          record: record,
+          thumbnailPath: thumbnailPath,
+          attachmentCount: docs.length,
+        ),
+      );
     }
 
     debugPrint('[EPHEMERAL_BROWSE] built ${entries.length} entries');
@@ -95,13 +108,17 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
     IFhirResource record, {
     String? sourceId,
   }) async {
-    debugPrint('[EPHEMERAL_DETAIL] loadDetail record=${record.resourceId} type=${record.fhirType}');
+    debugPrint(
+      '[EPHEMERAL_DETAIL] loadDetail record=${record.resourceId} type=${record.fhirType}',
+    );
 
     final related = FhirResourceRelationshipService.findRelatedInMemory(
       resource: record,
       allRecords: _records,
     );
-    debugPrint('[EPHEMERAL_DETAIL] related resources: ${related.length} (types: ${related.map((r) => r.fhirType).toList()})');
+    debugPrint(
+      '[EPHEMERAL_DETAIL] related resources: ${related.length} (types: ${related.map((r) => r.fhirType).toList()})',
+    );
 
     String? patientName;
     String? organizationName;
@@ -124,21 +141,27 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
             practitionerName = _extractPersonName(resource.rawResource);
           case FhirType.DocumentReference:
             final docAttachments = _resolveDocumentAttachments(resource);
-            debugPrint('[EPHEMERAL_DETAIL] encounter DocRef ${resource.resourceId}: ${docAttachments.length} files');
+            debugPrint(
+              '[EPHEMERAL_DETAIL] encounter DocRef ${resource.resourceId}: ${docAttachments.length} files',
+            );
             attachments.addAll(docAttachments);
           default:
             break;
         }
       } catch (_) {}
     }
-    debugPrint('[EPHEMERAL_DETAIL] after encounter lookup: ${attachments.length} attachments');
+    debugPrint(
+      '[EPHEMERAL_DETAIL] after encounter lookup: ${attachments.length} attachments',
+    );
 
     try {
       final existingIds = attachments.map((a) => a.id).toSet();
       final allDocs = _records
           .where((r) => r.fhirType == FhirType.DocumentReference)
           .toList();
-      debugPrint('[EPHEMERAL_DETAIL] context.related search: ${allDocs.length} total DocRefs, existingIds=$existingIds');
+      debugPrint(
+        '[EPHEMERAL_DETAIL] context.related search: ${allDocs.length} total DocRefs, existingIds=$existingIds',
+      );
 
       for (final doc in allDocs) {
         if (existingIds.contains(doc.resourceId)) continue;
@@ -152,14 +175,20 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
         });
         if (matches) {
           final docAttachments = _resolveDocumentAttachments(doc);
-          debugPrint('[EPHEMERAL_DETAIL] related DocRef ${doc.resourceId}: ${docAttachments.length} files');
+          debugPrint(
+            '[EPHEMERAL_DETAIL] related DocRef ${doc.resourceId}: ${docAttachments.length} files',
+          );
           attachments.addAll(docAttachments);
         }
       }
     } catch (_) {}
-    debugPrint('[EPHEMERAL_DETAIL] final attachments: ${attachments.length} (titles: ${attachments.map((a) => a.title).toList()})');
+    debugPrint(
+      '[EPHEMERAL_DETAIL] final attachments: ${attachments.length} (titles: ${attachments.map((a) => a.title).toList()})',
+    );
 
-    if (patientName == null && organizationName == null && practitionerName == null) {
+    if (patientName == null &&
+        organizationName == null &&
+        practitionerName == null) {
       _extractContextFromRecord(record, (p, o, pr) {
         patientName = p;
         organizationName = o;
@@ -167,11 +196,16 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       });
 
       if (patientName == null) {
-        final subjectRef = record.rawResource['subject']?['reference'] as String?;
+        final subjectRef =
+            record.rawResource['subject']?['reference'] as String?;
         if (subjectRef != null) {
-          final refId = subjectRef.contains('/') ? subjectRef.split('/').last : subjectRef;
+          final refId = subjectRef.contains('/')
+              ? subjectRef.split('/').last
+              : subjectRef;
           final resolved = _records
-              .where((r) => r.resourceId == refId && r.fhirType == FhirType.Patient)
+              .where(
+                (r) => r.resourceId == refId && r.fhirType == FhirType.Patient,
+              )
               .firstOrNull;
           if (resolved != null) {
             patientName = _extractPersonName(resolved.rawResource);
@@ -186,7 +220,9 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       patientName: patientName,
       organizationName: organizationName,
       practitionerName: practitionerName,
-      specialtyName: _extractSpecialtyName(record.rawResource) ?? _classifySpecialtyName(record),
+      specialtyName:
+          _extractSpecialtyName(record.rawResource) ??
+          _classifySpecialtyName(record),
     );
   }
 
@@ -227,7 +263,8 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
 
       if (url != null && url.isNotEmpty) {
         final rawPath = Uri.decodeComponent(
-            url.startsWith('file://') ? url.substring(7) : url);
+          url.startsWith('file://') ? url.substring(7) : url,
+        );
         try {
           if (File(rawPath).existsSync()) {
             resolvedPath = rawPath;
@@ -235,13 +272,15 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
         } catch (_) {}
       }
 
-      result.add(AttachmentBrowseFile(
-        id: docRef.resourceId,
-        resource: docRef,
-        title: docRef.title,
-        filePath: resolvedPath,
-        contentType: contentType,
-      ));
+      result.add(
+        AttachmentBrowseFile(
+          id: docRef.resourceId,
+          resource: docRef,
+          title: docRef.title,
+          filePath: resolvedPath,
+          contentType: contentType,
+        ),
+      );
     }
 
     return result;
@@ -259,8 +298,9 @@ class EphemeralAttachmentBrowseService implements AttachmentBrowseService {
       final givenList = nameObj['given'] as List<dynamic>?;
       final family = nameObj['family'] as String?;
 
-      final given =
-          (givenList != null && givenList.isNotEmpty) ? givenList[0] : null;
+      final given = (givenList != null && givenList.isNotEmpty)
+          ? givenList[0]
+          : null;
 
       if (given != null && family != null) return '$given $family';
       if (given != null) return given.toString();

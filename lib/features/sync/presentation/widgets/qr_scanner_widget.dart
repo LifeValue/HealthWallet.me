@@ -43,130 +43,131 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
   @override
   Widget build(BuildContext context) {
     return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text.rich(
-            TextSpan(
-              style: AppTextStyle.labelLarge.copyWith(
-                color: context.colorScheme.onSurface,
-              ),
-              children: [
-                const TextSpan(text: 'Scan a QR code from your '),
-                TextSpan(
-                  text: 'HealthWallet.me',
-                  style: AppTextStyle.labelLarge.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-                const TextSpan(text: ' desktop app or '),
-                TextSpan(
-                  text: 'Fasten Health',
-                  style: AppTextStyle.labelLarge.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-                const TextSpan(text: ' to sync your data.'),
-              ],
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text.rich(
+          TextSpan(
+            style: AppTextStyle.labelLarge.copyWith(
+              color: context.colorScheme.onSurface,
             ),
-            textAlign: TextAlign.center,
+            children: [
+              const TextSpan(text: 'Scan a QR code from your '),
+              TextSpan(
+                text: 'HealthWallet.me',
+                style: AppTextStyle.labelLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.colorScheme.onSurface,
+                ),
+              ),
+              const TextSpan(text: ' desktop app or '),
+              TextSpan(
+                text: 'Fasten Health',
+                style: AppTextStyle.labelLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.colorScheme.onSurface,
+                ),
+              ),
+              const TextSpan(text: ' to sync your data.'),
+            ],
           ),
-          const SizedBox(height: Insets.medium),
-          SizedBox(
-            height: 450,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(12)),
-              child: Stack(
-                children: [
-                  MobileScanner(
-                    controller: _controller,
-                    onDetect: (capture) {
-                      if (!_isScannerActive) return;
-                      final List<Barcode> barcodes = capture.barcodes;
-                      if (barcodes.isNotEmpty) {
-                        final String code = barcodes.first.rawValue ?? '';
-                        if (code.isNotEmpty) {
-                          setState(() {
-                            _isScannerActive = false;
-                          });
-                          widget.onQRCodeDetected(code);
-                        }
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: Insets.medium),
+        SizedBox(
+          height: 450,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            child: Stack(
+              children: [
+                MobileScanner(
+                  controller: _controller,
+                  onDetect: (capture) {
+                    if (!_isScannerActive) return;
+                    final List<Barcode> barcodes = capture.barcodes;
+                    if (barcodes.isNotEmpty) {
+                      final String code = barcodes.first.rawValue ?? '';
+                      if (code.isNotEmpty) {
+                        setState(() {
+                          _isScannerActive = false;
+                        });
+                        widget.onQRCodeDetected(code);
                       }
-                    },
-                  ),
-                  if (_errorMessage != null)
-                    Container(
-                      color: Colors.black54,
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(Insets.normal),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
+                    }
+                  },
+                ),
+                if (_errorMessage != null)
+                  Container(
+                    color: Colors.black54,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(Insets.normal),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Colors.white,
+                              size: 48,
+                            ),
+                            const SizedBox(height: Insets.small),
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(
                                 color: Colors.white,
-                                size: 48,
+                                fontSize: 16,
                               ),
-                              const SizedBox(height: Insets.small),
-                              Text(
-                                _errorMessage!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: Insets.medium),
-                              ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _errorMessage = null;
-                                  });
-                                  _controller.start();
-                                },
-                                child: Text(context.l10n.retry),
-                              ),
-                            ],
-                          ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: Insets.medium),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _errorMessage = null;
+                                });
+                                _controller.start();
+                              },
+                              child: Text(context.l10n.retry),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: Insets.medium),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () {
+              setState(() {
+                _isScannerActive = false;
+              });
+              if (widget.onCancel != null) {
+                widget.onCancel!();
+              }
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: context.isDarkMode
+                  ? Colors.white
+                  : context.colorScheme.primary,
+              side: BorderSide(color: context.colorScheme.primary),
+              padding: const EdgeInsets.all(10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              widget.cancelButtonText ?? context.l10n.cancel,
+              style: AppTextStyle.buttonSmall.copyWith(
+                color: context.colorScheme.primary,
               ),
             ),
           ),
-          const SizedBox(height: Insets.medium),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                setState(() {
-                  _isScannerActive = false;
-                });
-                if (widget.onCancel != null) {
-                  widget.onCancel!();
-                }
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.isDarkMode
-                    ? Colors.white
-                    : context.colorScheme.primary,
-                side: BorderSide(color: context.colorScheme.primary),
-                padding: const EdgeInsets.all(10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                widget.cancelButtonText ?? context.l10n.cancel,
-                style: AppTextStyle.buttonSmall
-                    .copyWith(color: context.colorScheme.primary),
-              ),
-            ),
-          ),
-        ],
+        ),
+      ],
     );
   }
 }

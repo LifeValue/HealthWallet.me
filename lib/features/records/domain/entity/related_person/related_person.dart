@@ -78,16 +78,16 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'RelatedPerson',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'RelatedPerson',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -114,8 +114,9 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            activeStatus ? 'Active' : 'Inactive',
-            prefix: 'Status'),
+          activeStatus ? 'Active' : 'Inactive',
+          prefix: 'Status',
+        ),
       );
     }
 
@@ -128,8 +129,9 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            relationDisplay.isNotEmpty ? relationDisplay : null,
-            prefix: 'Relationship'),
+          relationDisplay.isNotEmpty ? relationDisplay : null,
+          prefix: 'Relationship',
+        ),
       );
     }
 
@@ -143,14 +145,16 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
     // Gender
     final genderDisplay = gender?.display?.valueString;
     if (genderDisplay != null) {
-      infoLines.add(RecordInfoLine(
-        icon: genderDisplay.toLowerCase() == 'male'
-            ? Assets.icons.genderMale
-            : genderDisplay.toLowerCase() == 'female'
-                ? Assets.icons.genderFemale
-                : Assets.icons.user,
-        info: 'Gender: $genderDisplay',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: genderDisplay.toLowerCase() == 'male'
+              ? Assets.icons.genderMale
+              : genderDisplay.toLowerCase() == 'female'
+              ? Assets.icons.genderFemale
+              : Assets.icons.user,
+          info: 'Gender: $genderDisplay',
+        ),
+      );
     }
 
     // Birth Date
@@ -159,23 +163,28 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
       if (birthDateValue != null) {
         try {
           final parsedDate = DateTime.parse(birthDateValue);
-          infoLines.add(RecordInfoLine(
-            icon: Assets.icons.calendar,
-            info: 'Birth Date: ${DateFormat.yMMMMd().format(parsedDate)}',
-          ));
+          infoLines.add(
+            RecordInfoLine(
+              icon: Assets.icons.calendar,
+              info: 'Birth Date: ${DateFormat.yMMMMd().format(parsedDate)}',
+            ),
+          );
         } catch (_) {
           // Use raw string if parsing fails
-          infoLines.add(RecordInfoLine(
-            icon: Assets.icons.calendar,
-            info: 'Birth Date: $birthDateValue',
-          ));
+          infoLines.add(
+            RecordInfoLine(
+              icon: Assets.icons.calendar,
+              info: 'Birth Date: $birthDateValue',
+            ),
+          );
         }
       }
     }
 
     // Address
-    final addressDisplay =
-        FhirFieldExtractor.formatAddress(address?.firstOrNull);
+    final addressDisplay = FhirFieldExtractor.formatAddress(
+      address?.firstOrNull,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
@@ -213,8 +222,9 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            languages.isNotEmpty ? languages : null,
-            prefix: 'Languages'),
+          languages.isNotEmpty ? languages : null,
+          prefix: 'Languages',
+        ),
       );
     }
 
@@ -227,10 +237,12 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
 
     // Date (last updated)
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: 'Last Updated: ${DateFormat.yMMMMd().format(date!)}',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: 'Last Updated: ${DateFormat.yMMMMd().format(date!)}',
+        ),
+      );
     }
 
     return infoLines;

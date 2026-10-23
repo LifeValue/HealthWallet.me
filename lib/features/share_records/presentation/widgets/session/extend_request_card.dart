@@ -59,8 +59,8 @@ class ExtendRequestCard extends StatelessWidget {
                   label: context.l10n.shareDecline,
                   onPressed: () {
                     context.read<ShareRecordsBloc>().add(
-                          const ShareRecordsEvent.extendRejected(),
-                        );
+                      const ShareRecordsEvent.extendRejected(),
+                    );
                   },
                   variant: AppButtonVariant.outlined,
                   pillShaped: false,
@@ -77,8 +77,8 @@ class ExtendRequestCard extends StatelessWidget {
                   label: context.l10n.shareAccept,
                   onPressed: () {
                     context.read<ShareRecordsBloc>().add(
-                          ShareRecordsEvent.extendAccepted(durationSeconds),
-                        );
+                      ShareRecordsEvent.extendAccepted(durationSeconds),
+                    );
                   },
                   variant: AppButtonVariant.primary,
                   backgroundColor: accentColor,

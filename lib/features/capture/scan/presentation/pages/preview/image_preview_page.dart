@@ -41,10 +41,12 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     final initialPage =
         widget.currentIndex ?? previewBloc.state.currentPageIndex;
     _pageController = PageController(initialPage: initialPage);
-    previewBloc.add(PreviewInitialized(
-      initialPageIndex: initialPage,
-      images: images,
-    ));
+    previewBloc.add(
+      PreviewInitialized(
+        initialPageIndex: initialPage,
+        images: images,
+      ),
+    );
   }
 
   @override
@@ -93,8 +95,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           );
         }
 
-        final currentIndex =
-            state.currentPageIndex.clamp(0, images.length - 1);
+        final currentIndex = state.currentPageIndex.clamp(0, images.length - 1);
 
         return PopScope(
           canPop: false,
@@ -105,8 +106,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
               bloc.add(const PreviewReorderModeToggled(enabled: false));
               return;
             }
-            Navigator.of(context)
-                .pop(state.hasChanges ? state.images : null);
+            Navigator.of(context).pop(state.hasChanges ? state.images : null);
           },
           child: Scaffold(
             backgroundColor: Colors.black,
@@ -117,15 +117,18 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                 state.isReordering
                     ? context.l10n.reorderPages
                     : images.length > 1
-                        ? context.l10n.pageOfTotal('${currentIndex + 1}', '${images.length}')
-                        : widget.title,
+                    ? context.l10n.pageOfTotal(
+                        '${currentIndex + 1}',
+                        '${images.length}',
+                      )
+                    : widget.title,
               ),
               actions: [
                 if (state.isReordering)
                   TextButton(
-                    onPressed: () => context
-                        .read<PreviewBloc>()
-                        .add(const PreviewReorderModeToggled(enabled: false)),
+                    onPressed: () => context.read<PreviewBloc>().add(
+                      const PreviewReorderModeToggled(enabled: false),
+                    ),
                     child: Text(
                       context.l10n.done,
                       style: const TextStyle(
@@ -143,10 +146,12 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                   _ReorderGrid(
                     images: images,
                     onReorder: (oldIndex, newIndex) {
-                      context.read<PreviewBloc>().add(PreviewPagesReordered(
-                            oldIndex: oldIndex,
-                            newIndex: newIndex,
-                          ));
+                      context.read<PreviewBloc>().add(
+                        PreviewPagesReordered(
+                          oldIndex: oldIndex,
+                          newIndex: newIndex,
+                        ),
+                      );
                     },
                   )
                 else ...[
@@ -166,12 +171,14 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                     child: _BottomActionBar(
                       onReorder: images.length > 1
                           ? () => context.read<PreviewBloc>().add(
-                              const PreviewReorderModeToggled(enabled: true))
+                              const PreviewReorderModeToggled(enabled: true),
+                            )
                           : null,
                       onRotate: state.isReordering
                           ? null
                           : () => context.read<PreviewBloc>().add(
-                              PreviewPageRotated(pageIndex: currentIndex)),
+                              PreviewPageRotated(pageIndex: currentIndex),
+                            ),
                       onDelete: state.isReordering || state.images.length <= 1
                           ? null
                           : () => _onDeleteTapped(currentIndex),
@@ -285,11 +292,15 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           file,
           fit: BoxFit.contain,
           key: ValueKey(
-              '${file.path}_${file.lastModifiedSync().millisecondsSinceEpoch}'),
+            '${file.path}_${file.lastModifiedSync().millisecondsSinceEpoch}',
+          ),
           errorBuilder: (context, error, stackTrace) {
             return const Center(
-              child: Icon(Icons.image_not_supported_outlined,
-                  size: 40, color: Colors.grey),
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                size: 40,
+                color: Colors.grey,
+              ),
             );
           },
         ),
@@ -370,16 +381,20 @@ class _GridTile extends StatelessWidget {
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(7)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(7),
+              ),
               child: Image.file(
                 File(path),
                 fit: BoxFit.cover,
                 width: double.infinity,
                 errorBuilder: (_, _, _) => Container(
                   color: Colors.grey[800],
-                  child: const Icon(Icons.image,
-                      color: Colors.white38, size: 32),
+                  child: const Icon(
+                    Icons.image,
+                    color: Colors.white38,
+                    size: 32,
+                  ),
                 ),
               ),
             ),
@@ -389,8 +404,7 @@ class _GridTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4),
             decoration: const BoxDecoration(
               color: Color(0xFF2A2A2A),
-              borderRadius:
-                  BorderRadius.vertical(bottom: Radius.circular(7)),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(7)),
             ),
             child: Text(
               '${index + 1}',
@@ -483,8 +497,8 @@ class _ActionButton extends StatelessWidget {
     final color = isActive
         ? Colors.blueAccent
         : isEnabled
-            ? Colors.white
-            : Colors.white38;
+        ? Colors.white
+        : Colors.white38;
 
     return GestureDetector(
       onTap: onTap,

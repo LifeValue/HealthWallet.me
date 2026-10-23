@@ -32,45 +32,41 @@ class RecordsActiveFiltersBar extends StatelessWidget {
     final List<Widget> allChips = [];
 
     for (final specialty in activeSpecialties) {
-          allChips.add(
-            _buildFilterChip(
-              context,
-              label: specialty.displayName,
-              onTap: () {
-                final updated = activeSpecialties
-                    .where((s) => s != specialty)
-                    .toList();
-                context
-                    .read<RecordsBloc>()
-                    .add(RecordsSpecialtyApplied(updated));
-              },
-            ),
-          );
-        }
+      allChips.add(
+        _buildFilterChip(
+          context,
+          label: specialty.displayName,
+          onTap: () {
+            final updated = activeSpecialties
+                .where((s) => s != specialty)
+                .toList();
+            context.read<RecordsBloc>().add(RecordsSpecialtyApplied(updated));
+          },
+        ),
+      );
+    }
 
-        if (hasDateFilter) {
-          allChips.add(
-            _buildFilterChip(
-              context,
-              label: dateFilter!.formatChipLabel(),
-              onTap: () => context
-                  .read<RecordsBloc>()
-                  .add(const RecordsDateRangeCleared()),
-            ),
-          );
-        }
+    if (hasDateFilter) {
+      allChips.add(
+        _buildFilterChip(
+          context,
+          label: dateFilter!.formatChipLabel(),
+          onTap: () =>
+              context.read<RecordsBloc>().add(const RecordsDateRangeCleared()),
+        ),
+      );
+    }
 
-        allChips.addAll(
-          activeFilters.map(
-            (filter) => _buildFilterChip(
-              context,
-              label: filter.display,
-              onTap: () => context
-                  .read<RecordsBloc>()
-                  .add(RecordsFilterRemoved(filter)),
-            ),
-          ),
-        );
+    allChips.addAll(
+      activeFilters.map(
+        (filter) => _buildFilterChip(
+          context,
+          label: filter.display,
+          onTap: () =>
+              context.read<RecordsBloc>().add(RecordsFilterRemoved(filter)),
+        ),
+      ),
+    );
 
     return Padding(
       padding: EdgeInsets.only(top: 4, bottom: allChips.length > 2 ? 4 : 0),
@@ -138,7 +134,7 @@ class RecordsActiveFiltersBar extends StatelessWidget {
                 AppColors.primary,
                 BlendMode.srcIn,
               ),
-            )
+            ),
           ],
         ),
       ),

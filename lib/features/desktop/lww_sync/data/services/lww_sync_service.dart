@@ -33,10 +33,12 @@ class LwwSyncService {
     final sinceMs = since.millisecondsSinceEpoch;
     final deviceId = await getLocalDeviceId();
 
-    final results = await _db.customSelect(
-      'SELECT * FROM $tableName WHERE updated_at >= ?',
-      variables: [Variable.withInt(sinceMs)],
-    ).get();
+    final results = await _db
+        .customSelect(
+          'SELECT * FROM $tableName WHERE updated_at >= ?',
+          variables: [Variable.withInt(sinceMs)],
+        )
+        .get();
 
     var rows = results.map((row) => row.data).toList();
 
@@ -113,10 +115,12 @@ class LwwSyncService {
     final hasDeviceId = _tablesWithDeviceId.contains(tableName);
     final selectCols = hasDeviceId ? 'updated_at, device_id' : 'updated_at';
 
-    final localRows = await _db.customSelect(
-      'SELECT $selectCols FROM $tableName WHERE $idColumn = ?',
-      variables: [Variable.withString(id)],
-    ).get();
+    final localRows = await _db
+        .customSelect(
+          'SELECT $selectCols FROM $tableName WHERE $idColumn = ?',
+          variables: [Variable.withString(id)],
+        )
+        .get();
 
     if (localRows.isEmpty) return true;
 
@@ -135,10 +139,12 @@ class LwwSyncService {
   }
 
   Future<bool> _localHasBrokenAttachment(String id) async {
-    final rows = await _db.customSelect(
-      'SELECT resource_raw, resource_type FROM fhir_resource WHERE id = ?',
-      variables: [Variable.withString(id)],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT resource_raw, resource_type FROM fhir_resource WHERE id = ?',
+          variables: [Variable.withString(id)],
+        )
+        .get();
 
     if (rows.isEmpty) return false;
     final row = rows.first;
@@ -191,13 +197,15 @@ class LwwSyncService {
 
     final idColumn = _getIdColumn(tableName);
 
-    final sql = 'INSERT INTO $tableName ($columnNames) VALUES ($placeholders) '
+    final sql =
+        'INSERT INTO $tableName ($columnNames) VALUES ($placeholders) '
         'ON CONFLICT($idColumn) DO UPDATE SET $updateClauses';
 
     final values = columns.map((col) {
       final value = row[col];
       if (value == null) return null;
-      if (value is int || value is double || value is bool || value is String) return value;
+      if (value is int || value is double || value is bool || value is String)
+        return value;
       return value.toString();
     }).toList();
 
@@ -244,9 +252,11 @@ class LwwSyncService {
     final docsDir = await getApplicationDocumentsDirectory();
     final missing = <String>[];
 
-    final results = await _db.customSelect(
-      "SELECT resource_raw FROM fhir_resource WHERE resource_type = 'DocumentReference' AND deleted_at IS NULL",
-    ).get();
+    final results = await _db
+        .customSelect(
+          "SELECT resource_raw FROM fhir_resource WHERE resource_type = 'DocumentReference' AND deleted_at IS NULL",
+        )
+        .get();
 
     for (final row in results) {
       final raw = row.data['resource_raw'] as String?;
@@ -317,9 +327,11 @@ class LwwSyncService {
     String oldPath,
     String newRelativePath,
   ) async {
-    final rows = await _db.customSelect(
-      "SELECT id, resource_raw FROM fhir_resource WHERE resource_type = 'DocumentReference' AND deleted_at IS NULL",
-    ).get();
+    final rows = await _db
+        .customSelect(
+          "SELECT id, resource_raw FROM fhir_resource WHERE resource_type = 'DocumentReference' AND deleted_at IS NULL",
+        )
+        .get();
 
     for (final row in rows) {
       final id = row.data['id'] as String?;
@@ -339,8 +351,12 @@ class LwwSyncService {
           final url = attachment?['url'] as String?;
           if (url == null) continue;
 
-          final urlPath = Uri.decodeComponent(url.startsWith('file://') ? url.substring(7) : url);
-          if (urlPath == oldPath || urlPath.endsWith('/$oldPath') || urlPath.split('/').last == oldPath.split('/').last) {
+          final urlPath = Uri.decodeComponent(
+            url.startsWith('file://') ? url.substring(7) : url,
+          );
+          if (urlPath == oldPath ||
+              urlPath.endsWith('/$oldPath') ||
+              urlPath.split('/').last == oldPath.split('/').last) {
             attachment!['url'] = 'file://$newRelativePath';
             updated = true;
           }
@@ -360,9 +376,11 @@ class LwwSyncService {
     final docsDir = await getApplicationDocumentsDirectory();
     var fixed = 0;
 
-    final rows = await _db.customSelect(
-      "SELECT id, resource_raw FROM fhir_resource WHERE resource_type = 'DocumentReference' AND deleted_at IS NULL",
-    ).get();
+    final rows = await _db
+        .customSelect(
+          "SELECT id, resource_raw FROM fhir_resource WHERE resource_type = 'DocumentReference' AND deleted_at IS NULL",
+        )
+        .get();
 
     for (final row in rows) {
       final id = row.data['id'] as String?;
@@ -398,9 +416,12 @@ class LwwSyncService {
 
           final dir = Directory(docsDir.path);
           final matches = dir.listSync().whereType<File>().where(
-            (f) => f.path.split('/').last.contains(
-              fileName.replaceAll('.pdf', '').replaceAll('.', '_'),
-            ),
+            (f) => f.path
+                .split('/')
+                .last
+                .contains(
+                  fileName.replaceAll('.pdf', '').replaceAll('.', '_'),
+                ),
           );
           if (matches.isNotEmpty) {
             final match = matches.first.path.split('/').last;
@@ -425,9 +446,11 @@ class LwwSyncService {
   Future<Map<String, int>> getTableRowCounts() async {
     final counts = <String, int>{};
     for (final table in syncedTables) {
-      final result = await _db.customSelect(
-        'SELECT COUNT(*) as count FROM $table WHERE deleted_at IS NULL',
-      ).getSingle();
+      final result = await _db
+          .customSelect(
+            'SELECT COUNT(*) as count FROM $table WHERE deleted_at IS NULL',
+          )
+          .getSingle();
       counts[table] = result.data['count'] as int? ?? 0;
     }
     return counts;
@@ -450,10 +473,12 @@ class LwwSyncService {
     var totalDeleted = 0;
 
     for (final table in syncedTables) {
-      final result = await _db.customSelect(
-        'SELECT COUNT(*) as count FROM $table WHERE deleted_at IS NOT NULL AND deleted_at < ?',
-        variables: [Variable(cutoff)],
-      ).getSingle();
+      final result = await _db
+          .customSelect(
+            'SELECT COUNT(*) as count FROM $table WHERE deleted_at IS NOT NULL AND deleted_at < ?',
+            variables: [Variable(cutoff)],
+          )
+          .getSingle();
 
       final count = result.data['count'] as int? ?? 0;
 
@@ -475,9 +500,11 @@ class LwwSyncService {
     var totalUpdated = 0;
 
     for (final table in syncedTables) {
-      final result = await _db.customSelect(
-        'SELECT COUNT(*) as count FROM $table WHERE updated_at IS NULL',
-      ).getSingle();
+      final result = await _db
+          .customSelect(
+            'SELECT COUNT(*) as count FROM $table WHERE updated_at IS NULL',
+          )
+          .getSingle();
 
       final count = result.data['count'] as int? ?? 0;
 

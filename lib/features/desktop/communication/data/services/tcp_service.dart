@@ -344,8 +344,12 @@ class TcpService {
         final brand = android.brand;
         final model = android.model;
         if (brand.isEmpty) return model;
-        final words = brand.split(' ').map((w) =>
-            w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w);
+        final words = brand
+            .split(' ')
+            .map(
+              (w) =>
+                  w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w,
+            );
         return '${words.join(' ')} $model';
       }
       var hostname = Platform.localHostname;
@@ -354,7 +358,9 @@ class TcpService {
       }
       return hostname.replaceAll('-', ' ');
     } catch (_) {
-      return Platform.localHostname.replaceAll('.local', '').replaceAll('-', ' ');
+      return Platform.localHostname
+          .replaceAll('.local', '')
+          .replaceAll('-', ' ');
     }
   }
 
@@ -367,7 +373,11 @@ class TcpService {
 
     final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
     final virtualKeywords = [
-      'vethernet', 'vmware', 'virtualbox', 'docker', 'hyper-v',
+      'vethernet',
+      'vmware',
+      'virtualbox',
+      'docker',
+      'hyper-v',
     ];
 
     bool isVpn(String name) =>
@@ -375,13 +385,16 @@ class TcpService {
     bool isVirtual(String name) =>
         virtualKeywords.any((k) => name.toLowerCase().contains(k));
     bool isUsable(NetworkInterface iface) =>
-        !isVpn(iface.name) && !isVirtual(iface.name) && iface.addresses.isNotEmpty;
+        !isVpn(iface.name) &&
+        !isVirtual(iface.name) &&
+        iface.addresses.isNotEmpty;
     bool isWifi(String name) {
       final lower = name.toLowerCase();
       return lower.startsWith('en') ||
           lower.startsWith('wlan') ||
           lower.startsWith('wi-fi');
     }
+
     bool isEthernet(String name) {
       final lower = name.toLowerCase();
       return lower.startsWith('eth');
@@ -510,7 +523,8 @@ class TcpService {
       case MessageType.hello:
         if (_pairingKey != null && _clientSocket == null) {
           try {
-            final json = jsonDecode(message.payloadString) as Map<String, dynamic>;
+            final json =
+                jsonDecode(message.payloadString) as Map<String, dynamic>;
             final remoteHash = json['pairing_key_hash'] as String?;
             final localHash = _hashKey(_pairingKey!);
             if (remoteHash != null && remoteHash != localHash) {

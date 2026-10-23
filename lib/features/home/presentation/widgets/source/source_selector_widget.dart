@@ -171,14 +171,14 @@ class SourceSelectorWidget extends StatelessWidget {
       if (filteredSources.length > 1) {
         final allSources = List<Source>.from(filteredSources);
         allSources.insert(
-            0,
-            const Source(
-              id: 'All',
-              platformName: 'All Sources',
-              labelSource: 'All Sources',
-              platformType:
-                  'all', // Special type to indicate this is a filter option, not a real source
-            ));
+          0,
+          const Source(
+            id: 'All',
+            platformName: 'All Sources',
+            labelSource: 'All Sources',
+            platformType: 'all', // Special type to indicate this is a filter option, not a real source
+          ),
+        );
         return allSources;
       }
 
@@ -264,8 +264,9 @@ class SourceSelectorWidget extends StatelessWidget {
       // If selected source is not found in patient sources,
       // try to find it in all sources
       try {
-        final allSources =
-            sources.where((source) => source.id != 'All').toList();
+        final allSources = sources
+            .where((source) => source.id != 'All')
+            .toList();
         final currentSource = allSources.firstWhere(
           (source) => source.id == selectedSource,
         );

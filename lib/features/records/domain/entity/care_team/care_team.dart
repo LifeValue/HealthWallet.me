@@ -80,16 +80,16 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'CareTeam',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'CareTeam',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -119,26 +119,35 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Managing Organization
     final organizationDisplay =
-        FhirFieldExtractor.extractMultipleReferenceDisplays(managingOrganization);
+        FhirFieldExtractor.extractMultipleReferenceDisplays(
+          managingOrganization,
+        );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(organizationDisplay,
-          prefix: 'Organization'),
+      ResourceFieldMapper.createOrganizationLine(
+        organizationDisplay,
+        prefix: 'Organization',
+      ),
     );
 
     // Participants/Members
-    final participantsDisplay =
-        FhirFieldExtractor.extractParticipants(participant);
+    final participantsDisplay = FhirFieldExtractor.extractParticipants(
+      participant,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTeamLine(participantsDisplay,
-          prefix: 'Members'),
+      ResourceFieldMapper.createTeamLine(
+        participantsDisplay,
+        prefix: 'Members',
+      ),
     );
 
     // Period
@@ -149,8 +158,7 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
     );
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
@@ -158,10 +166,12 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes
@@ -180,8 +190,9 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
       subject?.reference?.valueString,
       encounter?.reference?.valueString,
       ...?reasonReference?.map((reference) => reference.reference?.valueString),
-      ...?managingOrganization
-          ?.map((reference) => reference.reference?.valueString),
+      ...?managingOrganization?.map(
+        (reference) => reference.reference?.valueString,
+      ),
     }.where((reference) => reference != null).toList();
   }
 

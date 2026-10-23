@@ -33,7 +33,8 @@ class ConnectionDialog extends StatefulWidget {
             debugPrint('[QR_SCAN] QR detected from direct scanner');
             try {
               final json = jsonDecode(qrData) as Map<String, dynamic>;
-              if (json.containsKey('pairing_key') && json.containsKey('device_id')) {
+              if (json.containsKey('pairing_key') &&
+                  json.containsKey('device_id')) {
                 debugPrint('[QR_SCAN] Detected: Desktop pairing QR');
                 final pairing = DevicePairing(
                   deviceId: json['device_id'] as String,
@@ -49,7 +50,9 @@ class ConnectionDialog extends StatefulWidget {
                 pairingStorage.savePairing(pairing).then((_) {
                   rootNavigator.pop();
                   scaffoldMessenger.showSnackBar(
-                    SnackBar(content: Text('Paired with ${pairing.deviceName}')),
+                    SnackBar(
+                      content: Text('Paired with ${pairing.deviceName}'),
+                    ),
                   );
                   getIt<CommunicationBloc>().add(
                     CommunicationPairingCompleted(pairing: pairing),
@@ -59,7 +62,9 @@ class ConnectionDialog extends StatefulWidget {
               }
             } catch (_) {}
 
-            debugPrint('[QR_SCAN] Forwarding to SyncBloc for Fasten Health sync');
+            debugPrint(
+              '[QR_SCAN] Forwarding to SyncBloc for Fasten Health sync',
+            );
             rootNavigator.pop();
             getIt<SyncBloc>().add(SyncData(qrData: qrData));
           },
@@ -106,8 +111,9 @@ class ConnectionDialog extends StatefulWidget {
                           child: Icon(
                             Icons.close,
                             size: 20,
-                            color: context.colorScheme.onSurface
-                                .withValues(alpha: 0.4),
+                            color: context.colorScheme.onSurface.withValues(
+                              alpha: 0.4,
+                            ),
                           ),
                         ),
                       ],
@@ -164,14 +170,11 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildStatusSection(context, commState),
-            if (commState.connectionStatus !=
-                ConnectionStatus.connected) ...[
+            if (commState.connectionStatus != ConnectionStatus.connected) ...[
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: Insets.normal),
+                padding: const EdgeInsets.symmetric(vertical: Insets.normal),
                 child: Divider(
-                  color: context.colorScheme.onSurface
-                      .withValues(alpha: 0.06),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.06),
                   height: 1,
                 ),
               ),
@@ -189,7 +192,8 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     final isDiscovering =
         commState.connectionStatus == ConnectionStatus.discovering;
     final isDesktop = getIt<AppPlatform>().isDesktop;
-    final remoteName = commState.connectedDeviceName ??
+    final remoteName =
+        commState.connectedDeviceName ??
         (isDesktop ? null : commState.pairedDevice?.deviceName);
 
     final Color dotColor;
@@ -197,8 +201,9 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
 
     if (isConnected) {
       dotColor = AppColors.success;
-      statusLabel =
-          remoteName != null ? context.l10n.desktopConnectedTo(remoteName) : context.l10n.desktopConnected;
+      statusLabel = remoteName != null
+          ? context.l10n.desktopConnectedTo(remoteName)
+          : context.l10n.desktopConnected;
     } else if (isDiscovering) {
       dotColor = AppColors.warning;
       statusLabel = remoteName != null
@@ -235,8 +240,9 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
             if (isConnected)
               GestureDetector(
                 onTap: () {
-                  getIt<CommunicationBloc>()
-                      .add(const CommunicationManualDisconnect());
+                  getIt<CommunicationBloc>().add(
+                    const CommunicationManualDisconnect(),
+                  );
                 },
                 child: Text(
                   context.l10n.desktopDisconnect,
@@ -252,8 +258,9 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                 !isDiscovering)
               GestureDetector(
                 onTap: () {
-                  getIt<CommunicationBloc>()
-                      .add(const CommunicationConnectionRequested());
+                  getIt<CommunicationBloc>().add(
+                    const CommunicationConnectionRequested(),
+                  );
                 },
                 child: Text(
                   context.l10n.desktopReconnect,
@@ -310,7 +317,10 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     );
   }
 
-  Widget _buildPairingSection(BuildContext context, DesktopSyncState commState) {
+  Widget _buildPairingSection(
+    BuildContext context,
+    DesktopSyncState commState,
+  ) {
     final hasPairing = commState.pairedDevice != null;
 
     return Column(
@@ -363,10 +373,13 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
         const SizedBox(height: Insets.normal),
         if (getIt<AppPlatform>().isDesktop)
           AppButton(
-            label: hasPairing ? context.l10n.desktopNewQrCode : context.l10n.desktopGenerateQrCode,
+            label: hasPairing
+                ? context.l10n.desktopNewQrCode
+                : context.l10n.desktopGenerateQrCode,
             onPressed: () {
-              getIt<CommunicationBloc>()
-                  .add(const CommunicationPairingRequested());
+              getIt<CommunicationBloc>().add(
+                const CommunicationPairingRequested(),
+              );
             },
             variant: AppButtonVariant.outlined,
             height: 36,
@@ -473,7 +486,9 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
       }
     } catch (_) {}
 
-    debugPrint('[QR_SCAN] Not a pairing QR, forwarding to SyncBloc for Fasten Health sync');
+    debugPrint(
+      '[QR_SCAN] Not a pairing QR, forwarding to SyncBloc for Fasten Health sync',
+    );
     navigator.pop();
     getIt<SyncBloc>().add(SyncData(qrData: qrData));
   }
@@ -488,8 +503,9 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
 
     navigator.pop();
 
-    getIt<CommunicationBloc>()
-        .add(CommunicationPairingCompleted(pairing: pairing));
+    getIt<CommunicationBloc>().add(
+      CommunicationPairingCompleted(pairing: pairing),
+    );
   }
 }
 

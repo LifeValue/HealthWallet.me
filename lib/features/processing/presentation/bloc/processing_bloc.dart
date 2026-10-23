@@ -60,8 +60,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       _documentReferenceService;
 
   @override
-  PatientDeduplicationService get deduplicationService =>
-      _deduplicationService;
+  PatientDeduplicationService get deduplicationService => _deduplicationService;
 
   @override
   SourceTypeService get sourceTypeService => _sourceTypeService;
@@ -85,8 +84,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     on<SessionChangedProgress>(onSessionChangedProgress);
     on<SessionCleared>(onSessionCleared);
     on<SessionActivated>(onSessionActivated);
-    on<MappingInitiated>(onMappingInitiated,
-        transformer: restartable());
+    on<MappingInitiated>(onMappingInitiated, transformer: restartable());
     on<ResourceChanged>(onResourceChanged);
     on<PatientReverted>(onPatientReverted);
     on<ResourceRemoved>(onResourceRemoved);
@@ -159,9 +157,11 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     final newSessions = List<ProcessingSession>.from(state.sessions);
     newSessions[sessionIndex] = updatedSession;
 
-    emit(state.copyWith(
-      sessions: newSessions,
-    ));
+    emit(
+      state.copyWith(
+        sessions: newSessions,
+      ),
+    );
   }
 
   Future<void> onProcessingInitialised(
@@ -173,19 +173,21 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     try {
       final sessions = await _repository.getProcessingSessions();
 
-      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+      final isDesktop =
+          Platform.isMacOS || Platform.isLinux || Platform.isWindows;
       final useVision =
           _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
-      emit(state.copyWith(
-        sessions: sessions,
-        status: const PipelineStatus.initial(),
-        useVision: useVision,
-      ));
+      emit(
+        state.copyWith(
+          sessions: sessions,
+          status: const PipelineStatus.initial(),
+          useVision: useVision,
+        ),
+      );
     } on Exception catch (e) {
       emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
     }
   }
-
 
   void onNotificationAcknowledged(
     NotificationAcknowledged event,
@@ -198,8 +200,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     TokenCapacityUpdated event,
     Emitter<ProcessingState> emit,
   ) async {
-    await _prefs.setInt(
-        SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
+    await _prefs.setInt(SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
     await _repository.disposeModel();
     add(MappingInitiated(sessionId: event.sessionId));
   }
@@ -211,7 +212,6 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     _prefs.setBool(SharedPrefsConstants.aiUseVision, event.useVision);
     emit(state.copyWith(useVision: event.useVision));
   }
-
 
   void _onContainerTypeSwitched(
     ContainerTypeSwitched event,
@@ -235,7 +235,8 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           confidenceLevel: dr.issuedDate.confidenceLevel,
         ),
       );
-      updateSession(emit,
+      updateSession(
+        emit,
         sessionId: event.sessionId,
         encounter: StagedEncounter(draft: encounter),
         diagnosticReport: const StagedDiagnosticReport(),
@@ -243,7 +244,8 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       );
     } else if (session.encounter.draft != null ||
         session.encounter.existing != null) {
-      final enc = session.encounter.draft ??
+      final enc =
+          session.encounter.draft ??
           MappingEncounter.fromFhirResource(session.encounter.existing!);
       final report = MappingDiagnosticReport(
         id: enc.id,
@@ -256,7 +258,8 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           confidenceLevel: enc.periodStart.confidenceLevel,
         ),
       );
-      updateSession(emit,
+      updateSession(
+        emit,
         sessionId: event.sessionId,
         encounter: const StagedEncounter(),
         diagnosticReport: StagedDiagnosticReport(draft: report),

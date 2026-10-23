@@ -56,12 +56,10 @@ class TrayService with TrayListener {
     String? deviceName,
     String syncLabel = 'Idle',
   }) async {
-    final toggleLabel =
-        _isWindowVisible ? 'Hide Window' : 'Show Window';
+    final toggleLabel = _isWindowVisible ? 'Hide Window' : 'Show Window';
 
     final connectionLabel = switch (connectionStatus) {
-      ConnectionStatus.connected =>
-        'Connected to "${deviceName ?? "Device"}"',
+      ConnectionStatus.connected => 'Connected to "${deviceName ?? "Device"}"',
       ConnectionStatus.discovering => 'Discovering...',
       ConnectionStatus.disconnected => 'No device connected',
     };

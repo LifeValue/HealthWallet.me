@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
+
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
@@ -106,15 +107,16 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       List<IFhirResource> filteredResources = resources;
       if (state.activeSpecialties.isNotEmpty) {
         _specialtyClassifier.buildEncounterIndex(resources);
-        filteredResources = resources
-            .where((r) {
-              final override = MedicalSpecialty.values
-                  .where((s) => s.name == r.specialtyOverride)
-                  .firstOrNull;
-              final classified = _specialtyClassifier.classify(r, override: override);
-              return state.activeSpecialties.any(classified.contains);
-            })
-            .toList();
+        filteredResources = resources.where((r) {
+          final override = MedicalSpecialty.values
+              .where((s) => s.name == r.specialtyOverride)
+              .firstOrNull;
+          final classified = _specialtyClassifier.classify(
+            r,
+            override: override,
+          );
+          return state.activeSpecialties.any(classified.contains);
+        }).toList();
       }
 
       final List<IFhirResource> updatedResources;
@@ -146,8 +148,11 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     Emitter<RecordsState> emit,
   ) async {
     if (state.activeFilters.isEmpty && !event.isShareContext) {
-      emit(state.copyWith(
-          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]));
+      emit(
+        state.copyWith(
+          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport],
+        ),
+      );
     }
     await _loadResources(emit);
   }
@@ -178,7 +183,8 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
 
     if (nextState.activeFilters.isEmpty && !event.isShareContext) {
       nextState = nextState.copyWith(
-          activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport]);
+        activeFilters: [FhirType.Encounter, FhirType.DiagnosticReport],
+      );
     }
 
     emit(nextState);
@@ -190,12 +196,14 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsFiltersApplied event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      status: const RecordsStatus.loading(),
-      activeFilters: event.filters,
-      dateFilter: event.dateFilter,
-      resources: [],
-    ));
+    emit(
+      state.copyWith(
+        status: const RecordsStatus.loading(),
+        activeFilters: event.filters,
+        dateFilter: event.dateFilter,
+        resources: [],
+      ),
+    );
 
     await _loadResources(emit);
   }
@@ -205,10 +213,12 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     Emitter<RecordsState> emit,
   ) async {
     final updatedFilters = [...state.activeFilters]..remove(event.filter);
-    emit(state.copyWith(
-      activeFilters: updatedFilters,
-      resources: [],
-    ));
+    emit(
+      state.copyWith(
+        activeFilters: updatedFilters,
+        resources: [],
+      ),
+    );
 
     await _loadResources(emit);
   }
@@ -218,14 +228,18 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     Emitter<RecordsState> emit,
   ) async {
     emit(
-        state.copyWith(recordDetailStatus: const RecordDetailStatus.loading()));
+      state.copyWith(recordDetailStatus: const RecordDetailStatus.loading()),
+    );
     try {
-      final relatedResources = (event.resource.fhirType == FhirType.Encounter ||
+      final relatedResources =
+          (event.resource.fhirType == FhirType.Encounter ||
               event.resource.fhirType == FhirType.DiagnosticReport)
           ? await _recordsRepository.getRelatedResourcesForEncounter(
-              encounterId: event.resource.resourceId)
+              encounterId: event.resource.resourceId,
+            )
           : await _recordsRepository.getRelatedResources(
-              resource: event.resource);
+              resource: event.resource,
+            );
 
       emit(
         state.copyWith(
@@ -234,9 +248,11 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         ),
       );
     } catch (e) {
-      emit(state.copyWith(
-        recordDetailStatus: RecordDetailStatus.failure(e),
-      ));
+      emit(
+        state.copyWith(
+          recordDetailStatus: RecordDetailStatus.failure(e),
+        ),
+      );
     }
   }
 
@@ -244,28 +260,34 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     LoadDemoData event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      isLoadingDemoData: true,
-      demoDataError: null,
-    ));
+    emit(
+      state.copyWith(
+        isLoadingDemoData: true,
+        demoDataError: null,
+      ),
+    );
 
     try {
       await _recordsRepository.loadDemoData();
 
       final hasDemoData = await _recordsRepository.hasDemoData();
 
-      emit(state.copyWith(
-        isLoadingDemoData: false,
-        hasDemoData: hasDemoData,
-        demoDataError: null,
-      ));
+      emit(
+        state.copyWith(
+          isLoadingDemoData: false,
+          hasDemoData: hasDemoData,
+          demoDataError: null,
+        ),
+      );
 
       await _loadResources(emit);
     } catch (e) {
-      emit(state.copyWith(
-        isLoadingDemoData: false,
-        demoDataError: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          isLoadingDemoData: false,
+          demoDataError: e.toString(),
+        ),
+      );
     }
   }
 
@@ -276,16 +298,20 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     try {
       await _recordsRepository.clearDemoData();
 
-      emit(state.copyWith(
-        hasDemoData: false,
-        demoDataError: null,
-      ));
+      emit(
+        state.copyWith(
+          hasDemoData: false,
+          demoDataError: null,
+        ),
+      );
 
       await _loadResources(emit);
     } catch (e) {
-      emit(state.copyWith(
-        demoDataError: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          demoDataError: e.toString(),
+        ),
+      );
     }
   }
 
@@ -299,10 +325,12 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     _searchDebounceTimer?.cancel();
 
     if (query.isEmpty) {
-      emit(state.copyWith(
-        resources: [],
-        hasMorePages: true,
-      ));
+      emit(
+        state.copyWith(
+          resources: [],
+          hasMorePages: true,
+        ),
+      );
       await _loadResources(emit);
       return;
     }
@@ -322,10 +350,12 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSearchExecuted event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      resources: [],
-      hasMorePages: false,
-    ));
+    emit(
+      state.copyWith(
+        resources: [],
+        hasMorePages: false,
+      ),
+    );
     await _loadResources(emit);
   }
 
@@ -339,8 +369,10 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         patientId: event.patientId,
       );
 
-      final name = (event.patientName ?? export.patientName)
-          .replaceAll(RegExp(r'[^\w\s-]'), '');
+      final name = (event.patientName ?? export.patientName).replaceAll(
+        RegExp(r'[^\w\s-]'),
+        '',
+      );
       final prefs = await SharedPreferences.getInstance();
       final region = RegionPreset.fromString(
         prefs.getString(SharedPrefsConstants.regionPreset),
@@ -352,11 +384,15 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         '${(await getTemporaryDirectory()).path}/$fileName.pdf',
       ).writeAsBytes(export.bytes);
 
-      unawaited(SharePlus.instance.share(ShareParams(
-        title: fileName,
-        files: [XFile(pdfFile.path)],
-        sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
-      )));
+      unawaited(
+        SharePlus.instance.share(
+          ShareParams(
+            title: fileName,
+            files: [XFile(pdfFile.path)],
+            sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
+          ),
+        ),
+      );
     } catch (_) {}
   }
 
@@ -383,20 +419,24 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     Emitter<RecordsState> emit,
   ) {
     final newSelectionMode = !state.isSelectionMode;
-    emit(state.copyWith(
-      isSelectionMode: newSelectionMode,
-      selectedResourceIds: newSelectionMode ? state.selectedResourceIds : {},
-    ));
+    emit(
+      state.copyWith(
+        isSelectionMode: newSelectionMode,
+        selectedResourceIds: newSelectionMode ? state.selectedResourceIds : {},
+      ),
+    );
   }
 
   Future<void> _onDateRangeCleared(
     RecordsDateRangeCleared event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      dateFilter: null,
-      resources: [],
-    ));
+    emit(
+      state.copyWith(
+        dateFilter: null,
+        resources: [],
+      ),
+    );
 
     await _loadResources(emit);
   }
@@ -417,10 +457,12 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         await _recordsRepository.deleteResource(event.resourceId);
       }
 
-      emit(state.copyWith(
-        status: const RecordsStatus.deleted(),
-        resources: [],
-      ));
+      emit(
+        state.copyWith(
+          status: const RecordsStatus.deleted(),
+          resources: [],
+        ),
+      );
 
       final remainingPatients = await _recordsRepository.getResources(
         resourceTypes: [FhirType.Patient],
@@ -428,11 +470,13 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       );
 
       if (remainingPatients.isEmpty) {
-        emit(state.copyWith(
-          status: const RecordsStatus.success(),
-          resources: [],
-          hasMorePages: false,
-        ));
+        emit(
+          state.copyWith(
+            status: const RecordsStatus.success(),
+            resources: [],
+            hasMorePages: false,
+          ),
+        );
       } else {
         await _loadResources(emit);
       }
@@ -445,12 +489,14 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSpecialtyApplied event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      status: const RecordsStatus.loading(),
-      activeSpecialties: event.specialties,
-      activeFilters: event.specialties.isNotEmpty ? [] : state.activeFilters,
-      resources: [],
-    ));
+    emit(
+      state.copyWith(
+        status: const RecordsStatus.loading(),
+        activeSpecialties: event.specialties,
+        activeFilters: event.specialties.isNotEmpty ? [] : state.activeFilters,
+        resources: [],
+      ),
+    );
 
     await _loadResources(emit);
   }
@@ -459,10 +505,12 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsRefreshRequested event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      status: const RecordsStatus.loading(),
-      resources: [],
-    ));
+    emit(
+      state.copyWith(
+        status: const RecordsStatus.loading(),
+        resources: [],
+      ),
+    );
 
     await _loadResources(emit);
   }
@@ -471,13 +519,15 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsClearAllFilters event,
     Emitter<RecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      status: const RecordsStatus.loading(),
-      activeFilters: [],
-      activeSpecialties: [],
-      dateFilter: null,
-      resources: [],
-    ));
+    emit(
+      state.copyWith(
+        status: const RecordsStatus.loading(),
+        activeFilters: [],
+        activeSpecialties: [],
+        dateFilter: null,
+        resources: [],
+      ),
+    );
 
     await _loadResources(emit);
   }

@@ -23,35 +23,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
 
   List<OnboardingScreenData> get _screens => [
-        OnboardingScreenData(
-          title: context.l10n.onboardingWelcomeTitle,
-          subtitle: context.l10n.onboardingWelcomeSubtitle,
-          description: context.l10n.onboardingWelcomeDescription,
-          image: Assets.onboarding.onboarding1,
-          customWidget: const CountryFlagsWidget(),
-        ),
-        OnboardingScreenData(
-          title: context.l10n.onboardingRecordsTitle,
-          subtitle: context.l10n.onboardingRecordsSubtitle,
-          description: context.l10n.onboardingRecordsDescription,
-          content: context.l10n.onboardingRecordsContent,
-          bottom: context.l10n.onboardingRecordsBottom,
-          image: Assets.onboarding.onboarding2,
-        ),
-        OnboardingScreenData(
-          title: context.l10n.onboardingAiModelTitle,
-          subtitle: context.l10n.onboardingAiModelSubtitle,
-          description: context.l10n.onboardingAiModelDescription,
-          image: Assets.onboarding.onboarding3,
-        ),
-        OnboardingScreenData(
-          title: context.l10n.onboardingSyncTitle,
-          subtitle: context.l10n.onboardingSyncSubtitle,
-          description: context.l10n.onboardingSyncDescription,
-          image: Assets.onboarding.onboarding4,
-          showBiometricToggle: true,
-        ),
-      ];
+    OnboardingScreenData(
+      title: context.l10n.onboardingWelcomeTitle,
+      subtitle: context.l10n.onboardingWelcomeSubtitle,
+      description: context.l10n.onboardingWelcomeDescription,
+      image: Assets.onboarding.onboarding1,
+      customWidget: const CountryFlagsWidget(),
+    ),
+    OnboardingScreenData(
+      title: context.l10n.onboardingRecordsTitle,
+      subtitle: context.l10n.onboardingRecordsSubtitle,
+      description: context.l10n.onboardingRecordsDescription,
+      content: context.l10n.onboardingRecordsContent,
+      bottom: context.l10n.onboardingRecordsBottom,
+      image: Assets.onboarding.onboarding2,
+    ),
+    OnboardingScreenData(
+      title: context.l10n.onboardingAiModelTitle,
+      subtitle: context.l10n.onboardingAiModelSubtitle,
+      description: context.l10n.onboardingAiModelDescription,
+      image: Assets.onboarding.onboarding3,
+    ),
+    OnboardingScreenData(
+      title: context.l10n.onboardingSyncTitle,
+      subtitle: context.l10n.onboardingSyncSubtitle,
+      description: context.l10n.onboardingSyncDescription,
+      image: Assets.onboarding.onboarding4,
+      showBiometricToggle: true,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -79,22 +79,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       child: PageView(
                         controller: _pageController,
                         onPageChanged: (int page) {
-                          context
-                              .read<OnboardingBloc>()
-                              .add(OnboardingPageChanged(page));
+                          context.read<OnboardingBloc>().add(
+                            OnboardingPageChanged(page),
+                          );
                         },
                         children: _screens
-                            .map((screenData) => OnboardingScreen(
-                                  title: screenData.title,
-                                  subtitle: screenData.subtitle,
-                                  description: screenData.description,
-                                  content: screenData.content,
-                                  bottom: screenData.bottom,
-                                  image: screenData.image,
-                                  showBiometricToggle:
-                                      screenData.showBiometricToggle,
-                                  customWidget: screenData.customWidget,
-                                ))
+                            .map(
+                              (screenData) => OnboardingScreen(
+                                title: screenData.title,
+                                subtitle: screenData.subtitle,
+                                description: screenData.description,
+                                content: screenData.content,
+                                bottom: screenData.bottom,
+                                image: screenData.image,
+                                showBiometricToggle:
+                                    screenData.showBiometricToggle,
+                                customWidget: screenData.customWidget,
+                              ),
+                            )
                             .toList(),
                       ),
                     ),
@@ -104,8 +106,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       totalPages: _screens.length,
                     ),
                     SizedBox(
-                        height: MediaQuery.of(context).padding.bottom +
-                            Insets.extraSmall),
+                      height:
+                          MediaQuery.of(context).padding.bottom +
+                          Insets.extraSmall,
+                    ),
                   ],
                 ),
               ),

@@ -37,10 +37,15 @@ class _NotificationWidgetState extends State<NotificationWidget> {
 
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) {
-        final platformOffset = Platform.isIOS ? Insets.extraLarge : Insets.large;
+        final platformOffset = Platform.isIOS
+            ? Insets.extraLarge
+            : Insets.large;
         final tabletExtra = context.isTablet ? -36.0 : 0.0;
         final topPadding =
-            MediaQuery.of(context).viewPadding.top + kToolbarHeight + platformOffset + tabletExtra;
+            MediaQuery.of(context).viewPadding.top +
+            kToolbarHeight +
+            platformOffset +
+            tabletExtra;
         return BlocBuilder<NotificationBloc, NotificationState>(
           bloc: context.read<NotificationBloc>(),
           builder: (blocContext, currentState) {
@@ -56,8 +61,12 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                 ),
                 Positioned(
                   top: topPadding,
-                  left: context.isTablet ? context.screenHorizontalPadding : Insets.smallNormal,
-                  right: context.isTablet ? context.screenHorizontalPadding : Insets.smallNormal,
+                  left: context.isTablet
+                      ? context.screenHorizontalPadding
+                      : Insets.smallNormal,
+                  right: context.isTablet
+                      ? context.screenHorizontalPadding
+                      : Insets.smallNormal,
                   child: Card(
                     child: Container(
                       height: 368,
@@ -98,9 +107,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                                 TextButton(
                                   onPressed: () {
                                     _hideOverlay();
-                                    context
-                                        .read<NotificationBloc>()
-                                        .add(const NotificationCleared());
+                                    context.read<NotificationBloc>().add(
+                                      const NotificationCleared(),
+                                    );
                                   },
                                   style: TextButton.styleFrom(
                                     visualDensity: const VisualDensity(
@@ -133,8 +142,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                                     child: Text(
                                       context.l10n.noNotifications,
                                       style: AppTextStyle.bodySmall.copyWith(
-                                        color: colorScheme.onSurface
-                                            .withValues(alpha: 0.6),
+                                        color: colorScheme.onSurface.withValues(
+                                          alpha: 0.6,
+                                        ),
                                         decoration: TextDecoration.none,
                                       ),
                                     ),
@@ -145,10 +155,10 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                                         currentState.notifications.length,
                                     separatorBuilder: (context, index) =>
                                         Divider(
-                                      height: 1,
-                                      thickness: 1,
-                                      color: dividerColor,
-                                    ),
+                                          height: 1,
+                                          thickness: 1,
+                                          color: dividerColor,
+                                        ),
                                     itemBuilder: (context, index) {
                                       final notification =
                                           currentState.notifications[index];
@@ -243,8 +253,8 @@ class _NotificationWidgetState extends State<NotificationWidget> {
         }
 
         context.read<NotificationBloc>().add(
-              NotificationMarkedAsRead(notification: notification),
-            );
+          NotificationMarkedAsRead(notification: notification),
+        );
         _hideOverlay();
         try {
           if (notification.route.routeName.isNotEmpty) {
@@ -306,7 +316,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                             ? notification.progress! / 100
                             : null,
                         minHeight: 6,
-                        backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+                        backgroundColor: colorScheme.primary.withValues(
+                          alpha: 0.1,
+                        ),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           colorScheme.primary,
                         ),
@@ -330,9 +342,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                           confirmText: context.l10n.cancelDownloadTitle,
                           cancelText: context.l10n.continueButton,
                           onConfirm: () {
-                            GetIt.instance
-                                .get<LoadModelBloc>()
-                                .add(const LoadModelDownloadCancelled());
+                            GetIt.instance.get<LoadModelBloc>().add(
+                              const LoadModelDownloadCancelled(),
+                            );
                           },
                         );
                       },
@@ -358,12 +370,12 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                       onTap: () {
                         if (notification.id != null) {
                           context.read<NotificationBloc>().add(
-                                NotificationRemovedById(id: notification.id!),
-                              );
+                            NotificationRemovedById(id: notification.id!),
+                          );
                         } else {
                           context.read<NotificationBloc>().add(
-                                NotificationRemoved(notification: notification),
-                              );
+                            NotificationRemoved(notification: notification),
+                          );
                         }
                       },
                       child: SizedBox(
@@ -408,10 +420,12 @@ class _NotificationWidgetState extends State<NotificationWidget> {
   Widget build(BuildContext context) {
     return BlocBuilder<NotificationBloc, NotificationState>(
       builder: (context, state) {
-        final hasUnread =
-            state.notifications.any((notification) => !notification.read);
-        final hasProgress =
-            state.notifications.any((n) => n.type == NotificationType.progress);
+        final hasUnread = state.notifications.any(
+          (notification) => !notification.read,
+        );
+        final hasProgress = state.notifications.any(
+          (n) => n.type == NotificationType.progress,
+        );
         final colorScheme = context.colorScheme;
 
         return CompositedTransformTarget(
@@ -444,8 +458,9 @@ class _NotificationWidgetState extends State<NotificationWidget> {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color:
-                            hasProgress ? colorScheme.primary : AppColors.error,
+                        color: hasProgress
+                            ? colorScheme.primary
+                            : AppColors.error,
                         shape: BoxShape.circle,
                       ),
                     ),

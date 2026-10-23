@@ -10,12 +10,14 @@ class PatientNameBuilder {
       return existingName != null ? [existingName] : null;
     }
 
-    final finalGiven = given ??
+    final finalGiven =
+        given ??
         (existingName?.given?.isNotEmpty == true
             ? existingName!.given!.map((g) => g.toString()).toList()
             : <String>[]);
 
-    final finalFamily = family ??
+    final finalFamily =
+        family ??
         (existingName?.family != null
             ? existingName!.family!.toString()
             : null);
@@ -52,8 +54,9 @@ class PatientNameBuilder {
     String? family,
     List<fhir_r4.HumanName>? existingNames,
   }) {
-    final existingName =
-        existingNames?.isNotEmpty == true ? existingNames!.first : null;
+    final existingName = existingNames?.isNotEmpty == true
+        ? existingNames!.first
+        : null;
     return buildHumanName(
       given: given,
       family: family,

@@ -88,9 +88,9 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
     final senderFilters = receivedData.activeFilters;
     if (senderFilters.isNotEmpty) {
       final resolved = senderFilters
-          .map((name) => FhirType.values
-              .where((t) => t.name == name)
-              .firstOrNull)
+          .map(
+            (name) => FhirType.values.where((t) => t.name == name).firstOrNull,
+          )
           .whereType<FhirType>()
           .toList();
 
@@ -106,13 +106,21 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
 
   void _ensureAttachmentBrowseBloc(List<IFhirResource> records) {
     if (_attachmentBrowseBloc != null) return;
-    final service = EphemeralAttachmentBrowseService(records, getIt<SpecialtyClassifier>());
-    _attachmentBrowseBloc = AttachmentBrowseBloc(service, getIt<SpecialtyClassifier>());
-    _attachmentBrowseBloc!.add(AttachmentBrowseInitialised(
-      resourceTypes: _filterTypes,
-      readOnly: true,
-      sourceRecords: records,
-    ));
+    final service = EphemeralAttachmentBrowseService(
+      records,
+      getIt<SpecialtyClassifier>(),
+    );
+    _attachmentBrowseBloc = AttachmentBrowseBloc(
+      service,
+      getIt<SpecialtyClassifier>(),
+    );
+    _attachmentBrowseBloc!.add(
+      AttachmentBrowseInitialised(
+        resourceTypes: _filterTypes,
+        readOnly: true,
+        sourceRecords: records,
+      ),
+    );
   }
 
   void _onSearchFocusChanged() {
@@ -159,10 +167,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
       builder: (_) {
         final receivedData = widget.state.receivedData;
         final availableTypes = receivedData != null
-            ? receivedData.records
-                .map((r) => r.fhirType)
-                .toSet()
-                .toList()
+            ? receivedData.records.map((r) => r.fhirType).toSet().toList()
             : <FhirType>[];
         return RecordsFilterBottomSheet(
           activeFilters: _filterTypes,
@@ -170,11 +175,13 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
           onApply: (filters, _, _) {
             setState(() => _filterTypes = filters);
             if (_viewMode == RecordsViewMode.attachments) {
-              _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
-                resourceTypes: filters,
-                readOnly: true,
-                sourceRecords: _allRecords,
-              ));
+              _attachmentBrowseBloc?.add(
+                AttachmentBrowseInitialised(
+                  resourceTypes: filters,
+                  readOnly: true,
+                  sourceRecords: _allRecords,
+                ),
+              );
             }
           },
         );
@@ -183,23 +190,29 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   }
 
   void _removeFilter(FhirType filter) {
-    setState(() => _filterTypes = _filterTypes.where((f) => f != filter).toList());
+    setState(
+      () => _filterTypes = _filterTypes.where((f) => f != filter).toList(),
+    );
     if (_viewMode == RecordsViewMode.attachments) {
-      _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
-        resourceTypes: _filterTypes,
-        readOnly: true,
-        sourceRecords: _allRecords,
-      ));
+      _attachmentBrowseBloc?.add(
+        AttachmentBrowseInitialised(
+          resourceTypes: _filterTypes,
+          readOnly: true,
+          sourceRecords: _allRecords,
+        ),
+      );
     }
   }
 
   void _clearAllFilters() {
     setState(() => _filterTypes = []);
     if (_viewMode == RecordsViewMode.attachments) {
-      _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
-        readOnly: true,
-        sourceRecords: _allRecords,
-      ));
+      _attachmentBrowseBloc?.add(
+        AttachmentBrowseInitialised(
+          readOnly: true,
+          sourceRecords: _allRecords,
+        ),
+      );
     }
   }
 
@@ -222,7 +235,9 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
     var records = receivedData.records;
 
     if (_filterTypes.isNotEmpty) {
-      records = records.where((r) => _filterTypes.contains(r.fhirType)).toList();
+      records = records
+          .where((r) => _filterTypes.contains(r.fhirType))
+          .toList();
     }
 
     if (_searchQuery.isNotEmpty && _searchQuery.length >= 2) {
@@ -237,9 +252,9 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
             .toLowerCase();
 
         return title.contains(query) ||
-               displayTitle.contains(query) ||
-               statusDisplay.contains(query) ||
-               additionalInfoText.contains(query);
+            displayTitle.contains(query) ||
+            statusDisplay.contains(query) ||
+            additionalInfoText.contains(query);
       }).toList();
     }
 
@@ -255,7 +270,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
       return Center(child: Text(context.l10n.shareNoDataReceived));
     }
 
-    final isDesktopSplit = _viewMode == RecordsViewMode.attachments &&
+    final isDesktopSplit =
+        _viewMode == RecordsViewMode.attachments &&
         context.isTablet &&
         MediaQuery.of(context).orientation != Orientation.portrait;
 
@@ -272,8 +288,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
             ],
           )
         : (_viewMode == RecordsViewMode.attachments
-            ? _buildAttachmentsBody(context, receivedData.records)
-            : _buildListBody(context));
+              ? _buildAttachmentsBody(context, receivedData.records)
+              : _buildListBody(context));
 
     if (_searchFocusNode.hasFocus) return content;
 
@@ -302,7 +318,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   }
 
   Widget _buildStyledHeader(BuildContext context) {
-    final isSplit = context.isTablet &&
+    final isSplit =
+        context.isTablet &&
         MediaQuery.of(context).orientation != Orientation.portrait;
     return ValueListenableBuilder<bool>(
       valueListenable: _isScrolled,
@@ -489,11 +506,13 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
                         _isScrolled.value = false;
                         setState(() => _viewMode = mode);
                         if (mode == RecordsViewMode.attachments) {
-                          _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
-                            resourceTypes: _filterTypes,
-                            readOnly: true,
-                            sourceRecords: _allRecords,
-                          ));
+                          _attachmentBrowseBloc?.add(
+                            AttachmentBrowseInitialised(
+                              resourceTypes: _filterTypes,
+                              readOnly: true,
+                              sourceRecords: _allRecords,
+                            ),
+                          );
                         }
                       },
                     ),
@@ -612,11 +631,15 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
             child: Wrap(
               spacing: 6.0,
               runSpacing: 6,
-              children: _filterTypes.map((filter) => _buildFilterChip(
-                context,
-                label: filter.display,
-                onTap: () => _removeFilter(filter),
-              )).toList(),
+              children: _filterTypes
+                  .map(
+                    (filter) => _buildFilterChip(
+                      context,
+                      label: filter.display,
+                      onTap: () => _removeFilter(filter),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
           GestureDetector(
@@ -673,7 +696,10 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
     );
   }
 
-  Widget _buildAttachmentsBody(BuildContext context, List<IFhirResource> records) {
+  Widget _buildAttachmentsBody(
+    BuildContext context,
+    List<IFhirResource> records,
+  ) {
     _ensureAttachmentBrowseBloc(records);
 
     return NotificationListener<ScrollNotification>(
@@ -762,7 +788,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
               ResourceCard(
                 resource: resource,
                 readOnly: true,
-                ephemeralRecords: widget.state.receivedData?.records ?? const [],
+                ephemeralRecords:
+                    widget.state.receivedData?.records ?? const [],
               ),
             ],
           ),

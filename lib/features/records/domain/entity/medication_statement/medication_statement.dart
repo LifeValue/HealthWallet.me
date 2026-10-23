@@ -15,7 +15,9 @@ import 'package:intl/intl.dart';
 part 'medication_statement.freezed.dart';
 
 @freezed
-abstract class MedicationStatement with _$MedicationStatement implements IFhirResource {
+abstract class MedicationStatement
+    with _$MedicationStatement
+    implements IFhirResource {
   const MedicationStatement._();
 
   const factory MedicationStatement({
@@ -53,8 +55,9 @@ abstract class MedicationStatement with _$MedicationStatement implements IFhirRe
 
   factory MedicationStatement.fromLocalData(FhirResourceLocalDto data) {
     final resourceJson = jsonDecode(data.resourceRaw);
-    final fhirMedicationStatement =
-        fhir_r4.MedicationStatement.fromJson(resourceJson);
+    final fhirMedicationStatement = fhir_r4.MedicationStatement.fromJson(
+      resourceJson,
+    );
 
     return MedicationStatement(
       id: data.id,
@@ -89,16 +92,16 @@ abstract class MedicationStatement with _$MedicationStatement implements IFhirRe
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'MedicationStatement',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'MedicationStatement',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -118,7 +121,8 @@ abstract class MedicationStatement with _$MedicationStatement implements IFhirRe
 
     // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
-        medicationX?.isAs<CodeableConcept>());
+      medicationX?.isAs<CodeableConcept>(),
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createMedicationLine(medicationDisplay),
@@ -136,17 +140,22 @@ abstract class MedicationStatement with _$MedicationStatement implements IFhirRe
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(statusReason);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusReasonDisplay,
-          prefix: 'Status Reason'),
+      ResourceFieldMapper.createStatusLine(
+        statusReasonDisplay,
+        prefix: 'Status Reason',
+      ),
     );
 
     // Category
-    final categoryDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(category);
+    final categoryDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      category,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Effective Period
@@ -157,25 +166,26 @@ abstract class MedicationStatement with _$MedicationStatement implements IFhirRe
     );
 
     // Information Source
-    final informationSourceDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(informationSource);
+    final informationSourceDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      informationSource,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(informationSourceDisplay,
-          prefix: 'Information Source'),
+      ResourceFieldMapper.createUserLine(
+        informationSourceDisplay,
+        prefix: 'Information Source',
+      ),
     );
 
     // Dosage Instructions
-    final dosageDisplay =
-        FhirFieldExtractor.extractDosageInstructions(dosage);
+    final dosageDisplay = FhirFieldExtractor.extractDosageInstructions(dosage);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
     );
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
@@ -183,10 +193,12 @@ abstract class MedicationStatement with _$MedicationStatement implements IFhirRe
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes

@@ -83,10 +83,16 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     _messageSub = _tcpService.messages.listen((message) {
       if (message.type == MessageType.hello) {
         try {
-          final json = jsonDecode(message.payloadString) as Map<String, dynamic>;
+          final json =
+              jsonDecode(message.payloadString) as Map<String, dynamic>;
           var remoteName = json['device_name'] as String?;
-          debugPrint('[Communication] Remote device name from hello: "$remoteName"');
-          if (remoteName == null || remoteName.isEmpty || remoteName == 'localhost' || remoteName == 'unknown') {
+          debugPrint(
+            '[Communication] Remote device name from hello: "$remoteName"',
+          );
+          if (remoteName == null ||
+              remoteName.isEmpty ||
+              remoteName == 'localhost' ||
+              remoteName == 'unknown') {
             remoteName = 'Mobile Device';
           }
           add(CommunicationRemoteDeviceNameReceived(name: remoteName));
@@ -107,7 +113,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       } else if (mpcState == CommunicationState.disconnected) {
         _tcpService.setUseMpc(false);
         if (state.connectionStatus == ConnectionStatus.connected &&
-            state.connectionTransport == ConnectionTransport.multipeerConnectivity) {
+            state.connectionTransport ==
+                ConnectionTransport.multipeerConnectivity) {
           add(const CommunicationDisconnected());
         }
       }
@@ -133,7 +140,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     if (_platform.isDesktop) {
       final (:ip, :vpnDetected) = await _getLocalIp();
       if (vpnDetected) {
-        debugPrint('[Communication] VPN detected — connection issues may occur');
+        debugPrint(
+          '[Communication] VPN detected — connection issues may occur',
+        );
       }
       final updated = pairing.lastIp != ip
           ? pairing.copyWith(lastIp: ip)
@@ -141,10 +150,12 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       if (updated != pairing) {
         await _pairingStorage.savePairing(updated);
       }
-      emit(state.copyWith(
-        pairedDevice: updated,
-        vpnDetected: vpnDetected,
-      ));
+      emit(
+        state.copyWith(
+          pairedDevice: updated,
+          vpnDetected: vpnDetected,
+        ),
+      );
       await _startDesktopServer(emit, updated);
     } else {
       add(const CommunicationConnectionRequested());
@@ -230,11 +241,13 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
     _reconnectTimer?.cancel();
 
-    emit(state.copyWith(
-      connectionStatus: ConnectionStatus.discovering,
-      connectionTransport: ConnectionTransport.unknown,
-      error: null,
-    ));
+    emit(
+      state.copyWith(
+        connectionStatus: ConnectionStatus.discovering,
+        connectionTransport: ConnectionTransport.unknown,
+        error: null,
+      ),
+    );
 
     if (_platform.isDesktop) {
       await _startDesktopServer(emit, state.pairedDevice!);
@@ -245,8 +258,11 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     if (await _tryNetworkDiscovery()) return;
     if (await _tryMpc()) return;
 
-    add(const CommunicationConnectionFailed(
-        error: 'Desktop not found. Try scanning QR again.'));
+    add(
+      const CommunicationConnectionFailed(
+        error: 'Desktop not found. Try scanning QR again.',
+      ),
+    );
   }
 
   Future<bool> _tryMpc() async {
@@ -271,7 +287,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     final pairing = _pairingStorage.loadPairing();
     if (pairing == null) return false;
 
-    debugPrint('[Communication] Step 2: TCP saved IP ${pairing.lastIp}:${pairing.lastPort}');
+    debugPrint(
+      '[Communication] Step 2: TCP saved IP ${pairing.lastIp}:${pairing.lastPort}',
+    );
     try {
       await _tcpService.connectToServer(
         ip: pairing.lastIp,
@@ -319,13 +337,15 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         ? ConnectionTransport.multipeerConnectivity
         : ConnectionTransport.tcp;
 
-    emit(state.copyWith(
-      connectionStatus: ConnectionStatus.connected,
-      connectionTransport: transport,
-      connectedIp: event.ip == 'mpc' ? null : event.ip,
-      connectedPort: event.port == 0 ? null : event.port,
-      error: null,
-    ));
+    emit(
+      state.copyWith(
+        connectionStatus: ConnectionStatus.connected,
+        connectionTransport: transport,
+        connectedIp: event.ip == 'mpc' ? null : event.ip,
+        connectedPort: event.port == 0 ? null : event.port,
+        error: null,
+      ),
+    );
 
     if (transport == ConnectionTransport.multipeerConnectivity) {
       final pairing = _pairingStorage.loadPairing();
@@ -344,17 +364,21 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     final wasConnected = state.connectionStatus == ConnectionStatus.connected;
     if (!wasConnected) return;
 
-    emit(state.copyWith(
-      connectionStatus: ConnectionStatus.disconnected,
-      connectionTransport: ConnectionTransport.unknown,
-      connectedIp: null,
-      connectedPort: null,
-    ));
+    emit(
+      state.copyWith(
+        connectionStatus: ConnectionStatus.disconnected,
+        connectionTransport: ConnectionTransport.unknown,
+        connectedIp: null,
+        connectedPort: null,
+      ),
+    );
 
     _tcpService.setUseMpc(false);
 
     if (_platform.isDesktop) {
-      debugPrint('[Communication] Client disconnected, restarting MPC advertising');
+      debugPrint(
+        '[Communication] Client disconnected, restarting MPC advertising',
+      );
       if (_mpcTransport != null) {
         await _mpcTransport!.disconnect();
         await _mpcTransport!.startServer(port: 0);
@@ -364,19 +388,27 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     if (state.pairedDevice != null && _platform.isMobile) {
       _reconnectAttempts++;
       if (_reconnectAttempts > _maxReconnectAttempts) {
-        debugPrint('[Communication] Max reconnect attempts reached, clearing pairing');
+        debugPrint(
+          '[Communication] Max reconnect attempts reached, clearing pairing',
+        );
         _reconnectAttempts = 0;
         await _pairingStorage.clearPairing();
         emit(state.copyWith(pairedDevice: null));
-        add(const CommunicationConnectionFailed(
-            error: 'Could not connect. Scan QR code to pair again.'));
+        add(
+          const CommunicationConnectionFailed(
+            error: 'Could not connect. Scan QR code to pair again.',
+          ),
+        );
         return;
       }
       final delay = _initialReconnectDelay * (1 << (_reconnectAttempts - 1));
-      debugPrint('[Communication] Lost connection, reconnecting in ${delay.inSeconds}s (attempt $_reconnectAttempts/$_maxReconnectAttempts)');
+      debugPrint(
+        '[Communication] Lost connection, reconnecting in ${delay.inSeconds}s (attempt $_reconnectAttempts/$_maxReconnectAttempts)',
+      );
       _reconnectTimer?.cancel();
       _reconnectTimer = Timer(delay, () {
-        if (!isClosed && state.connectionStatus == ConnectionStatus.disconnected) {
+        if (!isClosed &&
+            state.connectionStatus == ConnectionStatus.disconnected) {
           add(const CommunicationConnectionRequested());
         }
       });
@@ -391,22 +423,26 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     _reconnectAttempts = 0;
     await _tcpService.disconnect();
 
-    emit(state.copyWith(
-      connectionStatus: ConnectionStatus.disconnected,
-      connectionTransport: ConnectionTransport.unknown,
-      connectedIp: null,
-      connectedPort: null,
-    ));
+    emit(
+      state.copyWith(
+        connectionStatus: ConnectionStatus.disconnected,
+        connectionTransport: ConnectionTransport.unknown,
+        connectedIp: null,
+        connectedPort: null,
+      ),
+    );
   }
 
   void _onConnectionFailed(
     CommunicationConnectionFailed event,
     Emitter<DesktopSyncState> emit,
   ) {
-    emit(state.copyWith(
-      connectionStatus: ConnectionStatus.disconnected,
-      error: event.error,
-    ));
+    emit(
+      state.copyWith(
+        connectionStatus: ConnectionStatus.disconnected,
+        error: event.error,
+      ),
+    );
   }
 
   void _onRemoteDeviceName(
@@ -435,7 +471,11 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
     final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
     final virtualKeywords = [
-      'vethernet', 'vmware', 'virtualbox', 'docker', 'hyper-v',
+      'vethernet',
+      'vmware',
+      'virtualbox',
+      'docker',
+      'hyper-v',
     ];
 
     bool isVpn(String name) =>
@@ -443,13 +483,16 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     bool isVirtual(String name) =>
         virtualKeywords.any((k) => name.toLowerCase().contains(k));
     bool isUsable(NetworkInterface iface) =>
-        !isVpn(iface.name) && !isVirtual(iface.name) && iface.addresses.isNotEmpty;
+        !isVpn(iface.name) &&
+        !isVirtual(iface.name) &&
+        iface.addresses.isNotEmpty;
     bool isWifi(String name) {
       final lower = name.toLowerCase();
       return lower.startsWith('en') ||
           lower.startsWith('wlan') ||
           lower.startsWith('wi-fi');
     }
+
     bool isEthernet(String name) {
       final lower = name.toLowerCase();
       return lower.startsWith('eth');

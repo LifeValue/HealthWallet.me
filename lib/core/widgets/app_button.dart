@@ -49,7 +49,8 @@ class AppButton extends StatelessWidget {
 
     Widget button;
 
-    final effectivePadding = padding ??
+    final effectivePadding =
+        padding ??
         const EdgeInsets.symmetric(
           horizontal: Insets.medium,
           vertical: Insets.smallNormal,
@@ -197,17 +198,18 @@ class AppButton extends StatelessWidget {
         ),
       );
     } else {
-      final bgColor = backgroundColor ??
+      final bgColor =
+          backgroundColor ??
           (variant == AppButtonVariant.primary
               ? colorScheme.primary
               : colorScheme.secondary);
       final fgColor = backgroundColor != null
           ? Colors.white
           : (isDarkMode
-              ? Colors.white
-              : (variant == AppButtonVariant.primary
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSecondary));
+                ? Colors.white
+                : (variant == AppButtonVariant.primary
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSecondary));
       final labelWidget = Text(
         label,
         style: AppTextStyle.buttonMedium.copyWith(

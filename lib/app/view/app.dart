@@ -86,8 +86,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
     final bluetoothOn = await getIt<BluetoothStateService>().isEnabled();
     if (!bluetoothOn) {
-      await userRepository
-          .updateUser(user.copyWith(isReceiveModeEnabled: false));
+      await userRepository.updateUser(
+        user.copyWith(isReceiveModeEnabled: false),
+      );
       return;
     }
 
@@ -114,9 +115,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-            create: (_) => getIt<UserBloc>()..add(const UserInitialised())),
+          create: (_) => getIt<UserBloc>()..add(const UserInitialised()),
+        ),
         BlocProvider(
-            create: (_) => getIt<SyncBloc>()..add(const SyncInitialised())),
+          create: (_) => getIt<SyncBloc>()..add(const SyncInitialised()),
+        ),
         BlocProvider(create: (_) => getIt<RecordsBloc>()),
         BlocProvider.value(value: getIt<ProcessingBloc>()),
         BlocProvider.value(
@@ -131,45 +134,43 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           BlocProvider.value(value: getIt<TrayBloc>()),
       ],
       child: MultiBlocListener(
-          listeners: [
-            BlocListener<SyncBloc, SyncState>(
-              listenWhen: (previous, current) =>
-                  previous.syncStatus != current.syncStatus ||
-                  previous.shouldShowTutorial != current.shouldShowTutorial,
-              listener: _handleSyncBlocStateChange,
-            ),
-            BlocListener<ProcessingBloc, ProcessingState>(
-              listenWhen: (previous, current) =>
-                  previous.status != current.status &&
-                  current.status == const PipelineStatus.success(),
-              listener: (context, state) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!context.mounted) return;
-                  _handleScanSuccess(context);
-                });
-              },
-            ),
-            BlocListener<RecordsBloc, RecordsState>(
-              listenWhen: (previous, current) =>
-                  current.status == const RecordsStatus.deleted(),
-              listener: (context, state) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!context.mounted) return;
-                  context
-                      .read<PatientBloc>()
-                      .add(const PatientPatientsLoaded());
-                  context
-                      .read<HomeBloc>()
-                      .add(const HomeRefreshPreservingOrder());
-                });
-              },
-            ),
-          ],
-          child: BlocBuilder<UserBloc, UserState>(
-            buildWhen: (previous, current) =>
-                previous.user.isDarkMode != current.user.isDarkMode ||
-                previous.appLocale != current.appLocale,
-            builder: (context, state) {
+        listeners: [
+          BlocListener<SyncBloc, SyncState>(
+            listenWhen: (previous, current) =>
+                previous.syncStatus != current.syncStatus ||
+                previous.shouldShowTutorial != current.shouldShowTutorial,
+            listener: _handleSyncBlocStateChange,
+          ),
+          BlocListener<ProcessingBloc, ProcessingState>(
+            listenWhen: (previous, current) =>
+                previous.status != current.status &&
+                current.status == const PipelineStatus.success(),
+            listener: (context, state) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!context.mounted) return;
+                _handleScanSuccess(context);
+              });
+            },
+          ),
+          BlocListener<RecordsBloc, RecordsState>(
+            listenWhen: (previous, current) =>
+                current.status == const RecordsStatus.deleted(),
+            listener: (context, state) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!context.mounted) return;
+                context.read<PatientBloc>().add(const PatientPatientsLoaded());
+                context.read<HomeBloc>().add(
+                  const HomeRefreshPreservingOrder(),
+                );
+              });
+            },
+          ),
+        ],
+        child: BlocBuilder<UserBloc, UserState>(
+          buildWhen: (previous, current) =>
+              previous.user.isDarkMode != current.user.isDarkMode ||
+              previous.appLocale != current.appLocale,
+          builder: (context, state) {
             return MaterialApp.router(
               scrollBehavior: const MaterialScrollBehavior().copyWith(
                 dragDevices: {
@@ -181,8 +182,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               title: 'HealthWallet.me',
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
-              themeMode:
-                  state.user.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              themeMode: state.user.isDarkMode
+                  ? ThemeMode.dark
+                  : ThemeMode.light,
               locale: state.appLocale,
               routerConfig: router.config(
                 navigatorObservers: () => [routeObserver],
@@ -231,8 +233,9 @@ void _handleSyncBlocStateChange(BuildContext context, SyncState state) {
     Future.delayed(const Duration(milliseconds: 500), () {
       if (context.mounted) {
         final homeState = context.read<HomeBloc>().state;
-        final currentSource =
-            homeState.selectedSource.isEmpty ? 'All' : homeState.selectedSource;
+        final currentSource = homeState.selectedSource.isEmpty
+            ? 'All'
+            : homeState.selectedSource;
         PatientSourceUtils.reloadHomeWithPatientFilter(context, currentSource);
       }
     });

@@ -115,15 +115,20 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
     }
     if (result.gender != null) {
       _selectedGender = GenderMapper.mapFhirGenderToDisplay(
-          result.gender!, context.l10n);
+        result.gender!,
+        context.l10n,
+      );
     }
   }
 
-  List<String> _getGenderOptions(AppLocalizations l10n) =>
-      [l10n.male, l10n.female, l10n.preferNotToSay];
+  List<String> _getGenderOptions(AppLocalizations l10n) => [
+    l10n.male,
+    l10n.female,
+    l10n.preferNotToSay,
+  ];
   final List<String> _bloodTypeOptions = [
     'N/A',
-    ...BloodTypes.getAllBloodTypes()
+    ...BloodTypes.getAllBloodTypes(),
   ];
 
   @override
@@ -134,8 +139,8 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
     _familyController = TextEditingController();
     _identifierController = TextEditingController();
     _selectedBloodType = 'N/A';
-    _selectedCountryCode = WidgetsBinding
-            .instance.platformDispatcher.locale.countryCode
+    _selectedCountryCode =
+        WidgetsBinding.instance.platformDispatcher.locale.countryCode
             ?.toUpperCase() ??
         'US';
 
@@ -196,7 +201,8 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
       final identifierChanged = currentIdentifierValue.isNotEmpty;
 
       if (mounted) {
-        final patientFieldsChanged = nameChanged ||
+        final patientFieldsChanged =
+            nameChanged ||
             birthDateChanged ||
             genderChanged ||
             identifierChanged ||
@@ -210,20 +216,23 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
               : null;
 
           context.read<PatientBloc>().add(
-                PatientEditSaved(
-                  patientId: _currentPatient!.id,
-                  sourceId: _currentPatient!.sourceId,
-                  given: givenList,
-                  family:
-                      currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
-                  birthDate: _selectedBirthDate,
-                  gender: _selectedGender,
-                  bloodType: _selectedBloodType,
-                  identifierValue: currentIdentifierValue.isNotEmpty ? currentIdentifierValue : null,
-                  contactPhone: _selectedContactPhone.isNotEmpty ? _selectedContactPhone : null,
-                  availableSources: homeState.sources,
-                ),
-              );
+            PatientEditSaved(
+              patientId: _currentPatient!.id,
+              sourceId: _currentPatient!.sourceId,
+              given: givenList,
+              family: currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
+              birthDate: _selectedBirthDate,
+              gender: _selectedGender,
+              bloodType: _selectedBloodType,
+              identifierValue: currentIdentifierValue.isNotEmpty
+                  ? currentIdentifierValue
+                  : null,
+              contactPhone: _selectedContactPhone.isNotEmpty
+                  ? _selectedContactPhone
+                  : null,
+              availableSources: homeState.sources,
+            ),
+          );
         }
 
         context.popDialog();

@@ -48,7 +48,14 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
   bool _isDragging = false;
 
   static const _allowedExtensions = [
-    '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff'
+    '.pdf',
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.bmp',
+    '.webp',
+    '.tiff',
   ];
 
   bool get _isDesktop => getIt<AppPlatform>().isDesktop;
@@ -68,9 +75,9 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
     if (externalFileService.hasPendingFiles) {
       final paths = externalFileService.consumeFilePaths();
       if (paths.isNotEmpty) {
-        context
-            .read<ProcessingBloc>()
-            .add(DocumentImported(filePaths: paths.toList()));
+        context.read<ProcessingBloc>().add(
+          DocumentImported(filePaths: paths.toList()),
+        );
       }
     }
   }
@@ -147,7 +154,10 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
                           )
                         else
                           Padding(
-                            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
+                            padding: EdgeInsets.only(
+                              bottom:
+                                  MediaQuery.of(context).padding.bottom + 76,
+                            ),
                             child: ImportActions(
                               onImportDocument: () =>
                                   _handleImportDocument(context),
@@ -274,7 +284,11 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
         width: 200,
         child: TextButton.icon(
           onPressed: () => _handleImportDocument(context),
-          icon: Icon(Icons.folder_open, size: 18, color: context.colorScheme.primary),
+          icon: Icon(
+            Icons.folder_open,
+            size: 18,
+            color: context.colorScheme.primary,
+          ),
           label: Text(
             context.l10n.browseFiles,
             style: AppTextStyle.buttonSmall.copyWith(
@@ -375,7 +389,7 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
           'gif',
           'bmp',
           'webp',
-          'tiff'
+          'tiff',
         ],
       );
 
@@ -391,8 +405,8 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
 
         if (validPaths.isNotEmpty && context.mounted) {
           context.read<ProcessingBloc>().add(
-                DocumentImported(filePaths: validPaths),
-              );
+            DocumentImported(filePaths: validPaths),
+          );
         }
       }
     } catch (_) {}
@@ -416,8 +430,8 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
 
       if (validPaths.isNotEmpty && context.mounted) {
         context.read<ProcessingBloc>().add(
-              DocumentImported(filePaths: validPaths),
-            );
+          DocumentImported(filePaths: validPaths),
+        );
       }
     } catch (_) {}
   }

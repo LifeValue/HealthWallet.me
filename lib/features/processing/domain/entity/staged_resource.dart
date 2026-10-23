@@ -51,25 +51,24 @@ typedef StagedEncounter = StagedResource<MappingEncounter, Encounter>;
 typedef StagedDiagnosticReport = StagedResource<MappingDiagnosticReport, Never>;
 
 Map<String, dynamic> stagedPatientToJson(StagedPatient patient) => {
-      'draft': patient.draft?.toJson(),
-      'existing': patient.existing?.toDto().toJson(),
-      'mode': patient.mode.toString(),
-    };
+  'draft': patient.draft?.toJson(),
+  'existing': patient.existing?.toDto().toJson(),
+  'mode': patient.mode.toString(),
+};
 
 Map<String, dynamic> stagedEncounterToJson(StagedEncounter encounter) => {
-      'draft': encounter.draft?.toJson(),
-      'existing': encounter.existing?.toDto().toJson(),
-      'mode': encounter.mode.toString(),
-    };
+  'draft': encounter.draft?.toJson(),
+  'existing': encounter.existing?.toDto().toJson(),
+  'mode': encounter.mode.toString(),
+};
 
 StagedPatient stagedPatientFromJson(Map<String, dynamic> json) => StagedPatient(
-      draft:
-          json['draft'] != null ? MappingPatient.fromJson(json['draft']) : null,
-      existing: json['existing'] != null
-          ? Patient.fromDto(FhirResourceDto.fromJson(json['existing']))
-          : null,
-      mode: ImportMode.fromString(json['mode']),
-    );
+  draft: json['draft'] != null ? MappingPatient.fromJson(json['draft']) : null,
+  existing: json['existing'] != null
+      ? Patient.fromDto(FhirResourceDto.fromJson(json['existing']))
+      : null,
+  mode: ImportMode.fromString(json['mode']),
+);
 
 StagedEncounter stagedEncounterFromJson(Map<String, dynamic> json) =>
     StagedEncounter(
@@ -83,18 +82,18 @@ StagedEncounter stagedEncounterFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> stagedDiagnosticReportToJson(
-        StagedDiagnosticReport report) =>
-    {
-      'draft': report.draft?.toJson(),
-      'existing': null,
-      'mode': report.mode.toString(),
-    };
+  StagedDiagnosticReport report,
+) => {
+  'draft': report.draft?.toJson(),
+  'existing': null,
+  'mode': report.mode.toString(),
+};
 
 StagedDiagnosticReport stagedDiagnosticReportFromJson(
-        Map<String, dynamic> json) =>
-    StagedDiagnosticReport(
-      draft: json['draft'] != null
-          ? MappingDiagnosticReport.fromJson(json['draft'])
-          : null,
-      mode: ImportMode.fromString(json['mode']),
-    );
+  Map<String, dynamic> json,
+) => StagedDiagnosticReport(
+  draft: json['draft'] != null
+      ? MappingDiagnosticReport.fromJson(json['draft'])
+      : null,
+  mode: ImportMode.fromString(json['mode']),
+);

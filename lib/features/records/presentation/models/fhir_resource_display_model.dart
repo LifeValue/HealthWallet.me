@@ -5,7 +5,7 @@ class FhirResourceDisplayModel {
   final String id;
   final String resourceType;
   final String
-      primaryDisplay; // Main title (e.g., condition name, allergy substance)
+  primaryDisplay; // Main title (e.g., condition name, allergy substance)
   final String? secondaryDisplay; // Subtitle (e.g., status, severity)
   final String? date; // Relevant date for the resource
   final String? status; // Clinical status if applicable
@@ -27,7 +27,8 @@ class FhirResourceDisplayModel {
 
   /// Create from display data built by DisplayModelBuilder
   factory FhirResourceDisplayModel.fromDisplayData(
-      Map<String, dynamic> displayData) {
+    Map<String, dynamic> displayData,
+  ) {
     return FhirResourceDisplayModel(
       id: displayData['id'] as String? ?? '',
       resourceType: displayData['resourceType'] as String? ?? 'Unknown',
@@ -39,7 +40,7 @@ class FhirResourceDisplayModel {
       category: displayData['category'] as String?,
       additionalInfo:
           (displayData['additionalInfo'] as List<dynamic>?)?.cast<String>() ??
-              [],
+          [],
       rawResource: displayData['rawResource'] as Map<String, dynamic>? ?? {},
     );
   }

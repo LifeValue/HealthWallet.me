@@ -26,21 +26,24 @@ abstract class RestApiService {
 
 @LazySingleton(as: RestApiService)
 class RestApiServiceImpl implements RestApiService {
-  final _dio = Dio(BaseOptions(
-    baseUrl: AppConstants.baseUrl,
-    connectTimeout: AppConstants.connectTimeout,
-    sendTimeout: AppConstants.sendTimeout,
-    receiveTimeout: AppConstants.receiveTimeout,
-  ))
-    ..interceptors.addAll([
-      LogInterceptor(
-        request: true,
-        responseBody: true,
-        requestBody: true,
-        requestHeader: true,
-      ),
-      AccessTokenInterceptor(),
-    ]);
+  final _dio =
+      Dio(
+          BaseOptions(
+            baseUrl: AppConstants.baseUrl,
+            connectTimeout: AppConstants.connectTimeout,
+            sendTimeout: AppConstants.sendTimeout,
+            receiveTimeout: AppConstants.receiveTimeout,
+          ),
+        )
+        ..interceptors.addAll([
+          LogInterceptor(
+            request: true,
+            responseBody: true,
+            requestBody: true,
+            requestHeader: true,
+          ),
+          AccessTokenInterceptor(),
+        ]);
 
   @override
   Future<T> request<T>({
@@ -73,8 +76,9 @@ class RestApiServiceImpl implements RestApiService {
         ),
       );
 
-      final dynamic data =
-          (onExtract != null) ? onExtract(response.data) : response.data;
+      final dynamic data = (onExtract != null)
+          ? onExtract(response.data)
+          : response.data;
       return (decoder != null) ? decoder(data) : data;
     } catch (exception) {
       throw mapDioException(exception);
@@ -143,9 +147,10 @@ class RestApiServiceImpl implements RestApiService {
         case DioExceptionType.receiveTimeout:
         case DioExceptionType.sendTimeout:
           return RemoteException(
-              kind: RemoteExceptionKind.timeout,
-              rootException: exception,
-              message: remoteTimeoutMessage);
+            kind: RemoteExceptionKind.timeout,
+            rootException: exception,
+            message: remoteTimeoutMessage,
+          );
         case DioExceptionType.badResponse:
           final httpErrorCode = exception.response?.statusCode ?? -1;
 
@@ -153,7 +158,8 @@ class RestApiServiceImpl implements RestApiService {
 
           /// server-defined error
           if (exception.response?.data != null) {
-            message = exception.response!.data['message'] ??
+            message =
+                exception.response!.data['message'] ??
                 exception.response!.data['error'] ??
                 remoteGenericMessage;
           }
@@ -167,18 +173,22 @@ class RestApiServiceImpl implements RestApiService {
         case DioExceptionType.connectionError:
         case DioExceptionType.badCertificate:
           return RemoteException(
-              kind: RemoteExceptionKind.network,
-              rootException: exception,
-              message: remoteConnectionMessage);
+            kind: RemoteExceptionKind.network,
+            rootException: exception,
+            message: remoteConnectionMessage,
+          );
         case DioExceptionType.unknown:
           return RemoteException(
-              kind: RemoteExceptionKind.unknown, rootException: exception);
+            kind: RemoteExceptionKind.unknown,
+            rootException: exception,
+          );
       }
     }
 
     return RemoteException(
-        kind: RemoteExceptionKind.unknown,
-        rootException: exception,
-        message: remoteGenericMessage);
+      kind: RemoteExceptionKind.unknown,
+      rootException: exception,
+      message: remoteGenericMessage,
+    );
   }
 }

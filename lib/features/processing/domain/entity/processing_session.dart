@@ -79,21 +79,24 @@ abstract class ProcessingSession
   }
 
   ProcessingSessionsCompanion toDbCompanion() => ProcessingSessionsCompanion(
-        id: drift.Value(id),
-        filePaths: drift.Value(jsonEncode(filePaths)),
-        status: drift.Value(status.toString()),
-        origin: drift.Value(origin.toString()),
-        isDocumentAttached: drift.Value(isDocumentAttached),
-        resources: drift.Value(jsonEncode(
-            resources.map((resource) => resource.toJson()).toList())),
-        createdAt: drift.Value(createdAt!),
-        patient: drift.Value(jsonEncode(stagedPatientToJson(patient))),
-        encounter: drift.Value(jsonEncode(
-          isDiagnosticReportContainer
-              ? stagedDiagnosticReportToJson(diagnosticReport!)
-              : stagedEncounterToJson(encounter),
-        )),
-      );
+    id: drift.Value(id),
+    filePaths: drift.Value(jsonEncode(filePaths)),
+    status: drift.Value(status.toString()),
+    origin: drift.Value(origin.toString()),
+    isDocumentAttached: drift.Value(isDocumentAttached),
+    resources: drift.Value(
+      jsonEncode(resources.map((resource) => resource.toJson()).toList()),
+    ),
+    createdAt: drift.Value(createdAt!),
+    patient: drift.Value(jsonEncode(stagedPatientToJson(patient))),
+    encounter: drift.Value(
+      jsonEncode(
+        isDiagnosticReportContainer
+            ? stagedDiagnosticReportToJson(diagnosticReport!)
+            : stagedEncounterToJson(encounter),
+      ),
+    ),
+  );
 
   @override
   int compareTo(ProcessingSession other) {

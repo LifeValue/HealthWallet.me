@@ -13,12 +13,14 @@ import 'package:path_provider/path_provider.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [
-  FhirResource,
-  Sources,
-  RecordNotes,
-  ProcessingSessions,
-])
+@DriftDatabase(
+  tables: [
+    FhirResource,
+    Sources,
+    RecordNotes,
+    ProcessingSessions,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
@@ -27,65 +29,74 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
+    onCreate: (m) async {
+      await m.createAll();
+      await _createOptimizationIndexes();
+      await _createSyncTriggers();
+    },
+    onUpgrade: (m, from, to) async {
+      final schemaSteps = stepByStep(
+        from1To2: (m, schema) async {
           await _createOptimizationIndexes();
-          await _createSyncTriggers();
+          await m.createTable(schema.recordAttachments);
         },
-        onUpgrade: (m, from, to) async {
-          final schemaSteps = stepByStep(
-            from1To2: (m, schema) async {
-              await _createOptimizationIndexes();
-              await m.createTable(schema.recordAttachments);
-            },
-            from2To3: (m, schema) async {
-              await m.createTable(schema.recordNotes);
-            },
-            from3To5: (m, schema) async {
-              await m.deleteTable('record_attachments');
-              await customStatement(
-                  'ALTER TABLE sources RENAME COLUMN name TO platform_name');
-              await m.addColumn(schema.sources, schema.sources.labelSource);
-              await m.addColumn(schema.sources, schema.sources.platformType);
-              await m.addColumn(schema.sources, schema.sources.createdAt);
-              await m.addColumn(schema.sources, schema.sources.updatedAt);
-              await m.alterTable(TableMigration(
-                schema.recordNotes,
-                newColumns: [schema.recordNotes.sourceId],
-              ));
-              await m.createTable(schema.processingSessions);
-            },
-            from5To6: (m, schema) async {},
-            from6To7: (m, schema) async {
-              await m.addColumn(
-                  schema.processingSessions, schema.processingSessions.patient);
-              await m.addColumn(schema.processingSessions,
-                  schema.processingSessions.encounter);
-            },
-            from7To8: (m, schema) async {
-              await m.addColumn(schema.processingSessions,
-                  schema.processingSessions.isDocumentAttached);
-            },
+        from2To3: (m, schema) async {
+          await m.createTable(schema.recordNotes);
+        },
+        from3To5: (m, schema) async {
+          await m.deleteTable('record_attachments');
+          await customStatement(
+            'ALTER TABLE sources RENAME COLUMN name TO platform_name',
           );
-
-          if (from < 8) {
-            await schemaSteps(m, from, to < 8 ? to : 8);
-          }
-
-          if (from <= 8 && to >= 9) {
-            await _migrateWalletSourceToPerPatient();
-          }
-
-          if (from <= 9 && to >= 10) {
-            await _migrateToV10();
-            await _createSyncTriggers();
-          }
-
-          if (from <= 10 && to >= 11) {
-            await _migrateToV11();
-          }
+          await m.addColumn(schema.sources, schema.sources.labelSource);
+          await m.addColumn(schema.sources, schema.sources.platformType);
+          await m.addColumn(schema.sources, schema.sources.createdAt);
+          await m.addColumn(schema.sources, schema.sources.updatedAt);
+          await m.alterTable(
+            TableMigration(
+              schema.recordNotes,
+              newColumns: [schema.recordNotes.sourceId],
+            ),
+          );
+          await m.createTable(schema.processingSessions);
+        },
+        from5To6: (m, schema) async {},
+        from6To7: (m, schema) async {
+          await m.addColumn(
+            schema.processingSessions,
+            schema.processingSessions.patient,
+          );
+          await m.addColumn(
+            schema.processingSessions,
+            schema.processingSessions.encounter,
+          );
+        },
+        from7To8: (m, schema) async {
+          await m.addColumn(
+            schema.processingSessions,
+            schema.processingSessions.isDocumentAttached,
+          );
         },
       );
+
+      if (from < 8) {
+        await schemaSteps(m, from, to < 8 ? to : 8);
+      }
+
+      if (from <= 8 && to >= 9) {
+        await _migrateWalletSourceToPerPatient();
+      }
+
+      if (from <= 9 && to >= 10) {
+        await _migrateToV10();
+        await _createSyncTriggers();
+      }
+
+      if (from <= 10 && to >= 11) {
+        await _migrateToV11();
+      }
+    },
+  );
 
   Future<void> _migrateWalletSourceToPerPatient() async {
     final walletPatient = await customSelect(
@@ -120,33 +131,42 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> _migrateToV10() async {
     await customStatement(
-        'ALTER TABLE fhir_resource ADD COLUMN updated_at INTEGER NULL');
+      'ALTER TABLE fhir_resource ADD COLUMN updated_at INTEGER NULL',
+    );
     await customStatement(
-        'ALTER TABLE fhir_resource ADD COLUMN deleted_at INTEGER NULL');
+      'ALTER TABLE fhir_resource ADD COLUMN deleted_at INTEGER NULL',
+    );
     await customStatement(
-        'ALTER TABLE fhir_resource ADD COLUMN device_id TEXT NULL');
+      'ALTER TABLE fhir_resource ADD COLUMN device_id TEXT NULL',
+    );
 
     await customStatement(
-        'ALTER TABLE sources ADD COLUMN deleted_at INTEGER NULL');
+      'ALTER TABLE sources ADD COLUMN deleted_at INTEGER NULL',
+    );
 
     await customStatement(
-        'ALTER TABLE processing_sessions ADD COLUMN updated_at INTEGER NULL');
+      'ALTER TABLE processing_sessions ADD COLUMN updated_at INTEGER NULL',
+    );
     await customStatement(
-        'ALTER TABLE processing_sessions ADD COLUMN deleted_at INTEGER NULL');
+      'ALTER TABLE processing_sessions ADD COLUMN deleted_at INTEGER NULL',
+    );
     await customStatement(
-        'ALTER TABLE processing_sessions ADD COLUMN device_id TEXT NULL');
+      'ALTER TABLE processing_sessions ADD COLUMN device_id TEXT NULL',
+    );
 
     await customStatement(
-        'ALTER TABLE record_notes ADD COLUMN updated_at INTEGER NULL');
+      'ALTER TABLE record_notes ADD COLUMN updated_at INTEGER NULL',
+    );
     await customStatement(
-        'ALTER TABLE record_notes ADD COLUMN deleted_at INTEGER NULL');
+      'ALTER TABLE record_notes ADD COLUMN deleted_at INTEGER NULL',
+    );
   }
-
 
   Future<void> _migrateToV11() async {
     try {
       await customStatement(
-          'ALTER TABLE fhir_resource ADD COLUMN specialty_override TEXT NULL');
+        'ALTER TABLE fhir_resource ADD COLUMN specialty_override TEXT NULL',
+      );
     } catch (_) {}
 
     final rows = await customSelect(
@@ -210,7 +230,12 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> _createSyncTriggers() async {
-    final tables = ['fhir_resource', 'sources', 'record_notes', 'processing_sessions'];
+    final tables = [
+      'fhir_resource',
+      'sources',
+      'record_notes',
+      'processing_sessions',
+    ];
 
     for (final table in tables) {
       final hasUpdatedAt = await customSelect(
@@ -242,7 +267,8 @@ class AppDatabase extends _$AppDatabase {
   Future<void> addSource(SourcesCompanion entry) => into(sources).insert(entry);
 
   Future<List<FhirResourceLocalDto>> getEncounterWithReferences(
-      String encounterId) {
+    String encounterId,
+  ) {
     return customSelect(
       '''
       SELECT * FROM fhir_resource 
@@ -253,7 +279,8 @@ class AppDatabase extends _$AppDatabase {
       variables: [
         Variable.withString(encounterId),
         Variable.withString(
-            '%"encounter":{"reference":"urn:uuid:$encounterId"}%')
+          '%"encounter":{"reference":"urn:uuid:$encounterId"}%',
+        ),
       ],
       readsFrom: {fhirResource},
     ).map((row) => fhirResource.map(row.data)).get();
@@ -308,12 +335,15 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
-    return NativeDatabase(file, setup: (database) {
-      database.execute('PRAGMA foreign_keys = ON');
-      database.execute('PRAGMA journal_mode = WAL');
-      database.execute('PRAGMA synchronous = NORMAL');
-      database.execute('PRAGMA cache_size = 10000');
-      database.execute('PRAGMA temp_store = MEMORY');
-    });
+    return NativeDatabase(
+      file,
+      setup: (database) {
+        database.execute('PRAGMA foreign_keys = ON');
+        database.execute('PRAGMA journal_mode = WAL');
+        database.execute('PRAGMA synchronous = NORMAL');
+        database.execute('PRAGMA cache_size = 10000');
+        database.execute('PRAGMA temp_store = MEMORY');
+      },
+    );
   });
 }

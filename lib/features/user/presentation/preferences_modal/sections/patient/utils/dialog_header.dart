@@ -23,7 +23,9 @@ class DialogHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: Insets.normal, vertical: Insets.small),
+        horizontal: Insets.normal,
+        vertical: Insets.small,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -39,8 +41,9 @@ class DialogHeader extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: AppTextStyle.bodySmall
-                            .copyWith(fontWeight: FontWeight.w500),
+                        style: AppTextStyle.bodySmall.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       if (subtitle != null)
                         Text(

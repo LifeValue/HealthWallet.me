@@ -45,7 +45,9 @@ class ApplePassBuilder {
     final certificatePem = await _loadAssetString(_certPath);
     final privateKeyPem = await _loadAssetString(_keyPath);
 
-    final iconBytes = await _loadAssetBytes('assets/icons/app-icon-transparent.png');
+    final iconBytes = await _loadAssetBytes(
+      'assets/icons/app-icon-transparent.png',
+    );
     final icon = PkImage(image1: iconBytes);
 
     final emergencyDeepLink = EmergencyQrEncoder.encode(cardData);
@@ -89,22 +91,37 @@ class ApplePassBuilder {
     return bytes;
   }
 
-  PassStructure _buildPassStructure(EmergencyCardData cardData, ApplePassLabels labels) {
+  PassStructure _buildPassStructure(
+    EmergencyCardData cardData,
+    ApplePassLabels labels,
+  ) {
     final primaryFields = <FieldDict>[
-      FieldDict(key: 'patient-name', label: labels.patient, value: cardData.patientName),
+      FieldDict(
+        key: 'patient-name',
+        label: labels.patient,
+        value: cardData.patientName,
+      ),
     ];
 
     final headerFields = <FieldDict>[];
     if (cardData.bloodType != null) {
       headerFields.add(
-        FieldDict(key: 'blood-type', label: labels.bloodType, value: cardData.bloodType!),
+        FieldDict(
+          key: 'blood-type',
+          label: labels.bloodType,
+          value: cardData.bloodType!,
+        ),
       );
     }
 
     final secondaryFields = <FieldDict>[];
     if (cardData.allergies.isNotEmpty) {
       secondaryFields.add(
-        FieldDict(key: 'allergies', label: labels.allergies, value: cardData.allergies.join(', ')),
+        FieldDict(
+          key: 'allergies',
+          label: labels.allergies,
+          value: cardData.allergies.join(', '),
+        ),
       );
     }
     if (cardData.gender != null) {
@@ -115,12 +132,14 @@ class ApplePassBuilder {
 
     final auxiliaryFields = <FieldDict>[];
     if (cardData.dateOfBirth != null) {
-      final age = DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
+      final age =
+          DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
       auxiliaryFields.add(
         FieldDict(
           key: 'dob',
           label: labels.dateOfBirth,
-          value: '${DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!)} (Age $age)',
+          value:
+              '${DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!)} (Age $age)',
         ),
       );
     }
@@ -137,12 +156,20 @@ class ApplePassBuilder {
     final backFields = <FieldDict>[];
     if (cardData.conditions.isNotEmpty) {
       backFields.add(
-        FieldDict(key: 'conditions', label: labels.conditions, value: cardData.conditions.join(', ')),
+        FieldDict(
+          key: 'conditions',
+          label: labels.conditions,
+          value: cardData.conditions.join(', '),
+        ),
       );
     }
     if (cardData.medications.isNotEmpty) {
       backFields.add(
-        FieldDict(key: 'medications', label: labels.medications, value: cardData.medications.join(', ')),
+        FieldDict(
+          key: 'medications',
+          label: labels.medications,
+          value: cardData.medications.join(', '),
+        ),
       );
     }
 

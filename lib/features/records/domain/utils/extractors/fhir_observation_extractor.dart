@@ -15,7 +15,8 @@ class FhirObservationExtractor {
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
     if (valueCodeableConcept != null) {
       return FhirCommonExtractor.extractCodeableConceptText(
-          valueCodeableConcept);
+        valueCodeableConcept,
+      );
     }
 
     final valueString = valueX?.isAs<fhir_r4.FhirString>();
@@ -71,8 +72,7 @@ class FhirObservationExtractor {
       final rawUnit = valueQuantity.unit?.toString() ?? '';
       if (rawValue != null) {
         final u = rawUnit.trim().toLowerCase();
-        if ((u == 'cm' || u == 'centimeters') &&
-            region.heightUnit == 'ft/in') {
+        if ((u == 'cm' || u == 'centimeters') && region.heightUnit == 'ft/in') {
           final converted = convertQuantityForRegion(rawValue, rawUnit, region);
           return converted.unit;
         }
@@ -382,7 +382,9 @@ class FhirObservationExtractor {
   }
 
   static String _formatQuantityValueByCode(
-      String? code, fhir_r4.Quantity quantity) {
+    String? code,
+    fhir_r4.Quantity quantity,
+  ) {
     final String? raw = quantity.value?.toString();
     if (raw == null) return 'N/A';
     final double? num = double.tryParse(raw);

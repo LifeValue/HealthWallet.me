@@ -77,7 +77,7 @@ class ProcessingResourcesSection extends StatelessWidget {
             state: state,
             onSaveResources: onSaveResources,
           ),
-        ]
+        ],
       ],
     );
   }
@@ -104,7 +104,8 @@ class _SaveButton extends StatelessWidget {
               : context.colorScheme.onPrimary,
           padding: const EdgeInsets.all(8),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadiusGeometry.circular(8)),
+            borderRadius: BorderRadiusGeometry.circular(8),
+          ),
         ),
         onPressed: state.status == const PipelineStatus.savingResources()
             ? null
@@ -160,11 +161,15 @@ class _AddResourceButton extends StatelessWidget {
   List<DialogItem> _getResourceTypes(BuildContext context) {
     return [
       DialogItem(
-          id: 'AllergyIntolerance', label: context.l10n.allergyIntolerance),
+        id: 'AllergyIntolerance',
+        label: context.l10n.allergyIntolerance,
+      ),
       DialogItem(id: 'Condition', label: context.l10n.condition),
       DialogItem(id: 'DiagnosticReport', label: context.l10n.diagnosticReport),
       DialogItem(
-          id: 'MedicationStatement', label: context.l10n.medicationStatement),
+        id: 'MedicationStatement',
+        label: context.l10n.medicationStatement,
+      ),
       DialogItem(id: 'Observation', label: context.l10n.observation),
       DialogItem(id: 'Organization', label: context.l10n.organization),
       DialogItem(id: 'Practitioner', label: context.l10n.practitioner),
@@ -184,10 +189,12 @@ class _AddResourceButton extends StatelessWidget {
     if (selectedResourceIds != null &&
         selectedResourceIds.isNotEmpty &&
         context.mounted) {
-      context.read<ProcessingBloc>().add(ResourcesAdded(
-            sessionId: sessionId,
-            resourceTypes: selectedResourceIds,
-          ));
+      context.read<ProcessingBloc>().add(
+        ResourcesAdded(
+          sessionId: sessionId,
+          resourceTypes: selectedResourceIds,
+        ),
+      );
     }
   }
 }
@@ -256,10 +263,10 @@ class _ScannedBasicButtons extends StatelessWidget {
                 onPressed: isStep2Blocked
                     ? null
                     : () => context.read<ProcessingBloc>().add(
-                          ProcessRemainingResources(
-                            sessionId: sessionId,
-                          ),
+                        ProcessRemainingResources(
+                          sessionId: sessionId,
                         ),
+                      ),
                 enabled: !isStep2Blocked,
                 fullWidth: false,
                 padding: const EdgeInsets.all(8),
@@ -274,7 +281,11 @@ class _ScannedBasicButtons extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.computer, size: 20, color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  Icons.computer,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(width: Insets.small),
                 Text(
                   'Continue processing on Desktop',
@@ -309,10 +320,10 @@ class _ScannedBasicButtons extends StatelessWidget {
         (session.encounter.hasSelection ||
             session.isDiagnosticReportContainer)) {
       context.read<ProcessingBloc>().add(
-            DocumentAttached(
-              sessionId: sessionId,
-            ),
-          );
+        DocumentAttached(
+          sessionId: sessionId,
+        ),
+      );
       return;
     }
 
@@ -331,18 +342,18 @@ class _ScannedBasicButtons extends StatelessWidget {
     final (patient, encounter) = result;
 
     context.read<ProcessingBloc>().add(
-          EncounterAttached(
-            sessionId: sessionId,
-            patient: patient,
-            encounter: encounter,
-          ),
-        );
+      EncounterAttached(
+        sessionId: sessionId,
+        patient: patient,
+        encounter: encounter,
+      ),
+    );
 
     context.read<ProcessingBloc>().add(
-          DocumentAttached(
-            sessionId: sessionId,
-          ),
-        );
+      DocumentAttached(
+        sessionId: sessionId,
+      ),
+    );
   }
 
   void _finishSession(BuildContext context) {
@@ -354,15 +365,16 @@ class _ScannedBasicButtons extends StatelessWidget {
         context: context,
         title: context.l10n.patient,
         message: context.l10n.patientModifiedUpdating(
-            session.patient.existing!.displayTitle),
+          session.patient.existing!.displayTitle,
+        ),
         warningText: context.l10n.actionCannotBeUndone,
         confirmText: context.l10n.save,
         cancelText: context.l10n.cancel,
         confirmButtonColor: context.colorScheme.primary,
         onConfirm: () {
           context.read<ProcessingBloc>().add(
-                ResourceCreationInitiated(sessionId: sessionId),
-              );
+            ResourceCreationInitiated(sessionId: sessionId),
+          );
         },
       );
     } else {
@@ -376,8 +388,8 @@ class _ScannedBasicButtons extends StatelessWidget {
         confirmButtonColor: context.colorScheme.primary,
         onConfirm: () {
           context.read<ProcessingBloc>().add(
-                ResourceCreationInitiated(sessionId: sessionId),
-              );
+            ResourceCreationInitiated(sessionId: sessionId),
+          );
         },
       );
     }

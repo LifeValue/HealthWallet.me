@@ -74,7 +74,7 @@ class DefaultPatientService {
             'use': 'official',
             'given': ['Health Wallet'],
             'family': 'Holder',
-          }
+          },
         ],
         'identifier': [
           {
@@ -84,13 +84,13 @@ class DefaultPatientService {
                   'system': 'http://terminology.hl7.org/CodeSystem/v2-0203',
                   'code': profile.identifierFhirCode,
                   'display': profile.identifierDisplayName,
-                }
+                },
               ],
               'text': profile.identifierDisplayName,
             },
             'system': profile.fhirIdentifierSystem,
             'value': 'default_patient',
-          }
+          },
         ],
       },
     );
@@ -109,11 +109,11 @@ class DefaultPatientService {
 
       final defaultPatient = await createDefaultWalletHolder();
 
-      final walletSource =
-          await _walletPatientService.createWalletSourceForPatient(
-        defaultPatient.id,
-        defaultPatient.displayTitle,
-      );
+      final walletSource = await _walletPatientService
+          .createWalletSourceForPatient(
+            defaultPatient.id,
+            defaultPatient.displayTitle,
+          );
       await _syncLocalDataSource.cacheSources([walletSource]);
 
       final fhirResourceDto = FhirResourceDto(

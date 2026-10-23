@@ -18,7 +18,8 @@ class HandoverSenderService {
   final TcpService _tcpService;
   final MessageRouter _messageRouter;
 
-  final _sessionUpdateController = StreamController<HandoverSession>.broadcast();
+  final _sessionUpdateController =
+      StreamController<HandoverSession>.broadcast();
   final Map<String, HandoverSession> _activeSessions = {};
   final Map<String, bool> _cancelled = {};
   Map<String, dynamic>? _resultPayload;
@@ -36,12 +37,19 @@ class HandoverSenderService {
   Stream<HandoverSession> get sessionUpdates => _sessionUpdateController.stream;
 
   HandoverSenderService(this._tcpService, this._messageRouter) {
-    _progressSub = _messageRouter.on('handover.progress').listen(_handleProgress);
+    _progressSub = _messageRouter
+        .on('handover.progress')
+        .listen(_handleProgress);
     _resultSub = _messageRouter.on('handover.result').listen(_handleResult);
-    _step1Sub = _messageRouter.on('handover.step1_complete').listen(_handleStep1Complete);
+    _step1Sub = _messageRouter
+        .on('handover.step1_complete')
+        .listen(_handleStep1Complete);
   }
 
-  Future<void> sendHandover(List<String> filePaths, {Map<String, dynamic>? phase1Data}) async {
+  Future<void> sendHandover(
+    List<String> filePaths, {
+    Map<String, dynamic>? phase1Data,
+  }) async {
     final sessionId = const Uuid().v4();
 
     _cancelled[sessionId] = false;
@@ -78,7 +86,11 @@ class HandoverSenderService {
     try {
       await acceptCompleter.future.timeout(const Duration(seconds: 30));
     } on TimeoutException {
-      _updateSession(sessionId, HandoverStatus.error, error: 'Desktop did not accept');
+      _updateSession(
+        sessionId,
+        HandoverStatus.error,
+        error: 'Desktop did not accept',
+      );
       return;
     }
 
@@ -89,8 +101,11 @@ class HandoverSenderService {
 
       final file = File(filePaths[i]);
       if (!await file.exists()) {
-        _updateSession(sessionId, HandoverStatus.error,
-            error: 'File not found: ${p.basename(filePaths[i])}');
+        _updateSession(
+          sessionId,
+          HandoverStatus.error,
+          error: 'File not found: ${p.basename(filePaths[i])}',
+        );
         return;
       }
       final bytes = await file.readAsBytes();
@@ -129,11 +144,17 @@ class HandoverSenderService {
     if (session == null) return;
 
     final status = payload['status'] as String?;
-    final progress = (payload['progress'] as num?)?.toDouble() ?? session.progress;
+    final progress =
+        (payload['progress'] as num?)?.toDouble() ?? session.progress;
 
     if (status == 'error') {
       final error = payload['error'] as String? ?? 'Processing failed';
-      _updateSession(sessionId, HandoverStatus.error, progress: progress, error: error);
+      _updateSession(
+        sessionId,
+        HandoverStatus.error,
+        progress: progress,
+        error: error,
+      );
       return;
     }
 
@@ -159,8 +180,8 @@ class HandoverSenderService {
       final processingBloc = getIt<ProcessingBloc>();
       final sessions = processingBloc.state.sessions;
       final pendingSessions = sessions.where(
-          (s) => s.status == ProcessingStatus.pending &&
-              s.filePaths.isNotEmpty);
+        (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty,
+      );
       for (final session in pendingSessions) {
         processingBloc.add(SessionCleared(session: session));
       }
@@ -184,8 +205,8 @@ class HandoverSenderService {
       final processingBloc = getIt<ProcessingBloc>();
       final sessions = processingBloc.state.sessions;
       final pendingSessions = sessions.where(
-          (s) => s.status == ProcessingStatus.pending &&
-              s.filePaths.isNotEmpty);
+        (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty,
+      );
       for (final session in pendingSessions) {
         processingBloc.add(SessionCleared(session: session));
       }

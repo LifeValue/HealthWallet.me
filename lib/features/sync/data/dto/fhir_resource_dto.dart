@@ -38,7 +38,9 @@ abstract class FhirResourceDto with _$FhirResourceDto {
       if (context != null) {
         final encounterList = context['encounter'] as List?;
         if (encounterList != null && encounterList.isNotEmpty) {
-          final ref = Reference.fromJson(encounterList[0] as Map<String, dynamic>);
+          final ref = Reference.fromJson(
+            encounterList[0] as Map<String, dynamic>,
+          );
           final refString = ref.reference?.valueString;
           if (refString != null) {
             encounterId = FhirReferenceUtils.extractReferenceId(refString);

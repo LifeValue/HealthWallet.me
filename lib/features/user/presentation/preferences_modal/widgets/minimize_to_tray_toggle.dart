@@ -19,8 +19,8 @@ class MinimizeToTrayToggle extends StatelessWidget {
         return GestureDetector(
           onTap: () {
             context.read<TrayBloc>().add(
-                  TrayMinimizeToTrayToggled(enabled: !isEnabled),
-                );
+              TrayMinimizeToTrayToggled(enabled: !isEnabled),
+            );
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
@@ -50,8 +50,8 @@ class MinimizeToTrayToggle extends StatelessWidget {
                         style: context.textTheme.bodySmall?.copyWith(
                           color: !isEnabled
                               ? (context.isDarkMode
-                                  ? Colors.white
-                                  : colorScheme.onPrimary)
+                                    ? Colors.white
+                                    : colorScheme.onPrimary)
                               : colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
@@ -74,8 +74,8 @@ class MinimizeToTrayToggle extends StatelessWidget {
                         style: context.textTheme.bodySmall?.copyWith(
                           color: isEnabled
                               ? (context.isDarkMode
-                                  ? Colors.white
-                                  : colorScheme.onPrimary)
+                                    ? Colors.white
+                                    : colorScheme.onPrimary)
                               : colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),

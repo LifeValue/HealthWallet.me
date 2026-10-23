@@ -52,10 +52,13 @@ class RecordAttachmentsBloc
     try {
       if (event.resource.fhirType == FhirType.DocumentReference) {
         final attachmentInfo = await _extractAttachmentInfo(event.resource);
-        emit(state.copyWith(
+        emit(
+          state.copyWith(
             attachments: [attachmentInfo],
             resource: event.resource,
-            status: const RecordAttachmentsStatus.success()));
+            status: const RecordAttachmentsStatus.success(),
+          ),
+        );
         return;
       }
 
@@ -89,7 +92,8 @@ class RecordAttachmentsBloc
                 final encounters = ctx['encounter'] as List;
                 return encounters.any((enc) {
                   final refId = FhirReferenceUtils.extractReferenceId(
-                      enc['reference']?.toString());
+                    enc['reference']?.toString(),
+                  );
                   return refId == event.resource.resourceId;
                 });
               }
@@ -100,7 +104,8 @@ class RecordAttachmentsBloc
               final relatedList = ctx['related'] as List;
               return relatedList.any((related) {
                 final refId = FhirReferenceUtils.extractReferenceId(
-                    related['reference']?.toString());
+                  related['reference']?.toString(),
+                );
                 return refId == event.resource.resourceId;
               });
             }
@@ -124,20 +129,22 @@ class RecordAttachmentsBloc
           resourceMap[r.resourceId] = r;
         }
 
-        final infos = await Future.wait(relatedDocuments.map((doc) async {
-          final info = await _extractAttachmentInfo(doc);
-          final relatedRef = _extractRelatedResourceId(doc);
-          final isDirect = relatedRef == null ||
-              relatedRef == event.resource.resourceId;
-          if (!isDirect && resourceMap.containsKey(relatedRef)) {
-            final source = resourceMap[relatedRef]!;
-            return info.copyWith(
-              sourceRecordTitle: source.title,
-              sourceRecordType: source.fhirType.name,
-            );
-          }
-          return info;
-        }));
+        final infos = await Future.wait(
+          relatedDocuments.map((doc) async {
+            final info = await _extractAttachmentInfo(doc);
+            final relatedRef = _extractRelatedResourceId(doc);
+            final isDirect =
+                relatedRef == null || relatedRef == event.resource.resourceId;
+            if (!isDirect && resourceMap.containsKey(relatedRef)) {
+              final source = resourceMap[relatedRef]!;
+              return info.copyWith(
+                sourceRecordTitle: source.title,
+                sourceRecordType: source.fhirType.name,
+              );
+            }
+            return info;
+          }),
+        );
         infos.sort((a, b) {
           final aIsDirect = a.sourceRecordTitle == null;
           final bIsDirect = b.sourceRecordTitle == null;
@@ -148,20 +155,25 @@ class RecordAttachmentsBloc
         attachmentInfos = infos;
       } else {
         attachmentInfos = await Future.wait(
-            relatedDocuments.map(_extractAttachmentInfo));
+          relatedDocuments.map(_extractAttachmentInfo),
+        );
       }
 
-      emit(state.copyWith(
+      emit(
+        state.copyWith(
           attachments: attachmentInfos,
           resource: event.resource,
-          status: const RecordAttachmentsStatus.success()));
+          status: const RecordAttachmentsStatus.success(),
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(status: RecordAttachmentsStatus.error(e)));
     }
   }
 
   Future<AttachmentInfo> _extractAttachmentInfo(
-      IFhirResource documentReference) async {
+    IFhirResource documentReference,
+  ) async {
     try {
       final content = documentReference.rawResource['content'] as List?;
       final attachmentData = content?.isNotEmpty == true
@@ -204,9 +216,13 @@ class RecordAttachmentsBloc
 
     try {
       if (state.resource.fhirType == FhirType.DocumentReference) {
-        emit(state.copyWith(
+        emit(
+          state.copyWith(
             status: const RecordAttachmentsStatus.error(
-                'Cannot attach files to DocumentReference resources')));
+              'Cannot attach files to DocumentReference resources',
+            ),
+          ),
+        );
         return;
       }
 
@@ -238,7 +254,9 @@ class RecordAttachmentsBloc
           sourceId: effectiveSourceId,
           title: originalFileName,
         );
-        debugPrint('[ATTACH_BLOC] Saved DocumentReference to DB: title=$originalFileName, sourceId=$effectiveSourceId, subjectId=$subjectId, encounterId=$encounterId');
+        debugPrint(
+          '[ATTACH_BLOC] Saved DocumentReference to DB: title=$originalFileName, sourceId=$effectiveSourceId, subjectId=$subjectId, encounterId=$encounterId',
+        );
       }
 
       debugPrint('[ATTACH_BLOC] All files saved, refreshing state');
@@ -268,7 +286,7 @@ class RecordAttachmentsBloc
             fhir_r4.Reference(
               reference: fhir_r4.FhirString('Encounter/$encounterId'),
               display: fhir_r4.FhirString('Encounter $encounterId'),
-            )
+            ),
           ]
         : null;
 
@@ -296,7 +314,9 @@ class RecordAttachmentsBloc
         fhir_r4.DocumentReferenceContent(
           attachment: fhir_r4.Attachment(
             contentType: fhir_r4.FhirCode(_getContentTypeFromPath(filePath)),
-            url: fhir_r4.FhirUrl('file://${relativeFilePath.split('/').map(Uri.encodeComponent).join('/')}'),
+            url: fhir_r4.FhirUrl(
+              'file://${relativeFilePath.split('/').map(Uri.encodeComponent).join('/')}',
+            ),
             title: fhir_r4.FhirString(fileName),
             size: fhir_r4.FhirUnsignedInt(bytes.length.toString()),
           ),
@@ -309,10 +329,12 @@ class RecordAttachmentsBloc
                   ? [
                       fhir_r4.Reference(
                         reference: fhir_r4.FhirString(
-                            '$relatedResourceType/$relatedResourceId'),
-                        display:
-                            fhir_r4.FhirString('Related $relatedResourceType'),
-                      )
+                          '$relatedResourceType/$relatedResourceId',
+                        ),
+                        display: fhir_r4.FhirString(
+                          'Related $relatedResourceType',
+                        ),
+                      ),
                     ]
                   : null,
             )
@@ -349,7 +371,8 @@ class RecordAttachmentsBloc
 
     if (documentReference.subject?.reference?.valueString != null) {
       subjectId = FhirReferenceUtils.extractReferenceId(
-          documentReference.subject!.reference!.valueString!);
+        documentReference.subject!.reference!.valueString!,
+      );
     }
 
     final dto = FhirResourceCompanion.insert(
@@ -358,8 +381,9 @@ class RecordAttachmentsBloc
       resourceId: drift.Value(resourceId),
       resourceType: const drift.Value('DocumentReference'),
       title: drift.Value(title),
-      date:
-          drift.Value(documentReference.date?.valueDateTime ?? DateTime.now()),
+      date: drift.Value(
+        documentReference.date?.valueDateTime ?? DateTime.now(),
+      ),
       resourceRaw: jsonEncode(resourceJson),
       encounterId: encounterId != null
           ? drift.Value(encounterId)
@@ -400,9 +424,9 @@ class RecordAttachmentsBloc
     emit(state.copyWith(status: const RecordAttachmentsStatus.loading()));
 
     try {
-      await (_database.delete(_database.fhirResource)
-            ..where((t) => t.id.equals(event.attachment.id)))
-          .go();
+      await (_database.delete(
+        _database.fhirResource,
+      )..where((t) => t.id.equals(event.attachment.id))).go();
 
       try {
         final content = event.attachment.rawResource['content'] as List?;

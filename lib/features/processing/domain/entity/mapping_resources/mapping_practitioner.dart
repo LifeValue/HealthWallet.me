@@ -43,12 +43,12 @@ abstract class MappingPractitioner
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'Practitioner',
-        'practitionerName': practitionerName.toJson(),
-        'specialty': specialty.toJson(),
-        'identifier': identifier.toJson(),
-      };
+    'id': id,
+    'resourceType': 'Practitioner',
+    'practitionerName': practitionerName.toJson(),
+    'specialty': specialty.toJson(),
+    'identifier': identifier.toJson(),
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -60,16 +60,17 @@ abstract class MappingPractitioner
     final fhir_r4.Practitioner practitioner = fhir_r4.Practitioner(
       meta: meta,
       name: [
-        fhir_r4.HumanName(text: fhir_r4.FhirString(practitionerName.value))
+        fhir_r4.HumanName(text: fhir_r4.FhirString(practitionerName.value)),
       ],
       qualification: [
         fhir_r4.PractitionerQualification(
           code: fhir_r4.CodeableConcept(
-              text: fhir_r4.FhirString(specialty.value)),
-        )
+            text: fhir_r4.FhirString(specialty.value),
+          ),
+        ),
       ],
       identifier: [
-        fhir_r4.Identifier(value: fhir_r4.FhirString(identifier.value))
+        fhir_r4.Identifier(value: fhir_r4.FhirString(identifier.value)),
       ],
     );
 
@@ -90,29 +91,29 @@ abstract class MappingPractitioner
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'practitionerName': l10n.labelPractitionerName,
-        'specialty': l10n.labelSpecialty,
-        'identifier': l10n.labelIdentifier,
-      };
+    'practitionerName': l10n.labelPractitionerName,
+    'specialty': l10n.labelSpecialty,
+    'identifier': l10n.labelIdentifier,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'practitionerName': TextFieldDescriptor(
-          label: 'Practitioner Name',
-          value: practitionerName.value,
-          confidenceLevel: practitionerName.confidenceLevel,
-        ),
-        'specialty': TextFieldDescriptor(
-          label: 'Specialty',
-          value: specialty.value,
-          confidenceLevel: specialty.confidenceLevel,
-        ),
-        'identifier': TextFieldDescriptor(
-          label: 'Identifier',
-          value: identifier.value,
-          confidenceLevel: identifier.confidenceLevel,
-        ),
-      };
+    'practitionerName': TextFieldDescriptor(
+      label: 'Practitioner Name',
+      value: practitionerName.value,
+      confidenceLevel: practitionerName.confidenceLevel,
+    ),
+    'specialty': TextFieldDescriptor(
+      label: 'Specialty',
+      value: specialty.value,
+      confidenceLevel: specialty.confidenceLevel,
+    ),
+    'identifier': TextFieldDescriptor(
+      label: 'Identifier',
+      value: identifier.value,
+      confidenceLevel: identifier.confidenceLevel,
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -126,13 +127,15 @@ abstract class MappingPractitioner
         ),
         specialty: MappedProperty(
           value: newValues['specialty'] ?? specialty.value,
-          confidenceLevel:
-              newValues['specialty'] != null ? 1 : specialty.confidenceLevel,
+          confidenceLevel: newValues['specialty'] != null
+              ? 1
+              : specialty.confidenceLevel,
         ),
         identifier: MappedProperty(
           value: newValues['identifier'] ?? identifier.value,
-          confidenceLevel:
-              newValues['identifier'] != null ? 1 : identifier.confidenceLevel,
+          confidenceLevel: newValues['identifier'] != null
+              ? 1
+              : identifier.confidenceLevel,
         ),
       );
 
@@ -141,10 +144,10 @@ abstract class MappingPractitioner
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        practitionerName: practitionerName.calculateConfidence(inputText),
-        specialty: specialty.calculateConfidence(inputText),
-        identifier: identifier.calculateConfidence(inputText),
-      );
+    practitionerName: practitionerName.calculateConfidence(inputText),
+    specialty: specialty.calculateConfidence(inputText),
+    identifier: identifier.calculateConfidence(inputText),
+  );
 
   @override
   bool get isValid =>

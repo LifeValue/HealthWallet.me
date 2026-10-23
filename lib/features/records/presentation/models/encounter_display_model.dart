@@ -26,7 +26,8 @@ class EncounterDisplayModel {
 
   /// Create from display data built by DisplayModelBuilder
   factory EncounterDisplayModel.fromDisplayData(
-      Map<String, dynamic> displayData) {
+    Map<String, dynamic> displayData,
+  ) {
     return EncounterDisplayModel(
       id: displayData['id'] as String? ?? '',
       patientDisplay:
@@ -34,14 +35,15 @@ class EncounterDisplayModel {
       encounterType: displayData['encounterType'] as String? ?? 'Encounter',
       startDate: displayData['startDate'] as String?,
       endDate: displayData['endDate'] as String?,
-      practitionerNames: (displayData['practitionerNames'] as List<dynamic>?)
+      practitionerNames:
+          (displayData['practitionerNames'] as List<dynamic>?)
               ?.cast<String>() ??
           [],
       organizationName:
           displayData['organizationName'] as String? ?? 'Unknown Organization',
       locationNames:
           (displayData['locationNames'] as List<dynamic>?)?.cast<String>() ??
-              [],
+          [],
       rawEncounter: displayData['rawEncounter'] as Map<String, dynamic>? ?? {},
     );
   }

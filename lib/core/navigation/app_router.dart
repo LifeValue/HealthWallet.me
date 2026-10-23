@@ -30,26 +30,26 @@ part 'app_router.gr.dart';
 class AppRouter extends RootStackRouter {
   @override
   List<AutoRoute> get routes => [
-        AutoRoute(page: SplashRoute.page, initial: true),
-        AutoRoute(page: OnboardingRoute.page),
-        AutoRoute(
-          page: DashboardRoute.page,
-          children: [
-            AutoRoute(page: HomeRoute.page),
-            AutoRoute(page: RecordsRoute.page),
-            AutoRoute(page: ScanRoute.page),
-            AutoRoute(page: ImportRoute.page),
-            AutoRoute(page: DesktopRoute.page),
-          ],
-        ),
-        AutoRoute(page: RecordDetailsRoute.page),
-        AutoRoute(page: SyncRoute.page),
-        AutoRoute(page: PrivacyPolicyRoute.page),
-        AutoRoute(page: LoadModelRoute.page),
-        AutoRoute(page: ProcessingRoute.page),
-        AutoRoute(page: FocusModeRoute.page),
-        AutoRoute(page: ShareRecordsRoute.page),
-        AutoRoute(page: ShareRecordsSendRoute.page),
-        AutoRoute(page: EmergencyCardRoute.page),
-      ];
+    AutoRoute(page: SplashRoute.page, initial: true),
+    AutoRoute(page: OnboardingRoute.page),
+    AutoRoute(
+      page: DashboardRoute.page,
+      children: [
+        AutoRoute(page: HomeRoute.page),
+        AutoRoute(page: RecordsRoute.page),
+        AutoRoute(page: ScanRoute.page),
+        AutoRoute(page: ImportRoute.page),
+        AutoRoute(page: DesktopRoute.page),
+      ],
+    ),
+    AutoRoute(page: RecordDetailsRoute.page),
+    AutoRoute(page: SyncRoute.page),
+    AutoRoute(page: PrivacyPolicyRoute.page),
+    AutoRoute(page: LoadModelRoute.page),
+    AutoRoute(page: ProcessingRoute.page),
+    AutoRoute(page: FocusModeRoute.page),
+    AutoRoute(page: ShareRecordsRoute.page),
+    AutoRoute(page: ShareRecordsSendRoute.page),
+    AutoRoute(page: EmergencyCardRoute.page),
+  ];
 }

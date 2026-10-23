@@ -63,8 +63,9 @@ class _ReorderPagesSheetState extends State<ReorderPagesSheet> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
                     context.l10n.cancel,
-                    style: AppTextStyle.buttonSmall
-                        .copyWith(color: AppColors.primary),
+                    style: AppTextStyle.buttonSmall.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 Text(

@@ -29,9 +29,11 @@ class MobileBackupHandler {
   );
 
   void start() {
-    _requestSubscription = _messageRouter.on('backup.request').listen(
-      _handleBackupRequest,
-    );
+    _requestSubscription = _messageRouter
+        .on('backup.request')
+        .listen(
+          _handleBackupRequest,
+        );
   }
 
   Future<void> _handleBackupRequest(Map<String, dynamic> payload) async {
@@ -90,10 +92,12 @@ class MobileBackupHandler {
   }
 
   Future<int> _getRecordCount() async {
-    final result = await _database.customSelect(
-      'SELECT COUNT(*) as count FROM fhir_resource',
-      readsFrom: {_database.fhirResource},
-    ).getSingle();
+    final result = await _database
+        .customSelect(
+          'SELECT COUNT(*) as count FROM fhir_resource',
+          readsFrom: {_database.fhirResource},
+        )
+        .getSingle();
     return result.data['count'] as int;
   }
 

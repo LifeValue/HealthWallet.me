@@ -24,8 +24,9 @@ class RecentRecordsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...recentRecords
-            .map((record) => _buildRecentRecordCard(context, record)),
+        ...recentRecords.map(
+          (record) => _buildRecentRecordCard(context, record),
+        ),
       ],
     );
   }
@@ -101,8 +102,9 @@ class RecentRecordsSection extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                context.colorScheme.onSurface.withValues(alpha: 0.08),
+                            color: context.colorScheme.onSurface.withValues(
+                              alpha: 0.08,
+                            ),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -156,7 +158,9 @@ class RecentRecordsSection extends StatelessWidget {
                           width: 16,
                           height: 16,
                           colorFilter: ColorFilter.mode(
-                            context.colorScheme.onSurface.withValues(alpha: 0.6),
+                            context.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                             BlendMode.srcIn,
                           ),
                         ),

@@ -148,11 +148,11 @@ class _FocusModeViewState extends State<_FocusModeView> {
               final notification = state.notification!;
 
               context.read<NotificationBloc>().add(
-                    NotificationAdded(notification: notification),
-                  );
-              context
-                  .read<ProcessingBloc>()
-                  .add(const NotificationAcknowledged());
+                NotificationAdded(notification: notification),
+              );
+              context.read<ProcessingBloc>().add(
+                const NotificationAcknowledged(),
+              );
 
               showProcessingDoneNotification(
                 context,
@@ -163,9 +163,9 @@ class _FocusModeViewState extends State<_FocusModeView> {
                     setState(() => _isHiding = true);
                     Timer(const Duration(milliseconds: 500), () {
                       if (mounted) {
-                        context
-                            .read<FocusModeBloc>()
-                            .add(const FocusModeEvent.notificationDisplayed());
+                        context.read<FocusModeBloc>().add(
+                          const FocusModeEvent.notificationDisplayed(),
+                        );
                       }
                     });
                   }
@@ -178,19 +178,22 @@ class _FocusModeViewState extends State<_FocusModeView> {
               return;
             }
 
-            final hasCompletedProcessing = state.sessions.any((session) =>
-                session.status == ProcessingStatus.draft ||
-                session.status == ProcessingStatus.patientExtracted);
+            final hasCompletedProcessing = state.sessions.any(
+              (session) =>
+                  session.status == ProcessingStatus.draft ||
+                  session.status == ProcessingStatus.patientExtracted,
+            );
 
-            final noSessionsProcessing =
-                state.sessions.every((session) => !session.isProcessing);
+            final noSessionsProcessing = state.sessions.every(
+              (session) => !session.isProcessing,
+            );
 
             if (hasCompletedProcessing &&
                 noSessionsProcessing &&
                 !focusModeState.waitingForNotification) {
-              context
-                  .read<FocusModeBloc>()
-                  .add(const FocusModeEvent.processingCompleted());
+              context.read<FocusModeBloc>().add(
+                const FocusModeEvent.processingCompleted(),
+              );
             }
           },
         ),
@@ -229,23 +232,23 @@ class _FocusModeViewState extends State<_FocusModeView> {
                     ),
                   )
                 : (state.isScreenDarkened
-                    ? GestureDetector(
-                        onTap: () => _restoreScreen(context),
-                        child: Container(
-                          color: Colors.black,
-                          width: double.infinity,
-                          height: double.infinity,
-                          child: Center(
-                            child: Text(
-                              context.l10n.tapToViewProgress,
-                              style: AppTextStyle.bodyMedium.copyWith(
-                                color: Colors.white.withValues(alpha: 0.5),
+                      ? GestureDetector(
+                          onTap: () => _restoreScreen(context),
+                          child: Container(
+                            color: Colors.black,
+                            width: double.infinity,
+                            height: double.infinity,
+                            child: Center(
+                              child: Text(
+                                context.l10n.tapToViewProgress,
+                                style: AppTextStyle.bodyMedium.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      )
-                    : body),
+                        )
+                      : body),
           );
         },
       ),
@@ -372,7 +375,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
                 context.colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 16)
+            const SizedBox(height: 16),
           ],
         );
       },

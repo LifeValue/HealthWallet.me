@@ -9,7 +9,9 @@ class WalletPatientService {
   WalletPatientService(this._syncRepository);
 
   Future<Source> createWalletSourceForPatient(
-      String patientId, String patientName) async {
+    String patientId,
+    String patientName,
+  ) async {
     final walletSourceId = 'wallet-$patientId';
 
     final existingSources = await _syncRepository.getSources();
@@ -36,9 +38,12 @@ class WalletPatientService {
   Future<List<Source>> getWalletSourcesForPatient(String patientId) async {
     final allSources = await _syncRepository.getSources();
     return allSources
-        .where((source) =>
-            source.id == 'wallet-$patientId' ||
-            (source.platformType == 'wallet' && source.id.contains(patientId)))
+        .where(
+          (source) =>
+              source.id == 'wallet-$patientId' ||
+              (source.platformType == 'wallet' &&
+                  source.id.contains(patientId)),
+        )
         .toList();
   }
 
@@ -54,8 +59,9 @@ class WalletPatientService {
 
   Future<List<Source>> createWalletSourcesForAllFastenPatients() async {
     final allSources = await _syncRepository.getSources();
-    final fastenSources =
-        allSources.where((source) => source.platformType == 'fasten').toList();
+    final fastenSources = allSources
+        .where((source) => source.platformType == 'fasten')
+        .toList();
 
     final createdWalletSources = <Source>[];
 
@@ -63,7 +69,9 @@ class WalletPatientService {
       final patientId = _extractPatientIdFromSourceId(fastenSource.id);
       if (patientId != null) {
         final walletSource = await createWalletSourceForPatient(
-            patientId, fastenSource.labelSource ?? 'Patient $patientId');
+          patientId,
+          fastenSource.labelSource ?? 'Patient $patientId',
+        );
         createdWalletSources.add(walletSource);
       }
     }

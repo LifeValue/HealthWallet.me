@@ -27,7 +27,9 @@ class PatientSelector extends StatelessWidget {
         return Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            color: context.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.5,
+            ),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
@@ -50,7 +52,9 @@ class PatientSelector extends StatelessWidget {
   }
 
   Widget _buildPatientSelector(
-      BuildContext context, AttachToEncounterState state) {
+    BuildContext context,
+    AttachToEncounterState state,
+  ) {
     final patient = state.patient;
 
     if (state.existingPatients.isEmpty && patient.draft == null) {
@@ -110,15 +114,15 @@ class PatientSelector extends StatelessWidget {
                 cancelText: context.l10n.cancel,
                 onConfirm: () {
                   context.read<AttachToEncounterBloc>().add(
-                        AttachToEncounterPatientChanged(newValue),
-                      );
+                    AttachToEncounterPatientChanged(newValue),
+                  );
                 },
               );
               return;
             }
             context.read<AttachToEncounterBloc>().add(
-                  AttachToEncounterPatientChanged(newValue),
-                );
+              AttachToEncounterPatientChanged(newValue),
+            );
           },
         ),
       ],
@@ -126,7 +130,9 @@ class PatientSelector extends StatelessWidget {
   }
 
   Widget _buildPatientBanner(
-      BuildContext context, AttachToEncounterState state) {
+    BuildContext context,
+    AttachToEncounterState state,
+  ) {
     final patient = state.patient;
     final hasBoth = patient.draft != null && patient.existing != null;
     final isNew = patient.mode == ImportMode.createNew && patient.draft != null;
@@ -155,7 +161,8 @@ class PatientSelector extends StatelessWidget {
           icon: Icons.edit_outlined,
           color: AppColors.warning,
           text: context.l10n.patientModifiedUpdating(
-              patient.existing!.displayTitle),
+            patient.existing!.displayTitle,
+          ),
         );
       }
       return _banner(

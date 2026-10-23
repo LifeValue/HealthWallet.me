@@ -85,13 +85,25 @@ class BiometricsSetupDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: Insets.medium),
                   _buildSetupStep(
-                      context, '1', context.l10n.deviceSettingsStep1),
+                    context,
+                    '1',
+                    context.l10n.deviceSettingsStep1,
+                  ),
                   _buildSetupStep(
-                      context, '2', context.l10n.deviceSettingsStep2),
+                    context,
+                    '2',
+                    context.l10n.deviceSettingsStep2,
+                  ),
                   _buildSetupStep(
-                      context, '3', context.l10n.deviceSettingsStep3),
+                    context,
+                    '3',
+                    context.l10n.deviceSettingsStep3,
+                  ),
                   _buildSetupStep(
-                      context, '4', context.l10n.deviceSettingsStep4),
+                    context,
+                    '4',
+                    context.l10n.deviceSettingsStep4,
+                  ),
                   const SizedBox(height: Insets.medium),
                   Text(
                     context.l10n.deviceSecurityReturnMessage,
@@ -128,27 +140,30 @@ class BiometricsSetupDialog extends StatelessWidget {
                         Navigator.of(context).pop();
 
                         try {
-                          final opened =
-                              await biometricService.openDeviceSettings();
+                          final opened = await biometricService
+                              .openDeviceSettings();
                           if (!opened) {
                             if (context.mounted) {
-                              unawaited(showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title:
-                                      Text(context.l10n.settingsNotAvailable),
-                                  content: Text(
-                                    context.l10n.settingsNotAvailableMessage,
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                      child: Text(context.l10n.ok),
+                              unawaited(
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(
+                                      context.l10n.settingsNotAvailable,
                                     ),
-                                  ],
+                                    content: Text(
+                                      context.l10n.settingsNotAvailableMessage,
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: Text(context.l10n.ok),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ));
+                              );
                             }
                           }
                         } catch (e) {

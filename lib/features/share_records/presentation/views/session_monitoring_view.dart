@@ -81,8 +81,9 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
                         Text(
                           context.l10n.shareSessionAutoExpire,
                           style: AppTextStyle.bodyMedium.copyWith(
-                            color: context.colorScheme.onSurface
-                                .withValues(alpha: 0.6),
+                            color: context.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -95,8 +96,7 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
             SessionBottomBar(
               state: widget.state,
               peerRole: 'receiver',
-              endSessionEvent:
-                  const ShareRecordsEvent.killSessionRequested(),
+              endSessionEvent: const ShareRecordsEvent.killSessionRequested(),
             ),
           ],
         ),
@@ -135,7 +135,9 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(Insets.small),
-                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.success.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [

@@ -62,7 +62,10 @@ Future<void> showShareOptionsMenu(
                 ),
               ),
               const SizedBox(width: 12),
-              Text(context.l10n.addIpsToAppleWallet, style: AppTextStyle.menuItem),
+              Text(
+                context.l10n.addIpsToAppleWallet,
+                style: AppTextStyle.menuItem,
+              ),
             ],
           ),
         ),
@@ -81,7 +84,10 @@ Future<void> showShareOptionsMenu(
                 ),
               ),
               const SizedBox(width: 12),
-              Text(context.l10n.addIpsToGoogleWallet, style: AppTextStyle.menuItem),
+              Text(
+                context.l10n.addIpsToGoogleWallet,
+                style: AppTextStyle.menuItem,
+              ),
             ],
           ),
         ),
@@ -94,34 +100,34 @@ Future<void> showShareOptionsMenu(
   switch (value) {
     case 'export_ips':
       context.read<RecordsBloc>().add(
-            RecordsSharePressed(
-              patientName: patientName,
-              patientId: patientId,
-            ),
-          );
+        RecordsSharePressed(
+          patientName: patientName,
+          patientId: patientId,
+        ),
+      );
     case 'apple_wallet':
       context.read<WalletPassBloc>().add(
-            WalletPassRequested(
-              type: WalletPassType.apple,
-              patientId: patientId ?? '',
-              applePassLabels: ApplePassLabels(
-                patient: context.l10n.patient,
-                bloodType: context.l10n.bloodType,
-                allergies: context.l10n.allergiesLabel,
-                gender: context.l10n.gender,
-                dateOfBirth: context.l10n.dateOfBirthLabel,
-                emergencyPhone: context.l10n.emergencyPhoneLabel,
-                conditions: context.l10n.conditionsLabel,
-                medications: context.l10n.medicationsLabel,
-              ),
-            ),
-          );
+        WalletPassRequested(
+          type: WalletPassType.apple,
+          patientId: patientId ?? '',
+          applePassLabels: ApplePassLabels(
+            patient: context.l10n.patient,
+            bloodType: context.l10n.bloodType,
+            allergies: context.l10n.allergiesLabel,
+            gender: context.l10n.gender,
+            dateOfBirth: context.l10n.dateOfBirthLabel,
+            emergencyPhone: context.l10n.emergencyPhoneLabel,
+            conditions: context.l10n.conditionsLabel,
+            medications: context.l10n.medicationsLabel,
+          ),
+        ),
+      );
     case 'google_wallet':
       context.read<WalletPassBloc>().add(
-            WalletPassRequested(
-              type: WalletPassType.google,
-              patientId: patientId ?? '',
-            ),
-          );
+        WalletPassRequested(
+          type: WalletPassType.google,
+          patientId: patientId ?? '',
+        ),
+      );
   }
 }

@@ -22,8 +22,10 @@ class HandoverService {
   final Map<String, HandoverSession> _sessions = {};
   final Map<String, List<String>> _receivedFiles = {};
   final Map<String, Map<String, dynamic>?> _phase1Data = {};
-  final _sessionUpdateController = StreamController<HandoverSession>.broadcast();
-  final Map<String, ({String type, Map<String, dynamic> payload})> _pendingResults = {};
+  final _sessionUpdateController =
+      StreamController<HandoverSession>.broadcast();
+  final Map<String, ({String type, Map<String, dynamic> payload})>
+  _pendingResults = {};
 
   StreamSubscription? _offerSub;
   StreamSubscription? _fileSub;
@@ -141,24 +143,29 @@ class HandoverService {
     if (_hasPhase1Data) {
       final p1 = phase1!;
       phase1Patient = stagedPatientFromJson(
-          p1['patient'] as Map<String, dynamic>);
+        p1['patient'] as Map<String, dynamic>,
+      );
       if (p1['encounter'] != null) {
         phase1Encounter = stagedEncounterFromJson(
-            p1['encounter'] as Map<String, dynamic>);
+          p1['encounter'] as Map<String, dynamic>,
+        );
       }
       if (p1['diagnosticReport'] != null) {
         phase1DiagnosticReport = stagedDiagnosticReportFromJson(
-            p1['diagnosticReport'] as Map<String, dynamic>);
+          p1['diagnosticReport'] as Map<String, dynamic>,
+        );
       }
     }
 
-    _processingBloc.add(DocumentImported(
-      filePaths: filePaths,
-      origin: ProcessingOrigin.handover,
-      phase1Patient: phase1Patient,
-      phase1Encounter: phase1Encounter,
-      phase1DiagnosticReport: phase1DiagnosticReport,
-    ));
+    _processingBloc.add(
+      DocumentImported(
+        filePaths: filePaths,
+        origin: ProcessingOrigin.handover,
+        phase1Patient: phase1Patient,
+        phase1Encounter: phase1Encounter,
+        phase1DiagnosticReport: phase1DiagnosticReport,
+      ),
+    );
 
     var sessionActivated = false;
     var phase2Triggered = false;
@@ -239,7 +246,10 @@ class HandoverService {
       _sessionUpdateController.add(updated);
 
       final step1Payload = {'session_id': sessionId};
-      _pendingResults[sessionId] = (type: 'handover.step1_complete', payload: step1Payload);
+      _pendingResults[sessionId] = (
+        type: 'handover.step1_complete',
+        payload: step1Payload,
+      );
       _tcpService.sendData('handover.step1_complete', step1Payload);
 
       _processingBlocSub?.cancel();
@@ -284,7 +294,10 @@ class HandoverService {
         'encounter': ?encounterJson,
       };
 
-      _pendingResults[sessionId] = (type: 'handover.result', payload: resultPayload);
+      _pendingResults[sessionId] = (
+        type: 'handover.result',
+        payload: resultPayload,
+      );
 
       await _tcpService.sendData('handover.result', resultPayload);
 

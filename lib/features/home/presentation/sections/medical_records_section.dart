@@ -92,8 +92,11 @@ class MedicalRecordsSection extends StatelessWidget {
   }
 
   Widget _buildOverviewCard(
-      BuildContext context, OverviewCard card, double screenWidth,
-      {Key? key}) {
+    BuildContext context,
+    OverviewCard card,
+    double screenWidth, {
+    Key? key,
+  }) {
     final bool isSmall = screenWidth < _breakpoint;
     final bool isTabletLayout = screenWidth >= 600;
     final double iconSize = isSmall ? 22 : 26;

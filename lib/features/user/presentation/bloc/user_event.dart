@@ -36,7 +36,8 @@ abstract class UserBiometricsSetupShown extends UserEvent
 }
 
 @freezed
-abstract class UserDataUpdatedFromSync extends UserEvent with _$UserDataUpdatedFromSync {
+abstract class UserDataUpdatedFromSync extends UserEvent
+    with _$UserDataUpdatedFromSync {
   const UserDataUpdatedFromSync._();
 
   const factory UserDataUpdatedFromSync() = _UserDataUpdatedFromSync;
@@ -50,17 +51,21 @@ abstract class UserNameUpdated extends UserEvent with _$UserNameUpdated {
 }
 
 @freezed
-abstract class UserReceiveModeToggled extends UserEvent with _$UserReceiveModeToggled {
+abstract class UserReceiveModeToggled extends UserEvent
+    with _$UserReceiveModeToggled {
   const UserReceiveModeToggled._();
 
-  const factory UserReceiveModeToggled(bool isEnabled) = _UserReceiveModeToggled;
+  const factory UserReceiveModeToggled(bool isEnabled) =
+      _UserReceiveModeToggled;
 }
 
 @freezed
-abstract class UserRegionPresetChanged extends UserEvent with _$UserRegionPresetChanged {
+abstract class UserRegionPresetChanged extends UserEvent
+    with _$UserRegionPresetChanged {
   const UserRegionPresetChanged._();
 
-  const factory UserRegionPresetChanged(RegionPreset preset) = _UserRegionPresetChanged;
+  const factory UserRegionPresetChanged(RegionPreset preset) =
+      _UserRegionPresetChanged;
 }
 
 @freezed

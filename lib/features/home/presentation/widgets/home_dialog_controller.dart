@@ -12,8 +12,9 @@ class HomeDialogController {
     HomeState state,
     Function(Map<HomeRecordsCategory, bool>) onRecordsSaved,
   ) {
-    final orderedRecords =
-        state.overviewCards.map((c) => c.category).toList(growable: false);
+    final orderedRecords = state.overviewCards
+        .map((c) => c.category)
+        .toList(growable: false);
     const allRecords = HomeRecordsCategory.values;
     final items = orderedRecords.map((category) {
       return DialogItem(
@@ -25,10 +26,12 @@ class HomeDialogController {
     // Add any remaining categories not in ordered list
     for (final category in allRecords) {
       if (!orderedRecords.contains(category)) {
-        items.add(DialogItem(
-          id: category.name,
-          label: category.display,
-        ));
+        items.add(
+          DialogItem(
+            id: category.name,
+            label: category.display,
+          ),
+        );
       }
     }
 
@@ -112,8 +115,9 @@ class HomeDialogController {
     HomeState state,
     Function(Map<MedicalSpecialty, bool>) onSpecialtiesSaved,
   ) {
-    final orderedSpecialties =
-        state.specialtyCards.map((c) => c.specialty).toList(growable: false);
+    final orderedSpecialties = state.specialtyCards
+        .map((c) => c.specialty)
+        .toList(growable: false);
     const allSpecialties = MedicalSpecialty.values;
     final items = orderedSpecialties.map((specialty) {
       return DialogItem(
@@ -124,10 +128,12 @@ class HomeDialogController {
 
     for (final specialty in allSpecialties) {
       if (!orderedSpecialties.contains(specialty)) {
-        items.add(DialogItem(
-          id: specialty.name,
-          label: specialty.displayName,
-        ));
+        items.add(
+          DialogItem(
+            id: specialty.name,
+            label: specialty.displayName,
+          ),
+        );
       }
     }
 
@@ -140,7 +146,8 @@ class HomeDialogController {
       context: context,
       builder: (context) => AppDialog(
         title: context.l10n.specialty,
-        description: 'Choose the specialities you want to see on your dashboard.',
+        description:
+            'Choose the specialities you want to see on your dashboard.',
         items: items,
         mode: AppDialogMode.multiSelect,
         initiallySelected: initiallySelected,

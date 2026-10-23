@@ -11,17 +11,25 @@ extension ResponsiveExtension on BuildContext {
   bool get isDesktopWidth => screenWidth >= Breakpoints.desktop;
   bool get isTablet => screenWidth >= Breakpoints.tablet;
   bool get isSmallPhone => screenWidth < Breakpoints.smallPhone;
-  double get screenHorizontalPadding =>
-      isDesktopWidth ? 48.0 : isTablet ? 32.0 : 16.0;
+  double get screenHorizontalPadding => isDesktopWidth
+      ? 48.0
+      : isTablet
+      ? 32.0
+      : 16.0;
 
-  double get dialogWidth =>
-      isDesktopWidth ? 480.0 : isTablet ? 450.0 : 350.0;
+  double get dialogWidth => isDesktopWidth
+      ? 480.0
+      : isTablet
+      ? 450.0
+      : 350.0;
 
-  double get wideDialogWidth =>
-      isDesktopWidth ? 560.0 : isTablet ? 520.0 : 400.0;
+  double get wideDialogWidth => isDesktopWidth
+      ? 560.0
+      : isTablet
+      ? 520.0
+      : 400.0;
 
-  double get contentMaxWidth =>
-      isDesktopWidth ? 700.0 : 600.0;
+  double get contentMaxWidth => isDesktopWidth ? 700.0 : 600.0;
 }
 
 class ConstrainedContent extends StatelessWidget {

@@ -11,7 +11,9 @@ class PatientPostProcessor {
     String ocrText, {
     String? regionDefaultLabel,
   }) {
-    ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] patient: ${patient.givenName.value} ${patient.familyName.value}, mrn=${patient.patientIdentifier.value}, label=${patient.identifierLabel}');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][PostProcessor] patient: ${patient.givenName.value} ${patient.familyName.value}, mrn=${patient.patientIdentifier.value}, label=${patient.identifierLabel}',
+    );
 
     var result = patient;
 
@@ -21,7 +23,8 @@ class PatientPostProcessor {
     result = _validateNames(result);
     result = _recoverNamesFromOcr(result, ocrText);
 
-    final defaultLabel = regionDefaultLabel ??
+    final defaultLabel =
+        regionDefaultLabel ??
         CountryIdentifier.forCurrentLocale().identifierLabel;
     if (defaultLabel != 'ID' &&
         (result.identifierLabel == 'ID' || result.identifierLabel == 'MRN') &&
@@ -30,13 +33,31 @@ class PatientPostProcessor {
     }
 
     if (result != patient) {
-      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] corrected: label=${result.identifierLabel}, dob=${result.dateOfBirth.value}, gender=${result.gender.value}');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][PostProcessor] corrected: label=${result.identifierLabel}, dob=${result.dateOfBirth.value}, gender=${result.gender.value}',
+      );
     }
 
     return result;
   }
 
-  static final _knownLabels = {'CNP', 'MRN', 'SSN', 'NHS', 'KVNR', 'SVNr', 'DNI', 'CIP', 'NIR', 'CF', 'BSN', 'PESEL', 'PNR', 'AHV', 'Identifier'};
+  static final _knownLabels = {
+    'CNP',
+    'MRN',
+    'SSN',
+    'NHS',
+    'KVNR',
+    'SVNr',
+    'DNI',
+    'CIP',
+    'NIR',
+    'CF',
+    'BSN',
+    'PESEL',
+    'PNR',
+    'AHV',
+    'Identifier',
+  };
   static final _numericPattern = RegExp(r'^\d[\d\s\-\.]+$');
 
   static MappingPatient _fixSwappedIdentifierFields(MappingPatient patient) {
@@ -44,19 +65,29 @@ class PatientPostProcessor {
     final mrn = patient.patientIdentifier.value.trim();
 
     final labelLooksNumeric = _numericPattern.hasMatch(label);
-    final mrnLooksLikeLabel = _knownLabels.contains(mrn) ||
+    final mrnLooksLikeLabel =
+        _knownLabels.contains(mrn) ||
         (mrn.isNotEmpty && RegExp(r'^[A-Za-z]+$').hasMatch(mrn));
 
     if (labelLooksNumeric && (mrn.isEmpty || mrnLooksLikeLabel)) {
-      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] swapped fields: moving "$label" from label to MRN box');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][PostProcessor] swapped fields: moving "$label" from label to MRN box',
+      );
       return patient.copyWith(
-        patientIdentifier: MappedProperty(value: label, confidenceLevel: patient.patientIdentifier.confidenceLevel),
-        identifierLabel: mrn.isNotEmpty && _knownLabels.contains(mrn) ? mrn : 'Identifier',
+        patientIdentifier: MappedProperty(
+          value: label,
+          confidenceLevel: patient.patientIdentifier.confidenceLevel,
+        ),
+        identifierLabel: mrn.isNotEmpty && _knownLabels.contains(mrn)
+            ? mrn
+            : 'Identifier',
       );
     }
 
     if (labelLooksNumeric && mrn.isNotEmpty) {
-      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] label contains number "$label", resetting to Identifier');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][PostProcessor] label contains number "$label", resetting to Identifier',
+      );
       return patient.copyWith(identifierLabel: 'Identifier');
     }
 
@@ -74,15 +105,22 @@ class PatientPostProcessor {
       final realCnp = _findCnpInText(ocrText);
       if (realCnp != null) {
         final parsed = _tryParseCnp(realCnp)!;
-        ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] CNP recovered from OCR: $realCnp (model had wrong value: $mrnValue)');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][PostProcessor] CNP recovered from OCR: $realCnp (model had wrong value: $mrnValue)',
+        );
         return patient.copyWith(
-          patientIdentifier: MappedProperty(value: realCnp, confidenceLevel: 0.9),
+          patientIdentifier: MappedProperty(
+            value: realCnp,
+            confidenceLevel: 0.9,
+          ),
           identifierLabel: 'CNP',
           dateOfBirth: MappedProperty(value: parsed.dob, confidenceLevel: 1.0),
           gender: MappedProperty(value: parsed.gender, confidenceLevel: 1.0),
         );
       }
-      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] label CNP -> Identifier (not a valid CNP, none found in OCR)');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][PostProcessor] label CNP -> Identifier (not a valid CNP, none found in OCR)',
+      );
       return patient.copyWith(identifierLabel: 'Identifier');
     }
 
@@ -90,9 +128,14 @@ class PatientPostProcessor {
       final realCnp = _findCnpInText(ocrText);
       if (realCnp != null) {
         final parsed = _tryParseCnp(realCnp)!;
-        ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] CNP found in OCR: $realCnp (model had: label=${patient.identifierLabel}, mrn=$mrnValue)');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][PostProcessor] CNP found in OCR: $realCnp (model had: label=${patient.identifierLabel}, mrn=$mrnValue)',
+        );
         return patient.copyWith(
-          patientIdentifier: MappedProperty(value: realCnp, confidenceLevel: 0.9),
+          patientIdentifier: MappedProperty(
+            value: realCnp,
+            confidenceLevel: 0.9,
+          ),
           identifierLabel: 'CNP',
           dateOfBirth: MappedProperty(value: parsed.dob, confidenceLevel: 1.0),
           gender: MappedProperty(value: parsed.gender, confidenceLevel: 1.0),
@@ -101,7 +144,9 @@ class PatientPostProcessor {
     }
 
     if (isValidCnp && patient.identifierLabel != 'CNP') {
-      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] label ${patient.identifierLabel} -> CNP (valid 13-digit CNP detected)');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][PostProcessor] label ${patient.identifierLabel} -> CNP (valid 13-digit CNP detected)',
+      );
       return patient.copyWith(identifierLabel: 'CNP');
     }
 
@@ -119,9 +164,14 @@ class PatientPostProcessor {
       if (foundCnp != null) {
         final foundParsed = _tryParseCnp(foundCnp);
         if (foundParsed != null) {
-          ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] CNP recovered from OCR: $foundCnp');
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][PostProcessor] CNP recovered from OCR: $foundCnp',
+          );
           return patient.copyWith(
-            patientIdentifier: MappedProperty(value: foundCnp, confidenceLevel: 0.9),
+            patientIdentifier: MappedProperty(
+              value: foundCnp,
+              confidenceLevel: 0.9,
+            ),
             dateOfBirth: MappedProperty(
               value: foundParsed.dob,
               confidenceLevel: 1.0,
@@ -136,7 +186,9 @@ class PatientPostProcessor {
       return patient;
     }
 
-    ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] CNP derived: dob=${parsed.dob}, gender=${parsed.gender}');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][PostProcessor] CNP derived: dob=${parsed.dob}, gender=${parsed.gender}',
+    );
     return patient.copyWith(
       dateOfBirth: MappedProperty(
         value: parsed.dob,
@@ -174,14 +226,18 @@ class PatientPostProcessor {
     var result = patient;
 
     if (_isLikelyAddress(result.familyName.value)) {
-      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] cleared familyName (address detected)');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][PostProcessor] cleared familyName (address detected)',
+      );
       result = result.copyWith(
         familyName: const MappedProperty(value: '', confidenceLevel: 0.0),
       );
     }
 
     if (_isLikelyAddress(result.givenName.value)) {
-      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] cleared givenName (address detected)');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][PostProcessor] cleared givenName (address detected)',
+      );
       result = result.copyWith(
         givenName: const MappedProperty(value: '', confidenceLevel: 0.0),
       );
@@ -191,7 +247,9 @@ class PatientPostProcessor {
     final givenIsPlaceholder = _isPlaceholder(result.givenName.value);
 
     if (familyIsPlaceholder || givenIsPlaceholder) {
-      ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] placeholder detected: family="${result.familyName.value}", given="${result.givenName.value}"');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][PostProcessor] placeholder detected: family="${result.familyName.value}", given="${result.givenName.value}"',
+      );
       if (familyIsPlaceholder) {
         result = result.copyWith(
           familyName: const MappedProperty(value: '', confidenceLevel: 0.0),
@@ -290,10 +348,22 @@ class PatientPostProcessor {
     if (!needsFamily && !needsGiven) return patient;
 
     final namePatterns = [
-      RegExp(r'Nume\s*(?:si|și)\s*[Pp]renume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s+([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+CNP|\s+\d|\s*$)', multiLine: true),
-      RegExp(r'Nume\s*(?:si|și)\s*[Pp]renume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-]+)\s*,\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+CNP|\s+\d|\s*$)', multiLine: true),
-      RegExp(r'Nume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s+Prenume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+\d|\s*$)', multiLine: true),
-      RegExp(r'(?:Patient|Name)\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s*,?\s+([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+\d|\s*$)', multiLine: true),
+      RegExp(
+        r'Nume\s*(?:si|și)\s*[Pp]renume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s+([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+CNP|\s+\d|\s*$)',
+        multiLine: true,
+      ),
+      RegExp(
+        r'Nume\s*(?:si|și)\s*[Pp]renume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-]+)\s*,\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+CNP|\s+\d|\s*$)',
+        multiLine: true,
+      ),
+      RegExp(
+        r'Nume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s+Prenume\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+\d|\s*$)',
+        multiLine: true,
+      ),
+      RegExp(
+        r'(?:Patient|Name)\s*[:=]\s*([A-ZÀ-Ž][A-ZÀ-Ž\-]+)\s*,?\s+([A-ZÀ-Ž][A-ZÀ-Ža-zà-ž\-\s]+?)(?:\s*[,;]|\s+\d|\s*$)',
+        multiLine: true,
+      ),
     ];
 
     for (final pattern in namePatterns) {
@@ -301,7 +371,9 @@ class PatientPostProcessor {
       if (match != null) {
         final surname = match.group(1)!.trim();
         final firstName = match.group(2)!.trim();
-        ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] names recovered from OCR: "$surname" "$firstName"');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][PostProcessor] names recovered from OCR: "$surname" "$firstName"',
+        );
         var result = patient;
         if (needsFamily) {
           result = result.copyWith(
@@ -317,7 +389,9 @@ class PatientPostProcessor {
       }
     }
 
-    ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] could not recover names from OCR');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][PostProcessor] could not recover names from OCR',
+    );
     return patient;
   }
 

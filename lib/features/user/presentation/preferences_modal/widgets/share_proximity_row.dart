@@ -72,8 +72,11 @@ class _ShareProximityRowState extends State<ShareProximityRow>
 
     if (granted) {
       final manager = getIt<ReceiveModeService>();
-      final isEnabled =
-          context.read<UserBloc>().state.user.isReceiveModeEnabled;
+      final isEnabled = context
+          .read<UserBloc>()
+          .state
+          .user
+          .isReceiveModeEnabled;
       if (manager.isListening && !isEnabled) {
         context.read<UserBloc>().add(const UserReceiveModeToggled(true));
       }
@@ -135,8 +138,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
   }
 
   Future<void> _toggleReceiveMode(BuildContext context) async {
-    final isEnabled =
-        context.read<UserBloc>().state.user.isReceiveModeEnabled;
+    final isEnabled = context.read<UserBloc>().state.user.isReceiveModeEnabled;
 
     if (!isEnabled) {
       final service = getIt<BluetoothStateService>();
@@ -184,7 +186,9 @@ class _ShareProximityRowState extends State<ShareProximityRow>
                   Text(
                     'Advertise to nearby devices',
                     style: AppTextStyle.labelSmall.copyWith(
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                   ),
                 ],

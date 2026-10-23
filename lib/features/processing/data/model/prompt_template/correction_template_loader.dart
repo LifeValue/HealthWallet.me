@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/services.dart';
 
 class CorrectionTemplateLoader {
@@ -47,8 +48,8 @@ class CorrectionTemplateLoader {
 
     for (final template in candidates) {
       int score = 0;
-      final templateOcr =
-          (template['ocrExcerpt'] as String? ?? '').toLowerCase();
+      final templateOcr = (template['ocrExcerpt'] as String? ?? '')
+          .toLowerCase();
 
       if (ocrText != null && ocrText.isNotEmpty) {
         final ocrLower = ocrText.toLowerCase();
@@ -131,12 +132,15 @@ class CorrectionTemplateLoader {
   String _formatExample(Map<String, dynamic> template) {
     final extraction = template['extraction'] as List<dynamic>;
 
-    final condensed = extraction.take(8).map((resource) {
-      final r = resource as Map<String, dynamic>;
-      final copy = Map<String, dynamic>.from(r);
-      copy.remove('confidenceLevel');
-      return jsonEncode(copy);
-    }).join(',\n');
+    final condensed = extraction
+        .take(8)
+        .map((resource) {
+          final r = resource as Map<String, dynamic>;
+          final copy = Map<String, dynamic>.from(r);
+          copy.remove('confidenceLevel');
+          return jsonEncode(copy);
+        })
+        .join(',\n');
 
     return '[\n$condensed\n]';
   }

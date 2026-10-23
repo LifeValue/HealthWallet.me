@@ -5,14 +5,16 @@ abstract class ProcessingEvent {
 }
 
 @freezed
-abstract class ProcessingInitialised extends ProcessingEvent with _$ProcessingInitialised {
+abstract class ProcessingInitialised extends ProcessingEvent
+    with _$ProcessingInitialised {
   const ProcessingInitialised._();
 
   const factory ProcessingInitialised() = _ProcessingInitialised;
 }
 
 @freezed
-abstract class CaptureButtonPressed extends ProcessingEvent with _$CaptureButtonPressed {
+abstract class CaptureButtonPressed extends ProcessingEvent
+    with _$CaptureButtonPressed {
   const CaptureButtonPressed._();
 
   const factory CaptureButtonPressed({
@@ -22,7 +24,8 @@ abstract class CaptureButtonPressed extends ProcessingEvent with _$CaptureButton
 }
 
 @freezed
-abstract class DocumentImported extends ProcessingEvent with _$DocumentImported {
+abstract class DocumentImported extends ProcessingEvent
+    with _$DocumentImported {
   const DocumentImported._();
 
   const factory DocumentImported({
@@ -59,7 +62,8 @@ enum CaptureMode {
 }
 
 @freezed
-abstract class SessionActivated extends ProcessingEvent with _$SessionActivated {
+abstract class SessionActivated extends ProcessingEvent
+    with _$SessionActivated {
   const SessionActivated._();
 
   const factory SessionActivated({
@@ -68,7 +72,8 @@ abstract class SessionActivated extends ProcessingEvent with _$SessionActivated 
 }
 
 @freezed
-abstract class MappingInitiated extends ProcessingEvent with _$MappingInitiated {
+abstract class MappingInitiated extends ProcessingEvent
+    with _$MappingInitiated {
   const MappingInitiated._();
 
   const factory MappingInitiated({required String sessionId}) =
@@ -94,16 +99,17 @@ abstract class ResourceChanged extends ProcessingEvent with _$ResourceChanged {
 abstract class PatientReverted extends ProcessingEvent with _$PatientReverted {
   const PatientReverted._();
 
-  const factory PatientReverted({required String sessionId}) =
-      _PatientReverted;
+  const factory PatientReverted({required String sessionId}) = _PatientReverted;
 }
 
 @freezed
 abstract class ResourceRemoved extends ProcessingEvent with _$ResourceRemoved {
   const ResourceRemoved._();
 
-  const factory ResourceRemoved(
-      {required String sessionId, required int index}) = _ResourceRemoved;
+  const factory ResourceRemoved({
+    required String sessionId,
+    required int index,
+  }) = _ResourceRemoved;
 }
 
 @freezed
@@ -124,7 +130,8 @@ abstract class NotificationAcknowledged extends ProcessingEvent
 }
 
 @freezed
-abstract class MappingCancelled extends ProcessingEvent with _$MappingCancelled {
+abstract class MappingCancelled extends ProcessingEvent
+    with _$MappingCancelled {
   const MappingCancelled._();
 
   const factory MappingCancelled({required String sessionId}) =
@@ -142,7 +149,8 @@ abstract class ResourcesAdded extends ProcessingEvent with _$ResourcesAdded {
 }
 
 @freezed
-abstract class EncounterAttached extends ProcessingEvent with _$EncounterAttached {
+abstract class EncounterAttached extends ProcessingEvent
+    with _$EncounterAttached {
   const EncounterAttached._();
 
   const factory EncounterAttached({
@@ -163,7 +171,8 @@ abstract class ProcessRemainingResources extends ProcessingEvent
 }
 
 @freezed
-abstract class DocumentAttached extends ProcessingEvent with _$DocumentAttached {
+abstract class DocumentAttached extends ProcessingEvent
+    with _$DocumentAttached {
   const DocumentAttached._();
 
   const factory DocumentAttached({
@@ -186,8 +195,7 @@ abstract class TokenCapacityUpdated extends ProcessingEvent
 abstract class VisionToggled extends ProcessingEvent with _$VisionToggled {
   const VisionToggled._();
 
-  const factory VisionToggled({required bool useVision}) =
-      _VisionToggled;
+  const factory VisionToggled({required bool useVision}) = _VisionToggled;
 }
 
 @freezed

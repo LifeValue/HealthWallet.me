@@ -13,7 +13,8 @@ abstract class OnboardingPageChanged extends OnboardingEvent
 }
 
 @freezed
-abstract class OnboardingNextPage extends OnboardingEvent with _$OnboardingNextPage {
+abstract class OnboardingNextPage extends OnboardingEvent
+    with _$OnboardingNextPage {
   const OnboardingNextPage._();
 
   const factory OnboardingNextPage() = _OnboardingNextPage;
@@ -28,7 +29,8 @@ abstract class OnboardingPreviousPage extends OnboardingEvent
 }
 
 @freezed
-abstract class OnboardingLaunchUrl extends OnboardingEvent with _$OnboardingLaunchUrl {
+abstract class OnboardingLaunchUrl extends OnboardingEvent
+    with _$OnboardingLaunchUrl {
   const OnboardingLaunchUrl._();
 
   const factory OnboardingLaunchUrl(String url) = _OnboardingLaunchUrl;

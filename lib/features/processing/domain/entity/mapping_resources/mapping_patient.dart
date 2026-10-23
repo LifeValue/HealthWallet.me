@@ -40,8 +40,9 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         value: MappingResource.normalizeDateValue(rawDob.value),
       ),
       gender: MappedProperty.fromJson(json['gender']),
-      patientIdentifier:
-          MappedProperty.fromJson(json['patientIdentifier'] ?? json['patientMRN'] ?? json['patientId']),
+      patientIdentifier: MappedProperty.fromJson(
+        json['patientIdentifier'] ?? json['patientMRN'] ?? json['patientId'],
+      ),
       identifierLabel: rawLabel.isEmpty ? defaultLabel : rawLabel,
     );
   }
@@ -82,21 +83,23 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         value: FhirFieldExtractor.extractPatientIdentifierValue(patient),
         confidenceLevel: 1,
       ),
-      identifierLabel: FhirFieldExtractor.extractPatientIdentifierLabel(patient),
+      identifierLabel: FhirFieldExtractor.extractPatientIdentifierLabel(
+        patient,
+      ),
     );
   }
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'Patient',
-        'familyName': familyName.toJson(),
-        'givenName': givenName.toJson(),
-        'dateOfBirth': dateOfBirth.toJson(),
-        'gender': gender.toJson(),
-        'patientIdentifier': patientIdentifier.toJson(),
-        'identifierLabel': identifierLabel,
-      };
+    'id': id,
+    'resourceType': 'Patient',
+    'familyName': familyName.toJson(),
+    'givenName': givenName.toJson(),
+    'dateOfBirth': dateOfBirth.toJson(),
+    'gender': gender.toJson(),
+    'patientIdentifier': patientIdentifier.toJson(),
+    'identifierLabel': identifierLabel,
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -117,7 +120,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
         fhir_r4.HumanName(
           family: fhir_r4.FhirString(familyName.value),
           given: [fhir_r4.FhirString(givenName.value)],
-        )
+        ),
       ],
       birthDate: dateOfBirth.value.isNotEmpty
           ? fhir_r4.FhirDate.fromString(dateOfBirth.value)
@@ -133,15 +136,16 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
                   ? [
                       fhir_r4.Coding(
                         system: fhir_r4.FhirUri(
-                            'http://terminology.hl7.org/CodeSystem/v2-0203'),
+                          'http://terminology.hl7.org/CodeSystem/v2-0203',
+                        ),
                         code: fhir_r4.FhirCode(identifierCoding),
                         display: fhir_r4.FhirString(identifierLabel),
-                      )
+                      ),
                     ]
                   : null,
               text: fhir_r4.FhirString(identifierLabel),
             ),
-          )
+          ),
       ],
     );
 
@@ -163,86 +167,88 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'givenName': l10n.labelFirstName,
-        'familyName': l10n.labelFamilyName,
-        'dateOfBirth': l10n.labelDateOfBirth,
-        'gender': l10n.labelGender,
-      };
+    'givenName': l10n.labelFirstName,
+    'familyName': l10n.labelFamilyName,
+    'dateOfBirth': l10n.labelDateOfBirth,
+    'gender': l10n.labelGender,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'givenName': TextFieldDescriptor(
-          label: 'First name',
-          value: givenName.value,
-          confidenceLevel: givenName.confidenceLevel,
-        ),
-        'familyName': TextFieldDescriptor(
-          label: 'Family name',
-          value: familyName.value,
-          confidenceLevel: familyName.confidenceLevel,
-        ),
-        'dateOfBirth': TextFieldDescriptor(
-          label: 'Date of birth',
-          value: dateOfBirth.value,
-          confidenceLevel: dateOfBirth.confidenceLevel,
-          fieldType: FieldType.date,
-        ),
-        'gender': TextFieldDescriptor(
-          label: 'Gender',
-          value: gender.value,
-          confidenceLevel: gender.confidenceLevel,
-          fieldType: FieldType.dropdown,
-        ),
-        'patientIdentifier': TextFieldDescriptor(
-          label: identifierLabel,
-          value: patientIdentifier.value,
-          confidenceLevel: patientIdentifier.confidenceLevel,
-        ),
-      };
+    'givenName': TextFieldDescriptor(
+      label: 'First name',
+      value: givenName.value,
+      confidenceLevel: givenName.confidenceLevel,
+    ),
+    'familyName': TextFieldDescriptor(
+      label: 'Family name',
+      value: familyName.value,
+      confidenceLevel: familyName.confidenceLevel,
+    ),
+    'dateOfBirth': TextFieldDescriptor(
+      label: 'Date of birth',
+      value: dateOfBirth.value,
+      confidenceLevel: dateOfBirth.confidenceLevel,
+      fieldType: FieldType.date,
+    ),
+    'gender': TextFieldDescriptor(
+      label: 'Gender',
+      value: gender.value,
+      confidenceLevel: gender.confidenceLevel,
+      fieldType: FieldType.dropdown,
+    ),
+    'patientIdentifier': TextFieldDescriptor(
+      label: identifierLabel,
+      value: patientIdentifier.value,
+      confidenceLevel: patientIdentifier.confidenceLevel,
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) => MappingPatient(
-        id: id,
-        givenName: MappedProperty(
-          value: newValues['givenName'] ?? givenName.value,
-          confidenceLevel:
-              newValues['givenName'] != null ? 1 : givenName.confidenceLevel,
-        ),
-        familyName: MappedProperty(
-          value: newValues['familyName'] ?? familyName.value,
-          confidenceLevel:
-              newValues['familyName'] != null ? 1 : familyName.confidenceLevel,
-        ),
-        dateOfBirth: MappedProperty(
-          value: newValues['dateOfBirth'] ?? dateOfBirth.value,
-          confidenceLevel: newValues['dateOfBirth'] != null
-              ? 1
-              : dateOfBirth.confidenceLevel,
-        ),
-        gender: MappedProperty(
-          value: newValues['gender'] ?? gender.value,
-          confidenceLevel:
-              newValues['gender'] != null ? 1 : gender.confidenceLevel,
-        ),
-        patientIdentifier: MappedProperty(
-          value: newValues['patientIdentifier'] ?? patientIdentifier.value,
-          confidenceLevel:
-              newValues['patientIdentifier'] != null ? 1 : patientIdentifier.confidenceLevel,
-        ),
-        identifierLabel: identifierLabel,
-      );
+    id: id,
+    givenName: MappedProperty(
+      value: newValues['givenName'] ?? givenName.value,
+      confidenceLevel: newValues['givenName'] != null
+          ? 1
+          : givenName.confidenceLevel,
+    ),
+    familyName: MappedProperty(
+      value: newValues['familyName'] ?? familyName.value,
+      confidenceLevel: newValues['familyName'] != null
+          ? 1
+          : familyName.confidenceLevel,
+    ),
+    dateOfBirth: MappedProperty(
+      value: newValues['dateOfBirth'] ?? dateOfBirth.value,
+      confidenceLevel: newValues['dateOfBirth'] != null
+          ? 1
+          : dateOfBirth.confidenceLevel,
+    ),
+    gender: MappedProperty(
+      value: newValues['gender'] ?? gender.value,
+      confidenceLevel: newValues['gender'] != null ? 1 : gender.confidenceLevel,
+    ),
+    patientIdentifier: MappedProperty(
+      value: newValues['patientIdentifier'] ?? patientIdentifier.value,
+      confidenceLevel: newValues['patientIdentifier'] != null
+          ? 1
+          : patientIdentifier.confidenceLevel,
+    ),
+    identifierLabel: identifierLabel,
+  );
 
   @override
   String get label => 'Patient';
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        familyName: familyName.calculateConfidence(inputText),
-        givenName: givenName.calculateConfidence(inputText),
-        dateOfBirth: dateOfBirth.calculateDateConfidence(inputText),
-        gender: gender.calculateGenderConfidence(inputText),
-        patientIdentifier: patientIdentifier.calculateConfidence(inputText),
-      );
+    familyName: familyName.calculateConfidence(inputText),
+    givenName: givenName.calculateConfidence(inputText),
+    dateOfBirth: dateOfBirth.calculateDateConfidence(inputText),
+    gender: gender.calculateGenderConfidence(inputText),
+    patientIdentifier: patientIdentifier.calculateConfidence(inputText),
+  );
 
   static String? _mapLabelToFhirCode(String label) {
     switch (label.toUpperCase()) {

@@ -16,8 +16,11 @@ class ShareIntentService {
   final AppRouter _router;
   final PageViewNavigationController _navigationController;
 
-  ShareIntentService(this._externalFileService, this._router,
-      this._navigationController);
+  ShareIntentService(
+    this._externalFileService,
+    this._router,
+    this._navigationController,
+  );
 
   StreamSubscription? _intentSub;
   bool _isInitialized = false;
@@ -37,12 +40,14 @@ class ShareIntentService {
       },
     );
 
-    unawaited(ReceiveSharingIntent.instance.getInitialMedia().then((sharedFiles) async {
-      if (sharedFiles.isNotEmpty) {
-        await _processSharedFiles(sharedFiles);
-        unawaited(ReceiveSharingIntent.instance.reset());
-      }
-    }));
+    unawaited(
+      ReceiveSharingIntent.instance.getInitialMedia().then((sharedFiles) async {
+        if (sharedFiles.isNotEmpty) {
+          await _processSharedFiles(sharedFiles);
+          unawaited(ReceiveSharingIntent.instance.reset());
+        }
+      }),
+    );
   }
 
   Future<void> _processSharedFiles(List<SharedMediaFile> sharedFiles) async {
@@ -98,7 +103,7 @@ class ShareIntentService {
       '.pdf',
       '.gif',
       '.bmp',
-      '.webp'
+      '.webp',
     ];
     return validExtensions.contains(extension);
   }

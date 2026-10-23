@@ -34,15 +34,15 @@ class ProcessingLocalDataSourceImpl implements ProcessingLocalDataSource {
     String id,
     ProcessingSessionsCompanion entity,
   ) async {
-    return (appDatabase.update(appDatabase.processingSessions)
-          ..where((t) => t.id.equals(id)))
-        .write(entity);
+    return (appDatabase.update(
+      appDatabase.processingSessions,
+    )..where((t) => t.id.equals(id))).write(entity);
   }
 
   @override
   Future<int> deleteProcessingSession(String id) async {
-    return (appDatabase.delete(appDatabase.processingSessions)
-          ..where((t) => t.id.equals(id)))
-        .go();
+    return (appDatabase.delete(
+      appDatabase.processingSessions,
+    )..where((t) => t.id.equals(id))).go();
   }
 }

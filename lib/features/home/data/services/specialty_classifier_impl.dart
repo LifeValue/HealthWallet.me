@@ -11,8 +11,9 @@ class SpecialtyClassifierImpl implements SpecialtyClassifier {
   @override
   void buildEncounterIndex(List<IFhirResource> allResources) {
     _encounterSpecialties.clear();
-    final encounters = allResources
-        .where((r) => r.fhirType == FhirType.Encounter);
+    final encounters = allResources.where(
+      (r) => r.fhirType == FhirType.Encounter,
+    );
     for (final encounter in encounters) {
       final specialties = _classifyInternal(encounter);
       if (specialties.isNotEmpty) {

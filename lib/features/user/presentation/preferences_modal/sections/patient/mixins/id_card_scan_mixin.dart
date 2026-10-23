@@ -36,17 +36,15 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
     setState(() => isScanning = true);
 
     try {
-      final scannedResult =
-          await FlutterDocScanner().getScannedDocumentAsImages(page: 1);
+      final scannedResult = await FlutterDocScanner()
+          .getScannedDocumentAsImages(page: 1);
 
       if (scannedResult == null || scannedResult.images.isEmpty) {
         if (mounted) setState(() => isScanning = false);
         return;
       }
 
-      final rawPaths = scannedResult.images
-          .where((p) => p.isNotEmpty)
-          .toList();
+      final rawPaths = scannedResult.images.where((p) => p.isNotEmpty).toList();
       final sanitizedPaths = ProcessingPathHelper.normalizePaths(rawPaths);
       if (sanitizedPaths.isEmpty) {
         if (mounted) setState(() => isScanning = false);
@@ -103,7 +101,8 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
     }
     if (!mounted) return;
 
-    final countryCode = scanCountryCode ?? context.read<UserBloc>().state.countryCode;
+    final countryCode =
+        scanCountryCode ?? context.read<UserBloc>().state.countryCode;
     final result = IdCardExtractor.extract(ocrText, countryCode);
 
     if (mounted && result.hasData) {

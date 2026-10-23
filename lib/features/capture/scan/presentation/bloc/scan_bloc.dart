@@ -73,8 +73,7 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     );
     if (result == null) return null;
 
-    final imagePaths =
-        result.images.where((path) => path.isNotEmpty).toList();
+    final imagePaths = result.images.where((path) => path.isNotEmpty).toList();
 
     if (imagePaths.isEmpty || !_isValidResult(imagePaths.first)) return null;
 

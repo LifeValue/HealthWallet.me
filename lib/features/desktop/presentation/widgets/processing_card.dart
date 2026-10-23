@@ -15,18 +15,24 @@ class ProcessingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildRow(context,
-              icon: Icons.phone_android,
-              label: context.l10n.desktopScannedOnPhone,
-              count: '-'),
-          _buildRow(context,
-              icon: Icons.desktop_mac,
-              label: context.l10n.desktopProcessedOnDesktop,
-              count: '-'),
-          _buildRow(context,
-              icon: Icons.file_upload_outlined,
-              label: context.l10n.desktopImportedOnDesktop,
-              count: '-'),
+          _buildRow(
+            context,
+            icon: Icons.phone_android,
+            label: context.l10n.desktopScannedOnPhone,
+            count: '-',
+          ),
+          _buildRow(
+            context,
+            icon: Icons.desktop_mac,
+            label: context.l10n.desktopProcessedOnDesktop,
+            count: '-',
+          ),
+          _buildRow(
+            context,
+            icon: Icons.file_upload_outlined,
+            label: context.l10n.desktopImportedOnDesktop,
+            count: '-',
+          ),
         ],
       ),
     );
@@ -42,17 +48,25 @@ class ProcessingCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: Insets.small),
       child: Row(
         children: [
-          Icon(icon,
-              size: 16,
-              color: context.colorScheme.onSurface.withValues(alpha: 0.5)),
+          Icon(
+            icon,
+            size: 16,
+            color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
           const SizedBox(width: Insets.small),
-          Text(label,
-              style: AppTextStyle.labelSmall
-                  .copyWith(color: context.colorScheme.onSurface)),
+          Text(
+            label,
+            style: AppTextStyle.labelSmall.copyWith(
+              color: context.colorScheme.onSurface,
+            ),
+          ),
           const Spacer(),
-          Text(count,
-              style: AppTextStyle.labelSmall.copyWith(
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.5))),
+          Text(
+            count,
+            style: AppTextStyle.labelSmall.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
         ],
       ),
     );

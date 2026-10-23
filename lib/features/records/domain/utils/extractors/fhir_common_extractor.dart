@@ -44,7 +44,8 @@ class FhirCommonExtractor {
   }
 
   static String? extractFirstCodeableConceptFromArray(
-      List<dynamic>? codeableConceptArray) {
+    List<dynamic>? codeableConceptArray,
+  ) {
     if (codeableConceptArray == null || codeableConceptArray.isEmpty) {
       return null;
     }
@@ -54,8 +55,9 @@ class FhirCommonExtractor {
   }
 
   static String? joinNullable(List<String?> values, String separator) {
-    final nonNullStrings =
-        values.where((s) => s != null && s.isNotEmpty).toList();
+    final nonNullStrings = values
+        .where((s) => s != null && s.isNotEmpty)
+        .toList();
     return nonNullStrings.isEmpty ? null : nonNullStrings.join(separator);
   }
 
@@ -80,7 +82,8 @@ class FhirCommonExtractor {
   }
 
   static String? extractAllCodeableConceptsFromArray(
-      List<dynamic>? codeableConceptArray) {
+    List<dynamic>? codeableConceptArray,
+  ) {
     if (codeableConceptArray == null || codeableConceptArray.isEmpty) {
       return null;
     }
@@ -216,8 +219,7 @@ class FhirCommonExtractor {
     return extractMultipleReferenceDisplays(reasonReferences);
   }
 
-  static String? extractFirstIdentifier(
-      List<fhir_r4.Identifier>? identifiers) {
+  static String? extractFirstIdentifier(List<fhir_r4.Identifier>? identifiers) {
     if (identifiers == null || identifiers.isEmpty) return null;
 
     for (final identifier in identifiers) {

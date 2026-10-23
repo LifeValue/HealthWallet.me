@@ -56,8 +56,10 @@ class _AiModelSectionState extends State<AiModelSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(context.l10n.onboardingAiModelTitle,
-                    style: AppTextStyle.bodySmall),
+                Text(
+                  context.l10n.onboardingAiModelTitle,
+                  style: AppTextStyle.bodySmall,
+                ),
                 const SizedBox(height: Insets.small),
                 Container(
                   padding: const EdgeInsets.all(Insets.smallNormal),
@@ -155,28 +157,28 @@ class _AiModelSectionState extends State<AiModelSection> {
         Row(
           children: [
             Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.small,
-                  vertical: Insets.extraSmall,
-                ),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(state.status).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _getStatusIcon(state.status),
-                    const SizedBox(width: Insets.extraSmall),
-                    Text(
-                      _getModelStatusText(context, state),
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: _getStatusColor(state.status),
-                      ),
-                    ),
-                  ],
-                ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Insets.small,
+                vertical: Insets.extraSmall,
               ),
+              decoration: BoxDecoration(
+                color: _getStatusColor(state.status).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _getStatusIcon(state.status),
+                  const SizedBox(width: Insets.extraSmall),
+                  Text(
+                    _getModelStatusText(context, state),
+                    style: AppTextStyle.labelSmall.copyWith(
+                      color: _getStatusColor(state.status),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             if (state.deviceCapability != DeviceAiCapability.unsupported) ...[
               const Spacer(),
               GestureDetector(
@@ -197,7 +199,10 @@ class _AiModelSectionState extends State<AiModelSection> {
         ),
         if (!state.downloadedVariants.values.any((v) => v)) ...[
           const SizedBox(height: Insets.small),
-          _buildRichDescription(context, context.l10n.onboardingAiModelDescription),
+          _buildRichDescription(
+            context,
+            context.l10n.onboardingAiModelDescription,
+          ),
         ],
         const SizedBox(height: Insets.normal),
         if (state.status == LoadModelStatus.modelAbsent ||
@@ -205,20 +210,24 @@ class _AiModelSectionState extends State<AiModelSection> {
           if (state.deviceCapability == DeviceAiCapability.unsupported)
             Container(
               width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.error.withValues(alpha: 0.3),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.error_outline,
-                          color: AppColors.error, size: 18),
+                      const Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
@@ -250,9 +259,11 @@ class _AiModelSectionState extends State<AiModelSection> {
               label: state.downloadedVariants.values.any((v) => v)
                   ? context.l10n.aiModelSelect
                   : context.l10n.aiModelEnableDownload,
-              icon: Icon(state.downloadedVariants.values.any((v) => v)
-                  ? Icons.swap_horiz
-                  : Icons.download),
+              icon: Icon(
+                state.downloadedVariants.values.any((v) => v)
+                    ? Icons.swap_horiz
+                    : Icons.download,
+              ),
               variant: AppButtonVariant.primary,
               onPressed: () => ModelManagementDialog.show(context),
             )
@@ -349,8 +360,7 @@ class _AiModelSectionState extends State<AiModelSection> {
 
   void _openAiSettings(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    final currentTokens =
-        prefs.getInt(SharedPrefsConstants.aiMaxTokens) ?? 500;
+    final currentTokens = prefs.getInt(SharedPrefsConstants.aiMaxTokens) ?? 500;
 
     if (!context.mounted) return;
 
@@ -421,14 +431,16 @@ class _AiModelSectionState extends State<AiModelSection> {
       final segments = description.split('**');
       final spans = <TextSpan>[];
       for (int i = 0; i < segments.length; i++) {
-        spans.add(TextSpan(
-          text: segments[i],
-          style: i.isOdd
-              ? AppTextStyle.labelLarge.copyWith(
-                  fontWeight: FontWeight.w700,
-                )
-              : null,
-        ));
+        spans.add(
+          TextSpan(
+            text: segments[i],
+            style: i.isOdd
+                ? AppTextStyle.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                  )
+                : null,
+          ),
+        );
       }
       return Text.rich(
         TextSpan(

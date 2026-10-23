@@ -98,16 +98,16 @@ abstract class Media with _$Media implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Media',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Media',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -140,8 +140,9 @@ abstract class Media with _$Media implements IFhirResource {
     );
 
     // Modality
-    final modalityDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(modality);
+    final modalityDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      modality,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(modalityDisplay, prefix: 'Modality'),
@@ -162,20 +163,24 @@ abstract class Media with _$Media implements IFhirResource {
     );
 
     // Operator
-    final operatorDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(operator_);
+    final operatorDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      operator_,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(operatorDisplay, prefix: 'Operator'),
     );
 
     // Body Site
-    final bodySiteDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(bodySite);
+    final bodySiteDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      bodySite,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
-          prefix: 'Body Site'),
+      ResourceFieldMapper.createBodySiteLine(
+        bodySiteDisplay,
+        prefix: 'Body Site',
+      ),
     );
 
     // Dimensions
@@ -183,8 +188,9 @@ abstract class Media with _$Media implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createImageLine(
-            '${width?.valueString} x ${height?.valueString}',
-            prefix: 'Dimensions'),
+          '${width?.valueString} x ${height?.valueString}',
+          prefix: 'Dimensions',
+        ),
       );
     }
 
@@ -192,8 +198,10 @@ abstract class Media with _$Media implements IFhirResource {
     if (duration != null) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createTimeLine('${duration?.valueString} seconds',
-            prefix: 'Duration'),
+        ResourceFieldMapper.createTimeLine(
+          '${duration?.valueString} seconds',
+          prefix: 'Duration',
+        ),
       );
     }
 
@@ -201,14 +209,15 @@ abstract class Media with _$Media implements IFhirResource {
     if (content?.contentType != null) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createAttachmentLine(content!.contentType.toString(),
-            prefix: 'Content Type'),
+        ResourceFieldMapper.createAttachmentLine(
+          content!.contentType.toString(),
+          prefix: 'Content Type',
+        ),
       );
     }
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
@@ -216,10 +225,12 @@ abstract class Media with _$Media implements IFhirResource {
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes

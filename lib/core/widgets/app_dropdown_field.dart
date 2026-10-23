@@ -70,8 +70,12 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
             child: CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
-              targetAnchor: widget.openAbove ? Alignment.topLeft : Alignment.bottomLeft,
-              followerAnchor: widget.openAbove ? Alignment.bottomLeft : Alignment.topLeft,
+              targetAnchor: widget.openAbove
+                  ? Alignment.topLeft
+                  : Alignment.bottomLeft,
+              followerAnchor: widget.openAbove
+                  ? Alignment.bottomLeft
+                  : Alignment.topLeft,
               offset: Offset(0, widget.openAbove ? -4 : 4),
               child: Container(
                 decoration: BoxDecoration(
@@ -84,13 +88,15 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2)),
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, -2),
+                    ),
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, -4)),
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, -4),
+                    ),
                   ],
                 ),
                 child: Material(
@@ -99,7 +105,8 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                   color: context.colorScheme.surface,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxHeight: 52.0 *
+                      maxHeight:
+                          52.0 *
                           (widget.items.length > 7 ? 7 : widget.items.length),
                     ),
                     child: _MenuList(
@@ -141,17 +148,16 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
         child: Container(
           width: double.infinity,
           height: kInputFieldHeight,
-          padding: const EdgeInsets.symmetric(
-              horizontal: Insets.smallNormal),
+          padding: const EdgeInsets.symmetric(horizontal: Insets.smallNormal),
           decoration: BoxDecoration(
             border: Border.all(
               color: widget.hasError
                   ? context.colorScheme.error
                   : _isOpen
-                      ? context.colorScheme.primary
-                      : context.isDarkMode
-                          ? AppColors.borderDark
-                          : AppColors.border,
+                  ? context.colorScheme.primary
+                  : context.isDarkMode
+                  ? AppColors.borderDark
+                  : AppColors.border,
               width: kInputBorderWidth,
             ),
             borderRadius: BorderRadius.circular(kInputBorderRadius),
@@ -165,8 +171,9 @@ class _AppDropdownFieldState<T> extends State<AppDropdownField<T>> {
                     : Text(
                         widget.value,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.labelLarge
-                            .copyWith(color: context.colorScheme.onSurface),
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: context.colorScheme.onSurface,
+                        ),
                       ),
               ),
               Icon(

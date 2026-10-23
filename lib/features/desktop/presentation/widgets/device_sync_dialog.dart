@@ -56,8 +56,9 @@ class DeviceSyncDialog {
                             child: Icon(
                               Icons.close,
                               size: 20,
-                              color: context.colorScheme.onSurface
-                                  .withValues(alpha: 0.4),
+                              color: context.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
                         ],
@@ -81,12 +82,11 @@ class DeviceSyncDialog {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Padding(
-                                          padding:
-                                              const EdgeInsets.symmetric(
-                                                  horizontal: Insets.medium),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: Insets.medium,
+                                          ),
                                           child: Divider(
-                                            color: context
-                                                .colorScheme.onSurface
+                                            color: context.colorScheme.onSurface
                                                 .withValues(alpha: 0.06),
                                             height: 1,
                                           ),

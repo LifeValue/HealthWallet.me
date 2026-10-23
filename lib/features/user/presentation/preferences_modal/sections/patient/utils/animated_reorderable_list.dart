@@ -4,7 +4,12 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 class AnimatedReorderableList<T> extends StatefulWidget {
   final List<T> items;
   final Widget Function(
-      BuildContext context, T item, int index, bool isBeingMoved) itemBuilder;
+    BuildContext context,
+    T item,
+    int index,
+    bool isBeingMoved,
+  )
+  itemBuilder;
   final String Function(T item) itemIdExtractor;
   final double itemHeight;
   final double itemSpacing;
@@ -46,8 +51,9 @@ class _AnimatedReorderableListState<T> extends State<AnimatedReorderableList<T>>
   }
 
   void _initializeAnimations(List<T> items) {
-    final currentItemIds =
-        items.map((item) => widget.itemIdExtractor(item)).toSet();
+    final currentItemIds = items
+        .map((item) => widget.itemIdExtractor(item))
+        .toSet();
     final existingItemIds = _animationControllers.keys.toSet();
 
     for (final itemId in existingItemIds) {
@@ -67,21 +73,27 @@ class _AnimatedReorderableListState<T> extends State<AnimatedReorderableList<T>>
           vsync: this,
         );
 
-        final slideAnimation = Tween<double>(
-          begin: 0.0,
-          end: 0.0,
-        ).animate(CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeInOutCubic,
-        ));
+        final slideAnimation =
+            Tween<double>(
+              begin: 0.0,
+              end: 0.0,
+            ).animate(
+              CurvedAnimation(
+                parent: controller,
+                curve: Curves.easeInOutCubic,
+              ),
+            );
 
-        final fadeAnimation = Tween<double>(
-          begin: 1.0,
-          end: 1.0,
-        ).animate(CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeInOutCubic,
-        ));
+        final fadeAnimation =
+            Tween<double>(
+              begin: 1.0,
+              end: 1.0,
+            ).animate(
+              CurvedAnimation(
+                parent: controller,
+                curve: Curves.easeInOutCubic,
+              ),
+            );
 
         _animationControllers[itemId] = controller;
         _slideAnimations[itemId] = slideAnimation;
@@ -91,7 +103,10 @@ class _AnimatedReorderableListState<T> extends State<AnimatedReorderableList<T>>
   }
 
   Future<void> _animateReorder(
-      String itemId, int oldIndex, int newIndex) async {
+    String itemId,
+    int oldIndex,
+    int newIndex,
+  ) async {
     if (oldIndex == newIndex || !_animationControllers.containsKey(itemId)) {
       return;
     }
@@ -103,31 +118,37 @@ class _AnimatedReorderableListState<T> extends State<AnimatedReorderableList<T>>
     final slideDistance =
         (newIndex - oldIndex) * (widget.itemHeight + widget.itemSpacing);
 
-    final fadeAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.3),
-        weight: 20.0,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.3, end: 0.3),
-        weight: 60.0,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.3, end: 1.0),
-        weight: 20.0,
-      ),
-    ]).animate(CurvedAnimation(
-      parent: controller,
-      curve: Curves.easeInOutCubic,
-    ));
+    final fadeAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.0, end: 0.3),
+            weight: 20.0,
+          ),
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 0.3, end: 0.3),
+            weight: 60.0,
+          ),
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 0.3, end: 1.0),
+            weight: 20.0,
+          ),
+        ]).animate(
+          CurvedAnimation(
+            parent: controller,
+            curve: Curves.easeInOutCubic,
+          ),
+        );
 
-    final slideAnimation = Tween<double>(
-      begin: 0.0,
-      end: slideDistance,
-    ).animate(CurvedAnimation(
-      parent: controller,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeInOutCubic),
-    ));
+    final slideAnimation =
+        Tween<double>(
+          begin: 0.0,
+          end: slideDistance,
+        ).animate(
+          CurvedAnimation(
+            parent: controller,
+            curve: const Interval(0.2, 0.8, curve: Curves.easeInOutCubic),
+          ),
+        );
 
     _slideAnimations[itemId] = slideAnimation;
     _fadeAnimations[itemId] = fadeAnimation;
@@ -137,28 +158,36 @@ class _AnimatedReorderableListState<T> extends State<AnimatedReorderableList<T>>
     await Future.delayed(widget.fadeDelay);
 
     controller.reset();
-    _slideAnimations[itemId] = Tween<double>(
-      begin: 0.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: controller,
-      curve: Curves.easeInOutCubic,
-    ));
+    _slideAnimations[itemId] =
+        Tween<double>(
+          begin: 0.0,
+          end: 0.0,
+        ).animate(
+          CurvedAnimation(
+            parent: controller,
+            curve: Curves.easeInOutCubic,
+          ),
+        );
 
-    _fadeAnimations[itemId] = Tween<double>(
-      begin: 1.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: controller,
-      curve: Curves.easeInOutCubic,
-    ));
+    _fadeAnimations[itemId] =
+        Tween<double>(
+          begin: 1.0,
+          end: 1.0,
+        ).animate(
+          CurvedAnimation(
+            parent: controller,
+            curve: Curves.easeInOutCubic,
+          ),
+        );
   }
 
   void handleReorder(String fromItemId, String toItemId) {
-    final oldIndex = widget.items
-        .indexWhere((item) => widget.itemIdExtractor(item) == fromItemId);
-    final newIndex = widget.items
-        .indexWhere((item) => widget.itemIdExtractor(item) == toItemId);
+    final oldIndex = widget.items.indexWhere(
+      (item) => widget.itemIdExtractor(item) == fromItemId,
+    );
+    final newIndex = widget.items.indexWhere(
+      (item) => widget.itemIdExtractor(item) == toItemId,
+    );
 
     if (oldIndex != -1 && newIndex != -1 && oldIndex != newIndex) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -180,7 +209,8 @@ class _AnimatedReorderableListState<T> extends State<AnimatedReorderableList<T>>
       itemBuilder: (context, index) {
         final item = widget.items[index];
         final itemId = widget.itemIdExtractor(item);
-        final isBeingMoved = _animationControllers.containsKey(itemId) &&
+        final isBeingMoved =
+            _animationControllers.containsKey(itemId) &&
             _animationControllers[itemId]!.isAnimating;
 
         if (isBeingMoved) {

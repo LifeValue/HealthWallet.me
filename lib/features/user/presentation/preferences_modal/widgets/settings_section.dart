@@ -58,15 +58,15 @@ class SettingsSection extends StatelessWidget {
                       confirmText: context.l10n.disable,
                       cancelText: context.l10n.cancel,
                       onConfirm: () {
-                        context
-                            .read<UserBloc>()
-                            .add(const UserBiometricAuthToggled(false));
+                        context.read<UserBloc>().add(
+                          const UserBiometricAuthToggled(false),
+                        );
                       },
                     );
                   } else {
-                    context
-                        .read<UserBloc>()
-                        .add(const UserBiometricAuthToggled(true));
+                    context.read<UserBloc>().add(
+                      const UserBiometricAuthToggled(true),
+                    );
                   }
                 },
                 borderRadius: BorderRadius.circular(8),
@@ -90,9 +90,9 @@ class SettingsSection extends StatelessWidget {
                       !current.isBiometricAuthEnabled;
                 },
                 listener: (context, state) {
-                  context
-                      .read<UserBloc>()
-                      .add(const UserBiometricsSetupShown());
+                  context.read<UserBloc>().add(
+                    const UserBiometricsSetupShown(),
+                  );
                   showDialog(
                     context: context,
                     builder: (context) => const BiometricsSetupDialog(),
@@ -120,7 +120,9 @@ class SettingsSection extends StatelessWidget {
                       Icon(
                         Icons.arrow_forward_ios,
                         size: 16,
-                        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ],
                   ),
@@ -133,7 +135,9 @@ class SettingsSection extends StatelessWidget {
               const SizedBox(height: Insets.normal),
               InkWell(
                 onTap: () {
-                  UrlLauncherService.launchURL('https://healthwallet.me/#contact');
+                  UrlLauncherService.launchURL(
+                    'https://healthwallet.me/#contact',
+                  );
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
@@ -173,7 +177,9 @@ class SettingsSection extends StatelessWidget {
                       Icon(
                         Icons.arrow_forward_ios,
                         size: 16,
-                        color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ],
                   ),

@@ -15,11 +15,17 @@ class DesktopBloc extends Bloc<DesktopEvent, DesktopState> {
   final ProcessingBloc _processingBloc;
 
   static const _allowedExtensions = [
-    '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff'
+    '.pdf',
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.bmp',
+    '.webp',
+    '.tiff',
   ];
 
-  DesktopBloc(this._processingBloc)
-      : super(const DesktopState()) {
+  DesktopBloc(this._processingBloc) : super(const DesktopState()) {
     on<DesktopFilesDropped>(_onFilesDropped);
   }
 
@@ -40,10 +46,12 @@ class DesktopBloc extends Bloc<DesktopEvent, DesktopState> {
       }
 
       if (validPaths.isEmpty) {
-        emit(state.copyWith(
-          isImporting: false,
-          error: 'No valid files found. Supported: PDF, JPG, PNG, TIFF',
-        ));
+        emit(
+          state.copyWith(
+            isImporting: false,
+            error: 'No valid files found. Supported: PDF, JPG, PNG, TIFF',
+          ),
+        );
         return;
       }
 

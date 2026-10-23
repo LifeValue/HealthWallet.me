@@ -43,7 +43,8 @@ abstract class TimelineResourceModel with _$TimelineResourceModel {
 
   /// Create from standalone resource display model
   factory TimelineResourceModel.fromStandaloneResource(
-      FhirResourceDisplayModel resource) {
+    FhirResourceDisplayModel resource,
+  ) {
     return TimelineResourceModel(
       id: resource.id,
       resourceType: resource.resourceType,

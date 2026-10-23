@@ -49,7 +49,9 @@ class DiscoveryService {
     final pairing = _pairingStorage.loadPairing();
     if (pairing == null) return null;
 
-    debugPrint('[Discovery] Using saved IP ${pairing.lastIp}:${pairing.lastPort}');
+    debugPrint(
+      '[Discovery] Using saved IP ${pairing.lastIp}:${pairing.lastPort}',
+    );
     return DiscoveryResult(
       ip: pairing.lastIp,
       port: pairing.lastPort,
@@ -65,8 +67,12 @@ class DiscoveryService {
 
     Future<DiscoveryResult?> safeMdns() async {
       try {
-        final r = await _mdnsService.search(timeout: const Duration(seconds: 3));
-        return r != null ? DiscoveryResult(ip: r.ip, port: r.port, method: 'mdns') : null;
+        final r = await _mdnsService.search(
+          timeout: const Duration(seconds: 3),
+        );
+        return r != null
+            ? DiscoveryResult(ip: r.ip, port: r.port, method: 'mdns')
+            : null;
       } catch (_) {
         return null;
       }
@@ -78,7 +84,9 @@ class DiscoveryService {
           timeout: const Duration(seconds: 3),
           expectedDeviceId: expectedDeviceId,
         );
-        return r != null ? DiscoveryResult(ip: r.ip, port: r.port, method: 'ssdp') : null;
+        return r != null
+            ? DiscoveryResult(ip: r.ip, port: r.port, method: 'ssdp')
+            : null;
       } catch (_) {
         return null;
       }
@@ -88,7 +96,9 @@ class DiscoveryService {
 
     for (final result in results) {
       if (result != null) {
-        debugPrint('[Discovery] Found via ${result.method}: ${result.ip}:${result.port}');
+        debugPrint(
+          '[Discovery] Found via ${result.method}: ${result.ip}:${result.port}',
+        );
         await _pairingStorage.updateLastConnection(
           ip: result.ip,
           port: result.port,

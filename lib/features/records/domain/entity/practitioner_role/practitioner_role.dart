@@ -15,7 +15,9 @@ import 'package:intl/intl.dart';
 part 'practitioner_role.freezed.dart';
 
 @freezed
-abstract class PractitionerRole with _$PractitionerRole implements IFhirResource {
+abstract class PractitionerRole
+    with _$PractitionerRole
+    implements IFhirResource {
   const PractitionerRole._();
 
   const factory PractitionerRole({
@@ -50,8 +52,9 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
 
   factory PractitionerRole.fromLocalData(FhirResourceLocalDto data) {
     final resourceJson = jsonDecode(data.resourceRaw);
-    final fhirPractitionerRole =
-        fhir_r4.PractitionerRole.fromJson(resourceJson);
+    final fhirPractitionerRole = fhir_r4.PractitionerRole.fromJson(
+      resourceJson,
+    );
 
     return PractitionerRole(
       id: data.id,
@@ -83,16 +86,16 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'PractitionerRole',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'PractitionerRole',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -100,8 +103,9 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
       return title;
     }
 
-    final displayText =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(code);
+    final displayText = FhirFieldExtractor.extractFirstCodeableConceptFromArray(
+      code,
+    );
     if (displayText != null) return displayText;
 
     return fhirType.display;
@@ -117,8 +121,9 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            activeStatus ? 'Active' : 'Inactive',
-            prefix: 'Status'),
+          activeStatus ? 'Active' : 'Inactive',
+          prefix: 'Status',
+        ),
       );
     }
 
@@ -126,21 +131,26 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
     final practitionerDisplay = practitioner?.display?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(practitionerDisplay,
-          prefix: 'Practitioner'),
+      ResourceFieldMapper.createUserLine(
+        practitionerDisplay,
+        prefix: 'Practitioner',
+      ),
     );
 
     // Organization
     final organizationDisplay = organization?.display?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(organizationDisplay,
-          prefix: 'Organization'),
+      ResourceFieldMapper.createOrganizationLine(
+        organizationDisplay,
+        prefix: 'Organization',
+      ),
     );
 
     // Role/Code
-    final roleDisplay =
-        FhirFieldExtractor.extractFirstCodeableConceptFromArray(code);
+    final roleDisplay = FhirFieldExtractor.extractFirstCodeableConceptFromArray(
+      code,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(roleDisplay, prefix: 'Role'),
@@ -156,8 +166,9 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            specialtyDisplay.isNotEmpty ? specialtyDisplay : null,
-            prefix: 'Specialty'),
+          specialtyDisplay.isNotEmpty ? specialtyDisplay : null,
+          prefix: 'Specialty',
+        ),
       );
     }
 
@@ -171,8 +182,9 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createLocationLine(
-            locationDisplay.isNotEmpty ? locationDisplay : null,
-            prefix: 'Location'),
+          locationDisplay.isNotEmpty ? locationDisplay : null,
+          prefix: 'Location',
+        ),
       );
     }
 
@@ -186,8 +198,9 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            serviceDisplay.isNotEmpty ? serviceDisplay : null,
-            prefix: 'Healthcare Service'),
+          serviceDisplay.isNotEmpty ? serviceDisplay : null,
+          prefix: 'Healthcare Service',
+        ),
       );
     }
 
@@ -225,16 +238,20 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
     final exceptionsDisplay = availabilityExceptions?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(exceptionsDisplay,
-          prefix: 'Availability Notes'),
+      ResourceFieldMapper.createNotesLine(
+        exceptionsDisplay,
+        prefix: 'Availability Notes',
+      ),
     );
 
     // Date (last updated)
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: 'Last Updated: ${DateFormat.yMMMMd().format(date!)}',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: 'Last Updated: ${DateFormat.yMMMMd().format(date!)}',
+        ),
+      );
     }
 
     return infoLines;
@@ -246,8 +263,9 @@ abstract class PractitionerRole with _$PractitionerRole implements IFhirResource
       practitioner?.reference?.valueString,
       organization?.reference?.valueString,
       ...?location?.map((reference) => reference.reference?.valueString),
-      ...?healthcareService
-          ?.map((reference) => reference.reference?.valueString),
+      ...?healthcareService?.map(
+        (reference) => reference.reference?.valueString,
+      ),
       ...?endpoint?.map((reference) => reference.reference?.valueString),
     }.where((reference) => reference != null).toList();
   }

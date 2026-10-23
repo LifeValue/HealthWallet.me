@@ -56,8 +56,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     MappingInitiated event,
     Emitter<ProcessingState> emit,
   ) async {
-    final session =
-        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
     if (session == null) return;
     if (session.isProcessing ||
         session.status == ProcessingStatus.draft ||
@@ -71,70 +72,95 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     if (anotherSessionProcessing) return;
 
     try {
-      updateSession(emit,
-          sessionId: event.sessionId,
-          status: ProcessingStatus.processingPatient);
-      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+      updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.processingPatient,
+      );
+      final isDesktop =
+          Platform.isMacOS || Platform.isLinux || Platform.isWindows;
       final sessionImages =
           state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
       if (sessionImages.isEmpty) {
-        updateSession(emit,
-            sessionId: event.sessionId,
-            status: ProcessingStatus.pending,
-            progress: 0.0);
-        emit(state.copyWith(
-          status: const PipelineStatus.failure(
-            error: 'No images were generated from the scan. Please try scanning again.',
+        updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.pending,
+          progress: 0.0,
+        );
+        emit(
+          state.copyWith(
+            status: const PipelineStatus.failure(
+              error: 'No images were generated from the scan. Please try scanning again.',
+            ),
           ),
-        ));
+        );
         return;
       }
-      final medicalText =
-          await ocrProcessingHelper.processOcrForImages(sessionImages);
+      final medicalText = await ocrProcessingHelper.processOcrForImages(
+        sessionImages,
+      );
       if (medicalText.isEmpty || medicalText.trim().isEmpty) {
-        updateSession(emit,
-            sessionId: event.sessionId, status: ProcessingStatus.draft);
+        updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.draft,
+        );
         return;
       }
       final ocrPreMatch = await _tryMatchPatientFromOcr(medicalText);
       if (ocrPreMatch != null) {
         ProcessingLogBuffer.instance.log(
-          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: ${ocrPreMatch.displayTitle}, running container-only AI');
+          '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: ${ocrPreMatch.displayTitle}, running container-only AI',
+        );
         final stagedPatient = StagedPatient(
           existing: ocrPreMatch,
           mode: ImportMode.linkExisting,
         );
         final container = await processingRepository.mapContainerOnly(
           medicalText,
-          maxTokens: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiMaxTokens),
-          threads: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads),
-          contextSize: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize),
+          maxTokens: isDesktop
+              ? null
+              : prefs.getInt(SharedPrefsConstants.aiMaxTokens),
+          threads: isDesktop
+              ? null
+              : prefs.getInt(SharedPrefsConstants.aiThreads),
+          contextSize: isDesktop
+              ? null
+              : prefs.getInt(SharedPrefsConstants.aiContextSize),
         );
-        final finalSession =
-            state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+        final finalSession = state.sessions.firstWhereOrNull(
+          (s) => s.id == event.sessionId,
+        );
         if (container is MappingDiagnosticReport) {
-          updateSession(emit,
-              sessionId: event.sessionId,
-              status: ProcessingStatus.patientExtracted,
-              patient: stagedPatient,
-              diagnosticReport: StagedDiagnosticReport(draft: container),
-              updateDb: true);
+          updateSession(
+            emit,
+            sessionId: event.sessionId,
+            status: ProcessingStatus.patientExtracted,
+            patient: stagedPatient,
+            diagnosticReport: StagedDiagnosticReport(draft: container),
+            updateDb: true,
+          );
         } else {
-          updateSession(emit,
-              sessionId: event.sessionId,
-              status: ProcessingStatus.patientExtracted,
-              patient: stagedPatient,
-              encounter: StagedEncounter(draft: container as MappingEncounter),
-              updateDb: true);
+          updateSession(
+            emit,
+            sessionId: event.sessionId,
+            status: ProcessingStatus.patientExtracted,
+            patient: stagedPatient,
+            encounter: StagedEncounter(draft: container as MappingEncounter),
+            updateDb: true,
+          );
         }
         if (!processingRepository.shouldCancelGeneration) {
-          emit(state.copyWith(
-            notification: Notification(
-              text: "${finalSession?.origin ?? 'Document'} patient matched",
-              route: ProcessingRoute(sessionId: event.sessionId),
-              time: DateTime.now(),
+          emit(
+            state.copyWith(
+              notification: Notification(
+                text: "${finalSession?.origin ?? 'Document'} patient matched",
+                route: ProcessingRoute(sessionId: event.sessionId),
+                time: DateTime.now(),
+              ),
             ),
-          ));
+          );
         }
         startNextPendingSession();
         return;
@@ -142,52 +168,76 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
 
       final (patient, container) = await processingRepository.mapBasicInfo(
         sessionImages,
-        maxTokens: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiMaxTokens),
-        gpuLayers: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiGpuLayers),
-        threads: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads),
-        contextSize: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize),
+        maxTokens: isDesktop
+            ? null
+            : prefs.getInt(SharedPrefsConstants.aiMaxTokens),
+        gpuLayers: isDesktop
+            ? null
+            : prefs.getInt(SharedPrefsConstants.aiGpuLayers),
+        threads: isDesktop
+            ? null
+            : prefs.getInt(SharedPrefsConstants.aiThreads),
+        contextSize: isDesktop
+            ? null
+            : prefs.getInt(SharedPrefsConstants.aiContextSize),
       );
       final stagedPatient = await _matchOrCreatePatient(patient);
-      final finalSession =
-          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+      final finalSession = state.sessions.firstWhereOrNull(
+        (s) => s.id == event.sessionId,
+      );
       if (container is MappingDiagnosticReport) {
-        updateSession(emit,
-            sessionId: event.sessionId,
-            status: ProcessingStatus.patientExtracted,
-            patient: stagedPatient,
-            diagnosticReport: StagedDiagnosticReport(draft: container),
-            updateDb: true);
+        updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.patientExtracted,
+          patient: stagedPatient,
+          diagnosticReport: StagedDiagnosticReport(draft: container),
+          updateDb: true,
+        );
       } else {
-        updateSession(emit,
-            sessionId: event.sessionId,
-            status: ProcessingStatus.patientExtracted,
-            patient: stagedPatient,
-            encounter: StagedEncounter(draft: container as MappingEncounter),
-            updateDb: true);
+        updateSession(
+          emit,
+          sessionId: event.sessionId,
+          status: ProcessingStatus.patientExtracted,
+          patient: stagedPatient,
+          encounter: StagedEncounter(draft: container as MappingEncounter),
+          updateDb: true,
+        );
       }
       if (!processingRepository.shouldCancelGeneration) {
-        emit(state.copyWith(
-          notification: Notification(
-            text: "${finalSession?.origin ?? 'Document'} patient info extracted",
-            route: ProcessingRoute(sessionId: event.sessionId),
-            time: DateTime.now(),
+        emit(
+          state.copyWith(
+            notification: Notification(
+              text:
+                  "${finalSession?.origin ?? 'Document'} patient info extracted",
+              route: ProcessingRoute(sessionId: event.sessionId),
+              time: DateTime.now(),
+            ),
           ),
-        ));
+        );
       }
 
       startNextPendingSession();
     } on Exception catch (e) {
-      updateSession(emit,
-          sessionId: event.sessionId,
-          status: ProcessingStatus.pending,
-          updateDb: true);
+      updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.pending,
+        updateDb: true,
+      );
       if (!emit.isDone) {
         if (isCapacityError(e.toString())) {
-          emit(state.copyWith(
-            status: PipelineStatus.capacityFailure(sessionId: event.sessionId),
-          ));
+          emit(
+            state.copyWith(
+              status: PipelineStatus.capacityFailure(
+                sessionId: event.sessionId,
+              ),
+            ),
+          );
         } else {
-          emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
+          emit(
+            state.copyWith(status: PipelineStatus.failure(error: e.toString())),
+          );
         }
       }
     }
@@ -208,9 +258,11 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         for (final id in patient.identifier!) {
           final value = id.value?.valueString;
           if (value == null || value.length < 5) continue;
-          if (ocrText.contains(value) || _fuzzyIdentifierMatch(value, ocrText)) {
+          if (ocrText.contains(value) ||
+              _fuzzyIdentifierMatch(value, ocrText)) {
             ProcessingLogBuffer.instance.log(
-              '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value');
+              '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] OCR pre-match: found identifier $value',
+            );
             return patient;
           }
         }
@@ -240,11 +292,15 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         limit: 1000,
       );
       final allPatients = allPatientsResources.whereType<Patient>().toList();
-      final matchedPatient =
-          deduplicationService.findMatchingPatient(patient, allPatients);
+      final matchedPatient = deduplicationService.findMatchingPatient(
+        patient,
+        allPatients,
+      );
       if (matchedPatient != null) {
         return StagedPatient(
-            existing: matchedPatient, mode: ImportMode.linkExisting);
+          existing: matchedPatient,
+          mode: ImportMode.linkExisting,
+        );
       }
       return StagedPatient(draft: patient, mode: ImportMode.createNew);
     } catch (e) {
@@ -258,8 +314,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     Emitter<ProcessingState> emit,
   ) async {
     emit(state.copyWith(status: const PipelineStatus.loading()));
-    final session =
-        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
     if (session == null) return;
     final anotherSessionProcessing = state.sessions.any(
       (s) => s.id != event.sessionId && s.isProcessing,
@@ -267,72 +324,102 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     if (anotherSessionProcessing) return;
 
     try {
-      updateSession(emit,
-          sessionId: event.sessionId, status: ProcessingStatus.processing);
-      final sessionImages = state.sessionImagePaths[event.sessionId] ??
-          state.allImagePathsForOCR;
-      final activeSession =
-          state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
-      final docCategory =
-          activeSession?.isDiagnosticReportContainer == true
-              ? 'lab_report' : 'visit';
-      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
-      final savedMaxTokens = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiMaxTokens);
-      final savedGpuLayers = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiGpuLayers);
-      final savedThreads = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads);
-      final savedContextSize = isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize);
+      updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.processing,
+      );
+      final sessionImages =
+          state.sessionImagePaths[event.sessionId] ?? state.allImagePathsForOCR;
+      final activeSession = state.sessions.firstWhereOrNull(
+        (s) => s.id == event.sessionId,
+      );
+      final docCategory = activeSession?.isDiagnosticReportContainer == true
+          ? 'lab_report'
+          : 'visit';
+      final isDesktop =
+          Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+      final savedMaxTokens = isDesktop
+          ? null
+          : prefs.getInt(SharedPrefsConstants.aiMaxTokens);
+      final savedGpuLayers = isDesktop
+          ? null
+          : prefs.getInt(SharedPrefsConstants.aiGpuLayers);
+      final savedThreads = isDesktop
+          ? null
+          : prefs.getInt(SharedPrefsConstants.aiThreads);
+      final savedContextSize = isDesktop
+          ? null
+          : prefs.getInt(SharedPrefsConstants.aiContextSize);
       final useVision =
           prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
-      final Stream<MappingResourcesWithProgress> stream =
-          processingRepository.mapRemainingResources(sessionImages,
-              documentCategory: docCategory,
-              useVision: useVision,
-              maxTokens: savedMaxTokens,
-              gpuLayers: savedGpuLayers,
-              threads: savedThreads,
-              contextSize: savedContextSize);
+      final Stream<MappingResourcesWithProgress> stream = processingRepository
+          .mapRemainingResources(
+            sessionImages,
+            documentCategory: docCategory,
+            useVision: useVision,
+            maxTokens: savedMaxTokens,
+            gpuLayers: savedGpuLayers,
+            threads: savedThreads,
+            contextSize: savedContextSize,
+          );
 
       await for (final (resources, progress) in stream) {
-        final currentSession = state.sessions
-            .firstWhereOrNull((s) => s.id == event.sessionId);
+        final currentSession = state.sessions.firstWhereOrNull(
+          (s) => s.id == event.sessionId,
+        );
         if (emit.isDone ||
             currentSession?.status != ProcessingStatus.processing) {
           return;
         }
-        updateSession(emit,
-            sessionId: event.sessionId,
-            resources: [...currentSession!.resources, ...resources],
-            progress: progress,
-            updateDb: true);
-      }
-      updateSession(emit,
+        updateSession(
+          emit,
           sessionId: event.sessionId,
-          status: ProcessingStatus.draft,
-          updateDb: true);
-      emit(state.copyWith(
-        notification: Notification(
-          text: '${session.origin} processing finished',
-          route: ProcessingRoute(sessionId: event.sessionId),
-          time: DateTime.now(),
+          resources: [...currentSession!.resources, ...resources],
+          progress: progress,
+          updateDb: true,
+        );
+      }
+      updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.draft,
+        updateDb: true,
+      );
+      emit(
+        state.copyWith(
+          notification: Notification(
+            text: '${session.origin} processing finished',
+            route: ProcessingRoute(sessionId: event.sessionId),
+            time: DateTime.now(),
+          ),
         ),
-      ));
+      );
       startNextPendingSession();
     } catch (e) {
       final failedSession = state.sessions.firstWhereOrNull(
         (s) => s.id == event.sessionId,
       );
-      updateSession(emit,
-          sessionId: event.sessionId,
-          status: ProcessingStatus.patientExtracted,
-          resources: failedSession?.resources,
-          updateDb: true);
+      updateSession(
+        emit,
+        sessionId: event.sessionId,
+        status: ProcessingStatus.patientExtracted,
+        resources: failedSession?.resources,
+        updateDb: true,
+      );
       if (!emit.isDone) {
         if (isCapacityError(e.toString())) {
-          emit(state.copyWith(
-            status: PipelineStatus.capacityFailure(sessionId: event.sessionId),
-          ));
+          emit(
+            state.copyWith(
+              status: PipelineStatus.capacityFailure(
+                sessionId: event.sessionId,
+              ),
+            ),
+          );
         } else {
-          emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
+          emit(
+            state.copyWith(status: PipelineStatus.failure(error: e.toString())),
+          );
         }
       }
     }
@@ -342,17 +429,22 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     MappingCancelled event,
     Emitter<ProcessingState> emit,
   ) async {
-    final session =
-        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
     if (session == null) return;
     final hasPatientData = session.patient.hasSelection;
-    final newStatus = (session.status == ProcessingStatus.processing ||
-            hasPatientData)
+    final newStatus =
+        (session.status == ProcessingStatus.processing || hasPatientData)
         ? ProcessingStatus.patientExtracted
         : ProcessingStatus.cancelled;
-    updateSession(emit,
-        sessionId: event.sessionId,
-        status: newStatus, resources: [], progress: 0.0);
+    updateSession(
+      emit,
+      sessionId: event.sessionId,
+      status: newStatus,
+      resources: [],
+      progress: 0.0,
+    );
     await processingRepository.disposeModel();
   }
 
@@ -361,15 +453,20 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     Emitter<ProcessingState> emit,
   ) async {
     emit(state.copyWith(status: const PipelineStatus.savingResources()));
-    final activeSession =
-        state.sessions.firstWhere((s) => s.id == event.sessionId);
+    final activeSession = state.sessions.firstWhere(
+      (s) => s.id == event.sessionId,
+    );
     try {
       final (subjectId, sourceId, finalContainer, _) =
           await _persistPrimaryResources(activeSession);
       await prefs.setString('selected_patient_id', subjectId);
       final otherResources = activeSession.resources
-          .where((r) => r is! MappingPatient &&
-              r is! MappingEncounter && r is! MappingDiagnosticReport)
+          .where(
+            (r) =>
+                r is! MappingPatient &&
+                r is! MappingEncounter &&
+                r is! MappingDiagnosticReport,
+          )
           .toList();
       final encounterDraft = activeSession.encounter.draft;
       final specialtyValue = encounterDraft?.specialty.value ?? '';
@@ -381,26 +478,32 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         specialtyEnumName = match?.name ?? 'generalCare';
       }
       final specialtyMeta = specialtyValue.isNotEmpty
-          ? fhir_r4.FhirMeta(tag: [
-              fhir_r4.Coding(
-                system: fhir_r4.FhirUri('http://healthwallet.me/specialty'),
-                code: fhir_r4.FhirCode(specialtyEnumName),
-                display: fhir_r4.FhirString(specialtyValue),
-              ),
-            ])
+          ? fhir_r4.FhirMeta(
+              tag: [
+                fhir_r4.Coding(
+                  system: fhir_r4.FhirUri('http://healthwallet.me/specialty'),
+                  code: fhir_r4.FhirCode(specialtyEnumName),
+                  display: fhir_r4.FhirString(specialtyValue),
+                ),
+              ],
+            )
           : null;
       final List<IFhirResource> fhirResources = otherResources
-          .map((resource) => resource.toFhirResource(
+          .map(
+            (resource) => resource.toFhirResource(
               sourceId: sourceId,
               subjectId: subjectId,
               encounterId: finalContainer.id,
-              meta: specialtyMeta))
+              meta: specialtyMeta,
+            ),
+          )
           .toList();
       if (fhirResources.isNotEmpty) {
         await syncRepository.saveResources(fhirResources);
       }
-      final encounterForDoc =
-          finalContainer is Encounter ? finalContainer : null;
+      final encounterForDoc = finalContainer is Encounter
+          ? finalContainer
+          : null;
       await documentReferenceService.deleteDocumentReferences(
         sourceId: sourceId,
         encounterId: finalContainer.id,
@@ -423,14 +526,17 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     DocumentAttached event,
     Emitter<ProcessingState> emit,
   ) {
-    final session =
-        state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
+    final session = state.sessions.firstWhereOrNull(
+      (s) => s.id == event.sessionId,
+    );
     if (session == null) return;
 
-    updateSession(emit,
-        sessionId: event.sessionId,
-        isDocumentAttached: true,
-        updateDb: true);
+    updateSession(
+      emit,
+      sessionId: event.sessionId,
+      isDocumentAttached: true,
+      updateDb: true,
+    );
   }
 
   Future<(String, String, IFhirResource, Patient)> _persistPrimaryResources(
@@ -443,52 +549,63 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     if (activeSession.patient.mode == ImportMode.linkExisting &&
         activeSession.patient.existing != null) {
       final Patient existingPatient = activeSession.patient.existing!;
-      final walletSource =
-          await sourceTypeService.ensureWalletSourceForPatient(
-              patientId: existingPatient.id,
-              patientName: existingPatient.displayTitle,
-              availableSources: availableSources);
+      final walletSource = await sourceTypeService.ensureWalletSourceForPatient(
+        patientId: existingPatient.id,
+        patientName: existingPatient.displayTitle,
+        availableSources: availableSources,
+      );
       subjectId = existingPatient.id;
       sourceId = walletSource.id;
 
       if (activeSession.patient.draft != null) {
-        final draftWithExistingId = activeSession.patient.draft!
-            .copyWith(id: existingPatient.id);
-        resourcesToSave.add(draftWithExistingId.toFhirResource(
+        final draftWithExistingId = activeSession.patient.draft!.copyWith(
+          id: existingPatient.id,
+        );
+        resourcesToSave.add(
+          draftWithExistingId.toFhirResource(
             sourceId: existingPatient.sourceId,
             subjectId: '',
-            encounterId: ''));
+            encounterId: '',
+          ),
+        );
       }
     } else {
       final MappingPatient draftPatient = activeSession.patient.draft!;
-      final walletSource =
-          await sourceTypeService.ensureWalletSourceForPatient(
-              patientId: draftPatient.id,
-              patientName:
-                  '${draftPatient.givenName.value} ${draftPatient.familyName.value}',
-              availableSources: availableSources);
+      final walletSource = await sourceTypeService.ensureWalletSourceForPatient(
+        patientId: draftPatient.id,
+        patientName:
+            '${draftPatient.givenName.value} ${draftPatient.familyName.value}',
+        availableSources: availableSources,
+      );
       subjectId = draftPatient.id;
       sourceId = walletSource.id;
-      resourcesToSave.add(draftPatient.toFhirResource(
-          sourceId: sourceId, subjectId: '', encounterId: ''));
+      resourcesToSave.add(
+        draftPatient.toFhirResource(
+          sourceId: sourceId,
+          subjectId: '',
+          encounterId: '',
+        ),
+      );
     }
     IFhirResource finalContainer;
     if (activeSession.isDiagnosticReportContainer) {
       final MappingDiagnosticReport draftReport =
           activeSession.diagnosticReport!.draft!;
       finalContainer = draftReport.toFhirResource(
-          sourceId: sourceId,
-          subjectId: subjectId,
-          encounterId: draftReport.id);
+        sourceId: sourceId,
+        subjectId: subjectId,
+        encounterId: draftReport.id,
+      );
       resourcesToSave.add(finalContainer);
     } else if (activeSession.encounter.existing != null) {
       finalContainer = activeSession.encounter.existing!;
     } else {
       final MappingEncounter draftEncounter = activeSession.encounter.draft!;
       finalContainer = draftEncounter.toFhirResource(
-          sourceId: sourceId,
-          subjectId: subjectId,
-          encounterId: draftEncounter.id);
+        sourceId: sourceId,
+        subjectId: subjectId,
+        encounterId: draftEncounter.id,
+      );
       resourcesToSave.add(finalContainer);
     }
     if (resourcesToSave.isNotEmpty) {
@@ -502,8 +619,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
     } else if (activeSession.patient.existing != null) {
       finalPatient = activeSession.patient.existing!;
     } else {
-      finalPatient =
-          resourcesToSave.firstWhere((r) => r is Patient) as Patient;
+      finalPatient = resourcesToSave.firstWhere((r) => r is Patient) as Patient;
     }
 
     return (subjectId, sourceId, finalContainer, finalPatient);

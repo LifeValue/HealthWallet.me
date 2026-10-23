@@ -69,11 +69,11 @@ class SourceTypeService {
       return existingWallet;
     }
 
-    final walletSource =
-        await _walletPatientService.createWalletSourceForPatient(
-      patientId,
-      patientName ?? 'Patient $patientId',
-    );
+    final walletSource = await _walletPatientService
+        .createWalletSourceForPatient(
+          patientId,
+          patientName ?? 'Patient $patientId',
+        );
 
     await _syncRepository.cacheSources([walletSource]);
 

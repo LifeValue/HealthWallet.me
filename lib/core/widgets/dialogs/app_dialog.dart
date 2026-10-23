@@ -7,6 +7,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+
 class AppDialog extends StatefulWidget {
   final String title;
   final String description;
@@ -80,8 +81,9 @@ class AppDialog extends StatefulWidget {
         description: description,
         items: items,
         mode: AppDialogMode.singleSelect,
-        initiallySelected:
-            initiallySelected != null ? [initiallySelected] : null,
+        initiallySelected: initiallySelected != null
+            ? [initiallySelected]
+            : null,
         cancelText: cancelText,
         confirmText: confirmText,
       ),
@@ -203,8 +205,9 @@ class _AppDialogState extends State<AppDialog> {
                       children: [
                         Text(
                           widget.title,
-                          style: AppTextStyle.bodyMedium
-                              .copyWith(color: textColor),
+                          style: AppTextStyle.bodyMedium.copyWith(
+                            color: textColor,
+                          ),
                         ),
                         Container(
                           width: 36,
@@ -244,8 +247,9 @@ class _AppDialogState extends State<AppDialog> {
                               Flexible(
                                 child: Text(
                                   widget.description,
-                                  style: AppTextStyle.labelLarge
-                                      .copyWith(color: textColor),
+                                  style: AppTextStyle.labelLarge.copyWith(
+                                    color: textColor,
+                                  ),
                                 ),
                               ),
                               if (widget.mode == AppDialogMode.multiSelect)
@@ -262,9 +266,12 @@ class _AppDialogState extends State<AppDialog> {
                                         height: 24,
                                         decoration: BoxDecoration(
                                           border: Border.all(
-                                              color: textColor, width: 2),
-                                          borderRadius:
-                                              BorderRadius.circular(4),
+                                            color: textColor,
+                                            width: 2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 4),
@@ -301,8 +308,9 @@ class _AppDialogState extends State<AppDialog> {
                             widget.mode != AppDialogMode.confirmation)
                           Container(
                             padding: const EdgeInsets.all(Insets.smallNormal),
-                            margin:
-                                const EdgeInsets.only(bottom: Insets.normal),
+                            margin: const EdgeInsets.only(
+                              bottom: Insets.normal,
+                            ),
                             decoration: BoxDecoration(
                               color: Theme.of(context)
                                   .colorScheme
@@ -310,8 +318,9 @@ class _AppDialogState extends State<AppDialog> {
                                   .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                  color: AppColors.error.withValues(alpha: 0.3),
-                                  width: 1),
+                                color: AppColors.error.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -325,8 +334,9 @@ class _AppDialogState extends State<AppDialog> {
                                   child: Text(
                                     widget.validationMessage ??
                                         'Select at least one item to continue.',
-                                    style: AppTextStyle.labelLarge
-                                        .copyWith(color: AppColors.error),
+                                    style: AppTextStyle.labelLarge.copyWith(
+                                      color: AppColors.error,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -342,15 +352,17 @@ class _AppDialogState extends State<AppDialog> {
                                 },
                                 style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
-                                      vertical: Insets.small),
+                                    vertical: Insets.small,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                 ),
                                 child: Text(
                                   widget.cancelText,
-                                  style: AppTextStyle.buttonSmall
-                                      .copyWith(color: AppColors.primary),
+                                  style: AppTextStyle.buttonSmall.copyWith(
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ),
@@ -369,11 +381,12 @@ class _AppDialogState extends State<AppDialog> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _canConfirm()
                                       ? (widget.confirmButtonColor ??
-                                          AppColors.primary)
+                                            AppColors.primary)
                                       : textColor.withValues(alpha: 0.2),
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
-                                      vertical: Insets.small),
+                                    vertical: Insets.small,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -415,7 +428,9 @@ class _AppDialogState extends State<AppDialog> {
                       child: Column(
                         children: [
                           _buildDropdownItem(
-                              context.l10n.selectAll, _selectAll),
+                            context.l10n.selectAll,
+                            _selectAll,
+                          ),
                           _buildDropdownItem(context.l10n.clearAll, _clearAll),
                         ],
                       ),
@@ -453,12 +468,18 @@ class _AppDialogState extends State<AppDialog> {
     return widget.items.map((item) {
       final isSelected = _selectedItems[item.id] ?? false;
       return _buildSelectableItem(
-          item.label, isSelected, () => _toggleItem(item.id));
+        item.label,
+        isSelected,
+        () => _toggleItem(item.id),
+      );
     }).toList();
   }
 
   Widget _buildSelectableItem(
-      String label, bool isSelected, VoidCallback onTap) {
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textColor = colorScheme.onSurface;
 

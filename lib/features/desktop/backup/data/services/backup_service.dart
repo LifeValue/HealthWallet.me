@@ -17,7 +17,8 @@ class BackupService {
   BackupService(this._database);
 
   Future<String> _defaultBackupPath() async {
-    final home = Platform.environment['HOME'] ??
+    final home =
+        Platform.environment['HOME'] ??
         Platform.environment['USERPROFILE'] ??
         '';
     return p.join(home, 'Documents', 'HealthWallet', 'Backups');
@@ -62,7 +63,9 @@ class BackupService {
     final safeName = (name != null && name.trim().isNotEmpty)
         ? name.trim().replaceAll(RegExp(r'[^\w\s\-.]'), '_')
         : '';
-    final prefix = safeName.isNotEmpty ? '${safeName}_' : 'healthwallet_backup_';
+    final prefix = safeName.isNotEmpty
+        ? '${safeName}_'
+        : 'healthwallet_backup_';
     final fileName = '$prefix$id.db';
     final snapshotPath = p.join(backupDir.path, fileName);
 
@@ -108,9 +111,11 @@ class BackupService {
 
     await _database.customStatement('PRAGMA wal_checkpoint(TRUNCATE)');
 
-    final tables = await _database.customSelect(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
-    ).get();
+    final tables = await _database
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+        )
+        .get();
 
     for (final row in tables) {
       final name = row.data['name'] as String;
@@ -120,9 +125,11 @@ class BackupService {
     final escaped = backupPath.replaceAll("'", "''");
     await _database.customStatement("ATTACH DATABASE '$escaped' AS backup_db");
 
-    final backupTables = await _database.customSelect(
-      "SELECT name FROM backup_db.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
-    ).get();
+    final backupTables = await _database
+        .customSelect(
+          "SELECT name FROM backup_db.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+        )
+        .get();
 
     for (final row in backupTables) {
       final name = row.data['name'] as String;
@@ -169,10 +176,12 @@ class BackupService {
   }
 
   Future<int> _getRecordCount() async {
-    final result = await _database.customSelect(
-      'SELECT COUNT(*) as count FROM fhir_resource',
-      readsFrom: {_database.fhirResource},
-    ).getSingle();
+    final result = await _database
+        .customSelect(
+          'SELECT COUNT(*) as count FROM fhir_resource',
+          readsFrom: {_database.fhirResource},
+        )
+        .getSingle();
     return result.data['count'] as int;
   }
 

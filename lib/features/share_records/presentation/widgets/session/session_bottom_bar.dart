@@ -91,8 +91,8 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
           statusText: state.extensionRequestPending
               ? '${_formatDuration(context, _lastRequestedSeconds)} requested'
               : null,
-          onToggleExpanded: state.canRequestExtension &&
-                  !state.extensionRequestPending
+          onToggleExpanded:
+              state.canRequestExtension && !state.extensionRequestPending
               ? () => setState(() => _isExpanded = !_isExpanded)
               : null,
         ),
@@ -105,10 +105,12 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             Padding(
               padding: const EdgeInsets.only(bottom: Insets.small),
               child: Text(
-                context.l10n.shareExtensionsUsed(state.extensionsUsed, state.maxExtensions),
+                context.l10n.shareExtensionsUsed(
+                  state.extensionsUsed,
+                  state.maxExtensions,
+                ),
                 style: AppTextStyle.labelSmall.copyWith(
-                  color: context.colorScheme.onSurface
-                      .withValues(alpha: 0.5),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -138,14 +140,15 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
               Expanded(
                 child: AppButton(
                   label: context.l10n.shareRequestTenMin,
-                  onPressed: state.extensionRequestPending ||
+                  onPressed:
+                      state.extensionRequestPending ||
                           !state.canRequestExtension
                       ? null
                       : () {
                           setState(() => _lastRequestedSeconds = 600);
                           context.read<ShareRecordsBloc>().add(
-                                const ShareRecordsEvent.sessionExtendRequested(600),
-                              );
+                            const ShareRecordsEvent.sessionExtendRequested(600),
+                          );
                         },
                   variant: AppButtonVariant.outlined,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -188,10 +191,12 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             Padding(
               padding: const EdgeInsets.only(bottom: Insets.small),
               child: Text(
-                context.l10n.shareExtensionsUsed(state.extensionsUsed, state.maxExtensions),
+                context.l10n.shareExtensionsUsed(
+                  state.extensionsUsed,
+                  state.maxExtensions,
+                ),
                 style: AppTextStyle.labelSmall.copyWith(
-                  color: context.colorScheme.onSurface
-                      .withValues(alpha: 0.5),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -403,8 +408,8 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
         _isExpanded = false;
       });
       context.read<ShareRecordsBloc>().add(
-            ShareRecordsEvent.sessionExtendRequested(totalSeconds),
-          );
+        ShareRecordsEvent.sessionExtendRequested(totalSeconds),
+      );
     }
   }
 

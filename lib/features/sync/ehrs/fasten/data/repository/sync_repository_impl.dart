@@ -31,15 +31,21 @@ class SyncRepositoryImpl implements SyncRepository {
 
   @override
   Future<void> syncResources({required String endpoint}) async {
-    final List<FhirResourceDto> resources =
-        await _remoteDataSource.getResources(endpoint: endpoint);
+    final List<FhirResourceDto> resources = await _remoteDataSource
+        .getResources(endpoint: endpoint);
 
-    await _localDataSource.cacheFhirResources(resources
-        .map((resource) =>
-            resource.populateEncounterIdFromRaw().populateSubjectIdFromRaw())
-        .toList());
-    await _localDataSource
-        .setLastSyncTimestamp(DateTime.now().toIso8601String());
+    await _localDataSource.cacheFhirResources(
+      resources
+          .map(
+            (resource) => resource
+                .populateEncounterIdFromRaw()
+                .populateSubjectIdFromRaw(),
+          )
+          .toList(),
+    );
+    await _localDataSource.setLastSyncTimestamp(
+      DateTime.now().toIso8601String(),
+    );
   }
 
   @override
@@ -68,15 +74,18 @@ class SyncRepositoryImpl implements SyncRepository {
 
         // Add local sources that are not in backend (like wallet)
         for (final localSource in localSources) {
-          if (!enrichedSources
-              .any((backendSource) => backendSource.id == localSource.id)) {
-            mergedSources.add(entity.Source(
-              id: localSource.id,
-              platformName: localSource.platformName,
-              logo: localSource.logo,
-              labelSource: localSource.labelSource,
-              platformType: localSource.platformType,
-            ));
+          if (!enrichedSources.any(
+            (backendSource) => backendSource.id == localSource.id,
+          )) {
+            mergedSources.add(
+              entity.Source(
+                id: localSource.id,
+                platformName: localSource.platformName,
+                logo: localSource.logo,
+                labelSource: localSource.labelSource,
+                platformType: localSource.platformType,
+              ),
+            );
           }
         }
 
@@ -180,6 +189,7 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future saveResources(List<IFhirResource> resources) async {
     await _localDataSource.cacheFhirResources(
-        resources.map((resource) => resource.toDto()).toList());
+      resources.map((resource) => resource.toDto()).toList(),
+    );
   }
 }

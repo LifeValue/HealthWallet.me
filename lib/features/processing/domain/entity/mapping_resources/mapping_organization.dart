@@ -43,12 +43,12 @@ abstract class MappingOrganization
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'Organization',
-        'organizationName': organizationName.toJson(),
-        'address': address.toJson(),
-        'phone': phone.toJson(),
-      };
+    'id': id,
+    'resourceType': 'Organization',
+    'organizationName': organizationName.toJson(),
+    'address': address.toJson(),
+    'phone': phone.toJson(),
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -81,29 +81,29 @@ abstract class MappingOrganization
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'organizationName': l10n.labelOrganizationName,
-        'address': l10n.labelAddress,
-        'phone': l10n.labelPhone,
-      };
+    'organizationName': l10n.labelOrganizationName,
+    'address': l10n.labelAddress,
+    'phone': l10n.labelPhone,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'organizationName': TextFieldDescriptor(
-          label: 'Organization Name',
-          value: organizationName.value,
-          confidenceLevel: organizationName.confidenceLevel,
-        ),
-        'address': TextFieldDescriptor(
-          label: 'Address',
-          value: address.value,
-          confidenceLevel: address.confidenceLevel,
-        ),
-        'phone': TextFieldDescriptor(
-          label: 'Phone',
-          value: phone.value,
-          confidenceLevel: phone.confidenceLevel,
-        ),
-      };
+    'organizationName': TextFieldDescriptor(
+      label: 'Organization Name',
+      value: organizationName.value,
+      confidenceLevel: organizationName.confidenceLevel,
+    ),
+    'address': TextFieldDescriptor(
+      label: 'Address',
+      value: address.value,
+      confidenceLevel: address.confidenceLevel,
+    ),
+    'phone': TextFieldDescriptor(
+      label: 'Phone',
+      value: phone.value,
+      confidenceLevel: phone.confidenceLevel,
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -117,13 +117,15 @@ abstract class MappingOrganization
         ),
         address: MappedProperty(
           value: newValues['address'] ?? address.value,
-          confidenceLevel:
-              newValues['address'] != null ? 1 : address.confidenceLevel,
+          confidenceLevel: newValues['address'] != null
+              ? 1
+              : address.confidenceLevel,
         ),
         phone: MappedProperty(
           value: newValues['phone'] ?? phone.value,
-          confidenceLevel:
-              newValues['phone'] != null ? 1 : phone.confidenceLevel,
+          confidenceLevel: newValues['phone'] != null
+              ? 1
+              : phone.confidenceLevel,
         ),
       );
 
@@ -132,10 +134,10 @@ abstract class MappingOrganization
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        organizationName: organizationName.calculateConfidence(inputText),
-        address: address.calculateConfidence(inputText),
-        phone: phone.calculateConfidence(inputText),
-      );
+    organizationName: organizationName.calculateConfidence(inputText),
+    address: address.calculateConfidence(inputText),
+    phone: phone.calculateConfidence(inputText),
+  );
 
   @override
   bool get isValid =>

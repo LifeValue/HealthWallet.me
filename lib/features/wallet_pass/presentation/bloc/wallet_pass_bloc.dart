@@ -23,7 +23,7 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
   final WalletPassRepository _repository;
 
   WalletPassBloc(this._cardBuilder, this._repository)
-      : super(const WalletPassState()) {
+    : super(const WalletPassState()) {
     on<WalletPassRequested>(_onRequested);
   }
 
@@ -35,22 +35,31 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
 
     try {
       final cardData = await _cardBuilder.build(patientId: event.patientId);
-      emit(state.copyWith(
-        status: WalletPassStatus.dataReady,
-        cardData: cardData,
-      ));
+      emit(
+        state.copyWith(
+          status: WalletPassStatus.dataReady,
+          cardData: cardData,
+        ),
+      );
 
       switch (event.type) {
         case WalletPassType.apple:
-          await _handleApplePass(cardData, event.patientId, emit, event.applePassLabels);
+          await _handleApplePass(
+            cardData,
+            event.patientId,
+            emit,
+            event.applePassLabels,
+          );
         case WalletPassType.google:
           await _handleGooglePass(cardData, event.patientId, emit);
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: WalletPassStatus.failure,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: WalletPassStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -60,32 +69,38 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
     Emitter<WalletPassState> emit,
     ApplePassLabels? labels,
   ) async {
-    final effectiveLabels = labels ?? const ApplePassLabels(
-      patient: 'Patient',
-      bloodType: 'Blood Type',
-      allergies: 'Allergies',
-      gender: 'Gender',
-      dateOfBirth: 'Date of Birth',
-      emergencyPhone: 'Emergency Phone',
-      conditions: 'Conditions',
-      medications: 'Medications',
-    );
+    final effectiveLabels =
+        labels ??
+        const ApplePassLabels(
+          patient: 'Patient',
+          bloodType: 'Blood Type',
+          allergies: 'Allergies',
+          gender: 'Gender',
+          dateOfBirth: 'Date of Birth',
+          emergencyPhone: 'Emergency Phone',
+          conditions: 'Conditions',
+          medications: 'Medications',
+        );
     final passBytes = await _repository.generateApplePass(
       cardData: cardData,
       patientId: patientId,
       labels: effectiveLabels,
     );
-    emit(state.copyWith(
-      status: WalletPassStatus.passGenerated,
-      passBytes: passBytes,
-    ));
+    emit(
+      state.copyWith(
+        status: WalletPassStatus.passGenerated,
+        passBytes: passBytes,
+      ),
+    );
 
     final tempDir = await getTemporaryDirectory();
     final filePath = '${tempDir.path}/HealthWallet_Emergency.pkpass';
     final file = File(filePath);
     await file.writeAsBytes(passBytes);
 
-    const channel = MethodChannel('com.techstackapps.healthwallet/apple_wallet');
+    const channel = MethodChannel(
+      'com.techstackapps.healthwallet/apple_wallet',
+    );
     await channel.invokeMethod('addPass', {'filePath': filePath});
 
     emit(state.copyWith(status: WalletPassStatus.passAddedToWallet));
@@ -100,18 +115,22 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
       cardData: cardData,
       patientId: patientId,
     );
-    emit(state.copyWith(
-      status: WalletPassStatus.passGenerated,
-      googlePassJson: passJson,
-    ));
+    emit(
+      state.copyWith(
+        status: WalletPassStatus.passGenerated,
+        googlePassJson: passJson,
+      ),
+    );
 
     final plugin = FlutterGoogleWalletPlugin();
     unawaited(plugin.initWalletClient());
 
-    unawaited(plugin.savePassesJwt(
-      jsonPass: passJson,
-      addToGoogleWalletRequestCode: 1,
-    ));
+    unawaited(
+      plugin.savePassesJwt(
+        jsonPass: passJson,
+        addToGoogleWalletRequestCode: 1,
+      ),
+    );
 
     emit(state.copyWith(status: WalletPassStatus.passAddedToWallet));
   }

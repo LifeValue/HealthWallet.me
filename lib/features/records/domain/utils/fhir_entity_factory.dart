@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 
@@ -26,7 +27,9 @@ class FhirEntityFactory {
 
   /// Create entity by resource type using a centralized mapping
   static IFhirResource _createEntityByType(
-      String resourceType, FhirResourceLocalDto dto) {
+    String resourceType,
+    FhirResourceLocalDto dto,
+  ) {
     switch (resourceType) {
       case 'Patient':
         return Patient.fromLocalData(dto);

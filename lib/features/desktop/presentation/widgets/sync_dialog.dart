@@ -101,7 +101,8 @@ class SyncSection extends StatelessWidget {
   final DesktopSyncState commState;
   final LwwSyncState syncState;
 
-  const SyncSection({super.key, 
+  const SyncSection({
+    super.key,
     required this.commState,
     required this.syncState,
   });
@@ -128,13 +129,17 @@ class SyncSection extends StatelessWidget {
             if (syncState.sentRows > 0 || syncState.receivedRows > 0)
               InfoRow(
                 label: context.l10n.desktopSyncTransfer,
-                value:
-                    context.l10n.desktopSyncTransferValue(syncState.sentRows, syncState.receivedRows),
+                value: context.l10n.desktopSyncTransferValue(
+                  syncState.sentRows,
+                  syncState.receivedRows,
+                ),
               ),
             if (syncState.pendingChangeCount > 0)
               InfoRow(
                 label: context.l10n.desktopSyncPending,
-                value: context.l10n.desktopSyncPendingValue(syncState.pendingChangeCount),
+                value: context.l10n.desktopSyncPendingValue(
+                  syncState.pendingChangeCount,
+                ),
               ),
             if (syncState.error != null) ...[
               const SizedBox(height: Insets.small),
@@ -151,7 +156,9 @@ class SyncSection extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
-                    context.l10n.desktopSyncingTable(_formatTableName(context, syncState.currentTable!)),
+                    context.l10n.desktopSyncingTable(
+                      _formatTableName(context, syncState.currentTable!),
+                    ),
                     style: AppTextStyle.labelSmall.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -165,28 +172,28 @@ class SyncSection extends StatelessWidget {
             ],
             const SizedBox(height: Insets.normal),
             AppButton(
-                  label: isSyncing ? context.l10n.desktopSyncing : context.l10n.desktopSyncNow,
-                  onPressed: isConnected && !isSyncing
-                      ? () {
-                          getIt<LwwSyncBloc>().add(const SyncTriggered());
-                        }
-                      : null,
-                  height: 36,
-                ),
+              label: isSyncing
+                  ? context.l10n.desktopSyncing
+                  : context.l10n.desktopSyncNow,
+              onPressed: isConnected && !isSyncing
+                  ? () {
+                      getIt<LwwSyncBloc>().add(const SyncTriggered());
+                    }
+                  : null,
+              height: 36,
+            ),
             if (syncState.lastSyncTime != null) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: Insets.normal),
                 child: Divider(
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.06),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.06),
                   height: 1,
                 ),
               ),
               Text(
                 context.l10n.desktopSyncRecent,
                 style: AppTextStyle.labelSmall.copyWith(
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.35),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.35),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
@@ -195,7 +202,8 @@ class SyncSection extends StatelessWidget {
               const SizedBox(height: Insets.small),
               _SyncHistoryEntry(
                 time: syncState.lastSyncTime!,
-                deviceName: commState.connectedDeviceName ??
+                deviceName:
+                    commState.connectedDeviceName ??
                     (getIt<AppPlatform>().isDesktop
                         ? null
                         : commState.pairedDevice?.deviceName),
@@ -263,17 +271,18 @@ class _SyncHistoryEntry extends StatelessWidget {
               Text(
                 '$timeStr · $device',
                 style: AppTextStyle.labelSmall.copyWith(
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                   fontSize: 12,
                 ),
               ),
               if (hasTransfer)
                 Text(
-                  context.l10n.desktopSyncHistoryTransfer(sentRows, receivedRows),
+                  context.l10n.desktopSyncHistoryTransfer(
+                    sentRows,
+                    receivedRows,
+                  ),
                   style: AppTextStyle.labelSmall.copyWith(
-                    color:
-                        context.colorScheme.onSurface.withValues(alpha: 0.3),
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.3),
                     fontSize: 11,
                   ),
                 ),

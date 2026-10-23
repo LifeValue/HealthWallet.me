@@ -28,8 +28,9 @@ class InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: AppTextStyle.labelSmall
-                  .copyWith(color: context.colorScheme.onSurface),
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
             ),
           ),
         ],

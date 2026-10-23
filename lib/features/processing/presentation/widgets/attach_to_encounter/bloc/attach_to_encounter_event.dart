@@ -25,7 +25,8 @@ abstract class AttachToEncounterPatientChanged extends AttachToEncounterEvent
 }
 
 @freezed
-abstract class AttachToEncounterSearchQueryChanged extends AttachToEncounterEvent
+abstract class AttachToEncounterSearchQueryChanged
+    extends AttachToEncounterEvent
     with _$AttachToEncounterSearchQueryChanged {
   const AttachToEncounterSearchQueryChanged._();
 
@@ -43,10 +44,12 @@ abstract class AttachToEncounterSelected extends AttachToEncounterEvent
 }
 
 @freezed
-abstract class AttachToEncounterNewEncounterCreated extends AttachToEncounterEvent
+abstract class AttachToEncounterNewEncounterCreated
+    extends AttachToEncounterEvent
     with _$AttachToEncounterNewEncounterCreated {
   const AttachToEncounterNewEncounterCreated._();
 
   const factory AttachToEncounterNewEncounterCreated(
-      MappingEncounter encounter) = _AttachToEncounterNewEncounterCreated;
+    MappingEncounter encounter,
+  ) = _AttachToEncounterNewEncounterCreated;
 }

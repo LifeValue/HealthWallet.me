@@ -83,7 +83,8 @@ class _RecordsToolbarState extends State<RecordsToolbar>
       context.read<RecordsBloc>().add(const RecordsSearch(''));
       if (widget.viewMode == RecordsViewMode.attachments) {
         context.read<AttachmentBrowseBloc>().add(
-            const AttachmentBrowseSearchChanged(''));
+          const AttachmentBrowseSearchChanged(''),
+        );
       }
       _searchFocusNode.requestFocus();
     } else {
@@ -165,7 +166,8 @@ class _RecordsToolbarState extends State<RecordsToolbar>
               context.read<RecordsBloc>().add(RecordsSearch(query));
               if (widget.viewMode == RecordsViewMode.attachments) {
                 context.read<AttachmentBrowseBloc>().add(
-                    AttachmentBrowseSearchChanged(query));
+                  AttachmentBrowseSearchChanged(query),
+                );
               }
             },
             onSubmitted: (_) => _searchFocusNode.unfocus(),

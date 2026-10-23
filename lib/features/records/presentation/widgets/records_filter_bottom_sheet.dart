@@ -20,7 +20,8 @@ class RecordsFilterBottomSheet extends StatefulWidget {
   });
 
   final List<FhirType> activeFilters;
-  final void Function(List<FhirType>, DateFilter?, List<MedicalSpecialty>) onApply;
+  final void Function(List<FhirType>, DateFilter?, List<MedicalSpecialty>)
+  onApply;
   final DateFilter? currentDateFilter;
   final List<FhirType>? availableFilters;
   final List<MedicalSpecialty> currentSpecialties;
@@ -103,7 +104,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.18),
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.18,
+                    ),
                     width: 1,
                   ),
                 ),
@@ -116,7 +119,10 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                   return Stack(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         child: Row(
                           children: [
                             Expanded(
@@ -124,7 +130,10 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                                 controller: _tabController,
                                 indicatorColor: Colors.transparent,
                                 labelColor: context.colorScheme.primary,
-                                unselectedLabelColor: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                                unselectedLabelColor: context
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.6),
                                 labelStyle: AppTextStyle.bodyMedium,
                                 unselectedLabelStyle: AppTextStyle.bodyMedium,
                                 dividerColor: Colors.transparent,
@@ -136,11 +145,13 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                             ),
                             IconButton(
                               iconSize: 18,
-                              visualDensity:
-                                  const VisualDensity(horizontal: -4, vertical: -4),
+                              visualDensity: const VisualDensity(
+                                horizontal: -4,
+                                vertical: -4,
+                              ),
                               onPressed: () => Navigator.of(context).pop(),
                               icon: const Icon(Icons.close),
-                            )
+                            ),
                           ],
                         ),
                       ),
@@ -173,7 +184,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.18),
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.18,
+                    ),
                     width: 1,
                   ),
                 ),
@@ -201,7 +214,8 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                             : context.colorScheme.onPrimary,
                         padding: const EdgeInsets.all(10),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadiusGeometry.circular(6)),
+                          borderRadius: BorderRadiusGeometry.circular(6),
+                        ),
                       ),
                       onPressed: () {
                         final dateFilter = _dateRangeModel.hasValue
@@ -220,8 +234,11 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                           return;
                         }
 
-                        widget.onApply
-                            .call(_selectedFilters, dateFilter, _selectedSpecialties);
+                        widget.onApply.call(
+                          _selectedFilters,
+                          dateFilter,
+                          _selectedSpecialties,
+                        );
                         Navigator.of(context).pop();
                       },
                       child: Row(
@@ -235,8 +252,10 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Text(context.l10n.applyFilters,
-                              style: AppTextStyle.buttonMedium),
+                          Text(
+                            context.l10n.applyFilters,
+                            style: AppTextStyle.buttonMedium,
+                          ),
                         ],
                       ),
                     ),
@@ -305,12 +324,17 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: (widget.availableFilters ?? FhirType.values).map((filter) {
+            children: (widget.availableFilters ?? FhirType.values).map((
+              filter,
+            ) {
               final isSelected = _selectedFilters.contains(filter);
               return GestureDetector(
                 onTap: () => _toggleFitler(filter),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? context.colorScheme.primary.withValues(alpha: 0.12)
@@ -319,7 +343,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                     border: Border.all(
                       color: isSelected
                           ? context.colorScheme.primary.withValues(alpha: 0.3)
-                          : context.colorScheme.onSurface.withValues(alpha: 0.15),
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.15,
+                            ),
                     ),
                   ),
                   child: Row(
@@ -349,7 +375,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                 ),
               );
             }).toList(),
-          )
+          ),
         ],
       ),
     );
@@ -568,7 +594,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                     style: AppTextStyle.labelLarge.copyWith(
                       color: _dateRangeModel.hasValue
                           ? context.colorScheme.error
-                          : context.colorScheme.onSurface.withValues(alpha: 0.3),
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.3,
+                            ),
                     ),
                   ),
                 ],
@@ -633,7 +661,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
 
     String formatDate(int? year, int? month, int? day) {

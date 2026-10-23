@@ -43,14 +43,16 @@ class AttachToEncounterBloc
       );
 
       _allPatients = allPatientsResources.whereType<Patient>().toList();
-      final List<Patient> uniquePatients =
-          _deduplicationService.getUniquePatients(_allPatients);
+      final List<Patient> uniquePatients = _deduplicationService
+          .getUniquePatients(_allPatients);
 
       if (uniquePatients.isEmpty) {
-        emit(state.copyWith(
-          status: AttachToEncounterStatus.success,
-          existingPatients: [],
-        ));
+        emit(
+          state.copyWith(
+            status: AttachToEncounterStatus.success,
+            existingPatients: [],
+          ),
+        );
         return;
       }
 
@@ -58,15 +60,17 @@ class AttachToEncounterBloc
 
       if (event.patient.mode == ImportMode.linkExisting &&
           event.patient.existing != null) {
-        selectedPatient = uniquePatients
-            .firstWhere((patient) => patient.id == event.patient.existing!.id,
-                orElse: () => uniquePatients.first);
+        selectedPatient = uniquePatients.firstWhere(
+          (patient) => patient.id == event.patient.existing!.id,
+          orElse: () => uniquePatients.first,
+        );
       }
 
-      emit(state.copyWith(
-        existingPatients: uniquePatients,
-        selectedPatient: selectedPatient,
-        patient: event.patient.copyWith(
+      emit(
+        state.copyWith(
+          existingPatients: uniquePatients,
+          selectedPatient: selectedPatient,
+          patient: event.patient.copyWith(
             draft: (selectedPatient is MappingPatient)
                 ? selectedPatient
                 : event.patient.draft,
@@ -75,9 +79,11 @@ class AttachToEncounterBloc
                 : event.patient.existing,
             mode: (selectedPatient is MappingPatient)
                 ? ImportMode.createNew
-                : ImportMode.linkExisting),
-        encounter: event.encounter,
-      ));
+                : ImportMode.linkExisting,
+          ),
+          encounter: event.encounter,
+        ),
+      );
 
       if (selectedPatient is Patient) {
         await _loadEncounters(emit, selectedPatient);
@@ -86,10 +92,12 @@ class AttachToEncounterBloc
       emit(state.copyWith(status: AttachToEncounterStatus.success));
     } catch (e) {
       logger.e('Error loading patients in AttachToEncounterBloc: $e');
-      emit(state.copyWith(
-        status: AttachToEncounterStatus.failure,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: AttachToEncounterStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -98,25 +106,29 @@ class AttachToEncounterBloc
     Emitter<AttachToEncounterState> emit,
   ) async {
     if (event.patient is MappingPatient) {
-      emit(state.copyWith(
-        patient: StagedPatient(
-          draft: state.patient.draft,
-          mode: ImportMode.createNew,
+      emit(
+        state.copyWith(
+          patient: StagedPatient(
+            draft: state.patient.draft,
+            mode: ImportMode.createNew,
+          ),
+          existingEncounters: [],
+          selectedPatient: event.patient,
         ),
-        existingEncounters: [],
-        selectedPatient: event.patient,
-      ));
+      );
     }
 
     if (event.patient is Patient) {
-      emit(state.copyWith(
-        selectedPatient: event.patient,
-        patient: state.patient.copyWith(
-          existing: event.patient,
-          mode: ImportMode.linkExisting,
+      emit(
+        state.copyWith(
+          selectedPatient: event.patient,
+          patient: state.patient.copyWith(
+            existing: event.patient,
+            mode: ImportMode.linkExisting,
+          ),
+          status: AttachToEncounterStatus.loading,
         ),
-        status: AttachToEncounterStatus.loading,
-      ));
+      );
       await _loadEncounters(emit, event.patient);
     }
   }
@@ -130,9 +142,10 @@ class AttachToEncounterBloc
         patient.id,
         _allPatients,
       );
-      final resourceSourceIds = await _deduplicationService.getSourceIdsForPatient(
-        patient.resourceId,
-      );
+      final resourceSourceIds = await _deduplicationService
+          .getSourceIdsForPatient(
+            patient.resourceId,
+          );
       final sourceIds = {...patientSourceIds, ...resourceSourceIds}.toList();
 
       final resources = await _recordsRepository.getResources(
@@ -142,19 +155,25 @@ class AttachToEncounterBloc
         limit: 100,
       );
 
-      final List<Encounter> encounters = resources.whereType<Encounter>().toList();
+      final List<Encounter> encounters = resources
+          .whereType<Encounter>()
+          .toList();
 
-      emit(state.copyWith(
-        status: AttachToEncounterStatus.success,
-        existingEncounters: encounters,
-        filteredEncounters: _filterEncounters(encounters, state.searchQuery),
-      ));
+      emit(
+        state.copyWith(
+          status: AttachToEncounterStatus.success,
+          existingEncounters: encounters,
+          filteredEncounters: _filterEncounters(encounters, state.searchQuery),
+        ),
+      );
     } catch (e) {
       logger.e('Error loading encounters: $e');
-      emit(state.copyWith(
-        status: AttachToEncounterStatus.failure,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: AttachToEncounterStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -163,10 +182,12 @@ class AttachToEncounterBloc
     Emitter<AttachToEncounterState> emit,
   ) async {
     final filtered = _filterEncounters(state.existingEncounters, event.query);
-    emit(state.copyWith(
-      searchQuery: event.query,
-      filteredEncounters: filtered,
-    ));
+    emit(
+      state.copyWith(
+        searchQuery: event.query,
+        filteredEncounters: filtered,
+      ),
+    );
   }
 
   Future<void> _onEncounterSelected(
@@ -174,20 +195,24 @@ class AttachToEncounterBloc
     Emitter<AttachToEncounterState> emit,
   ) async {
     if (event.encounter is MappingEncounter) {
-      emit(state.copyWith(
-        encounter: state.encounter.copyWith(
-          existing: null,
-          mode: ImportMode.createNew,
+      emit(
+        state.copyWith(
+          encounter: state.encounter.copyWith(
+            existing: null,
+            mode: ImportMode.createNew,
+          ),
         ),
-      ));
+      );
     }
     if (event.encounter is Encounter) {
-      emit(state.copyWith(
-        encounter: state.encounter.copyWith(
-          existing: event.encounter,
-          mode: ImportMode.linkExisting,
+      emit(
+        state.copyWith(
+          encounter: state.encounter.copyWith(
+            existing: event.encounter,
+            mode: ImportMode.linkExisting,
+          ),
         ),
-      ));
+      );
     }
   }
 
@@ -195,12 +220,14 @@ class AttachToEncounterBloc
     AttachToEncounterNewEncounterCreated event,
     Emitter<AttachToEncounterState> emit,
   ) async {
-    emit(state.copyWith(
-      encounter: state.encounter.copyWith(
-        draft: event.encounter,
-        mode: ImportMode.createNew,
+    emit(
+      state.copyWith(
+        encounter: state.encounter.copyWith(
+          draft: event.encounter,
+          mode: ImportMode.createNew,
+        ),
       ),
-    ));
+    );
   }
 
   List<Encounter> _filterEncounters(List<Encounter> encounters, String query) {

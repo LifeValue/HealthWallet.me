@@ -52,8 +52,8 @@ class SelectableRecordsList extends StatelessWidget {
               hasActiveFilters
                   ? context.l10n.shareNoRecordsMatchSelectedFilters
                   : hasAppliedFilters
-                      ? context.l10n.shareNoRecordsForAppliedFilters
-                      : context.l10n.shareNoRecordsAvailable,
+                  ? context.l10n.shareNoRecordsForAppliedFilters
+                  : context.l10n.shareNoRecordsAvailable,
               style: AppTextStyle.titleMedium.copyWith(
                 color: context.colorScheme.onSurface,
               ),
@@ -64,8 +64,8 @@ class SelectableRecordsList extends StatelessWidget {
               hasActiveFilters
                   ? context.l10n.shareTryClearingFilters
                   : hasAppliedFilters
-                      ? context.l10n.shareRecordsPageFiltersNoResults
-                      : context.l10n.shareImportOrSyncRecords,
+                  ? context.l10n.shareRecordsPageFiltersNoResults
+                  : context.l10n.shareImportOrSyncRecords,
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
@@ -93,8 +93,8 @@ class SelectableRecordsList extends StatelessWidget {
           isSelected: isSelected,
           onTap: () {
             context.read<ShareRecordsBloc>().add(
-                  ShareRecordsEvent.recordToggled(resource),
-                );
+              ShareRecordsEvent.recordToggled(resource),
+            );
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

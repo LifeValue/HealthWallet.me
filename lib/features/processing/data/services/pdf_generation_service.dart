@@ -115,13 +115,16 @@ class PdfGenerationService {
           title: defaultTitle,
         );
 
-        groups.add(DocumentGroup(
-          type: DocumentGroupType.scannedImages,
-          pdfPath: pdfPath,
-          title: scannedDocumentsPagesTitle?.call(imagePaths.length) ??
-              '$defaultTitle (${imagePaths.length} pages)',
-          originalCount: imagePaths.length,
-        ));
+        groups.add(
+          DocumentGroup(
+            type: DocumentGroupType.scannedImages,
+            pdfPath: pdfPath,
+            title:
+                scannedDocumentsPagesTitle?.call(imagePaths.length) ??
+                '$defaultTitle (${imagePaths.length} pages)',
+            originalCount: imagePaths.length,
+          ),
+        );
       }
 
       for (int i = 0; i < pdfPaths.length; i++) {
@@ -133,12 +136,14 @@ class PdfGenerationService {
           fileName: 'pdf_${_generateId()}_$fileName',
         );
 
-        groups.add(DocumentGroup(
-          type: DocumentGroupType.importedPdf,
-          pdfPath: pdfPath,
-          title: pdfFileTitle?.call(fileName) ?? 'PDF: $fileName',
-          originalCount: 1,
-        ));
+        groups.add(
+          DocumentGroup(
+            type: DocumentGroupType.importedPdf,
+            pdfPath: pdfPath,
+            title: pdfFileTitle?.call(fileName) ?? 'PDF: $fileName',
+            originalCount: 1,
+          ),
+        );
       }
 
       return groups;
@@ -153,7 +158,8 @@ class PdfGenerationService {
 
   Future<String> _generateScannedDocumentName() async {
     final now = DateTime.now();
-    final dateStr = '${now.day.toString().padLeft(2, '0')}'
+    final dateStr =
+        '${now.day.toString().padLeft(2, '0')}'
         '${now.month.toString().padLeft(2, '0')}'
         '${now.year}';
 
@@ -175,7 +181,9 @@ class PdfGenerationService {
           final fileName = p.basename(file.path);
           if (fileName.startsWith(pattern) && fileName.endsWith('.pdf')) {
             final numberPart = fileName.substring(
-                pattern.length, fileName.length - 4);
+              pattern.length,
+              fileName.length - 4,
+            );
             final number = int.tryParse(numberPart);
             if (number != null && number > maxNumber) {
               maxNumber = number;

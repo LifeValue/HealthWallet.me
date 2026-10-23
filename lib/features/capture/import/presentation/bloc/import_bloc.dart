@@ -16,11 +16,17 @@ class ImportBloc extends Bloc<ImportEvent, ImportState> {
   final ProcessingBloc _processingBloc;
 
   static const _allowedExtensions = [
-    'pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff'
+    'pdf',
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'bmp',
+    'webp',
+    'tiff',
   ];
 
-  ImportBloc(this._processingBloc)
-      : super(const ImportState()) {
+  ImportBloc(this._processingBloc) : super(const ImportState()) {
     on<ImportDocumentPressed>(_onImportDocument);
     on<PickImagePressed>(_onPickImage);
     on<ExternalFilesReceived>(_onExternalFiles);

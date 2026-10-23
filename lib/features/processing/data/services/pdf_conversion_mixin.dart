@@ -26,7 +26,10 @@ mixin PdfConversionMixin implements TextRecognitionService {
             throw Exception('Failed to decode PNG for page $index');
           }
 
-          final whiteBg = img.Image(width: decoded.width, height: decoded.height);
+          final whiteBg = img.Image(
+            width: decoded.width,
+            height: decoded.height,
+          );
           img.fill(whiteBg, color: img.ColorRgba8(255, 255, 255, 255));
           img.compositeImage(whiteBg, decoded);
           final pngOut = img.encodePng(whiteBg, level: 6);
@@ -47,8 +50,7 @@ mixin PdfConversionMixin implements TextRecognitionService {
 
   Future<Directory> getCacheDirectory() async {
     final docsDir = await getApplicationDocumentsDirectory();
-    final pdfCacheDir =
-        Directory(path.join(docsDir.path, 'pdf_preview_cache'));
+    final pdfCacheDir = Directory(path.join(docsDir.path, 'pdf_preview_cache'));
     if (!await pdfCacheDir.exists()) {
       await pdfCacheDir.create(recursive: true);
     }
@@ -56,7 +58,11 @@ mixin PdfConversionMixin implements TextRecognitionService {
   }
 
   String generateCacheKey(
-      String pdfPath, int fileSize, DateTime modified, double dpi) {
+    String pdfPath,
+    int fileSize,
+    DateTime modified,
+    double dpi,
+  ) {
     final keyString =
         '$pdfPath|$fileSize|${modified.millisecondsSinceEpoch}|$dpi';
     final bytes = utf8.encode(keyString);
@@ -67,8 +73,9 @@ mixin PdfConversionMixin implements TextRecognitionService {
   Future<List<String>?> getCachedImages(String cacheKey) async {
     try {
       final cacheDir = await getCacheDirectory();
-      final cacheMetadataFile =
-          File(path.join(cacheDir.path, '$cacheKey.json'));
+      final cacheMetadataFile = File(
+        path.join(cacheDir.path, '$cacheKey.json'),
+      );
 
       if (!await cacheMetadataFile.exists()) {
         return null;
@@ -76,8 +83,9 @@ mixin PdfConversionMixin implements TextRecognitionService {
 
       final metadataJson = await cacheMetadataFile.readAsString();
       final metadata = jsonDecode(metadataJson) as Map<String, dynamic>;
-      final cachedImagePaths =
-          (metadata['imagePaths'] as List).map((p) => p as String).toList();
+      final cachedImagePaths = (metadata['imagePaths'] as List)
+          .map((p) => p as String)
+          .toList();
 
       bool allExist = true;
       for (final imagePath in cachedImagePaths) {
@@ -106,8 +114,9 @@ mixin PdfConversionMixin implements TextRecognitionService {
   Future<void> saveToCache(String cacheKey, List<String> imagePaths) async {
     try {
       final cacheDir = await getCacheDirectory();
-      final cacheMetadataFile =
-          File(path.join(cacheDir.path, '$cacheKey.json'));
+      final cacheMetadataFile = File(
+        path.join(cacheDir.path, '$cacheKey.json'),
+      );
 
       final metadata = {
         'imagePaths': imagePaths,
@@ -128,8 +137,12 @@ mixin PdfConversionMixin implements TextRecognitionService {
       if (!await file.exists()) return [];
 
       final fileStat = await file.stat();
-      final cacheKey =
-          generateCacheKey(pdfPath, fileStat.size, fileStat.modified, dpi);
+      final cacheKey = generateCacheKey(
+        pdfPath,
+        fileStat.size,
+        fileStat.modified,
+        dpi,
+      );
 
       final cachedImages = await getCachedImages(cacheKey);
       if (cachedImages != null) return cachedImages;
@@ -148,8 +161,10 @@ mixin PdfConversionMixin implements TextRecognitionService {
             continue;
           }
 
-          final whiteBg =
-              img.Image(width: decoded.width, height: decoded.height);
+          final whiteBg = img.Image(
+            width: decoded.width,
+            height: decoded.height,
+          );
           img.fill(whiteBg, color: img.ColorRgba8(255, 255, 255, 255));
           img.compositeImage(whiteBg, decoded);
           final jpegBytes = img.encodeJpg(whiteBg, quality: 75);
@@ -161,9 +176,10 @@ mixin PdfConversionMixin implements TextRecognitionService {
           imagePaths.add(cachedImageFile.path);
         } catch (e, stackTrace) {
           logger.e(
-              'convertPdfToImagesForPreview - Error processing page $index: $e',
-              e,
-              stackTrace);
+            'convertPdfToImagesForPreview - Error processing page $index: $e',
+            e,
+            stackTrace,
+          );
         }
         index++;
       }
@@ -174,8 +190,11 @@ mixin PdfConversionMixin implements TextRecognitionService {
 
       return imagePaths;
     } catch (e, stackTrace) {
-      logger.e('convertPdfToImagesForPreview - Conversion failed: $e', e,
-          stackTrace);
+      logger.e(
+        'convertPdfToImagesForPreview - Conversion failed: $e',
+        e,
+        stackTrace,
+      );
       return [];
     }
   }
@@ -194,7 +213,7 @@ mixin PdfConversionMixin implements TextRecognitionService {
       '.gif',
       '.bmp',
       '.webp',
-      '.tiff'
+      '.tiff',
     ];
     final lowerPath = filePath.toLowerCase();
     return imageExtensions.any(lowerPath.endsWith);

@@ -69,8 +69,9 @@ class AiTokenSettingsDialog extends StatefulWidget {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final deviceRamMB = await _detectDeviceRamMB();
-    final profile =
-        await DeviceCapabilityService.buildProfile(ramMB: deviceRamMB);
+    final profile = await DeviceCapabilityService.buildProfile(
+      ramMB: deviceRamMB,
+    );
     final config = DeviceCapabilityService.computeModelConfig(
       withVision: true,
       profile: profile,
@@ -127,7 +128,8 @@ class AiTokenSettingsDialog extends StatefulWidget {
         }
       } else if (Platform.isWindows) {
         final result = await Process.run('powershell', [
-          '-NoProfile', '-Command',
+          '-NoProfile',
+          '-Command',
           '(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory',
         ]);
         if (result.exitCode == 0) {
@@ -157,8 +159,8 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
   late int _contextSize;
   late bool _useVision;
 
-  final AiModelDownloadService _downloadService =
-      getIt.get<AiModelDownloadService>();
+  final AiModelDownloadService _downloadService = getIt
+      .get<AiModelDownloadService>();
   StreamSubscription<AiModelDownloadState>? _downloadSub;
   bool _isMmprojDownloading = false;
   double _mmprojProgress = 0.0;
@@ -233,8 +235,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
 
   Future<void> _handleVisionToggleOn() async {
     final variant = widget.activeModelConfig.variant;
-    final exists =
-        await _downloadService.checkMmprojExistsForVariant(variant);
+    final exists = await _downloadService.checkMmprojExistsForVariant(variant);
 
     if (exists) {
       setState(() => _useVision = true);
@@ -244,26 +245,30 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     if (!mounted) return;
 
     final sizeMB = widget.activeModelConfig.mmprojSizeMB;
-    unawaited(AppSimpleDialog.showConfirmation(
-      context: context,
-      title: context.l10n.deepScanDownloadTitle,
-      message: context.l10n.deepScanDownloadMessage(sizeMB),
-      confirmText: context.l10n.aiModelEnableDownload,
-      cancelText: context.l10n.cancel,
-      onConfirm: () {
-        _downloadService.startMmprojDownloadForVariant(variant);
-      },
-    ));
+    unawaited(
+      AppSimpleDialog.showConfirmation(
+        context: context,
+        title: context.l10n.deepScanDownloadTitle,
+        message: context.l10n.deepScanDownloadMessage(sizeMB),
+        confirmText: context.l10n.aiModelEnableDownload,
+        cancelText: context.l10n.cancel,
+        onConfirm: () {
+          _downloadService.startMmprojDownloadForVariant(variant);
+        },
+      ),
+    );
   }
 
   void _apply() {
-    Navigator.of(context).pop(AiSettingsResult(
-      maxTokens: _currentTokenValue(),
-      gpuLayers: _gpuLayers,
-      threads: _threads,
-      contextSize: _contextSize,
-      useVision: _useVision,
-    ));
+    Navigator.of(context).pop(
+      AiSettingsResult(
+        maxTokens: _currentTokenValue(),
+        gpuLayers: _gpuLayers,
+        threads: _threads,
+        contextSize: _contextSize,
+        useVision: _useVision,
+      ),
+    );
   }
 
   @override
@@ -276,8 +281,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
     final kvCache = _contextSize * 170 ~/ 1024;
     final overhead = activeModel.modelSizeMB >= 2000 ? 700 : 400;
     final visionMB = _useVision ? activeModel.mmprojSizeMB : 0;
-    final estimatedMB =
-        activeModel.modelSizeMB + visionMB + kvCache + overhead;
+    final estimatedMB = activeModel.modelSizeMB + visionMB + kvCache + overhead;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -287,104 +291,106 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
         child: SizedBox(
           width: context.wideDialogWidth,
           child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: context.isDarkMode
-                ? context.colorScheme.surface
-                : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHeader(textColor),
-              Divider(height: 1, thickness: 1, color: borderColor),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(Insets.normal),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.l10n.aiSettingsDescription,
-                        style: AppTextStyle.labelLarge
-                            .copyWith(color: secondaryTextColor),
-                      ),
-                      const SizedBox(height: Insets.small),
-                      _buildDeviceInfoChip(textColor, estimatedMB),
-                      const SizedBox(height: Insets.normal),
-                      AiVisionToggleSection(
-                        useVision: _useVision,
-                        isMmprojDownloading: _isMmprojDownloading,
-                        mmprojProgress: _mmprojProgress,
-                        onToggleOn: _handleVisionToggleOn,
-                        onToggleOff: () => setState(() => _useVision = false),
-                        textColor: textColor,
-                        secondaryTextColor: secondaryTextColor,
-                        borderColor: borderColor,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      _buildSliderSection(
-                        context.l10n.contextSizeLabel,
-                        context.l10n.contextSizeDescription,
-                        _contextStepIndex(),
-                        0,
-                        _contextSizeSteps.length - 1,
-                        _contextSizeSteps
-                            .indexOf(widget.recommendedContextSize)
-                            .clamp(0, _contextSizeSteps.length - 1),
-                        (v) =>
-                            setState(() => _contextSize = _contextSizeSteps[v]),
-                        textColor,
-                        secondaryTextColor,
-                        borderColor,
-                        label: '$_contextSize',
-                        stepValues: _contextSizeSteps,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      _buildSliderSection(
-                        context.l10n.gpuLayersLabel,
-                        context.l10n.gpuLayersDescription,
-                        _gpuLayers.clamp(0, 99),
-                        0,
-                        99,
-                        widget.recommendedGpuLayers.clamp(0, 99),
-                        (v) => setState(() => _gpuLayers = v),
-                        textColor,
-                        secondaryTextColor,
-                        borderColor,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      _buildSliderSection(
-                        context.l10n.threadsLabel,
-                        context.l10n.threadsDescription,
-                        _threads,
-                        1,
-                        Platform.numberOfProcessors.clamp(1, 8),
-                        widget.recommendedThreads,
-                        (v) => setState(() => _threads = v),
-                        textColor,
-                        secondaryTextColor,
-                        borderColor,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      _buildTokenSection(
-                        textColor,
-                        secondaryTextColor,
-                        borderColor,
-                      ),
-                      const SizedBox(height: Insets.normal),
-                      _buildApplyButton(),
-                    ],
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            decoration: BoxDecoration(
+              color: context.isDarkMode
+                  ? context.colorScheme.surface
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: borderColor, width: 1),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildHeader(textColor),
+                Divider(height: 1, thickness: 1, color: borderColor),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(Insets.normal),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l10n.aiSettingsDescription,
+                          style: AppTextStyle.labelLarge.copyWith(
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: Insets.small),
+                        _buildDeviceInfoChip(textColor, estimatedMB),
+                        const SizedBox(height: Insets.normal),
+                        AiVisionToggleSection(
+                          useVision: _useVision,
+                          isMmprojDownloading: _isMmprojDownloading,
+                          mmprojProgress: _mmprojProgress,
+                          onToggleOn: _handleVisionToggleOn,
+                          onToggleOff: () => setState(() => _useVision = false),
+                          textColor: textColor,
+                          secondaryTextColor: secondaryTextColor,
+                          borderColor: borderColor,
+                        ),
+                        const SizedBox(height: Insets.normal),
+                        _buildSliderSection(
+                          context.l10n.contextSizeLabel,
+                          context.l10n.contextSizeDescription,
+                          _contextStepIndex(),
+                          0,
+                          _contextSizeSteps.length - 1,
+                          _contextSizeSteps
+                              .indexOf(widget.recommendedContextSize)
+                              .clamp(0, _contextSizeSteps.length - 1),
+                          (v) => setState(
+                            () => _contextSize = _contextSizeSteps[v],
+                          ),
+                          textColor,
+                          secondaryTextColor,
+                          borderColor,
+                          label: '$_contextSize',
+                          stepValues: _contextSizeSteps,
+                        ),
+                        const SizedBox(height: Insets.normal),
+                        _buildSliderSection(
+                          context.l10n.gpuLayersLabel,
+                          context.l10n.gpuLayersDescription,
+                          _gpuLayers.clamp(0, 99),
+                          0,
+                          99,
+                          widget.recommendedGpuLayers.clamp(0, 99),
+                          (v) => setState(() => _gpuLayers = v),
+                          textColor,
+                          secondaryTextColor,
+                          borderColor,
+                        ),
+                        const SizedBox(height: Insets.normal),
+                        _buildSliderSection(
+                          context.l10n.threadsLabel,
+                          context.l10n.threadsDescription,
+                          _threads,
+                          1,
+                          Platform.numberOfProcessors.clamp(1, 8),
+                          widget.recommendedThreads,
+                          (v) => setState(() => _threads = v),
+                          textColor,
+                          secondaryTextColor,
+                          borderColor,
+                        ),
+                        const SizedBox(height: Insets.normal),
+                        _buildTokenSection(
+                          textColor,
+                          secondaryTextColor,
+                          borderColor,
+                        ),
+                        const SizedBox(height: Insets.normal),
+                        _buildApplyButton(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -406,8 +412,10 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
           Expanded(
             child: Text(
               context.l10n.aiSettings,
-              style: AppTextStyle.bodyMedium
-                  .copyWith(color: textColor, fontWeight: FontWeight.w500),
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           GestureDetector(
@@ -521,8 +529,7 @@ class _AiTokenSettingsDialogState extends State<AiTokenSettingsDialog> {
         AiTokenOptionsSection(
           selectedPreset: _selectedPreset,
           customController: _customController,
-          onPresetChanged: (preset) =>
-              setState(() => _selectedPreset = preset),
+          onPresetChanged: (preset) => setState(() => _selectedPreset = preset),
           onCustomValueChanged: () => setState(() {}),
           textColor: textColor,
           borderColor: borderColor,

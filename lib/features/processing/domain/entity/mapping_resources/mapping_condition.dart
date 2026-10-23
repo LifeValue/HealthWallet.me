@@ -10,7 +10,9 @@ import 'package:uuid/uuid.dart';
 part 'mapping_condition.freezed.dart';
 
 @freezed
-abstract class MappingCondition with _$MappingCondition implements MappingResource {
+abstract class MappingCondition
+    with _$MappingCondition
+    implements MappingResource {
   const MappingCondition._();
 
   const factory MappingCondition({
@@ -43,12 +45,12 @@ abstract class MappingCondition with _$MappingCondition implements MappingResour
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'Condition',
-        'conditionName': conditionName.toJson(),
-        'onsetDateTime': onsetDateTime.toJson(),
-        'clinicalStatus': clinicalStatus.toJson(),
-      };
+    'id': id,
+    'resourceType': 'Condition',
+    'conditionName': conditionName.toJson(),
+    'onsetDateTime': onsetDateTime.toJson(),
+    'clinicalStatus': clinicalStatus.toJson(),
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -60,16 +62,20 @@ abstract class MappingCondition with _$MappingCondition implements MappingResour
     final fhir_r4.Condition condition = fhir_r4.Condition(
       meta: meta,
       code: fhir_r4.CodeableConcept(
-          text: fhir_r4.FhirString(conditionName.value)),
+        text: fhir_r4.FhirString(conditionName.value),
+      ),
       onsetX: onsetDateTime.value.isNotEmpty
           ? fhir_r4.FhirDateTime.fromString(onsetDateTime.value)
           : null,
       clinicalStatus: fhir_r4.CodeableConcept(
-          text: fhir_r4.FhirString(clinicalStatus.value)),
+        text: fhir_r4.FhirString(clinicalStatus.value),
+      ),
       subject: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Patient/$subjectId')),
+        reference: fhir_r4.FhirString('Patient/$subjectId'),
+      ),
       encounter: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Encounter/$encounterId')),
+        reference: fhir_r4.FhirString('Encounter/$encounterId'),
+      ),
     );
 
     final Map<String, dynamic> rawResource = condition.toJson();
@@ -90,30 +96,30 @@ abstract class MappingCondition with _$MappingCondition implements MappingResour
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'conditionName': l10n.labelConditionName,
-        'onsetDateTime': l10n.labelOnsetDate,
-        'clinicalStatus': l10n.labelClinicalStatus,
-      };
+    'conditionName': l10n.labelConditionName,
+    'onsetDateTime': l10n.labelOnsetDate,
+    'clinicalStatus': l10n.labelClinicalStatus,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'conditionName': TextFieldDescriptor(
-          label: 'Condition Name',
-          value: conditionName.value,
-          confidenceLevel: conditionName.confidenceLevel,
-        ),
-        'onsetDateTime': TextFieldDescriptor(
-          label: 'Onset Date',
-          value: onsetDateTime.value,
-          confidenceLevel: onsetDateTime.confidenceLevel,
-          fieldType: FieldType.date,
-        ),
-        'clinicalStatus': TextFieldDescriptor(
-          label: 'Clinical Status',
-          value: clinicalStatus.value,
-          confidenceLevel: clinicalStatus.confidenceLevel,
-        ),
-      };
+    'conditionName': TextFieldDescriptor(
+      label: 'Condition Name',
+      value: conditionName.value,
+      confidenceLevel: conditionName.confidenceLevel,
+    ),
+    'onsetDateTime': TextFieldDescriptor(
+      label: 'Onset Date',
+      value: onsetDateTime.value,
+      confidenceLevel: onsetDateTime.confidenceLevel,
+      fieldType: FieldType.date,
+    ),
+    'clinicalStatus': TextFieldDescriptor(
+      label: 'Clinical Status',
+      value: clinicalStatus.value,
+      confidenceLevel: clinicalStatus.confidenceLevel,
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -144,10 +150,10 @@ abstract class MappingCondition with _$MappingCondition implements MappingResour
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        conditionName: conditionName.calculateConfidence(inputText),
-        onsetDateTime: onsetDateTime.calculateDateConfidence(inputText),
-        clinicalStatus: clinicalStatus.calculateConfidence(inputText),
-      );
+    conditionName: conditionName.calculateConfidence(inputText),
+    onsetDateTime: onsetDateTime.calculateDateConfidence(inputText),
+    clinicalStatus: clinicalStatus.calculateConfidence(inputText),
+  );
 
   @override
   bool get isValid =>

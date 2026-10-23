@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -57,13 +58,18 @@ class HomeLocalDataSourceImpl implements HomePreferencesRepository {
   Future<void> saveSpecialtiesVisibility(Map<String, bool> visibility) async {
     final prefs = await _prefs;
     final jsonString = jsonEncode(visibility);
-    await prefs.setString(SharedPrefsConstants.specialtiesVisibility, jsonString);
+    await prefs.setString(
+      SharedPrefsConstants.specialtiesVisibility,
+      jsonString,
+    );
   }
 
   @override
   Future<Map<String, bool>?> getSpecialtiesVisibility() async {
     final prefs = await _prefs;
-    final jsonString = prefs.getString(SharedPrefsConstants.specialtiesVisibility);
+    final jsonString = prefs.getString(
+      SharedPrefsConstants.specialtiesVisibility,
+    );
     if (jsonString == null) return null;
     return Map<String, bool>.from(jsonDecode(jsonString));
   }

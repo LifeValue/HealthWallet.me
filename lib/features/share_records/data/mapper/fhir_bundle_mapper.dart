@@ -22,8 +22,9 @@ class FhirBundleMapper {
     final entries = <Map<String, dynamic>>[];
 
     for (final resource in records) {
-      final rawResource =
-          Map<String, dynamic>.from(resource.rawResource as Map);
+      final rawResource = Map<String, dynamic>.from(
+        resource.rawResource as Map,
+      );
 
       await _embedAttachmentData(rawResource);
 
@@ -55,7 +56,8 @@ class FhirBundleMapper {
   }
 
   static Future<void> _embedAttachmentData(
-      Map<String, dynamic> rawResource) async {
+    Map<String, dynamic> rawResource,
+  ) async {
     if (rawResource['resourceType'] != 'DocumentReference') return;
 
     final content = rawResource['content'] as List?;
@@ -65,7 +67,9 @@ class FhirBundleMapper {
       final attachment = item['attachment'] as Map<String, dynamic>?;
       final url = attachment?['url'] as String?;
       if (url != null && url.startsWith('file://')) {
-        final resolvedFile = await _resolveFile(Uri.decodeComponent(url.substring(7)));
+        final resolvedFile = await _resolveFile(
+          Uri.decodeComponent(url.substring(7)),
+        );
         if (resolvedFile != null) {
           final bytes = await resolvedFile.readAsBytes();
           attachment!['data'] = base64Encode(bytes);
@@ -128,7 +132,8 @@ class FhirBundleMapper {
         final resourceType = resourceJson['resourceType'] as String?;
         if (resourceType == null) continue;
 
-        final resourceId = entry['_resourceId']?.toString() ??
+        final resourceId =
+            entry['_resourceId']?.toString() ??
             resourceJson['id']?.toString() ??
             _uuid.v4();
 
@@ -201,8 +206,7 @@ class FhirBundleMapper {
     }
   }
 
-  static String _extractTitle(
-      Map<String, dynamic> json, String resourceType) {
+  static String _extractTitle(Map<String, dynamic> json, String resourceType) {
     switch (resourceType) {
       case 'Encounter':
         final type = json['type'] as List?;
@@ -223,20 +227,25 @@ class FhirBundleMapper {
         return _extractCodeableConceptTitle(json['code'], 'Procedure');
       case 'Immunization':
         return _extractCodeableConceptTitle(
-            json['vaccineCode'], 'Immunization');
+          json['vaccineCode'],
+          'Immunization',
+        );
       case 'MedicationRequest':
         return _extractCodeableConceptTitle(
-            json['medicationCodeableConcept'], 'Medication Request');
+          json['medicationCodeableConcept'],
+          'Medication Request',
+        );
       case 'DiagnosticReport':
-        return _extractCodeableConceptTitle(
-            json['code'], 'Diagnostic Report');
+        return _extractCodeableConceptTitle(json['code'], 'Diagnostic Report');
       default:
         return resourceType;
     }
   }
 
   static String _extractCodeableConceptTitle(
-      dynamic codeableConcept, String fallback) {
+    dynamic codeableConcept,
+    String fallback,
+  ) {
     if (codeableConcept is! Map<String, dynamic>) return fallback;
     final coding = codeableConcept['coding'] as List?;
     if (coding != null && coding.isNotEmpty) {
@@ -246,7 +255,9 @@ class FhirBundleMapper {
   }
 
   static DateTime? _extractDate(
-      Map<String, dynamic> json, String resourceType) {
+    Map<String, dynamic> json,
+    String resourceType,
+  ) {
     String? dateString;
 
     switch (resourceType) {
@@ -254,15 +265,17 @@ class FhirBundleMapper {
         dateString = json['period']?['start']?.toString();
         break;
       case 'Observation':
-        dateString = json['effectiveDateTime']?.toString() ??
-            json['issued']?.toString();
+        dateString =
+            json['effectiveDateTime']?.toString() ?? json['issued']?.toString();
         break;
       case 'Condition':
-        dateString = json['onsetDateTime']?.toString() ??
+        dateString =
+            json['onsetDateTime']?.toString() ??
             json['recordedDate']?.toString();
         break;
       case 'Procedure':
-        dateString = json['performedDateTime']?.toString() ??
+        dateString =
+            json['performedDateTime']?.toString() ??
             json['performedPeriod']?['start']?.toString();
         break;
       case 'Immunization':
@@ -272,11 +285,12 @@ class FhirBundleMapper {
         dateString = json['authoredOn']?.toString();
         break;
       case 'DiagnosticReport':
-        dateString = json['effectiveDateTime']?.toString() ??
-            json['issued']?.toString();
+        dateString =
+            json['effectiveDateTime']?.toString() ?? json['issued']?.toString();
         break;
       default:
-        dateString = json['date']?.toString() ??
+        dateString =
+            json['date']?.toString() ??
             json['issued']?.toString() ??
             json['recordedDate']?.toString();
     }
@@ -308,14 +322,17 @@ class FhirBundleMapper {
     final contextEncounter = context['encounter'] as List?;
     if (contextEncounter != null && contextEncounter.isNotEmpty) {
       return _parseReferenceString(
-          contextEncounter[0]['reference']?.toString());
+        contextEncounter[0]['reference']?.toString(),
+      );
     }
 
     return _extractReferenceId(context, 'encounter');
   }
 
   static String? _extractReferenceId(
-      Map<String, dynamic> json, String fieldName) {
+    Map<String, dynamic> json,
+    String fieldName,
+  ) {
     return _parseReferenceString(json[fieldName]?['reference']?.toString());
   }
 

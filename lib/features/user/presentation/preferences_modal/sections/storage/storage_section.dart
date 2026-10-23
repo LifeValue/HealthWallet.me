@@ -15,7 +15,8 @@ class StorageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!Platform.isMacOS && !Platform.isWindows) return const SizedBox.shrink();
+    if (!Platform.isMacOS && !Platform.isWindows)
+      return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Insets.small),
@@ -194,8 +195,9 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed:
-                          _isProcessing ? null : () => Navigator.pop(context),
+                      onPressed: _isProcessing
+                          ? null
+                          : () => Navigator.pop(context),
                       child: Text(
                         'Cancel',
                         style: AppTextStyle.buttonMedium.copyWith(
@@ -212,13 +214,16 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.error,
-                        disabledBackgroundColor:
-                            AppColors.error.withValues(alpha: 0.3),
+                        disabledBackgroundColor: AppColors.error.withValues(
+                          alpha: 0.3,
+                        ),
                         foregroundColor: Colors.white,
-                        disabledForegroundColor:
-                            Colors.white.withValues(alpha: 0.5),
+                        disabledForegroundColor: Colors.white.withValues(
+                          alpha: 0.5,
+                        ),
                         padding: const EdgeInsets.symmetric(
-                            vertical: Insets.smallNormal),
+                          vertical: Insets.smallNormal,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),

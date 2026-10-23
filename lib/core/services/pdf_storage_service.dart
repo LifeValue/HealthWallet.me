@@ -27,7 +27,8 @@ class PdfStorageService {
         throw Exception('Source PDF file not found');
       }
 
-      final fileName = customFileName ??
+      final fileName =
+          customFileName ??
           'health_document_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       final docsPath = await _pathResolver.getDocumentsPath();

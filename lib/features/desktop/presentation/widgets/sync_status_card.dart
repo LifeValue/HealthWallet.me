@@ -28,8 +28,13 @@ class SyncStatusCard extends StatelessWidget {
     final isSyncing = syncState.syncStatus == LwwSyncStatus.syncing;
     final hasError = syncState.syncStatus == LwwSyncStatus.error;
 
-    final (statusColor, statusLabel) =
-        _getStatus(context, isConnected, isSyncing, hasError, syncState.isSynced);
+    final (statusColor, statusLabel) = _getStatus(
+      context,
+      isConnected,
+      isSyncing,
+      hasError,
+      syncState.isSynced,
+    );
 
     return DesktopCard(
       title: context.l10n.syncTitle,
@@ -53,7 +58,11 @@ class SyncStatusCard extends StatelessWidget {
               ),
               if (syncState.isSynced && isConnected) ...[
                 const SizedBox(width: Insets.small),
-                const Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                const Icon(
+                  Icons.check_circle,
+                  color: AppColors.success,
+                  size: 16,
+                ),
               ],
             ],
           ),
@@ -67,12 +76,17 @@ class SyncStatusCard extends StatelessWidget {
           if (syncState.sentRows > 0 || syncState.receivedRows > 0)
             InfoRow(
               label: context.l10n.desktopSyncTransfer,
-              value: context.l10n.desktopSyncTransferValue(syncState.sentRows, syncState.receivedRows),
+              value: context.l10n.desktopSyncTransferValue(
+                syncState.sentRows,
+                syncState.receivedRows,
+              ),
             ),
           if (syncState.pendingChangeCount > 0)
             InfoRow(
               label: context.l10n.desktopSyncPending,
-              value: context.l10n.desktopSyncPendingValue(syncState.pendingChangeCount),
+              value: context.l10n.desktopSyncPendingValue(
+                syncState.pendingChangeCount,
+              ),
             ),
           if (syncState.error != null) ...[
             const SizedBox(height: Insets.small),
@@ -89,7 +103,9 @@ class SyncStatusCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  context.l10n.desktopSyncingTable(_formatTableName(context, syncState.currentTable!)),
+                  context.l10n.desktopSyncingTable(
+                    _formatTableName(context, syncState.currentTable!),
+                  ),
                   style: AppTextStyle.labelSmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -103,12 +119,12 @@ class SyncStatusCard extends StatelessWidget {
           ],
           const SizedBox(height: Insets.normal),
           AppButton(
-            label: isSyncing ? context.l10n.desktopSyncing : context.l10n.desktopSyncNow,
+            label: isSyncing
+                ? context.l10n.desktopSyncing
+                : context.l10n.desktopSyncNow,
             onPressed: isConnected && !isSyncing
                 ? () {
-                    context
-                        .read<LwwSyncBloc>()
-                        .add(const SyncTriggered());
+                    context.read<LwwSyncBloc>().add(const SyncTriggered());
                   }
                 : null,
             height: 36,
@@ -119,10 +135,16 @@ class SyncStatusCard extends StatelessWidget {
   }
 
   (Color, String) _getStatus(
-      BuildContext context, bool connected, bool syncing, bool hasError, bool isSynced) {
+    BuildContext context,
+    bool connected,
+    bool syncing,
+    bool hasError,
+    bool isSynced,
+  ) {
     if (hasError) return (AppColors.error, context.l10n.desktopSyncError);
     if (syncing) return (AppColors.warning, context.l10n.desktopSyncing);
-    if (isSynced && connected) return (AppColors.success, context.l10n.desktopSyncInSync);
+    if (isSynced && connected)
+      return (AppColors.success, context.l10n.desktopSyncInSync);
     if (connected) return (AppColors.success, context.l10n.desktopSyncReady);
     return (AppColors.error, context.l10n.desktopSyncOffline);
   }

@@ -88,9 +88,12 @@ class DialogContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!showNameField)
-            Text(patient.displayTitle,
-                style: AppTextStyle.bodyMedium
-                    .copyWith(fontWeight: FontWeight.w500)),
+            Text(
+              patient.displayTitle,
+              style: AppTextStyle.bodyMedium.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           if (!showNameField) const SizedBox(height: Insets.medium),
           if (showNameField && onCountryChanged != null) ...[
             _CountrySelector(
@@ -226,8 +229,10 @@ class _CountrySelector extends StatelessWidget {
           countryItems,
           (value) {
             final code = _countries.entries
-                .firstWhere((e) => e.value == value,
-                    orElse: () => const MapEntry('US', ''))
+                .firstWhere(
+                  (e) => e.value == value,
+                  orElse: () => const MapEntry('US', ''),
+                )
                 .key;
             onChanged(code);
           },
@@ -292,7 +297,10 @@ class _ScanIdCardButton extends StatelessWidget {
                   Assets.icons.information.svg(
                     width: 14,
                     height: 14,
-                    colorFilter: const ColorFilter.mode(AppColors.warning, BlendMode.srcIn),
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.warning,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -317,7 +325,9 @@ class _ScanIdCardButton extends StatelessWidget {
                   label: Text(context.l10n.retry),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
-                    side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: Insets.small),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -337,8 +347,12 @@ class _ScanIdCardButton extends StatelessWidget {
                     label: Text(context.l10n.retry),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
-                      padding: const EdgeInsets.symmetric(vertical: Insets.small),
+                      side: BorderSide(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: Insets.small,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),

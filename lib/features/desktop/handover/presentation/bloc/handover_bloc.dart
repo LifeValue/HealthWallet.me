@@ -33,8 +33,10 @@ class HandoverBloc extends Bloc<HandoverEvent, HandoverState> {
     });
 
     _handoverService.startListening(
-      onOfferReceived: (session) => add(HandoverOfferReceived(session: session)),
-      onFileReceived: (sessionId) => add(HandoverFileReceived(sessionId: sessionId)),
+      onOfferReceived: (session) =>
+          add(HandoverOfferReceived(session: session)),
+      onFileReceived: (sessionId) =>
+          add(HandoverFileReceived(sessionId: sessionId)),
       onProcessingComplete: (sessionId) =>
           add(HandoverProcessingComplete(sessionId: sessionId)),
     );

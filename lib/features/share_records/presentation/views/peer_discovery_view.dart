@@ -55,8 +55,8 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
   void _handleRetry() {
     _startSearchTimer();
     context.read<ShareRecordsBloc>().add(
-          const ShareRecordsEvent.selectionConfirmed(),
-        );
+      const ShareRecordsEvent.selectionConfirmed(),
+    );
   }
 
   @override
@@ -120,8 +120,8 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
           peer: peer,
           onTap: () {
             context.read<ShareRecordsBloc>().add(
-                  ShareRecordsEvent.peerSelected(peer.deviceId),
-                );
+              ShareRecordsEvent.peerSelected(peer.deviceId),
+            );
           },
         );
       },
@@ -141,8 +141,8 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
         child: AppButton(
           onPressed: () {
             context.read<ShareRecordsBloc>().add(
-                  const ShareRecordsEvent.sendModeSelected(),
-                );
+              const ShareRecordsEvent.sendModeSelected(),
+            );
           },
           label: context.l10n.cancel,
           variant: AppButtonVariant.outlined,
@@ -204,8 +204,9 @@ class _PeerDeviceTile extends StatelessWidget {
                     Text(
                       context.l10n.shareHealthWalletDevice,
                       style: AppTextStyle.labelMedium.copyWith(
-                        color: context.colorScheme.onSurface
-                            .withValues(alpha: 0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],

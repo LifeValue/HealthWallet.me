@@ -34,28 +34,32 @@ class EmergencyCardBuilder {
 
     final patientName =
         FhirFieldExtractor.extractHumanNameFamilyFirst(patient.name?.first) ??
-            '';
+        '';
 
     final dob = FhirFieldExtractor.extractPatientBirthDate(patient);
     final gender = FhirFieldExtractor.extractPatientGender(patient);
-    final phone =
-        FhirFieldExtractor.extractTelecomBySystem(patient.telecom, 'phone');
+    final phone = FhirFieldExtractor.extractTelecomBySystem(
+      patient.telecom,
+      'phone',
+    );
 
     String? emergencyContactName;
     String? emergencyContactPhone;
     final contact = patient.contact?.firstOrNull;
     if (contact != null) {
-      emergencyContactName =
-          FhirFieldExtractor.extractHumanName(contact.name);
-      emergencyContactPhone =
-          FhirFieldExtractor.extractTelecomBySystem(contact.telecom, 'phone');
+      emergencyContactName = FhirFieldExtractor.extractHumanName(contact.name);
+      emergencyContactPhone = FhirFieldExtractor.extractTelecomBySystem(
+        contact.telecom,
+        'phone',
+      );
     }
 
     final bloodTypeObs = await _recordsRepository.getBloodTypeObservations(
       patientId: patientId,
     );
-    final bloodType =
-        FhirFieldExtractor.extractBloodTypeFromObservations(bloodTypeObs);
+    final bloodType = FhirFieldExtractor.extractBloodTypeFromObservations(
+      bloodTypeObs,
+    );
 
     final allergyResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.AllergyIntolerance],

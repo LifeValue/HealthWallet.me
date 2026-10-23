@@ -31,19 +31,23 @@ List<CountryEntry> buildCountryList() {
   for (final iso in IsoCode.values) {
     final meta = metadataByIsoCode[iso];
     if (meta == null) continue;
-    entries.add(CountryEntry(
-      isoCode: iso,
-      dialCode: meta.countryCode,
-      flag: _isoToFlag(iso.name),
-      name: countryNames[iso] ?? iso.name,
-    ));
+    entries.add(
+      CountryEntry(
+        isoCode: iso,
+        dialCode: meta.countryCode,
+        flag: _isoToFlag(iso.name),
+        name: countryNames[iso] ?? iso.name,
+      ),
+    );
   }
   entries.sort((a, b) => a.name.compareTo(b.name));
   return entries;
 }
 
 String _isoToFlag(String code) {
-  return code.toUpperCase().codeUnits
+  return code
+      .toUpperCase()
+      .codeUnits
       .map((c) => String.fromCharCode(c - 0x41 + 0x1F1E6))
       .join();
 }
@@ -103,12 +107,16 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   CountryEntry get _defaultCountry {
     if (widget.defaultCountryCode != null) {
       final match = _countries
-          .where((c) => c.isoCode.name.toUpperCase() == widget.defaultCountryCode!.toUpperCase())
+          .where(
+            (c) =>
+                c.isoCode.name.toUpperCase() ==
+                widget.defaultCountryCode!.toUpperCase(),
+          )
           .firstOrNull;
       if (match != null) return match;
     }
-    final countryCode =
-        ui.PlatformDispatcher.instance.locale.countryCode?.toUpperCase();
+    final countryCode = ui.PlatformDispatcher.instance.locale.countryCode
+        ?.toUpperCase();
     if (countryCode != null) {
       final match = _countries
           .where((c) => c.isoCode.name.toUpperCase() == countryCode)
@@ -132,7 +140,9 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     if (widget.value.isNotEmpty) {
       try {
         final parsed = PhoneNumber.parse(widget.value);
-        final hasRealDigits = parsed.nsn.replaceAll(RegExp(r'0'), '').isNotEmpty;
+        final hasRealDigits = parsed.nsn
+            .replaceAll(RegExp(r'0'), '')
+            .isNotEmpty;
         if (!hasRealDigits && widget.defaultCountryCode != null) {
           _selectedCountry = _defaultCountry;
           _lastDigits = '';
@@ -174,7 +184,8 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     if (digits.length > maxLen) digits = digits.substring(0, maxLen);
 
     final prevFormatted = _formatNsn(_selectedCountry.isoCode, _lastDigits);
-    final isDeleting = _numberCtrl.text.length < prevFormatted.length &&
+    final isDeleting =
+        _numberCtrl.text.length < prevFormatted.length &&
         digits.length >= _lastDigits.length &&
         _lastDigits.isNotEmpty;
     if (isDeleting) {
@@ -205,12 +216,15 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     _formatting = true;
     final digits = _numberCtrl.text.replaceAll(RegExp(r'[^\d]'), '');
     final maxLen = _maxNsnLength(entry.isoCode);
-    final capped = digits.length > maxLen ? digits.substring(0, maxLen) : digits;
+    final capped = digits.length > maxLen
+        ? digits.substring(0, maxLen)
+        : digits;
     setState(() => _selectedCountry = entry);
     _numberCtrl.value = TextEditingValue(
       text: _formatNsn(entry.isoCode, capped),
       selection: TextSelection.collapsed(
-          offset: _formatNsn(entry.isoCode, capped).length),
+        offset: _formatNsn(entry.isoCode, capped).length,
+      ),
     );
     _lastDigits = capped;
     _formatting = false;
@@ -279,8 +293,11 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
               style: AppTextStyle.labelLarge.copyWith(color: tColor),
             ),
             if (enabled)
-              Icon(Icons.expand_more,
-                  size: 16, color: tColor.withValues(alpha: 0.6)),
+              Icon(
+                Icons.expand_more,
+                size: 16,
+                color: tColor.withValues(alpha: 0.6),
+              ),
           ],
         ),
       ),

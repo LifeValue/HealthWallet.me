@@ -71,8 +71,9 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
 
       final observations = await _recordsRepository.getBloodTypeObservations(
         patientId: displayPatient.id,
-        sourceId:
-            displayPatient.sourceId.isNotEmpty ? displayPatient.sourceId : null,
+        sourceId: displayPatient.sourceId.isNotEmpty
+            ? displayPatient.sourceId
+            : null,
       );
 
       final extractedBloodType =
@@ -116,69 +117,76 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
               orElse: () => widget.patient,
             );
 
-            final isExpanded =
-                blocState.expandedPatientIds.contains(currentPatient.id);
+            final isExpanded = blocState.expandedPatientIds.contains(
+              currentPatient.id,
+            );
 
             final cardScale = widget.isExpanding ? 1.02 : 1.0;
 
             return MultiBlocListener(
-                listeners: [
-                  BlocListener<PatientBloc, PatientState>(
-                    listenWhen: (previous, current) =>
-                        previous.patients != current.patients ||
-                        previous.status != current.status ||
-                        previous.isEditingPatient != current.isEditingPatient,
-                    listener: (context, state) {
-                      if (state.status.toString().contains('Success') ||
-                          state.isEditingPatient == false) {
-                        _loadBloodType();
-                      }
-                    },
-                  ),
-                  BlocListener<HomeBloc, HomeState>(
-                    listenWhen: (previous, current) =>
-                        previous.selectedSource != current.selectedSource,
-                    listener: (context, state) {
+              listeners: [
+                BlocListener<PatientBloc, PatientState>(
+                  listenWhen: (previous, current) =>
+                      previous.patients != current.patients ||
+                      previous.status != current.status ||
+                      previous.isEditingPatient != current.isEditingPatient,
+                  listener: (context, state) {
+                    if (state.status.toString().contains('Success') ||
+                        state.isEditingPatient == false) {
                       _loadBloodType();
-                    },
+                    }
+                  },
+                ),
+                BlocListener<HomeBloc, HomeState>(
+                  listenWhen: (previous, current) =>
+                      previous.selectedSource != current.selectedSource,
+                  listener: (context, state) {
+                    _loadBloodType();
+                  },
+                ),
+              ],
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeInOutCubic,
+                padding: const EdgeInsets.all(Insets.small),
+                margin: const EdgeInsets.only(bottom: Insets.small),
+                transform: Matrix4.diagonal3Values(
+                  cardScale,
+                  cardScale,
+                  cardScale,
+                ),
+                decoration: BoxDecoration(
+                  color: _getCardColor(context, currentPatient),
+                  border: Border.all(
+                    color: _getBorderColor(context, currentPatient),
                   ),
-                ],
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.easeInOutCubic,
-                  padding: const EdgeInsets.all(Insets.small),
-                  margin: const EdgeInsets.only(bottom: Insets.small),
-                  transform: Matrix4.diagonal3Values(
-                      cardScale, cardScale, cardScale),
-                  decoration: BoxDecoration(
-                    color: _getCardColor(context, currentPatient),
-                    border: Border.all(
-                        color: _getBorderColor(context, currentPatient)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildCardHeader(context, displayPatient, currentPatient),
-                      AnimatedSize(
-                        duration: Duration(
-                            milliseconds: widget.isExpanding ? 1200 : 800),
-                        curve: Curves.easeInOutCubic,
-                        child: (isExpanded || widget.isExpanding)
-                            ? PatientCardDetails(
-                                displayPatient: displayPatient,
-                                currentPatient: currentPatient,
-                                iconColor: widget.iconColor,
-                                textColor: widget.textColor,
-                                isExpanding: widget.isExpanding,
-                                isCollapsing: widget.isCollapsing,
-                                bloodTypeDisplay: _bloodTypeDisplay,
-                                onBloodTypeUpdated: _loadBloodType,
-                              )
-                            : const SizedBox.shrink(),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    _buildCardHeader(context, displayPatient, currentPatient),
+                    AnimatedSize(
+                      duration: Duration(
+                        milliseconds: widget.isExpanding ? 1200 : 800,
                       ),
-                    ],
-                  ),
-                ));
+                      curve: Curves.easeInOutCubic,
+                      child: (isExpanded || widget.isExpanding)
+                          ? PatientCardDetails(
+                              displayPatient: displayPatient,
+                              currentPatient: currentPatient,
+                              iconColor: widget.iconColor,
+                              textColor: widget.textColor,
+                              isExpanding: widget.isExpanding,
+                              isCollapsing: widget.isCollapsing,
+                              bloodTypeDisplay: _bloodTypeDisplay,
+                              onBloodTypeUpdated: _loadBloodType,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ),
+            );
           },
         );
       },
@@ -210,7 +218,8 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
             const SizedBox(width: Insets.small),
             Text(
               FhirFieldExtractor.extractHumanNameFamilyFirst(
-                      displayPatient.name?.first) ??
+                    displayPatient.name?.first,
+                  ) ??
                   displayPatient.displayTitle,
               style: AppTextStyle.bodySmall.copyWith(
                 color: widget.textColor,
@@ -235,11 +244,9 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
   Color _getCardColor(BuildContext context, Patient patient) {
     if (widget.isCollapsing) return Colors.transparent;
     if (widget.isExpanding) return AppColors.primary.withValues(alpha: 0.05);
-    if (context
-        .read<PatientBloc>()
-        .state
-        .expandedPatientIds
-        .contains(patient.id)) {
+    if (context.read<PatientBloc>().state.expandedPatientIds.contains(
+      patient.id,
+    )) {
       return AppColors.primary.withValues(alpha: 0.1);
     }
     if (widget.isAnimating) return AppColors.primary.withValues(alpha: 0.15);
@@ -249,11 +256,9 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
   Color _getBorderColor(BuildContext context, Patient patient) {
     if (widget.isCollapsing) return widget.borderColor;
     if (widget.isExpanding) return AppColors.primary.withValues(alpha: 0.5);
-    if (context
-        .read<PatientBloc>()
-        .state
-        .expandedPatientIds
-        .contains(patient.id)) {
+    if (context.read<PatientBloc>().state.expandedPatientIds.contains(
+      patient.id,
+    )) {
       return AppColors.primary;
     }
     if (widget.isAnimating) return AppColors.primary.withValues(alpha: 0.5);
@@ -261,11 +266,9 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
   }
 
   double _getRotationTurns(BuildContext context, Patient patient) {
-    if (context
-        .read<PatientBloc>()
-        .state
-        .expandedPatientIds
-        .contains(patient.id)) {
+    if (context.read<PatientBloc>().state.expandedPatientIds.contains(
+      patient.id,
+    )) {
       return 0.5;
     }
     return 0.0;

@@ -54,8 +54,8 @@ class RegionSection extends StatelessWidget {
                             child: GestureDetector(
                               onTap: () {
                                 context.read<UserBloc>().add(
-                                      UserRegionPresetChanged(preset),
-                                    );
+                                  UserRegionPresetChanged(preset),
+                                );
                               },
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
@@ -64,7 +64,9 @@ class RegionSection extends StatelessWidget {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.primary.withValues(alpha: 0.15)
+                                      ? AppColors.primary.withValues(
+                                          alpha: 0.15,
+                                        )
                                       : Colors.transparent,
                                   border: Border.all(
                                     color: isSelected
