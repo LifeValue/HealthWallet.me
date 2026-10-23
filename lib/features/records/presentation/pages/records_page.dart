@@ -195,7 +195,7 @@ class _RecordsViewState extends State<RecordsView> {
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         final state = context.read<RecordsBloc>().state;
-        if (state.status != RecordsStatus.loading() && state.hasMorePages) {
+        if (state.status != const RecordsStatus.loading() && state.hasMorePages) {
           context.read<RecordsBloc>().add(const RecordsLoadMore());
         }
       }

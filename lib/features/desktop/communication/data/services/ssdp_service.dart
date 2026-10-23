@@ -112,7 +112,7 @@ class SsdpService {
       },
     );
 
-    final searchMessage = 'M-SEARCH * HTTP/1.1\r\n'
+    const searchMessage = 'M-SEARCH * HTTP/1.1\r\n'
         'HOST: $_multicastAddress:$_multicastPort\r\n'
         'MAN: "ssdp:discover"\r\n'
         'MX: 3\r\n'

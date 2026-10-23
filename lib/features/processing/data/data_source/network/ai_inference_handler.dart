@@ -117,7 +117,7 @@ mixin AiInferenceHandler {
     ];
 
     final messages = [
-      LlamaChatMessage.fromText(
+      const LlamaChatMessage.fromText(
         role: LlamaChatRole.system,
         text:
             'You are a medical document data extractor. Output only valid JSON.',
@@ -227,7 +227,7 @@ mixin AiInferenceHandler {
         '[$ts][ScanAI] prompt ${prompt.length} chars, maxTokens=$effectiveTokens');
 
     final messages = [
-      LlamaChatMessage.fromText(
+      const LlamaChatMessage.fromText(
         role: LlamaChatRole.system,
         text:
             'You are a medical document data extractor. Output only valid JSON.',

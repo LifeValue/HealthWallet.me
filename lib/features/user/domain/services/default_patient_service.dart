@@ -30,8 +30,8 @@ class DefaultPatientService {
         ? CountryIdentifier.forCountry(savedCountry)
         : CountryIdentifier.forCurrentLocale();
 
-    final dbId = 'default_patient';
-    final walletSourceId = 'wallet-$dbId';
+    const dbId = 'default_patient';
+    const walletSourceId = 'wallet-$dbId';
 
     final identifier = fhir_r4.Identifier(
       type: fhir_r4.CodeableConcept(

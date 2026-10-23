@@ -272,7 +272,7 @@ class _AttachmentTimelineScrubberState
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(dotCount, (i) {
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: _dotSpacing / 2 - 2),
+              padding: const EdgeInsets.symmetric(horizontal: _dotSpacing / 2 - 2),
               child: Container(
                 width: 5,
                 height: 5,

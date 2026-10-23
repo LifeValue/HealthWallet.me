@@ -45,7 +45,7 @@ class SyncLoadingWidget extends StatelessWidget {
                   child: CircularProgressIndicator(
                     strokeWidth: 8,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      context.isDarkMode ? Colors.white : Color(0xFF1E1E1E),
+                      context.isDarkMode ? Colors.white : const Color(0xFF1E1E1E),
                     ),
                     strokeCap: StrokeCap.round,
                   ),

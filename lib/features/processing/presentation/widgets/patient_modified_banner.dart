@@ -35,7 +35,7 @@ class PatientModifiedBanner extends StatelessWidget {
           Assets.icons.edit.svg(
             width: 16,
             height: 16,
-            colorFilter: ColorFilter.mode(
+            colorFilter: const ColorFilter.mode(
               AppColors.warning,
               BlendMode.srcIn,
             ),
@@ -58,7 +58,7 @@ class PatientModifiedBanner extends StatelessWidget {
                 child: Assets.icons.close.svg(
                   width: 14,
                   height: 14,
-                  colorFilter: ColorFilter.mode(
+                  colorFilter: const ColorFilter.mode(
                     AppColors.warning,
                     BlendMode.srcIn,
                   ),

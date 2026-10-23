@@ -291,7 +291,7 @@ class _ScanIdCardButton extends StatelessWidget {
                   Assets.icons.information.svg(
                     width: 14,
                     height: 14,
-                    colorFilter: ColorFilter.mode(AppColors.warning, BlendMode.srcIn),
+                    colorFilter: const ColorFilter.mode(AppColors.warning, BlendMode.srcIn),
                   ),
                   const SizedBox(width: 4),
                   Expanded(

@@ -70,7 +70,7 @@ class PeerSearchStatusView extends StatelessWidget {
                         width: 80,
                         height: 80,
                         child: Assets.images.device.svg(
-                          colorFilter: ColorFilter.mode(
+                          colorFilter: const ColorFilter.mode(
                             AppColors.primary,
                             BlendMode.srcIn,
                           ),

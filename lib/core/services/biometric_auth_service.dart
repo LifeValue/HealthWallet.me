@@ -51,13 +51,13 @@ class BiometricAuthService {
     try {
       if (_isAndroid) {
         try {
-          final securityIntent = AndroidIntent(
+          const securityIntent = AndroidIntent(
             action: 'android.settings.SECURITY_SETTINGS',
           );
           await securityIntent.launch();
           return true;
         } catch (e) {
-          final settingsIntent = AndroidIntent(
+          const settingsIntent = AndroidIntent(
             action: 'android.settings.SETTINGS',
           );
           await settingsIntent.launch();

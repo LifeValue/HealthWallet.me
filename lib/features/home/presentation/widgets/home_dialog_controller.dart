@@ -14,7 +14,7 @@ class HomeDialogController {
   ) {
     final orderedRecords =
         state.overviewCards.map((c) => c.category).toList(growable: false);
-    final allRecords = HomeRecordsCategory.values;
+    const allRecords = HomeRecordsCategory.values;
     final items = orderedRecords.map((category) {
       return DialogItem(
         id: category.name,
@@ -114,7 +114,7 @@ class HomeDialogController {
   ) {
     final orderedSpecialties =
         state.specialtyCards.map((c) => c.specialty).toList(growable: false);
-    final allSpecialties = MedicalSpecialty.values;
+    const allSpecialties = MedicalSpecialty.values;
     final items = orderedSpecialties.map((specialty) {
       return DialogItem(
         id: specialty.name,

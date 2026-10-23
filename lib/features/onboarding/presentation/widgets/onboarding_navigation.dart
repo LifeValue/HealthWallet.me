@@ -47,7 +47,7 @@ class OnboardingNavigation extends StatelessWidget {
               if (isLastPage) {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setBool('hasSeenOnboarding', true);
-                context.appRouter.replace(DashboardRoute());
+                context.appRouter.replace(const DashboardRoute());
               } else {
                 context.read<OnboardingBloc>().add(const OnboardingNextPage());
                 pageController.nextPage(
@@ -223,7 +223,7 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.wifi_off,
                     size: 40,
                     color: AppColors.error,

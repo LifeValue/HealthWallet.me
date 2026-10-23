@@ -224,8 +224,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
       await _appDatabase.into(_appDatabase.sources).insert(
             db.SourcesCompanion.insert(
               id: 'wallet',
-              platformName: Value('wallet'),
-              labelSource: Value('Wallet'),
+              platformName: const Value('wallet'),
+              labelSource: const Value('Wallet'),
               platformType: const Value('wallet'),
               createdAt: Value(now),
               updatedAt: Value(now),
@@ -246,8 +246,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
       await _appDatabase.into(_appDatabase.sources).insert(
             db.SourcesCompanion.insert(
               id: 'demo_data',
-              platformName: Value('wallet-manual'), // Platform name
-              labelSource: Value('Demo Data'), // Custom display label
+              platformName: const Value('wallet-manual'), // Platform name
+              labelSource: const Value('Demo Data'), // Custom display label
               platformType: const Value('wallet'),
               createdAt: Value(now),
               updatedAt: Value(now),

@@ -229,16 +229,16 @@ class _PreviewButton extends StatelessWidget {
             color: const Color(0xFF1E1E1E).withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(222),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.remove_red_eye,
                 color: Colors.white,
                 size: 16,
               ),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'Preview document',
                 style: TextStyle(
                   color: Colors.white,

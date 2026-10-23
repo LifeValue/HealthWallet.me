@@ -172,7 +172,7 @@ class SourceSelectorWidget extends StatelessWidget {
         final allSources = List<Source>.from(filteredSources);
         allSources.insert(
             0,
-            Source(
+            const Source(
               id: 'All',
               platformName: 'All Sources',
               labelSource: 'All Sources',

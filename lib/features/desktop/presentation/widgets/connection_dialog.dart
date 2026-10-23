@@ -86,7 +86,7 @@ class ConnectionDialog extends StatefulWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(
+                    padding: const EdgeInsets.only(
                       left: Insets.medium,
                       right: Insets.medium,
                       top: Insets.normal,
@@ -268,7 +268,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 12,
                     height: 12,
                     child: CircularProgressIndicator(
@@ -292,7 +292,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
           const SizedBox(height: Insets.small),
           Row(
             children: [
-              Icon(Icons.vpn_lock, size: 14, color: AppColors.warning),
+              const Icon(Icons.vpn_lock, size: 14, color: AppColors.warning),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(

@@ -159,7 +159,7 @@ class _ResourceCardState extends State<ResourceCard> {
     return BlocBuilder<RecordsBloc, RecordsState>(
       builder: (context, state) {
         final isLoadingRelated =
-            state.recordDetailStatus == RecordDetailStatus.loading();
+            state.recordDetailStatus == const RecordDetailStatus.loading();
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -429,7 +429,7 @@ class _ResourceCardState extends State<ResourceCard> {
             ]),
         child: BlocBuilder<RecordsBloc, RecordsState>(
           builder: (context, state) {
-            if (state.recordDetailStatus == RecordDetailStatus.loading()) {
+            if (state.recordDetailStatus == const RecordDetailStatus.loading()) {
               return Padding(
                 padding: const EdgeInsets.all(Insets.normal),
                 child: Center(

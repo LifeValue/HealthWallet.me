@@ -329,16 +329,16 @@ class HomeViewState extends State<HomeView> {
                 ],
               ],
             ),
-            Positioned.fill(
+            const Positioned.fill(
               child: Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const _ConnectionMiniCard(),
-                    const SizedBox(width: 8),
-                    const _SyncMiniCard(),
-                    const SizedBox(width: 8),
-                    const _BackupMiniCard(),
+                    _ConnectionMiniCard(),
+                    SizedBox(width: 8),
+                    _SyncMiniCard(),
+                    SizedBox(width: 8),
+                    _BackupMiniCard(),
                   ],
                 ),
               ),

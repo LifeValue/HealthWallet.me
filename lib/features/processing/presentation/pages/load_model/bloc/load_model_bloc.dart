@@ -383,7 +383,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
   }
 
   void _addCancelledNotification() {
-    _notificationBloc.add(NotificationTypeUpdated(
+    _notificationBloc.add(const NotificationTypeUpdated(
       id: kAiModelDownloadNotificationId,
       type: NotificationType.error,
       text: 'AI Model Download Cancelled',

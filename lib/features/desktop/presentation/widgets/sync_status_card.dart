@@ -53,7 +53,7 @@ class SyncStatusCard extends StatelessWidget {
               ),
               if (syncState.isSynced && isConnected) ...[
                 const SizedBox(width: Insets.small),
-                Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                const Icon(Icons.check_circle, color: AppColors.success, size: 16),
               ],
             ],
           ),

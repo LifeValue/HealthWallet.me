@@ -36,7 +36,7 @@ class DeviceSyncDialog {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(
+                      padding: const EdgeInsets.only(
                         left: Insets.medium,
                         right: Insets.medium,
                         top: Insets.normal,

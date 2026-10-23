@@ -101,7 +101,7 @@ class _SyncPageState extends State<SyncPage> {
           );
         }
 
-        return SyncPlaceholderWidget(
+        return const SyncPlaceholderWidget(
           onSyncPressed: null,
           recordTypeName: null,
         );
@@ -173,7 +173,7 @@ class _SyncPageState extends State<SyncPage> {
       message: context.l10n.syncDataLoadedSuccessfully,
       onOkPressed: () {
         context.router.pushAndPopUntil(
-          DashboardRoute(),
+          const DashboardRoute(),
           predicate: (_) => false,
         );
 

@@ -84,7 +84,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           alignment: Alignment.topRight,
           child: GestureDetector(
             onTap: () => ModelManagementDialog.show(context),
-            child: Icon(
+            child: const Icon(
               Icons.swap_horiz,
               size: 22,
               color: AppColors.primary,
@@ -99,7 +99,7 @@ class _AiModelSectionState extends State<AiModelSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, size: 18, color: AppColors.success),
+            const Icon(Icons.check_circle, size: 18, color: AppColors.success),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -183,7 +183,7 @@ class _AiModelSectionState extends State<AiModelSection> {
               const Spacer(),
               GestureDetector(
                 onTap: () => ModelManagementDialog.show(context),
-                child: Icon(
+                child: const Icon(
                   Icons.swap_horiz,
                   size: 22,
                   color: AppColors.primary,
@@ -219,7 +219,7 @@ class _AiModelSectionState extends State<AiModelSection> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.error_outline,
+                      const Icon(Icons.error_outline,
                           color: AppColors.error, size: 18),
                       const SizedBox(width: 8),
                       Flexible(
@@ -301,7 +301,7 @@ class _AiModelSectionState extends State<AiModelSection> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.wifi_off,
                     size: 40,
                     color: AppColors.error,
@@ -386,7 +386,7 @@ class _AiModelSectionState extends State<AiModelSection> {
   Widget _getStatusIcon(LoadModelStatus status) {
     switch (status) {
       case LoadModelStatus.modelLoaded:
-        return Icon(
+        return const Icon(
           Icons.check_circle,
           size: 14,
           color: AppColors.success,
@@ -401,7 +401,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           ),
         );
       case LoadModelStatus.loading:
-        return SizedBox(
+        return const SizedBox(
           width: 14,
           height: 14,
           child: CircularProgressIndicator(
@@ -410,7 +410,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           ),
         );
       case LoadModelStatus.error:
-        return Icon(
+        return const Icon(
           Icons.error_outline,
           size: 14,
           color: AppColors.error,

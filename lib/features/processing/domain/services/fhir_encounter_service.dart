@@ -72,7 +72,7 @@ class FhirEncounterHelper {
       id: '${sourceId}_$resourceId',
       sourceId: Value(sourceId),
       resourceId: Value(resourceId),
-      resourceType: Value('Encounter'),
+      resourceType: const Value('Encounter'),
       title: Value(title),
       date: Value(extractDate(fhirEncounter)),
       resourceRaw: jsonEncode(resourceJson),

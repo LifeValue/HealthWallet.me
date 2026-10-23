@@ -44,14 +44,14 @@ class _SplashPageState extends State<SplashPage> {
 
     final isBiometricAuthEnabled =
         await _userRepository.isBiometricAuthEnabled();
-    if (!isBiometricAuthEnabled) return DashboardRoute();
+    if (!isBiometricAuthEnabled) return const DashboardRoute();
 
     final isBiometricAvailable =
         await _biometricAuthService.isBiometricAvailable();
-    if (!isBiometricAvailable) return DashboardRoute();
+    if (!isBiometricAvailable) return const DashboardRoute();
 
     final didAuthenticate = await _biometricAuthService.authenticate();
-    return didAuthenticate ? DashboardRoute() : const OnboardingRoute();
+    return didAuthenticate ? const DashboardRoute() : const OnboardingRoute();
   }
 
   @override

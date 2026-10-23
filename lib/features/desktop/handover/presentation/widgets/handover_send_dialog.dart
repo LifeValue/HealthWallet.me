@@ -201,7 +201,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
               ),
             const SizedBox(height: Insets.normal),
             if (_isSent) ...[
-              Icon(
+              const Icon(
                 Icons.check_circle_outline,
                 size: 48,
                 color: AppColors.success,

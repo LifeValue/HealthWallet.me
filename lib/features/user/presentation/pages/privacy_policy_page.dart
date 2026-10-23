@@ -167,7 +167,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             // Importing Documents
             _buildSubsectionTitle('1. ${context.l10n.importingDocuments}'),
             const SizedBox(height: Insets.small),
-            Text(
+            const Text(
               'You can add health documents (such as PDFs of lab results or clinic summaries) directly into the app using standard mobile operating system features:',
               style: AppTextStyle.bodyMedium,
             ),
@@ -242,7 +242,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             // How Your Information is Used
             _buildSectionTitle(context.l10n.howInformationUsed),
             const SizedBox(height: Insets.small),
-            Text(
+            const Text(
               'Since all your data resides on your device, it is only "used" by the app to help you organize and view your records. This includes:',
               style: AppTextStyle.bodyMedium,
             ),
@@ -252,7 +252,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             _buildBulletPoint(
                 'Displaying your health records, lab results, and medication history to you.'),
             const SizedBox(height: Insets.small),
-            Text(
+            const Text(
               'We do not use your information for advertising, research, or any other purpose.',
               style: AppTextStyle.bodyMedium,
             ),
@@ -272,7 +272,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             // Children's Privacy
             _buildSectionTitle(context.l10n.childrensPrivacy),
             const SizedBox(height: Insets.small),
-            Text(
+            const Text(
               'Our service is not directed to individuals under the age of 16, in accordance with the General Data Protection Regulation (GDPR) as applicable in Romania and across the EU. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us.',
               style: AppTextStyle.bodyMedium,
             ),
@@ -281,7 +281,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             // Changes to This Privacy Policy
             _buildSectionTitle(context.l10n.changesToPolicy),
             const SizedBox(height: Insets.small),
-            Text(
+            const Text(
               'We may update this policy from time to time. If we make any material changes, we will notify you through the app or by other means so you can review the changes before they take effect.',
               style: AppTextStyle.bodyMedium,
             ),
@@ -290,7 +290,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             // Contact Us
             _buildSectionTitle(context.l10n.contactUs),
             const SizedBox(height: Insets.small),
-            Text(
+            const Text(
               'If you have any questions or concerns about this Privacy Policy, please contact us at:',
               style: AppTextStyle.bodyMedium,
             ),
@@ -365,11 +365,11 @@ class PrivacyPolicyPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
+          const Align(
             alignment: Alignment.topCenter,
             child: Container(
               width: 20,
-              child: const Text('• ', style: TextStyle(fontSize: 16)),
+              child: Text('• ', style: TextStyle(fontSize: 16)),
             ),
           ),
           Expanded(
@@ -390,11 +390,11 @@ class PrivacyPolicyPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
+          const Align(
             alignment: Alignment.topCenter,
             child: Container(
               width: 20,
-              child: const Text('• ', style: TextStyle(fontSize: 16)),
+              child: Text('• ', style: TextStyle(fontSize: 16)),
             ),
           ),
           Expanded(

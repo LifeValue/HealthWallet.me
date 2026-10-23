@@ -118,13 +118,13 @@ class OnboardingScreen extends StatelessWidget {
                                         cancelText: context.l10n.cancel,
                                         onConfirm: () {
                                           context.read<UserBloc>().add(
-                                              UserBiometricAuthToggled(false));
+                                              const UserBiometricAuthToggled(false));
                                         },
                                       );
                                     } else {
                                       context
                                           .read<UserBloc>()
-                                          .add(UserBiometricAuthToggled(true));
+                                          .add(const UserBiometricAuthToggled(true));
                                     }
                                   },
                                   style: TextButton.styleFrom(
@@ -355,8 +355,8 @@ class OnboardingScreen extends StatelessWidget {
         if (beforeBullet.isNotEmpty) {
           inlineSpans.add(TextSpan(text: beforeBullet));
         }
-        inlineSpans.add(TextSpan(text: '•'));
-        inlineSpans.add(WidgetSpan(
+        inlineSpans.add(const TextSpan(text: '•'));
+        inlineSpans.add(const WidgetSpan(
           child: SizedBox(width: 8),
         ));
 

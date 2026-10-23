@@ -358,7 +358,7 @@ class RecordAttachmentsBloc
       id: '${sourceId}_$resourceId',
       sourceId: drift.Value(sourceId),
       resourceId: drift.Value(resourceId),
-      resourceType: drift.Value('DocumentReference'),
+      resourceType: const drift.Value('DocumentReference'),
       title: drift.Value(title),
       date:
           drift.Value(documentReference.date?.valueDateTime ?? DateTime.now()),

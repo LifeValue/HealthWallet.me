@@ -190,7 +190,7 @@ class _HandoverTransferCard extends StatelessWidget {
             const SizedBox(height: Insets.small),
             Row(
               children: [
-                Icon(Icons.check_circle, size: 16, color: AppColors.success),
+                const Icon(Icons.check_circle, size: 16, color: AppColors.success),
                 const SizedBox(width: Insets.extraSmall),
                 Text(
                   'Transfer complete',
@@ -241,11 +241,11 @@ class _StatusIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (status) {
       case HandoverStatus.complete:
-        return Icon(Icons.check_circle, size: 24, color: AppColors.success);
+        return const Icon(Icons.check_circle, size: 24, color: AppColors.success);
       case HandoverStatus.error:
-        return Icon(Icons.error, size: 24, color: AppColors.error);
+        return const Icon(Icons.error, size: 24, color: AppColors.error);
       default:
-        return SizedBox(
+        return const SizedBox(
           width: 24,
           height: 24,
           child: CircularProgressIndicator(

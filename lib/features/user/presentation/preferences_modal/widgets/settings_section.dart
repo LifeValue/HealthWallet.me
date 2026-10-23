@@ -60,13 +60,13 @@ class SettingsSection extends StatelessWidget {
                       onConfirm: () {
                         context
                             .read<UserBloc>()
-                            .add(UserBiometricAuthToggled(false));
+                            .add(const UserBiometricAuthToggled(false));
                       },
                     );
                   } else {
                     context
                         .read<UserBloc>()
-                        .add(UserBiometricAuthToggled(true));
+                        .add(const UserBiometricAuthToggled(true));
                   }
                 },
                 borderRadius: BorderRadius.circular(8),

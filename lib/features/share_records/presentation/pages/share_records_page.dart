@@ -348,7 +348,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                TextSpan(text: ' '),
+                const TextSpan(text: ' '),
                 TextSpan(text: context.l10n.shareSharedFrom(deviceName)),
               ],
             ),
@@ -419,7 +419,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
           Expanded(
             child: Text(
               context.l10n.shareInfoBannerMessage,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.warning,
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
@@ -435,7 +435,7 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
             ),
             child: Text(
               context.l10n.ok,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.warning,
                 fontWeight: FontWeight.w700,
               ),

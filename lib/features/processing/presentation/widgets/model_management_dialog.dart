@@ -90,7 +90,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.memory, size: 22, color: AppColors.primary),
+                          const Icon(Icons.memory, size: 22, color: AppColors.primary),
                           const SizedBox(width: Insets.small),
                           Expanded(
                             child: Text(
@@ -127,7 +127,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.info_outline,
+                              const Icon(Icons.info_outline,
                                   size: 18, color: AppColors.warning),
                               const SizedBox(width: Insets.small),
                               Flexible(
@@ -261,7 +261,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                     ],
                     if (isActiveAndLoaded) ...[
                       const SizedBox(width: 8),
-                      Icon(Icons.check_circle,
+                      const Icon(Icons.check_circle,
                           size: 16, color: AppColors.success),
                     ],
                   ],
@@ -302,7 +302,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded,
+                  const Icon(Icons.warning_amber_rounded,
                       size: 14, color: AppColors.error),
                   const SizedBox(width: 6),
                   Flexible(

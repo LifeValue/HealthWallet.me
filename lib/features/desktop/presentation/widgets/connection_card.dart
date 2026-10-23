@@ -62,7 +62,7 @@ class ConnectionCard extends StatelessWidget {
               ),
             ),
           ] else ...[
-            Icon(Icons.check_circle, size: 40, color: AppColors.success),
+            const Icon(Icons.check_circle, size: 40, color: AppColors.success),
             const SizedBox(height: Insets.small),
             Text(
               state.pairedDevice!.deviceName,

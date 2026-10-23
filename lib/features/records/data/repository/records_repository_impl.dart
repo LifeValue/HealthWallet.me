@@ -351,7 +351,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
       final pdfFile = File('${docsDir.path}/demo_medical_report.pdf');
       await pdfFile.writeAsBytes(byteData.buffer.asUint8List());
 
-      final docRefId = 'demo-doc-ref-pdf-001';
+      const docRefId = 'demo-doc-ref-pdf-001';
       final docRef = <String, dynamic>{
         'resourceType': 'DocumentReference',
         'id': docRefId,

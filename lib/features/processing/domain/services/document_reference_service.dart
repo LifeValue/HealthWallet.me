@@ -168,7 +168,7 @@ class DocumentReferenceService {
       id: '${sourceId}_$resourceId',
       sourceId: Value(sourceId),
       resourceId: Value(resourceId),
-      resourceType: Value('DocumentReference'),
+      resourceType: const Value('DocumentReference'),
       title: Value(title),
       date: Value(_extractDateFromDocumentReference(fhirDocumentReference)),
       resourceRaw: jsonEncode(resourceJson),

@@ -571,7 +571,7 @@ class _BackupPreview extends StatelessWidget {
             },
             child: Text(
               context.l10n.desktopRestore,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.warning,
                 fontWeight: FontWeight.w600,
               ),
@@ -606,7 +606,7 @@ class _BackupPreview extends StatelessWidget {
             },
             child: Text(
               context.l10n.desktopDelete,
-              style: TextStyle(color: AppColors.error),
+              style: const TextStyle(color: AppColors.error),
             ),
           ),
         ],
@@ -635,7 +635,7 @@ class _BackupLocationRow extends StatelessWidget {
           size: 16,
           color: context.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
-        SizedBox(width: Insets.extraSmall),
+        const SizedBox(width: Insets.extraSmall),
         Expanded(
           child: Tooltip(
             message: displayPath,
@@ -649,7 +649,7 @@ class _BackupLocationRow extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: Insets.extraSmall),
+        const SizedBox(width: Insets.extraSmall),
         InkWell(
           onTap: isWorking ? null : () => _pickDirectory(context),
           borderRadius: BorderRadius.circular(4),
