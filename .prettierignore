@@ -1,0 +1,30 @@
+# Dart is formatted by `dart format`; Prettier covers YAML, JSON, ARB and Markdown.
+# Files listed in .gitignore are skipped as well.
+
+# Native projects and generated output
+android/
+ios/
+macos/
+windows/
+build/
+drift_schemas/
+test/drift/my_database/generated/
+untranslated_messages.json
+pubspec.lock
+package-lock.json
+.mason/
+mason-lock.json
+
+# Data and third-party text kept byte for byte
+assets/
+LICENSE.md
+test_sync_data.json
+
+# Live emergency page opened by the wallet pass QR code
+docs/
+
+# Unused GitHub workflows, left untouched by policy
+.github/
+
+# BMad planning output, written by its own tooling
+_bmad-output/

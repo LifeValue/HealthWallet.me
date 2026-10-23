@@ -93,3 +93,5 @@ pubspec_overrides.yaml
 # Fastlane
 ios/fastlane/Appfile
 ios/fastlane/Matchfile
+# Node (Prettier tooling)
+node_modules/

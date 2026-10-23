@@ -1,0 +1,12 @@
+{
+  "name": "health-wallet-tooling",
+  "private": true,
+  "description": "Dev tooling only: Prettier for the YAML, JSON, ARB and Markdown files. Dart is formatted by dart format.",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.9"
+  }
+}

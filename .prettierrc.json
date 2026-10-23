@@ -1,0 +1,9 @@
+{
+  "proseWrap": "preserve",
+  "overrides": [
+    {
+      "files": "*.arb",
+      "options": { "parser": "json" }
+    }
+  ]
+}
