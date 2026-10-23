@@ -1,3 +1,6 @@
+// FhirType names are the FHIR resourceType strings (stored via `.name`), so they keep FHIR's casing.
+// ignore_for_file: constant_identifier_names
+
 import 'dart:convert';
 
 import 'package:health_wallet/core/data/local/app_database.dart';

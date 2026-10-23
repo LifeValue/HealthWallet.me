@@ -219,5 +219,5 @@ class AnimatedReorderableListController<T> {
     state?.handleReorder(fromItemId, toItemId);
   }
 
-  GlobalKey<_AnimatedReorderableListState<T>> get key => _key;
+  GlobalKey<State<AnimatedReorderableList<T>>> get key => _key;
 }

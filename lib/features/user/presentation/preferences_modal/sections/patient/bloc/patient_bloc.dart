@@ -114,7 +114,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
       final patientGroups =
           _deduplicationService.deduplicatePatients(allPatients);
 
-      final patientGroups_enhanced =
+      final enhancedPatientGroups =
           await _deduplicationService.enhancePatientGroupsWithSubjectId(
         patientGroups,
         allPatients,
@@ -131,7 +131,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           oldPosition != null &&
           oldPosition >= 0) {
         var matchingGroup = _deduplicationService.findPatientGroup(
-          patientGroups_enhanced,
+          enhancedPatientGroups,
           preservePatientId,
         );
 
@@ -139,7 +139,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
           final oldPatientGroup = state.patientGroups[preservePatientId];
           if (oldPatientGroup != null) {
             matchingGroup = _findMatchingGroupByOldPatient(
-              patientGroups_enhanced,
+              enhancedPatientGroups,
               oldPatientGroup,
             );
           }
@@ -193,7 +193,7 @@ class PatientBloc extends Bloc<PatientEvent, PatientState> {
         status: const PatientStatus.success(),
         patients: uniquePatients,
         allPatientsAcrossSources: allPatients,
-        patientGroups: patientGroups_enhanced,
+        patientGroups: enhancedPatientGroups,
         expandedPatientIds: expandedIds,
         selectedPatientId: selectedPatientId,
       ));
