@@ -21,7 +21,7 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
 
   final RecordsRepository _recordsRepository;
 
-  _onRecordNotesInitialised(
+  Future<void> _onRecordNotesInitialised(
     RecordNotesInitialised event,
     Emitter<RecordNotesState> emit,
   ) async {
@@ -41,7 +41,7 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
     }
   }
 
-  _onRecordNotesInputInitialised(
+  void _onRecordNotesInputInitialised(
     RecordNotesInputInitialised event,
     Emitter<RecordNotesState> emit,
   ) {
@@ -51,7 +51,7 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
     ));
   }
 
-  _onRecordNotesInputCanceled(
+  void _onRecordNotesInputCanceled(
     RecordNotesInputCanceled event,
     Emitter<RecordNotesState> emit,
   ) {
@@ -61,7 +61,7 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
     ));
   }
 
-  _onRecordNotesInputDone(
+  Future<void> _onRecordNotesInputDone(
     RecordNotesInputDone event,
     Emitter<RecordNotesState> emit,
   ) async {
@@ -93,7 +93,7 @@ class RecordNotesBloc extends Bloc<RecordNotesEvent, RecordNotesState> {
     }
   }
 
-  _onRecordNotesNoteDeleted(
+  Future<void> _onRecordNotesNoteDeleted(
     RecordNotesNoteDeleted event,
     Emitter<RecordNotesState> emit,
   ) async {

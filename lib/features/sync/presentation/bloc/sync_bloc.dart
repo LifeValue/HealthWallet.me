@@ -39,7 +39,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<CreateWalletSource>(_onCreateWalletSource);
   }
 
-  _onSyncInitialised(
+  Future<void> _onSyncInitialised(
     SyncInitialised event,
     Emitter<SyncState> emit,
   ) async {

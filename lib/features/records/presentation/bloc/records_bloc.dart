@@ -329,7 +329,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     await _loadResources(emit);
   }
 
-  _onRecordsSharePressed(
+  Future<void> _onRecordsSharePressed(
     RecordsSharePressed event,
     Emitter<RecordsState> emit,
   ) async {

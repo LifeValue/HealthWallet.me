@@ -43,7 +43,7 @@ class RecordAttachmentsBloc
   final AppDatabase _database;
   final PathResolver _pathResolver;
 
-  _onRecordAttachmentsInitialised(
+  Future<void> _onRecordAttachmentsInitialised(
     RecordAttachmentsInitialised event,
     Emitter<RecordAttachmentsState> emit,
   ) async {
@@ -196,7 +196,7 @@ class RecordAttachmentsBloc
     }
   }
 
-  _onRecordAttachmentsFileAttached(
+  Future<void> _onRecordAttachmentsFileAttached(
     RecordAttachmentsFileAttached event,
     Emitter<RecordAttachmentsState> emit,
   ) async {
@@ -393,7 +393,7 @@ class RecordAttachmentsBloc
     }
   }
 
-  _onRecordAttachmentsFileDeleted(
+  Future<void> _onRecordAttachmentsFileDeleted(
     RecordAttachmentsFileDeleted event,
     Emitter<RecordAttachmentsState> emit,
   ) async {
