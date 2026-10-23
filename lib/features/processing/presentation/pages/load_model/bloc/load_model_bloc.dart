@@ -251,7 +251,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
               ? {...state.downloadingVariants, variant: true}
               : state.downloadingVariants,
           variantProgress: variant != null
-              ? {...state.variantProgress, variant: serviceState.progress ?? 0.0}
+              ? {...state.variantProgress, variant: serviceState.progress}
               : state.variantProgress,
         ));
         if (variant != null) {

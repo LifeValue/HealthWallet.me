@@ -129,7 +129,6 @@ abstract class Coverage with _$Coverage implements IFhirResource {
         final classType = FhirFieldExtractor.extractCodeableConceptText(
             coverageClass.type);
         final classValue = coverageClass.value.valueString;
-        final className = coverageClass.name?.valueString;
         
         if (classType == 'group' || classType?.toLowerCase() == 'group') {
           ResourceFieldMapper.addIfNotNull(
@@ -291,19 +290,17 @@ abstract class Coverage with _$Coverage implements IFhirResource {
         
         // Get value from valueMoney or valueQuantity
         String? costValue;
-        if (cost.valueX != null) {
-          final valueMoney = cost.valueX.isAs<fhir_r4.Money>();
-          if (valueMoney != null) {
-            final amount = valueMoney.value?.valueString;
-            final currency = valueMoney.currency?.toString() ?? 'USD';
-            if (amount != null) {
-              costValue = '\$$amount $currency';
-            }
-          } else {
-            final valueQuantity = cost.valueX.isAs<fhir_r4.Quantity>();
-            if (valueQuantity != null) {
-              costValue = FhirFieldExtractor.extractQuantity(valueQuantity);
-            }
+        final valueMoney = cost.valueX.isAs<fhir_r4.Money>();
+        if (valueMoney != null) {
+          final amount = valueMoney.value?.valueString;
+          final currency = valueMoney.currency?.toString() ?? 'USD';
+          if (amount != null) {
+            costValue = '\$$amount $currency';
+          }
+        } else {
+          final valueQuantity = cost.valueX.isAs<fhir_r4.Quantity>();
+          if (valueQuantity != null) {
+            costValue = FhirFieldExtractor.extractQuantity(valueQuantity);
           }
         }
         

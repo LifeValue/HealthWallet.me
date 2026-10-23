@@ -89,9 +89,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
           if (remoteName == null || remoteName.isEmpty || remoteName == 'localhost' || remoteName == 'unknown') {
             remoteName = 'Mobile Device';
           }
-          if (remoteName != null && remoteName.isNotEmpty) {
-            add(CommunicationRemoteDeviceNameReceived(name: remoteName));
-          }
+          add(CommunicationRemoteDeviceNameReceived(name: remoteName));
         } catch (_) {}
       }
     });
