@@ -52,7 +52,6 @@ default:
   interruptible: true
 
 variables:
-  FLUTTER_VERSION: "3.47.7"
   GIT_DEPTH: "20"
   # JDK for Gradle in the Android jobs (see .android_env).
   ANDROID_JDK_VERSION: "17.0.20.1+1"
@@ -71,6 +70,11 @@ stages:
   - export GIT_CONFIG_KEY_0="url.https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/.insteadOf"
   - export GIT_CONFIG_VALUE_0="ssh://git@${CI_SERVER_HOST}:2822/"
 
+# The Flutter version pinned in .fvmrc (FVM's config), so CI and local builds cannot drift apart.
+.flutter_version: &flutter_version
+  - export FLUTTER_VERSION="$(sed -n 's/.*"flutter"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' .fvmrc)"
+  - '[ -n "$FLUTTER_VERSION" ] || { echo "No Flutter version found in .fvmrc"; exit 1; }'
+
 # =============================================================================
 # Checks — analyze + tests on every branch push
 # =============================================================================
@@ -78,7 +82,7 @@ stages:
 #
 # Flutter is installed by the job rather than taken from a prebuilt image: the cirruslabs/flutter
 # images stop at 3.44.0. A shallow clone at the release tag is far smaller than the 1.5 GB release
-# archive, and the SDK (with the tools it downloads on first run) is cached per Flutter version.
+# archive, and the SDK (with the tools it downloads on first run) is cached per .fvmrc.
 checks:
   stage: check
   image: debian:bookworm-slim
@@ -86,7 +90,9 @@ checks:
     PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
     FLUTTER_HOME: "$CI_PROJECT_DIR/.flutter-sdk"
   cache:
-    - key: flutter-sdk-$FLUTTER_VERSION
+    - key:
+        files: [.fvmrc]
+        prefix: flutter-sdk
       paths:
         - .flutter-sdk
     - key: pub-$CI_COMMIT_REF_SLUG
@@ -98,6 +104,7 @@ checks:
       when: always
   before_script:
     - apt-get update -qq && apt-get install -y -qq --no-install-recommends git curl unzip xz-utils ca-certificates > /dev/null
+    - *flutter_version
     - |
       if [ ! -x "$FLUTTER_HOME/bin/flutter" ]; then
         rm -rf "$FLUTTER_HOME"
@@ -139,6 +146,7 @@ checks:
       echo "Missing on the Mac mini runner:$missing"
       exit 1
     fi
+  - *flutter_version
   - fvm install "$FLUTTER_VERSION"
   # The Android Fastfile calls plain `flutter`; make it the pinned version.
   - export PATH="${FVM_CACHE_PATH:-$HOME/fvm}/versions/$FLUTTER_VERSION/bin:$PATH"
@@ -380,6 +388,7 @@ windows:release:
     - $env:GIT_CONFIG_VALUE_0 = "ssh://git@$env:CI_SERVER_HOST:2822/"
   script:
     - if (-not $env:ENV_FILE_CONTENT) { throw "Protected CI/CD variables are not available on $env:CI_COMMIT_BRANCH. Protect this branch to deploy from it." }
+    - $env:FLUTTER_VERSION = (Get-Content .fvmrc -Raw | ConvertFrom-Json).flutter
     - if (-not ((flutter --version) -match "Flutter $env:FLUTTER_VERSION")) { throw "flutter on PATH is not $env:FLUTTER_VERSION" }
     - Copy-Item $env:ENV_FILE_CONTENT .env
     - flutter config --enable-windows-desktop
