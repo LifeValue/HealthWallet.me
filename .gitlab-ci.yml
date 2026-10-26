@@ -53,6 +53,10 @@ default:
 
 variables:
   GIT_DEPTH: "20"
+  # Scanner images, pinned like every other tool.
+  OSV_SCANNER_IMAGE: "ghcr.io/google/osv-scanner:v2.6.0"
+  GITLEAKS_IMAGE: "ghcr.io/gitleaks/gitleaks:v8.30.1"
+  PRE_COMMIT_VERSION: "4.7.0"
   # JDK for Gradle in the Android jobs (see .android_env).
   ANDROID_JDK_VERSION: "17.0.20.1+1"
   ANDROID_JDK_URL: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.20.1_1.tar.gz"
@@ -76,7 +80,7 @@ stages:
   - '[ -n "$FLUTTER_VERSION" ] || { echo "No Flutter version found in .fvmrc"; exit 1; }'
 
 # =============================================================================
-# Checks — analyze + tests on every branch push
+# Checks — run in parallel on every branch push; any failure fails the pipeline
 # =============================================================================
 # Needs no secrets: every Envied field has a default, so codegen runs against an empty .env.
 #
@@ -125,6 +129,96 @@ checks:
     # Errors, warnings and infos all fail, as in scripts/check.sh.
     - flutter analyze
     - flutter test
+
+# Every other formatter (.pre-commit-config.yaml) on the files this branch changed, and the commit
+# messages against Conventional Commits. Dart is formatted in `checks`; swift-format needs Xcode,
+# so Swift is only formatted by the local hook. Java and Ruby are installed only when Kotlin or
+# Ruby files changed.
+#
+# Python 3.13 image: gersemi's native module needs a Python below 3.15 (see .pre-commit-config.yaml).
+# Node (Prettier, commitlint) is a pinned, checksum-verified tarball kept in the job cache.
+lint:
+  stage: check
+  image: python:3.13-slim-bookworm
+  variables:
+    GIT_DEPTH: "0"
+    NODE_VERSION: "22.23.3"
+    NODE_SHA256_X64: "df450af89261115ef9f9e3830c3eeb2cc9213b63c720b1af623cb5dcbe2e02de"
+    NODE_SHA256_ARM64: "a44aeb94849a299b22df10b9e622ec2f605c2183501bc40590705131de7c740f"
+    PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    npm_config_cache: "$CI_PROJECT_DIR/.cache/npm"
+  cache:
+    - key:
+        files: [.pre-commit-config.yaml, package-lock.json]
+        prefix: lint
+      paths:
+        - .cache/
+      when: always
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git curl xz-utils ca-certificates > /dev/null
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - |
+      case "$(uname -m)" in
+        x86_64) node_arch=x64; node_sha="$NODE_SHA256_X64" ;;
+        aarch64) node_arch=arm64; node_sha="$NODE_SHA256_ARM64" ;;
+        *) echo "Unsupported runner architecture $(uname -m)"; exit 1 ;;
+      esac
+      node_dir="$CI_PROJECT_DIR/.cache/node-v$NODE_VERSION-$node_arch"
+      if [ ! -x "$node_dir/bin/node" ]; then
+        curl -fsSL --retry 3 -o /tmp/node.tar.xz "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$node_arch.tar.xz"
+        echo "$node_sha  /tmp/node.tar.xz" | sha256sum -c -
+        mkdir -p "$node_dir" && tar -xJf /tmp/node.tar.xz -C "$node_dir" --strip-components 1
+      fi
+      export PATH="$node_dir/bin:$PATH"
+    - node --version
+    # Changes are measured against where the branch left its Gitflow parent; on develop and
+    # master, against the previous push.
+    - |
+      case "$CI_COMMIT_BRANCH" in
+        develop|master) BASE="$CI_COMMIT_BEFORE_SHA" ;;
+        hotfix/*) git fetch -q origin master && BASE="$(git merge-base origin/master HEAD)" ;;
+        *) git fetch -q origin develop && BASE="$(git merge-base origin/develop HEAD)" ;;
+      esac
+      if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then BASE="$(git rev-parse HEAD~1)"; fi
+      echo "Checking changes since $BASE"
+    - CHANGED="$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD)"
+    - SKIP="dart-format,swift-format"
+    - |
+      if echo "$CHANGED" | grep -qE '\.(kt|kts)$'; then
+        apt-get install -y -qq --no-install-recommends default-jre-headless > /dev/null
+      else SKIP="$SKIP,pretty-format-kotlin"; fi
+    - |
+      if echo "$CHANGED" | grep -qE '(^|/)(Gemfile|Podfile|Fastfile|Appfile)$|\.rb$'; then
+        apt-get install -y -qq --no-install-recommends ruby ruby-dev build-essential > /dev/null
+      else SKIP="$SKIP,rubocop"; fi
+    - export SKIP
+    - pip install -q "pre-commit==$PRE_COMMIT_VERSION"
+    - npm ci --ignore-scripts --no-audit --no-fund
+  script:
+    - pre-commit run --show-diff-on-failure --from-ref "$BASE" --to-ref HEAD
+    - npx --no-install commitlint --from "$BASE" --to HEAD --verbose
+
+# Known vulnerabilities (OSV database) in every lockfile: pub, npm, RubyGems, Swift packages.
+scan:dependencies:
+  stage: check
+  image:
+    name: $OSV_SCANNER_IMAGE
+    entrypoint: [""]
+  script:
+    - osv-scanner scan source --recursive .
+
+# Secrets in any commit of the history; .gitleaks.toml documents the allowlisted false positives.
+scan:secrets:
+  stage: check
+  image:
+    name: $GITLEAKS_IMAGE
+    entrypoint: [""]
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - gitleaks git --redact --config .gitleaks.toml --verbose .
 
 # =============================================================================
 # Mac mini — iOS, macOS and Android store uploads via fastlane
@@ -239,7 +333,7 @@ checks:
   tags: [shell-macmini]
   # A store upload must not be killed mid-flight by a newer push.
   interruptible: false
-  needs: ["checks"]
+  needs: &all_checks ["checks", "lint", "scan:dependencies", "scan:secrets"]
   cache:
     - &bundle_cache
       key: bundle-macos
@@ -381,7 +475,7 @@ windows:release:
   stage: deploy
   tags: [windows]
   interruptible: false
-  needs: ["checks"]
+  needs: *all_checks
   rules: *on_any_branch
   before_script:
     - $env:GIT_CONFIG_COUNT = "1"

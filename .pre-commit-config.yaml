@@ -85,7 +85,8 @@ repos:
     rev: 0.29.2
     hooks:
       - id: gersemi
-        # gersemi's native module fails to load under Python 3.15.
+        # gersemi's native module fails to load under Python 3.15, which `python3` would resolve
+        # to (pre-commit's own interpreter), so it needs a Python 3.13 on PATH; CI's lint image has it.
         language_version: python3.13
 
   - repo: https://github.com/rubocop/rubocop
