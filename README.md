@@ -214,9 +214,8 @@ Needs Node (Prettier, commitlint), Java (ktlint), Ruby (RuboCop) and Xcode (swif
 
 ```bash
 brew install pre-commit   # once per machine
-npm install               # once per clone: Prettier and commitlint
-pre-commit install        # once per clone: format on commit, check commit messages
-scripts/check.sh          # all formatters on the whole repo, then analyze and tests
+npm install               # Prettier, commitlint and the git hooks (format staged files, check commit messages)
+scripts/check.sh          # formatters on the files your branch changed, then analyze and tests
 ```
 
 ---
