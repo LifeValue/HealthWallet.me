@@ -58,6 +58,8 @@ abstract class ProcessingRepository {
     int? contextSize,
   });
 
+  /// Each event carries every resource extracted so far (a snapshot that
+  /// replaces the previous one, not a delta) and the progress.
   Stream<MappingResourcesWithProgress> mapRemainingResources(
     List<String> imagePaths, {
     String? documentCategory,

@@ -292,6 +292,12 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               threads: savedThreads,
               contextSize: savedContextSize);
 
+      // Each yield is every phase-2 resource so far, not a delta: it replaces
+      // the previous yield on top of the resources the session started with.
+      final baseResources = state.sessions
+              .firstWhereOrNull((s) => s.id == event.sessionId)
+              ?.resources ??
+          const <MappingResource>[];
       await for (final (resources, progress) in stream) {
         final currentSession = state.sessions
             .firstWhereOrNull((s) => s.id == event.sessionId);
@@ -301,7 +307,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         }
         updateSession(emit,
             sessionId: event.sessionId,
-            resources: [...currentSession!.resources, ...resources],
+            resources: [...baseResources, ...resources],
             progress: progress,
             updateDb: true);
       }
