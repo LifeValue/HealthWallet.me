@@ -125,7 +125,29 @@ xcrun devicectl device copy from --device <udid> --domain-type appDataContainer 
   --destination build/extraction_bench/results/qwen-ip15-1.jsonl
 ```
 
-On the iOS simulator, `xcrun simctl get_app_container booted com.techstackapps.healthwallet data` prints the container path; copy into its `Documents/`.
+**Simulators and emulators** give valid extractions for accuracy and regression checks, but not phone speed or memory: llamadart runs on the CPU in the iOS simulator (its Metal backend returns wrong output there, llamadart issue #950), and the app runs llama.cpp on the CPU on every Android device, so both run at the Mac's CPU speed. Platform OCR differs (Vision on iOS, ML Kit on Android), so compare runs within one platform.
+
+*iOS simulator*: install once (the first run fails fast without a model), then copy into the data container. Its path changes on every reinstall, so look it up each time; `cp -c` clones the model without using disk.
+
+```bash
+SIM=<simulator udid>; xcrun simctl boot $SIM
+fvm flutter test integration_test/extraction_bench_test.dart -d $SIM --no-uninstall --dart-define=BENCH_MODEL=qwen   # installs, then fails fast
+C=$(xcrun simctl get_app_container $SIM com.techstackapps.healthwallet data)
+mkdir -p "$C/Documents/ai_models" "$C/Documents/extraction_bench" && cp -c build/extraction_bench/models/*.gguf "$C/Documents/ai_models/"
+rm -rf "$C/Documents/extraction_bench/dataset" && cp -R build/extraction_bench/dataset "$C/Documents/extraction_bench/dataset"
+fvm flutter test integration_test/extraction_bench_test.dart -d $SIM --no-uninstall --dart-define=BENCH_MODEL=qwen --dart-define=BENCH_VISION=false --dart-define=BENCH_RUN_ID=qwen-sim-1
+cp "$C/Documents/extraction_bench/results/qwen-sim-1/predictions.jsonl" build/extraction_bench/results/qwen-sim-1.jsonl
+```
+
+*Android emulator*: an arm64 image with at least 6 GB RAM and enough free data space for the model (about 2 GB, plus as much again while it is staged in `/data/local/tmp`). The default AVD's 2 GB RAM and 6 GB data partition are too small, and `-partition-size` does not grow an existing one, so create a dedicated AVD:
+
+```bash
+echo no | avdmanager create avd -n bench_pixel -k "system-images;android-35;google_apis_playstore_ps16k;arm64-v8a" -d pixel_8a
+sed -i '' -e 's/^disk.dataPartition.size.*/disk.dataPartition.size = 16G/' -e 's/^hw.ramSize.*/hw.ramSize = 6144/' ~/.android/avd/bench_pixel.avd/config.ini
+emulator -avd bench_pixel -no-snapshot-save -no-audio &
+```
+
+Then follow the Android steps above with `-d emulator-5554`, pushing `build/extraction_bench/models` the same way as the dataset. A document takes about 6 minutes there (Apple M-series CPU).
 
 ## Datasets
 
