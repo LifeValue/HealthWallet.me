@@ -258,17 +258,16 @@ scan:dependencies:
     # The image only puts the binary at /osv-scanner (its entrypoint), not on PATH.
     - /osv-scanner scan source --recursive .
 
-# Secrets in any commit of the history; .gitleaks.toml documents the allowlisted false positives.
+# Secrets in the commits this branch adds (the full history was scanned clean when this job was
+# introduced); .gitleaks.toml documents the allowlisted false positives.
 scan:secrets:
   stage: check
   image:
     name: $GITLEAKS_IMAGE
     entrypoint: [""]
-  variables:
-    GIT_DEPTH: "0"
   script:
-    - git config --global --add safe.directory "$CI_PROJECT_DIR"
-    - gitleaks git --redact --config .gitleaks.toml --verbose .
+    - *diff_base
+    - gitleaks git --redact --config .gitleaks.toml --verbose --log-opts="$BASE..HEAD" .
 
 # =============================================================================
 # Mac mini — iOS, macOS and Android store uploads via fastlane
