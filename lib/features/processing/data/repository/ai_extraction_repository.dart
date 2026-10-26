@@ -387,13 +387,22 @@ Rules:
     List<MappingResource> allResources = [];
     final confidenceText = ocrText.isNotEmpty ? ocrText : null;
 
+    var visionLoaded = false;
     if (useVision) {
-      await networkDataSource.initModel(
-        gpuLayers: gpuLayers,
-        threads: threads,
-        contextSize: contextSize,
-      );
+      try {
+        await networkDataSource.initModel(
+          gpuLayers: gpuLayers,
+          threads: threads,
+          contextSize: contextSize,
+        );
+        visionLoaded = true;
+      } catch (e) {
+        // E.g. model + projector over the memory limit: text-only still fits.
+        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision model load failed: $e, switching to text fallback');
+      }
+    }
 
+    if (visionLoaded) {
       final promptBuilder = await RemainingResourcesVisionPrompt.create(
         documentCategory: documentCategory,
         ocrText: ocrText,
@@ -449,7 +458,7 @@ Rules:
           ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1} failed: $e');
         }
       }
-    } else {
+    } else if (!useVision) {
       ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision disabled, using text-only');
     }
 
