@@ -18,8 +18,7 @@ exclude: |
     ios/fastlane/report\.xml$|
     .*\.xcassets/|
     LICENSE\.md$|test_sync_data\.json$|untranslated_messages\.json$|
-    \.fvmrc$|\.mason/|mason-lock\.json$|.*\.iml$|
-    android/app/src/main/kotlin/com/techstackapps/health_wallet/
+    \.fvmrc$|\.mason/|mason-lock\.json$|.*\.iml$
   )|\.(g|freezed|gr|config|gen)\.dart$
   |\.(pbxproj|xcscheme|xcworkspacedata|xcsettings|storyboard|xib|plist|entitlements|lock|resolved|msgpack)$
 
