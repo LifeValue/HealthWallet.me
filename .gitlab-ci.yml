@@ -96,9 +96,12 @@ stages:
 # Flutter is installed by the job rather than taken from a prebuilt image: the cirruslabs/flutter
 # images stop at 3.44.0. A shallow clone at the release tag is far smaller than the 1.5 GB release
 # archive, and the SDK (with the tools it downloads on first run) is cached per .fvmrc.
+#
+# Kept fast: buildpack-deps already has git, curl, unzip and xz (no apt-get per run), build_runner
+# reuses its cached state so it only rebuilds what changed, and analyze and test run in parallel.
 checks:
   stage: check
-  image: debian:bookworm-slim
+  image: buildpack-deps:bookworm
   variables:
     PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
     FLUTTER_HOME: "$CI_PROJECT_DIR/.flutter-sdk"
@@ -115,8 +118,18 @@ checks:
       paths:
         - .pub-cache
       when: always
+    # build_runner's asset graph and the files it generated (all gitignored).
+    - key: build-runner-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - build-runner-develop
+        - build-runner-master
+      paths:
+        - .dart_tool/build/
+        - lib/**/*.g.dart
+        - lib/**/*.freezed.dart
+        - lib/**/*.gr.dart
+        - lib/**/*.config.dart
   before_script:
-    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git curl unzip xz-utils ca-certificates > /dev/null
     - *flutter_version
     - |
       if [ ! -x "$FLUTTER_HOME/bin/flutter" ]; then
@@ -130,14 +143,24 @@ checks:
     # Declared asset directories that only hold secrets in release builds.
     - mkdir -p assets/certs/android
     - touch .env
-    - flutter pub get
-    - dart run build_runner build
+    - flutter pub get --enforce-lockfile
+    # Incremental thanks to the cache; a stale cached output is replaced, never a failure.
+    - dart run build_runner build --delete-conflicting-outputs
   script:
     # Same exclusions as .pre-commit-config.yaml: generated files are never formatted.
     - git ls-files '*.dart' | grep -vE '\.(g|freezed|gr|config|gen)\.dart$|/app_localizations[^/]*\.dart$|^test/drift/my_database/generated/' | xargs dart format --output=none --set-exit-if-changed
-    # Errors, warnings and infos all fail, as in scripts/check.sh.
-    - flutter analyze
-    - flutter test
+    # Analyze (errors, warnings and infos all fail, as in scripts/check.sh) and test run in
+    # parallel; the job fails if either fails.
+    - |
+      flutter analyze --no-pub > analyze.log 2>&1 &
+      analyze_pid=$!
+      test_status=0
+      flutter test --no-pub || test_status=$?
+      analyze_status=0
+      wait "$analyze_pid" || analyze_status=$?
+      echo "==> flutter analyze"
+      cat analyze.log
+      [ "$analyze_status" -eq 0 ] && [ "$test_status" -eq 0 ]
 
 # Every other formatter (.pre-commit-config.yaml) on the files this branch changed, and the commit
 # messages against Conventional Commits. Dart is formatted in `checks`; swift-format needs Xcode,
