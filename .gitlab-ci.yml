@@ -9,8 +9,7 @@
 #   scan:secrets            secrets anywhere in the git history       Linux instance runner (Docker)
 #
 # Deploys follow Gitflow and only start once every check has passed:
-#   ios / android / macos   automatic on develop,                     shell-macmini (fastlane)
-#                           manual on release/* and master
+#   ios / android / macos   manual on develop, release/* and master   shell-macmini (fastlane)
 #   windows                 manual on develop, release/* and master   needs a `windows` runner (none yet)
 #                           → GitLab Release with zip + msix
 #   shorebird patches       manual on master                          shell-macmini
@@ -19,8 +18,8 @@
 # Deploy jobs need the PROTECTED CI/CD variables, which GitLab only exposes to protected branches;
 # on an unprotected branch the job stops at its first step and says so.
 #
-# Every push to develop uploads a beta to TestFlight (iOS, macOS) and the Play internal track.
-# Nothing goes to production from CI: a tested beta is promoted to the App Store / Play production
+# Every deploy is started by hand from the pipeline, including on develop: a beta goes to TestFlight
+# (iOS, macOS) and the Play internal track only when someone runs it. Nothing goes to production from CI: a tested beta is promoted to the App Store / Play production
 # in App Store Connect and Play Console.
 #
 # The Flutter version comes from .fvmrc, the same pin FVM uses locally.
@@ -373,14 +372,6 @@ scan:secrets:
     when: manual
     allow_failure: true
 
-# Beta uploads: automatic on develop, so every merge reaches testers; manual on release/* (a
-# release candidate for testers) and master.
-.on_develop: &on_develop
-  - if: $CI_COMMIT_BRANCH == "develop"
-  - if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
-    when: manual
-    allow_failure: true
-
 .on_master: &on_master
   - if: $CI_COMMIT_BRANCH == "master"
     when: manual
@@ -389,7 +380,7 @@ scan:secrets:
 ios:testflight:
   extends: .macmini
   stage: deploy
-  rules: *on_develop
+  rules: *on_deploy_branches
   # One upload per platform at a time: the next build number is read from the store, so two
   # overlapping pipelines would pick the same one.
   resource_group: ios:testflight
@@ -405,7 +396,7 @@ ios:testflight:
 macos:testflight:
   extends: .macmini
   stage: deploy
-  rules: *on_develop
+  rules: *on_deploy_branches
   # One upload per platform at a time: the next build number is read from the store, so two
   # overlapping pipelines would pick the same one.
   resource_group: macos:testflight
@@ -422,7 +413,7 @@ macos:testflight:
 android:play-internal:
   extends: .macmini
   stage: deploy
-  rules: *on_develop
+  rules: *on_deploy_branches
   # One upload per platform at a time: the next build number is read from the store, so two
   # overlapping pipelines would pick the same one.
   resource_group: android:play-internal
