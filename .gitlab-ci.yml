@@ -120,9 +120,10 @@ checks:
     - flutter pub get
     - dart run build_runner build
   script:
-    # Errors fail the job; the ~110 existing warnings (mostly unused imports) don't yet.
-    # Drop --no-fatal-warnings once they are cleaned up.
-    - flutter analyze --no-fatal-infos --no-fatal-warnings
+    # Same exclusions as .pre-commit-config.yaml: generated files are never formatted.
+    - git ls-files '*.dart' | grep -vE '\.(g|freezed|gr|config|gen)\.dart$|/app_localizations[^/]*\.dart$|^test/drift/my_database/generated/' | xargs dart format --output=none --set-exit-if-changed
+    # Errors, warnings and infos all fail, as in scripts/check.sh.
+    - flutter analyze
     - flutter test
 
 # =============================================================================
