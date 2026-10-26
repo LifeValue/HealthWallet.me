@@ -210,7 +210,7 @@ mixin AiExtractionRepository {
     if (ocrText.trim().length >= _minOcrCharsForTextOnly) {
       ProcessingLogBuffer.instance.log('[$_ts][ScanAI] OCR has enough text, trying text-only (fast path)...');
       try {
-        final textResult = await _tryTextOnlyBasicInfo(ocrText, maxTokens, threads, contextSize);
+        final textResult = await _tryTextOnlyBasicInfo(ocrText, maxTokens, gpuLayers, threads, contextSize);
         if (textResult != null) {
           final (patient, container, docCategory) = textResult;
           final postProcessed = PatientPostProcessor.postProcess(patient, ocrText);
@@ -236,6 +236,7 @@ mixin AiExtractionRepository {
   Future<MappingResource> mapContainerOnly(
     String ocrText, {
     int? maxTokens,
+    int? gpuLayers,
     int? threads,
     int? contextSize,
   }) async {
@@ -244,6 +245,7 @@ mixin AiExtractionRepository {
     final textCtx = (contextSize == null || contextSize < 2048) ? 2048 : contextSize;
     await networkDataSource.initModel(
       withVision: false,
+      gpuLayers: gpuLayers,
       threads: threads,
       contextSize: textCtx,
     );
@@ -301,6 +303,7 @@ Rules:
   Future<(MappingPatient, MappingResource, String)?> _tryTextOnlyBasicInfo(
     String ocrText,
     int? maxTokens,
+    int? gpuLayers,
     int? threads,
     int? contextSize,
   ) async {
@@ -308,6 +311,7 @@ Rules:
     ProcessingLogBuffer.instance.log('[$_ts][ScanAI] loading model (text-only, no vision projector)...');
     await networkDataSource.initModel(
       withVision: false,
+      gpuLayers: gpuLayers,
       threads: threads,
       contextSize: textCtx,
     );
@@ -464,6 +468,7 @@ Rules:
       final textCtx = (contextSize == null || contextSize < 2048) ? 2048 : contextSize;
       await networkDataSource.initModel(
         withVision: false,
+        gpuLayers: gpuLayers,
         threads: threads,
         contextSize: textCtx,
       );

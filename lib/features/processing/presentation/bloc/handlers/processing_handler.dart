@@ -107,6 +107,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         final container = await processingRepository.mapContainerOnly(
           medicalText,
           maxTokens: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiMaxTokens),
+          gpuLayers: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiGpuLayers),
           threads: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads),
           contextSize: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize),
         );

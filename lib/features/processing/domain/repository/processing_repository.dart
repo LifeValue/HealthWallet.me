@@ -46,6 +46,7 @@ abstract class ProcessingRepository {
   Future<MappingResource> mapContainerOnly(
     String ocrText, {
     int? maxTokens,
+    int? gpuLayers,
     int? threads,
     int? contextSize,
   });
