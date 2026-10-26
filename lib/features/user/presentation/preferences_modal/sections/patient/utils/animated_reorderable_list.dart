@@ -236,18 +236,3 @@ class _AnimatedReorderableListState<T> extends State<AnimatedReorderableList<T>>
     );
   }
 }
-
-class AnimatedReorderableListController<T> {
-  final GlobalKey<_AnimatedReorderableListState<T>> _key =
-      GlobalKey<_AnimatedReorderableListState<T>>();
-
-  AnimatedReorderableList<T> get widget =>
-      _key.currentWidget as AnimatedReorderableList<T>;
-
-  void reorderItem(String fromItemId, String toItemId) {
-    final state = _key.currentState;
-    state?.handleReorder(fromItemId, toItemId);
-  }
-
-  GlobalKey<State<AnimatedReorderableList<T>>> get key => _key;
-}

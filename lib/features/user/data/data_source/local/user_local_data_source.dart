@@ -43,25 +43,3 @@ class UserLocalDataSourceImpl implements UserLocalDataSource {
     await _sharedPreferences.remove(_userKey);
   }
 }
-
-class MockUserLocalDataSource implements UserLocalDataSource {
-  User? _user;
-
-  @override
-  Future<User?> getUser() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    return _user;
-  }
-
-  @override
-  Future<void> saveUser(User user) async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    _user = user;
-  }
-
-  @override
-  Future<void> clearUser() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    _user = null;
-  }
-}

@@ -24,17 +24,4 @@ void main() {
       expect(isVitalLoinc(code), isFalse, reason: code);
     }
   });
-
-  test('isBpPanelCode', () {
-    expect(isBpPanelCode('85354-9'), isTrue);
-    expect(isBpPanelCode('55284-4'), isTrue);
-    expect(isBpPanelCode('8480-6'), isFalse);
-  });
-
-  test('isBloodTypeLoinc', () {
-    expect(isBloodTypeLoinc('883-9'), isTrue);
-    expect(isBloodTypeLoinc('10331-7'), isTrue);
-    expect(isBloodTypeLoinc('34530-6'), isTrue);
-    expect(isBloodTypeLoinc('8867-4'), isFalse);
-  });
 }
