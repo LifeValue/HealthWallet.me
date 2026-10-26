@@ -50,6 +50,7 @@ fvm dart run tool/extraction_bench/bench.dart compare --dataset build/extraction
 | `BENCH_VISION` | `true` | `useVision` for phase 2 (phase 1 always falls back to vision as in production). The app defaults to vision on desktop and text-only on phones (AI settings → vision off), so pass `false` for a phone run that matches what users get |
 | `BENCH_RUN_ID` | `<model>-<os>-<UTC timestamp>` | Results folder; re-using an id appends, and `score` keeps the last record per document |
 | `BENCH_LIMIT` | all | Process only the first N documents (sorted by docId) |
+| `BENCH_DOCS` | all | Process only these comma-separated docIds (e.g. to re-run the documents that errored; merge the records by docId before scoring) |
 | `BENCH_COOLDOWN_S` | `0` | Pause between documents, to keep phones out of thermal throttling |
 | `BENCH_OUTPUT` | the app's pref (unset: `schema`) | `ExtractionOutputMode` for every phase: `grammar` (the generic JSON-array grammar), `schema` (a flat per-phase JSON schema as llamadart `responseFormat`) or `schemaDraft` (an unconstrained draft call, then the schema call with the draft in its prompt). Sets the `aiOutputMode` pref for the run and restores it afterwards, so the runner reads the mode the way `ProcessingHandler` does. Recorded as `outputMode` in each record |
 | `BENCH_GPU_LAYERS` | the app's config | GPU layers for every model load, text and vision (`0` = CPU only, `99` = all). Without it the app's `DeviceCapabilityService.computeModelConfig` decides, and its text paths never take the AI-settings value; on iOS that is 0 layers for text and at most 4 for vision. Recorded as `gpuLayers` in each record |
@@ -172,6 +173,31 @@ Dataset `generate --seed 7 --per-cell 3` (24 documents), Qwen3-VL-2B, iPhone 17 
 ΔF1 schema − grammar (text): +0.038 [0.006, 0.072], P(≤ 0) = 0.011; largest on ro (+0.111) and es (+0.070), de and en within ±0.014. ΔF1 schemaDraft − schema (text): +0.004 [−0.012, 0.020], P(≤ 0) = 0.303. Vision runs: schema − grammar +0.041 [0.006, 0.077], schemaDraft − schema −0.003 [−0.016, 0.011]. By the rule fixed before measuring (text run decides: schema if ΔF1 ≥ 0 and strict JSON not lower; schemaDraft only if its lower CI bound over schema is > 0), `ExtractionOutputMode.defaultMode` is `schema`.
 
 The two grammar truncations (ro-dis-003, ro-lab-003, phase 2) are gone under the schema's `maxItems`. No run put a Condition on a lab report or a CNP label on a German patient. In the simulator the vision runs mostly measure the text path: its memory check (60% of the RAM estimated for the simulator's machine id, minus the RSS) stops the vision batch on most documents and phase 2 falls back to text, (20–22 of 24 documents; 2–4 vision generations per run), so read them as a check that the vision code paths run, not as vision accuracy; measure vision on a phone.
+
+## Model candidates (2026-10-26)
+
+Research recommendation 4 (D1a). Dataset `generate --seed 7 --per-cell 6` (48 documents, `build/extraction_bench/dataset-48`), text only (`BENCH_VISION=false`), `BENCH_OUTPUT=schema`, iPhone 17 Pro and 17 Pro Max simulators (CPU), two runs in parallel; `compare` against the tier's current model with `--seed 1234`. Run ids `<variant>-sim-text-48`. The candidates are bench-only `AiModelVariant`s (not in `availableVariants`); NuExtract 2.0 and NuExtract3 get their chat template's `template` kwarg (built from the phase schema by `NuExtractPrompt`) and, for NuExtract3, `instructions`; the others use the production prompts. Every candidate loaded and ran in llamadart 0.15.6 (`qwen35` architecture and BF16 mmproj included). Rule fixed before measuring: recommend a candidate only if the lower bound of its ΔF1 95% CI is above 0 and strict JSON and truncation are no worse. Simulator times and RAM are not phone numbers; download is model + mmproj.
+
+| Tier | Model | F1 [95% CI] | ΔF1 vs tier model [95% CI] | Omission | Hallucination | Strict JSON | Truncated | Median wall / doc | Download | Licence |
+|---|---|---|---|---:|---:|---:|---:|---:|---:|---|
+| Lite | Qwen3-VL-2B (shipped) | 0.604 [0.585, 0.623] | | 5.8% | 16.5% | 99.0% | 1.0% | 48 s | 1.93 GB | Apache-2.0 |
+| Lite | Qwen3.5-2B | 0.594 | −0.010 [−0.030, 0.009] | 11.6% | 16.2% | 97.9% | 2.1% | 55 s | 1.95 GB | Apache-2.0 |
+| Lite | NuExtract 2.0-2B | 0.510 | −0.094 [−0.119, −0.069] | 35.3% | 21.6% | 100.0% | 0.0% | 29 s | 2.32 GB | MIT |
+| Advanced | MedGemma 1 4B (shipped) | 0.635 [0.611, 0.660] | | 9.7% | 18.2% | 100.0% | 0.0% | 85 s | 3.34 GB | HAI-DEF |
+| Advanced | Qwen3.5-4B | 0.696 [0.675, 0.718] | **+0.061 [0.041, 0.082]** | 3.8% | 14.7% | 97.9% | 2.1% | 99 s | 3.41 GB | Apache-2.0 |
+| Advanced | NuExtract3 (4B) | 0.650 [0.632, 0.670] | +0.015 [−0.005, 0.036] | 6.5% | 17.5% | 100.0% | 0.0% | 85 s | 3.46 GB | Apache-2.0 |
+| Advanced | MedGemma 1.5 4B | 0.548 [0.527, 0.570] | −0.087 [−0.114, −0.061] | 22.4% | 16.2% | 100.0% | 0.0% | 76 s | 3.34 GB | HAI-DEF |
+
+Every run classified all 48 documents correctly as lab report or visit except NuExtract 2.0 (31/48; it has no instructions slot, so it never sees the lab-report-vs-visit rule).
+
+- **Lite: keep Qwen3-VL-2B.** Qwen3.5-2B is a tie (de +0.022, en −0.033, lab reports −0.031 [−0.065, 0.000]); it is better on Conditions (0.65 vs 0.55) and DiagnosticReport (0.76 vs 0.62), worse on Observations (0.45 vs 0.53), and omits twice as much. NuExtract 2.0 is worse in every language and family (Condition 0.17, Procedure 0.15).
+- **Advanced: Qwen3.5-4B is the only candidate with a significant gain, but by the rule it is not recommended yet.** It is ahead in every language (de +0.098, ro +0.070, en +0.041, es +0.036 [0.001, 0.067]) and family (lab reports +0.067, discharge letters +0.055), with Organization 0.94 vs 0.68 and MedicationStatement 0.34 vs 0.14. It fails the validity criterion on two phase-2 generations (es-dis-005, ro-dis-003; 2 of 96): prompt (~1,320 tokens) plus output (709–731) fill the 2,048-token context, because it writes indented JSON. Fix that (a larger phase-2 context or compact output) and re-measure before switching; it also drops MedGemma's HAI-DEF obligations.
+- NuExtract3 is ahead of MedGemma (discharge letters +0.043 [0.023, 0.066], en +0.049 [0.016, 0.084], Condition 0.71 vs 0.58, Organization 0.98 vs 0.68) but not significantly overall (P(Δ ≤ 0) = 0.062), and below its own base model: NuExtract3 − Qwen3.5-4B = −0.046 [−0.067, −0.026]. Its vendor benchmark edge does not carry over to our schemas with this template prompt.
+- MedGemma 1.5 is worse than MedGemma 1 in every stratum; it drops practitioners and organizations (0.36 and 0.26 vs 0.88 and 0.68) and procedures (0.23 vs 0.70).
+
+14 Qwen3.5-4B documents first failed with the app's pre-load memory check ("Not enough memory to load the AI model. Available: ~3,450MB, required: ~4,635MB"): the simulator reports the Mac's free RAM, which dropped while both simulators loaded 4B models. They were re-run with `BENCH_DOCS` (`qwen35x4b-sim-text-48-rerun`, no errors) and merged by docId (`qwen35x4b-sim-text-48-merged`). On a phone, run one model at a time. Still open on a phone: speed, peak RAM and vision for Qwen3.5-4B and NuExtract3.
+
+The missing-patient-ID path of the schema change is not measured by these runs: every generated document prints a patient identifier.
 
 ## Datasets
 

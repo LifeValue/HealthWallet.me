@@ -110,6 +110,8 @@ Models (`lib/core/config/constants/ai_model_config.dart`), downloaded on demand 
 | MedGemma 4B-IT Q4_K_M | 2490 MB | 851 MB | Advanced; skips the device check |
 | Qwen3-VL-8B | 4560 MB | 815 MB | Desktop only; skips the device check |
 
+Bench-only candidates (`AiModelVariant` values left out of `availableVariants`, so users can't pick them; `getActive` resolves any variant from the `aiSelectedModel` pref, so the benchmark runs the production path): Qwen3.5-2B, NuExtract 2.0-2B, Qwen3.5-4B, NuExtract3 and MedGemma 1.5 4B. `AiModelConfig.promptFamily` (`standard`, `nuExtract2`, `nuExtract3`) picks the prompt: for the NuExtract families, schema-mode text calls send the OCR text as the only user message with no system prompt, and pass `NuExtractPrompt.kwargs` (the phase schema as a NuExtract template, plus `instructions` for NuExtract3) as llamadart `chatTemplateKwargs`. Without a template, NuExtract3's chat template falls into its document-to-Markdown mode. Grammar, schemaDraft and vision calls keep the standard prompts. Results of the 2026-10-26 run (48 synthetic documents, simulator, text only) are in `tool/extraction_bench/README.md` ("Model candidates"). Lite: keep Qwen3-VL-2B (Qwen3.5-2B ties, NuExtract 2.0 is worse). Advanced: Qwen3.5-4B beats MedGemma 1 (ΔF1 +0.061 [0.041, 0.082]) but fills the 2,048-token context in phase 2 on 2 of 96 generations, so it is not recommended until that is fixed and confirmed on a phone. NuExtract3 is not significantly better (+0.015 [−0.005, 0.036]) and MedGemma 1.5 is worse (−0.087).
+
 ### Extraction benchmark
 
 `tool/extraction_bench/` measures the pipeline's document→FHIR accuracy; usage, dataset layout, scoring and the de-identification rule for real documents are in `tool/extraction_bench/README.md`.

@@ -42,6 +42,8 @@ const _model = String.fromEnvironment('BENCH_MODEL');
 const _useVision = bool.fromEnvironment('BENCH_VISION', defaultValue: true);
 const _runIdDefine = String.fromEnvironment('BENCH_RUN_ID');
 const _limit = int.fromEnvironment('BENCH_LIMIT');
+// Comma-separated document ids, e.g. to re-run the documents that errored.
+const _docsDefine = String.fromEnvironment('BENCH_DOCS');
 const _cooldownSeconds = int.fromEnvironment('BENCH_COOLDOWN_S');
 // A string, so that 0 (CPU only) is distinguishable from unset.
 const _gpuLayersDefine = String.fromEnvironment('BENCH_GPU_LAYERS');
@@ -100,6 +102,11 @@ void main() {
     if (!datasetDir.existsSync()) fail('Dataset not found at ${datasetDir.path}');
     var docs = loadBenchDocs(datasetDir);
     if (docs.isEmpty) fail('No documents (*/<docId>/meta.json) under ${datasetDir.path}');
+    if (_docsDefine.isNotEmpty) {
+      final ids = _docsDefine.split(',').map((id) => id.trim()).toSet();
+      docs = docs.where((d) => ids.contains(d.docId)).toList();
+      if (docs.isEmpty) fail('None of BENCH_DOCS ($_docsDefine) is in the dataset');
+    }
     if (_limit > 0) docs = docs.take(_limit).toList();
 
     final isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;

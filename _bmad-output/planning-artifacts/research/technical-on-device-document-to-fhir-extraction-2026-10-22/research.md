@@ -101,6 +101,7 @@ refresh_before: '2027-04-22'
   - On NuMind's own extraction benchmark it scores 0.651 against 0.417 for its base Qwen3.5-4B, with 27 against 229 failed outputs. Gemma 4 E4B scores 0.538 [13].
   - These are vendor numbers on the vendor's own set. They match the independent finding that small models fail mainly on format, which extraction training fixes [30].
   - No official GGUF exists. A community Q4_K_M is 2.71 GB plus a 676 MB mmproj [31].
+  - *Correction (2026-10-26):* NuMind publishes an official GGUF, `numind/NuExtract3-GGUF` (2026-05-18; `NuExtract3-Q4_K_M.gguf` 2.78 GB plus `mmproj-NuExtract3-BF16.gguf` 0.68 GB), which this report missed. The benchmark used it. Results of recommendation 4: `tool/extraction_bench/README.md`, "Model candidates".
   - Its languages are listed only as "multilingual".
   - Its predecessor NuExtract 2.0 has an MIT 2B build on Qwen2-VL-2B [32], a possible Lite-tier wildcard (GGUF not checked).
 - **MedGemma 1.5 4B.** I re-checked the card. Compared with MedGemma 1, lab-report extraction rose from 25 to 64 macro F1 on an internal dataset ("EHR 4"), and from 78 to 91 on another. On the one **public image→JSON** set (Mendeley lab-report PNGs), MedGemma 1 and 1.5 both score **85**, and plain Gemma 3 4B scores 83. Plain Gemma 3 4B also *beats* MedGemma 1 on all three internal PDF sets: 84/61/41 vs 78/50/25 [12].
