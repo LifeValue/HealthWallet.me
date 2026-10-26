@@ -62,6 +62,10 @@ default:
 
 variables:
   GIT_DEPTH: "20"
+  # Cache archives are zipped on the runner itself; fastzip with the fastest level keeps the
+  # build_runner cache save and the Flutter/pub cache restores quick.
+  FF_USE_FASTZIP: "true"
+  CACHE_COMPRESSION_LEVEL: "fastest"
   # Scanner images, pinned like every other tool.
   OSV_SCANNER_IMAGE: "ghcr.io/google/osv-scanner:v2.6.0"
   GITLEAKS_IMAGE: "ghcr.io/gitleaks/gitleaks:v8.30.1"
