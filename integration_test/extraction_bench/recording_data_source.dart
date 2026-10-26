@@ -16,8 +16,8 @@ class GenerationLog {
   bool strictJsonValid = false;
   GenerationStats? stats;
 
-  /// Sum of llama.cpp mtmd `image slice encoded in N ms` lines seen during
-  /// the call; null when none were seen.
+  /// Sum of llama.cpp mtmd `image slice encoded in N ms` lines written to
+  /// stderr during the call; null when none were seen.
   double? imageEncodeMs;
 
   /// Sum of mtmd `image decoded (batch i/n) in N ms` lines; null when none.
@@ -43,11 +43,16 @@ class GenerationLog {
 /// Wraps the production [AiInferenceDataSource] and records every generation:
 /// raw output, whether it is strict JSON as produced, the call's
 /// [GenerationStats], and image-encode times from llama.cpp's native log
-/// (fed through [onLog]). Behaviour is otherwise passed through unchanged.
+/// (read through [drainNativeLog] after each call). Behaviour is otherwise
+/// passed through unchanged.
 class RecordingAiInferenceDataSource implements AiInferenceDataSource {
-  RecordingAiInferenceDataSource(this._inner, {this.gpuLayersOverride});
+  RecordingAiInferenceDataSource(this._inner, {this.gpuLayersOverride, this.drainNativeLog});
 
   final AiInferenceDataSource _inner;
+
+  /// Returns the native log written since the last call
+  /// (`NativeLogCapture.drain`); null when stderr is not captured.
+  final String Function()? drainNativeLog;
 
   /// When set, replaces the GPU layers of every model load, text and vision;
   /// the pipeline's text paths otherwise never pass any (auto config).
@@ -61,25 +66,31 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   static final _sliceEncoded = RegExp(r'image slice encoded in (\d+(?:\.\d+)?) ms');
   static final _imageDecoded = RegExp(r'image decoded \(batch \d+/\d+\) in (\d+(?:\.\d+)?) ms');
 
-  /// Starts a new document: clears the recorded generations.
+  /// Starts a new document: clears the recorded generations and discards the
+  /// native log written before it.
   void beginDocument() {
+    drainNativeLog?.call();
     generations.clear();
     _current = null;
     phase = '';
   }
 
-  /// Handler for `LlamaLogging.configure`.
+  /// Handler for `LlamaLogging.configure`: Dart-side records. llama.cpp's own
+  /// lines go to stderr and arrive through [drainNativeLog] instead.
   void onLog(LlamaLogRecord record) {
     final current = _current;
-    if (current == null) return;
-    for (final line in record.message.split('\n')) {
+    if (current != null) _parseNativeLog(current, record.message);
+  }
+
+  static void _parseNativeLog(GenerationLog log, String text) {
+    for (final line in text.split('\n')) {
       final enc = _sliceEncoded.firstMatch(line);
       if (enc != null) {
-        current.imageEncodeMs = (current.imageEncodeMs ?? 0) + double.parse(enc.group(1)!);
+        log.imageEncodeMs = (log.imageEncodeMs ?? 0) + double.parse(enc.group(1)!);
       }
       final dec = _imageDecoded.firstMatch(line);
       if (dec != null) {
-        current.imageDecodeMs = (current.imageDecodeMs ?? 0) + double.parse(dec.group(1)!);
+        log.imageDecodeMs = (log.imageDecodeMs ?? 0) + double.parse(dec.group(1)!);
       }
     }
   }
@@ -111,6 +122,9 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
       log.error = e.toString();
       rethrow;
     } finally {
+      // The call's lines, plus any model-load output since the last call.
+      final native = drainNativeLog?.call();
+      if (native != null) _parseNativeLog(log, native);
       _current = null;
     }
   }

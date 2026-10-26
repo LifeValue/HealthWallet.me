@@ -65,7 +65,11 @@ For each document it:
 
 The runner skips `ProcessingHandler`'s OCR pre-match against existing patient records (`mapContainerOnly`), since the benchmark has no records; it always runs the full phase 1.
 
-The production classes are used unchanged. A recording decorator wraps `AiInferenceDataSourceImpl` and keeps each generation's raw output, whether it parses as JSON exactly as produced (`strictJsonValid`), the call's `GenerationStats` (prompt and completion tokens, time to first token, prompt-eval and total duration from llamadart's final chunk and performance context), and the image-encode time. Image-encode time comes only from llama.cpp's mtmd log lines (`image slice encoded in N ms`), which the runner receives through `LlamaLogging.configure`; when none appear the value is `null` and the report prints "n/a".
+The production classes are used unchanged. A recording decorator wraps `AiInferenceDataSourceImpl` and keeps each generation's raw output, whether it parses as JSON exactly as produced (`strictJsonValid`), the call's `GenerationStats` (prompt and completion tokens, time to first token, prompt-eval and total duration from llamadart's final chunk and performance context), and the image-encode and image-decode times from llama.cpp's mtmd log lines (`image slice encoded in N ms`, `image decoded (batch i/n) in N ms`).
+
+llama.cpp writes its log to stderr, and llamadart never forwards it to a Dart handler, so the runner points the process's stderr (fd 2) at `results/<runId>/native.log` for the run (`NativeLogCapture`), reads what each generation wrote after it returns and copies it on to the real stderr. `native.log` is kept as the run's full native log. llamadart 0.15 encodes images with `mtmd_encode_chunk` itself and only decodes through mtmd's helper, so the decode line appears but the encode line does not: `imageEncodeMs` is `null` and the report prints "n/a". Use the vision calls' time to first token, which includes the encode, until llamadart logs or reports it.
+
+Each record also keeps the pipeline's own `ProcessingLogBuffer` lines for the document (`pipelineLog`): OCR size, the model config and GPU layers, memory checks, vision batches and text fallbacks.
 
 ### Record format
 
@@ -75,7 +79,8 @@ The production classes are used unchanged. A recording decorator wraps `AiInfere
  "generations": [{"phase": "basic", "mode": "text", "strictJsonValid": true, "promptTokens": 812,
    "completionTokens": 143, "timeToFirstTokenMs": 950.2, "promptEvalMs": 901.0, "durationMs": 4210.7,
    "imageEncodeMs": null, "imageDecodeMs": null, "rawOutput": "[…]"}],
- "peakRssBytes": 3012345856, "wallMs": 48211, "mappingErrors": ["…"], "error": "…"}
+ "peakRssBytes": 3012345856, "wallMs": 48211, "pipelineLog": ["[12:25:05.290][ScanAI] loadModel: ctx=2048, gpuLayers=99, …", …],
+ "mappingErrors": ["…"], "error": "…"}
 ```
 
 `error` is present only when the pipeline threw; `predictedResources` is then empty. `gpuLayers` is present only with `BENCH_GPU_LAYERS`.

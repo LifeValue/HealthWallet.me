@@ -33,6 +33,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'extraction_bench/document_runner.dart';
+import 'extraction_bench/native_log_capture.dart';
 import 'extraction_bench/recording_data_source.dart';
 
 const _model = String.fromEnvironment('BENCH_MODEL');
@@ -103,7 +104,20 @@ void main() {
     final previousModel = prefs.getString(SharedPrefsConstants.aiSelectedModel);
     await prefs.setString(SharedPrefsConstants.aiSelectedModel, variant.name);
 
-    final recorder = RecordingAiInferenceDataSource(AiInferenceDataSourceImpl(prefs), gpuLayersOverride: gpuLayers);
+    final runId = _runIdDefine.isNotEmpty ? _runIdDefine : '${variant.name}-${Platform.operatingSystem}-${_timestamp()}';
+    final resultsDir = Directory(p.join(benchRoot, 'results', runId))..createSync(recursive: true);
+    // llama.cpp logs image-encode times only to stderr; see NativeLogCapture.
+    NativeLogCapture? nativeLog;
+    try {
+      nativeLog = NativeLogCapture.start(p.join(resultsDir.path, 'native.log'));
+    } catch (e) {
+      debugPrint('[bench] stderr capture unavailable, image-encode times will be n/a: $e');
+    }
+    final recorder = RecordingAiInferenceDataSource(
+      AiInferenceDataSourceImpl(prefs),
+      gpuLayersOverride: gpuLayers,
+      drainNativeLog: nativeLog?.drain,
+    );
     final ocr = getIt<TextRecognitionService>();
     final repository = ProcessingRepositoryImpl(
       recorder,
@@ -113,8 +127,6 @@ void main() {
     );
     await LlamaLogging.configure(level: LlamaLogLevel.info, handler: recorder.onLog);
 
-    final runId = _runIdDefine.isNotEmpty ? _runIdDefine : '${variant.name}-${Platform.operatingSystem}-${_timestamp()}';
-    final resultsDir = Directory(p.join(benchRoot, 'results', runId))..createSync(recursive: true);
     final output = File(p.join(resultsDir.path, 'predictions.jsonl'));
     final workDir = Directory(p.join(resultsDir.path, 'pages'))..createSync(recursive: true);
 
@@ -143,6 +155,7 @@ void main() {
       }
     } finally {
       await LlamaLogging.configure();
+      nativeLog?.stop();
       if (previousModel == null) {
         await prefs.remove(SharedPrefsConstants.aiSelectedModel);
       } else {

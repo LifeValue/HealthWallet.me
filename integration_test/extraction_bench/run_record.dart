@@ -16,6 +16,7 @@ class RunRecord {
     required this.peakRssBytes,
     required this.wallMs,
     this.gpuLayers,
+    this.pipelineLog = const [],
     this.mappingErrors = const [],
     this.error,
   });
@@ -39,6 +40,10 @@ class RunRecord {
   final int peakRssBytes;
   final int wallMs;
 
+  /// The pipeline's `ProcessingLogBuffer` lines for this document (OCR size,
+  /// memory checks, vision batches, text fallback).
+  final List<String> pipelineLog;
+
   /// Resources the pipeline extracted but `toFhirResource` could not map;
   /// they are left out of [predictedResources].
   final List<String> mappingErrors;
@@ -57,6 +62,7 @@ class RunRecord {
         'generations': [for (final g in generations) g.toJson()],
         'peakRssBytes': peakRssBytes,
         'wallMs': wallMs,
+        if (pipelineLog.isNotEmpty) 'pipelineLog': pipelineLog,
         if (mappingErrors.isNotEmpty) 'mappingErrors': mappingErrors,
         if (error != null) 'error': error,
       };

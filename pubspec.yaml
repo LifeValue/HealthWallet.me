@@ -114,6 +114,7 @@ dev_dependencies:
 
   # Extraction benchmark (tool/extraction_bench, integration_test/)
   args: ^2.7.0
+  ffi: ^2.2.0
   pdf: ^3.13.1
 
   # Code Generation

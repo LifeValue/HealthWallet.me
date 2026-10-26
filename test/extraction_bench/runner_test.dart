@@ -11,6 +11,7 @@ import 'package:llamadart/llamadart.dart';
 import 'package:path/path.dart' as p;
 
 import '../../integration_test/extraction_bench/document_runner.dart';
+import '../../integration_test/extraction_bench/native_log_capture.dart';
 import '../../integration_test/extraction_bench/recording_data_source.dart';
 import '../../integration_test/extraction_bench/run_record.dart';
 import '../../tool/extraction_bench/src/dataset.dart';
@@ -169,6 +170,43 @@ void main() {
     expect(parsed.generations.map((g) => g.strictJsonValid), [true, false]);
     expect(parsed.generations[1].imageEncodeMs, 412);
     expect(parsed.error, isNull);
+  });
+
+  test('native log drained after each call is parsed into that generation', () async {
+    final drains = [
+      'llama_model_load: loaded\n', // before the document: discarded
+      'clip_model_loader: ok\nencoding image slice...\nimage slice encoded in 300 ms\n'
+          'image slice encoded in 112.5 ms\nimage decoded (batch 1/1) in 40 ms\n',
+      'llama_context: n_ctx = 2048\n',
+    ];
+    final recorder = RecordingAiInferenceDataSource(
+      FakeAiInferenceDataSource(['[]', '[]']),
+      drainNativeLog: () => drains.isEmpty ? '' : drains.removeAt(0),
+    )..beginDocument();
+    recorder.phase = 'remaining';
+    await recorder.runVisionPrompt(prompt: 'p', imagePaths: const []);
+    await recorder.runTextPrompt(prompt: 'p');
+    final [vision, text] = recorder.generations;
+    expect(vision.imageEncodeMs, 412.5);
+    expect(vision.imageDecodeMs, 40);
+    expect(text.imageEncodeMs, isNull);
+    expect(drains, isEmpty);
+  });
+
+  test('NativeLogCapture redirects stderr to a file and restores it', () async {
+    final tmp = Directory.systemTemp.createTempSync('bench_stderr_');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+    final path = p.join(tmp.path, 'native.log');
+    final capture = NativeLogCapture.start(path);
+    stderr.writeln('image slice encoded in 77 ms');
+    await stderr.flush();
+    expect(capture.drain(), contains('image slice encoded in 77 ms'));
+    expect(capture.drain(), isEmpty);
+    stderr.writeln('second');
+    await stderr.flush();
+    capture.stop();
+    expect(File(path).readAsStringSync(), endsWith('second\n'));
+    expect(capture.drain(), isEmpty);
   });
 
   test('the GPU-layer override replaces every model load and is recorded', () async {

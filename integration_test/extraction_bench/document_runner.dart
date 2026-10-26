@@ -7,6 +7,7 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:path/path.dart' as p;
 
 import 'degradation.dart';
@@ -59,6 +60,14 @@ Future<RunRecord> runBenchDocument({
   required int? Function(String key) pref,
 }) async {
   recorder.beginDocument();
+  final pipelineLog = <String>[];
+  final logBuffer = ProcessingLogBuffer.instance;
+  // log() notifies right after appending, so the newest entry is the last.
+  void onPipelineLog() {
+    if (logBuffer.length > 0) pipelineLog.add(logBuffer.getAll().last);
+  }
+
+  logBuffer.addListener(onPipelineLog);
   var peakRss = ProcessInfo.currentRss;
   final rssTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
     final rss = ProcessInfo.currentRss;
@@ -128,6 +137,7 @@ Future<RunRecord> runBenchDocument({
   }
   wall.stop();
   rssTimer.cancel();
+  logBuffer.removeListener(onPipelineLog);
   // Rasterized PDF pages are temporary files; dataset images are kept.
   for (final page in pageImages) {
     if (!p.isWithin(doc.dir, page)) {
@@ -146,6 +156,7 @@ Future<RunRecord> runBenchDocument({
     platform: Platform.operatingSystem,
     useVision: useVision,
     gpuLayers: recorder.gpuLayersOverride,
+    pipelineLog: pipelineLog,
     predictedResources: predicted,
     generations: List.of(recorder.generations),
     peakRssBytes: peakRss,
