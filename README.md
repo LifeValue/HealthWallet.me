@@ -181,14 +181,18 @@ lib/
 <details>
 <summary><strong>Branch Strategy</strong></summary>
 
-| Branch      | Purpose               | CI/CD                            |
-| ----------- | --------------------- | -------------------------------- |
-| `master`    | Production            | Deploy to App Store + Play Store |
-| `develop`   | Staging               | Deploy to internal tracks        |
-| `feature/*` | New features          | Analyze + test                   |
-| `fix/*`     | Bug fixes             | Analyze + test                   |
-| `release/*` | Release stabilization | Full test suite                  |
-| `hotfix/*`  | Urgent fixes          | Analyze + test                   |
+Gitflow. Every push runs the checks in parallel: `dart format`, `flutter analyze` and `flutter test`; the formatters and commitlint on the changed files; dependency (osv-scanner) and secret (gitleaks) scans. Any failure fails the pipeline, and deploys start only after every check passes.
+
+| Branch      | From      | Purpose               | Deploys                                                      |
+| ----------- | --------- | --------------------- | ------------------------------------------------------------ |
+| `master`    | —         | Production            | Manual: TestFlight / Play internal, Shorebird patch, Windows |
+| `develop`   | —         | Staging               | Automatic beta to TestFlight and Play internal               |
+| `release/*` | `develop` | Release stabilization | Manual beta for testers                                      |
+| `feature/*` | `develop` | New features          | None, checks only                                            |
+| `bugfix/*`  | `develop` | Fixes for develop     | None, checks only                                            |
+| `hotfix/*`  | `master`  | Urgent fixes          | None, checks only                                            |
+
+Production releases are promoted from a tested beta in App Store Connect and Play Console.
 
 </details>
 
@@ -216,6 +220,7 @@ Needs Node (Prettier, commitlint), Java (ktlint), Ruby (RuboCop) and Xcode (swif
 brew install pre-commit   # once per machine
 npm install               # Prettier, commitlint and the git hooks (format staged files, check commit messages)
 scripts/check.sh          # formatters on the files your branch changed, then analyze and tests
+scripts/coverage.sh       # test coverage: total, per feature and for the critical areas
 ```
 
 ---
