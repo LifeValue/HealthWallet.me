@@ -96,3 +96,6 @@ ios/fastlane/Appfile
 ios/fastlane/Matchfile
 # Node (Prettier tooling)
 node_modules/
+
+# Temporary test written by scripts/coverage.sh
+test/coverage_all_files_test.dart
