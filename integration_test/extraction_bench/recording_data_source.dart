@@ -172,6 +172,7 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
     int? maxTokens,
     String? grammar,
     Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   }) =>
       _record(
         GenerationMode.text,
@@ -180,6 +181,7 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
           maxTokens: maxTokens,
           grammar: grammar,
           responseFormat: responseFormat,
+          chatTemplateKwargs: chatTemplateKwargs,
         ),
         grammar: grammar,
         responseFormat: responseFormat,
@@ -187,6 +189,9 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
 
   @override
   GenerationStats? get lastGenerationStats => _inner.lastGenerationStats;
+
+  @override
+  PromptFamily get promptFamily => _inner.promptFamily;
 
   @override
   Future<void> initModel({bool withVision = true, int? contextSize, int? gpuLayers, int? threads}) =>

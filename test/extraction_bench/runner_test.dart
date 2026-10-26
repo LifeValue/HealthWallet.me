@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
@@ -28,6 +29,9 @@ class FakeAiInferenceDataSource extends Fake implements AiInferenceDataSource {
   final constraints = <(String?, Map<String, dynamic>?)>[];
 
   @override
+  PromptFamily get promptFamily => PromptFamily.standard;
+
+  @override
   GenerationStats? get lastGenerationStats => _stats;
 
   @override
@@ -36,6 +40,7 @@ class FakeAiInferenceDataSource extends Fake implements AiInferenceDataSource {
     int? maxTokens,
     String? grammar,
     Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   }) async {
     constraints.add((grammar, responseFormat));
     _stats = const GenerationStats(

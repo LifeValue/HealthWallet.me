@@ -58,12 +58,19 @@ abstract class AiInferenceDataSource {
     Map<String, dynamic>? responseFormat,
   });
 
+  /// With [chatTemplateKwargs] (NuExtract's `template`/`instructions`),
+  /// [prompt] is sent alone as the user message: the chat template adds the
+  /// rest.
   Future<String?> runTextPrompt({
     required String prompt,
     int? maxTokens,
     String? grammar,
     Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   });
+
+  /// The [PromptFamily] of the active model.
+  PromptFamily get promptFamily;
 
   /// Token counts and timings of the last [runVisionPrompt] or
   /// [runTextPrompt] call. Reset when a call starts; null when the call
@@ -703,10 +710,15 @@ class AiInferenceDataSourceImpl
     int? maxTokens,
     String? grammar,
     Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   }) =>
       runTextPromptImpl(
           prompt: prompt,
           maxTokens: maxTokens,
           grammar: grammar,
-          responseFormat: responseFormat);
+          responseFormat: responseFormat,
+          chatTemplateKwargs: chatTemplateKwargs);
+
+  @override
+  PromptFamily get promptFamily => _activeConfig.promptFamily;
 }

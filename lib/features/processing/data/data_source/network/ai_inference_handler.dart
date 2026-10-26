@@ -254,6 +254,7 @@ mixin AiInferenceHandler {
     int? maxTokens,
     String? grammar,
     Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   }) async {
     lastGenerationStats = null;
     if (engine == null) {
@@ -265,17 +266,21 @@ mixin AiInferenceHandler {
     ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] prompt ${prompt.length} chars, maxTokens=$effectiveTokens');
 
-    final messages = [
-      LlamaChatMessage.fromText(
-        role: LlamaChatRole.system,
-        text:
-            'You are a medical document data extractor. Output only valid JSON.',
-      ),
-      LlamaChatMessage.fromText(
-        role: LlamaChatRole.user,
-        text: '$prompt\n\nJSON:\n',
-      ),
-    ];
+    // NuExtract's chat template renders its own task, template and document
+    // sections around the user message.
+    final messages = chatTemplateKwargs != null
+        ? [LlamaChatMessage.fromText(role: LlamaChatRole.user, text: prompt)]
+        : [
+            LlamaChatMessage.fromText(
+              role: LlamaChatRole.system,
+              text:
+                  'You are a medical document data extractor. Output only valid JSON.',
+            ),
+            LlamaChatMessage.fromText(
+              role: LlamaChatRole.user,
+              text: '$prompt\n\nJSON:\n',
+            ),
+          ];
 
     isGenerating = true;
     final sw = Stopwatch()..start();
@@ -312,6 +317,7 @@ mixin AiInferenceHandler {
         ),
         enableThinking: false,
         responseFormat: responseFormat,
+        chatTemplateKwargs: chatTemplateKwargs,
       )) {
         usage = chunk.usage ?? usage;
         finishReason = chunk.choices.firstOrNull?.finishReason ?? finishReason;

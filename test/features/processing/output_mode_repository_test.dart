@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/draft_prompt.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
@@ -35,12 +36,13 @@ class _FakeOcr extends Fake implements TextRecognitionService {
 }
 
 class _Call {
-  _Call(this.kind, this.prompt, this.maxTokens, this.grammar, this.responseFormat);
+  _Call(this.kind, this.prompt, this.maxTokens, this.grammar, this.responseFormat, [this.chatTemplateKwargs]);
   final String kind;
   final String prompt;
   final int? maxTokens;
   final String? grammar;
   final Map<String, dynamic>? responseFormat;
+  final Map<String, dynamic>? chatTemplateKwargs;
 
   bool get isDraft => grammar == null && responseFormat == null;
 
@@ -52,8 +54,11 @@ class _Call {
 /// Answers each call with the next queued output (a [Exception] is thrown)
 /// and records what was asked.
 class _FakeDataSource extends Fake implements AiInferenceDataSource {
-  _FakeDataSource(this.outputs);
+  _FakeDataSource(this.outputs, {this.promptFamily = PromptFamily.standard});
   final List<Object?> outputs;
+
+  @override
+  final PromptFamily promptFamily;
   final calls = <_Call>[];
   final loads = <({bool withVision, int? contextSize})>[];
 
@@ -97,8 +102,9 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
     int? maxTokens,
     String? grammar,
     Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   }) =>
-      _answer(_Call('text', prompt, maxTokens, grammar, responseFormat));
+      _answer(_Call('text', prompt, maxTokens, grammar, responseFormat, chatTemplateKwargs));
 }
 
 class _Repository with AiExtractionRepository {
@@ -366,6 +372,48 @@ void main() {
       expect(ds.calls.last.schemaKeys, contains('familyName'));
       expect(ds.calls.last.prompt, contains('Name: Müller, Anna'));
       expect(patient.familyName.value, 'Müller');
+    });
+  });
+
+  group('NuExtract models', () {
+    test('NuExtract3 gets the OCR text as the document, its template and instructions, and keeps the schema', () async {
+      final ds = _FakeDataSource([_basicObject], promptFamily: PromptFamily.nuExtract3);
+      final (patient, container) =
+          await _Repository(ds, _labOcr).processMapBasicInfo(const ['p.png'], outputMode: ExtractionOutputMode.schema);
+      final call = ds.calls.single;
+      expect(call.prompt, _labOcr);
+      expect(call.schemaKeys, contains('familyName'));
+      final template = jsonDecode(call.chatTemplateKwargs!['template'] as String) as Map<String, dynamic>;
+      expect(template['familyName'], 'string');
+      expect(template['dateOfBirth'], 'date-time');
+      expect(template['documentCategory'], ['visit', 'lab_report']);
+      expect(template['gender'], isNot(contains('')));
+      expect(call.chatTemplateKwargs!['instructions'], contains('documentCategory'));
+      expect(patient.familyName.value, 'Müller');
+      expect(container, isA<MappingDiagnosticReport>());
+    });
+
+    test('NuExtract 2.0 gets no instructions; a lab report phase 2 template has no conditions', () async {
+      final ds = _FakeDataSource([_labObject], promptFamily: PromptFamily.nuExtract2);
+      final resources = await _remaining(ds, mode: ExtractionOutputMode.schema, ocr: _longLabOcr);
+      final kwargs = ds.calls.single.chatTemplateKwargs!;
+      expect(kwargs.keys, ['template']);
+      final template = jsonDecode(kwargs['template'] as String) as Map<String, dynamic>;
+      expect(template.keys, ['observations', 'practitioners', 'organizations']);
+      expect(template['observations'], [
+        {'observationName': 'string', 'value': 'string', 'unit': 'string', 'referenceRange': 'string'},
+      ]);
+      expect(ds.calls.single.prompt, contains('MARKER-AFTER-800'));
+      expect(resources.whereType<MappingObservation>().map((o) => o.observationName.value), contains('Hämoglobin'));
+    });
+
+    test('grammar and schemaDraft modes keep the standard prompts', () async {
+      for (final mode in [ExtractionOutputMode.grammar, ExtractionOutputMode.schemaDraft]) {
+        final ds = _FakeDataSource(['Hb 13,5', _labObject], promptFamily: PromptFamily.nuExtract3);
+        if (mode == ExtractionOutputMode.grammar) ds.outputs.removeAt(0);
+        await _remaining(ds, mode: mode);
+        expect(ds.calls.map((c) => c.chatTemplateKwargs), everyElement(isNull), reason: mode.name);
+      }
     });
   });
 

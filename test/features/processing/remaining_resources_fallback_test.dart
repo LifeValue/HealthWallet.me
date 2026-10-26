@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
@@ -17,6 +18,9 @@ class _FakeOcr extends Fake implements TextRecognitionService {
 class _FakeDataSource extends Fake implements AiInferenceDataSource {
   final loads = <bool>[];
   var visionPrompts = 0;
+
+  @override
+  PromptFamily get promptFamily => PromptFamily.standard;
 
   @override
   GenerationStats? get lastGenerationStats => null;
@@ -50,6 +54,7 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
     int? maxTokens,
     String? grammar,
     Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   }) async =>
       '[{"resourceType":"Condition","conditionName":"Vorhofflimmern","onsetDateTime":"2019","clinicalStatus":"active"}]';
 }

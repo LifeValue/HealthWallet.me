@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:collection/collection.dart';
+import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_vision_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/draft_prompt.dart';
+import 'package:health_wallet/features/processing/data/model/prompt_template/nuextract_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/remaining_resources_vision_prompt.dart';
 import 'package:health_wallet/features/processing/data/utils/image_preprocessor.dart';
 import 'package:health_wallet/features/processing/data/utils/observation_ocr_validator.dart';
@@ -29,6 +31,9 @@ mixin AiExtractionRepository {
 
   /// OCR characters in a phase-2 prompt, vision and text alike.
   static const int _remainingOcrMaxLength = 2000;
+
+  /// The OCR text [BasicInfoPrompt] includes.
+  static const int _basicInfoOcrMaxLength = 1500;
 
   static const _basicInfoTypes = {'Patient', 'Encounter', 'DiagnosticReport'};
   static final _numericValue = RegExp(r'^[\d.,\-+/<>= ]+$');
@@ -59,25 +64,40 @@ mixin AiExtractionRepository {
   }
 
   /// One constrained text generation: the legacy grammar, or [schema] as the
-  /// response format in the schema modes.
+  /// response format in the schema modes. A NuExtract model in schema mode
+  /// gets [document] (the OCR text [prompt] was built from) with its template
+  /// and instructions as chat-template kwargs instead of [prompt].
   Future<String?> _runConstrainedText({
     required String prompt,
+    required String document,
     required int? maxTokens,
     required ExtractionOutputMode mode,
     required Map<String, dynamic> schema,
     required String schemaName,
-  }) =>
-      mode.usesSchema
-          ? networkDataSource.runTextPrompt(
-              prompt: prompt,
-              maxTokens: maxTokens,
-              responseFormat: ExtractionSchemas.responseFormat(schema, name: schemaName),
-            )
-          : networkDataSource.runTextPrompt(
-              prompt: prompt,
-              maxTokens: maxTokens,
-              grammar: GbnfGrammars.jsonArray,
-            );
+    String? documentCategory,
+  }) {
+    if (!mode.usesSchema) {
+      return networkDataSource.runTextPrompt(
+        prompt: prompt,
+        maxTokens: maxTokens,
+        grammar: GbnfGrammars.jsonArray,
+      );
+    }
+    final responseFormat = ExtractionSchemas.responseFormat(schema, name: schemaName);
+    final family = mode == ExtractionOutputMode.schema ? networkDataSource.promptFamily : PromptFamily.standard;
+    if (family == PromptFamily.standard) {
+      return networkDataSource.runTextPrompt(prompt: prompt, maxTokens: maxTokens, responseFormat: responseFormat);
+    }
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] ${family.name} template prompt, document ${document.length} chars');
+    return networkDataSource.runTextPrompt(
+      prompt: document,
+      maxTokens: maxTokens,
+      responseFormat: responseFormat,
+      chatTemplateKwargs: NuExtractPrompt.kwargs(family, schema, schemaName: schemaName, documentCategory: documentCategory),
+    );
+  }
+
+  static String _head(String text, int maxLength) => text.length > maxLength ? text.substring(0, maxLength) : text;
 
   /// The unconstrained draft call of schemaDraft mode; null when it fails or
   /// returns nothing, so the constrained call runs without a draft.
@@ -361,6 +381,7 @@ Rules:
 
     final response = await _runConstrainedText(
       prompt: prompt,
+      document: truncated,
       maxTokens: maxTokens ?? 256,
       mode: outputMode,
       schema: ExtractionSchemas.containerSchema(),
@@ -426,6 +447,7 @@ Rules:
 
     final response = await _runConstrainedText(
       prompt: prompt,
+      document: _head(ocrText, _basicInfoOcrMaxLength),
       maxTokens: maxTokens,
       mode: outputMode,
       schema: ExtractionSchemas.basicInfoSchema(),
@@ -477,6 +499,7 @@ Rules:
         ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running constrained text pass on the vision draft...');
         response = await _runConstrainedText(
           prompt: prompt,
+          document: _head(ocrText, _basicInfoOcrMaxLength),
           maxTokens: maxTokens,
           mode: outputMode,
           schema: ExtractionSchemas.basicInfoSchema(),
@@ -559,6 +582,8 @@ Rules:
         mode: outputMode,
         schema: remainingSchema,
         schemaName: 'remaining_resources',
+        document: _head(ocrText, _remainingOcrMaxLength),
+        documentCategory: documentCategory,
       );
       return _parseResourcesFromResponse(response, confidenceText, outputMode);
     }
@@ -722,6 +747,8 @@ Rules:
             mode: outputMode,
             schema: remainingSchema,
             schemaName: 'remaining_resources',
+            document: _head(ocrText, _remainingOcrMaxLength),
+            documentCategory: documentCategory,
           );
           allResources = _parseResourcesFromResponse(response, confidenceText, outputMode);
         }
