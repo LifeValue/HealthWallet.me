@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-# Enable once per clone with: git config core.hooksPath .githooks
-# Bypass in an emergency with: git commit --no-verify
-exec "$(git rev-parse --show-toplevel)/scripts/check.sh" --staged
