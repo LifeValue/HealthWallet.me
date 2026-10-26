@@ -660,7 +660,14 @@ class AiInferenceDataSourceImpl
     final availableMB = Platform.isIOS
         ? await _getAvailableRamMBForIos()
         : await _getAvailableRamMB();
-    final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
+    // The pipeline checks after initModel: weights already loaded are in RSS
+    // (iOS) or gone from MemAvailable (Android), so only what is not loaded
+    // yet, the context and the working memory still have to fit.
+    final loadedMB = _engine == null
+        ? 0
+        : _activeConfig.modelSizeMB +
+            (withVision && _hasVisionProjector ? _activeConfig.mmprojSizeMB : 0);
+    final requiredMB = estimateRequiredMB(ctx, withVision: withVision) - loadedMB;
     final canProceed = (availableMB < 0) || availableMB >= requiredMB || profile.isDesktop;
     ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] health check: available=${availableMB}MB, required~=${requiredMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, canProceed=$canProceed');
