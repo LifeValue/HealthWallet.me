@@ -91,9 +91,8 @@ class _ReorderPagesSheetState extends State<ReorderPagesSheet> {
               scrollController: scrollController,
               padding: const EdgeInsets.all(Insets.smallNormal),
               itemCount: _paths.length,
-              onReorder: (oldIndex, newIndex) {
+              onReorderItem: (oldIndex, newIndex) {
                 setState(() {
-                  if (newIndex > oldIndex) newIndex--;
                   final item = _paths.removeAt(oldIndex);
                   _paths.insert(newIndex, item);
                 });
