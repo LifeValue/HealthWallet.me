@@ -215,7 +215,8 @@ scan:dependencies:
     name: $OSV_SCANNER_IMAGE
     entrypoint: [""]
   script:
-    - osv-scanner scan source --recursive .
+    # The image only puts the binary at /osv-scanner (its entrypoint), not on PATH.
+    - /osv-scanner scan source --recursive .
 
 # Secrets in any commit of the history; .gitleaks.toml documents the allowlisted false positives.
 scan:secrets:
