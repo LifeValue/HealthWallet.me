@@ -162,6 +162,33 @@ checks:
       cat analyze.log
       [ "$analyze_status" -eq 0 ] && [ "$test_status" -eq 0 ]
 
+# BASE = where this branch left its Gitflow parent (develop, or master for hotfix/*); on develop
+# and master, the previous push. Only that parent is fetched, only as deep as needed, instead of the
+# whole 150 MB history. Used by `lint` and `scan:secrets` to check just this branch's changes.
+.diff_base: &diff_base
+  - git config --global --add safe.directory "$CI_PROJECT_DIR"
+  - |
+    TARGET=""
+    case "$CI_COMMIT_BRANCH" in
+      develop|master) BASE="$CI_COMMIT_BEFORE_SHA" ;;
+      hotfix/*) TARGET=master ;;
+      *) TARGET=develop ;;
+    esac
+    if [ -n "$TARGET" ]; then
+      # Explicit refspecs: CI clones one branch, so a plain `git fetch origin develop` would not
+      # create origin/develop.
+      git fetch -q --depth=100 origin "+refs/heads/$TARGET:refs/remotes/origin/$TARGET"
+      tries=0
+      until BASE="$(git merge-base "origin/$TARGET" HEAD 2>/dev/null)"; do
+        tries=$((tries + 1))
+        if [ "$tries" -gt 10 ]; then echo "No common history with $TARGET"; exit 1; fi
+        git fetch -q --deepen=200 origin "+refs/heads/$TARGET:refs/remotes/origin/$TARGET" \
+          "+refs/heads/$CI_COMMIT_BRANCH:refs/remotes/origin/$CI_COMMIT_BRANCH"
+      done
+    fi
+    if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then BASE="$(git rev-parse HEAD~1)"; fi
+    echo "Checking changes since $BASE"
+
 # Every other formatter (.pre-commit-config.yaml) on the files this branch changed, and the commit
 # messages against Conventional Commits. Dart is formatted in `checks`; swift-format needs Xcode,
 # so Swift is only formatted by the local hook. Java and Ruby are installed only when Kotlin or
@@ -189,7 +216,6 @@ lint:
       when: always
   before_script:
     - apt-get update -qq && apt-get install -y -qq --no-install-recommends git curl xz-utils ca-certificates > /dev/null
-    - git config --global --add safe.directory "$CI_PROJECT_DIR"
     - |
       case "$(uname -m)" in
         x86_64) node_arch=x64; node_sha="$NODE_SHA256_X64" ;;
@@ -204,16 +230,7 @@ lint:
       fi
       export PATH="$node_dir/bin:$PATH"
     - node --version
-    # Changes are measured against where the branch left its Gitflow parent; on develop and
-    # master, against the previous push.
-    - |
-      case "$CI_COMMIT_BRANCH" in
-        develop|master) BASE="$CI_COMMIT_BEFORE_SHA" ;;
-        hotfix/*) git fetch -q origin master && BASE="$(git merge-base origin/master HEAD)" ;;
-        *) git fetch -q origin develop && BASE="$(git merge-base origin/develop HEAD)" ;;
-      esac
-      if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then BASE="$(git rev-parse HEAD~1)"; fi
-      echo "Checking changes since $BASE"
+    - *diff_base
     - CHANGED="$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD)"
     - SKIP="dart-format,swift-format"
     - |
