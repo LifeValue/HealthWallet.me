@@ -13,8 +13,6 @@ PODS:
     - Flutter
   - permission_handler_apple (9.3.0):
     - Flutter
-  - printing (1.0.0):
-    - Flutter
 
 DEPENDENCIES:
   - airdrop (from `.symlinks/plugins/airdrop/ios`)
@@ -24,7 +22,6 @@ DEPENDENCIES:
   - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
   - pdfx (from `.symlinks/plugins/pdfx/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
-  - printing (from `.symlinks/plugins/printing/ios`)
 
 EXTERNAL SOURCES:
   airdrop:
@@ -41,8 +38,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/pdfx/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
-  printing:
-    :path: ".symlinks/plugins/printing/ios"
 
 SPEC CHECKSUMS:
   airdrop: 4fcb1b80cf0cfefe825cf6301e2db3dc6aee8ed3
@@ -52,8 +47,7 @@ SPEC CHECKSUMS:
   open_file_ios: 46184d802ee7959203f6392abcfa0dd49fdb5be0
   pdfx: 77f4dddc48361fbb01486fa2bdee4532cbb97ef3
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
-  printing: 54ff03f28fe9ba3aa93358afb80a8595a071dd07
 
-PODFILE CHECKSUM: ee90991339243eaa2c345acc2ca5bc93c4c32055
+PODFILE CHECKSUM: 328ce254030d7c368146d25a831668bd3b433fe2
 
 COCOAPODS: 1.16.2
