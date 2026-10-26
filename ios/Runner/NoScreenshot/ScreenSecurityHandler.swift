@@ -13,7 +13,8 @@ class ScreenSecurityHandler {
 
     // The window is looked up when protection is enabled: with the UIScene lifecycle it doesn't
     // exist yet when the channel is registered.
-    func register(with messenger: FlutterBinaryMessenger, windowProvider: @escaping () -> UIWindow?) {
+    func register(with messenger: FlutterBinaryMessenger, windowProvider: @escaping () -> UIWindow?)
+    {
         self.windowProvider = windowProvider
 
         let methodChannel = FlutterMethodChannel(
@@ -123,8 +124,10 @@ class ScreenSecurityHandler {
         NSLayoutConstraint.activate([
             stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -32),
+            stack.leadingAnchor.constraint(
+                greaterThanOrEqualTo: container.leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(
+                lessThanOrEqualTo: container.trailingAnchor, constant: -32),
         ])
 
         return container
