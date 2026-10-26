@@ -17,7 +17,9 @@ exclude: |
     .*/GeneratedPluginRegistrant\.swift$|
     ios/fastlane/report\.xml$|
     .*\.xcassets/|
-    LICENSE\.md$|test_sync_data\.json$|untranslated_messages\.json$
+    LICENSE\.md$|test_sync_data\.json$|untranslated_messages\.json$|
+    \.fvmrc$|\.mason/|mason-lock\.json$|.*\.iml$|
+    android/app/src/main/kotlin/com/techstackapps/health_wallet/
   )|\.(g|freezed|gr|config|gen)\.dart$
   |\.(pbxproj|xcscheme|xcworkspacedata|xcsettings|storyboard|xib|plist|entitlements|lock|resolved|msgpack)$
 
@@ -25,9 +27,12 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      # dart format owns Dart whitespace; these hooks would also edit multi-line string literals.
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        exclude_types: [dart]
       - id: end-of-file-fixer
+        exclude_types: [dart]
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: check-merge-conflict
@@ -80,6 +85,8 @@ repos:
     rev: 0.29.2
     hooks:
       - id: gersemi
+        # gersemi's native module fails to load under Python 3.15.
+        language_version: python3.13
 
   - repo: https://github.com/rubocop/rubocop
     rev: v1.92.0
