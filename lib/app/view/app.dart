@@ -6,23 +6,23 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
-import 'package:health_wallet/core/services/bluetooth_state_service.dart';
-import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
-import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
-import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
-import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
+import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
-import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
-import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 
 class App extends StatefulWidget {
@@ -86,8 +86,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
     final bluetoothOn = await getIt<BluetoothStateService>().isEnabled();
     if (!bluetoothOn) {
-      await userRepository
-          .updateUser(user.copyWith(isReceiveModeEnabled: false));
+      await userRepository.updateUser(
+        user.copyWith(isReceiveModeEnabled: false),
+      );
       return;
     }
 
@@ -114,9 +115,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-            create: (_) => getIt<UserBloc>()..add(const UserInitialised())),
+          create: (_) => getIt<UserBloc>()..add(const UserInitialised()),
+        ),
         BlocProvider(
-            create: (_) => getIt<SyncBloc>()..add(const SyncInitialised())),
+          create: (_) => getIt<SyncBloc>()..add(const SyncInitialised()),
+        ),
         BlocProvider(create: (_) => getIt<RecordsBloc>()),
         BlocProvider.value(value: getIt<ProcessingBloc>()),
         BlocProvider.value(
@@ -131,47 +134,43 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           BlocProvider.value(value: getIt<TrayBloc>()),
       ],
       child: MultiBlocListener(
-          listeners: [
-            BlocListener<SyncBloc, SyncState>(
-              listenWhen: (previous, current) =>
-                  previous.syncStatus != current.syncStatus ||
-                  previous.shouldShowTutorial != current.shouldShowTutorial,
-              listener: (context, state) {
-                _handleSyncBlocStateChange(context, state);
-              },
-            ),
-            BlocListener<ProcessingBloc, ProcessingState>(
-              listenWhen: (previous, current) =>
-                  previous.status != current.status &&
-                  current.status == const PipelineStatus.success(),
-              listener: (context, state) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!context.mounted) return;
-                  _handleScanSuccess(context);
-                });
-              },
-            ),
-            BlocListener<RecordsBloc, RecordsState>(
-              listenWhen: (previous, current) =>
-                  current.status == const RecordsStatus.deleted(),
-              listener: (context, state) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!context.mounted) return;
-                  context
-                      .read<PatientBloc>()
-                      .add(const PatientPatientsLoaded());
-                  context
-                      .read<HomeBloc>()
-                      .add(const HomeRefreshPreservingOrder());
-                });
-              },
-            ),
-          ],
-          child: BlocBuilder<UserBloc, UserState>(
-            buildWhen: (previous, current) =>
-                previous.user.isDarkMode != current.user.isDarkMode ||
-                previous.appLocale != current.appLocale,
-            builder: (context, state) {
+        listeners: [
+          BlocListener<SyncBloc, SyncState>(
+            listenWhen: (previous, current) =>
+                previous.syncStatus != current.syncStatus ||
+                previous.shouldShowTutorial != current.shouldShowTutorial,
+            listener: _handleSyncBlocStateChange,
+          ),
+          BlocListener<ProcessingBloc, ProcessingState>(
+            listenWhen: (previous, current) =>
+                previous.status != current.status &&
+                current.status == const PipelineStatus.success(),
+            listener: (context, state) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!context.mounted) return;
+                _handleScanSuccess(context);
+              });
+            },
+          ),
+          BlocListener<RecordsBloc, RecordsState>(
+            listenWhen: (previous, current) =>
+                current.status == const RecordsStatus.deleted(),
+            listener: (context, state) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!context.mounted) return;
+                context.read<PatientBloc>().add(const PatientPatientsLoaded());
+                context.read<HomeBloc>().add(
+                  const HomeRefreshPreservingOrder(),
+                );
+              });
+            },
+          ),
+        ],
+        child: BlocBuilder<UserBloc, UserState>(
+          buildWhen: (previous, current) =>
+              previous.user.isDarkMode != current.user.isDarkMode ||
+              previous.appLocale != current.appLocale,
+          builder: (context, state) {
             return MaterialApp.router(
               scrollBehavior: const MaterialScrollBehavior().copyWith(
                 dragDevices: {
@@ -183,8 +182,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               title: 'HealthWallet.me',
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
-              themeMode:
-                  state.user.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              themeMode: state.user.isDarkMode
+                  ? ThemeMode.dark
+                  : ThemeMode.light,
               locale: state.appLocale,
               routerConfig: router.config(
                 navigatorObservers: () => [routeObserver],
@@ -233,8 +233,9 @@ void _handleSyncBlocStateChange(BuildContext context, SyncState state) {
     Future.delayed(const Duration(milliseconds: 500), () {
       if (context.mounted) {
         final homeState = context.read<HomeBloc>().state;
-        final currentSource =
-            homeState.selectedSource.isEmpty ? 'All' : homeState.selectedSource;
+        final currentSource = homeState.selectedSource.isEmpty
+            ? 'All'
+            : homeState.selectedSource;
         PatientSourceUtils.reloadHomeWithPatientFilter(context, currentSource);
       }
     });

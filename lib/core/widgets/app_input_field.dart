@@ -62,8 +62,10 @@ class AppInputField extends StatelessWidget {
               onChanged: onChanged,
               keyboardType: keyboardType,
               inputFormatters: inputFormatters,
-              style: AppTextStyle.labelLarge
-                  .copyWith(color: textColor, height: 1.0),
+              style: AppTextStyle.labelLarge.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: Insets.smallNormal,
@@ -74,8 +76,10 @@ class AppInputField extends StatelessWidget {
                 focusedBorder: InputBorder.none,
                 isCollapsed: true,
                 hintText: hintText,
-                hintStyle: AppTextStyle.labelLarge
-                    .copyWith(color: hintColor, height: 1.0),
+                hintStyle: AppTextStyle.labelLarge.copyWith(
+                  color: hintColor,
+                  height: 1.0,
+                ),
               ),
             ),
           ),

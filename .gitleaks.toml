@@ -1,0 +1,8 @@
+# Secret scanning (gitleaks), run in CI on the branch's commits. Real secrets live in GitLab CI/CD
+# variables; anything allowlisted here must be shown not to be a secret.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "CocoaPods lockfiles: the SPEC CHECKSUMS are SHA-1 hashes of podspecs, not keys"
+paths = ['''(^|/)Podfile\.lock$''']

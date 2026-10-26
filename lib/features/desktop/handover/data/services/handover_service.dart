@@ -3,31 +3,29 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-
-import 'package:health_wallet/features/desktop/communication/data/services/chunk_transfer_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 @lazySingleton
 class HandoverService {
   final MessageRouter _messageRouter;
-  final ChunkTransferService _chunkTransferService;
   final TcpService _tcpService;
   final ProcessingBloc _processingBloc;
 
   final Map<String, HandoverSession> _sessions = {};
   final Map<String, List<String>> _receivedFiles = {};
   final Map<String, Map<String, dynamic>?> _phase1Data = {};
-  final _sessionUpdateController = StreamController<HandoverSession>.broadcast();
-  final Map<String, ({String type, Map<String, dynamic> payload})> _pendingResults = {};
+  final _sessionUpdateController =
+      StreamController<HandoverSession>.broadcast();
+  final Map<String, ({String type, Map<String, dynamic> payload})>
+  _pendingResults = {};
 
   StreamSubscription? _offerSub;
   StreamSubscription? _fileSub;
@@ -37,7 +35,6 @@ class HandoverService {
 
   HandoverService(
     this._messageRouter,
-    this._chunkTransferService,
     this._tcpService,
     this._processingBloc,
   );
@@ -62,7 +59,6 @@ class HandoverService {
   ) {
     final sessionId = payload['session_id'] as String;
     final fileCount = payload['file_count'] as int;
-    final totalBytes = payload['total_bytes'] as int;
 
     final session = HandoverSession(
       sessionId: sessionId,
@@ -88,7 +84,6 @@ class HandoverService {
     void Function(String sessionId) onProcessingComplete,
   ) async {
     final sessionId = payload['session_id'] as String;
-    final fileIndex = payload['file_index'] as int;
     final fileName = payload['file_name'] as String;
     final data = payload['data'] as String;
 
@@ -148,29 +143,34 @@ class HandoverService {
     if (_hasPhase1Data) {
       final p1 = phase1!;
       phase1Patient = stagedPatientFromJson(
-          p1['patient'] as Map<String, dynamic>);
+        p1['patient'] as Map<String, dynamic>,
+      );
       if (p1['encounter'] != null) {
         phase1Encounter = stagedEncounterFromJson(
-            p1['encounter'] as Map<String, dynamic>);
+          p1['encounter'] as Map<String, dynamic>,
+        );
       }
       if (p1['diagnosticReport'] != null) {
         phase1DiagnosticReport = stagedDiagnosticReportFromJson(
-            p1['diagnosticReport'] as Map<String, dynamic>);
+          p1['diagnosticReport'] as Map<String, dynamic>,
+        );
       }
     }
 
-    _processingBloc.add(DocumentImported(
-      filePaths: filePaths,
-      origin: ProcessingOrigin.handover,
-      phase1Patient: phase1Patient,
-      phase1Encounter: phase1Encounter,
-      phase1DiagnosticReport: phase1DiagnosticReport,
-    ));
+    _processingBloc.add(
+      DocumentImported(
+        filePaths: filePaths,
+        origin: ProcessingOrigin.handover,
+        phase1Patient: phase1Patient,
+        phase1Encounter: phase1Encounter,
+        phase1DiagnosticReport: phase1DiagnosticReport,
+      ),
+    );
 
     var sessionActivated = false;
     var phase2Triggered = false;
 
-    _processingBlocSub?.cancel();
+    unawaited(_processingBlocSub?.cancel());
     _processingBlocSub = _processingBloc.stream.listen((processingState) {
       final newSession = processingState.sessions.firstWhereOrNull(
         (s) => s.origin == ProcessingOrigin.handover,
@@ -246,7 +246,10 @@ class HandoverService {
       _sessionUpdateController.add(updated);
 
       final step1Payload = {'session_id': sessionId};
-      _pendingResults[sessionId] = (type: 'handover.step1_complete', payload: step1Payload);
+      _pendingResults[sessionId] = (
+        type: 'handover.step1_complete',
+        payload: step1Payload,
+      );
       _tcpService.sendData('handover.step1_complete', step1Payload);
 
       _processingBlocSub?.cancel();
@@ -287,11 +290,14 @@ class HandoverService {
       final resultPayload = {
         'session_id': sessionId,
         'resources': resources,
-        if (patientJson != null) 'patient': patientJson,
-        if (encounterJson != null) 'encounter': encounterJson,
+        'patient': ?patientJson,
+        'encounter': ?encounterJson,
       };
 
-      _pendingResults[sessionId] = (type: 'handover.result', payload: resultPayload);
+      _pendingResults[sessionId] = (
+        type: 'handover.result',
+        payload: resultPayload,
+      );
 
       await _tcpService.sendData('handover.result', resultPayload);
 
@@ -305,7 +311,7 @@ class HandoverService {
       _sessions[sessionId] = completedSession;
       _sessionUpdateController.add(completedSession);
 
-      _processingBlocSub?.cancel();
+      unawaited(_processingBlocSub?.cancel());
       _processingBlocSub = null;
 
       onProcessingComplete(sessionId);

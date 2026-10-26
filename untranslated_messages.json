@@ -3,14 +3,10 @@
     "onboardingRecordsContent",
     "onboardingRecordsBottom",
     "onboardingRequestIntegration",
-    "scanFastenQr",
-    "walletHolder",
-    "walletHolderDescription",
     "deleteSourceConfirmPrefix",
     "deleteSourceConfirmSuffix",
     "noAiModel",
     "documentScanTitle",
-    "desktopBackupLocation",
     "changeSpecialty",
     "changeSpecialtyConfirm",
     "removeSpecialtyConfirm",
@@ -18,11 +14,9 @@
   ],
 
   "es": [
-    "scanFastenQr",
     "deleteSourceConfirmPrefix",
     "deleteSourceConfirmSuffix",
     "noAiModel",
-    "desktopBackupLocation",
     "changeSpecialty",
     "changeSpecialtyConfirm",
     "removeSpecialtyConfirm",
@@ -30,11 +24,9 @@
   ],
 
   "ro": [
-    "scanFastenQr",
     "deleteSourceConfirmPrefix",
     "deleteSourceConfirmSuffix",
     "noAiModel",
-    "desktopBackupLocation",
     "changeSpecialty",
     "changeSpecialtyConfirm",
     "removeSpecialtyConfirm",

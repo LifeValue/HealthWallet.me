@@ -44,8 +44,7 @@ abstract class RecordsRepository {
 
   Future<int> getRelatedResourceCount(String resourceId);
 
-  Future<List<IFhirResource>> getRelatedResourcesForDeletion(
-      String resourceId);
+  Future<List<IFhirResource>> getRelatedResourcesForDeletion(String resourceId);
 
   Future<void> loadDemoData();
 

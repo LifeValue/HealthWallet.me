@@ -42,8 +42,8 @@ class _HomePatientBarState extends State<HomePatientBar> {
   }
 
   void _measureHeight() {
-    final renderBox = widget.patientRowKey.currentContext?.findRenderObject()
-        as RenderBox?;
+    final renderBox =
+        widget.patientRowKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null && mounted) {
       final height = renderBox.size.height;
       if (height > 0) {
@@ -119,11 +119,10 @@ class _HomePatientBarState extends State<HomePatientBar> {
 
   void _onPatientBarTap(BuildContext context) {
     if (_isShareMenuOpen) return;
-    final row = widget.patientRowKey.currentContext?.findRenderObject()
-        as RenderBox?;
+    final row =
+        widget.patientRowKey.currentContext?.findRenderObject() as RenderBox?;
     if (row == null) return;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final rowTopLeft = row.localToGlobal(
       Offset.zero,
       ancestor: overlay,
@@ -139,7 +138,8 @@ class _HomePatientBarState extends State<HomePatientBar> {
     setState(() => _isShareMenuOpen = true);
 
     final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
-        widget.state.patient?.name?.first);
+      widget.state.patient?.name?.first,
+    );
     showShareOptionsMenu(
       context,
       position: position,

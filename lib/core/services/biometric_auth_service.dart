@@ -1,8 +1,7 @@
-import 'package:flutter/services.dart';
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:android_intent_plus/android_intent.dart';
 
 class BiometricAuthService {
   final LocalAuthentication _auth = LocalAuthentication();
@@ -52,13 +51,13 @@ class BiometricAuthService {
     try {
       if (_isAndroid) {
         try {
-          final securityIntent = AndroidIntent(
+          const securityIntent = AndroidIntent(
             action: 'android.settings.SECURITY_SETTINGS',
           );
           await securityIntent.launch();
           return true;
         } catch (e) {
-          final settingsIntent = AndroidIntent(
+          const settingsIntent = AndroidIntent(
             action: 'android.settings.SETTINGS',
           );
           await settingsIntent.launch();

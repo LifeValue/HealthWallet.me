@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 
 class ProcessingPathHelper {
-  static final RegExp _uriPattern =
-      RegExp(r'(?:file|content)://[^\s,\]\}]+', caseSensitive: false);
+  static final RegExp _uriPattern = RegExp(
+    r'(?:file|content)://[^\s,\]\}]+',
+    caseSensitive: false,
+  );
 
   const ProcessingPathHelper._();
 

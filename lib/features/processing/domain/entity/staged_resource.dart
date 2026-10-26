@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 
 part 'staged_resource.freezed.dart';
@@ -28,7 +28,7 @@ enum ImportMode {
 
   factory ImportMode.fromString(String string) {
     switch (string) {
-      case "createNew":
+      case 'createNew':
         return ImportMode.createNew;
       default:
         return ImportMode.linkExisting;
@@ -39,9 +39,9 @@ enum ImportMode {
   String toString() {
     switch (this) {
       case ImportMode.createNew:
-        return "createNew";
+        return 'createNew';
       case ImportMode.linkExisting:
-        return "linkExisting";
+        return 'linkExisting';
     }
   }
 }
@@ -51,25 +51,24 @@ typedef StagedEncounter = StagedResource<MappingEncounter, Encounter>;
 typedef StagedDiagnosticReport = StagedResource<MappingDiagnosticReport, Never>;
 
 Map<String, dynamic> stagedPatientToJson(StagedPatient patient) => {
-      'draft': patient.draft?.toJson(),
-      'existing': patient.existing?.toDto().toJson(),
-      'mode': patient.mode.toString(),
-    };
+  'draft': patient.draft?.toJson(),
+  'existing': patient.existing?.toDto().toJson(),
+  'mode': patient.mode.toString(),
+};
 
 Map<String, dynamic> stagedEncounterToJson(StagedEncounter encounter) => {
-      'draft': encounter.draft?.toJson(),
-      'existing': encounter.existing?.toDto().toJson(),
-      'mode': encounter.mode.toString(),
-    };
+  'draft': encounter.draft?.toJson(),
+  'existing': encounter.existing?.toDto().toJson(),
+  'mode': encounter.mode.toString(),
+};
 
 StagedPatient stagedPatientFromJson(Map<String, dynamic> json) => StagedPatient(
-      draft:
-          json['draft'] != null ? MappingPatient.fromJson(json['draft']) : null,
-      existing: json['existing'] != null
-          ? Patient.fromDto(FhirResourceDto.fromJson(json['existing']))
-          : null,
-      mode: ImportMode.fromString(json['mode']),
-    );
+  draft: json['draft'] != null ? MappingPatient.fromJson(json['draft']) : null,
+  existing: json['existing'] != null
+      ? Patient.fromDto(FhirResourceDto.fromJson(json['existing']))
+      : null,
+  mode: ImportMode.fromString(json['mode']),
+);
 
 StagedEncounter stagedEncounterFromJson(Map<String, dynamic> json) =>
     StagedEncounter(
@@ -83,18 +82,18 @@ StagedEncounter stagedEncounterFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> stagedDiagnosticReportToJson(
-        StagedDiagnosticReport report) =>
-    {
-      'draft': report.draft?.toJson(),
-      'existing': null,
-      'mode': report.mode.toString(),
-    };
+  StagedDiagnosticReport report,
+) => {
+  'draft': report.draft?.toJson(),
+  'existing': null,
+  'mode': report.mode.toString(),
+};
 
 StagedDiagnosticReport stagedDiagnosticReportFromJson(
-        Map<String, dynamic> json) =>
-    StagedDiagnosticReport(
-      draft: json['draft'] != null
-          ? MappingDiagnosticReport.fromJson(json['draft'])
-          : null,
-      mode: ImportMode.fromString(json['mode']),
-    );
+  Map<String, dynamic> json,
+) => StagedDiagnosticReport(
+  draft: json['draft'] != null
+      ? MappingDiagnosticReport.fromJson(json['draft'])
+      : null,
+  mode: ImportMode.fromString(json['mode']),
+);

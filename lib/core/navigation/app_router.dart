@@ -2,26 +2,25 @@ import 'package:auto_route/auto_route.dart';
 // Used by the generated route args (ListEquality) in app_router.gr.dart.
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:health_wallet/features/dashboard/presentation/dashboard_page.dart';
-import 'package:health_wallet/features/processing/presentation/pages/processing/processing_page.dart';
-import 'package:health_wallet/features/capture/scan/presentation/pages/focus_mode/focus_mode_page.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
-import 'package:health_wallet/features/processing/presentation/pages/load_model/load_model_page.dart';
+import 'package:health_wallet/features/capture/scan/presentation/pages/focus_mode/focus_mode_page.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
+import 'package:health_wallet/features/dashboard/presentation/dashboard_page.dart';
 import 'package:health_wallet/features/desktop/presentation/pages/desktop_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
-
 import 'package:health_wallet/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:health_wallet/features/onboarding/presentation/pages/splash_page.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/load_model_page.dart';
+import 'package:health_wallet/features/processing/presentation/pages/processing/processing_page.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/pages/record_detail_page.dart';
-import 'package:health_wallet/features/user/presentation/pages/privacy_policy_page.dart';
-import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
-import 'package:health_wallet/features/wallet_pass/presentation/pages/emergency_card_page.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
 import 'package:health_wallet/features/share_records/presentation/pages/share_records_page.dart';
 import 'package:health_wallet/features/share_records/presentation/pages/share_records_send_page.dart';
 import 'package:health_wallet/features/sync/presentation/sync_page.dart';
+import 'package:health_wallet/features/user/presentation/pages/privacy_policy_page.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/presentation/pages/emergency_card_page.dart';
 import 'package:injectable/injectable.dart';
 
 part 'app_router.gr.dart';
@@ -31,26 +30,26 @@ part 'app_router.gr.dart';
 class AppRouter extends RootStackRouter {
   @override
   List<AutoRoute> get routes => [
-        AutoRoute(page: SplashRoute.page, initial: true),
-        AutoRoute(page: OnboardingRoute.page),
-        AutoRoute(
-          page: DashboardRoute.page,
-          children: [
-            AutoRoute(page: HomeRoute.page),
-            AutoRoute(page: RecordsRoute.page),
-            AutoRoute(page: ScanRoute.page),
-            AutoRoute(page: ImportRoute.page),
-            AutoRoute(page: DesktopRoute.page),
-          ],
-        ),
-        AutoRoute(page: RecordDetailsRoute.page),
-        AutoRoute(page: SyncRoute.page),
-        AutoRoute(page: PrivacyPolicyRoute.page),
-        AutoRoute(page: LoadModelRoute.page),
-        AutoRoute(page: ProcessingRoute.page),
-        AutoRoute(page: FocusModeRoute.page),
-        AutoRoute(page: ShareRecordsRoute.page),
-        AutoRoute(page: ShareRecordsSendRoute.page),
-        AutoRoute(page: EmergencyCardRoute.page),
-      ];
+    AutoRoute(page: SplashRoute.page, initial: true),
+    AutoRoute(page: OnboardingRoute.page),
+    AutoRoute(
+      page: DashboardRoute.page,
+      children: [
+        AutoRoute(page: HomeRoute.page),
+        AutoRoute(page: RecordsRoute.page),
+        AutoRoute(page: ScanRoute.page),
+        AutoRoute(page: ImportRoute.page),
+        AutoRoute(page: DesktopRoute.page),
+      ],
+    ),
+    AutoRoute(page: RecordDetailsRoute.page),
+    AutoRoute(page: SyncRoute.page),
+    AutoRoute(page: PrivacyPolicyRoute.page),
+    AutoRoute(page: LoadModelRoute.page),
+    AutoRoute(page: ProcessingRoute.page),
+    AutoRoute(page: FocusModeRoute.page),
+    AutoRoute(page: ShareRecordsRoute.page),
+    AutoRoute(page: ShareRecordsSendRoute.page),
+    AutoRoute(page: EmergencyCardRoute.page),
+  ];
 }

@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:drift/drift.dart';
-import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
-import 'package:injectable/injectable.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/processing/data/services/pdf_generation_service.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:injectable/injectable.dart';
 
 @injectable
 class DocumentReferenceService {
@@ -17,17 +18,21 @@ class DocumentReferenceService {
   final PathResolver _pathResolver;
 
   DocumentReferenceService(
-      this._database, this._pdfGenerationService, this._pathResolver);
+    this._database,
+    this._pdfGenerationService,
+    this._pathResolver,
+  );
 
   Future<void> deleteDocumentReferences({
     required String sourceId,
     required String encounterId,
   }) async {
-    await (_database.delete(_database.fhirResource)
-          ..where((t) =>
+    await (_database.delete(_database.fhirResource)..where(
+          (t) =>
               t.sourceId.equals(sourceId) &
               t.resourceType.equals('DocumentReference') &
-              t.encounterId.equals(encounterId)))
+              t.encounterId.equals(encounterId),
+        ))
         .go();
   }
 
@@ -49,11 +54,11 @@ class DocumentReferenceService {
 
         final fhirDocumentReference =
             await _createFhirR4DocumentReferenceFromPdf(
-          pdfPath: group.pdfPath,
-          patientId: patientId,
-          encounter: encounter,
-          title: group.title,
-        );
+              pdfPath: group.pdfPath,
+              patientId: patientId,
+              encounter: encounter,
+              title: group.title,
+            );
 
         final resourceId = await _saveFhirDocumentReferenceToDatabase(
           fhirDocumentReference: fhirDocumentReference,
@@ -68,7 +73,8 @@ class DocumentReferenceService {
     } catch (e) {
       logger.e('❌ Failed to create grouped FHIR DocumentReference records: $e');
       throw Exception(
-          'Failed to create grouped FHIR DocumentReference records: $e');
+        'Failed to create grouped FHIR DocumentReference records: $e',
+      );
     }
   }
 
@@ -88,9 +94,11 @@ class DocumentReferenceService {
     final List<fhir_r4.Reference>? encounterReferences = encounter != null
         ? [
             fhir_r4.Reference(
-              reference: fhir_r4.FhirString('Encounter/${encounter.resourceId}'),
+              reference: fhir_r4.FhirString(
+                'Encounter/${encounter.resourceId}',
+              ),
               display: fhir_r4.FhirString('Encounter ${encounter.resourceId}'),
-            )
+            ),
           ]
         : null;
 
@@ -153,7 +161,11 @@ class DocumentReferenceService {
     if (fhirDocumentReference.context?.encounter != null &&
         fhirDocumentReference.context!.encounter!.isNotEmpty) {
       final encounterRef = fhirDocumentReference
-          .context!.encounter!.first.reference?.valueString;
+          .context!
+          .encounter!
+          .first
+          .reference
+          ?.valueString;
       if (encounterRef != null) {
         encounterId = FhirReferenceUtils.extractReferenceId(encounterRef);
       }
@@ -161,19 +173,21 @@ class DocumentReferenceService {
 
     if (fhirDocumentReference.subject?.reference?.valueString != null) {
       subjectId = FhirReferenceUtils.extractReferenceId(
-          fhirDocumentReference.subject!.reference!.valueString!);
+        fhirDocumentReference.subject!.reference!.valueString!,
+      );
     }
 
     final dto = FhirResourceCompanion.insert(
       id: '${sourceId}_$resourceId',
       sourceId: Value(sourceId),
       resourceId: Value(resourceId),
-      resourceType: Value('DocumentReference'),
+      resourceType: const Value('DocumentReference'),
       title: Value(title),
       date: Value(_extractDateFromDocumentReference(fhirDocumentReference)),
       resourceRaw: jsonEncode(resourceJson),
-      encounterId:
-          encounterId != null ? Value(encounterId) : const Value.absent(),
+      encounterId: encounterId != null
+          ? Value(encounterId)
+          : const Value.absent(),
       subjectId: subjectId != null ? Value(subjectId) : const Value.absent(),
     );
 
@@ -182,7 +196,8 @@ class DocumentReferenceService {
   }
 
   DateTime? _extractDateFromDocumentReference(
-      fhir_r4.DocumentReference documentReference) {
+    fhir_r4.DocumentReference documentReference,
+  ) {
     if (documentReference.date != null) {
       try {
         return documentReference.date!.valueDateTime;
@@ -236,8 +251,11 @@ class DocumentReferenceService {
   }) async {
     try {
       final documentQuery = _database.select(_database.fhirResource)
-        ..where((tbl) => tbl.id.equals(
-            '${sourceId ?? 'scanner-app'}_$documentReferenceResourceId'));
+        ..where(
+          (tbl) => tbl.id.equals(
+            '${sourceId ?? 'scanner-app'}_$documentReferenceResourceId',
+          ),
+        );
 
       final document = await documentQuery.getSingleOrNull();
 
@@ -253,7 +271,7 @@ class DocumentReferenceService {
           {
             'reference': 'Encounter/$encounterId',
             'display': 'Encounter $encounterId',
-          }
+          },
         ],
       };
 
@@ -263,9 +281,9 @@ class DocumentReferenceService {
         encounterId: Value(encounterId),
       );
 
-      await (_database.update(_database.fhirResource)
-            ..where((tbl) => tbl.id.equals(document.id)))
-          .write(updateCompanion);
+      await (_database.update(
+        _database.fhirResource,
+      )..where((tbl) => tbl.id.equals(document.id))).write(updateCompanion);
     } catch (e) {
       throw Exception('Failed to link DocumentReference to Encounter: $e');
     }

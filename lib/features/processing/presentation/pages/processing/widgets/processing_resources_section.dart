@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/resources_form.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ProcessingResourcesSection extends StatelessWidget {
   final ProcessingState state;
@@ -48,10 +48,6 @@ class ProcessingResourcesSection extends StatelessWidget {
       return const SizedBox();
     }
 
-    final isPatientMatched =
-        displayedSession.patient.mode == ImportMode.linkExisting &&
-            displayedSession.patient.existing != null;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -81,7 +77,7 @@ class ProcessingResourcesSection extends StatelessWidget {
             state: state,
             onSaveResources: onSaveResources,
           ),
-        ]
+        ],
       ],
     );
   }
@@ -108,7 +104,8 @@ class _SaveButton extends StatelessWidget {
               : context.colorScheme.onPrimary,
           padding: const EdgeInsets.all(8),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadiusGeometry.circular(8)),
+            borderRadius: BorderRadiusGeometry.circular(8),
+          ),
         ),
         onPressed: state.status == const PipelineStatus.savingResources()
             ? null
@@ -130,8 +127,8 @@ class _AddResourceButton extends StatelessWidget {
       options: RoundedRectDottedBorderOptions(
         radius: const Radius.circular(8),
         dashPattern: [6, 6],
-        color: context.colorScheme.outline.withOpacity(
-          context.isDarkMode ? 0.4 : 0.2,
+        color: context.colorScheme.outline.withValues(
+          alpha: context.isDarkMode ? 0.4 : 0.2,
         ),
       ),
       child: GestureDetector(
@@ -164,11 +161,15 @@ class _AddResourceButton extends StatelessWidget {
   List<DialogItem> _getResourceTypes(BuildContext context) {
     return [
       DialogItem(
-          id: 'AllergyIntolerance', label: context.l10n.allergyIntolerance),
+        id: 'AllergyIntolerance',
+        label: context.l10n.allergyIntolerance,
+      ),
       DialogItem(id: 'Condition', label: context.l10n.condition),
       DialogItem(id: 'DiagnosticReport', label: context.l10n.diagnosticReport),
       DialogItem(
-          id: 'MedicationStatement', label: context.l10n.medicationStatement),
+        id: 'MedicationStatement',
+        label: context.l10n.medicationStatement,
+      ),
       DialogItem(id: 'Observation', label: context.l10n.observation),
       DialogItem(id: 'Organization', label: context.l10n.organization),
       DialogItem(id: 'Practitioner', label: context.l10n.practitioner),
@@ -188,10 +189,12 @@ class _AddResourceButton extends StatelessWidget {
     if (selectedResourceIds != null &&
         selectedResourceIds.isNotEmpty &&
         context.mounted) {
-      context.read<ProcessingBloc>().add(ResourcesAdded(
-            sessionId: sessionId,
-            resourceTypes: selectedResourceIds,
-          ));
+      context.read<ProcessingBloc>().add(
+        ResourcesAdded(
+          sessionId: sessionId,
+          resourceTypes: selectedResourceIds,
+        ),
+      );
     }
   }
 }
@@ -260,10 +263,10 @@ class _ScannedBasicButtons extends StatelessWidget {
                 onPressed: isStep2Blocked
                     ? null
                     : () => context.read<ProcessingBloc>().add(
-                          ProcessRemainingResources(
-                            sessionId: sessionId,
-                          ),
+                        ProcessRemainingResources(
+                          sessionId: sessionId,
                         ),
+                      ),
                 enabled: !isStep2Blocked,
                 fullWidth: false,
                 padding: const EdgeInsets.all(8),
@@ -278,7 +281,11 @@ class _ScannedBasicButtons extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.computer, size: 20, color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  Icons.computer,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(width: Insets.small),
                 Text(
                   'Continue processing on Desktop',
@@ -313,10 +320,10 @@ class _ScannedBasicButtons extends StatelessWidget {
         (session.encounter.hasSelection ||
             session.isDiagnosticReportContainer)) {
       context.read<ProcessingBloc>().add(
-            DocumentAttached(
-              sessionId: sessionId,
-            ),
-          );
+        DocumentAttached(
+          sessionId: sessionId,
+        ),
+      );
       return;
     }
 
@@ -335,18 +342,18 @@ class _ScannedBasicButtons extends StatelessWidget {
     final (patient, encounter) = result;
 
     context.read<ProcessingBloc>().add(
-          EncounterAttached(
-            sessionId: sessionId,
-            patient: patient,
-            encounter: encounter,
-          ),
-        );
+      EncounterAttached(
+        sessionId: sessionId,
+        patient: patient,
+        encounter: encounter,
+      ),
+    );
 
     context.read<ProcessingBloc>().add(
-          DocumentAttached(
-            sessionId: sessionId,
-          ),
-        );
+      DocumentAttached(
+        sessionId: sessionId,
+      ),
+    );
   }
 
   void _finishSession(BuildContext context) {
@@ -358,15 +365,16 @@ class _ScannedBasicButtons extends StatelessWidget {
         context: context,
         title: context.l10n.patient,
         message: context.l10n.patientModifiedUpdating(
-            session.patient.existing!.displayTitle),
+          session.patient.existing!.displayTitle,
+        ),
         warningText: context.l10n.actionCannotBeUndone,
         confirmText: context.l10n.save,
         cancelText: context.l10n.cancel,
         confirmButtonColor: context.colorScheme.primary,
         onConfirm: () {
           context.read<ProcessingBloc>().add(
-                ResourceCreationInitiated(sessionId: sessionId),
-              );
+            ResourceCreationInitiated(sessionId: sessionId),
+          );
         },
       );
     } else {
@@ -380,8 +388,8 @@ class _ScannedBasicButtons extends StatelessWidget {
         confirmButtonColor: context.colorScheme.primary,
         onConfirm: () {
           context.read<ProcessingBloc>().add(
-                ResourceCreationInitiated(sessionId: sessionId),
-              );
+            ResourceCreationInitiated(sessionId: sessionId),
+          );
         },
       );
     }
@@ -395,10 +403,10 @@ class _VisionNotAvailableBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(Insets.normal),
       decoration: BoxDecoration(
-        color: context.colorScheme.tertiaryContainer.withOpacity(0.3),
+        color: context.colorScheme.tertiaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: context.colorScheme.tertiary.withOpacity(0.5),
+          color: context.colorScheme.tertiary.withValues(alpha: 0.5),
         ),
       ),
       child: Column(

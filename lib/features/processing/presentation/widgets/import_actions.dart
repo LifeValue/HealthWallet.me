@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class ImportActions extends StatelessWidget {
@@ -44,4 +44,3 @@ class ImportActions extends StatelessWidget {
     );
   }
 }
-

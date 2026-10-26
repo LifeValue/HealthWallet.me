@@ -49,7 +49,8 @@ class AppButton extends StatelessWidget {
 
     Widget button;
 
-    final effectivePadding = padding ??
+    final effectivePadding =
+        padding ??
         const EdgeInsets.symmetric(
           horizontal: Insets.medium,
           vertical: Insets.smallNormal,
@@ -138,7 +139,7 @@ class AppButton extends StatelessWidget {
         backgroundColor: Colors.transparent,
         foregroundColor: textColor,
         side: BorderSide(color: borderColor, width: 1),
-        disabledForegroundColor: textColor.withOpacity(0.5),
+        disabledForegroundColor: textColor.withValues(alpha: 0.5),
         disabledBackgroundColor: Colors.transparent,
         padding: effectivePadding,
         fixedSize: fixedSize,
@@ -197,17 +198,18 @@ class AppButton extends StatelessWidget {
         ),
       );
     } else {
-      final bgColor = backgroundColor ??
+      final bgColor =
+          backgroundColor ??
           (variant == AppButtonVariant.primary
               ? colorScheme.primary
               : colorScheme.secondary);
       final fgColor = backgroundColor != null
           ? Colors.white
           : (isDarkMode
-              ? Colors.white
-              : (variant == AppButtonVariant.primary
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSecondary));
+                ? Colors.white
+                : (variant == AppButtonVariant.primary
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSecondary));
       final labelWidget = Text(
         label,
         style: AppTextStyle.buttonMedium.copyWith(
@@ -218,8 +220,8 @@ class AppButton extends StatelessWidget {
       final style = ElevatedButton.styleFrom(
         backgroundColor: bgColor,
         foregroundColor: fgColor,
-        disabledBackgroundColor: bgColor.withOpacity(0.5),
-        disabledForegroundColor: fgColor.withOpacity(0.5),
+        disabledBackgroundColor: bgColor.withValues(alpha: 0.5),
+        disabledForegroundColor: fgColor.withValues(alpha: 0.5),
         padding: effectivePadding,
         fixedSize: fixedSize,
         shape: effectiveShape,

@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/processing/data/data_source/local/processing_local_data_source.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
@@ -9,12 +13,9 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
-import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 @LazySingleton(as: ProcessingRepository)
@@ -49,10 +50,10 @@ class ProcessingRepositoryImpl extends Object
   @override
   Future<List<String>> scanDocuments() async {
     try {
-      final scannedResult =
-          await FlutterDocScanner().getScannedDocumentAsImages(
-        page: 10,
-      );
+      final scannedResult = await FlutterDocScanner()
+          .getScannedDocumentAsImages(
+            page: 10,
+          );
 
       if (scannedResult == null) {
         return [];
@@ -115,10 +116,12 @@ class ProcessingRepositoryImpl extends Object
       }
 
       final validPaths = documentPaths
-          .where((path) =>
-              path.isNotEmpty &&
-              !path.contains('Failed') &&
-              !path.contains('Unknown'))
+          .where(
+            (path) =>
+                path.isNotEmpty &&
+                !path.contains('Failed') &&
+                !path.contains('Unknown'),
+          )
           .toList();
 
       return validPaths;
@@ -175,7 +178,7 @@ class ProcessingRepositoryImpl extends Object
 
       final documentPaths = files
           .map((file) => file.path)
-          .where((path) => _isValidDocumentFile(path))
+          .where(_isValidDocumentFile)
           .toList();
 
       documentPaths.sort((a, b) {
@@ -223,7 +226,9 @@ class ProcessingRepositoryImpl extends Object
             if (await file.exists()) {
               await file.delete();
             }
-          } catch (e) {}
+          } catch (_) {
+            // Best-effort cleanup; a leftover temp file is harmless.
+          }
         }
       }
 
@@ -234,7 +239,9 @@ class ProcessingRepositoryImpl extends Object
             if (await file.exists()) {
               await file.delete();
             }
-          } catch (e) {}
+          } catch (_) {
+            // Best-effort cleanup; a leftover temp file is harmless.
+          }
         }
       }
     } catch (e) {
@@ -255,10 +262,10 @@ class ProcessingRepositoryImpl extends Object
     required List<String> filePaths,
     required ProcessingOrigin origin,
   }) async {
-    final relativePaths =
-        await Future.wait(filePaths.map(_pathResolver.toRelative));
-    final absolutePaths =
-        await _pathResolver.resolveAll(relativePaths);
+    final relativePaths = await Future.wait(
+      filePaths.map(_pathResolver.toRelative),
+    );
+    final absolutePaths = await _pathResolver.resolveAll(relativePaths);
 
     final session = ProcessingSession(
       id: const Uuid().v4(),
@@ -278,19 +285,24 @@ class ProcessingRepositoryImpl extends Object
     final dtos = await _localDataSource.getProcessingSessions();
     final sessions = dtos.map(ProcessingSession.fromDto).toList();
 
-    return Future.wait(sessions.map((s) async {
-      final absolutePaths = await _pathResolver.resolveAll(s.filePaths);
-      return s.copyWith(filePaths: absolutePaths);
-    }));
+    return Future.wait(
+      sessions.map((s) async {
+        final absolutePaths = await _pathResolver.resolveAll(s.filePaths);
+        return s.copyWith(filePaths: absolutePaths);
+      }),
+    );
   }
 
   @override
   Future<int> editProcessingSession(ProcessingSession session) async {
-    final relativePaths =
-        await Future.wait(session.filePaths.map(_pathResolver.toRelative));
+    final relativePaths = await Future.wait(
+      session.filePaths.map(_pathResolver.toRelative),
+    );
     final sessionForDb = session.copyWith(filePaths: relativePaths);
     return _localDataSource.updateProcessingSession(
-        session.id, sessionForDb.toDbCompanion());
+      session.id,
+      sessionForDb.toDbCompanion(),
+    );
   }
 
   @override
@@ -307,16 +319,21 @@ class ProcessingRepositoryImpl extends Object
   Stream<double> downloadModel() {
     final controller = StreamController<double>();
 
-    _networkDataSource.downloadModel(onProgress: (progress) {
-      if (!controller.isClosed) {
-        controller.add(progress.toDouble());
-      }
-    }).then((_) {
-      controller.close();
-    }).catchError((error) {
-      controller.addError(error);
-      controller.close();
-    });
+    _networkDataSource
+        .downloadModel(
+          onProgress: (progress) {
+            if (!controller.isClosed) {
+              controller.add(progress.toDouble());
+            }
+          },
+        )
+        .then((_) {
+          controller.close();
+        })
+        .catchError((error) {
+          controller.addError(error);
+          controller.close();
+        });
 
     return controller.stream;
   }
@@ -331,16 +348,21 @@ class ProcessingRepositoryImpl extends Object
     final controller = StreamController<double>();
 
     _networkDataSource
-        .downloadModelForVariant(variant, onProgress: (progress) {
-      if (!controller.isClosed) {
-        controller.add(progress.toDouble());
-      }
-    }).then((_) {
-      controller.close();
-    }).catchError((error) {
-      controller.addError(error);
-      controller.close();
-    });
+        .downloadModelForVariant(
+          variant,
+          onProgress: (progress) {
+            if (!controller.isClosed) {
+              controller.add(progress.toDouble());
+            }
+          },
+        )
+        .then((_) {
+          controller.close();
+        })
+        .catchError((error) {
+          controller.addError(error);
+          controller.close();
+        });
 
     return controller.stream;
   }
@@ -360,16 +382,21 @@ class ProcessingRepositoryImpl extends Object
     final controller = StreamController<double>();
 
     _networkDataSource
-        .downloadMmprojForVariant(variant, onProgress: (progress) {
-      if (!controller.isClosed) {
-        controller.add(progress.toDouble());
-      }
-    }).then((_) {
-      controller.close();
-    }).catchError((error) {
-      controller.addError(error);
-      controller.close();
-    });
+        .downloadMmprojForVariant(
+          variant,
+          onProgress: (progress) {
+            if (!controller.isClosed) {
+              controller.add(progress.toDouble());
+            }
+          },
+        )
+        .then((_) {
+          controller.close();
+        })
+        .catchError((error) {
+          controller.addError(error);
+          controller.close();
+        });
 
     return controller.stream;
   }
@@ -431,7 +458,9 @@ class ProcessingRepositoryImpl extends Object
 
   @override
   Future<void> waitForStreamCompletion() async {
-    if (_isStreamActive && _streamCompleter != null && !_streamCompleter!.isCompleted) {
+    if (_isStreamActive &&
+        _streamCompleter != null &&
+        !_streamCompleter!.isCompleted) {
       await _streamCompleter!.future;
     }
   }

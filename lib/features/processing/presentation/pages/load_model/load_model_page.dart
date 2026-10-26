@@ -4,24 +4,24 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/core/services/device_capability_service.dart';
-import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/model_management_dialog.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class LoadModelPage extends StatefulWidget {
@@ -172,168 +172,186 @@ class _LoadModelPageState extends State<LoadModelPage> {
 
     return SingleChildScrollView(
       child: Column(
-      children: [
-        const SizedBox(height: 20),
-        Assets.onboarding.onboarding3.svg(height: 250),
-        Text(
-          context.l10n.aiModelUnlockTitle,
-          textAlign: TextAlign.center,
-          style: AppTextStyle.titleLarge.copyWith(
-            color: context.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 32),
-        _buildRichDescription(context, context.l10n.aiModelUnlockDescription),
-        const SizedBox(height: 32),
-        Text(
-          context.l10n.aiModelDownloadInfo,
-          textAlign: TextAlign.center,
-          style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
-            height: 1.5,
-            letterSpacing: -0.2,
-          ),
-        ),
-        const SizedBox(height: 24),
-        if (state.status == LoadModelStatus.loading) ...[
-          CustomProgressIndicator(
-            progress: (state.downloadProgress ?? 0) / 100,
-            text: context.l10n.aiModelDownloading,
-          ),
-          const SizedBox(height: 16),
+        children: [
+          const SizedBox(height: 20),
+          Assets.onboarding.onboarding3.svg(height: 250),
           Text(
-            context.l10n.downloadContinuesInBackground,
+            context.l10n.aiModelUnlockTitle,
+            textAlign: TextAlign.center,
+            style: AppTextStyle.titleLarge.copyWith(
+              color: context.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 32),
+          _buildRichDescription(context, context.l10n.aiModelUnlockDescription),
+          const SizedBox(height: 32),
+          Text(
+            context.l10n.aiModelDownloadInfo,
             textAlign: TextAlign.center,
             style: AppTextStyle.bodySmall.copyWith(
-              color: context.colorScheme.primary,
-              fontStyle: FontStyle.italic,
+              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+              height: 1.5,
+              letterSpacing: -0.2,
             ),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => context.router.maybePop(),
-              child: Text(
-                widget.canAttachToEncounter
-                    ? context.l10n.continueWithoutAi
-                    : context.l10n.continueUsingApp,
+          const SizedBox(height: 24),
+          if (state.status == LoadModelStatus.loading) ...[
+            CustomProgressIndicator(
+              progress: (state.downloadProgress ?? 0) / 100,
+              text: context.l10n.aiModelDownloading,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              context.l10n.downloadContinuesInBackground,
+              textAlign: TextAlign.center,
+              style: AppTextStyle.bodySmall.copyWith(
+                color: context.colorScheme.primary,
+                fontStyle: FontStyle.italic,
               ),
             ),
-          ),
-        ] else ...[
-          if (state.deviceCapability == DeviceAiCapability.unsupported) ...[
-            AppButton(
-              label: context.l10n.processOnDesktop,
-              icon: const Icon(Icons.computer),
-              variant: AppButtonVariant.primary,
-              height: 48,
-              onPressed: () => _handleProcessOnDesktop(context),
-            ),
-            const SizedBox(height: Insets.small),
-            Center(
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
               child: TextButton(
-                onPressed: () => context.router.maybePop(false),
+                onPressed: () => context.router.maybePop(),
                 child: Text(
                   widget.canAttachToEncounter
-                      ? context.l10n.attachWithoutProcessing
-                      : context.l10n.cancel,
-                  textAlign: TextAlign.center,
+                      ? context.l10n.continueWithoutAi
+                      : context.l10n.continueUsingApp,
                 ),
-              ),
-            ),
-            const SizedBox(height: Insets.normal),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: context.colorScheme.errorContainer.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: context.colorScheme.error.withOpacity(0.5),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.error_outline, color: context.colorScheme.error, size: 20),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          context.l10n.aiModelNotAvailableForDevice,
-                          style: AppTextStyle.bodySmall.copyWith(
-                            color: context.colorScheme.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 28),
-                    child: Text(
-                      context.l10n.aiModelNotAvailableForDeviceDescription,
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: context.colorScheme.error.withOpacity(0.8),
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ] else ...[
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.colorScheme.primary,
-                  foregroundColor: context.isDarkMode
-                      ? Colors.white
-                      : context.colorScheme.onPrimary,
-                  padding: const EdgeInsets.all(8),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadiusGeometry.circular(8)),
+            if (state.deviceCapability == DeviceAiCapability.unsupported) ...[
+              AppButton(
+                label: context.l10n.processOnDesktop,
+                icon: const Icon(Icons.computer),
+                variant: AppButtonVariant.primary,
+                height: 48,
+                onPressed: () => _handleProcessOnDesktop(context),
+              ),
+              const SizedBox(height: Insets.small),
+              Center(
+                child: TextButton(
+                  onPressed: () => context.router.maybePop(false),
+                  child: Text(
+                    widget.canAttachToEncounter
+                        ? context.l10n.attachWithoutProcessing
+                        : context.l10n.cancel,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-                onPressed: () => ModelManagementDialog.show(context),
-                child: Text(context.l10n.aiModelEnableDownload),
               ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () => context.router.maybePop(false),
-                child: Text(widget.canAttachToEncounter
-                    ? context.l10n.attachWithoutProcessing
-                    : context.l10n.cancel),
+              const SizedBox(height: Insets.normal),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.errorContainer.withValues(
+                    alpha: 0.3,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: context.colorScheme.error.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: context.colorScheme.error,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            context.l10n.aiModelNotAvailableForDevice,
+                            style: AppTextStyle.bodySmall.copyWith(
+                              color: context.colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 28),
+                      child: Text(
+                        context.l10n.aiModelNotAvailableForDeviceDescription,
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: context.colorScheme.error.withValues(
+                            alpha: 0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: Insets.medium),
-            GestureDetector(
-              onTap: () => _handleProcessOnDesktop(context),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.computer, size: 22, color: context.colorScheme.primary),
-                  const SizedBox(width: Insets.small),
-                  Text(
-                    context.l10n.processOnDesktop,
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
+            ] else ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.colorScheme.primary,
+                    foregroundColor: context.isDarkMode
+                        ? Colors.white
+                        : context.colorScheme.onPrimary,
+                    padding: const EdgeInsets.all(8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadiusGeometry.circular(8),
                     ),
                   ),
-                ],
+                  onPressed: () => ModelManagementDialog.show(context),
+                  child: Text(context.l10n.aiModelEnableDownload),
+                ),
               ),
-            ),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => context.router.maybePop(false),
+                  child: Text(
+                    widget.canAttachToEncounter
+                        ? context.l10n.attachWithoutProcessing
+                        : context.l10n.cancel,
+                  ),
+                ),
+              ),
+              const SizedBox(height: Insets.medium),
+              GestureDetector(
+                onTap: () => _handleProcessOnDesktop(context),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.computer,
+                      size: 22,
+                      color: context.colorScheme.primary,
+                    ),
+                    const SizedBox(width: Insets.small),
+                    Text(
+                      context.l10n.processOnDesktop,
+                      style: AppTextStyle.bodyMedium.copyWith(
+                        color: context.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
+          const SizedBox(height: Insets.large),
         ],
-        const SizedBox(height: Insets.large),
-      ],
-    ),
+      ),
     );
   }
 
@@ -359,7 +377,8 @@ class _LoadModelPageState extends State<LoadModelPage> {
       final processingBloc = getIt<ProcessingBloc>();
       final sessions = processingBloc.state.sessions;
       final pending = sessions.where(
-          (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty);
+        (s) => s.status == ProcessingStatus.pending && s.filePaths.isNotEmpty,
+      );
       if (pending.isEmpty) return;
 
       final session = pending.first;
@@ -380,23 +399,27 @@ class _LoadModelPageState extends State<LoadModelPage> {
       final segments = description.split('**');
       final spans = <TextSpan>[];
       for (int i = 0; i < segments.length; i++) {
-        spans.add(TextSpan(
-          text: segments[i],
-          style: i.isOdd
-              ? AppTextStyle.bodySmall.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.85),
-                  height: 1.5,
-                  letterSpacing: -0.2,
-                  fontWeight: FontWeight.w700,
-                )
-              : null,
-        ));
+        spans.add(
+          TextSpan(
+            text: segments[i],
+            style: i.isOdd
+                ? AppTextStyle.bodySmall.copyWith(
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.85,
+                    ),
+                    height: 1.5,
+                    letterSpacing: -0.2,
+                    fontWeight: FontWeight.w700,
+                  )
+                : null,
+          ),
+        );
       }
       return RichText(
         textAlign: TextAlign.center,
         text: TextSpan(
           style: AppTextStyle.bodySmall.copyWith(
-            color: context.colorScheme.onSurface.withOpacity(0.7),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             height: 1.5,
             letterSpacing: -0.2,
           ),
@@ -408,7 +431,7 @@ class _LoadModelPageState extends State<LoadModelPage> {
       description,
       textAlign: TextAlign.center,
       style: AppTextStyle.bodySmall.copyWith(
-        color: context.colorScheme.onSurface.withOpacity(0.7),
+        color: context.colorScheme.onSurface.withValues(alpha: 0.7),
         height: 1.5,
         letterSpacing: -0.2,
       ),

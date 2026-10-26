@@ -1,18 +1,18 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
-import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/core/utils/blood_observation_utils.dart';
-import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/services/patient_name_builder.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/blood_observation_utils.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/sync/domain/entities/source.dart';
+import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/services/patient_name_builder.dart';
 import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 @injectable
@@ -94,7 +94,10 @@ class PatientEditService {
 
     List<fhir_r4.Identifier>? updatedIdentifiers;
     if (identifierValue != null) {
-      updatedIdentifiers = _updatePrimaryIdentifier(fhirPatient.identifier, identifierValue);
+      updatedIdentifiers = _updatePrimaryIdentifier(
+        fhirPatient.identifier,
+        identifierValue,
+      );
     } else {
       updatedIdentifiers = fhirPatient.identifier;
     }
@@ -123,10 +126,11 @@ class PatientEditService {
 
     final displayTitle = (given != null || family != null)
         ? updatedNames?.isNotEmpty == true
-            ? FhirFieldExtractor.extractHumanNameFamilyFirst(
-                    updatedNames!.first) ??
-                patient.displayTitle
-            : patient.displayTitle
+              ? FhirFieldExtractor.extractHumanNameFamilyFirst(
+                      updatedNames!.first,
+                    ) ??
+                    patient.displayTitle
+              : patient.displayTitle
         : patient.displayTitle;
 
     final finalPatient = patient.copyWith(
@@ -215,13 +219,17 @@ class PatientEditService {
 
     List<fhir_r4.Identifier>? updatedIdentifiers;
     if (identifierValue != null) {
-      updatedIdentifiers = _updatePrimaryIdentifier(fhirPatient.identifier, identifierValue);
+      updatedIdentifiers = _updatePrimaryIdentifier(
+        fhirPatient.identifier,
+        identifierValue,
+      );
     } else {
       updatedIdentifiers = fhirPatient.identifier;
     }
 
-    final finalName =
-        (given != null || family != null) ? updatedNames : fhirPatient.name;
+    final finalName = (given != null || family != null)
+        ? updatedNames
+        : fhirPatient.name;
 
     final finalGender = gender != null
         ? GenderMapper.mapDisplayGenderToFhir(gender)
@@ -248,7 +256,7 @@ class PatientEditService {
 
     final displayTitle = finalName?.isNotEmpty == true
         ? FhirFieldExtractor.extractHumanNameFamilyFirst(finalName!.first) ??
-            readOnlyPatient.displayTitle
+              readOnlyPatient.displayTitle
         : readOnlyPatient.displayTitle;
 
     final finalPatient = readOnlyPatient.copyWith(
@@ -368,7 +376,9 @@ class PatientEditService {
                 'http://terminology.hl7.org/CodeSystem/v2-0203',
               ),
               code: fhir_r4.FhirCode(targetCode),
-              display: fhir_r4.FhirString(_countryProfile.identifierDisplayName),
+              display: fhir_r4.FhirString(
+                _countryProfile.identifierDisplayName,
+              ),
             ),
           ],
           text: fhir_r4.FhirString(_countryProfile.identifierDisplayName),
@@ -396,14 +406,18 @@ class PatientEditService {
     if (p1.identifier!.isEmpty || p2.identifier!.isEmpty) return false;
 
     final ids1 = p1.identifier!
-        .where((id) =>
-            id.system?.valueString != null && id.value?.valueString != null)
+        .where(
+          (id) =>
+              id.system?.valueString != null && id.value?.valueString != null,
+        )
         .map((id) => '${id.system!.valueString}:${id.value!.valueString}')
         .toSet();
 
     final ids2 = p2.identifier!
-        .where((id) =>
-            id.system?.valueString != null && id.value?.valueString != null)
+        .where(
+          (id) =>
+              id.system?.valueString != null && id.value?.valueString != null,
+        )
         .map((id) => '${id.system!.valueString}:${id.value!.valueString}')
         .toSet();
 
@@ -427,18 +441,19 @@ class PatientEditService {
     String bloodType,
   ) async {
     try {
-      final existingObservations =
-          await _recordsRepository.getBloodTypeObservations(
-        patientId: patient.id,
-        sourceId: patient.sourceId.isNotEmpty ? patient.sourceId : null,
-      );
+      final existingObservations = await _recordsRepository
+          .getBloodTypeObservations(
+            patientId: patient.id,
+            sourceId: patient.sourceId.isNotEmpty ? patient.sourceId : null,
+          );
 
       if (bloodType == 'N/A') {
         if (existingObservations.isNotEmpty) {
           final existingObservation = existingObservations.first as Observation;
 
-          final updatedRawResource =
-              Map<String, dynamic>.from(existingObservation.rawResource);
+          final updatedRawResource = Map<String, dynamic>.from(
+            existingObservation.rawResource,
+          );
           updatedRawResource.remove('valueCodeableConcept');
 
           final clearedObservation = existingObservation.copyWith(
@@ -461,8 +476,9 @@ class PatientEditService {
 
         final newValueX = BloodObservationUtils.createBloodTypeValue(bloodType);
 
-        final updatedRawResource =
-            Map<String, dynamic>.from(existingObservation.rawResource);
+        final updatedRawResource = Map<String, dynamic>.from(
+          existingObservation.rawResource,
+        );
         updatedRawResource['valueCodeableConcept'] = newValueX.toJson();
 
         final updatedObservation = existingObservation.copyWith(
@@ -494,12 +510,16 @@ class PatientEditService {
     String? newIdentifierValue,
     required AppLocalizations l10n,
   }) async {
-    final currentBirthDate =
-        FhirFieldExtractor.extractPatientBirthDate(currentPatient);
-    final currentGender =
-        FhirFieldExtractor.extractPatientGender(currentPatient);
+    final currentBirthDate = FhirFieldExtractor.extractPatientBirthDate(
+      currentPatient,
+    );
+    final currentGender = FhirFieldExtractor.extractPatientGender(
+      currentPatient,
+    );
     final currentBloodType = await getCurrentBloodType(currentPatient);
-    final currentIdentifier = FhirFieldExtractor.extractPatientIdentifierValue(currentPatient);
+    final currentIdentifier = FhirFieldExtractor.extractPatientIdentifierValue(
+      currentPatient,
+    );
 
     final birthDateChanged = currentBirthDate != newBirthDate;
     final genderChanged =
@@ -507,7 +527,10 @@ class PatientEditService {
     final bloodTypeChanged = currentBloodType != newBloodType;
     final identifierChanged = currentIdentifier != (newIdentifierValue ?? '');
 
-    return birthDateChanged || genderChanged || bloodTypeChanged || identifierChanged;
+    return birthDateChanged ||
+        genderChanged ||
+        bloodTypeChanged ||
+        identifierChanged;
   }
 
   bool validatePatientData({

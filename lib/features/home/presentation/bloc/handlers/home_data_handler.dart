@@ -2,16 +2,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
+import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
 import 'package:health_wallet/features/home/domain/factory/patient_vitals_factory.dart';
 import 'package:health_wallet/features/home/domain/repository/home_preferences_repository.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
-import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
-import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -78,11 +78,15 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
   }
 
   Future<List<IFhirResource>> fetchResourcesFromAllSources(
-      List<FhirType> resourceTypes, String? sourceId,
-      [List<String>? patientSourceIds]) async {
+    List<FhirType> resourceTypes,
+    String? sourceId, [
+    List<String>? patientSourceIds,
+  ]) async {
     if (sourceId == demoSourceId) {
       final resources = await recordsRepository.getResources(
-          resourceTypes: resourceTypes, sourceId: demoSourceId);
+        resourceTypes: resourceTypes,
+        sourceId: demoSourceId,
+      );
       return resources;
     }
 
@@ -93,38 +97,47 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
     }
 
     final resources = await recordsRepository.getResources(
-        resourceTypes: resourceTypes,
-        sourceId: sourceId,
-        sourceIds: finalPatientSourceIds);
+      resourceTypes: resourceTypes,
+      sourceId: sourceId,
+      sourceIds: finalPatientSourceIds,
+    );
 
     return resources;
   }
 
   Future<
-          ({
-            List<OverviewCard> overviewCards,
-            List<IFhirResource> allEnabledResources,
-            Map<HomeRecordsCategory, bool> selectedRecordTypes
-          })>
-      fetchOverviewCardsAndResources(String? sourceId,
-          [List<String>? patientSourceIds]) async {
+    ({
+      List<OverviewCard> overviewCards,
+      List<IFhirResource> allEnabledResources,
+      Map<HomeRecordsCategory, bool> selectedRecordTypes,
+    })
+  >
+  fetchOverviewCardsAndResources(
+    String? sourceId, [
+    List<String>? patientSourceIds,
+  ]) async {
     final overviewCards = <OverviewCard>[];
     final allEnabledResources = <IFhirResource>[];
-    final savedRecordsVisibility =
-        await homePreferences.getRecordsVisibility();
-    final updatedSelectedRecordTypes =
-        Map<HomeRecordsCategory, bool>.from(state.selectedRecordTypes);
+    final savedRecordsVisibility = await homePreferences.getRecordsVisibility();
+    final updatedSelectedRecordTypes = Map<HomeRecordsCategory, bool>.from(
+      state.selectedRecordTypes,
+    );
     if (savedRecordsVisibility != null) {
-      updatedSelectedRecordTypes.updateAll((category, value) =>
-          savedRecordsVisibility[category.display] ?? value);
+      updatedSelectedRecordTypes.updateAll(
+        (category, value) => savedRecordsVisibility[category.display] ?? value,
+      );
     }
 
     for (final category in updatedSelectedRecordTypes.keys) {
       if (updatedSelectedRecordTypes[category]!) {
         final resources = await fetchResourcesFromAllSources(
-            category.resourceTypes, sourceId, patientSourceIds);
-        overviewCards.add(OverviewCard(
-            category: category, count: resources.length.toString()));
+          category.resourceTypes,
+          sourceId,
+          patientSourceIds,
+        );
+        overviewCards.add(
+          OverviewCard(category: category, count: resources.length.toString()),
+        );
         allEnabledResources.addAll(resources);
       } else {
         overviewCards.add(OverviewCard(category: category, count: '0'));
@@ -138,10 +151,16 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
     );
   }
 
-  Future<List<IFhirResource>> fetchPatientResources(String? sourceId,
-      [List<String>? patientSourceIds, String? selectedPatientId]) async {
+  Future<List<IFhirResource>> fetchPatientResources(
+    String? sourceId, [
+    List<String>? patientSourceIds,
+    String? selectedPatientId,
+  ]) async {
     var resources = await fetchResourcesFromAllSources(
-        [FhirType.Patient], sourceId, patientSourceIds);
+      [FhirType.Patient],
+      sourceId,
+      patientSourceIds,
+    );
 
     var patients = resources.whereType<Patient>().toList();
 
@@ -173,10 +192,15 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
     return patients;
   }
 
-  Future<List<PatientVital>> fetchAndProcessVitals(String? sourceId,
-      [List<String>? patientSourceIds]) async {
+  Future<List<PatientVital>> fetchAndProcessVitals(
+    String? sourceId, [
+    List<String>? patientSourceIds,
+  ]) async {
     final obs = await fetchResourcesFromAllSources(
-        [FhirType.Observation], sourceId, patientSourceIds);
+      [FhirType.Observation],
+      sourceId,
+      patientSourceIds,
+    );
     final prefs = await SharedPreferences.getInstance();
     final region = RegionPreset.fromString(
       prefs.getString(SharedPrefsConstants.regionPreset),
@@ -185,17 +209,19 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
   }
 
   Future<
-          ({
-            List<PatientVital> allAvailableVitals,
-            List<PatientVital> patientVitals,
-            Map<PatientVitalType, bool> selectedVitals
-          })>
-      processVitalsData(String? sourceId,
-          [List<String>? patientSourceIds]) async {
+    ({
+      List<PatientVital> allAvailableVitals,
+      List<PatientVital> patientVitals,
+      Map<PatientVitalType, bool> selectedVitals,
+    })
+  >
+  processVitalsData(String? sourceId, [List<String>? patientSourceIds]) async {
     final vitals = await fetchAndProcessVitals(sourceId, patientSourceIds);
     final saved = await homePreferences.getVitalsVisibility();
-    final selectedMap = Map<String, bool>.from(saved ??
-        {for (final e in state.selectedVitals.entries) e.key.title: e.value});
+    final selectedMap = Map<String, bool>.from(
+      saved ??
+          {for (final e in state.selectedVitals.entries) e.key.title: e.value},
+    );
 
     final hasData = vitals.any((v) => v.observationId != null);
 
@@ -205,15 +231,17 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
         () => hasData && vital.observationId != null
             ? true
             : (state.selectedVitals[PatientVitalTypeX.fromTitle(vital.title) ??
-                    PatientVitalType.heartRate] ??
-                false),
+                      PatientVitalType.heartRate] ??
+                  false),
       );
     }
 
     List<PatientVital> allAvailableVitals;
     if (state.allAvailableVitals.isNotEmpty) {
-      allAvailableVitals =
-          mergeVitalsWithCurrentOrder(state.allAvailableVitals, vitals);
+      allAvailableVitals = mergeVitalsWithCurrentOrder(
+        state.allAvailableVitals,
+        vitals,
+      );
     } else {
       allAvailableVitals = await applyVitalSignsOrder(vitals);
     }
@@ -225,15 +253,16 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
     final selectedVitals = Map<PatientVitalType, bool>.fromEntries(
       selectedMap.entries.map(
         (e) => MapEntry(
-            PatientVitalTypeX.fromTitle(e.key) ?? PatientVitalType.heartRate,
-            e.value),
+          PatientVitalTypeX.fromTitle(e.key) ?? PatientVitalType.heartRate,
+          e.value,
+        ),
       ),
     );
 
     return (
       allAvailableVitals: allAvailableVitals,
       patientVitals: filtered,
-      selectedVitals: selectedVitals
+      selectedVitals: selectedVitals,
     );
   }
 
@@ -255,14 +284,15 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
   }
 
   Future<List<PatientVital>> applyVitalSignsOrder(
-      List<PatientVital> vitals) async {
+    List<PatientVital> vitals,
+  ) async {
     if (vitals.isEmpty) return vitals;
 
     final savedOrder = await homePreferences.getVitalsOrder();
     if (savedOrder != null && savedOrder.isNotEmpty) {
       final map = {for (final v in vitals) v.title: v};
       final ordered = <PatientVital>[
-        ...savedOrder.map((t) => map.remove(t)).whereType<PatientVital>(),
+        ...savedOrder.map(map.remove).whereType<PatientVital>(),
         ...map.values,
       ];
       return ordered;
@@ -272,7 +302,7 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
       'Heart Rate',
       'Blood Pressure',
       'Temperature',
-      'Blood Oxygen'
+      'Blood Oxygen',
     ];
     final mapNoSaved = {for (final v in vitals) v.title: v};
     final ordered = <PatientVital>[
@@ -284,26 +314,31 @@ mixin HomeDataHandler on Bloc<HomeEvent, HomeState> {
   }
 
   Future<List<OverviewCard>> applyOverviewCardsOrder(
-      List<OverviewCard> cards) async {
+    List<OverviewCard> cards,
+  ) async {
     final savedOrder = await homePreferences.getRecordsOrder();
     if (savedOrder == null || savedOrder.isEmpty) return cards;
 
     final map = {for (final c in cards) c.category.display: c};
     return [
-      ...savedOrder.map((t) => map.remove(t)).whereType<OverviewCard>(),
+      ...savedOrder.map(map.remove).whereType<OverviewCard>(),
       ...map.values,
     ];
   }
 
   Future<List<SpecialtyCard>> classifyIntoSpecialties(
-      List<IFhirResource> resources) async {
+    List<IFhirResource> resources,
+  ) async {
     specialtyClassifier.buildEncounterIndex(resources);
     final counts = <MedicalSpecialty, int>{};
     for (final resource in resources) {
       final parsedOverride = MedicalSpecialty.values
           .where((s) => s.name == resource.specialtyOverride)
           .firstOrNull;
-      for (final specialty in specialtyClassifier.classify(resource, override: parsedOverride)) {
+      for (final specialty in specialtyClassifier.classify(
+        resource,
+        override: parsedOverride,
+      )) {
         counts[specialty] = (counts[specialty] ?? 0) + 1;
       }
     }

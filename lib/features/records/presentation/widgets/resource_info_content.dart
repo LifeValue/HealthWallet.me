@@ -37,28 +37,31 @@ class ResourceInfoContent extends StatelessWidget {
           ...resource.additionalInfo
               .where((infoLine) => !infoLine.isSection)
               .take(maxInfoLines)
-              .map((infoLine) => Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      infoLine.icon.svg(
-                        width: 16,
-                        colorFilter: ColorFilter.mode(
-                          context.colorScheme.onSurface.withValues(alpha: 0.6),
-                          BlendMode.srcIn,
-                        ),
+              .map(
+                (infoLine) => Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    infoLine.icon.svg(
+                      width: 16,
+                      colorFilter: ColorFilter.mode(
+                        context.colorScheme.onSurface.withValues(alpha: 0.6),
+                        BlendMode.srcIn,
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          infoLine.info,
-                          style: AppTextStyle.labelLarge.copyWith(
-                            color:
-                                context.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        infoLine.info,
+                        style: AppTextStyle.labelLarge.copyWith(
+                          color: context.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
                           ),
                         ),
-                      )
-                    ],
-                  )),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         ],
       ),
     );

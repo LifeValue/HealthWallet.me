@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PeerSearchStatusView extends StatelessWidget {
   final bool hasTimedOut;
@@ -70,7 +69,7 @@ class PeerSearchStatusView extends StatelessWidget {
                         width: 80,
                         height: 80,
                         child: Assets.images.device.svg(
-                          colorFilter: ColorFilter.mode(
+                          colorFilter: const ColorFilter.mode(
                             AppColors.primary,
                             BlendMode.srcIn,
                           ),
@@ -118,8 +117,9 @@ class PeerSearchStatusView extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: Insets.normal),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Insets.normal,
+                  ),
                   child: AppButton(
                     onPressed: onRetry,
                     label: context.l10n.retry,
@@ -158,8 +158,7 @@ class PeerSearchStatusView extends StatelessWidget {
               Text(
                 context.l10n.shareWifiDirectUnresponsive,
                 style: AppTextStyle.bodyMedium.copyWith(
-                  color:
-                      context.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -173,8 +172,7 @@ class PeerSearchStatusView extends StatelessWidget {
         Expanded(
           child: Center(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: Insets.normal),
+              padding: const EdgeInsets.symmetric(horizontal: Insets.normal),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -246,8 +244,7 @@ class _DiscoveryHintHeader extends StatelessWidget {
           Text(
             context.l10n.shareDiscoveryHint,
             style: AppTextStyle.bodyMedium.copyWith(
-              color:
-                  context.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: Insets.small),

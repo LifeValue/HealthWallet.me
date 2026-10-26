@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
@@ -7,9 +7,9 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
 import 'package:injectable/injectable.dart';
 
+part 'attachment_browse_bloc.freezed.dart';
 part 'attachment_browse_event.dart';
 part 'attachment_browse_state.dart';
-part 'attachment_browse_bloc.freezed.dart';
 
 @injectable
 class AttachmentBrowseBloc
@@ -18,7 +18,7 @@ class AttachmentBrowseBloc
   final SpecialtyClassifier _specialtyClassifier;
 
   AttachmentBrowseBloc(this._service, this._specialtyClassifier)
-      : super(const AttachmentBrowseState()) {
+    : super(const AttachmentBrowseState()) {
     on<AttachmentBrowseInitialised>(_onInitialised);
     on<AttachmentBrowseSelected>(_onRecordSelected);
     on<AttachmentBrowseMonthSelected>(_onMonthSelected);
@@ -30,15 +30,19 @@ class AttachmentBrowseBloc
     AttachmentBrowseInitialised event,
     Emitter<AttachmentBrowseState> emit,
   ) async {
-    debugPrint('[BROWSE] _onInitialised called: sourceId=${event.sourceId}, sourceIds=${event.sourceIds}, resourceTypes=${event.resourceTypes}, specialty=${event.specialty}');
+    debugPrint(
+      '[BROWSE] _onInitialised called: sourceId=${event.sourceId}, sourceIds=${event.sourceIds}, resourceTypes=${event.resourceTypes}, specialty=${event.specialty}',
+    );
     final sourceRecords = event.sourceRecords.isNotEmpty
         ? event.sourceRecords
         : state.sourceRecords;
-    emit(state.copyWith(
-      status: AttachmentBrowseStatus.loading,
-      readOnly: event.readOnly || state.readOnly,
-      sourceRecords: sourceRecords,
-    ));
+    emit(
+      state.copyWith(
+        status: AttachmentBrowseStatus.loading,
+        readOnly: event.readOnly || state.readOnly,
+        sourceRecords: sourceRecords,
+      ),
+    );
 
     try {
       var entries = await _service.loadEntries(
@@ -50,17 +54,16 @@ class AttachmentBrowseBloc
 
       if (event.specialty != null) {
         _specialtyClassifier.buildEncounterIndex(
-            entries.map((e) => e.record).toList());
-        entries = entries
-            .where((e) {
-              final override = MedicalSpecialty.values
-                  .where((s) => s.name == e.record.specialtyOverride)
-                  .firstOrNull;
-              return _specialtyClassifier
-                  .classify(e.record, override: override)
-                  .contains(event.specialty);
-            })
-            .toList();
+          entries.map((e) => e.record).toList(),
+        );
+        entries = entries.where((e) {
+          final override = MedicalSpecialty.values
+              .where((s) => s.name == e.record.specialtyOverride)
+              .firstOrNull;
+          return _specialtyClassifier
+              .classify(e.record, override: override)
+              .contains(event.specialty);
+        }).toList();
       }
 
       final timelineYears = _buildTimeline(entries);
@@ -82,15 +85,17 @@ class AttachmentBrowseBloc
         );
       }
 
-      emit(state.copyWith(
-        status: AttachmentBrowseStatus.success,
-        allRecords: entries,
-        records: entries,
-        selectedIndex: restoredIndex,
-        selectedDetail: detail,
-        timelineYears: timelineYears,
-        searchQuery: '',
-      ));
+      emit(
+        state.copyWith(
+          status: AttachmentBrowseStatus.success,
+          allRecords: entries,
+          records: entries,
+          selectedIndex: restoredIndex,
+          selectedDetail: detail,
+          timelineYears: timelineYears,
+          searchQuery: '',
+        ),
+      );
     } catch (_) {
       emit(state.copyWith(status: AttachmentBrowseStatus.error));
     }
@@ -155,12 +160,14 @@ class AttachmentBrowseBloc
           sourceId: entries[0].record.sourceId,
         );
       }
-      emit(state.copyWith(
-        records: entries,
-        selectedIndex: 0,
-        selectedDetail: detail,
-        timelineYears: timelineYears,
-      ));
+      emit(
+        state.copyWith(
+          records: entries,
+          selectedIndex: 0,
+          selectedDetail: detail,
+          timelineYears: timelineYears,
+        ),
+      );
       return;
     }
 
@@ -177,12 +184,14 @@ class AttachmentBrowseBloc
       );
     }
 
-    emit(state.copyWith(
-      records: filtered,
-      selectedIndex: 0,
-      selectedDetail: detail,
-      timelineYears: timelineYears,
-    ));
+    emit(
+      state.copyWith(
+        records: filtered,
+        selectedIndex: 0,
+        selectedDetail: detail,
+        timelineYears: timelineYears,
+      ),
+    );
   }
 
   Future<void> _onDetailRefreshed(
@@ -193,8 +202,10 @@ class AttachmentBrowseBloc
     if (index < 0 || index >= state.records.length) return;
 
     final entry = state.records[index];
-    final detail =
-        await _service.loadDetail(entry.record, sourceId: entry.record.sourceId);
+    final detail = await _service.loadDetail(
+      entry.record,
+      sourceId: entry.record.sourceId,
+    );
 
     final updatedEntry = AttachmentBrowseEntry(
       record: entry.record,
@@ -206,14 +217,18 @@ class AttachmentBrowseBloc
     final updatedRecords = List<AttachmentBrowseEntry>.from(state.records);
     updatedRecords[index] = updatedEntry;
     final updatedAll = List<AttachmentBrowseEntry>.from(state.allRecords);
-    final allIndex = updatedAll.indexWhere((e) => e.record.id == entry.record.id);
+    final allIndex = updatedAll.indexWhere(
+      (e) => e.record.id == entry.record.id,
+    );
     if (allIndex >= 0) updatedAll[allIndex] = updatedEntry;
 
-    emit(state.copyWith(
-      selectedDetail: detail,
-      records: updatedRecords,
-      allRecords: updatedAll,
-    ));
+    emit(
+      state.copyWith(
+        selectedDetail: detail,
+        records: updatedRecords,
+        allRecords: updatedAll,
+      ),
+    );
   }
 
   List<TimelineYear> _buildTimeline(List<AttachmentBrowseEntry> entries) {

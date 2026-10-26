@@ -1,6 +1,8 @@
 import 'dart:convert';
+
 import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,20 +51,22 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       final persistableNotifications = notifications
           .where((n) => n.type != NotificationType.progress)
           .toList();
-      final jsonList = persistableNotifications.map((n) => _toJson(n)).toList();
+      final jsonList = persistableNotifications.map(_toJson).toList();
       _prefs.setString(_storageKey, jsonEncode(jsonList));
-    } catch (e) {}
+    } catch (e, s) {
+      logger.w('Persisting notifications failed', e, s);
+    }
   }
 
   Map<String, dynamic> _toJson(Notification n) => {
-        'id': n.id,
-        'text': n.text,
-        'description': n.description,
-        'read': n.read,
-        'time': n.time?.toIso8601String(),
-        'type': n.type.name,
-        'progress': n.progress,
-      };
+    'id': n.id,
+    'text': n.text,
+    'description': n.description,
+    'read': n.read,
+    'time': n.time?.toIso8601String(),
+    'type': n.type.name,
+    'progress': n.progress,
+  };
 
   Notification _fromJson(Map<String, dynamic> json) {
     NotificationType type = NotificationType.normal;
@@ -98,8 +102,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) {
     if (event.notification.id != null) {
-      final existingIndex =
-          state.notifications.indexWhere((n) => n.id == event.notification.id);
+      final existingIndex = state.notifications.indexWhere(
+        (n) => n.id == event.notification.id,
+      );
       if (existingIndex != -1) {
         final newList = [...state.notifications];
         newList[existingIndex] = event.notification;
@@ -118,8 +123,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     NotificationPopupOpened event,
     Emitter<NotificationState> emit,
   ) {
-    final readList =
-        state.notifications.map((n) => n.copyWith(read: true)).toList();
+    final readList = state.notifications
+        .map((n) => n.copyWith(read: true))
+        .toList();
     emit(state.copyWith(notifications: readList));
     _saveNotifications(readList);
   }
@@ -144,8 +150,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     NotificationRemoved event,
     Emitter<NotificationState> emit,
   ) {
-    final newList =
-        state.notifications.where((n) => n != event.notification).toList();
+    final newList = state.notifications
+        .where((n) => n != event.notification)
+        .toList();
     emit(state.copyWith(notifications: newList));
     _saveNotifications(newList);
   }

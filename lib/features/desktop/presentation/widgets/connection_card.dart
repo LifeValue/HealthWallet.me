@@ -2,16 +2,16 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/desktop_card.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ConnectionCard extends StatelessWidget {
   final DesktopSyncState state;
@@ -28,13 +28,12 @@ class ConnectionCard extends StatelessWidget {
             AppButton(
               label: context.l10n.desktopGeneratePairingQr,
               onPressed: () {
-                context
-                    .read<CommunicationBloc>()
-                    .add(const CommunicationPairingRequested());
+                context.read<CommunicationBloc>().add(
+                  const CommunicationPairingRequested(),
+                );
               },
             ),
-          ] else if (state.connectionStatus !=
-              ConnectionStatus.connected) ...[
+          ] else if (state.connectionStatus != ConnectionStatus.connected) ...[
             Container(
               padding: const EdgeInsets.all(Insets.normal),
               decoration: BoxDecoration(
@@ -62,29 +61,39 @@ class ConnectionCard extends StatelessWidget {
               ),
             ),
           ] else ...[
-            Icon(Icons.check_circle, size: 40, color: AppColors.success),
+            const Icon(Icons.check_circle, size: 40, color: AppColors.success),
             const SizedBox(height: Insets.small),
             Text(
               state.pairedDevice!.deviceName,
-              style: AppTextStyle.bodyMedium
-                  .copyWith(color: context.colorScheme.onSurface),
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
             ),
           ],
           if (state.pairedDevice != null) ...[
             const SizedBox(height: Insets.normal),
-            InfoRow(label: context.l10n.desktopDevice, value: state.pairedDevice!.deviceName),
-            InfoRow(label: context.l10n.desktopTransport, value: _transportLabel(context, state)),
+            InfoRow(
+              label: context.l10n.desktopDevice,
+              value: state.pairedDevice!.deviceName,
+            ),
+            InfoRow(
+              label: context.l10n.desktopTransport,
+              value: _transportLabel(context, state),
+            ),
             if (state.connectedIp != null)
               InfoRow(label: context.l10n.desktopIp, value: state.connectedIp!),
             if (state.connectedPort != null)
-              InfoRow(label: context.l10n.desktopPort, value: '${state.connectedPort}'),
+              InfoRow(
+                label: context.l10n.desktopPort,
+                value: '${state.connectedPort}',
+              ),
             const SizedBox(height: Insets.small),
             AppButton(
               label: context.l10n.desktopNewPairing,
               onPressed: () {
-                context
-                    .read<CommunicationBloc>()
-                    .add(const CommunicationPairingRequested());
+                context.read<CommunicationBloc>().add(
+                  const CommunicationPairingRequested(),
+                );
               },
               fullWidth: false,
               height: 36,

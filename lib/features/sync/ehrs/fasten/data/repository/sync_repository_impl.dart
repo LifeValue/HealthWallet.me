@@ -2,16 +2,15 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
+import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/data/remote/sync_remote_data_source.dart';
-import 'package:health_wallet/features/sync/ehrs/fasten/data/remote/source_remote_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart'
     as entity;
-import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/data/remote/source_remote_data_source.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:injectable/injectable.dart';
-import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @Injectable(as: SyncRepository)
@@ -32,15 +31,21 @@ class SyncRepositoryImpl implements SyncRepository {
 
   @override
   Future<void> syncResources({required String endpoint}) async {
-    List<FhirResourceDto> resources =
-        await _remoteDataSource.getResources(endpoint: endpoint);
+    final List<FhirResourceDto> resources = await _remoteDataSource
+        .getResources(endpoint: endpoint);
 
-    await _localDataSource.cacheFhirResources(resources
-        .map((resource) =>
-            resource.populateEncounterIdFromRaw().populateSubjectIdFromRaw())
-        .toList());
-    await _localDataSource
-        .setLastSyncTimestamp(DateTime.now().toIso8601String());
+    await _localDataSource.cacheFhirResources(
+      resources
+          .map(
+            (resource) => resource
+                .populateEncounterIdFromRaw()
+                .populateSubjectIdFromRaw(),
+          )
+          .toList(),
+    );
+    await _localDataSource.setLastSyncTimestamp(
+      DateTime.now().toIso8601String(),
+    );
   }
 
   @override
@@ -69,15 +74,18 @@ class SyncRepositoryImpl implements SyncRepository {
 
         // Add local sources that are not in backend (like wallet)
         for (final localSource in localSources) {
-          if (!enrichedSources
-              .any((backendSource) => backendSource.id == localSource.id)) {
-            mergedSources.add(entity.Source(
-              id: localSource.id,
-              platformName: localSource.platformName,
-              logo: localSource.logo,
-              labelSource: localSource.labelSource,
-              platformType: localSource.platformType,
-            ));
+          if (!enrichedSources.any(
+            (backendSource) => backendSource.id == localSource.id,
+          )) {
+            mergedSources.add(
+              entity.Source(
+                id: localSource.id,
+                platformName: localSource.platformName,
+                logo: localSource.logo,
+                labelSource: localSource.labelSource,
+                platformType: localSource.platformType,
+              ),
+            );
           }
         }
 
@@ -109,8 +117,8 @@ class SyncRepositoryImpl implements SyncRepository {
 
   @override
   void setBaseUrl(String baseUrl) {
-    if (!baseUrl.endsWith("/")) {
-      baseUrl += "/";
+    if (!baseUrl.endsWith('/')) {
+      baseUrl += '/';
     }
     _remoteDataSource.updateBaseUrl(baseUrl);
     _sourceRemoteDataSource.updateBaseUrl(baseUrl);
@@ -174,13 +182,14 @@ class SyncRepositoryImpl implements SyncRepository {
   }
 
   Future<void> clearToken() async {
-    log("remove");
+    log('remove');
     await _prefs.remove(_tokenKey);
   }
 
   @override
   Future saveResources(List<IFhirResource> resources) async {
     await _localDataSource.cacheFhirResources(
-        resources.map((resource) => resource.toDto()).toList());
+      resources.map((resource) => resource.toDto()).toList(),
+    );
   }
 }

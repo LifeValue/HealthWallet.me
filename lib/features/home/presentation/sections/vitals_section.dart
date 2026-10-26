@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/home/presentation/widgets/reorderable_grid.dart';
-import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
+import 'package:health_wallet/features/home/presentation/widgets/reorderable_grid.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 class VitalsSection extends StatelessWidget {
   final List<PatientVital> vitals;
@@ -54,7 +54,8 @@ class VitalsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final vitalsToShow = vitalsExpanded ? allAvailableVitals : vitals;
     final double screenWidth = MediaQuery.sizeOf(context).width;
-    final bool isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final bool isPortrait =
+        MediaQuery.of(context).orientation == Orientation.portrait;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,10 +68,12 @@ class VitalsSection extends StatelessWidget {
               onReorder?.call(oldIndex, newIndex);
             } else {
               final vitalToMove = vitals[oldIndex];
-              final oldMasterIndex = allAvailableVitals
-                  .indexWhere((v) => v.title == vitalToMove.title);
-              final newMasterIndex = allAvailableVitals
-                  .indexWhere((v) => v.title == vitals[newIndex].title);
+              final oldMasterIndex = allAvailableVitals.indexWhere(
+                (v) => v.title == vitalToMove.title,
+              );
+              final newMasterIndex = allAvailableVitals.indexWhere(
+                (v) => v.title == vitals[newIndex].title,
+              );
 
               if (oldMasterIndex != -1 && newMasterIndex != -1) {
                 onReorder?.call(oldMasterIndex, newMasterIndex);
@@ -149,8 +152,11 @@ class VitalsSection extends StatelessWidget {
   }
 
   Widget _buildVitalSignCard(
-      BuildContext context, PatientVital vital, double screenWidth,
-      {Key? key}) {
+    BuildContext context,
+    PatientVital vital,
+    double screenWidth, {
+    Key? key,
+  }) {
     final String title = vital.title;
     final String value = vital.value;
     final String unit = vital.unit;
@@ -270,8 +276,8 @@ class VitalsSection extends StatelessWidget {
         case 'Optimal':
         case 'Normal':
           cardColor = context.isDarkMode
-              ? AppColors.successDark.withOpacity(0.08)
-              : AppColors.success.withOpacity(0.08);
+              ? AppColors.successDark.withValues(alpha: 0.08)
+              : AppColors.success.withValues(alpha: 0.08);
           statusIconColor = AppColors.success;
           statusIcon = Assets.icons.checkmarkCircleOutline.svg(
             width: iconSize,
@@ -282,8 +288,8 @@ class VitalsSection extends StatelessWidget {
         case 'Elevated':
         case 'Abnormal':
           cardColor = context.isDarkMode
-              ? AppColors.warningDark.withOpacity(0.08)
-              : AppColors.warning.withOpacity(0.08);
+              ? AppColors.warningDark.withValues(alpha: 0.08)
+              : AppColors.warning.withValues(alpha: 0.08);
           statusIconColor = AppColors.warning;
           statusIcon = Assets.icons.warning.svg(
             width: iconSize,
@@ -294,8 +300,8 @@ class VitalsSection extends StatelessWidget {
         case 'High':
         case 'Low':
           cardColor = context.isDarkMode
-              ? AppColors.errorDark.withOpacity(0.08)
-              : AppColors.error.withOpacity(0.08);
+              ? AppColors.errorDark.withValues(alpha: 0.08)
+              : AppColors.error.withValues(alpha: 0.08);
           statusIconColor = AppColors.error;
           statusIcon = Assets.icons.warning.svg(
             width: iconSize,
@@ -307,8 +313,8 @@ class VitalsSection extends StatelessWidget {
         case 'Critically High':
         case 'Critically Low':
           cardColor = context.isDarkMode
-              ? AppColors.errorDark.withOpacity(0.12)
-              : AppColors.error.withOpacity(0.12);
+              ? AppColors.errorDark.withValues(alpha: 0.12)
+              : AppColors.error.withValues(alpha: 0.12);
           statusIconColor = AppColors.error;
           statusIcon = Assets.icons.warning.svg(
             width: iconSize,
@@ -319,8 +325,8 @@ class VitalsSection extends StatelessWidget {
         case 'Uncertain':
         case 'Intermediate':
           cardColor = context.isDarkMode
-              ? AppColors.warningDark.withOpacity(0.08)
-              : AppColors.warning.withOpacity(0.08);
+              ? AppColors.warningDark.withValues(alpha: 0.08)
+              : AppColors.warning.withValues(alpha: 0.08);
           statusIconColor = AppColors.warning;
           statusIcon = Assets.icons.warning.svg(
             width: iconSize,
@@ -346,7 +352,7 @@ class VitalsSection extends StatelessWidget {
 
     final TextStyle unitStyle = AppTextStyle.bodySmall.copyWith(
       fontSize: isSmall ? 11 : 12,
-      color: context.colorScheme.onSurface.withOpacity(0.6),
+      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
     );
 
     return Container(

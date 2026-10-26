@@ -31,7 +31,9 @@ class TimelineEntry extends StatelessWidget {
   Widget build(BuildContext context) {
     return IntrinsicHeight(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: context.screenHorizontalPadding),
+        padding: EdgeInsets.symmetric(
+          horizontal: context.screenHorizontalPadding,
+        ),
         child: Stack(
           children: [
             Padding(
@@ -69,8 +71,7 @@ class TimelineEntry extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: _lineWidth,
-                      color:
-                          !isFirst ? AppColors.primary : Colors.transparent,
+                      color: !isFirst ? AppColors.primary : Colors.transparent,
                     ),
                   ),
                   Container(
@@ -90,15 +91,14 @@ class TimelineEntry extends StatelessWidget {
                           offset: const Offset(0, 1),
                           color: AppColors.primary.withValues(alpha: 0.6),
                           blurRadius: 3,
-                        )
+                        ),
                       ],
                     ),
                   ),
                   Expanded(
                     child: Container(
                       width: _lineWidth,
-                      color:
-                          !isLast ? AppColors.primary : Colors.transparent,
+                      color: !isLast ? AppColors.primary : Colors.transparent,
                     ),
                   ),
                 ],

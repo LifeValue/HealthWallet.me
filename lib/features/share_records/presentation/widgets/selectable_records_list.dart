@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
-import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/resource_card.dart';
+import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SelectableRecordsList extends StatelessWidget {
   final List<IFhirResource> filteredRecords;
@@ -53,8 +52,8 @@ class SelectableRecordsList extends StatelessWidget {
               hasActiveFilters
                   ? context.l10n.shareNoRecordsMatchSelectedFilters
                   : hasAppliedFilters
-                      ? context.l10n.shareNoRecordsForAppliedFilters
-                      : context.l10n.shareNoRecordsAvailable,
+                  ? context.l10n.shareNoRecordsForAppliedFilters
+                  : context.l10n.shareNoRecordsAvailable,
               style: AppTextStyle.titleMedium.copyWith(
                 color: context.colorScheme.onSurface,
               ),
@@ -65,8 +64,8 @@ class SelectableRecordsList extends StatelessWidget {
               hasActiveFilters
                   ? context.l10n.shareTryClearingFilters
                   : hasAppliedFilters
-                      ? context.l10n.shareRecordsPageFiltersNoResults
-                      : context.l10n.shareImportOrSyncRecords,
+                  ? context.l10n.shareRecordsPageFiltersNoResults
+                  : context.l10n.shareImportOrSyncRecords,
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
@@ -94,8 +93,8 @@ class SelectableRecordsList extends StatelessWidget {
           isSelected: isSelected,
           onTap: () {
             context.read<ShareRecordsBloc>().add(
-                  ShareRecordsEvent.recordToggled(resource),
-                );
+              ShareRecordsEvent.recordToggled(resource),
+            );
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

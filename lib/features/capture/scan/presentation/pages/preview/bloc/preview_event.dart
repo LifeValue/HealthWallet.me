@@ -5,7 +5,8 @@ abstract class PreviewEvent {
 }
 
 @freezed
-abstract class PreviewPageChanged extends PreviewEvent with _$PreviewPageChanged {
+abstract class PreviewPageChanged extends PreviewEvent
+    with _$PreviewPageChanged {
   const PreviewPageChanged._();
 
   const factory PreviewPageChanged({required int pageIndex}) =
@@ -13,7 +14,8 @@ abstract class PreviewPageChanged extends PreviewEvent with _$PreviewPageChanged
 }
 
 @freezed
-abstract class PreviewInitialized extends PreviewEvent with _$PreviewInitialized {
+abstract class PreviewInitialized extends PreviewEvent
+    with _$PreviewInitialized {
   const PreviewInitialized._();
 
   const factory PreviewInitialized({
@@ -23,7 +25,8 @@ abstract class PreviewInitialized extends PreviewEvent with _$PreviewInitialized
 }
 
 @freezed
-abstract class PreviewPageRotated extends PreviewEvent with _$PreviewPageRotated {
+abstract class PreviewPageRotated extends PreviewEvent
+    with _$PreviewPageRotated {
   const PreviewPageRotated._();
 
   const factory PreviewPageRotated({required int pageIndex}) =
@@ -31,7 +34,8 @@ abstract class PreviewPageRotated extends PreviewEvent with _$PreviewPageRotated
 }
 
 @freezed
-abstract class PreviewPageDeleted extends PreviewEvent with _$PreviewPageDeleted {
+abstract class PreviewPageDeleted extends PreviewEvent
+    with _$PreviewPageDeleted {
   const PreviewPageDeleted._();
 
   const factory PreviewPageDeleted({required int pageIndex}) =
@@ -39,7 +43,8 @@ abstract class PreviewPageDeleted extends PreviewEvent with _$PreviewPageDeleted
 }
 
 @freezed
-abstract class PreviewPagesReordered extends PreviewEvent with _$PreviewPagesReordered {
+abstract class PreviewPagesReordered extends PreviewEvent
+    with _$PreviewPagesReordered {
   const PreviewPagesReordered._();
 
   const factory PreviewPagesReordered({

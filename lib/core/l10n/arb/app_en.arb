@@ -1,1180 +1,1026 @@
 {
-    "appTitle": "HealthWallet.me",
-    "homeTitle": "Home",
-    "profileTitle": "Profile",
-    "settingsTitle": "Settings",
-    "welcomeMessage": "Welcome to HealthWallet.me!",
-    "@appTitle": {
-        "description": "The title of the application"
-    },
-    "@homeTitle": {
-        "description": "The title of the home screen"
-    },
-    "@profileTitle": {
-        "description": "The title of the profile screen"
-    },
-    "@settingsTitle": {
-        "description": "The title of the settings screen"
-    },
-    "@welcomeMessage": {
-        "description": "The welcome message shown to users"
-    },
-    "onboardingBack": "Back",
-    "onboardingGetStarted": "Get Started",
-    "onboardingNext": "Next",
-    "onboardingWelcomeTitle": "a Health Wallet for You!",
-    "onboardingWelcomeSubtitle": "<link>HealthWallet.me</link> already connects to 100,000+ US healthcare providers, and we're expanding to new countries.",
-    "onboardingWelcomeDescription": "Add records from any provider, import documents manually, or request support for your country.",
-      "onboardingRecordsTitle": "Your Health, Always in Sync",
+  "onboardingWelcomeTitle": "a Health Wallet for You!",
+  "onboardingWelcomeSubtitle": "<link>HealthWallet.me</link> already connects to 100,000+ US healthcare providers, and we're expanding to new countries.",
+  "onboardingWelcomeDescription": "Add records from any provider, import documents manually, or request support for your country.",
+  "onboardingRecordsTitle": "Your Health, Always in Sync",
   "onboardingRecordsSubtitle": "<link>HealthWallet.me</link> gives you flexible ways to bring all your medical history together:",
-    "onboardingRecordsDescription": "• Scan documents with your phone's camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of Fasten Health OnPrem and get all your US healthcare systems records to your wallet.",
-    "onboardingRecordsContent": "• Scan documents with your phone's camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of <link>Fasten Health OnPrem</link> and get all your US healthcare systems records to your wallet.",
-    "onboardingRecordsBottom": "Everything is organized securely on your device.",
-    "onboardingRequestIntegration": "Request an integration",
+  "onboardingRecordsDescription": "• Scan documents with your phone's camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of Fasten Health OnPrem and get all your US healthcare systems records to your wallet.",
+  "onboardingRecordsContent": "• Scan documents with your phone's camera\n• Upload PDFs, images, or lab files directly\n• Import records by sharing directly with <link>HealthWallet.me</link> from any app in your smartphone.\n• Scan the QR Code of <link>Fasten Health OnPrem</link> and get all your US healthcare systems records to your wallet.",
+  "onboardingRecordsBottom": "Everything is organized securely on your device.",
+  "onboardingRequestIntegration": "Request an integration",
   "onboardingScanButton": "Scan",
-    "onboardingSyncTitle": "Security & Privacy",
+  "onboardingSyncTitle": "Security & Privacy",
   "onboardingSyncSubtitle": "<link>HealthWallet.me</link> is built with privacy at its core. Your medical data is encrypted and stored only on your phone, never on cloud servers.",
-    "onboardingSyncDescription": "View your health history in airplane mode, abroad, or without internet, your records stay with you wherever you go. Add an extra layer of security by enabling biometric authentication.",
-  "onboardingBiometricText": "You can lock your HealthWallet with biometric security like Face ID or a fingerprint scan.",
+  "onboardingSyncDescription": "View your health history in airplane mode, abroad, or without internet, your records stay with you wherever you go. Add an extra layer of security by enabling biometric authentication.",
   "homeHi": "Hi, ",
-    "homeLastSynced": "Last synced: ",
-    "homeNever": "Never",
-    "homeVitalSigns": "Vitals",
-    "homeOverview": "Medical Records",
-    "homeSource": "Source:",
-    "homeAll": "All",
-    "homeRecentRecords": "Recent Records",
-    "homeViewAll": "View All",
-    "homeNA": "N/A",
-    "bluetoothRequired": "Please turn on Bluetooth to use Share Proximity",
-    "dashboardTitle": "Dashboard",
-    "recordsTitle": "Records",
-    "goToRecords": "Go to Records",
-    "syncTitle": "Sync",
-    "scanFastenQr": "Scan Fasten Health QR",
-    "syncSuccessful": "Sync successful!",
-    "syncDataLoadedSuccessfully": "Your medical records have been synchronized. You will be redirected to the home page.",
-    "cancelSyncTitle": "Cancel Sync?",
-    "cancelSyncMessage": "Are you sure you want to cancel the synchronization? This will stop the current sync process.",
-    "yesCancel": "Yes, Cancel",
-    "continueSync": "Continue Sync",
-    "syncAgain": "Sync Again",
-    "syncFailed": "Sync failed: ",
-    "tryAgain": "Try Again",
-    "syncedAt": "Synced at: ",
-    "pasteSyncData": "Paste Sync Data",
-    "submit": "Submit",
-    "hideManualEntry": "Hide Manual Entry",
-    "enterDataManually": "Enter data manually",
-    "medicalRecords": "Medical Records",
-    "searchRecordsHint": "Search records, doctors, locations...",
-    "detailsFor": "Details for ",
-    "patientId": "MRN: ",
-    "age": "Age",
-    "sex": "Sex",
-    "bloodType": "Blood Type",
-    "lastSyncedProfile": "Last synced: 2 hours ago",
-    "syncLatestRecords": "Sync your latest medical records from your healthcare provider.",
-    "scanToSync": "Scan to Sync",
-    "theme": "Theme",
-    "pleaseAuthenticate": "Please authenticate to continue",
-    "authenticate": "Authenticate",
-    "bypass": "Bypass",
-    "onboardingAuthTitle": "Enable Biometric Authentication",
-    "onboardingAuthDescription": "Add an extra layer of security to your account by enabling biometric authentication.",
-    "onboardingAuthEnable": "Enable Now",
-    "onboardingAuthSkip": "Skip for Now",
-    "biometricAuthentication": "Biometric Authentication",
-    "privacyPolicy": "Privacy Policy",
-    
-    "setupDeviceSecurity": "Set Up Device Security",
-    "deviceSecurityMessage": "Your device has no security setup. For your safety, please set up device security before using this app:",
-    "deviceSettingsStep1": "Go to your device Settings",
-    "deviceSettingsStep2": "Navigate to Security or Lock screen",
-    "deviceSettingsStep3": "Set up a screen lock (PIN, pattern, or password)",
-    "deviceSettingsStep4": "Optionally add fingerprint or face unlock for convenience",
-    "deviceSecurityReturnMessage": "After setting up device security, return to this app and try again.",
-    "cancel": "Cancel",
-    "openSettings": "Open Settings",
-    "settingsNotAvailable": "Settings Not Available",
-    "settingsNotAvailableMessage": "Could not open device settings automatically. Please manually:\n\n1. Open Settings\n2. Go to Security → Biometrics\n3. Add fingerprint or face unlock\n4. Return to this app and try again",
-    "ok": "OK",
-    
-    "scanCode": "Scan code",
-    "or": "or",
-    "manualSyncMessage": "Raw QR Code",
-    "pasteSyncDataHint": "Paste the raw QR code",
-    "connect": "Connect",
-    "scanNewQRCode": "Scan New QR Code",
-    "loadDemoData": "Load Demo Data",
-    "syncData": "Sync Data",
-    "noMedicalRecordsYet": "No medical records yet",
-    "noRecordTypeYet": "No {recordType} yet",
-    "loadDemoDataMessage": "Load demo data to explore the app or sync your real medical records",
-    "syncDataMessage": "Sync or update your data to view {recordType} records",
-    "retry": "Retry",
-    
-    "pleaseEnterSourceName": "Please enter a source name",
-    "selectBirthDate": "Select birth date",
-    "years": "years",
-    "male": "Male",
-    "female": "Female",
-    "preferNotToSay": "Prefer not to say",
-    
-    "errorUpdatingSourceLabel": "Error updating source label",
-    "noChangesDetected": "No changes detected",
-    "pleaseSelectBirthDate": "Please select a birth date",
-    "errorSavingPatientData": "Error saving patient data",
-    "walletHolder": "Wallet Holder",
-    "walletHolderDescription": "This patient is the primary owner of this health wallet",
-    "getStarted": "Get Started",
-    "failedToUpdateDisplayName": "Failed to update display name",
-    "actionCannotBeUndone": "This action cannot be undone.",
-    "deleteSourceConfirmPrefix": "This will permanently delete ",
-    "deleteSourceConfirmSuffix": " and all its records. To confirm, type the source name below.",
-    "deleteRecordConfirm": "Are you sure you want to delete this record?",
-    "deleteNoteConfirm": "Are you sure you want to delete this note?",
-    "deleteAttachmentConfirm": "Are you sure you want to delete this attachment?",
-    "deleteRecordsConfirm": "Are you sure you want to delete {count} items?",
-    "@deleteRecordsConfirm": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "confirmDeleteFile": "Are you sure you want to delete \"{filename}\"?",
-    "selectAtLeastOne": "Select at least one {type} to continue.",
-    
-    "editSourceLabel": "Edit source label",
-    "saveDetails": "Save details",
-    "editDetails": "Edit details",
-    "done": "Done",
-    "page": "Page",
-    "reorderPages": "Reorder Pages",
-    "attachments": "Attachments",
-    "noFilesAttached": "This record has no files attached",
-    "attachFile": "Attach file",
-    "overview": "Overview",
-    "recentRecords": "Recent records",
-    "chooseToDisplay": "Choose the {type} you want to see on your dashboard.",
-    "displayName": "Display name",
-    
-    "bloodTypeAPositive": "A positive",
-    "bloodTypeANegative": "A negative",
-    "bloodTypeBPositive": "B positive",
-    "bloodTypeBNegative": "B negative",
-    "bloodTypeABPositive": "AB positive",
-    "bloodTypeABNegative": "AB negative",
-    "bloodTypeOPositive": "O positive",
-    "bloodTypeONegative": "O negative",
-    
-    "serverError": "Something went wrong on the server",
-    "serverTimeout": "Server timeout",
-    "connectionError": "Connection error",
-    "unknownSource": "Unknown Source",
-    
-    "synchronization": "Synchronization",
-    "desktopSyncAndBackup": "Data Sync & Backup",
-    "desktopSyncDescription": "Sync & Backup your health records.\nHand over documents to be digitally processed on your desktop.",
-    "processOnDesktop": "Process on Desktop",
-    "sendToDesktop": "Send to Desktop",
-    "continueImporting": "Continue Importing",
-    "noAiModel": "No AI model",
-    "noAiModelOnDesktop": "No AI model on Desktop. Please download the AI model on your desktop app first.",
-    "syncMedicalRecords": "Sync Medical records",
-    "syncLatestMedicalRecords": "Sync your latest medical records from your healthcare provider using a secure JWT token.",
-    "neverSynced": "Never synced",
-    "lastSynced": "Last synced",
-    "tapToSelectPatient": "Tap to select patient",
-    "preferences": "Preferences",
-    "version": "Version",
-    "on": "ON",
-    "off": "OFF",
-    
-    "confirmDisableBiometric": "Are you sure you would like to disable the Biometric Auth (FaceID / Passcode)?",
-    "disable": "Disable",
-    
-    "continueButton": "Continue",
-    "enableBiometricAuth": "Enable Biometric Auth (FaceID / Passcode)",
-    "disableBiometricAuth": "Disable Biometric Auth (FaceID / Passcode)",
-    
-    "patient": "Patient",
-    
-    "noPatientsFound": "No patients found",
-    "id": "ID",
-    "gender": "Gender",
-    "loading": "Loading...",
-    "source": "Source",
-    "showAll": "Show All",
-    "records": "Records",
-    "vitals": "Vitals",
-    "selectAll": "Select all",
-    "clearAll": "Clear all",
-    "save": "Save",
-    "noRecordsFound": "No records found",
-    "noRecords": "No records",
-    "tryDifferentKeywords": "Try searching with different keywords",
-    "clearAllFilters": "Clear all",
-    "syncingData": "Syncing data",
-    "syncingMessage": "It might take a while. Please wait.",
-    "scanQRMessage": "Scan a QR code from your HealthWallet.me desktop app or Fasten Health to sync your data.",
-    "viewAll": "View all",
-    "vitalSigns": "Vital Signs",
-    "longPressToReorder": "Long press to move & reorder cards, or filter to select which ones appear on your dashboard.",
-    
-    "finishProcessing": "Finish Processing",
-    "finishProcessingMessage": "Are you sure you want to finish this processing session?",
-    "finishProcessingWarning": "This will clear the current session.",
-    "fieldCannotBeEmpty": "This field cannot be empty",
-    "selectDate": "Select date",
-    "attachToEncounter": "Attach to Encounter",
-    "continueProcessing": "Continue Processing",
-    "recordsSavedTitle": "Successfully Saved",
-    "recordsSavedMessage": "Your health records have been saved successfully.",
-    "whatNextQuestion": "What would you like to do next?",
-    "continueScanning": "Continue Scanning",
-
-    "effectiveDate": "Effective Date",
-    "privacyIntro": "Your privacy is our highest priority.",
-    "privacyDescription": "is a simple, secure tool designed to help you organize your health records with ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.",
-    "corePrinciple": "Our Core Principle: Your Data Stays on Your Device",
-    "whatInformationHandled": "What Information is Handled?",
-    "informationWeDoNotCollect": "Information We Do Not Collect or Access",
-    "informationYouManage": "Information You Manage",
-    "importingDocuments": "Importing Documents from Your Device",
-    "connectingFastenHealth": "Connecting to FastenHealth OnPrem",
-    "howInformationUsed": "How Your Information is Used",
-    "dataStorageSecurity": "Data Storage, Security, and Sharing",
-    "childrensPrivacy": "Children's Privacy",
-    "changesToPolicy": "Changes to This Privacy Policy",
-    "contactUs": "Contact Us",
-    "builtWithLove": "Built with love by Life Value!",
-    
-    "sourceName": "Source name",
-    "provideCustomLabel": "Provide a custom label for:",
-    "success": "Success",
-    "demoDataLoadedSuccessfully": "Demo data has been loaded successfully. You will be redirected to the home page.",
-
-    "documentScanTitle": "Scan",
-    "fromPhoneTab": "From Phone",
-
-    "onboardingAiModelTitle": "Enable AI Model",
-    "onboardingAiModelDescription": "Download a secure, on-device AI model to automatically analyze and organize your health records. Choose between two options depending on your needs and device capability. This is a one-time setup.\n\n**Your data stays private on your device.**",
-    "onboardingAiModelSubtitle": "Unlock AI-powered scanning",
-    "aiModelReady": "AI ready! You can start scanning.",
-    "aiModelDownloading": "Downloading...",
-    "aiModelEnableDownload": "Choose & Download",
-    "aiModelError": "Couldn’t verify. Try again.",
-    "aiModelMissing": "Not downloaded.",
-    "aiModelTitle": "Load AI Model",
-    "aiModelUnlockTitle": "Unlock AI-Powered Scanning",
-    "aiModelUnlockDescription": "To automatically read and organize your medical documents, this feature uses a secure, on-device AI model.\n\n**Your data stays private on your device.**",
-    "aiModelDownloadInfo": "To get started, choose and download one of two available AI options. This is a one-time setup.",
-    
-    "setup": "Setup",
-    "patientSetupTitle": "Set Up Your Profile",
-    "patientSetupSubtitle": "Personalize your health wallet with your information",
-    
-    "onboardingSetupTitle": "Set Up my Health Wallet",
-    "onboardingSetupBody": "Create your personal health profile to get started with HealthWallet",
-    "onboardingDemoTitle": "Try Demo Data",
-    "onboardingDemoBody": "Explore the app with sample medical records to see how it works",
-    "onboardingSyncTitle2": "Sync Your Records",
-    "onboardingSyncBody": "Connect to your healthcare providers to import your real medical records",
-    
-    "givenName": "Given Name",
-    "familyName": "Family Name",
-    "skipForNow": "Skip for now",
-    
-    "setUpProfile": "Set Up",
-    "useDefaults": "Default",
-    "editDetails": "Edit details",
-    "saveDetails": "Save details",
-    
-    "syncPlaceholderTutorialStep1": "Complete your profile to unlock full features.",
-    "syncPlaceholderTutorialStep2": "Not ready to import? Load demo data to see how the app looks in action.",
-    "syncPlaceholderTutorialStep3": "Keep your desktop and mobile wallet up to date.",
-    "tapToContinue": "Tap to continue",
-    
-    "homeOnboardingReorderMessage": "Long press to reorder them according to your preference.",
-    
-    "processing": "Processing",
-    "sessionNotFound": "Session not found!",
-    "preparingPreview": "Preparing preview...",
-    "processingFailed": "Processing failed",
-    "modelNotFoundError": "Model file not found. Please download the AI model first.",
-    "modelCorruptedError": "Model file is corrupted. Please re-download the AI model.",
-    "retry": "Retry",
-    "processingCancelled": "Processing was cancelled",
-    "processingBasicDetails": "Processing basic details...",
-    "processingPages": "Processing pages...",
-    "extractingPatientInfo": "Extracting patient and encounter info.",
-    "pleaseWait": "It might take a while. Please wait.",
-    "cancel": "Cancel",
-    "focusMode": "Focus Mode",
-    "onlyOneSessionAtTime": "Only one processing session can run at a time",
-    "aiModelNotAvailable": "Smart scanning is not available",
-    "addResources": "Add resources",
-    "addResourcesTitle": "Add Resources",
-    "chooseResourcesDescription": "Choose the resources you want to add for processing.",
-    "add": "Add",
-    "allergyIntolerance": "Allergy Intolerance",
-    "condition": "Condition",
-    "diagnosticReport": "Diagnostic Report",
-    "medicationStatement": "Medication Statement",
-    "observation": "Observation",
-    "organization": "Organization",
-    "practitioner": "Practitioner",
-    "procedure": "Procedure",
-    "tapToViewProgress": "Tap anywhere to view progress",
-    "screenWillDarkenInSeconds": "The screen will darken in {remainingSeconds} seconds.",
-    "@screenWillDarkenInSeconds": {
-        "placeholders": {
-            "remainingSeconds": {
-                "type": "int"
-            }
-        }
-    },
-    "screenWillDarkenInZeroSeconds": "The screen will darken in 0 seconds.",
-    "whileDocumentsProcessed": "While your documents are being processed:",
-    "doNotLockScreen": "Do not lock the screen or exit the app.",
-    "plugInCharger": "Plug in the charger.",
-    "exitFocusMode": "Exit Focus Mode",
-    "chargerPluggedIn": "Charger plugged in.",
-    "plugInChargerEllipsis": "Plug in the charger...",
-
-    "processingFailedCapacity": "The document is too large for the current AI context size.",
-    "processingFailedCapacitySuggestion": "Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.",
-    "increaseAiModelCapacity": "Increase AI Capacity",
-    "goBack": "Go Back",
-
-    "aiModelManage": "Manage AI Options",
-    "aiModelNotSelected": "No option selected",
-    "aiModelSelect": "Select Option",
-    "aiSettings": "AI Settings",
-    "aiSettingsDescription": "Adjust AI performance for your device. Recommended values are pre-selected.",
-    "setAiTokensUsage": "Set AI Tokens Usage",
-    "tokenUsageDescription": "Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.",
-    "gpuLayersLabel": "GPU Layers",
-    "gpuLayersDescription": "Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.",
-    "threadsLabel": "CPU Threads",
-    "threadsDescription": "Number of CPU threads for inference. More threads = faster but uses more battery.",
-    "recommended": "Recommended",
-    "tokenPresetLow": "Low",
-    "tokenPresetLowDescription": "Best for small files and quick tasks.\nUses the least resources and processes fastest.",
-    "tokenPresetMedium": "Medium",
-    "tokenPresetMediumDescription": "Good for most use cases.\nBalances file size, processing time, and resource usage.",
-    "tokenPresetHigh": "High",
-    "tokenPresetHighDescription": "Best for large files and complex processing.\nUses more resources and battery, and takes longer to complete.",
-    "tokenPresetCustom": "Custom",
-    "tokenPresetCustomDescription": "Set custom amount of tokens you want to use.",
-    "setTokens": "Set",
-    "tokens": "tokens",
-    "contextSizeLabel": "Context Size",
-    "contextSizeDescription": "Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.",
-    "useVisionLabel": "Deep Scan",
-    "useVisionDescription": "Reads images for deeper analysis (e.g. handwriting). Uses more memory and requires a more performant device.",
-
-    "aiModelNotAvailableForDevice": "Not available for this phone",
-    "aiModelNotAvailableForDeviceDescription": "Sorry, your device doesn't have enough memory to run the AI model. You can still use the app without smart scanning.",
-    "noInternetConnectionTitle": "No Internet Connection",
-    "noInternetConnectionDescription": "Please check your internet connection and try again.",
-    "processingStep2NotAvailableTitle": "Deep Scan not available on this device",
-    "processingStep2NotEnoughRam": "This device doesn't have enough memory for Deep Scan. Text-based processing is still available and works well for most documents.",
-    "emergencyContact": "Emergency Phone Contact",
-    "emergencyContactHint": "Phone number",
-    "searchCountry": "Search country...",
-    "rotatePage": "Rotate",
-    "deletePage": "Delete",
-    "deletePageConfirmTitle": "Delete Page",
-    "deletePageConfirmMessage": "This page will be removed from the document.",
-    "cannotDeleteLastPage": "Cannot delete the last page",
-    "pageRotated": "Page rotated",
-    "regionAndUnits": "Language & Units",
-    "country": "Country",
-    "patientModifiedNewWillBeCreated": "Modified — a new patient will be created",
-    "patientModifiedUpdating": "Modifying existing patient: {name}",
-    "@patientModifiedUpdating": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "patientSavingModified": "Saving modified patient: {name}",
-    "@patientSavingModified": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "dropModificationsTitle": "Drop modifications?",
-    "dropModificationsMessage": "Your changes to the patient fields will be discarded.",
-    "modifyPatientTitle": "Modify patient?",
-    "modifyPatientMessage": "This will update the existing patient record with your changes.",
-    "scanIdCard": "Scan ID Card or Passport",
-    "scanIdCardDescription": "Auto-fill from your document. Data stays on your device.",
-    "newLabel": "New",
-    "newPatient": "New patient",
-    "patientChangedTo": "Changed to: {name}",
-    "@patientChangedTo": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "patientMatchFound": "Existing patient: {name}",
-    "@patientMatchFound": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "language": "Language",
-    "systemDefault": "System Default",
-    "regionUS": "US",
-    "regionEurope": "Europe",
-    "regionUK": "UK",
-    "medGemmaIncompatibleDevice": "This model requires more memory than your device has available. Use the Lite model instead.",
-    "deepScanDownloadTitle": "Download Vision Model",
-    "deepScanDownloadMessage": "Deep Scan requires an additional download (~{size} MB). Download now?",
-    "@deepScanDownloadMessage": {
-        "placeholders": {
-            "size": {
-                "type": "int"
-            }
-        }
-    },
-    "downloadingVisionModel": "Downloading vision model...",
-
-    "shareUnknownDevice": "Unknown Device",
-    "shareViewOnlyBanner": "VIEW ONLY - Data will be deleted when you close the session or leave proximity area",
-    "shareViewOnlyBannerViewing": "VIEW ONLY - Data will be deleted when you exit",
-    "shareInfoBannerMessage": "Shared records are view-only. All data is automatically deleted when the session ends or the time limit expires.",
-    "shareTitle": "Share",
-    "shareFindDevices": "Find Devices",
-    "shareWaiting": "Waiting...",
-    "shareConnectingTitle": "Connecting",
-    "shareSending": "Sending",
-    "shareReceiving": "Receiving",
-    "shareSessionActive": "Session Active",
-    "shareViewingRecords": "Viewing Records",
-    "shareComplete": "Complete",
-    "shareError": "Error",
-    "sharePermissionsRequired": "Permissions Required",
-    "shareHealthWalletDevice": "HealthWallet Device",
-    "shareInvitationDeclined": "Invitation Declined",
-    "shareSessionComplete": "Session Complete",
-    "shareInvitationDeclinedMessage": "The receiver declined your invitation to view the records.",
-    "shareSessionCompleteMessage": "All shared data has been securely removed from this device",
-    "shareBackHome": "Back Home",
-    "shareConnectionFailed": "Connection Failed",
-    "shareUnableToConnect": "Unable to connect. Please try again.",
-    "shareNoDataReceived": "No data received",
-    "shareSearchRecords": "Search records",
-    "shareNoRecordsMatchFilters": "No records match the filters",
-    "shareNoRecordsAvailable": "No records available",
-    "shareReceiverViewingRecords": "Receiver is viewing records",
-    "shareSessionAutoExpire": "Session will auto-expire when timer reaches zero",
-    "shareRecordsDelivered": "Records delivered successfully",
-    "shareConnecting": "Connecting...",
-    "shareConnectionInterrupted": "Connection interrupted, reconnecting",
-    "shareSendingRecords": "Sending records...",
-    "shareReceivingRecords": "Receiving records...",
-    "shareConfirmExit": "Confirm Exit",
-    "shareDeleteSharedRecords": "Delete Shared Records?",
-    "shareDeleteWarning": "The shared record will be permanently deleted from this device. Action cannot be undone",
-    "shareDeleteAndExit": "Delete & Exit",
-    "shareIncomingTransfer": "Incoming Transfer",
-    "shareViewOnlyWarning": "Records will be view-only and automatically deleted when you exit",
-    "shareDecline": "Decline",
-    "shareAccept": "Accept",
-    "shareSearchingForDevices": "Searching for nearby devices...",
-    "shareSearchForDevices": "Search for devices...",
-    "shareNoDevicesFound": "No Devices Found",
-    "shareConnectionIssue": "Connection Issue",
-    "shareWifiDirectUnresponsive": "WiFi Direct is unresponsive on this device.",
-    "shareWifiToggleHint": "WiFi Direct unresponsive. Toggle WiFi off/on, then tap Retry.",
-    "shareDiscoveryHint": "Make sure the other device has the HealthWallet.me app opened",
-    "shareProximityHint": "The receiving device must have Share Proximity ON in Preferences to be discoverable.",
-    "shareNoRecordsMatchSelectedFilters": "No records match the selected filters",
-    "shareNoRecordsForAppliedFilters": "No records found for the applied filters",
-    "shareTryClearingFilters": "Try clearing some filters",
-    "shareRecordsPageFiltersNoResults": "The Records page filters returned no results",
-    "shareImportOrSyncRecords": "Import or sync records to share them",
-    "shareSessionTime": "Session time",
-    "shareSetAsDefault": "Set as default",
-    "shareRecordsButton": "Share Records",
-    "shareSelectRecordsToShare": "Select records to share",
-    "shareEndSession": "End Session",
-    "shareRequestTenMin": "Request +10 min",
-    "shareWaitingForResponse": "Waiting for response...",
-    "shareAddMoreTime": "Add more time",
-    "shareSessionExpiresIn": "Session expires in",
-    "shareExtensionRequestedTitle": "Extension Requested",
-    "shareHoursLabel": "hours",
-    "shareMinLabel": "min",
-    "shareSelectedCount": "{count} selected",
-    "@shareSelectedCount": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "shareRecordCount": "{recordCount} record(s)",
-    "@shareRecordCount": {
-        "placeholders": {
-            "recordCount": {
-                "type": "int"
-            }
-        }
-    },
-    "shareSharedFrom": "shared from {source}",
-    "@shareSharedFrom": {
-        "placeholders": {
-            "source": {
-                "type": "String"
-            }
-        }
-    },
-    "shareFoundDevices": "Found {count} device(s)",
-    "@shareFoundDevices": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "shareRetryingCount": "Retrying ({retryCount}/3)...",
-    "@shareRetryingCount": {
-        "placeholders": {
-            "retryCount": {
-                "type": "int"
-            }
-        }
-    },
-    "shareDeviceWantsToShare": "{deviceName} wants to share records with you",
-    "@shareDeviceWantsToShare": {
-        "placeholders": {
-            "deviceName": {
-                "type": "String"
-            }
-        }
-    },
-    "shareExtensionsUsed": "{used}/{max} extensions used",
-    "@shareExtensionsUsed": {
-        "placeholders": {
-            "used": {
-                "type": "int"
-            },
-            "max": {
-                "type": "int"
-            }
-        }
-    },
-    "shareDurationHoursMinutes": "{hours}h {minutes} min",
-    "@shareDurationHoursMinutes": {
-        "placeholders": {
-            "hours": {
-                "type": "int"
-            },
-            "minutes": {
-                "type": "int"
-            }
-        }
-    },
-    "shareDurationHours": "{hours}h",
-    "@shareDurationHours": {
-        "placeholders": {
-            "hours": {
-                "type": "int"
-            }
-        }
-    },
-    "shareDurationMinutes": "{minutes} min",
-    "@shareDurationMinutes": {
-        "placeholders": {
-            "minutes": {
-                "type": "int"
-            }
-        }
-    },
-    "shareTimerHoursMinutesSeconds": "{hours}h {minutes}min {seconds}s",
-    "@shareTimerHoursMinutesSeconds": {
-        "placeholders": {
-            "hours": {
-                "type": "int"
-            },
-            "minutes": {
-                "type": "int"
-            },
-            "seconds": {
-                "type": "int"
-            }
-        }
-    },
-    "shareTimerMinutesSeconds": "{minutes}min {seconds}s",
-    "@shareTimerMinutesSeconds": {
-        "placeholders": {
-            "minutes": {
-                "type": "int"
-            },
-            "seconds": {
-                "type": "int"
-            }
-        }
-    },
-    "shareTimerSeconds": "{seconds}s",
-    "@shareTimerSeconds": {
-        "placeholders": {
-            "seconds": {
-                "type": "int"
-            }
-        }
-    },
-    "shareMinuteCount": "{minutes} minute(s)",
-    "@shareMinuteCount": {
-        "placeholders": {
-            "minutes": {
-                "type": "int"
-            }
-        }
-    },
-    "shareSecondsCount": "{seconds} seconds",
-    "@shareSecondsCount": {
-        "placeholders": {
-            "seconds": {
-                "type": "int"
-            }
-        }
-    },
-    "shareExtensionRequestMessage": "The {peerRole} wants to extend the session by {duration}",
-    "@shareExtensionRequestMessage": {
-        "placeholders": {
-            "peerRole": {
-                "type": "String"
-            },
-            "duration": {
-                "type": "String"
-            }
-        }
-    },
-    "shareExtensionDurationRequested": "{duration} requested",
-    "@shareExtensionDurationRequested": {
-        "placeholders": {
-            "duration": {
-                "type": "String"
-            }
-        }
-    },
-
-    "desktopSyncNotYet": "Not yet",
-    "desktopSyncTransfer": "Transfer",
-    "desktopSyncTransferValue": "{sentRows} sent, {receivedRows} received",
-    "@desktopSyncTransferValue": {
-        "placeholders": {
-            "sentRows": {
-                "type": "int"
-            },
-            "receivedRows": {
-                "type": "int"
-            }
-        }
-    },
-    "desktopSyncPending": "Pending",
-    "desktopSyncPendingValue": "{count} changes",
-    "@desktopSyncPendingValue": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "desktopSyncingTable": "Syncing {tableName}...",
-    "@desktopSyncingTable": {
-        "placeholders": {
-            "tableName": {
-                "type": "String"
-            }
-        }
-    },
-    "desktopSyncing": "Syncing...",
-    "desktopSyncNow": "Sync Now",
-    "desktopSyncError": "Error",
-    "desktopSyncInSync": "In Sync",
-    "desktopSyncReady": "Ready",
-    "desktopSyncOffline": "Offline",
-    "desktopTableHealthRecords": "Health Records",
-    "desktopTableSources": "Sources",
-    "desktopTableNotes": "Notes",
-    "desktopTableSessions": "Sessions",
-    "desktopConnection": "Connection",
-    "desktopGeneratePairingQr": "Generate Pairing QR",
-    "desktopScanFromMobile": "Scan from mobile Sync page",
-    "desktopDevice": "Device",
-    "desktopTransport": "Transport",
-    "desktopIp": "IP",
-    "desktopPort": "Port",
-    "desktopNewPairing": "New Pairing",
-    "desktopTransportTcp": "TCP over WiFi",
-    "desktopTransportMpc": "MultipeerConnectivity (Direct)",
-    "desktopConnectedTo": "Connected to {name}",
-    "@desktopConnectedTo": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "desktopConnected": "Connected",
-    "desktopReconnectingTo": "Reconnecting to {name}...",
-    "@desktopReconnectingTo": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "desktopReconnecting": "Reconnecting...",
-    "desktopDisconnectedFrom": "Disconnected from {name}",
-    "@desktopDisconnectedFrom": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "desktopDisconnected": "Disconnected",
-    "desktopDisconnect": "Disconnect",
-    "desktopReconnect": "Reconnect",
-    "desktopVpnDetected": "VPN detected. Disconnect VPN to sync with desktop.",
-    "desktopPairing": "Pairing",
-    "desktopLabel": "Desktop",
-    "desktopScanFromPhoneToPair": "Scan from your phone to pair",
-    "desktopNewQrCode": "New QR Code",
-    "desktopGenerateQrCode": "Generate QR Code",
-    "desktopScanQrCode": "Scan QR Code",
-    "desktopChooseWhereToSave": "Choose where to save backups",
-    "desktopSelectBackupFolder": "Select a folder on your computer to store backup files",
-    "desktopChooseLocation": "Choose Location",
-    "desktopChooseBackupLocation": "Choose Backup Location",
-    "desktopBackingUp": "Backing up...",
-    "desktopCreateBackup": "Create Backup",
-    "desktopSyncWithPhoneFirst": "Sync with phone first",
-    "desktopNotConnected": "(not connected)",
-    "desktopStartBackup": "Start Backup",
-    "desktopNoBackupsYet": "No backups yet",
-    "desktopCreateFirstBackup": "Create your first backup to keep your health data safe",
-    "desktopAllBackups": "All backups",
-    "desktopDate": "Date",
-    "desktopSize": "Size",
-    "desktopChecksum": "Checksum",
-    "desktopRestoreThisBackup": "Restore this backup",
-    "desktopRestoreBackupTitle": "Restore Backup?",
-    "desktopRestoreBackupMessage": "This will replace all current data on this device with \"{name}\".\n\n{count} records will be restored.\n\nYour data on the paired phone will not be affected.",
-    "@desktopRestoreBackupMessage": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            },
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "desktopRestore": "Restore",
-    "desktopDeleteBackupTitle": "Delete Backup?",
-    "desktopDeleteBackupMessage": "Delete \"{name}\"?\n\nThis cannot be undone.",
-    "@desktopDeleteBackupMessage": {
-        "placeholders": {
-            "name": {
-                "type": "String"
-            }
-        }
-    },
-    "desktopDelete": "Delete",
-    "desktopBackupFrom": "Backup from",
-    "desktopBackup": "Backup",
-    "desktopBackupLocation": "Backup Location",
-    "desktopChange": "Change",
-    "desktopProcessingHistory": "Processing History",
-    "desktopScannedOnPhone": "Scanned on Phone",
-    "desktopProcessedOnDesktop": "Processed on Desktop",
-    "desktopImportedOnDesktop": "Imported on Desktop",
-    "desktopSyncRecent": "Recent",
-    "desktopUnknownDevice": "Unknown device",
-    "desktopSyncHistoryTransfer": "{sentRows} sent · {receivedRows} received",
-    "@desktopSyncHistoryTransfer": {
-        "placeholders": {
-            "sentRows": {
-                "type": "int"
-            },
-            "receivedRows": {
-                "type": "int"
-            }
-        }
-    },
-    "desktopNewDeviceConnecting": "New Device Connecting",
-    "desktopNewDeviceMessage": "A new device ({address}) wants to connect.\n\nThis will disconnect \"{currentDevice}\".\n\nSwitch to the new device?",
-    "@desktopNewDeviceMessage": {
-        "placeholders": {
-            "address": {
-                "type": "String"
-            },
-            "currentDevice": {
-                "type": "String"
-            }
-        }
-    },
-    "desktopKeepCurrent": "Keep Current",
-    "desktopSwitch": "Switch",
-    "desktopCurrentDevice": "current device",
-    "desktopHandoverPreparing": "Preparing...",
-    "desktopHandoverSendingFiles": "Sending files...",
-    "desktopHandoverProcessingOnDesktop": "Processing on desktop...",
-    "desktopHandoverComplete": "Complete!",
-    "desktopHandoverError": "Error occurred",
-    "desktopHandoverSending": "Sending...",
-    "desktopHandoverSendingToDesktop": "Sending to Desktop",
-    "desktopHandoverFileCount": "{count} files",
-    "@desktopHandoverFileCount": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "desktopHandoverSuccess": "Handed over to Desktop",
-    "desktopClose": "Close",
-    "desktopContinueImporting": "Continue Importing",
-    "desktopConnectToDesktop": "Connect to Desktop",
-    "desktopCouldNotReconnect": "Could not reconnect. Scan QR code to pair again.",
-    "desktopScanQrToPair": "Scan the QR code on your desktop app to pair.",
-    "desktopHandoverToDesktop": "Handover to Desktop",
-    "desktopHandoverProcessingMessage": "Processing is in progress. Handover will cancel the current processing and send files to desktop.",
-    "desktopHandover": "Handover",
-
-    "attachedDocuments": "Attached Documents",
-    "cameraPermissionRequired": "Camera Permission Required",
-    "cameraPermissionRequiredMessage": "This app needs camera access to scan. Please grant permission to continue.",
-    "cameraPermissionDenied": "Camera Permission Denied",
-    "cameraPermissionDeniedMessage": "Camera permission has been permanently denied. Please enable it in Settings to use the scanner.",
-    "successTitle": "Success!",
-    "attachmentSuccessMessage": "Successfully attached {count} documents to the encounter.",
-    "@attachmentSuccessMessage": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "encounterLabel": "Encounter",
-    "viewRecords": "View Records",
-    "errorTitle": "Error",
-    "somethingWentWrong": "Something went wrong",
-    "importDocument": "Import Document",
-    "pickImageFromGallery": "Pick Image from Gallery",
-    "scanDocument": "Scan Document",
-    "deleteSession": "Delete Session",
-    "deleteSessionConfirmation": "Are you sure you want to delete this session?",
-    "delete": "Delete",
-    "canceling": "Canceling...",
-    "waitingForAiToFinish": "Waiting for AI to finish...",
-    "logsCopied": "Logs copied",
-    "download": "Download",
-    "active": "Active",
-    "tapToSelect": "Tap to select",
-    "deviceInfoChip": "{platform}  •  {ramGB}GB RAM  •  {cores} cores  •  ~{estimatedMB}MB needed",
-    "@deviceInfoChip": {
-        "placeholders": {
-            "platform": {
-                "type": "String"
-            },
-            "ramGB": {
-                "type": "String"
-            },
-            "cores": {
-                "type": "int"
-            },
-            "estimatedMB": {
-                "type": "int"
-            }
-        }
-    },
-    "downloadContinuesInBackground": "You can navigate away - download will continue in background.\nCheck notifications for progress.",
-    "continueWithoutAi": "Continue without AI (download in background)",
-    "continueUsingApp": "Continue using app",
-    "attachWithoutProcessing": "I want to attach the document without processing",
-    "currentPatientAndSource": "Current Patient & Source",
-    "createEncounter": "Create Encounter",
-    "encounterName": "Encounter name",
-    "enterEncounterName": "Enter encounter name",
-    "pleaseEnterEncounterName": "Please enter an encounter name",
-    "date": "Date",
-    "create": "Create",
-    "searchEncounters": "Search encounters...",
-    "noEncountersFound": "No encounters found",
-    "noEncountersFoundMessage": "Create a new encounter first or select a different patient.",
-    "newEncounterPrefix": "New encounter",
-    "scannedDocumentsTitle": "Scanned Documents",
-    "scannedDocumentsPagesTitle": "Scanned Documents ({count} pages)",
-    "@scannedDocumentsPagesTitle": {
-        "placeholders": {
-            "count": {
-                "type": "String"
-            }
-        }
-    },
-    "pdfFileTitle": "PDF: {fileName}",
-    "@pdfFileTitle": {
-        "placeholders": {
-            "fileName": {
-                "type": "String"
-            }
-        }
-    },
-    "labelOrganizationName": "Organization Name",
-    "labelAddress": "Address",
-    "labelPhone": "Phone",
-    "labelEncounterName": "Encounter Name",
-    "labelStartDate": "Start Date",
-    "labelFirstName": "First name",
-    "labelFamilyName": "Family name",
-    "labelDateOfBirth": "Date of birth",
-    "labelGender": "Gender",
-    "labelReportName": "Report Name",
-    "labelConclusion": "Conclusion",
-    "labelIssuedDate": "Issued Date",
-    "labelPractitionerName": "Practitioner Name",
-    "labelSpecialty": "Specialty",
-    "labelIdentifier": "Identifier",
-    "labelConditionName": "Condition Name",
-    "labelOnsetDate": "Onset Date",
-    "labelClinicalStatus": "Clinical Status",
-    "labelSubstance": "Substance",
-    "labelManifestation": "Manifestation",
-    "labelCategory": "Category",
-    "labelProcedureName": "Procedure Name",
-    "labelPerformedDate": "Performed Date",
-    "labelReason": "Reason",
-    "labelMedicationName": "Medication Name",
-    "labelDosage": "Dosage",
-    "labelObservationName": "Observation name",
-    "labelValue": "Value",
-    "labelUnit": "Unit",
-    "labelReferenceRange": "Reference Range",
-
-    "permissionsRequired": "Permissions Required",
-    "recordsSelectedCount": "{count} selected",
-    "@recordsSelectedCount": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "noRecordsSelected": "No records selected",
-    "select": "Select",
-    "selectRecordsBeforeSharing": "Select records\nbefore sharing",
-    "selectRecordToViewDetails": "Select a record to view details",
-    "recordDetails": "Record Details",
-    "viewDocument": "View Document",
-    "encounterDetails": "Encounter details",
-    "relatedResources": "Related resources",
-    "deletePlusRelated": "Delete + {count} related",
-    "@deletePlusRelated": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "fileNotAvailable": "File not available on this device",
-    "couldNotOpenFile": "Could not open file: {message}",
-    "@couldNotOpenFile": {
-        "placeholders": {
-            "message": {
-                "type": "String"
-            }
-        }
-    },
-    "errorOpeningFile": "Error opening file: {error}",
-    "@errorOpeningFile": {
-        "placeholders": {
-            "error": {
-                "type": "String"
-            }
-        }
-    },
-    "failedToLoadImage": "Failed to load image",
-    "errorLoadingPdf": "Error loading PDF: {error}",
-    "@errorLoadingPdf": {
-        "placeholders": {
-            "error": {
-                "type": "String"
-            }
-        }
-    },
-    "errorOnPage": "Error on page {page}: {error}",
-    "@errorOnPage": {
-        "placeholders": {
-            "page": {
-                "type": "String"
-            },
-            "error": {
-                "type": "String"
-            }
-        }
-    },
-    "notes": "Notes",
-    "noNotesAttached": "This record has no notes attached",
-    "addNote": "Add note",
-    "editNote": "Edit note",
-    "filters": "Filters",
-    "timeRange": "Time Range",
-    "applyFilters": "Apply filters",
-    "recordType": "Record type",
-    "specialty": "Specialty",
-    "allSpecialties": "All Specialties",
-    "selectedRange": "Selected Range",
-    "noRangeSelected": "No range selected",
-    "clearDateRange": "Clear date range",
-    "start": "Start",
-    "end": "End",
-    "fromDate": "From {date}",
-    "@fromDate": {
-        "placeholders": {
-            "date": {
-                "type": "String"
-            }
-        }
-    },
-    "untilDate": "Until {date}",
-    "@untilDate": {
-        "placeholders": {
-            "date": {
-                "type": "String"
-            }
-        }
-    },
-    "day": "Day",
-    "month": "Month",
-    "year": "Year",
-    "mediaInfo": "Media Info",
-    "linkToEncounter": "Link to Encounter",
-    "noPdfDataAvailable": "No PDF data available",
-    "failedToLoadPdf": "Failed to load PDF document",
-    "mediaInformation": "Media Information",
-    "mediaInfoTitle": "Title:",
-    "mediaInfoType": "Type:",
-    "mediaInfoStatus": "Status:",
-    "mediaInfoPatient": "Patient:",
-    "mediaInfoEncounter": "Encounter:",
-    "mediaInfoFileSize": "File Size:",
-    "mediaInfoCreated": "Created:",
-    "mediaInfoResourceId": "Resource ID:",
-    "mediaInfoSource": "Source:",
-    "close": "Close",
-    "linkMediaToEncounterDescription": "Link this media resource to an encounter:",
-    "encounterId": "Encounter ID",
-    "encounterIdHint": "e.g., encounter-123",
-    "mediaLinkedSuccess": "Media linked to encounter successfully",
-    "failedToLinkMedia": "Failed to link media: {error}",
-    "@failedToLinkMedia": {
-        "placeholders": {
-            "error": {
-                "type": "String"
-            }
-        }
-    },
-    "link": "Link",
-
-    "connectionLabel": "Connection",
-    "connectionStatusConnected": "Connected",
-    "connectionStatusConnecting": "Connecting...",
-    "connectionStatusDisconnected": "Disconnected",
-    "connectionStatusNotPaired": "Not paired",
-    "syncLabel": "Sync",
-    "syncStatusSyncing": "Syncing...",
-    "syncStatusNotSynced": "Not synced",
-    "syncStatusInSync": "In sync",
-    "syncStatusPending": "{count} pending",
-    "@syncStatusPending": {
-        "placeholders": {
-            "count": {
-                "type": "int"
-            }
-        }
-    },
-    "backupLabel": "Backup",
-    "backupStatusWorking": "Working...",
-    "backupStatusNoBackup": "No backup",
-    "backupStatusBackingUp": "Backing up...",
-    "backupStatusRestoring": "Restoring...",
-    "backupStatusWaiting": "Waiting...",
-    "backupStatusNotConnected": "Not connected",
-    "exportIpsPdf": "Export IPS (PDF)",
-    "addIpsToAppleWallet": "Add IPS to Apple Wallet",
-    "addIpsToGoogleWallet": "Add IPS to Google Wallet",
-    "sourcesTitle": "Sources",
-    "emergencyMedicalId": "Emergency Medical ID",
-    "phoneLabel": "Phone",
-    "allergiesLabel": "Allergies",
-    "medicalConditionsLabel": "Medical Conditions",
-    "medicationsLabel": "Medications",
-    "conditionsLabel": "Conditions",
-    "dateOfBirthLabel": "Date of Birth",
-    "emergencyPhoneLabel": "Emergency Phone",
-    "openingScanner": "Opening scanner...",
-    "activeScanSessions": "Active scan sessions:",
-    "noScansYet": "No scans yet",
-    "scanOrImportToGetStarted": "Scan or import documents to get started",
-    "pageOfTotal": "{current} of {total}",
-    "@pageOfTotal": {
-        "placeholders": {
-            "current": {
-                "type": "String"
-            },
-            "total": {
-                "type": "String"
-            }
-        }
-    },
-    "fileNotFound": "File not found",
-    "fileIsEmpty": "File is empty",
-    "importTitle": "Import",
-    "activeImportSessions": "Active import sessions:",
-    "dropToImport": "Drop to import",
-    "dropFilesHereToImport": "Drop files here to import",
-    "supportedFileFormats": "PDF, JPG, PNG, TIFF",
-    "browseFiles": "Browse Files",
-    "noImportsYet": "No imports yet",
-    "importOrScanToGetStarted": "Import or scan documents to get started",
-    "notificationsTitle": "Notifications",
-    "noNotifications": "No notifications",
-    "cancelDownloadTitle": "Cancel Download",
-    "cancelDownloadMessage": "Are you sure you want to cancel the AI Model download? You can restart it later.",
-    "processingDone": "Processing done",
-    "pairedWithDevice": "Paired with {deviceName}",
-    "@pairedWithDevice": {
-        "placeholders": {
-            "deviceName": {
-                "type": "String"
-            }
-        }
-    },
-    "deviceSyncLabel": "Device Sync",
-    "disconnectLabel": "Disconnect",
-    "changeLabel": "Change",
-    "minimizeToTray": "Minimize to tray",
-    "changeSpecialty": "Change Specialty",
-    "changeSpecialtyConfirm": "Are you sure you want to change the specialty to",
-    "removeSpecialtyConfirm": "Are you sure you want to remove the specialty from this record?",
-    "confirm": "Confirm",
-    "currentRecord": "Current record"
+  "homeVitalSigns": "Vitals",
+  "homeSource": "Source:",
+  "homeNA": "N/A",
+  "dashboardTitle": "Dashboard",
+  "recordsTitle": "Records",
+  "goToRecords": "Go to Records",
+  "syncTitle": "Sync",
+  "syncSuccessful": "Sync successful!",
+  "syncDataLoadedSuccessfully": "Your medical records have been synchronized. You will be redirected to the home page.",
+  "cancelSyncTitle": "Cancel Sync?",
+  "cancelSyncMessage": "Are you sure you want to cancel the synchronization? This will stop the current sync process.",
+  "yesCancel": "Yes, Cancel",
+  "continueSync": "Continue Sync",
+  "tryAgain": "Try Again",
+  "searchRecordsHint": "Search records, doctors, locations...",
+  "patientId": "MRN: ",
+  "age": "Age",
+  "sex": "Sex",
+  "bloodType": "Blood Type",
+  "theme": "Theme",
+  "authenticate": "Authenticate",
+  "biometricAuthentication": "Biometric Authentication",
+  "privacyPolicy": "Privacy Policy",
+  "setupDeviceSecurity": "Set Up Device Security",
+  "deviceSecurityMessage": "Your device has no security setup. For your safety, please set up device security before using this app:",
+  "deviceSettingsStep1": "Go to your device Settings",
+  "deviceSettingsStep2": "Navigate to Security or Lock screen",
+  "deviceSettingsStep3": "Set up a screen lock (PIN, pattern, or password)",
+  "deviceSettingsStep4": "Optionally add fingerprint or face unlock for convenience",
+  "deviceSecurityReturnMessage": "After setting up device security, return to this app and try again.",
+  "cancel": "Cancel",
+  "openSettings": "Open Settings",
+  "settingsNotAvailable": "Settings Not Available",
+  "settingsNotAvailableMessage": "Could not open device settings automatically. Please manually:\n\n1. Open Settings\n2. Go to Security → Biometrics\n3. Add fingerprint or face unlock\n4. Return to this app and try again",
+  "ok": "OK",
+  "or": "or",
+  "connect": "Connect",
+  "loadDemoData": "Load Demo Data",
+  "noMedicalRecordsYet": "No medical records yet",
+  "loadDemoDataMessage": "Load demo data to explore the app or sync your real medical records",
+  "retry": "Retry",
+  "pleaseEnterSourceName": "Please enter a source name",
+  "selectBirthDate": "Select birth date",
+  "years": "years",
+  "male": "Male",
+  "female": "Female",
+  "preferNotToSay": "Prefer not to say",
+  "errorUpdatingSourceLabel": "Error updating source label",
+  "getStarted": "Get Started",
+  "failedToUpdateDisplayName": "Failed to update display name",
+  "actionCannotBeUndone": "This action cannot be undone.",
+  "deleteSourceConfirmPrefix": "This will permanently delete ",
+  "deleteSourceConfirmSuffix": " and all its records. To confirm, type the source name below.",
+  "deleteRecordConfirm": "Are you sure you want to delete this record?",
+  "deleteNoteConfirm": "Are you sure you want to delete this note?",
+  "deleteAttachmentConfirm": "Are you sure you want to delete this attachment?",
+  "deleteRecordsConfirm": "Are you sure you want to delete {count} items?",
+  "@deleteRecordsConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "editSourceLabel": "Edit source label",
+  "saveDetails": "Save details",
+  "editDetails": "Edit details",
+  "done": "Done",
+  "page": "Page",
+  "reorderPages": "Reorder Pages",
+  "attachments": "Attachments",
+  "noFilesAttached": "This record has no files attached",
+  "attachFile": "Attach file",
+  "overview": "Overview",
+  "recentRecords": "Recent records",
+  "displayName": "Display name",
+  "unknownSource": "Unknown Source",
+  "desktopSyncAndBackup": "Data Sync & Backup",
+  "desktopSyncDescription": "Sync & Backup your health records.\nHand over documents to be digitally processed on your desktop.",
+  "processOnDesktop": "Process on Desktop",
+  "continueImporting": "Continue Importing",
+  "noAiModel": "No AI model",
+  "noAiModelOnDesktop": "No AI model on Desktop. Please download the AI model on your desktop app first.",
+  "syncMedicalRecords": "Sync Medical records",
+  "lastSynced": "Last synced",
+  "tapToSelectPatient": "Tap to select patient",
+  "preferences": "Preferences",
+  "version": "Version",
+  "on": "ON",
+  "off": "OFF",
+  "confirmDisableBiometric": "Are you sure you would like to disable the Biometric Auth (FaceID / Passcode)?",
+  "disable": "Disable",
+  "continueButton": "Continue",
+  "enableBiometricAuth": "Enable Biometric Auth (FaceID / Passcode)",
+  "disableBiometricAuth": "Disable Biometric Auth (FaceID / Passcode)",
+  "patient": "Patient",
+  "noPatientsFound": "No patients found",
+  "id": "ID",
+  "gender": "Gender",
+  "loading": "Loading...",
+  "source": "Source",
+  "records": "Records",
+  "vitals": "Vitals",
+  "selectAll": "Select all",
+  "clearAll": "Clear all",
+  "save": "Save",
+  "noRecordsFound": "No records found",
+  "noRecords": "No records",
+  "tryDifferentKeywords": "Try searching with different keywords",
+  "syncingData": "Syncing data",
+  "syncingMessage": "It might take a while. Please wait.",
+  "viewAll": "View all",
+  "vitalSigns": "Vital Signs",
+  "longPressToReorder": "Long press to move & reorder cards, or filter to select which ones appear on your dashboard.",
+  "finishProcessing": "Finish Processing",
+  "finishProcessingMessage": "Are you sure you want to finish this processing session?",
+  "finishProcessingWarning": "This will clear the current session.",
+  "fieldCannotBeEmpty": "This field cannot be empty",
+  "selectDate": "Select date",
+  "attachToEncounter": "Attach to Encounter",
+  "continueProcessing": "Continue Processing",
+  "recordsSavedTitle": "Successfully Saved",
+  "whatNextQuestion": "What would you like to do next?",
+  "continueScanning": "Continue Scanning",
+  "effectiveDate": "Effective Date",
+  "privacyIntro": "Your privacy is our highest priority.",
+  "privacyDescription": "is a simple, secure tool designed to help you organize your health records with ease, directly on your device. This policy explains our commitment to your privacy: we do not collect your data, and we do not track you. You are in complete control.",
+  "corePrinciple": "Our Core Principle: Your Data Stays on Your Device",
+  "whatInformationHandled": "What Information is Handled?",
+  "informationWeDoNotCollect": "Information We Do Not Collect or Access",
+  "informationYouManage": "Information You Manage",
+  "importingDocuments": "Importing Documents from Your Device",
+  "connectingFastenHealth": "Connecting to FastenHealth OnPrem",
+  "howInformationUsed": "How Your Information is Used",
+  "dataStorageSecurity": "Data Storage, Security, and Sharing",
+  "childrensPrivacy": "Children's Privacy",
+  "changesToPolicy": "Changes to This Privacy Policy",
+  "contactUs": "Contact Us",
+  "builtWithLove": "Built with love by Life Value!",
+  "sourceName": "Source name",
+  "provideCustomLabel": "Provide a custom label for:",
+  "success": "Success",
+  "demoDataLoadedSuccessfully": "Demo data has been loaded successfully. You will be redirected to the home page.",
+  "documentScanTitle": "Scan",
+  "fromPhoneTab": "From Phone",
+  "onboardingAiModelTitle": "Enable AI Model",
+  "onboardingAiModelDescription": "Download a secure, on-device AI model to automatically analyze and organize your health records. Choose between two options depending on your needs and device capability. This is a one-time setup.\n\n**Your data stays private on your device.**",
+  "onboardingAiModelSubtitle": "Unlock AI-powered scanning",
+  "aiModelReady": "AI ready! You can start scanning.",
+  "aiModelDownloading": "Downloading...",
+  "aiModelEnableDownload": "Choose & Download",
+  "aiModelError": "Couldn’t verify. Try again.",
+  "aiModelMissing": "Not downloaded.",
+  "aiModelTitle": "Load AI Model",
+  "aiModelUnlockTitle": "Unlock AI-Powered Scanning",
+  "aiModelUnlockDescription": "To automatically read and organize your medical documents, this feature uses a secure, on-device AI model.\n\n**Your data stays private on your device.**",
+  "aiModelDownloadInfo": "To get started, choose and download one of two available AI options. This is a one-time setup.",
+  "setup": "Setup",
+  "patientSetupSubtitle": "Personalize your health wallet with your information",
+  "givenName": "Given Name",
+  "familyName": "Family Name",
+  "syncPlaceholderTutorialStep1": "Complete your profile to unlock full features.",
+  "syncPlaceholderTutorialStep2": "Not ready to import? Load demo data to see how the app looks in action.",
+  "syncPlaceholderTutorialStep3": "Keep your desktop and mobile wallet up to date.",
+  "tapToContinue": "Tap to continue",
+  "homeOnboardingReorderMessage": "Long press to reorder them according to your preference.",
+  "processing": "Processing",
+  "sessionNotFound": "Session not found!",
+  "preparingPreview": "Preparing preview...",
+  "processingFailed": "Processing failed",
+  "modelNotFoundError": "Model file not found. Please download the AI model first.",
+  "modelCorruptedError": "Model file is corrupted. Please re-download the AI model.",
+  "processingCancelled": "Processing was cancelled",
+  "processingBasicDetails": "Processing basic details...",
+  "processingPages": "Processing pages...",
+  "extractingPatientInfo": "Extracting patient and encounter info.",
+  "pleaseWait": "It might take a while. Please wait.",
+  "focusMode": "Focus Mode",
+  "onlyOneSessionAtTime": "Only one processing session can run at a time",
+  "aiModelNotAvailable": "Smart scanning is not available",
+  "addResources": "Add resources",
+  "addResourcesTitle": "Add Resources",
+  "chooseResourcesDescription": "Choose the resources you want to add for processing.",
+  "add": "Add",
+  "allergyIntolerance": "Allergy Intolerance",
+  "condition": "Condition",
+  "diagnosticReport": "Diagnostic Report",
+  "medicationStatement": "Medication Statement",
+  "observation": "Observation",
+  "organization": "Organization",
+  "practitioner": "Practitioner",
+  "procedure": "Procedure",
+  "tapToViewProgress": "Tap anywhere to view progress",
+  "screenWillDarkenInSeconds": "The screen will darken in {remainingSeconds} seconds.",
+  "@screenWillDarkenInSeconds": {
+    "placeholders": {
+      "remainingSeconds": {
+        "type": "int"
+      }
+    }
+  },
+  "screenWillDarkenInZeroSeconds": "The screen will darken in 0 seconds.",
+  "whileDocumentsProcessed": "While your documents are being processed:",
+  "doNotLockScreen": "Do not lock the screen or exit the app.",
+  "plugInCharger": "Plug in the charger.",
+  "exitFocusMode": "Exit Focus Mode",
+  "chargerPluggedIn": "Charger plugged in.",
+  "plugInChargerEllipsis": "Plug in the charger...",
+  "processingFailedCapacity": "The document is too large for the current AI context size.",
+  "processingFailedCapacitySuggestion": "Tap the settings icon above and increase the Context Size to 2048 or higher, then retry.",
+  "increaseAiModelCapacity": "Increase AI Capacity",
+  "goBack": "Go Back",
+  "aiModelManage": "Manage AI Options",
+  "aiModelNotSelected": "No option selected",
+  "aiModelSelect": "Select Option",
+  "aiSettings": "AI Settings",
+  "aiSettingsDescription": "Adjust AI performance for your device. Recommended values are pre-selected.",
+  "setAiTokensUsage": "Set AI Tokens Usage",
+  "tokenUsageDescription": "Control how much processing power the AI can use. Higher capacity allows larger files and more complex tasks, but uses more resources and takes longer.",
+  "gpuLayersLabel": "GPU Layers",
+  "gpuLayersDescription": "Offload model layers to GPU for faster image processing. More layers = faster but uses more memory. Set to 0 if the app crashes.",
+  "threadsLabel": "CPU Threads",
+  "threadsDescription": "Number of CPU threads for inference. More threads = faster but uses more battery.",
+  "recommended": "Recommended",
+  "tokenPresetLow": "Low",
+  "tokenPresetMedium": "Medium",
+  "tokenPresetHigh": "High",
+  "tokenPresetCustom": "Custom",
+  "setTokens": "Set",
+  "tokens": "tokens",
+  "contextSizeLabel": "Context Size",
+  "contextSizeDescription": "Amount of text the AI can process at once. Larger context handles bigger documents but uses more memory.",
+  "useVisionLabel": "Deep Scan",
+  "useVisionDescription": "Reads images for deeper analysis (e.g. handwriting). Uses more memory and requires a more performant device.",
+  "aiModelNotAvailableForDevice": "Not available for this phone",
+  "aiModelNotAvailableForDeviceDescription": "Sorry, your device doesn't have enough memory to run the AI model. You can still use the app without smart scanning.",
+  "noInternetConnectionTitle": "No Internet Connection",
+  "noInternetConnectionDescription": "Please check your internet connection and try again.",
+  "processingStep2NotAvailableTitle": "Deep Scan not available on this device",
+  "processingStep2NotEnoughRam": "This device doesn't have enough memory for Deep Scan. Text-based processing is still available and works well for most documents.",
+  "emergencyContact": "Emergency Phone Contact",
+  "rotatePage": "Rotate",
+  "deletePage": "Delete",
+  "deletePageConfirmTitle": "Delete Page",
+  "deletePageConfirmMessage": "This page will be removed from the document.",
+  "regionAndUnits": "Language & Units",
+  "country": "Country",
+  "patientModifiedUpdating": "Modifying existing patient: {name}",
+  "@patientModifiedUpdating": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "patientSavingModified": "Saving modified patient: {name}",
+  "@patientSavingModified": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dropModificationsTitle": "Drop modifications?",
+  "dropModificationsMessage": "Your changes to the patient fields will be discarded.",
+  "scanIdCard": "Scan ID Card or Passport",
+  "scanIdCardDescription": "Auto-fill from your document. Data stays on your device.",
+  "newLabel": "New",
+  "newPatient": "New patient",
+  "patientChangedTo": "Changed to: {name}",
+  "@patientChangedTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "patientMatchFound": "Existing patient: {name}",
+  "@patientMatchFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "Language",
+  "systemDefault": "System Default",
+  "regionUS": "US",
+  "regionEurope": "Europe",
+  "regionUK": "UK",
+  "medGemmaIncompatibleDevice": "This model requires more memory than your device has available. Use the Lite model instead.",
+  "deepScanDownloadTitle": "Download Vision Model",
+  "deepScanDownloadMessage": "Deep Scan requires an additional download (~{size} MB). Download now?",
+  "@deepScanDownloadMessage": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "shareUnknownDevice": "Unknown Device",
+  "shareViewOnlyBanner": "VIEW ONLY - Data will be deleted when you close the session or leave proximity area",
+  "shareViewOnlyBannerViewing": "VIEW ONLY - Data will be deleted when you exit",
+  "shareInfoBannerMessage": "Shared records are view-only. All data is automatically deleted when the session ends or the time limit expires.",
+  "shareTitle": "Share",
+  "shareFindDevices": "Find Devices",
+  "shareWaiting": "Waiting...",
+  "shareConnectingTitle": "Connecting",
+  "shareSending": "Sending",
+  "shareReceiving": "Receiving",
+  "shareSessionActive": "Session Active",
+  "shareViewingRecords": "Viewing Records",
+  "shareComplete": "Complete",
+  "shareError": "Error",
+  "sharePermissionsRequired": "Permissions Required",
+  "shareHealthWalletDevice": "HealthWallet Device",
+  "shareInvitationDeclined": "Invitation Declined",
+  "shareSessionComplete": "Session Complete",
+  "shareInvitationDeclinedMessage": "The receiver declined your invitation to view the records.",
+  "shareSessionCompleteMessage": "All shared data has been securely removed from this device",
+  "shareBackHome": "Back Home",
+  "shareConnectionFailed": "Connection Failed",
+  "shareUnableToConnect": "Unable to connect. Please try again.",
+  "shareNoDataReceived": "No data received",
+  "shareSearchRecords": "Search records",
+  "shareNoRecordsMatchFilters": "No records match the filters",
+  "shareNoRecordsAvailable": "No records available",
+  "shareReceiverViewingRecords": "Receiver is viewing records",
+  "shareSessionAutoExpire": "Session will auto-expire when timer reaches zero",
+  "shareRecordsDelivered": "Records delivered successfully",
+  "shareConnecting": "Connecting...",
+  "shareConnectionInterrupted": "Connection interrupted, reconnecting",
+  "shareSendingRecords": "Sending records...",
+  "shareReceivingRecords": "Receiving records...",
+  "shareConfirmExit": "Confirm Exit",
+  "shareDeleteSharedRecords": "Delete Shared Records?",
+  "shareDeleteWarning": "The shared record will be permanently deleted from this device. Action cannot be undone",
+  "shareDeleteAndExit": "Delete & Exit",
+  "shareIncomingTransfer": "Incoming Transfer",
+  "shareViewOnlyWarning": "Records will be view-only and automatically deleted when you exit",
+  "shareDecline": "Decline",
+  "shareAccept": "Accept",
+  "shareSearchingForDevices": "Searching for nearby devices...",
+  "shareSearchForDevices": "Search for devices...",
+  "shareNoDevicesFound": "No Devices Found",
+  "shareConnectionIssue": "Connection Issue",
+  "shareWifiDirectUnresponsive": "WiFi Direct is unresponsive on this device.",
+  "shareWifiToggleHint": "WiFi Direct unresponsive. Toggle WiFi off/on, then tap Retry.",
+  "shareDiscoveryHint": "Make sure the other device has the HealthWallet.me app opened",
+  "shareProximityHint": "The receiving device must have Share Proximity ON in Preferences to be discoverable.",
+  "shareNoRecordsMatchSelectedFilters": "No records match the selected filters",
+  "shareNoRecordsForAppliedFilters": "No records found for the applied filters",
+  "shareTryClearingFilters": "Try clearing some filters",
+  "shareRecordsPageFiltersNoResults": "The Records page filters returned no results",
+  "shareImportOrSyncRecords": "Import or sync records to share them",
+  "shareSessionTime": "Session time",
+  "shareSetAsDefault": "Set as default",
+  "shareRecordsButton": "Share Records",
+  "shareSelectRecordsToShare": "Select records to share",
+  "shareEndSession": "End Session",
+  "shareRequestTenMin": "Request +10 min",
+  "shareWaitingForResponse": "Waiting for response...",
+  "shareAddMoreTime": "Add more time",
+  "shareSessionExpiresIn": "Session expires in",
+  "shareExtensionRequestedTitle": "Extension Requested",
+  "shareHoursLabel": "hours",
+  "shareMinLabel": "min",
+  "shareSelectedCount": "{count} selected",
+  "@shareSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareRecordCount": "{recordCount} record(s)",
+  "@shareRecordCount": {
+    "placeholders": {
+      "recordCount": {
+        "type": "int"
+      }
+    }
+  },
+  "shareSharedFrom": "shared from {source}",
+  "@shareSharedFrom": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFoundDevices": "Found {count} device(s)",
+  "@shareFoundDevices": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareRetryingCount": "Retrying ({retryCount}/3)...",
+  "@shareRetryingCount": {
+    "placeholders": {
+      "retryCount": {
+        "type": "int"
+      }
+    }
+  },
+  "shareDeviceWantsToShare": "{deviceName} wants to share records with you",
+  "@shareDeviceWantsToShare": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareExtensionsUsed": "{used}/{max} extensions used",
+  "@shareExtensionsUsed": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "shareDurationHoursMinutes": "{hours}h {minutes} min",
+  "@shareDurationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "shareDurationHours": "{hours}h",
+  "@shareDurationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "shareDurationMinutes": "{minutes} min",
+  "@shareDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "shareTimerHoursMinutesSeconds": "{hours}h {minutes}min {seconds}s",
+  "@shareTimerHoursMinutesSeconds": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "shareTimerMinutesSeconds": "{minutes}min {seconds}s",
+  "@shareTimerMinutesSeconds": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "shareTimerSeconds": "{seconds}s",
+  "@shareTimerSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "shareMinuteCount": "{minutes} minute(s)",
+  "@shareMinuteCount": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "shareSecondsCount": "{seconds} seconds",
+  "@shareSecondsCount": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "shareExtensionRequestMessage": "The {peerRole} wants to extend the session by {duration}",
+  "@shareExtensionRequestMessage": {
+    "placeholders": {
+      "peerRole": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopSyncNotYet": "Not yet",
+  "desktopSyncTransfer": "Transfer",
+  "desktopSyncTransferValue": "{sentRows} sent, {receivedRows} received",
+  "@desktopSyncTransferValue": {
+    "placeholders": {
+      "sentRows": {
+        "type": "int"
+      },
+      "receivedRows": {
+        "type": "int"
+      }
+    }
+  },
+  "desktopSyncPending": "Pending",
+  "desktopSyncPendingValue": "{count} changes",
+  "@desktopSyncPendingValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "desktopSyncingTable": "Syncing {tableName}...",
+  "@desktopSyncingTable": {
+    "placeholders": {
+      "tableName": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopSyncing": "Syncing...",
+  "desktopSyncNow": "Sync Now",
+  "desktopSyncError": "Error",
+  "desktopSyncInSync": "In Sync",
+  "desktopSyncReady": "Ready",
+  "desktopSyncOffline": "Offline",
+  "desktopTableHealthRecords": "Health Records",
+  "desktopTableSources": "Sources",
+  "desktopTableNotes": "Notes",
+  "desktopTableSessions": "Sessions",
+  "desktopConnection": "Connection",
+  "desktopGeneratePairingQr": "Generate Pairing QR",
+  "desktopScanFromMobile": "Scan from mobile Sync page",
+  "desktopDevice": "Device",
+  "desktopTransport": "Transport",
+  "desktopIp": "IP",
+  "desktopPort": "Port",
+  "desktopNewPairing": "New Pairing",
+  "desktopTransportTcp": "TCP over WiFi",
+  "desktopTransportMpc": "MultipeerConnectivity (Direct)",
+  "desktopConnectedTo": "Connected to {name}",
+  "@desktopConnectedTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopConnected": "Connected",
+  "desktopReconnectingTo": "Reconnecting to {name}...",
+  "@desktopReconnectingTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopReconnecting": "Reconnecting...",
+  "desktopDisconnectedFrom": "Disconnected from {name}",
+  "@desktopDisconnectedFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopDisconnected": "Disconnected",
+  "desktopDisconnect": "Disconnect",
+  "desktopReconnect": "Reconnect",
+  "desktopVpnDetected": "VPN detected. Disconnect VPN to sync with desktop.",
+  "desktopPairing": "Pairing",
+  "desktopLabel": "Desktop",
+  "desktopScanFromPhoneToPair": "Scan from your phone to pair",
+  "desktopNewQrCode": "New QR Code",
+  "desktopGenerateQrCode": "Generate QR Code",
+  "desktopScanQrCode": "Scan QR Code",
+  "desktopChooseWhereToSave": "Choose where to save backups",
+  "desktopSelectBackupFolder": "Select a folder on your computer to store backup files",
+  "desktopChooseLocation": "Choose Location",
+  "desktopChooseBackupLocation": "Choose Backup Location",
+  "desktopBackingUp": "Backing up...",
+  "desktopCreateBackup": "Create Backup",
+  "desktopSyncWithPhoneFirst": "Sync with phone first",
+  "desktopNotConnected": "(not connected)",
+  "desktopStartBackup": "Start Backup",
+  "desktopNoBackupsYet": "No backups yet",
+  "desktopCreateFirstBackup": "Create your first backup to keep your health data safe",
+  "desktopAllBackups": "All backups",
+  "desktopDate": "Date",
+  "desktopSize": "Size",
+  "desktopChecksum": "Checksum",
+  "desktopRestoreThisBackup": "Restore this backup",
+  "desktopRestoreBackupTitle": "Restore Backup?",
+  "desktopRestoreBackupMessage": "This will replace all current data on this device with \"{name}\".\n\n{count} records will be restored.\n\nYour data on the paired phone will not be affected.",
+  "@desktopRestoreBackupMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "desktopRestore": "Restore",
+  "desktopDeleteBackupTitle": "Delete Backup?",
+  "desktopDeleteBackupMessage": "Delete \"{name}\"?\n\nThis cannot be undone.",
+  "@desktopDeleteBackupMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopDelete": "Delete",
+  "desktopBackupFrom": "Backup from",
+  "desktopBackup": "Backup",
+  "desktopChange": "Change",
+  "desktopProcessingHistory": "Processing History",
+  "desktopScannedOnPhone": "Scanned on Phone",
+  "desktopProcessedOnDesktop": "Processed on Desktop",
+  "desktopImportedOnDesktop": "Imported on Desktop",
+  "desktopSyncRecent": "Recent",
+  "desktopUnknownDevice": "Unknown device",
+  "desktopSyncHistoryTransfer": "{sentRows} sent · {receivedRows} received",
+  "@desktopSyncHistoryTransfer": {
+    "placeholders": {
+      "sentRows": {
+        "type": "int"
+      },
+      "receivedRows": {
+        "type": "int"
+      }
+    }
+  },
+  "desktopNewDeviceConnecting": "New Device Connecting",
+  "desktopNewDeviceMessage": "A new device ({address}) wants to connect.\n\nThis will disconnect \"{currentDevice}\".\n\nSwitch to the new device?",
+  "@desktopNewDeviceMessage": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      },
+      "currentDevice": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopKeepCurrent": "Keep Current",
+  "desktopSwitch": "Switch",
+  "desktopCurrentDevice": "current device",
+  "desktopHandoverPreparing": "Preparing...",
+  "desktopHandoverSendingFiles": "Sending files...",
+  "desktopHandoverProcessingOnDesktop": "Processing on desktop...",
+  "desktopHandoverComplete": "Complete!",
+  "desktopHandoverError": "Error occurred",
+  "desktopHandoverSending": "Sending...",
+  "desktopHandoverSendingToDesktop": "Sending to Desktop",
+  "desktopHandoverFileCount": "{count} files",
+  "@desktopHandoverFileCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "desktopHandoverSuccess": "Handed over to Desktop",
+  "desktopClose": "Close",
+  "desktopContinueImporting": "Continue Importing",
+  "desktopHandoverToDesktop": "Handover to Desktop",
+  "desktopHandoverProcessingMessage": "Processing is in progress. Handover will cancel the current processing and send files to desktop.",
+  "desktopHandover": "Handover",
+  "attachedDocuments": "Attached Documents",
+  "cameraPermissionRequired": "Camera Permission Required",
+  "cameraPermissionRequiredMessage": "This app needs camera access to scan. Please grant permission to continue.",
+  "cameraPermissionDenied": "Camera Permission Denied",
+  "cameraPermissionDeniedMessage": "Camera permission has been permanently denied. Please enable it in Settings to use the scanner.",
+  "successTitle": "Success!",
+  "attachmentSuccessMessage": "Successfully attached {count} documents to the encounter.",
+  "@attachmentSuccessMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "encounterLabel": "Encounter",
+  "viewRecords": "View Records",
+  "errorTitle": "Error",
+  "somethingWentWrong": "Something went wrong",
+  "importDocument": "Import Document",
+  "pickImageFromGallery": "Pick Image from Gallery",
+  "scanDocument": "Scan Document",
+  "deleteSession": "Delete Session",
+  "deleteSessionConfirmation": "Are you sure you want to delete this session?",
+  "delete": "Delete",
+  "canceling": "Canceling...",
+  "waitingForAiToFinish": "Waiting for AI to finish...",
+  "logsCopied": "Logs copied",
+  "download": "Download",
+  "active": "Active",
+  "tapToSelect": "Tap to select",
+  "deviceInfoChip": "{platform}  •  {ramGB}GB RAM  •  {cores} cores  •  ~{estimatedMB}MB needed",
+  "@deviceInfoChip": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      },
+      "ramGB": {
+        "type": "String"
+      },
+      "cores": {
+        "type": "int"
+      },
+      "estimatedMB": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadContinuesInBackground": "You can navigate away - download will continue in background.\nCheck notifications for progress.",
+  "continueWithoutAi": "Continue without AI (download in background)",
+  "continueUsingApp": "Continue using app",
+  "attachWithoutProcessing": "I want to attach the document without processing",
+  "currentPatientAndSource": "Current Patient & Source",
+  "createEncounter": "Create Encounter",
+  "encounterName": "Encounter name",
+  "enterEncounterName": "Enter encounter name",
+  "pleaseEnterEncounterName": "Please enter an encounter name",
+  "date": "Date",
+  "create": "Create",
+  "searchEncounters": "Search encounters...",
+  "noEncountersFound": "No encounters found",
+  "noEncountersFoundMessage": "Create a new encounter first or select a different patient.",
+  "newEncounterPrefix": "New encounter",
+  "scannedDocumentsTitle": "Scanned Documents",
+  "scannedDocumentsPagesTitle": "Scanned Documents ({count} pages)",
+  "@scannedDocumentsPagesTitle": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfFileTitle": "PDF: {fileName}",
+  "@pdfFileTitle": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "labelOrganizationName": "Organization Name",
+  "labelAddress": "Address",
+  "labelPhone": "Phone",
+  "labelEncounterName": "Encounter Name",
+  "labelStartDate": "Start Date",
+  "labelFirstName": "First name",
+  "labelFamilyName": "Family name",
+  "labelDateOfBirth": "Date of birth",
+  "labelGender": "Gender",
+  "labelReportName": "Report Name",
+  "labelConclusion": "Conclusion",
+  "labelIssuedDate": "Issued Date",
+  "labelPractitionerName": "Practitioner Name",
+  "labelSpecialty": "Specialty",
+  "labelIdentifier": "Identifier",
+  "labelConditionName": "Condition Name",
+  "labelOnsetDate": "Onset Date",
+  "labelClinicalStatus": "Clinical Status",
+  "labelSubstance": "Substance",
+  "labelManifestation": "Manifestation",
+  "labelCategory": "Category",
+  "labelProcedureName": "Procedure Name",
+  "labelPerformedDate": "Performed Date",
+  "labelReason": "Reason",
+  "labelMedicationName": "Medication Name",
+  "labelDosage": "Dosage",
+  "labelObservationName": "Observation name",
+  "labelValue": "Value",
+  "labelUnit": "Unit",
+  "labelReferenceRange": "Reference Range",
+  "permissionsRequired": "Permissions Required",
+  "recordsSelectedCount": "{count} selected",
+  "@recordsSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noRecordsSelected": "No records selected",
+  "select": "Select",
+  "selectRecordsBeforeSharing": "Select records\nbefore sharing",
+  "selectRecordToViewDetails": "Select a record to view details",
+  "recordDetails": "Record Details",
+  "viewDocument": "View Document",
+  "encounterDetails": "Encounter details",
+  "relatedResources": "Related resources",
+  "deletePlusRelated": "Delete + {count} related",
+  "@deletePlusRelated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileNotAvailable": "File not available on this device",
+  "couldNotOpenFile": "Could not open file: {message}",
+  "@couldNotOpenFile": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOpeningFile": "Error opening file: {error}",
+  "@errorOpeningFile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadImage": "Failed to load image",
+  "errorLoadingPdf": "Error loading PDF: {error}",
+  "@errorLoadingPdf": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOnPage": "Error on page {page}: {error}",
+  "@errorOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notes": "Notes",
+  "noNotesAttached": "This record has no notes attached",
+  "addNote": "Add note",
+  "editNote": "Edit note",
+  "filters": "Filters",
+  "timeRange": "Time Range",
+  "applyFilters": "Apply filters",
+  "recordType": "Record type",
+  "specialty": "Specialty",
+  "allSpecialties": "All Specialties",
+  "selectedRange": "Selected Range",
+  "noRangeSelected": "No range selected",
+  "clearDateRange": "Clear date range",
+  "start": "Start",
+  "end": "End",
+  "fromDate": "From {date}",
+  "@fromDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "untilDate": "Until {date}",
+  "@untilDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "day": "Day",
+  "month": "Month",
+  "year": "Year",
+  "mediaInfo": "Media Info",
+  "linkToEncounter": "Link to Encounter",
+  "noPdfDataAvailable": "No PDF data available",
+  "failedToLoadPdf": "Failed to load PDF document",
+  "mediaInformation": "Media Information",
+  "mediaInfoTitle": "Title:",
+  "mediaInfoType": "Type:",
+  "mediaInfoStatus": "Status:",
+  "mediaInfoPatient": "Patient:",
+  "mediaInfoEncounter": "Encounter:",
+  "mediaInfoFileSize": "File Size:",
+  "mediaInfoCreated": "Created:",
+  "mediaInfoResourceId": "Resource ID:",
+  "mediaInfoSource": "Source:",
+  "close": "Close",
+  "linkMediaToEncounterDescription": "Link this media resource to an encounter:",
+  "encounterId": "Encounter ID",
+  "encounterIdHint": "e.g., encounter-123",
+  "mediaLinkedSuccess": "Media linked to encounter successfully",
+  "failedToLinkMedia": "Failed to link media: {error}",
+  "@failedToLinkMedia": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "link": "Link",
+  "connectionLabel": "Connection",
+  "connectionStatusConnected": "Connected",
+  "connectionStatusConnecting": "Connecting...",
+  "connectionStatusDisconnected": "Disconnected",
+  "connectionStatusNotPaired": "Not paired",
+  "syncLabel": "Sync",
+  "syncStatusSyncing": "Syncing...",
+  "syncStatusNotSynced": "Not synced",
+  "syncStatusInSync": "In sync",
+  "syncStatusPending": "{count} pending",
+  "@syncStatusPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupLabel": "Backup",
+  "backupStatusWorking": "Working...",
+  "backupStatusNoBackup": "No backup",
+  "backupStatusBackingUp": "Backing up...",
+  "backupStatusRestoring": "Restoring...",
+  "backupStatusWaiting": "Waiting...",
+  "backupStatusNotConnected": "Not connected",
+  "exportIpsPdf": "Export IPS (PDF)",
+  "addIpsToAppleWallet": "Add IPS to Apple Wallet",
+  "addIpsToGoogleWallet": "Add IPS to Google Wallet",
+  "sourcesTitle": "Sources",
+  "emergencyMedicalId": "Emergency Medical ID",
+  "phoneLabel": "Phone",
+  "allergiesLabel": "Allergies",
+  "medicalConditionsLabel": "Medical Conditions",
+  "medicationsLabel": "Medications",
+  "conditionsLabel": "Conditions",
+  "dateOfBirthLabel": "Date of Birth",
+  "emergencyPhoneLabel": "Emergency Phone",
+  "openingScanner": "Opening scanner...",
+  "activeScanSessions": "Active scan sessions:",
+  "noScansYet": "No scans yet",
+  "scanOrImportToGetStarted": "Scan or import documents to get started",
+  "pageOfTotal": "{current} of {total}",
+  "@pageOfTotal": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "fileNotFound": "File not found",
+  "fileIsEmpty": "File is empty",
+  "importTitle": "Import",
+  "activeImportSessions": "Active import sessions:",
+  "dropToImport": "Drop to import",
+  "dropFilesHereToImport": "Drop files here to import",
+  "supportedFileFormats": "PDF, JPG, PNG, TIFF",
+  "browseFiles": "Browse Files",
+  "noImportsYet": "No imports yet",
+  "importOrScanToGetStarted": "Import or scan documents to get started",
+  "notificationsTitle": "Notifications",
+  "noNotifications": "No notifications",
+  "cancelDownloadTitle": "Cancel Download",
+  "cancelDownloadMessage": "Are you sure you want to cancel the AI Model download? You can restart it later.",
+  "processingDone": "Processing done",
+  "pairedWithDevice": "Paired with {deviceName}",
+  "@pairedWithDevice": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceSyncLabel": "Device Sync",
+  "disconnectLabel": "Disconnect",
+  "changeLabel": "Change",
+  "minimizeToTray": "Minimize to tray",
+  "changeSpecialty": "Change Specialty",
+  "changeSpecialtyConfirm": "Are you sure you want to change the specialty to",
+  "removeSpecialtyConfirm": "Are you sure you want to remove the specialty from this record?",
+  "confirm": "Confirm",
+  "currentRecord": "Current record"
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/di/injection.dart';
@@ -33,7 +35,7 @@ class _SplashPageState extends State<SplashPage> {
 
     await minSplash;
     if (!mounted) return;
-    context.appRouter.replace(destination);
+    unawaited(context.appRouter.replace(destination));
   }
 
   Future<PageRouteInfo> _resolveDestination() async {
@@ -42,16 +44,16 @@ class _SplashPageState extends State<SplashPage> {
 
     if (!hasSeenOnboarding) return const OnboardingRoute();
 
-    final isBiometricAuthEnabled =
-        await _userRepository.isBiometricAuthEnabled();
-    if (!isBiometricAuthEnabled) return DashboardRoute();
+    final isBiometricAuthEnabled = await _userRepository
+        .isBiometricAuthEnabled();
+    if (!isBiometricAuthEnabled) return const DashboardRoute();
 
-    final isBiometricAvailable =
-        await _biometricAuthService.isBiometricAvailable();
-    if (!isBiometricAvailable) return DashboardRoute();
+    final isBiometricAvailable = await _biometricAuthService
+        .isBiometricAvailable();
+    if (!isBiometricAvailable) return const DashboardRoute();
 
     final didAuthenticate = await _biometricAuthService.authenticate();
-    return didAuthenticate ? DashboardRoute() : const OnboardingRoute();
+    return didAuthenticate ? const DashboardRoute() : const OnboardingRoute();
   }
 
   @override

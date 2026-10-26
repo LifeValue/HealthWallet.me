@@ -13,11 +13,11 @@ import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
@@ -30,10 +30,10 @@ import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
+import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/features/user/domain/services/patient_edit_service.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,21 +80,18 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
     int limit = 20,
     int offset = 0,
     DateFilter? dateFilter,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<List<IFhirResource>> getRelatedResourcesForEncounter({
     required String encounterId,
     String? sourceId,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<List<IFhirResource>> getRelatedResources({
     required IFhirResource resource,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<IFhirResource?> resolveReference(String reference) async => null;
@@ -104,8 +101,7 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
     required String resourceId,
     String? sourceId,
     required String content,
-  }) async =>
-      0;
+  }) async => 0;
 
   @override
   Future<List<RecordNote>> getRecordNotes(String resourceId) async => [];
@@ -129,8 +125,7 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
   Future<List<IFhirResource>> getBloodTypeObservations({
     required String patientId,
     String? sourceId,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<String> saveObservation(IFhirResource observation) async => '';
@@ -144,15 +139,13 @@ class FakeRecordsRepository extends Fake implements RecordsRepository {
     List<FhirType> resourceTypes = const [],
     String? sourceId,
     int limit = 50,
-  }) async =>
-      [];
+  }) async => [];
 
   @override
   Future<({Uint8List bytes, String patientName})> buildIpsExport({
     String? sourceId,
     String? patientId,
-  }) async =>
-      (bytes: Uint8List(0), patientName: 'Unknown');
+  }) async => (bytes: Uint8List(0), patientName: 'Unknown');
 }
 
 class FakeSyncRepository extends Fake implements SyncRepository {
@@ -244,8 +237,10 @@ void main() {
     final fakeRecordsRepo = FakeRecordsRepository();
     final fakeSyncRepo = FakeSyncRepository();
 
-    final deduplicationService =
-        PatientDeduplicationService(fakeRecordsRepo, fakeSyncRepo);
+    final deduplicationService = PatientDeduplicationService(
+      fakeRecordsRepo,
+      fakeSyncRepo,
+    );
     final selectionService = PatientSelectionService(deduplicationService);
     final getSourcesUseCase = GetSourcesUseCase(fakeSyncRepo);
     final walletPatientService = WalletPatientService(fakeSyncRepo);
@@ -273,19 +268,28 @@ void main() {
     // Blocs with heavy dependency graphs (AI models, native plugins) are
     // mocked; the smoke test only needs their initial state.
     final processingBloc = MockProcessingBloc();
-    whenListen(processingBloc, const Stream<ProcessingState>.empty(),
-        initialState: const ProcessingState());
+    whenListen(
+      processingBloc,
+      const Stream<ProcessingState>.empty(),
+      initialState: const ProcessingState(),
+    );
     final homeBloc = MockHomeBloc();
-    whenListen(homeBloc, const Stream<HomeState>.empty(),
-        initialState: const HomeState());
+    whenListen(
+      homeBloc,
+      const Stream<HomeState>.empty(),
+      initialState: const HomeState(),
+    );
     final walletPassBloc = MockWalletPassBloc();
-    whenListen(walletPassBloc, const Stream<WalletPassState>.empty(),
-        initialState: const WalletPassState());
+    whenListen(
+      walletPassBloc,
+      const Stream<WalletPassState>.empty(),
+      initialState: const WalletPassState(),
+    );
 
     // --- Register everything the App widget resolves from getIt ---
     getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
     getIt.registerSingleton<AppRouter>(AppRouter());
-    getIt.registerFactory<AppRouteObserver>(() => AppRouteObserver());
+    getIt.registerFactory<AppRouteObserver>(AppRouteObserver.new);
     getIt.registerSingleton<BluetoothStateService>(FakeBluetoothStateService());
     getIt.registerSingleton<ReceiveModeService>(FakeReceiveModeService());
     getIt.registerFactory<UserRepository>(() => fakeUserRepo);
@@ -300,7 +304,8 @@ void main() {
     getIt.registerFactory<RecordsRepository>(() => fakeRecordsRepo);
     getIt.registerFactory<SyncRepository>(() => fakeSyncRepo);
     getIt.registerFactory<PatientDeduplicationService>(
-        () => deduplicationService);
+      () => deduplicationService,
+    );
     getIt.registerFactory<PatientSelectionService>(() => selectionService);
     getIt.registerFactory<PatientBloc>(() => patientBloc);
     getIt.registerSingleton<NotificationBloc>(notificationBloc);

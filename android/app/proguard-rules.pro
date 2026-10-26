@@ -8,4 +8,3 @@
 # MediaPipe proto classes (optional, not used in this app)
 -dontwarn com.google.mediapipe.proto.CalculatorProfileProto$CalculatorProfile
 -dontwarn com.google.mediapipe.proto.GraphTemplateProto$CalculatorGraphTemplate
-

@@ -1,3 +1,4 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -5,7 +6,6 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/practitioner/practitioner.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:uuid/uuid.dart';
 
 part 'mapping_practitioner.freezed.dart';
@@ -25,7 +25,7 @@ abstract class MappingPractitioner
 
   factory MappingPractitioner.fromJson(Map<String, dynamic> json) {
     return MappingPractitioner(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       practitionerName: MappedProperty.fromJson(json['practitionerName']),
       specialty: MappedProperty.fromJson(json['specialty']),
       identifier: MappedProperty.fromJson(json['identifier']),
@@ -43,12 +43,12 @@ abstract class MappingPractitioner
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'Practitioner',
-        'practitionerName': practitionerName.toJson(),
-        'specialty': specialty.toJson(),
-        'identifier': identifier.toJson(),
-      };
+    'id': id,
+    'resourceType': 'Practitioner',
+    'practitionerName': practitionerName.toJson(),
+    'specialty': specialty.toJson(),
+    'identifier': identifier.toJson(),
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -57,23 +57,24 @@ abstract class MappingPractitioner
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.Practitioner practitioner = fhir_r4.Practitioner(
+    final fhir_r4.Practitioner practitioner = fhir_r4.Practitioner(
       meta: meta,
       name: [
-        fhir_r4.HumanName(text: fhir_r4.FhirString(practitionerName.value))
+        fhir_r4.HumanName(text: fhir_r4.FhirString(practitionerName.value)),
       ],
       qualification: [
         fhir_r4.PractitionerQualification(
           code: fhir_r4.CodeableConcept(
-              text: fhir_r4.FhirString(specialty.value)),
-        )
+            text: fhir_r4.FhirString(specialty.value),
+          ),
+        ),
       ],
       identifier: [
-        fhir_r4.Identifier(value: fhir_r4.FhirString(identifier.value))
+        fhir_r4.Identifier(value: fhir_r4.FhirString(identifier.value)),
       ],
     );
 
-    Map<String, dynamic> rawResource = practitioner.toJson();
+    final Map<String, dynamic> rawResource = practitioner.toJson();
 
     return Practitioner(
       id: id,
@@ -90,29 +91,29 @@ abstract class MappingPractitioner
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'practitionerName': l10n.labelPractitionerName,
-        'specialty': l10n.labelSpecialty,
-        'identifier': l10n.labelIdentifier,
-      };
+    'practitionerName': l10n.labelPractitionerName,
+    'specialty': l10n.labelSpecialty,
+    'identifier': l10n.labelIdentifier,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'practitionerName': TextFieldDescriptor(
-          label: 'Practitioner Name',
-          value: practitionerName.value,
-          confidenceLevel: practitionerName.confidenceLevel,
-        ),
-        'specialty': TextFieldDescriptor(
-          label: 'Specialty',
-          value: specialty.value,
-          confidenceLevel: specialty.confidenceLevel,
-        ),
-        'identifier': TextFieldDescriptor(
-          label: 'Identifier',
-          value: identifier.value,
-          confidenceLevel: identifier.confidenceLevel,
-        ),
-      };
+    'practitionerName': TextFieldDescriptor(
+      label: 'Practitioner Name',
+      value: practitionerName.value,
+      confidenceLevel: practitionerName.confidenceLevel,
+    ),
+    'specialty': TextFieldDescriptor(
+      label: 'Specialty',
+      value: specialty.value,
+      confidenceLevel: specialty.confidenceLevel,
+    ),
+    'identifier': TextFieldDescriptor(
+      label: 'Identifier',
+      value: identifier.value,
+      confidenceLevel: identifier.confidenceLevel,
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -126,13 +127,15 @@ abstract class MappingPractitioner
         ),
         specialty: MappedProperty(
           value: newValues['specialty'] ?? specialty.value,
-          confidenceLevel:
-              newValues['specialty'] != null ? 1 : specialty.confidenceLevel,
+          confidenceLevel: newValues['specialty'] != null
+              ? 1
+              : specialty.confidenceLevel,
         ),
         identifier: MappedProperty(
           value: newValues['identifier'] ?? identifier.value,
-          confidenceLevel:
-              newValues['identifier'] != null ? 1 : identifier.confidenceLevel,
+          confidenceLevel: newValues['identifier'] != null
+              ? 1
+              : identifier.confidenceLevel,
         ),
       );
 
@@ -141,10 +144,10 @@ abstract class MappingPractitioner
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        practitionerName: practitionerName.calculateConfidence(inputText),
-        specialty: specialty.calculateConfidence(inputText),
-        identifier: identifier.calculateConfidence(inputText),
-      );
+    practitionerName: practitionerName.calculateConfidence(inputText),
+    specialty: specialty.calculateConfidence(inputText),
+    identifier: identifier.calculateConfidence(inputText),
+  );
 
   @override
   bool get isValid =>

@@ -49,10 +49,12 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     await _windowLifecycleService.init();
     await _trayService.init();
 
-    emit(state.copyWith(
-      isMinimizeToTrayEnabled:
-          _windowLifecycleService.isMinimizeToTrayEnabled,
-    ));
+    emit(
+      state.copyWith(
+        isMinimizeToTrayEnabled:
+            _windowLifecycleService.isMinimizeToTrayEnabled,
+      ),
+    );
   }
 
   Future<void> _onMinimizeToTrayToggled(
@@ -98,10 +100,12 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
       return;
     }
 
-    emit(state.copyWith(
-      connectionStatus: event.connectionStatus,
-      connectedDeviceName: event.deviceName,
-    ));
+    emit(
+      state.copyWith(
+        connectionStatus: event.connectionStatus,
+        connectedDeviceName: event.deviceName,
+      ),
+    );
 
     await _trayService.updateMenu(
       connectionStatus: event.connectionStatus,

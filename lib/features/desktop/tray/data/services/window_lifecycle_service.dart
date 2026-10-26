@@ -1,9 +1,9 @@
 import 'dart:io';
 
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 
 @lazySingleton
 class WindowLifecycleService with WindowListener {

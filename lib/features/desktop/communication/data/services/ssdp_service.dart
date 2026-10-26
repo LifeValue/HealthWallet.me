@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
@@ -112,7 +112,8 @@ class SsdpService {
       },
     );
 
-    final searchMessage = 'M-SEARCH * HTTP/1.1\r\n'
+    const searchMessage =
+        'M-SEARCH * HTTP/1.1\r\n'
         'HOST: $_multicastAddress:$_multicastPort\r\n'
         'MAN: "ssdp:discover"\r\n'
         'MX: 3\r\n'
@@ -142,7 +143,8 @@ class SsdpService {
   }) {
     if (_socket == null) return;
 
-    final notify = 'NOTIFY * HTTP/1.1\r\n'
+    final notify =
+        'NOTIFY * HTTP/1.1\r\n'
         'HOST: $_multicastAddress:$_multicastPort\r\n'
         'NT: $_urn\r\n'
         'NTS: ssdp:alive\r\n'
@@ -171,7 +173,8 @@ class SsdpService {
   }) {
     if (_socket == null) return;
 
-    final response = 'HTTP/1.1 200 OK\r\n'
+    final response =
+        'HTTP/1.1 200 OK\r\n'
         'ST: $_urn\r\n'
         'LOCATION: tcp://$ip:$port\r\n'
         'USN: uuid:$deviceId::$_urn\r\n'

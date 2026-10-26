@@ -1,10 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/utils/handover_utils.dart';
@@ -42,11 +42,13 @@ class SessionList extends StatelessWidget {
             return InkWell(
               onTap: isThisSessionDeleting
                   ? null
-                  : () => context.router
-                      .push(ProcessingRoute(sessionId: session.id)),
+                  : () => context.router.push(
+                      ProcessingRoute(sessionId: session.id),
+                    ),
               child: Padding(
                 padding: EdgeInsets.only(
-                    bottom: (index < sessions.length - 1) ? 16 : 0),
+                  bottom: (index < sessions.length - 1) ? 16 : 0,
+                ),
                 child: Opacity(
                   opacity: isThisSessionDeleting ? 0.6 : 1.0,
                   child: Card(
@@ -54,10 +56,10 @@ class SessionList extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
                         color: isThisSessionDeleting
-                            ? context.colorScheme.error.withOpacity(0.5)
+                            ? context.colorScheme.error.withValues(alpha: 0.5)
                             : session.isProcessing
-                                ? borderColor
-                                : context.theme.dividerColor,
+                            ? borderColor
+                            : context.theme.dividerColor,
                         width: session.isProcessing ? 2.0 : 1.0,
                       ),
                     ),
@@ -122,11 +124,15 @@ class SessionList extends StatelessWidget {
                                           size: 20,
                                         ),
                                         visualDensity: const VisualDensity(
-                                            horizontal: -4, vertical: -4),
+                                          horizontal: -4,
+                                          vertical: -4,
+                                        ),
                                       ),
                                     IconButton(
                                       onPressed: () => _showDeleteConfirmation(
-                                          context, session),
+                                        context,
+                                        session,
+                                      ),
                                       icon: Assets.icons.close.svg(
                                         colorFilter: ColorFilter.mode(
                                           context.colorScheme.onSurface,
@@ -134,7 +140,9 @@ class SessionList extends StatelessWidget {
                                         ),
                                       ),
                                       visualDensity: const VisualDensity(
-                                          horizontal: -4, vertical: -4),
+                                        horizontal: -4,
+                                        vertical: -4,
+                                      ),
                                     ),
                                   ],
                                 ],
@@ -142,7 +150,8 @@ class SessionList extends StatelessWidget {
                               if (session.isProcessing &&
                                   !isThisSessionDeleting)
                                 CustomProgressIndicator(
-                                    progress: session.progress),
+                                  progress: session.progress,
+                                ),
                             ],
                           ),
                         ),
@@ -150,8 +159,9 @@ class SessionList extends StatelessWidget {
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                color: context.colorScheme.surface
-                                    .withOpacity(0.7),
+                                color: context.colorScheme.surface.withValues(
+                                  alpha: 0.7,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Center(
@@ -179,7 +189,9 @@ class SessionList extends StatelessWidget {
   }
 
   void _showDeleteConfirmation(
-      BuildContext context, ProcessingSession session) {
+    BuildContext context,
+    ProcessingSession session,
+  ) {
     final processingBloc = context.read<ProcessingBloc>();
 
     AppSimpleDialog.showDestructiveConfirmation(

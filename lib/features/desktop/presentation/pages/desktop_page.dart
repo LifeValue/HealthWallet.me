@@ -2,8 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -13,7 +14,6 @@ import 'package:health_wallet/features/desktop/presentation/widgets/connection_c
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_chip.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/processing_card.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/sync_status_card.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class DesktopPage extends StatelessWidget {
@@ -28,8 +28,7 @@ class DesktopPage extends StatelessWidget {
             ..add(const CommunicationInitialised()),
         ),
         BlocProvider(
-          create: (_) =>
-              getIt<BackupBloc>()..add(const BackupHistoryLoaded()),
+          create: (_) => getIt<BackupBloc>()..add(const BackupHistoryLoaded()),
         ),
         BlocProvider.value(
           value: getIt<LwwSyncBloc>(),
@@ -44,58 +43,58 @@ class DesktopPage extends StatelessWidget {
         },
         child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
           builder: (context, commState) {
-          return BlocBuilder<BackupBloc, BackupState>(
-            builder: (context, backupState) {
-              return BlocBuilder<LwwSyncBloc, LwwSyncState>(
-                builder: (context, syncState) {
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(Insets.medium),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(context, commState),
-                        const SizedBox(height: Insets.medium),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                                child: ConnectionCard(state: commState)),
-                            const SizedBox(width: Insets.medium),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  SyncStatusCard(
-                                    commState: commState,
-                                    syncState: syncState,
-                                  ),
-                                  const SizedBox(height: Insets.medium),
-                                  BackupCard(
-                                    syncState: commState,
-                                    backupState: backupState,
-                                  ),
-                                ],
+            return BlocBuilder<BackupBloc, BackupState>(
+              builder: (context, backupState) {
+                return BlocBuilder<LwwSyncBloc, LwwSyncState>(
+                  builder: (context, syncState) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(Insets.medium),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(context, commState),
+                          const SizedBox(height: Insets.medium),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: ConnectionCard(state: commState)),
+                              const SizedBox(width: Insets.medium),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    SyncStatusCard(
+                                      commState: commState,
+                                      syncState: syncState,
+                                    ),
+                                    const SizedBox(height: Insets.medium),
+                                    BackupCard(
+                                      syncState: commState,
+                                      backupState: backupState,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: Insets.medium),
-                        const ProcessingCard(),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
+                            ],
+                          ),
+                          const SizedBox(height: Insets.medium),
+                          const ProcessingCard(),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
 
   void _showPendingClientDialog(BuildContext context, String address) {
     final commBloc = context.read<CommunicationBloc>();
-    final currentDevice = commBloc.state.connectedDeviceName ?? context.l10n.desktopCurrentDevice;
+    final currentDevice =
+        commBloc.state.connectedDeviceName ?? context.l10n.desktopCurrentDevice;
 
     showDialog(
       context: context,
@@ -132,8 +131,9 @@ class DesktopPage extends StatelessWidget {
         const SizedBox(width: Insets.small),
         Text(
           context.l10n.syncTitle,
-          style: AppTextStyle.titleMedium
-              .copyWith(color: context.colorScheme.onSurface),
+          style: AppTextStyle.titleMedium.copyWith(
+            color: context.colorScheme.onSurface,
+          ),
         ),
         const Spacer(),
         ConnectionChip(state: state),

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
@@ -43,7 +44,8 @@ class AiModelDownloadService with WidgetsBindingObserver {
   }
 
   final _stateController = StreamController<AiModelDownloadState>.broadcast();
-  final Map<AiModelVariant, StreamSubscription<double>> _variantSubscriptions = {};
+  final Map<AiModelVariant, StreamSubscription<double>> _variantSubscriptions =
+      {};
   StreamSubscription<double>? _mmprojSubscription;
 
   AiModelDownloadState _state = const AiModelDownloadState();
@@ -63,10 +65,12 @@ class AiModelDownloadService with WidgetsBindingObserver {
     if (wasInterrupted) {
       _prefs.remove(_downloadInterruptedKey);
       _prefs.remove(_downloadInProgressKey);
-      _updateState(_state.copyWith(
-        status: AiModelDownloadStatus.cancelled,
-        errorMessage: 'AI model download was cancelled',
-      ));
+      _updateState(
+        _state.copyWith(
+          status: AiModelDownloadStatus.cancelled,
+          errorMessage: 'AI model download was cancelled',
+        ),
+      );
     }
   }
 
@@ -82,16 +86,20 @@ class AiModelDownloadService with WidgetsBindingObserver {
     _updateState(_state.copyWith(status: AiModelDownloadStatus.checking));
     try {
       final exists = await _repository.checkModelExistence();
-      _updateState(_state.copyWith(
-        status: AiModelDownloadStatus.idle,
-        isModelAvailable: exists,
-      ));
+      _updateState(
+        _state.copyWith(
+          status: AiModelDownloadStatus.idle,
+          isModelAvailable: exists,
+        ),
+      );
       return exists;
     } catch (e) {
-      _updateState(_state.copyWith(
-        status: AiModelDownloadStatus.error,
-        errorMessage: 'Failed to check model existence',
-      ));
+      _updateState(
+        _state.copyWith(
+          status: AiModelDownloadStatus.error,
+          errorMessage: 'Failed to check model existence',
+        ),
+      );
       return false;
     }
   }
@@ -102,47 +110,61 @@ class AiModelDownloadService with WidgetsBindingObserver {
     try {
       final exists = await _repository.checkModelExistence();
       if (exists) {
-        _updateState(_state.copyWith(
-          status: AiModelDownloadStatus.completed,
-          isModelAvailable: true,
-          progress: 100.0,
-        ));
-        return;
-      }
-    } catch (e) {}
-
-    await _prefs.setBool(_downloadInProgressKey, true);
-
-    _updateState(_state.copyWith(
-      status: AiModelDownloadStatus.downloading,
-      progress: 0.0,
-      errorMessage: null,
-    ));
-
-    try {
-      final stream = _repository.downloadModel();
-      final sub = stream.listen(
-        (progress) {
-          _updateState(AiModelDownloadState(
-            status: AiModelDownloadStatus.downloading,
-            progress: progress,
-          ));
-        },
-        onDone: () async {
-          await _prefs.remove(_downloadInProgressKey);
-          _updateState(_state.copyWith(
+        _updateState(
+          _state.copyWith(
             status: AiModelDownloadStatus.completed,
             isModelAvailable: true,
             progress: 100.0,
-          ));
+          ),
+        );
+        return;
+      }
+    } catch (_) {
+      // The existence check failed; fall through and download the model.
+    }
+
+    await _prefs.setBool(_downloadInProgressKey, true);
+
+    _updateState(
+      _state.copyWith(
+        status: AiModelDownloadStatus.downloading,
+        progress: 0.0,
+        errorMessage: null,
+      ),
+    );
+
+    try {
+      final stream = _repository.downloadModel();
+      // Kept in _variantSubscriptions, which cancels it.
+      // ignore: cancel_subscriptions
+      final sub = stream.listen(
+        (progress) {
+          _updateState(
+            AiModelDownloadState(
+              status: AiModelDownloadStatus.downloading,
+              progress: progress,
+            ),
+          );
+        },
+        onDone: () async {
+          await _prefs.remove(_downloadInProgressKey);
+          _updateState(
+            _state.copyWith(
+              status: AiModelDownloadStatus.completed,
+              isModelAvailable: true,
+              progress: 100.0,
+            ),
+          );
         },
         onError: (error) async {
           await _prefs.remove(_downloadInProgressKey);
           debugPrint('AI model download error: $error');
-          _updateState(_state.copyWith(
-            status: AiModelDownloadStatus.error,
-            errorMessage: 'AI model download failed. Please check your connection and try again.',
-          ));
+          _updateState(
+            _state.copyWith(
+              status: AiModelDownloadStatus.error,
+              errorMessage: 'AI model download failed. Please check your connection and try again.',
+            ),
+          );
         },
         cancelOnError: true,
       );
@@ -150,10 +172,12 @@ class AiModelDownloadService with WidgetsBindingObserver {
     } catch (e) {
       await _prefs.remove(_downloadInProgressKey);
       debugPrint('AI model download start error: $e');
-      _updateState(_state.copyWith(
-        status: AiModelDownloadStatus.error,
-        errorMessage: 'AI model download failed. Please check your connection and try again.',
-      ));
+      _updateState(
+        _state.copyWith(
+          status: AiModelDownloadStatus.error,
+          errorMessage: 'AI model download failed. Please check your connection and try again.',
+        ),
+      );
     }
   }
 
@@ -169,26 +193,31 @@ class AiModelDownloadService with WidgetsBindingObserver {
     if (_variantSubscriptions.containsKey(variant)) return;
 
     try {
-      final exists =
-          await _repository.checkModelExistenceForVariant(variant);
+      final exists = await _repository.checkModelExistenceForVariant(variant);
       if (exists) {
-        _updateState(AiModelDownloadState(
-          status: AiModelDownloadStatus.completed,
-          isModelAvailable: true,
-          progress: 100.0,
-          variant: variant,
-        ));
+        _updateState(
+          AiModelDownloadState(
+            status: AiModelDownloadStatus.completed,
+            isModelAvailable: true,
+            progress: 100.0,
+            variant: variant,
+          ),
+        );
         return;
       }
-    } catch (e) {}
+    } catch (_) {
+      // The existence check failed; fall through and download the model.
+    }
 
     await _prefs.setBool(_downloadInProgressKey, true);
 
-    _updateState(AiModelDownloadState(
-      status: AiModelDownloadStatus.downloading,
-      progress: 0.0,
-      variant: variant,
-    ));
+    _updateState(
+      AiModelDownloadState(
+        status: AiModelDownloadStatus.downloading,
+        progress: 0.0,
+        variant: variant,
+      ),
+    );
 
     try {
       final stream = _repository.downloadModelForVariant(variant);
@@ -196,11 +225,13 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _variantSubscriptions[variant] = stream.listen(
         (progress) {
           if (_variantSubscriptions.containsKey(variant)) {
-            _updateState(AiModelDownloadState(
-              status: AiModelDownloadStatus.downloading,
-              progress: progress,
-              variant: variant,
-            ));
+            _updateState(
+              AiModelDownloadState(
+                status: AiModelDownloadStatus.downloading,
+                progress: progress,
+                variant: variant,
+              ),
+            );
           }
         },
         onDone: () async {
@@ -208,12 +239,14 @@ class AiModelDownloadService with WidgetsBindingObserver {
           if (!isAnyDownloading) {
             await _prefs.remove(_downloadInProgressKey);
           }
-          _updateState(AiModelDownloadState(
-            status: AiModelDownloadStatus.completed,
-            isModelAvailable: true,
-            progress: 100.0,
-            variant: variant,
-          ));
+          _updateState(
+            AiModelDownloadState(
+              status: AiModelDownloadStatus.completed,
+              isModelAvailable: true,
+              progress: 100.0,
+              variant: variant,
+            ),
+          );
         },
         onError: (error) async {
           debugPrint('AI model download error for ${variant.name}: $error');
@@ -221,11 +254,13 @@ class AiModelDownloadService with WidgetsBindingObserver {
           if (!isAnyDownloading) {
             await _prefs.remove(_downloadInProgressKey);
           }
-          _updateState(AiModelDownloadState(
-            status: AiModelDownloadStatus.error,
-            errorMessage: 'AI model download failed. Please check your connection and try again.',
-            variant: variant,
-          ));
+          _updateState(
+            AiModelDownloadState(
+              status: AiModelDownloadStatus.error,
+              errorMessage: 'AI model download failed. Please check your connection and try again.',
+              variant: variant,
+            ),
+          );
         },
         cancelOnError: true,
       );
@@ -235,11 +270,13 @@ class AiModelDownloadService with WidgetsBindingObserver {
       if (!isAnyDownloading) {
         await _prefs.remove(_downloadInProgressKey);
       }
-      _updateState(AiModelDownloadState(
-        status: AiModelDownloadStatus.error,
-        errorMessage: 'AI model download failed. Please check your connection and try again.',
-        variant: variant,
-      ));
+      _updateState(
+        AiModelDownloadState(
+          status: AiModelDownloadStatus.error,
+          errorMessage: 'AI model download failed. Please check your connection and try again.',
+          variant: variant,
+        ),
+      );
     }
   }
 
@@ -253,10 +290,12 @@ class AiModelDownloadService with WidgetsBindingObserver {
     }
     _variantSubscriptions.clear();
     await _prefs.remove(_downloadInProgressKey);
-    _updateState(_state.copyWith(
-      status: AiModelDownloadStatus.cancelled,
-      errorMessage: 'Download cancelled',
-    ));
+    _updateState(
+      _state.copyWith(
+        status: AiModelDownloadStatus.cancelled,
+        errorMessage: 'Download cancelled',
+      ),
+    );
   }
 
   Future<void> cancelDownloadForVariant(AiModelVariant variant) async {
@@ -265,11 +304,13 @@ class AiModelDownloadService with WidgetsBindingObserver {
     if (!isAnyDownloading) {
       await _prefs.remove(_downloadInProgressKey);
     }
-    _updateState(AiModelDownloadState(
-      status: AiModelDownloadStatus.cancelled,
-      errorMessage: 'Download cancelled',
-      variant: variant,
-    ));
+    _updateState(
+      AiModelDownloadState(
+        status: AiModelDownloadStatus.cancelled,
+        errorMessage: 'Download cancelled',
+        variant: variant,
+      ),
+    );
   }
 
   Future<bool> checkMmprojExistsForVariant(AiModelVariant variant) async {
@@ -284,26 +325,31 @@ class AiModelDownloadService with WidgetsBindingObserver {
     if (_mmprojSubscription != null) return;
 
     try {
-      final exists =
-          await _repository.checkMmprojExistenceForVariant(variant);
+      final exists = await _repository.checkMmprojExistenceForVariant(variant);
       if (exists) {
-        _updateState(AiModelDownloadState(
-          status: AiModelDownloadStatus.completed,
-          isMmprojDownload: true,
-          isModelAvailable: true,
-          progress: 100.0,
-          variant: variant,
-        ));
+        _updateState(
+          AiModelDownloadState(
+            status: AiModelDownloadStatus.completed,
+            isMmprojDownload: true,
+            isModelAvailable: true,
+            progress: 100.0,
+            variant: variant,
+          ),
+        );
         return;
       }
-    } catch (e) {}
+    } catch (_) {
+      // The existence check failed; fall through and download the model.
+    }
 
-    _updateState(AiModelDownloadState(
-      status: AiModelDownloadStatus.downloading,
-      isMmprojDownload: true,
-      progress: 0.0,
-      variant: variant,
-    ));
+    _updateState(
+      AiModelDownloadState(
+        status: AiModelDownloadStatus.downloading,
+        isMmprojDownload: true,
+        progress: 0.0,
+        variant: variant,
+      ),
+    );
 
     try {
       final stream = _repository.downloadMmprojForVariant(variant);
@@ -311,56 +357,66 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _mmprojSubscription = stream.listen(
         (progress) {
           if (_mmprojSubscription != null) {
-            _updateState(AiModelDownloadState(
-              status: AiModelDownloadStatus.downloading,
-              isMmprojDownload: true,
-              progress: progress,
-              variant: variant,
-            ));
+            _updateState(
+              AiModelDownloadState(
+                status: AiModelDownloadStatus.downloading,
+                isMmprojDownload: true,
+                progress: progress,
+                variant: variant,
+              ),
+            );
           }
         },
         onDone: () {
           _mmprojSubscription = null;
-          _updateState(AiModelDownloadState(
-            status: AiModelDownloadStatus.completed,
-            isMmprojDownload: true,
-            isModelAvailable: true,
-            progress: 100.0,
-            variant: variant,
-          ));
+          _updateState(
+            AiModelDownloadState(
+              status: AiModelDownloadStatus.completed,
+              isMmprojDownload: true,
+              isModelAvailable: true,
+              progress: 100.0,
+              variant: variant,
+            ),
+          );
         },
         onError: (error) {
           debugPrint('AI model component download error: $error');
           _mmprojSubscription = null;
-          _updateState(AiModelDownloadState(
-            status: AiModelDownloadStatus.error,
-            isMmprojDownload: true,
-            errorMessage: 'AI model download failed. Please check your connection and try again.',
-            variant: variant,
-          ));
+          _updateState(
+            AiModelDownloadState(
+              status: AiModelDownloadStatus.error,
+              isMmprojDownload: true,
+              errorMessage: 'AI model download failed. Please check your connection and try again.',
+              variant: variant,
+            ),
+          );
         },
         cancelOnError: true,
       );
     } catch (e) {
       debugPrint('AI model component download start error: $e');
       _mmprojSubscription = null;
-      _updateState(AiModelDownloadState(
-        status: AiModelDownloadStatus.error,
-        isMmprojDownload: true,
-        errorMessage: 'AI model download failed. Please check your connection and try again.',
-        variant: variant,
-      ));
+      _updateState(
+        AiModelDownloadState(
+          status: AiModelDownloadStatus.error,
+          isMmprojDownload: true,
+          errorMessage: 'AI model download failed. Please check your connection and try again.',
+          variant: variant,
+        ),
+      );
     }
   }
 
   Future<void> cancelMmprojDownload() async {
     await _mmprojSubscription?.cancel();
     _mmprojSubscription = null;
-    _updateState(_state.copyWith(
-      status: AiModelDownloadStatus.cancelled,
-      isMmprojDownload: true,
-      errorMessage: 'Download cancelled',
-    ));
+    _updateState(
+      _state.copyWith(
+        status: AiModelDownloadStatus.cancelled,
+        isMmprojDownload: true,
+        errorMessage: 'Download cancelled',
+      ),
+    );
   }
 
   void resetState() {

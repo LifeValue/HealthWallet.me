@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:health_wallet/features/home/presentation/widgets/shaking_card.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 /// A reusable reorderable grid for any type of item.
 class ReorderableGrid<T> extends StatelessWidget {

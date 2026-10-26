@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:health_wallet/features/share_records/presentation/widgets/exit_confirmation_dialog.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/exit_confirmation_dialog.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/session/extend_request_card.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/session/session_timer_widget.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SessionBottomBar extends StatefulWidget {
   final ShareRecordsState state;
@@ -92,8 +91,8 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
           statusText: state.extensionRequestPending
               ? '${_formatDuration(context, _lastRequestedSeconds)} requested'
               : null,
-          onToggleExpanded: state.canRequestExtension &&
-                  !state.extensionRequestPending
+          onToggleExpanded:
+              state.canRequestExtension && !state.extensionRequestPending
               ? () => setState(() => _isExpanded = !_isExpanded)
               : null,
         ),
@@ -106,10 +105,12 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             Padding(
               padding: const EdgeInsets.only(bottom: Insets.small),
               child: Text(
-                context.l10n.shareExtensionsUsed(state.extensionsUsed, state.maxExtensions),
+                context.l10n.shareExtensionsUsed(
+                  state.extensionsUsed,
+                  state.maxExtensions,
+                ),
                 style: AppTextStyle.labelSmall.copyWith(
-                  color: context.colorScheme.onSurface
-                      .withValues(alpha: 0.5),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -139,14 +140,15 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
               Expanded(
                 child: AppButton(
                   label: context.l10n.shareRequestTenMin,
-                  onPressed: state.extensionRequestPending ||
+                  onPressed:
+                      state.extensionRequestPending ||
                           !state.canRequestExtension
                       ? null
                       : () {
                           setState(() => _lastRequestedSeconds = 600);
                           context.read<ShareRecordsBloc>().add(
-                                const ShareRecordsEvent.sessionExtendRequested(600),
-                              );
+                            const ShareRecordsEvent.sessionExtendRequested(600),
+                          );
                         },
                   variant: AppButtonVariant.outlined,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -189,10 +191,12 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
             Padding(
               padding: const EdgeInsets.only(bottom: Insets.small),
               child: Text(
-                context.l10n.shareExtensionsUsed(state.extensionsUsed, state.maxExtensions),
+                context.l10n.shareExtensionsUsed(
+                  state.extensionsUsed,
+                  state.maxExtensions,
+                ),
                 style: AppTextStyle.labelSmall.copyWith(
-                  color: context.colorScheme.onSurface
-                      .withValues(alpha: 0.5),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -404,8 +408,8 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
         _isExpanded = false;
       });
       context.read<ShareRecordsBloc>().add(
-            ShareRecordsEvent.sessionExtendRequested(totalSeconds),
-          );
+        ShareRecordsEvent.sessionExtendRequested(totalSeconds),
+      );
     }
   }
 

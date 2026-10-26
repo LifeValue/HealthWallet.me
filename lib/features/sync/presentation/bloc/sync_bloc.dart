@@ -1,18 +1,19 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/utils/logger.dart';
-import 'package:injectable/injectable.dart';
-import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
-import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/sync/ehrs/fasten/domain/entities/sync_qr_data.dart';
 import 'package:health_wallet/features/user/domain/services/default_patient_service.dart';
+import 'package:injectable/injectable.dart';
 
+part 'sync_bloc.freezed.dart';
 part 'sync_event.dart';
 part 'sync_state.dart';
-part 'sync_bloc.freezed.dart';
 
 @lazySingleton
 class SyncBloc extends Bloc<SyncEvent, SyncState> {
@@ -39,25 +40,29 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<CreateWalletSource>(_onCreateWalletSource);
   }
 
-  _onSyncInitialised(
+  Future<void> _onSyncInitialised(
     SyncInitialised event,
     Emitter<SyncState> emit,
   ) async {
-    emit(state.copyWith(
-      isLoading: true,
-      errorMessage: null,
-      successMessage: null,
-    ));
+    emit(
+      state.copyWith(
+        isLoading: true,
+        errorMessage: null,
+        successMessage: null,
+      ),
+    );
     try {
-      SyncQrData? qrData = await _syncRepository.getCurrentSyncQrData();
-      String? lastSyncTime = await _syncRepository.getLastSyncTimestamp();
+      final SyncQrData? qrData = await _syncRepository.getCurrentSyncQrData();
+      final String? lastSyncTime = await _syncRepository.getLastSyncTimestamp();
 
-      emit(state.copyWith(
-        syncQrData: qrData,
-        lastSyncTime: lastSyncTime,
-        syncStatus: qrData != null ? SyncStatus.synced : SyncStatus.initial,
-        isLoading: false,
-      ));
+      emit(
+        state.copyWith(
+          syncQrData: qrData,
+          lastSyncTime: lastSyncTime,
+          syncStatus: qrData != null ? SyncStatus.synced : SyncStatus.initial,
+          isLoading: false,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(errorMessage: e.toString(), isLoading: false));
     }
@@ -69,19 +74,23 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   ) async {
     debugPrint('[SYNC] === SyncData event received ===');
     debugPrint('[SYNC] QR data length: ${event.qrData.length}');
-    emit(state.copyWith(
-      isLoading: true,
-      isQRScanning: false,
-      syncStatus: SyncStatus.syncing,
-      errorMessage: null,
-      successMessage: null,
-    ));
+    emit(
+      state.copyWith(
+        isLoading: true,
+        isQRScanning: false,
+        syncStatus: SyncStatus.syncing,
+        errorMessage: null,
+        successMessage: null,
+      ),
+    );
     try {
       debugPrint('[SYNC] Parsing QR JSON...');
       final qrDataJson = jsonDecode(event.qrData) as Map<String, dynamic>;
       debugPrint('[SYNC] JSON keys: ${qrDataJson.keys.toList()}');
       final syncQrData = SyncQrData.fromJson(qrDataJson);
-      debugPrint('[SYNC] Parsed SyncQrData: token=${syncQrData.token.substring(0, syncQrData.token.length > 10 ? 10 : syncQrData.token.length)}... urls=${syncQrData.serverBaseUrls} endpoint=${syncQrData.syncEndpoint}');
+      debugPrint(
+        '[SYNC] Parsed SyncQrData: token=${syncQrData.token.substring(0, syncQrData.token.length > 10 ? 10 : syncQrData.token.length)}... urls=${syncQrData.serverBaseUrls} endpoint=${syncQrData.syncEndpoint}',
+      );
 
       debugPrint('[SYNC] Creating default patient...');
       await _defaultPatientService.createAndSetAsMain();
@@ -96,9 +105,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         _syncRepository.setBaseUrl(baseUrl);
 
         try {
-          debugPrint('[SYNC] Syncing resources from endpoint: ${syncQrData.syncEndpoint}');
+          debugPrint(
+            '[SYNC] Syncing resources from endpoint: ${syncQrData.syncEndpoint}',
+          );
           await _syncRepository.syncResources(
-              endpoint: syncQrData.syncEndpoint);
+            endpoint: syncQrData.syncEndpoint,
+          );
 
           debugPrint('[SYNC] Sync SUCCESS with $baseUrl');
           exception = null;
@@ -118,24 +130,30 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       await _syncRepository.saveSyncQrData(syncQrData);
       debugPrint('[SYNC] === Sync completed successfully ===');
 
-      emit(state.copyWith(
-        isLoading: false,
-        syncStatus: SyncStatus.synced,
-        syncQrData: syncQrData,
-        lastSyncTime: DateTime.now().toIso8601String(),
-        hasSyncedData: true,
-        syncDialogShown: true,
-        errorMessage: null,
-        successMessage: "Data was succesfully synced!",
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          syncStatus: SyncStatus.synced,
+          syncQrData: syncQrData,
+          lastSyncTime: DateTime.now().toIso8601String(),
+          hasSyncedData: true,
+          syncDialogShown: true,
+          errorMessage: null,
+          successMessage: 'Data was succesfully synced!',
+        ),
+      );
 
-      add(const DataHandled(
-        sourceId: 'sync',
-        isSuccess: true,
-      ));
+      add(
+        const DataHandled(
+          sourceId: 'sync',
+          isSuccess: true,
+        ),
+      );
     } catch (e, stackTrace) {
       debugPrint('[SYNC] ERROR: $e');
-      debugPrint('[SYNC] Stack: ${stackTrace.toString().split('\n').take(5).join('\n')}');
+      debugPrint(
+        '[SYNC] Stack: ${stackTrace.toString().split('\n').take(5).join('\n')}',
+      );
 
       String errorMessage;
       if (e.toString().contains('HandshakeException') ||
@@ -155,43 +173,57 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       }
 
       debugPrint('[SYNC] Emitting error: $errorMessage');
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: errorMessage,
-        successMessage: null,
-        syncStatus: SyncStatus.initial,
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: errorMessage,
+          successMessage: null,
+          syncStatus: SyncStatus.initial,
+        ),
+      );
     }
   }
 
   Future<void> _onScanQRCode(
-      SyncScanQRCode event, Emitter<SyncState> emit) async {
+    SyncScanQRCode event,
+    Emitter<SyncState> emit,
+  ) async {
     debugPrint('[SYNC] QR scanner opened');
-    emit(state.copyWith(
-      isQRScanning: true,
-    ));
+    emit(
+      state.copyWith(
+        isQRScanning: true,
+      ),
+    );
   }
 
   Future<void> _onSyncScanNewPressed(
-      SyncScanNewPressed event, Emitter<SyncState> emit) async {
-    emit(state.copyWith(
-      syncStatus: SyncStatus.syncing,
-      successMessage: null,
-      errorMessage: null,
-    ));
+    SyncScanNewPressed event,
+    Emitter<SyncState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        syncStatus: SyncStatus.syncing,
+        successMessage: null,
+        errorMessage: null,
+      ),
+    );
   }
 
   Future<void> _onSyncCancel(SyncCancel event, Emitter<SyncState> emit) async {
-    emit(state.copyWith(
-      isQRScanning: false,
-      isLoading: false,
-      syncStatus: SyncStatus.initial,
-      errorMessage: null,
-    ));
+    emit(
+      state.copyWith(
+        isQRScanning: false,
+        isLoading: false,
+        syncStatus: SyncStatus.initial,
+        errorMessage: null,
+      ),
+    );
   }
 
   Future<void> _onLoadDemoData(
-      LoadDemoData event, Emitter<SyncState> emit) async {
+    LoadDemoData event,
+    Emitter<SyncState> emit,
+  ) async {
     try {
       await _defaultPatientService.createAndSetAsMain();
 
@@ -199,66 +231,92 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       await _recordsRepository.loadDemoData();
       final hasDemoData = await _recordsRepository.hasDemoData();
 
-      emit(state.copyWith(
-        hasDemoData: hasDemoData,
-      ));
+      emit(
+        state.copyWith(
+          hasDemoData: hasDemoData,
+        ),
+      );
 
-      add(const DataHandled(
-        sourceId: 'demo_data',
-        isSuccess: true,
-      ));
+      add(
+        const DataHandled(
+          sourceId: 'demo_data',
+          isSuccess: true,
+        ),
+      );
     } catch (e) {
       logger.e('Failed to load demo data: $e');
 
-      add(DataHandled(
-        sourceId: 'demo_data',
-        isSuccess: false,
-        errorMessage: e.toString(),
-      ));
+      add(
+        DataHandled(
+          sourceId: 'demo_data',
+          isSuccess: false,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
   Future<void> _onDataHandled(
-      DataHandled event, Emitter<SyncState> emit) async {
+    DataHandled event,
+    Emitter<SyncState> emit,
+  ) async {
     if (event.isSuccess) {
       if (event.sourceId == 'demo_data') {
         final hasDemoData = await _recordsRepository.hasDemoData();
-        emit(state.copyWith(
-          hasDemoData: hasDemoData,
-        ));
+        emit(
+          state.copyWith(
+            hasDemoData: hasDemoData,
+          ),
+        );
       } else if (event.sourceId == 'sync') {
-        emit(state.copyWith(
-          hasSyncedData: true,
-        ));
+        emit(
+          state.copyWith(
+            hasSyncedData: true,
+          ),
+        );
       }
     }
   }
 
   Future<void> _onTriggerTutorial(
-      TriggerTutorial event, Emitter<SyncState> emit) async {
-    emit(state.copyWith(
-      shouldShowTutorial: true,
-    ));
+    TriggerTutorial event,
+    Emitter<SyncState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        shouldShowTutorial: true,
+      ),
+    );
   }
 
   Future<void> _onResetTutorial(
-      ResetTutorial event, Emitter<SyncState> emit) async {
-    emit(state.copyWith(
-      shouldShowTutorial: false,
-      syncDialogShown: false,
-      demoDataConfirmed: false,
-    ));
+    ResetTutorial event,
+    Emitter<SyncState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        shouldShowTutorial: false,
+        syncDialogShown: false,
+        demoDataConfirmed: false,
+      ),
+    );
   }
 
   Future<void> _onDemoDataConfirmed(
-      DemoDataConfirmed event, Emitter<SyncState> emit) async {
-    emit(state.copyWith(
-      demoDataConfirmed: true,
-    ));
+    DemoDataConfirmed event,
+    Emitter<SyncState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        demoDataConfirmed: true,
+      ),
+    );
   }
 
   Future<void> _onCreateWalletSource(
-      CreateWalletSource event, Emitter<SyncState> emit) async {
+    CreateWalletSource event,
+    Emitter<SyncState> emit,
+  ) async {
     try {
       await _defaultPatientService.createAndSetAsMain();
     } catch (e) {

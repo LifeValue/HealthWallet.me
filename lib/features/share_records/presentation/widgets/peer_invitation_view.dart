@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -8,7 +8,6 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PeerInvitationView extends StatelessWidget {
   final ShareRecordsState state;
@@ -45,7 +44,10 @@ class PeerInvitationView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              context.l10n.shareDeviceWantsToShare(state.pendingInvitationDeviceName ?? context.l10n.shareUnknownDevice),
+              context.l10n.shareDeviceWantsToShare(
+                state.pendingInvitationDeviceName ??
+                    context.l10n.shareUnknownDevice,
+              ),
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
@@ -57,8 +59,9 @@ class PeerInvitationView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border:
-                    Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
@@ -83,10 +86,10 @@ class PeerInvitationView extends StatelessWidget {
                     onPressed: () {
                       if (state.pendingInvitationId != null) {
                         context.read<ShareRecordsBloc>().add(
-                              ShareRecordsEvent.invitationRejected(
-                                state.pendingInvitationId!,
-                              ),
-                            );
+                          ShareRecordsEvent.invitationRejected(
+                            state.pendingInvitationId!,
+                          ),
+                        );
                       }
                     },
                     child: Text(context.l10n.shareDecline),
@@ -98,10 +101,10 @@ class PeerInvitationView extends StatelessWidget {
                     onPressed: () {
                       if (state.pendingInvitationId != null) {
                         context.read<ShareRecordsBloc>().add(
-                              ShareRecordsEvent.invitationAccepted(
-                                state.pendingInvitationId!,
-                              ),
-                            );
+                          ShareRecordsEvent.invitationAccepted(
+                            state.pendingInvitationId!,
+                          ),
+                        );
                       }
                     },
                     child: Text(context.l10n.shareAccept),

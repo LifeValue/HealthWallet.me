@@ -15,7 +15,9 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   }
 
   void _onPageChanged(
-      OnboardingPageChanged event, Emitter<OnboardingState> emit) {
+    OnboardingPageChanged event,
+    Emitter<OnboardingState> emit,
+  ) {
     emit(state.copyWith(currentPage: event.page));
   }
 
@@ -26,14 +28,18 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   }
 
   void _onPreviousPage(
-      OnboardingPreviousPage event, Emitter<OnboardingState> emit) {
+    OnboardingPreviousPage event,
+    Emitter<OnboardingState> emit,
+  ) {
     if (state.currentPage > 0) {
       emit(state.copyWith(currentPage: state.currentPage - 1));
     }
   }
 
   Future<void> _onLaunchUrl(
-      OnboardingLaunchUrl event, Emitter<OnboardingState> emit) async {
+    OnboardingLaunchUrl event,
+    Emitter<OnboardingState> emit,
+  ) async {
     emit(state.copyWith(isLaunchingUrl: true));
 
     try {
@@ -43,22 +49,28 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           url,
           mode: LaunchMode.externalApplication,
         );
-        emit(state.copyWith(
-          isLaunchingUrl: false,
-          urlLaunchSuccess: launched,
-        ));
+        emit(
+          state.copyWith(
+            isLaunchingUrl: false,
+            urlLaunchSuccess: launched,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          isLaunchingUrl: false,
-          urlLaunchSuccess: false,
-        ));
+        emit(
+          state.copyWith(
+            isLaunchingUrl: false,
+            urlLaunchSuccess: false,
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        isLaunchingUrl: false,
-        urlLaunchSuccess: false,
-        errorMessage: 'Could not open link. Please try again.',
-      ));
+      emit(
+        state.copyWith(
+          isLaunchingUrl: false,
+          urlLaunchSuccess: false,
+          errorMessage: 'Could not open link. Please try again.',
+        ),
+      );
     }
   }
 }

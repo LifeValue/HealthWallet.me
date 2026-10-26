@@ -81,7 +81,8 @@ abstract class ShareRecordsState with _$ShareRecordsState {
 
   int get receivedCount => receivedData?.recordCount ?? 0;
 
-  bool get isDefaultDuration => selectedViewingDuration == defaultViewingDuration;
+  bool get isDefaultDuration =>
+      selectedViewingDuration == defaultViewingDuration;
 
   double get progressPercentage {
     if (transferProgress == null) return 0.0;

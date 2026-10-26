@@ -21,29 +21,35 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           manager.pauseListening();
         }
 
-        emit(state.copyWith(
-          discoveredPeers: [],
-          statusMessage: 'Scanning for devices...',
-        ));
+        emit(
+          state.copyWith(
+            discoveredPeers: [],
+            statusMessage: 'Scanning for devices...',
+          ),
+        );
         await _service.disconnect();
         await _service.startDiscovery(useBluetooth: event.useBluetooth);
 
       case PermissionDenied(:final message):
         _shareLog('ERROR: Permissions denied: $message');
-        emit(state.copyWith(
-          phase: SharePhase.error,
-          errorMessage: message,
-          statusMessage: 'Permissions required',
-        ));
+        emit(
+          state.copyWith(
+            phase: SharePhase.error,
+            errorMessage: message,
+            statusMessage: 'Permissions required',
+          ),
+        );
 
       case PermissionPermanentlyDenied(:final message):
         _shareLog('ERROR: Permissions permanently denied: $message');
-        emit(state.copyWith(
-          phase: SharePhase.error,
-          errorMessage: message,
-          showSettingsDialog: true,
-          statusMessage: 'Please enable permissions in Settings',
-        ));
+        emit(
+          state.copyWith(
+            phase: SharePhase.error,
+            errorMessage: message,
+            showSettingsDialog: true,
+            statusMessage: 'Please enable permissions in Settings',
+          ),
+        );
     }
   }
 
@@ -60,28 +66,34 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           manager.pauseListening();
         }
 
-        emit(state.copyWith(
-          phase: SharePhase.discoveringPeers,
-          discoveredPeers: [],
-          statusMessage: 'Looking for nearby devices...',
-        ));
+        emit(
+          state.copyWith(
+            phase: SharePhase.discoveringPeers,
+            discoveredPeers: [],
+            statusMessage: 'Looking for nearby devices...',
+          ),
+        );
         await _service.disconnect();
         await _service.startSymmetricDiscovery();
 
       case PermissionDenied(:final message):
-        emit(state.copyWith(
-          phase: SharePhase.error,
-          errorMessage: message,
-          statusMessage: 'Permissions required',
-        ));
+        emit(
+          state.copyWith(
+            phase: SharePhase.error,
+            errorMessage: message,
+            statusMessage: 'Permissions required',
+          ),
+        );
 
       case PermissionPermanentlyDenied(:final message):
-        emit(state.copyWith(
-          phase: SharePhase.error,
-          errorMessage: message,
-          showSettingsDialog: true,
-          statusMessage: 'Please enable permissions in Settings',
-        ));
+        emit(
+          state.copyWith(
+            phase: SharePhase.error,
+            errorMessage: message,
+            showSettingsDialog: true,
+            statusMessage: 'Please enable permissions in Settings',
+          ),
+        );
     }
   }
 
@@ -102,8 +114,9 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
   ) {
     final peers = List<PeerDevice>.from(state.discoveredPeers);
     final newName = event.peer.deviceName;
-    final existingIndex =
-        peers.indexWhere((p) => p.deviceId == event.peer.deviceId);
+    final existingIndex = peers.indexWhere(
+      (p) => p.deviceId == event.peer.deviceId,
+    );
 
     if (existingIndex >= 0) {
       final existing = peers[existingIndex];
@@ -123,18 +136,20 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           final existing = peers[nameMatchIndex];
           final longerName =
               newName!.length >= (existing.deviceName?.length ?? 0)
-                  ? newName
-                  : existing.deviceName;
+              ? newName
+              : existing.deviceName;
           peers[nameMatchIndex] = existing.copyWith(
             deviceId: event.peer.deviceId,
             deviceName: longerName,
             osType: event.peer.osType ?? existing.osType,
             status: event.peer.status,
           );
-          emit(state.copyWith(
-            discoveredPeers: peers,
-            statusMessage: 'Found ${peers.length} device(s)',
-          ));
+          emit(
+            state.copyWith(
+              discoveredPeers: peers,
+              statusMessage: 'Found ${peers.length} device(s)',
+            ),
+          );
           return;
         }
       }
@@ -145,10 +160,12 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       peers.add(event.peer);
     }
 
-    emit(state.copyWith(
-      discoveredPeers: peers,
-      statusMessage: 'Found ${peers.length} device(s)',
-    ));
+    emit(
+      state.copyWith(
+        discoveredPeers: peers,
+        statusMessage: 'Found ${peers.length} device(s)',
+      ),
+    );
   }
 
   Future<void> handlePeerSelected(
@@ -165,30 +182,37 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     );
 
     _shareLog('Connecting to ${peer.deviceName}...');
-    emit(state.copyWith(
-      selectedPeer: peer,
-      phase: SharePhase.connecting,
-      statusMessage: 'Connecting to ${peer.deviceName}...',
-    ));
+    emit(
+      state.copyWith(
+        selectedPeer: peer,
+        phase: SharePhase.connecting,
+        statusMessage: 'Connecting to ${peer.deviceName}...',
+      ),
+    );
 
     if (state.isSending && state.selection.isNotEmpty) {
-      emit(state.copyWith(
-        statusMessage: 'Preparing records...',
-      ));
+      emit(
+        state.copyWith(
+          statusMessage: 'Preparing records...',
+        ),
+      );
 
-      final selectedRecords =
-          state.selection.selectedRecords.values.toList();
-      _shareLog('Selected ${selectedRecords.length} records, enriching with related...');
-      final enrichedRecords =
-          await _enrichSelectionWithRelatedResources(selectedRecords);
+      final selectedRecords = state.selection.selectedRecords.values.toList();
+      _shareLog(
+        'Selected ${selectedRecords.length} records, enriching with related...',
+      );
+      final enrichedRecords = await _enrichSelectionWithRelatedResources(
+        selectedRecords,
+      );
 
-      _shareLog('Enriched to ${enrichedRecords.length} records (types: ${enrichedRecords.map((r) => r.fhirType.name).toSet().toList()})');
+      _shareLog(
+        'Enriched to ${enrichedRecords.length} records (types: ${enrichedRecords.map((r) => r.fhirType.name).toSet().toList()})',
+      );
 
       final notesMap = <String, List<RecordNote>>{};
       for (final resource in enrichedRecords) {
         try {
-          final notes =
-              await _recordsRepository.getRecordNotes(resource.id);
+          final notes = await _recordsRepository.getRecordNotes(resource.id);
           if (notes.isNotEmpty) {
             notesMap[resource.id] = notes;
           }
@@ -204,17 +228,18 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         deviceName: _deviceName,
         expiresInSeconds: state.selectedViewingDuration.inSeconds,
         notesMap: notesMap,
-        activeFilters:
-            state.appliedFilters.map((f) => f.name).toList(),
+        activeFilters: state.appliedFilters.map((f) => f.name).toList(),
       );
       _shareLog('Preparing files for sending...');
       _tempFilePath = await _service.prepareFilesForSending(payload);
       if (_tempFilePath == null) {
         _shareLog('ERROR: Failed to prepare files for sending');
-        emit(state.copyWith(
-          phase: SharePhase.error,
-          errorMessage: 'Failed to prepare files for sending',
-        ));
+        emit(
+          state.copyWith(
+            phase: SharePhase.error,
+            errorMessage: 'Failed to prepare files for sending',
+          ),
+        );
         return;
       }
     }
@@ -235,13 +260,12 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         List<IFhirResource> relatedResources = [];
 
         if (record.fhirType == FhirType.Encounter) {
-          relatedResources =
-              await _recordsRepository.getRelatedResourcesForEncounter(
-            encounterId: record.resourceId,
-          );
+          relatedResources = await _recordsRepository
+              .getRelatedResourcesForEncounter(
+                encounterId: record.resourceId,
+              );
         } else {
-          relatedResources =
-              await _recordsRepository.getRelatedResources(
+          relatedResources = await _recordsRepository.getRelatedResources(
             resource: record,
           );
         }
@@ -253,7 +277,8 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         }
       } catch (e) {
         debugPrint(
-            '[SHARE] Error fetching related resources for ${record.id}: $e');
+          '[SHARE] Error fetching related resources for ${record.id}: $e',
+        );
       }
     }
 
@@ -265,23 +290,29 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     Emitter<ShareRecordsState> emit,
   ) {
     _shareLog('=== Transfer started ===');
-    emit(state.copyWith(
-      phase: SharePhase.transferring,
-      statusMessage: null,
-      isSessionActive: true,
-    ));
+    emit(
+      state.copyWith(
+        phase: SharePhase.transferring,
+        statusMessage: null,
+        isSessionActive: true,
+      ),
+    );
   }
 
   void handleTransferProgressUpdated(
     TransferProgressUpdated event,
     Emitter<ShareRecordsState> emit,
   ) {
-    _shareLog('Transfer progress: ${(state.progressPercentage * 100).toInt()}%');
-    emit(state.copyWith(
-      transferProgress: event.progress,
-      statusMessage:
-          'Transferring ${(state.progressPercentage * 100).toInt()}%',
-    ));
+    _shareLog(
+      'Transfer progress: ${(state.progressPercentage * 100).toInt()}%',
+    );
+    emit(
+      state.copyWith(
+        transferProgress: event.progress,
+        statusMessage:
+            'Transferring ${(state.progressPercentage * 100).toInt()}%',
+      ),
+    );
   }
 
   void handleTransferCompleted(
@@ -293,29 +324,33 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       if (_pendingViewingStarted) {
         _pendingViewingStarted = false;
         debugPrint('[SHARE] Applying buffered viewingStarted signal');
-        emit(state.copyWith(
-          phase: SharePhase.monitoringSession,
-          isSessionActive: true,
-          sessionStartedAt: DateTime.now(),
-          viewingTimeRemaining: state.selectedViewingDuration,
-          statusMessage:
-              'Receiver is viewing records - monitoring session',
-        ));
+        emit(
+          state.copyWith(
+            phase: SharePhase.monitoringSession,
+            isSessionActive: true,
+            sessionStartedAt: DateTime.now(),
+            viewingTimeRemaining: state.selectedViewingDuration,
+            statusMessage: 'Receiver is viewing records - monitoring session',
+          ),
+        );
         _startViewingTimer();
       } else {
         debugPrint(
-            '[SHARE] Files sent - staying on connecting until receiver accepts');
-        emit(state.copyWith(
-          phase: SharePhase.connecting,
-          isSessionActive: true,
-          statusMessage:
-              'Records sent - waiting for receiver to accept',
-        ));
+          '[SHARE] Files sent - staying on connecting until receiver accepts',
+        );
+        emit(
+          state.copyWith(
+            phase: SharePhase.connecting,
+            isSessionActive: true,
+            statusMessage: 'Records sent - waiting for receiver to accept',
+          ),
+        );
         _startMonitoringFallbackTimer();
       }
     } else {
       debugPrint(
-          '[SHARE] Transfer completed for receiver - waiting for data to be parsed');
+        '[SHARE] Transfer completed for receiver - waiting for data to be parsed',
+      );
     }
   }
 
@@ -329,18 +364,21 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       return;
     }
 
-    final isConnectionPhase = state.phase == SharePhase.connecting ||
+    final isConnectionPhase =
+        state.phase == SharePhase.connecting ||
         state.phase == SharePhase.transferring;
     if (isConnectionPhase &&
         state.connectionRetryCount < 3 &&
         !state.wifiToggleNeeded) {
       final retryCount = state.connectionRetryCount + 1;
-      emit(state.copyWith(
-        phase: SharePhase.connecting,
-        connectionRetryCount: retryCount,
-        statusMessage: 'Retrying ($retryCount/3)...',
-        errorMessage: null,
-      ));
+      emit(
+        state.copyWith(
+          phase: SharePhase.connecting,
+          connectionRetryCount: retryCount,
+          statusMessage: 'Retrying ($retryCount/3)...',
+          errorMessage: null,
+        ),
+      );
       add(const ShareRecordsEvent.connectionRetried());
       return;
     }
@@ -350,13 +388,15 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       _tempFilePath = null;
     }
 
-    emit(state.copyWith(
-      phase: SharePhase.error,
-      isSessionActive: false,
-      errorMessage: event.error,
-      statusMessage: 'Transfer failed',
-      connectionRetryCount: 0,
-    ));
+    emit(
+      state.copyWith(
+        phase: SharePhase.error,
+        isSessionActive: false,
+        errorMessage: event.error,
+        statusMessage: 'Transfer failed',
+        connectionRetryCount: 0,
+      ),
+    );
   }
 
   Future<void> handleTransferCancelled(
@@ -364,11 +404,13 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     Emitter<ShareRecordsState> emit,
   ) async {
     await _service.disconnect();
-    emit(state.copyWith(
-      mode: ShareMode.idle,
-      isSessionActive: false,
-      statusMessage: 'Transfer cancelled',
-    ));
+    emit(
+      state.copyWith(
+        mode: ShareMode.idle,
+        isSessionActive: false,
+        statusMessage: 'Transfer cancelled',
+      ),
+    );
   }
 
   Future<void> handleConnectionRetried(
@@ -377,16 +419,18 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
   ) async {
     _shareLog('Connection retry attempt ${state.connectionRetryCount}');
     await _service.disconnect();
-    emit(state.copyWith(
-      phase: SharePhase.discoveringPeers,
-      errorMessage: null,
-      statusMessage: state.isSending
-          ? 'Looking for nearby devices...'
-          : 'Waiting for sender...',
-      discoveredPeers: [],
-      selectedPeer: null,
-      isSessionActive: false,
-    ));
+    emit(
+      state.copyWith(
+        phase: SharePhase.discoveringPeers,
+        errorMessage: null,
+        statusMessage: state.isSending
+            ? 'Looking for nearby devices...'
+            : 'Waiting for sender...',
+        discoveredPeers: [],
+        selectedPeer: null,
+        isSessionActive: false,
+      ),
+    );
 
     if (state.isSending) {
       add(const ShareRecordsEvent.discoveryStarted());
@@ -399,52 +443,66 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     InvitationReceived event,
     Emitter<ShareRecordsState> emit,
   ) {
-    emit(state.copyWith(
-      pendingInvitationId: event.invitationId,
-      pendingInvitationDeviceName: event.deviceName,
-      statusMessage: '${event.deviceName} wants to share records',
-    ));
+    emit(
+      state.copyWith(
+        pendingInvitationId: event.invitationId,
+        pendingInvitationDeviceName: event.deviceName,
+        statusMessage: '${event.deviceName} wants to share records',
+      ),
+    );
   }
 
   Future<void> handleInvitationAccepted(
     InvitationAccepted event,
     Emitter<ShareRecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      pendingInvitationId: null,
-      phase: SharePhase.transferring,
-      statusMessage: 'Receiving records...',
-    ));
+    emit(
+      state.copyWith(
+        pendingInvitationId: null,
+        phase: SharePhase.transferring,
+        statusMessage: 'Receiving records...',
+      ),
+    );
 
     await _service.acceptInvitation(event.invitationId);
   }
+
   Future<void> handleInvitationRejected(
     InvitationRejected event,
     Emitter<ShareRecordsState> emit,
   ) async {
-    emit(state.copyWith(
-      pendingInvitationId: null,
-      pendingInvitationDeviceName: null,
-      statusMessage: 'Invitation rejected',
-    ));
+    emit(
+      state.copyWith(
+        pendingInvitationId: null,
+        pendingInvitationDeviceName: null,
+        statusMessage: 'Invitation rejected',
+      ),
+    );
 
     await _service.rejectInvitation(event.invitationId);
   }
+
   Future<void> handleDataReceived(
     DataReceived event,
     Emitter<ShareRecordsState> emit,
   ) async {
-    _shareLog('Data received: ${event.data.fileName} (${event.data.size} bytes)');
+    _shareLog(
+      'Data received: ${event.data.fileName} (${event.data.size} bytes)',
+    );
     final container = await _service.parseReceivedData(event.data);
     if (container != null) {
-      _shareLog('Parsed ${container.recordCount} records from ${container.senderDeviceName}');
+      _shareLog(
+        'Parsed ${container.recordCount} records from ${container.senderDeviceName}',
+      );
       add(ShareRecordsEvent.ephemeralDataParsed(container));
     } else {
       _shareLog('ERROR: parseReceivedData returned null');
-      emit(state.copyWith(
-        phase: SharePhase.error,
-        errorMessage: 'Failed to parse received data',
-      ));
+      emit(
+        state.copyWith(
+          phase: SharePhase.error,
+          errorMessage: 'Failed to parse received data',
+        ),
+      );
     }
   }
 
@@ -459,14 +517,18 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       _shareLog('Parsing file: $filePath');
       final container = await _service.parseReceivedFile(filePath);
       if (container != null) {
-        _shareLog('Parsed ${container.recordCount} records, ${container.tempAttachmentPaths.length} attachments');
+        _shareLog(
+          'Parsed ${container.recordCount} records, ${container.tempAttachmentPaths.length} attachments',
+        );
         add(ShareRecordsEvent.ephemeralDataParsed(container));
       } else {
         _shareLog('ERROR: Failed to parse file: $filePath');
-        emit(state.copyWith(
-          phase: SharePhase.error,
-          errorMessage: 'Failed to parse received file',
-        ));
+        emit(
+          state.copyWith(
+            phase: SharePhase.error,
+            errorMessage: 'Failed to parse received file',
+          ),
+        );
       }
     }
   }
@@ -476,18 +538,22 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     Emitter<ShareRecordsState> emit,
   ) async {
     _shareLog('=== Session started: ${event.container.sessionId} ===');
-    _shareLog('Records: ${event.container.recordCount}, Duration: ${event.container.viewDuration.inMinutes}min');
+    _shareLog(
+      'Records: ${event.container.recordCount}, Duration: ${event.container.viewDuration.inMinutes}min',
+    );
     _shareLog('Filters: ${event.container.activeFilters}');
     _shareLog('Temp files: ${event.container.tempAttachmentPaths.length}');
     EphemeralSessionManager.instance.startSession(event.container);
-    emit(state.copyWith(
-      phase: SharePhase.viewingRecords,
-      receivedData: event.container,
-      viewingTimeRemaining: event.container.viewDuration,
-      isSessionActive: true,
-      statusMessage:
-          'Viewing ${event.container.recordCount} records from ${event.container.senderDeviceName}',
-    ));
+    emit(
+      state.copyWith(
+        phase: SharePhase.viewingRecords,
+        receivedData: event.container,
+        viewingTimeRemaining: event.container.viewDuration,
+        isSessionActive: true,
+        statusMessage:
+            'Viewing ${event.container.recordCount} records from ${event.container.senderDeviceName}',
+      ),
+    );
 
     _startViewingTimer();
 
@@ -502,7 +568,8 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
   }
 
   Future<void> _insertEphemeralNotes(
-      EphemeralRecordsContainer container) async {
+    EphemeralRecordsContainer container,
+  ) async {
     for (final resource in container.records) {
       final notes = container.notes[resource.id];
       if (notes == null) continue;

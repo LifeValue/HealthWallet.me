@@ -1,8 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/preview/bloc/preview_bloc.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/preview/image_preview_page.dart';
@@ -150,7 +151,7 @@ class _PageIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final isFirstPage = currentPage == 0;
     final isLastPage = currentPage >= totalPages - 1;
-    final disabledColor = context.colorScheme.onSurface.withOpacity(0.3);
+    final disabledColor = context.colorScheme.onSurface.withValues(alpha: 0.3);
     final enabledColor = context.colorScheme.onSurface;
 
     return Padding(
@@ -226,19 +227,19 @@ class _PreviewButton extends StatelessWidget {
             left: 12,
           ),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.6),
+            color: const Color(0xFF1E1E1E).withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(222),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.remove_red_eye,
                 color: Colors.white,
                 size: 16,
               ),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'Preview document',
                 style: TextStyle(
                   color: Colors.white,
@@ -323,8 +324,11 @@ class _ImageWithRetryState extends State<_ImageWithRetry> {
               return const Center(child: CircularProgressIndicator());
             }
             return const Center(
-              child: Icon(Icons.image_not_supported_outlined,
-                  size: 40, color: Colors.grey),
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                size: 40,
+                color: Colors.grey,
+              ),
             );
           },
         );

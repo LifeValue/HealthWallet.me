@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
-import 'package:collection/collection.dart';
-import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
-import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 class HandoverSendDialog extends StatefulWidget {
   final List<String> filePaths;
@@ -72,7 +72,9 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
     super.initState();
     _subscription = _senderService.sessionUpdates.listen((session) {
       if (mounted) {
-        debugPrint('[Handover] session update: ${session.status}, isSent=$_isSent');
+        debugPrint(
+          '[Handover] session update: ${session.status}, isSent=$_isSent',
+        );
         setState(() => _session = session);
         if (_isSent && !_processingCancelled) {
           _processingCancelled = true;
@@ -84,15 +86,22 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
   }
 
   void _cancelMobileProcessing() {
-    debugPrint('[Handover] _cancelMobileProcessing called, sourceId=${widget.sourceSessionId}');
+    debugPrint(
+      '[Handover] _cancelMobileProcessing called, sourceId=${widget.sourceSessionId}',
+    );
     if (widget.sourceSessionId == null) return;
     try {
       final processingBloc = getIt<ProcessingBloc>();
-      final session = processingBloc.state.sessions
-          .firstWhereOrNull((s) => s.id == widget.sourceSessionId);
-      debugPrint('[Handover] found session: ${session?.id}, status=${session?.status}, isProcessing=${session?.isProcessing}');
+      final session = processingBloc.state.sessions.firstWhereOrNull(
+        (s) => s.id == widget.sourceSessionId,
+      );
+      debugPrint(
+        '[Handover] found session: ${session?.id}, status=${session?.status}, isProcessing=${session?.isProcessing}',
+      );
       if (session != null && session.isProcessing) {
-        debugPrint('[Handover] calling cancelGeneration + disposeModel + MappingCancelled');
+        debugPrint(
+          '[Handover] calling cancelGeneration + disposeModel + MappingCancelled',
+        );
         getIt<ProcessingRepository>().cancelGeneration();
         getIt<ProcessingRepository>().disposeModel();
         processingBloc.add(MappingCancelled(sessionId: session.id));
@@ -106,8 +115,9 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
     if (widget.sourceSessionId == null) return;
     try {
       final processingBloc = getIt<ProcessingBloc>();
-      final session = processingBloc.state.sessions
-          .firstWhereOrNull((s) => s.id == widget.sourceSessionId);
+      final session = processingBloc.state.sessions.firstWhereOrNull(
+        (s) => s.id == widget.sourceSessionId,
+      );
       if (session != null) {
         processingBloc.add(SessionCleared(session: session));
       }
@@ -117,7 +127,10 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
   Future<void> _startSending() async {
     if (_started) return;
     _started = true;
-    await _senderService.sendHandover(widget.filePaths, phase1Data: widget.phase1Data);
+    await _senderService.sendHandover(
+      widget.filePaths,
+      phase1Data: widget.phase1Data,
+    );
   }
 
   @override
@@ -186,7 +199,9 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
                     child: Icon(
                       Icons.close,
                       size: 20,
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.4),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.4,
+                      ),
                     ),
                   ),
               ],
@@ -201,7 +216,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
               ),
             const SizedBox(height: Insets.normal),
             if (_isSent) ...[
-              Icon(
+              const Icon(
                 Icons.check_circle_outline,
                 size: 48,
                 color: AppColors.success,
@@ -216,7 +231,9 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
             ] else if (_session?.status != HandoverStatus.error) ...[
               LinearProgressIndicator(
                 value: _session?.progress,
-                backgroundColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
+                backgroundColor: context.colorScheme.onSurface.withValues(
+                  alpha: 0.08,
+                ),
               ),
             ],
             const SizedBox(height: Insets.small),

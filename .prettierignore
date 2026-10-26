@@ -1,0 +1,33 @@
+# Prettier formats YAML, JSON, ARB, Markdown, HTML, CSS, JavaScript and XML. The other
+# languages have their own formatter in .pre-commit-config.yaml. Files in .gitignore are skipped too.
+
+# Generated or managed by a tool
+**/build/
+drift_schemas/
+test/drift/my_database/generated/
+untranslated_messages.json
+pubspec.lock
+package-lock.json
+.mason/
+mason-lock.json
+windows/flutter/
+**/Pods/
+**/fastlane/report.xml
+**/fastlane/README.md
+**/*.xcassets/
+**/xcuserdata/
+*.plist
+*.storyboard
+*.xib
+*.entitlements
+.idea/
+
+# Data kept byte for byte
+assets/
+LICENSE.md
+
+# Unused GitHub workflows, left untouched by policy
+.github/
+
+# BMad planning output, written by its own tooling
+_bmad-output/

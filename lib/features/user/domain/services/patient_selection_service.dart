@@ -18,7 +18,8 @@ class PatientSelectionService {
       return patients.isNotEmpty ? patients.first : null;
     }
 
-    final groups = patientGroups ?? _deduplicationService.deduplicatePatients(patients);
+    final groups =
+        patientGroups ?? _deduplicationService.deduplicatePatients(patients);
 
     final patientGroup = _findPatientGroup(groups, selectedPatientId);
 
@@ -65,11 +66,12 @@ class PatientSelectionService {
   ) {
     for (final group in groups.values) {
       if (group.representativePatient.id == patientId ||
-          group.allPatientInstances.any((p) => p.id == patientId || p.resourceId == patientId)) {
+          group.allPatientInstances.any(
+            (p) => p.id == patientId || p.resourceId == patientId,
+          )) {
         return group;
       }
     }
     return null;
   }
 }
-

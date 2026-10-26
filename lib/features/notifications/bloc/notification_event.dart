@@ -5,7 +5,8 @@ abstract class NotificationEvent {
 }
 
 @freezed
-abstract class NotificationAdded extends NotificationEvent with _$NotificationAdded {
+abstract class NotificationAdded extends NotificationEvent
+    with _$NotificationAdded {
   const NotificationAdded._();
 
   const factory NotificationAdded({
@@ -30,14 +31,16 @@ abstract class NotificationPopupClosed extends NotificationEvent
 }
 
 @freezed
-abstract class NotificationCleared extends NotificationEvent with _$NotificationCleared {
+abstract class NotificationCleared extends NotificationEvent
+    with _$NotificationCleared {
   const NotificationCleared._();
 
   const factory NotificationCleared() = _NotificationCleared;
 }
 
 @freezed
-abstract class NotificationRemoved extends NotificationEvent with _$NotificationRemoved {
+abstract class NotificationRemoved extends NotificationEvent
+    with _$NotificationRemoved {
   const NotificationRemoved._();
 
   const factory NotificationRemoved({

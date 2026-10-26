@@ -1,5 +1,5 @@
-import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:drift/drift.dart';
+import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/fhir_resource_table.dart';
 
 class FhirResourceDatasource {
@@ -14,7 +14,7 @@ class FhirResourceDatasource {
     int? limit,
     int? offset,
   }) async {
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
         db.select(db.fhirResource)..orderBy([(f) => OrderingTerm.desc(f.date)]);
 
     if (sourceId != null) {
@@ -38,9 +38,9 @@ class FhirResourceDatasource {
     required String encounterId,
     String? sourceId,
   }) async {
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query = db
-        .select(db.fhirResource)
-      ..where((f) => f.encounterId.equals(encounterId));
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
+        db.select(db.fhirResource)
+          ..where((f) => f.encounterId.equals(encounterId));
 
     if (sourceId != null) {
       query.where((f) => f.sourceId.equals(sourceId));
@@ -64,8 +64,11 @@ class FhirResourceDatasource {
     final parts = reference.split('/');
     if (parts.length == 2) {
       final query = db.select(db.fhirResource)
-        ..where((tbl) =>
-            tbl.resourceType.equals(parts[0]) & tbl.resourceId.equals(parts[1]))
+        ..where(
+          (tbl) =>
+              tbl.resourceType.equals(parts[0]) &
+              tbl.resourceId.equals(parts[1]),
+        )
         ..limit(1);
 
       return await query.getSingleOrNull();
@@ -102,15 +105,11 @@ class FhirResourceDatasource {
   }
 
   Future<int> deleteResourceById(String id) async {
-    return (db.delete(db.fhirResource)
-          ..where((f) => f.id.equals(id)))
-        .go();
+    return (db.delete(db.fhirResource)..where((f) => f.id.equals(id))).go();
   }
 
   Future<int> deleteResourcesByIds(List<String> ids) async {
-    return (db.delete(db.fhirResource)
-          ..where((f) => f.id.isIn(ids)))
-        .go();
+    return (db.delete(db.fhirResource)..where((f) => f.id.isIn(ids))).go();
   }
 
   Future<int> getRelatedResourceCount(String encounterId) async {
@@ -123,9 +122,9 @@ class FhirResourceDatasource {
   }
 
   Future<int> deleteResourcesBySourceId(String sourceId) async {
-    return (db.delete(db.fhirResource)
-          ..where((f) => f.sourceId.equals(sourceId)))
-        .go();
+    return (db.delete(
+      db.fhirResource,
+    )..where((f) => f.sourceId.equals(sourceId))).go();
   }
 
   Future<List<String>> getSourceIdsForSubject(String subjectId) async {
@@ -157,8 +156,9 @@ class FhirResourceDatasource {
       return [];
     }
 
-    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> selectQuery =
-        db.select(db.fhirResource)..orderBy([(f) => OrderingTerm.desc(f.date)]);
+    final SimpleSelectStatement<FhirResource, FhirResourceLocalDto>
+    selectQuery = db.select(db.fhirResource)
+      ..orderBy([(f) => OrderingTerm.desc(f.date)]);
 
     if (sourceId != null) {
       selectQuery.where((f) => f.sourceId.equals(sourceId));
@@ -170,9 +170,11 @@ class FhirResourceDatasource {
 
     if (searchTerms.isNotEmpty) {
       for (final term in searchTerms) {
-        selectQuery.where((f) =>
-            f.title.lower().contains(term) |
-            f.resourceRaw.lower().contains(term));
+        selectQuery.where(
+          (f) =>
+              f.title.lower().contains(term) |
+              f.resourceRaw.lower().contains(term),
+        );
       }
     }
 
@@ -192,15 +194,19 @@ class FhirResourceDatasource {
     }).toList();
 
     results.sort((a, b) {
-      final aResourceTypeMatch = searchTerms
-          .any((term) => a.resourceType?.toLowerCase() == term.toLowerCase());
-      final bResourceTypeMatch = searchTerms
-          .any((term) => b.resourceType?.toLowerCase() == term.toLowerCase());
+      final aResourceTypeMatch = searchTerms.any(
+        (term) => a.resourceType?.toLowerCase() == term.toLowerCase(),
+      );
+      final bResourceTypeMatch = searchTerms.any(
+        (term) => b.resourceType?.toLowerCase() == term.toLowerCase(),
+      );
 
-      final aInTitle = searchTerms
-          .any((term) => a.title?.toLowerCase().contains(term) ?? false);
-      final bInTitle = searchTerms
-          .any((term) => b.title?.toLowerCase().contains(term) ?? false);
+      final aInTitle = searchTerms.any(
+        (term) => a.title?.toLowerCase().contains(term) ?? false,
+      );
+      final bInTitle = searchTerms.any(
+        (term) => b.title?.toLowerCase().contains(term) ?? false,
+      );
 
       if (aResourceTypeMatch && !bResourceTypeMatch) return -1;
       if (!aResourceTypeMatch && bResourceTypeMatch) return 1;

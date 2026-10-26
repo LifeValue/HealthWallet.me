@@ -1,12 +1,13 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_detail_panel.dart';
-import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_timeline_scrubber.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_thumbnail_strip.dart';
+import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_timeline_scrubber.dart';
 
 const double kThumbnailItemWidth = 100.0;
 const double kThumbnailGap = 16.0;
@@ -87,8 +88,10 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
     final maxScroll = _thumbnailScrollController.position.maxScrollExtent;
     if (maxScroll <= 0) return;
 
-    final progress =
-        (_thumbnailScrollController.offset / maxScroll).clamp(0.0, 1.0);
+    final progress = (_thumbnailScrollController.offset / maxScroll).clamp(
+      0.0,
+      1.0,
+    );
     final index = (progress * max).round();
     if (index != _visibleIndex) {
       setState(() => _visibleIndex = index);
@@ -100,7 +103,9 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
     if (!_thumbnailScrollController.position.hasContentDimensions) return;
     _isThumbnailSyncing = true;
     final targetOffset =
-        kThumbnailPadding + index * (kThumbnailItemWidth + kThumbnailGap) - kThumbnailGap;
+        kThumbnailPadding +
+        index * (kThumbnailItemWidth + kThumbnailGap) -
+        kThumbnailGap;
     final maxScroll = _thumbnailScrollController.position.maxScrollExtent;
     _thumbnailScrollController
         .animateTo(
@@ -151,8 +156,9 @@ class _AttachmentBrowseViewState extends State<AttachmentBrowseView> {
             ? widget.bottomNavHeight + bottomInset
             : 8.0;
         final overlayBottomPad = isKeyboardOpen ? 8.0 : navPad;
-        final timelineSpace =
-            hasTimeline ? _kTimelineTopPad + _kTimelineHeight : 0.0;
+        final timelineSpace = hasTimeline
+            ? _kTimelineTopPad + _kTimelineHeight
+            : 0.0;
         final bottomBarHeight =
             timelineSpace + _kThumbnailTopPad + _kThumbnailHeight;
 
@@ -251,99 +257,100 @@ class _BottomOverlay extends StatelessWidget {
         onSwipe(velocity < 0 ? 1 : -1);
       },
       child: Stack(
-      children: [
-        Positioned.fill(
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(40),
-              topRight: Radius.circular(40),
-            ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(40),
-                    topRight: Radius.circular(40),
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: const [0.0, 0.4, 1.0],
-                    colors: context.isDarkMode
-                        ? [
-                            context.colorScheme.surface
-                                .withValues(alpha: 0.02),
-                            context.colorScheme.surface
-                                .withValues(alpha: 0.5),
-                            context.colorScheme.surface,
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.02),
-                            Colors.white.withValues(alpha: 0.5),
-                            Colors.white,
-                          ],
+        children: [
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(40),
+                topRight: Radius.circular(40),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(40),
+                      topRight: Radius.circular(40),
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: const [0.0, 0.4, 1.0],
+                      colors: context.isDarkMode
+                          ? [
+                              context.colorScheme.surface.withValues(
+                                alpha: 0.02,
+                              ),
+                              context.colorScheme.surface.withValues(
+                                alpha: 0.5,
+                              ),
+                              context.colorScheme.surface,
+                            ]
+                          : [
+                              Colors.white.withValues(alpha: 0.02),
+                              Colors.white.withValues(alpha: 0.5),
+                              Colors.white,
+                            ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (hasTimeline) ...[
-              const SizedBox(height: _kTimelineTopPad),
-              SizedBox(
-                height: _kTimelineHeight,
-                child: AttachmentTimelineScrubber(
-                  timelineYears: state.timelineYears,
-                  selectedIndex: visibleIndex,
-                  records: state.records,
-                  onYearSelected: (year) {
-                    final yearEntry = state.timelineYears
-                        .where((y) => y.year == year)
-                        .firstOrNull;
-                    if (yearEntry != null && yearEntry.months.isNotEmpty) {
-                      context.read<AttachmentBrowseBloc>().add(
-                            AttachmentBrowseSelected(
-                              yearEntry.months.first.firstRecordIndex,
-                            ),
-                          );
-                    }
-                  },
-                  onMonthSelected: (year, month) {
-                    context.read<AttachmentBrowseBloc>().add(
-                          AttachmentBrowseMonthSelected(year, month),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (hasTimeline) ...[
+                const SizedBox(height: _kTimelineTopPad),
+                SizedBox(
+                  height: _kTimelineHeight,
+                  child: AttachmentTimelineScrubber(
+                    timelineYears: state.timelineYears,
+                    selectedIndex: visibleIndex,
+                    records: state.records,
+                    onYearSelected: (year) {
+                      final yearEntry = state.timelineYears
+                          .where((y) => y.year == year)
+                          .firstOrNull;
+                      if (yearEntry != null && yearEntry.months.isNotEmpty) {
+                        context.read<AttachmentBrowseBloc>().add(
+                          AttachmentBrowseSelected(
+                            yearEntry.months.first.firstRecordIndex,
+                          ),
                         );
+                      }
+                    },
+                    onMonthSelected: (year, month) {
+                      context.read<AttachmentBrowseBloc>().add(
+                        AttachmentBrowseMonthSelected(year, month),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              const SizedBox(height: _kThumbnailTopPad),
+              SizedBox(
+                height: _kThumbnailHeight,
+                child: AttachmentThumbnailStrip(
+                  records: state.records,
+                  selectedIndex: state.selectedIndex,
+                  scrollController: thumbnailScrollController,
+                  isSelectionMode: isSelectionMode,
+                  selectedResourceIds: selectedResourceIds,
+                  onSelectionToggle: onSelectionToggle,
+                  onSelectionModeToggled: onSelectionModeToggled,
+                  onSelected: (index) {
+                    context.read<AttachmentBrowseBloc>().add(
+                      AttachmentBrowseSelected(index),
+                    );
                   },
                 ),
               ),
+              SizedBox(height: bottomPadding),
             ],
-            const SizedBox(height: _kThumbnailTopPad),
-            SizedBox(
-              height: _kThumbnailHeight,
-              child: AttachmentThumbnailStrip(
-                records: state.records,
-                selectedIndex: state.selectedIndex,
-                scrollController: thumbnailScrollController,
-                isSelectionMode: isSelectionMode,
-                selectedResourceIds: selectedResourceIds,
-                onSelectionToggle: onSelectionToggle,
-                onSelectionModeToggled: onSelectionModeToggled,
-                onSelected: (index) {
-                  context.read<AttachmentBrowseBloc>().add(
-                        AttachmentBrowseSelected(index),
-                      );
-                },
-              ),
-            ),
-            SizedBox(height: bottomPadding),
-          ],
-        ),
-      ],
-    ),
+          ),
+        ],
+      ),
     );
   }
 }
-

@@ -19,10 +19,12 @@ class RecordsViewToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final outerColor =
-        isDark ? const Color(0xFF060606) : const Color(0xFFF2F2F2);
-    final borderColor =
-        isDark ? const Color(0xFF3C3C3C) : const Color(0xFFE0E0E0);
+    final outerColor = isDark
+        ? const Color(0xFF060606)
+        : const Color(0xFFF2F2F2);
+    final borderColor = isDark
+        ? const Color(0xFF3C3C3C)
+        : const Color(0xFFE0E0E0);
     final inactiveIconColor = isDark ? Colors.white : Colors.black54;
 
     final isRecords = mode == RecordsViewMode.recordsList;
@@ -66,31 +68,31 @@ class RecordsViewToggle extends StatelessWidget {
     required Color inactiveIconColor,
   }) {
     return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(222),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            svgIcon.svg(
-              width: 16,
-              height: 16,
-              colorFilter: ColorFilter.mode(
-                isActive ? Colors.white : inactiveIconColor,
-                BlendMode.srcIn,
-              ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive ? AppColors.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(222),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          svgIcon.svg(
+            width: 16,
+            height: 16,
+            colorFilter: ColorFilter.mode(
+              isActive ? Colors.white : inactiveIconColor,
+              BlendMode.srcIn,
             ),
-            if (isActive) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: AppTextStyle.labelSmall.copyWith(color: Colors.white),
-              ),
-            ],
+          ),
+          if (isActive) ...[
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTextStyle.labelSmall.copyWith(color: Colors.white),
+            ),
           ],
-        ),
-      );
+        ],
+      ),
+    );
   }
 }

@@ -82,21 +82,26 @@ class _AttachmentTimelineScrubberState
   void _buildTimelineItems() {
     _items = [];
     for (final year in widget.timelineYears) {
-      final firstMonthIndex =
-          year.months.isNotEmpty ? year.months.first.firstRecordIndex : 0;
-      _items.add(_TimelineItem(
-        isYear: true,
-        year: year.year,
-        firstRecordIndex: firstMonthIndex,
-      ));
-      for (final month in year.months) {
-        _items.add(_TimelineItem(
-          isYear: false,
+      final firstMonthIndex = year.months.isNotEmpty
+          ? year.months.first.firstRecordIndex
+          : 0;
+      _items.add(
+        _TimelineItem(
+          isYear: true,
           year: year.year,
-          month: month.month,
-          recordCount: month.recordCount,
-          firstRecordIndex: month.firstRecordIndex,
-        ));
+          firstRecordIndex: firstMonthIndex,
+        ),
+      );
+      for (final month in year.months) {
+        _items.add(
+          _TimelineItem(
+            isYear: false,
+            year: year.year,
+            month: month.month,
+            recordCount: month.recordCount,
+            firstRecordIndex: month.firstRecordIndex,
+          ),
+        );
       }
     }
   }
@@ -153,7 +158,7 @@ class _AttachmentTimelineScrubberState
     if (_isSyncing) return;
     if (!_scrollController.hasClients) return;
 
-    double offset = _scrollController.offset;
+    final double offset = _scrollController.offset;
     double cumulative = 0;
     int foundIndex = 0;
     for (int i = 0; i < _items.length; i++) {
@@ -272,7 +277,9 @@ class _AttachmentTimelineScrubberState
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(dotCount, (i) {
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: _dotSpacing / 2 - 2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: _dotSpacing / 2 - 2,
+              ),
               child: Container(
                 width: 5,
                 height: 5,

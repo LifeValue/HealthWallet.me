@@ -15,7 +15,9 @@ class FhirCommonExtractor {
     try {
       final text = codeableConcept.text?.toString();
       if (text != null && text.isNotEmpty) return text;
-    } catch (e) {}
+    } catch (_) {
+      // Malformed text; try the coding display next.
+    }
 
     try {
       final coding = codeableConcept.coding;
@@ -23,7 +25,9 @@ class FhirCommonExtractor {
         final display = coding!.first.display?.toString();
         if (display != null && display.isNotEmpty) return display;
       }
-    } catch (e) {}
+    } catch (_) {
+      // Malformed coding; there is no display text to return.
+    }
 
     return null;
   }
@@ -40,7 +44,8 @@ class FhirCommonExtractor {
   }
 
   static String? extractFirstCodeableConceptFromArray(
-      List<dynamic>? codeableConceptArray) {
+    List<dynamic>? codeableConceptArray,
+  ) {
     if (codeableConceptArray == null || codeableConceptArray.isEmpty) {
       return null;
     }
@@ -50,8 +55,9 @@ class FhirCommonExtractor {
   }
 
   static String? joinNullable(List<String?> values, String separator) {
-    final nonNullStrings =
-        values.where((s) => s != null && s.isNotEmpty).toList();
+    final nonNullStrings = values
+        .where((s) => s != null && s.isNotEmpty)
+        .toList();
     return nonNullStrings.isEmpty ? null : nonNullStrings.join(separator);
   }
 
@@ -76,13 +82,14 @@ class FhirCommonExtractor {
   }
 
   static String? extractAllCodeableConceptsFromArray(
-      List<dynamic>? codeableConceptArray) {
+    List<dynamic>? codeableConceptArray,
+  ) {
     if (codeableConceptArray == null || codeableConceptArray.isEmpty) {
       return null;
     }
 
     final texts = codeableConceptArray
-        .map((concept) => extractCodeableConceptText(concept))
+        .map(extractCodeableConceptText)
         .where((text) => text != null && text.isNotEmpty)
         .toList();
 
@@ -212,8 +219,7 @@ class FhirCommonExtractor {
     return extractMultipleReferenceDisplays(reasonReferences);
   }
 
-  static String? extractFirstIdentifier(
-      List<fhir_r4.Identifier>? identifiers) {
+  static String? extractFirstIdentifier(List<fhir_r4.Identifier>? identifiers) {
     if (identifiers == null || identifiers.isEmpty) return null;
 
     for (final identifier in identifiers) {

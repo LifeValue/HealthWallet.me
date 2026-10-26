@@ -41,13 +41,13 @@ class RemainingResourcesVisionPrompt {
     final resourceSchemas = documentCategory == 'lab_report'
         ? _labReportSchemas
         : documentCategory == 'visit'
-            ? _visitSchemas
-            : _defaultSchemas;
+        ? _visitSchemas
+        : _defaultSchemas;
 
     final truncatedOcr = ocrText != null && ocrText!.isNotEmpty
         ? (ocrText!.length > maxOcrLength
-            ? ocrText!.substring(0, maxOcrLength)
-            : ocrText!)
+              ? ocrText!.substring(0, maxOcrLength)
+              : ocrText!)
         : null;
     final ocrSection = truncatedOcr != null
         ? '\nOCR text from this document (use for exact values):\n---\n$truncatedOcr\n---\n'
@@ -97,7 +97,8 @@ Rules:
   static const _organizationSchema =
       '{"resourceType":"Organization","organizationName":"string","address":"string","phone":"string"}';
 
-  static const _labReportSchemas = '''Observation (lab results, vital signs):
+  static const _labReportSchemas =
+      '''Observation (lab results, vital signs):
 $_observationSchema
 
 Condition (diagnoses):
@@ -109,7 +110,8 @@ $_practitionerSchema
 Organization (hospitals, labs):
 $_organizationSchema''';
 
-  static const _visitSchemas = '''Condition (diagnoses):
+  static const _visitSchemas =
+      '''Condition (diagnoses):
 $_conditionSchema
 
 MedicationStatement (medications):
@@ -130,7 +132,8 @@ $_allergySchema
 Organization (hospitals, clinics):
 $_organizationSchema''';
 
-  static const _defaultSchemas = '''Observation (lab results, vital signs):
+  static const _defaultSchemas =
+      '''Observation (lab results, vital signs):
 $_observationSchema
 
 Condition (diagnoses):

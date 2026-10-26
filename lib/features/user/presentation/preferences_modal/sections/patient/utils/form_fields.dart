@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_dropdown_field.dart';
 import 'package:health_wallet/core/widgets/app_input_field.dart';
@@ -11,12 +11,14 @@ class FormFields {
   static Widget buildFieldLabel(BuildContext context, String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: Insets.smaller),
-      child: Text(label,
-          style: AppTextStyle.bodySmall.copyWith(
-            color: context.isDarkMode
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimary,
-          )),
+      child: Text(
+        label,
+        style: AppTextStyle.bodySmall.copyWith(
+          color: context.isDarkMode
+              ? AppColors.textPrimaryDark
+              : AppColors.textPrimary,
+        ),
+      ),
     );
   }
 
@@ -97,7 +99,8 @@ class FormFields {
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: Insets.small),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
             child: Text(cancelLabel, style: AppTextStyle.buttonSmall),
           ),
@@ -112,7 +115,8 @@ class FormFields {
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: Insets.small),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
             child: isLoading
                 ? const SizedBox(

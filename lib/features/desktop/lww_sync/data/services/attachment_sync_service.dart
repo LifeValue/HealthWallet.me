@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
-import 'package:health_wallet/core/services/path_resolver.dart';
 
 @lazySingleton
 class AttachmentSyncService {
@@ -101,8 +101,7 @@ class AttachmentSyncService {
       final data = attachment?['data'] as String?;
       if (data != null) {
         final bytes = base64Decode(data);
-        final title =
-            attachment?['title'] as String? ?? '${_uuid.v4()}.bin';
+        final title = attachment?['title'] as String? ?? '${_uuid.v4()}.bin';
         final sanitized = title.replaceAll(RegExp(r'[^\w.\-]'), '_');
         final contentType = attachment?['contentType'] as String?;
         final ext = _extensionFromContentType(contentType);

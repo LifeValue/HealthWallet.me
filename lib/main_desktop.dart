@@ -3,11 +3,11 @@ import 'package:health_wallet/app/view/app.dart';
 import 'package:health_wallet/bootstrap.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
-import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/desktop/tray/data/services/tray_service.dart';
@@ -45,26 +45,30 @@ void main() async {
   getIt<HandoverBloc>().add(const HandoverInitialised());
   getIt<TrayBloc>().add(const TrayInitialised());
 
-  getIt<CommunicationBloc>()
-      .stream
-      .distinct((a, b) =>
-          a.connectionStatus == b.connectionStatus &&
-          a.connectedDeviceName == b.connectedDeviceName)
+  getIt<CommunicationBloc>().stream
+      .distinct(
+        (a, b) =>
+            a.connectionStatus == b.connectionStatus &&
+            a.connectedDeviceName == b.connectedDeviceName,
+      )
       .listen((commState) {
-    getIt<TrayBloc>().add(TrayConnectionStatusChanged(
-      connectionStatus: commState.connectionStatus,
-      deviceName: commState.connectedDeviceName,
-    ));
-  });
+        getIt<TrayBloc>().add(
+          TrayConnectionStatusChanged(
+            connectionStatus: commState.connectionStatus,
+            deviceName: commState.connectedDeviceName,
+          ),
+        );
+      });
 
-  getIt<LwwSyncBloc>()
-      .stream
+  getIt<LwwSyncBloc>().stream
       .distinct((a, b) => a.syncStatus == b.syncStatus)
       .listen((syncState) {
-    getIt<TrayBloc>().add(TraySyncStatusChanged(
-      syncStatus: syncState.syncStatus,
-    ));
-  });
+        getIt<TrayBloc>().add(
+          TraySyncStatusChanged(
+            syncStatus: syncState.syncStatus,
+          ),
+        );
+      });
 
   await bootstrap(() => const App());
 }

@@ -1,7 +1,7 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_observation_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_patient_extractor.dart';
@@ -21,9 +21,10 @@ class FhirFieldExtractor {
       FhirCommonExtractor.extractDate(date);
 
   static String? extractFirstCodeableConceptFromArray(
-          List<dynamic>? codeableConceptArray) =>
-      FhirCommonExtractor.extractFirstCodeableConceptFromArray(
-          codeableConceptArray);
+    List<dynamic>? codeableConceptArray,
+  ) => FhirCommonExtractor.extractFirstCodeableConceptFromArray(
+    codeableConceptArray,
+  );
 
   static String? joinNullable(List<String?> values, String separator) =>
       FhirCommonExtractor.joinNullable(values, separator);
@@ -35,9 +36,10 @@ class FhirFieldExtractor {
       FhirCommonExtractor.extractQuantity(quantity);
 
   static String? extractAllCodeableConceptsFromArray(
-          List<dynamic>? codeableConceptArray) =>
-      FhirCommonExtractor.extractAllCodeableConceptsFromArray(
-          codeableConceptArray);
+    List<dynamic>? codeableConceptArray,
+  ) => FhirCommonExtractor.extractAllCodeableConceptsFromArray(
+    codeableConceptArray,
+  );
 
   static String? extractFirstAnnotation(List<dynamic>? annotations) =>
       FhirCommonExtractor.extractFirstAnnotation(annotations);
@@ -48,8 +50,7 @@ class FhirFieldExtractor {
   static String? formatAddress(fhir_r4.Address? address) =>
       FhirCommonExtractor.formatAddress(address);
 
-  static String? extractMultipleReferenceDisplays(
-          List<dynamic>? references) =>
+  static String? extractMultipleReferenceDisplays(List<dynamic>? references) =>
       FhirCommonExtractor.extractMultipleReferenceDisplays(references);
 
   static String? extractDosageInstructions(List<dynamic>? dosages) =>
@@ -65,8 +66,8 @@ class FhirFieldExtractor {
       FhirCommonExtractor.extractReasonReferences(reasonReferences);
 
   static String? extractFirstIdentifier(
-          List<fhir_r4.Identifier>? identifiers) =>
-      FhirCommonExtractor.extractFirstIdentifier(identifiers);
+    List<fhir_r4.Identifier>? identifiers,
+  ) => FhirCommonExtractor.extractFirstIdentifier(identifiers);
 
   static String? extractServiceType(List<dynamic>? serviceTypes) =>
       FhirCommonExtractor.extractServiceType(serviceTypes);
@@ -81,13 +82,16 @@ class FhirFieldExtractor {
       FhirObservationExtractor.extractObservationValue(valueX);
 
   static String? extractObservationValueForRegion(
-          dynamic valueX, RegionPreset region) =>
-      FhirObservationExtractor.extractObservationValueForRegion(
-          valueX, region);
+    dynamic valueX,
+    RegionPreset region,
+  ) =>
+      FhirObservationExtractor.extractObservationValueForRegion(valueX, region);
 
   static ({double value, String unit}) convertQuantityForRegion(
-          double value, String unit, RegionPreset region) =>
-      FhirObservationExtractor.convertQuantityForRegion(value, unit, region);
+    double value,
+    String unit,
+    RegionPreset region,
+  ) => FhirObservationExtractor.convertQuantityForRegion(value, unit, region);
 
   static bool isVitalSign(Observation observation) =>
       FhirObservationExtractor.isVitalSign(observation);
@@ -107,8 +111,7 @@ class FhirFieldExtractor {
   static String? extractInterpretation(List<dynamic>? interpretations) =>
       FhirObservationExtractor.extractInterpretation(interpretations);
 
-  static String? extractBloodTypeFromObservations(
-          List<dynamic> observations) =>
+  static String? extractBloodTypeFromObservations(List<dynamic> observations) =>
       FhirObservationExtractor.extractBloodTypeFromObservations(observations);
 
   static String? extractHumanName(dynamic name) =>
@@ -151,24 +154,27 @@ class FhirFieldExtractor {
       FhirPatientExtractor.extractMultipleBirth(multipleBirthX);
 
   static String? extractCommunicationLanguages(
-          List<fhir_r4.PatientCommunication>? communication) =>
-      FhirPatientExtractor.extractCommunicationLanguages(communication);
+    List<fhir_r4.PatientCommunication>? communication,
+  ) => FhirPatientExtractor.extractCommunicationLanguages(communication);
 
   static int? calculateAge(DateTime? birthDate) =>
       FhirPatientExtractor.calculateAge(birthDate);
 
   static String? extractIdentifierByType(
-          List<fhir_r4.Identifier>? identifiers, String typeCode) =>
-      FhirPatientExtractor.extractIdentifierByType(identifiers, typeCode);
+    List<fhir_r4.Identifier>? identifiers,
+    String typeCode,
+  ) => FhirPatientExtractor.extractIdentifierByType(identifiers, typeCode);
 
   static String? extractTelecomBySystem(
-          List<fhir_r4.ContactPoint>? telecom, String system,
-          {String? use}) =>
-      FhirPatientExtractor.extractTelecomBySystem(telecom, system, use: use);
+    List<fhir_r4.ContactPoint>? telecom,
+    String system, {
+    String? use,
+  }) => FhirPatientExtractor.extractTelecomBySystem(telecom, system, use: use);
 
   static List<Map<String, String>> extractAllTelecomBySystem(
-          List<fhir_r4.ContactPoint>? telecom, String system) =>
-      FhirPatientExtractor.extractAllTelecomBySystem(telecom, system);
+    List<fhir_r4.ContactPoint>? telecom,
+    String system,
+  ) => FhirPatientExtractor.extractAllTelecomBySystem(telecom, system);
 
   static String? extractTelecom(List<fhir_r4.ContactPoint>? telecom) =>
       FhirPatientExtractor.extractTelecom(telecom);
@@ -189,12 +195,14 @@ class FhirFieldExtractor {
       FhirCommonExtractor.extractDiagnoses(diagnoses);
 
   static String? extractRaceOrEthnicity(
-          Map<String, dynamic> rawResource, String extensionUrl) =>
-      FhirPatientExtractor.extractRaceOrEthnicity(rawResource, extensionUrl);
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) => FhirPatientExtractor.extractRaceOrEthnicity(rawResource, extensionUrl);
 
   static String? extractExtensionValue(
-          Map<String, dynamic> rawResource, String extensionUrl) =>
-      FhirPatientExtractor.extractExtensionValue(rawResource, extensionUrl);
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) => FhirPatientExtractor.extractExtensionValue(rawResource, extensionUrl);
 
   static String? extractBirthPlace(Map<String, dynamic> rawResource) =>
       FhirPatientExtractor.extractBirthPlace(rawResource);

@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -14,7 +15,9 @@ import 'package:intl/intl.dart';
 part 'medication_dispense.freezed.dart';
 
 @freezed
-abstract class MedicationDispense with _$MedicationDispense implements IFhirResource {
+abstract class MedicationDispense
+    with _$MedicationDispense
+    implements IFhirResource {
   const MedicationDispense._();
 
   const factory MedicationDispense({
@@ -58,8 +61,9 @@ abstract class MedicationDispense with _$MedicationDispense implements IFhirReso
 
   factory MedicationDispense.fromLocalData(FhirResourceLocalDto data) {
     final resourceJson = jsonDecode(data.resourceRaw);
-    final fhirMedicationDispense =
-        fhir_r4.MedicationDispense.fromJson(resourceJson);
+    final fhirMedicationDispense = fhir_r4.MedicationDispense.fromJson(
+      resourceJson,
+    );
 
     return MedicationDispense(
       id: data.id,
@@ -100,16 +104,16 @@ abstract class MedicationDispense with _$MedicationDispense implements IFhirReso
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'MedicationDispense',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'MedicationDispense',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -125,23 +129,27 @@ abstract class MedicationDispense with _$MedicationDispense implements IFhirReso
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
-        medicationX?.isAs<CodeableConcept>());
+      medicationX?.isAs<CodeableConcept>(),
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createMedicationLine(medicationDisplay),
     );
 
     // Category
-    final categoryDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(category);
+    final categoryDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      category,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Type
@@ -162,8 +170,10 @@ abstract class MedicationDispense with _$MedicationDispense implements IFhirReso
     final daysSupplyDisplay = FhirFieldExtractor.extractQuantity(daysSupply);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createValueLine(daysSupplyDisplay,
-          prefix: 'Days Supply'),
+      ResourceFieldMapper.createValueLine(
+        daysSupplyDisplay,
+        prefix: 'Days Supply',
+      ),
     );
 
     // Performer
@@ -175,39 +185,48 @@ abstract class MedicationDispense with _$MedicationDispense implements IFhirReso
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createUserLine(
-            performerDisplay.isNotEmpty ? performerDisplay : null,
-            prefix: 'Performer'),
+          performerDisplay.isNotEmpty ? performerDisplay : null,
+          prefix: 'Performer',
+        ),
       );
     }
 
     // Location
-    final locationDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(location);
+    final locationDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      location,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(locationDisplay,
-          prefix: 'Location'),
+      ResourceFieldMapper.createLocationLine(
+        locationDisplay,
+        prefix: 'Location',
+      ),
     );
 
     // When Prepared
     final whenPreparedDisplay = whenPrepared?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(whenPreparedDisplay,
-          prefix: 'Prepared'),
+      ResourceFieldMapper.createDateLine(
+        whenPreparedDisplay,
+        prefix: 'Prepared',
+      ),
     );
 
     // When Handed Over
     final whenHandedOverDisplay = whenHandedOver?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(whenHandedOverDisplay,
-          prefix: 'Handed Over'),
+      ResourceFieldMapper.createDateLine(
+        whenHandedOverDisplay,
+        prefix: 'Handed Over',
+      ),
     );
 
     // Dosage Instructions
-    final dosageDisplay =
-        FhirFieldExtractor.extractDosageInstructions(dosageInstruction);
+    final dosageDisplay = FhirFieldExtractor.extractDosageInstructions(
+      dosageInstruction,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
@@ -215,10 +234,12 @@ abstract class MedicationDispense with _$MedicationDispense implements IFhirReso
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes
@@ -239,10 +260,12 @@ abstract class MedicationDispense with _$MedicationDispense implements IFhirReso
       location?.reference?.valueString,
       destination?.reference?.valueString,
       ...?partOf?.map((reference) => reference.reference?.valueString),
-      ...?supportingInformation
-          ?.map((reference) => reference.reference?.valueString),
-      ...?authorizingPrescription
-          ?.map((reference) => reference.reference?.valueString),
+      ...?supportingInformation?.map(
+        (reference) => reference.reference?.valueString,
+      ),
+      ...?authorizingPrescription?.map(
+        (reference) => reference.reference?.valueString,
+      ),
       ...?receiver?.map((reference) => reference.reference?.valueString),
       ...?detectedIssue?.map((reference) => reference.reference?.valueString),
       ...?eventHistory?.map((reference) => reference.reference?.valueString),

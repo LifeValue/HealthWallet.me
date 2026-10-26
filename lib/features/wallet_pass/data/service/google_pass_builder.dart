@@ -2,22 +2,26 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:health_wallet/core/config/env/env.dart';
+import 'package:health_wallet/core/utils/phone_formatter.dart';
+import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:injectable/injectable.dart';
 import 'package:intl/intl.dart';
-import 'package:pointycastle/export.dart';
 import 'package:pointycastle/asn1.dart';
-import 'package:health_wallet/core/config/env/env.dart';
-import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
-import 'package:health_wallet/core/utils/phone_formatter.dart';
-import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:pointycastle/export.dart';
 
 @injectable
 class GooglePassBuilder {
-  static const _serviceAccountPath = 'assets/certs/android/service-account.json';
+  static const _serviceAccountPath =
+      'assets/certs/android/service-account.json';
 
   String get _issuerId => Env.googleWalletIssuerId;
 
-  Future<String> build(EmergencyCardData cardData, {required String patientId}) async {
+  Future<String> build(
+    EmergencyCardData cardData, {
+    required String patientId,
+  }) async {
     final serviceAccount = await _loadServiceAccount();
     final objectSuffix = 'emergency_${patientId}_v2';
 
@@ -96,7 +100,8 @@ class GooglePassBuilder {
     if (gender != null) subheaderParts.add(gender);
     if (cardData.bloodType != null) subheaderParts.add(cardData.bloodType!);
     if (cardData.dateOfBirth != null) {
-      final age = DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
+      final age =
+          DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
       subheaderParts.add('Age $age');
     }
     if (cardData.allergies.isNotEmpty) {
@@ -196,7 +201,8 @@ class GooglePassBuilder {
     final privateKeySeq = privateKeyParser.nextObject() as ASN1Sequence;
 
     final modulus = (privateKeySeq.elements![1] as ASN1Integer).integer!;
-    final privateExponent = (privateKeySeq.elements![3] as ASN1Integer).integer!;
+    final privateExponent =
+        (privateKeySeq.elements![3] as ASN1Integer).integer!;
     final p = (privateKeySeq.elements![4] as ASN1Integer).integer!;
     final q = (privateKeySeq.elements![5] as ASN1Integer).integer!;
 

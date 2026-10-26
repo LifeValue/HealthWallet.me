@@ -112,7 +112,13 @@ abstract class MappingResource {
       final d = int.tryParse(dmySlash.group(1)!);
       final m = int.tryParse(dmySlash.group(2)!);
       final y = int.tryParse(dmySlash.group(3)!);
-      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+      if (d != null &&
+          m != null &&
+          y != null &&
+          m >= 1 &&
+          m <= 12 &&
+          d >= 1 &&
+          d <= 31) {
         return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
       }
     }
@@ -122,7 +128,13 @@ abstract class MappingResource {
       final y = int.tryParse(ymdSlash.group(1)!);
       final m = int.tryParse(ymdSlash.group(2)!);
       final d = int.tryParse(ymdSlash.group(3)!);
-      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+      if (d != null &&
+          m != null &&
+          y != null &&
+          m >= 1 &&
+          m <= 12 &&
+          d >= 1 &&
+          d <= 31) {
         return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
       }
     }
@@ -132,7 +144,13 @@ abstract class MappingResource {
       final d = int.tryParse(dmyDot.group(1)!);
       final m = int.tryParse(dmyDot.group(2)!);
       final y = int.tryParse(dmyDot.group(3)!);
-      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+      if (d != null &&
+          m != null &&
+          y != null &&
+          m >= 1 &&
+          m <= 12 &&
+          d >= 1 &&
+          d <= 31) {
         return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
       }
     }
@@ -142,7 +160,13 @@ abstract class MappingResource {
       final d = int.tryParse(dmyDash.group(1)!);
       final m = int.tryParse(dmyDash.group(2)!);
       final y = int.tryParse(dmyDash.group(3)!);
-      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+      if (d != null &&
+          m != null &&
+          y != null &&
+          m >= 1 &&
+          m <= 12 &&
+          d >= 1 &&
+          d <= 31) {
         return '${y.toString().padLeft(4, '0')}-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
       }
     }

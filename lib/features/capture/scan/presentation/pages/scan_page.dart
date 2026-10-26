@@ -4,23 +4,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/custom_app_bar.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/navigation_settled_callback_mixin.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/helpers/document_handler.dart';
 import 'package:health_wallet/features/processing/presentation/pages/load_model/bloc/load_model_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/session_list.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:health_wallet/core/widgets/custom_app_bar.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
-import 'package:health_wallet/features/processing/presentation/helpers/document_handler.dart';
-import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/features/dashboard/presentation/helpers/navigation_settled_callback_mixin.dart';
 
 @RoutePage()
 class ScanPage extends StatelessWidget {
@@ -84,8 +84,9 @@ class _ScanViewState extends State<ScanView>
     _hasAutoScanned = true;
 
     final currentState = context.read<ProcessingBloc>().state;
-    final hasAnySessions = currentState.sessions
-        .any((session) => session.origin == ProcessingOrigin.scan);
+    final hasAnySessions = currentState.sessions.any(
+      (session) => session.origin == ProcessingOrigin.scan,
+    );
 
     if (!hasAnySessions) {
       await _handleCaptureButtonPressed(context);
@@ -103,11 +104,10 @@ class _ScanViewState extends State<ScanView>
 
   Future<void> _handleCaptureButtonPressed(BuildContext context) async {
     final cameraStatus = await Permission.camera.request();
+    if (!context.mounted) return;
 
     if (cameraStatus.isGranted) {
-      if (context.mounted) {
-        context.read<ProcessingBloc>().add(const CaptureButtonPressed());
-      }
+      context.read<ProcessingBloc>().add(const CaptureButtonPressed());
     } else if (cameraStatus.isPermanentlyDenied) {
       DialogHelper.showPermissionDeniedDialog(context);
     } else {
@@ -266,7 +266,7 @@ class _ScanViewState extends State<ScanView>
   }
 
   Widget _buildMainView(BuildContext context, ProcessingState state) {
-    List<ProcessingSession> scanSessions = state.sessions
+    final List<ProcessingSession> scanSessions = state.sessions
         .where((element) => element.origin == ProcessingOrigin.scan)
         .toList();
 
@@ -274,63 +274,65 @@ class _ScanViewState extends State<ScanView>
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
         child: Padding(
-      padding: EdgeInsets.only(
-        left: context.screenHorizontalPadding,
-        right: context.screenHorizontalPadding,
-        top: context.isTablet ? 24.0 : 16.0,
-        bottom: 16.0,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          if (scanSessions.isNotEmpty)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.activeScanSessions,
-                    style: AppTextStyle.titleMedium,
+          padding: EdgeInsets.only(
+            left: context.screenHorizontalPadding,
+            right: context.screenHorizontalPadding,
+            top: context.isTablet ? 24.0 : 16.0,
+            bottom: 16.0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              if (scanSessions.isNotEmpty)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.activeScanSessions,
+                        style: AppTextStyle.titleMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        context.l10n.onlyOneSessionAtTime,
+                        style: AppTextStyle.bodySmall,
+                      ),
+                      const SizedBox(height: 24),
+                      Expanded(
+                        child: SessionList(
+                          sessions: scanSessions,
+                          showSendToDesktop: _isDesktopConnected(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).padding.bottom + 76,
+                        ),
+                        child: AppButton(
+                          label: context.l10n.scanDocument,
+                          icon: Assets.icons.scan.svg(),
+                          variant: AppButtonVariant.primary,
+                          onPressed: () => _handleDirectScan(context),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    context.l10n.onlyOneSessionAtTime,
-                    style: AppTextStyle.bodySmall,
-                  ),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: SessionList(
-                      sessions: scanSessions,
-                      showSendToDesktop: _isDesktopConnected(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 76),
-                    child: AppButton(
-                      label: context.l10n.scanDocument,
-                      icon: Assets.icons.scan.svg(),
-                      variant: AppButtonVariant.primary,
-                      onPressed: () => _handleDirectScan(context),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (scanSessions.isEmpty)
-            if (context.isTablet)
-              Expanded(
-                child: Align(
-                  alignment: const Alignment(0, -0.3),
-                  child: _buildEmptyState(context),
                 ),
-              )
-            else
-              Center(child: _buildEmptyState(context)),
-        ],
+              if (scanSessions.isEmpty)
+                if (context.isTablet)
+                  Expanded(
+                    child: Align(
+                      alignment: const Alignment(0, -0.3),
+                      child: _buildEmptyState(context),
+                    ),
+                  )
+                else
+                  Center(child: _buildEmptyState(context)),
+            ],
+          ),
+        ),
       ),
-    ),
-    ),
     );
   }
 
@@ -381,11 +383,10 @@ class _ScanViewState extends State<ScanView>
 
   Future<void> _handleDirectScan(BuildContext context) async {
     final cameraStatus = await Permission.camera.request();
+    if (!context.mounted) return;
 
     if (cameraStatus.isGranted) {
-      if (context.mounted) {
-        context.read<ProcessingBloc>().add(const CaptureButtonPressed());
-      }
+      context.read<ProcessingBloc>().add(const CaptureButtonPressed());
     } else if (cameraStatus.isPermanentlyDenied) {
       DialogHelper.showPermissionDeniedDialog(context);
     } else {

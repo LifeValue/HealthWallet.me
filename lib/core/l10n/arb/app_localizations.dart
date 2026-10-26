@@ -102,54 +102,6 @@ abstract class AppLocalizations {
     Locale('ro'),
   ];
 
-  /// The title of the application
-  ///
-  /// In en, this message translates to:
-  /// **'HealthWallet.me'**
-  String get appTitle;
-
-  /// The title of the home screen
-  ///
-  /// In en, this message translates to:
-  /// **'Home'**
-  String get homeTitle;
-
-  /// The title of the profile screen
-  ///
-  /// In en, this message translates to:
-  /// **'Profile'**
-  String get profileTitle;
-
-  /// The title of the settings screen
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get settingsTitle;
-
-  /// The welcome message shown to users
-  ///
-  /// In en, this message translates to:
-  /// **'Welcome to HealthWallet.me!'**
-  String get welcomeMessage;
-
-  /// No description provided for @onboardingBack.
-  ///
-  /// In en, this message translates to:
-  /// **'Back'**
-  String get onboardingBack;
-
-  /// No description provided for @onboardingGetStarted.
-  ///
-  /// In en, this message translates to:
-  /// **'Get Started'**
-  String get onboardingGetStarted;
-
-  /// No description provided for @onboardingNext.
-  ///
-  /// In en, this message translates to:
-  /// **'Next'**
-  String get onboardingNext;
-
   /// No description provided for @onboardingWelcomeTitle.
   ///
   /// In en, this message translates to:
@@ -228,29 +180,11 @@ abstract class AppLocalizations {
   /// **'View your health history in airplane mode, abroad, or without internet, your records stay with you wherever you go. Add an extra layer of security by enabling biometric authentication.'**
   String get onboardingSyncDescription;
 
-  /// No description provided for @onboardingBiometricText.
-  ///
-  /// In en, this message translates to:
-  /// **'You can lock your HealthWallet with biometric security like Face ID or a fingerprint scan.'**
-  String get onboardingBiometricText;
-
   /// No description provided for @homeHi.
   ///
   /// In en, this message translates to:
   /// **'Hi, '**
   String get homeHi;
-
-  /// No description provided for @homeLastSynced.
-  ///
-  /// In en, this message translates to:
-  /// **'Last synced: '**
-  String get homeLastSynced;
-
-  /// No description provided for @homeNever.
-  ///
-  /// In en, this message translates to:
-  /// **'Never'**
-  String get homeNever;
 
   /// No description provided for @homeVitalSigns.
   ///
@@ -258,47 +192,17 @@ abstract class AppLocalizations {
   /// **'Vitals'**
   String get homeVitalSigns;
 
-  /// No description provided for @homeOverview.
-  ///
-  /// In en, this message translates to:
-  /// **'Medical Records'**
-  String get homeOverview;
-
   /// No description provided for @homeSource.
   ///
   /// In en, this message translates to:
   /// **'Source:'**
   String get homeSource;
 
-  /// No description provided for @homeAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get homeAll;
-
-  /// No description provided for @homeRecentRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent Records'**
-  String get homeRecentRecords;
-
-  /// No description provided for @homeViewAll.
-  ///
-  /// In en, this message translates to:
-  /// **'View All'**
-  String get homeViewAll;
-
   /// No description provided for @homeNA.
   ///
   /// In en, this message translates to:
   /// **'N/A'**
   String get homeNA;
-
-  /// No description provided for @bluetoothRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Please turn on Bluetooth to use Share Proximity'**
-  String get bluetoothRequired;
 
   /// No description provided for @dashboardTitle.
   ///
@@ -323,12 +227,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync'**
   String get syncTitle;
-
-  /// No description provided for @scanFastenQr.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan Fasten Health QR'**
-  String get scanFastenQr;
 
   /// No description provided for @syncSuccessful.
   ///
@@ -366,71 +264,17 @@ abstract class AppLocalizations {
   /// **'Continue Sync'**
   String get continueSync;
 
-  /// No description provided for @syncAgain.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Again'**
-  String get syncAgain;
-
-  /// No description provided for @syncFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync failed: '**
-  String get syncFailed;
-
   /// No description provided for @tryAgain.
   ///
   /// In en, this message translates to:
   /// **'Try Again'**
   String get tryAgain;
 
-  /// No description provided for @syncedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Synced at: '**
-  String get syncedAt;
-
-  /// No description provided for @pasteSyncData.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste Sync Data'**
-  String get pasteSyncData;
-
-  /// No description provided for @submit.
-  ///
-  /// In en, this message translates to:
-  /// **'Submit'**
-  String get submit;
-
-  /// No description provided for @hideManualEntry.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide Manual Entry'**
-  String get hideManualEntry;
-
-  /// No description provided for @enterDataManually.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter data manually'**
-  String get enterDataManually;
-
-  /// No description provided for @medicalRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Medical Records'**
-  String get medicalRecords;
-
   /// No description provided for @searchRecordsHint.
   ///
   /// In en, this message translates to:
   /// **'Search records, doctors, locations...'**
   String get searchRecordsHint;
-
-  /// No description provided for @detailsFor.
-  ///
-  /// In en, this message translates to:
-  /// **'Details for '**
-  String get detailsFor;
 
   /// No description provided for @patientId.
   ///
@@ -456,71 +300,17 @@ abstract class AppLocalizations {
   /// **'Blood Type'**
   String get bloodType;
 
-  /// No description provided for @lastSyncedProfile.
-  ///
-  /// In en, this message translates to:
-  /// **'Last synced: 2 hours ago'**
-  String get lastSyncedProfile;
-
-  /// No description provided for @syncLatestRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync your latest medical records from your healthcare provider.'**
-  String get syncLatestRecords;
-
-  /// No description provided for @scanToSync.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan to Sync'**
-  String get scanToSync;
-
   /// No description provided for @theme.
   ///
   /// In en, this message translates to:
   /// **'Theme'**
   String get theme;
 
-  /// No description provided for @pleaseAuthenticate.
-  ///
-  /// In en, this message translates to:
-  /// **'Please authenticate to continue'**
-  String get pleaseAuthenticate;
-
   /// No description provided for @authenticate.
   ///
   /// In en, this message translates to:
   /// **'Authenticate'**
   String get authenticate;
-
-  /// No description provided for @bypass.
-  ///
-  /// In en, this message translates to:
-  /// **'Bypass'**
-  String get bypass;
-
-  /// No description provided for @onboardingAuthTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable Biometric Authentication'**
-  String get onboardingAuthTitle;
-
-  /// No description provided for @onboardingAuthDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Add an extra layer of security to your account by enabling biometric authentication.'**
-  String get onboardingAuthDescription;
-
-  /// No description provided for @onboardingAuthEnable.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable Now'**
-  String get onboardingAuthEnable;
-
-  /// No description provided for @onboardingAuthSkip.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip for Now'**
-  String get onboardingAuthSkip;
 
   /// No description provided for @biometricAuthentication.
   ///
@@ -606,29 +396,11 @@ abstract class AppLocalizations {
   /// **'OK'**
   String get ok;
 
-  /// No description provided for @scanCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan code'**
-  String get scanCode;
-
   /// No description provided for @or.
   ///
   /// In en, this message translates to:
   /// **'or'**
   String get or;
-
-  /// No description provided for @manualSyncMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Raw QR Code'**
-  String get manualSyncMessage;
-
-  /// No description provided for @pasteSyncDataHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste the raw QR code'**
-  String get pasteSyncDataHint;
 
   /// No description provided for @connect.
   ///
@@ -636,23 +408,11 @@ abstract class AppLocalizations {
   /// **'Connect'**
   String get connect;
 
-  /// No description provided for @scanNewQRCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan New QR Code'**
-  String get scanNewQRCode;
-
   /// No description provided for @loadDemoData.
   ///
   /// In en, this message translates to:
   /// **'Load Demo Data'**
   String get loadDemoData;
-
-  /// No description provided for @syncData.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Data'**
-  String get syncData;
 
   /// No description provided for @noMedicalRecordsYet.
   ///
@@ -660,23 +420,11 @@ abstract class AppLocalizations {
   /// **'No medical records yet'**
   String get noMedicalRecordsYet;
 
-  /// No description provided for @noRecordTypeYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No {recordType} yet'**
-  String noRecordTypeYet(Object recordType);
-
   /// No description provided for @loadDemoDataMessage.
   ///
   /// In en, this message translates to:
   /// **'Load demo data to explore the app or sync your real medical records'**
   String get loadDemoDataMessage;
-
-  /// No description provided for @syncDataMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync or update your data to view {recordType} records'**
-  String syncDataMessage(Object recordType);
 
   /// No description provided for @retry.
   ///
@@ -725,36 +473,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error updating source label'**
   String get errorUpdatingSourceLabel;
-
-  /// No description provided for @noChangesDetected.
-  ///
-  /// In en, this message translates to:
-  /// **'No changes detected'**
-  String get noChangesDetected;
-
-  /// No description provided for @pleaseSelectBirthDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Please select a birth date'**
-  String get pleaseSelectBirthDate;
-
-  /// No description provided for @errorSavingPatientData.
-  ///
-  /// In en, this message translates to:
-  /// **'Error saving patient data'**
-  String get errorSavingPatientData;
-
-  /// No description provided for @walletHolder.
-  ///
-  /// In en, this message translates to:
-  /// **'Wallet Holder'**
-  String get walletHolder;
-
-  /// No description provided for @walletHolderDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'This patient is the primary owner of this health wallet'**
-  String get walletHolderDescription;
 
   /// No description provided for @getStarted.
   ///
@@ -809,18 +527,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete {count} items?'**
   String deleteRecordsConfirm(int count);
-
-  /// No description provided for @confirmDeleteFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete \"{filename}\"?'**
-  String confirmDeleteFile(Object filename);
-
-  /// No description provided for @selectAtLeastOne.
-  ///
-  /// In en, this message translates to:
-  /// **'Select at least one {type} to continue.'**
-  String selectAtLeastOne(Object type);
 
   /// No description provided for @editSourceLabel.
   ///
@@ -888,95 +594,17 @@ abstract class AppLocalizations {
   /// **'Recent records'**
   String get recentRecords;
 
-  /// No description provided for @chooseToDisplay.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose the {type} you want to see on your dashboard.'**
-  String chooseToDisplay(Object type);
-
   /// No description provided for @displayName.
   ///
   /// In en, this message translates to:
   /// **'Display name'**
   String get displayName;
 
-  /// No description provided for @bloodTypeAPositive.
-  ///
-  /// In en, this message translates to:
-  /// **'A positive'**
-  String get bloodTypeAPositive;
-
-  /// No description provided for @bloodTypeANegative.
-  ///
-  /// In en, this message translates to:
-  /// **'A negative'**
-  String get bloodTypeANegative;
-
-  /// No description provided for @bloodTypeBPositive.
-  ///
-  /// In en, this message translates to:
-  /// **'B positive'**
-  String get bloodTypeBPositive;
-
-  /// No description provided for @bloodTypeBNegative.
-  ///
-  /// In en, this message translates to:
-  /// **'B negative'**
-  String get bloodTypeBNegative;
-
-  /// No description provided for @bloodTypeABPositive.
-  ///
-  /// In en, this message translates to:
-  /// **'AB positive'**
-  String get bloodTypeABPositive;
-
-  /// No description provided for @bloodTypeABNegative.
-  ///
-  /// In en, this message translates to:
-  /// **'AB negative'**
-  String get bloodTypeABNegative;
-
-  /// No description provided for @bloodTypeOPositive.
-  ///
-  /// In en, this message translates to:
-  /// **'O positive'**
-  String get bloodTypeOPositive;
-
-  /// No description provided for @bloodTypeONegative.
-  ///
-  /// In en, this message translates to:
-  /// **'O negative'**
-  String get bloodTypeONegative;
-
-  /// No description provided for @serverError.
-  ///
-  /// In en, this message translates to:
-  /// **'Something went wrong on the server'**
-  String get serverError;
-
-  /// No description provided for @serverTimeout.
-  ///
-  /// In en, this message translates to:
-  /// **'Server timeout'**
-  String get serverTimeout;
-
-  /// No description provided for @connectionError.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection error'**
-  String get connectionError;
-
   /// No description provided for @unknownSource.
   ///
   /// In en, this message translates to:
   /// **'Unknown Source'**
   String get unknownSource;
-
-  /// No description provided for @synchronization.
-  ///
-  /// In en, this message translates to:
-  /// **'Synchronization'**
-  String get synchronization;
 
   /// No description provided for @desktopSyncAndBackup.
   ///
@@ -995,12 +623,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Process on Desktop'**
   String get processOnDesktop;
-
-  /// No description provided for @sendToDesktop.
-  ///
-  /// In en, this message translates to:
-  /// **'Send to Desktop'**
-  String get sendToDesktop;
 
   /// No description provided for @continueImporting.
   ///
@@ -1025,18 +647,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync Medical records'**
   String get syncMedicalRecords;
-
-  /// No description provided for @syncLatestMedicalRecords.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync your latest medical records from your healthcare provider using a secure JWT token.'**
-  String get syncLatestMedicalRecords;
-
-  /// No description provided for @neverSynced.
-  ///
-  /// In en, this message translates to:
-  /// **'Never synced'**
-  String get neverSynced;
 
   /// No description provided for @lastSynced.
   ///
@@ -1140,12 +750,6 @@ abstract class AppLocalizations {
   /// **'Source'**
   String get source;
 
-  /// No description provided for @showAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Show All'**
-  String get showAll;
-
   /// No description provided for @records.
   ///
   /// In en, this message translates to:
@@ -1194,12 +798,6 @@ abstract class AppLocalizations {
   /// **'Try searching with different keywords'**
   String get tryDifferentKeywords;
 
-  /// No description provided for @clearAllFilters.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear all'**
-  String get clearAllFilters;
-
   /// No description provided for @syncingData.
   ///
   /// In en, this message translates to:
@@ -1211,12 +809,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'It might take a while. Please wait.'**
   String get syncingMessage;
-
-  /// No description provided for @scanQRMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan a QR code from your HealthWallet.me desktop app or Fasten Health to sync your data.'**
-  String get scanQRMessage;
 
   /// No description provided for @viewAll.
   ///
@@ -1283,12 +875,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Successfully Saved'**
   String get recordsSavedTitle;
-
-  /// No description provided for @recordsSavedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Your health records have been saved successfully.'**
-  String get recordsSavedMessage;
 
   /// No description provided for @whatNextQuestion.
   ///
@@ -1506,53 +1092,11 @@ abstract class AppLocalizations {
   /// **'Setup'**
   String get setup;
 
-  /// No description provided for @patientSetupTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set Up Your Profile'**
-  String get patientSetupTitle;
-
   /// No description provided for @patientSetupSubtitle.
   ///
   /// In en, this message translates to:
   /// **'Personalize your health wallet with your information'**
   String get patientSetupSubtitle;
-
-  /// No description provided for @onboardingSetupTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set Up my Health Wallet'**
-  String get onboardingSetupTitle;
-
-  /// No description provided for @onboardingSetupBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your personal health profile to get started with HealthWallet'**
-  String get onboardingSetupBody;
-
-  /// No description provided for @onboardingDemoTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Try Demo Data'**
-  String get onboardingDemoTitle;
-
-  /// No description provided for @onboardingDemoBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Explore the app with sample medical records to see how it works'**
-  String get onboardingDemoBody;
-
-  /// No description provided for @onboardingSyncTitle2.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Your Records'**
-  String get onboardingSyncTitle2;
-
-  /// No description provided for @onboardingSyncBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to your healthcare providers to import your real medical records'**
-  String get onboardingSyncBody;
 
   /// No description provided for @givenName.
   ///
@@ -1565,24 +1109,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Family Name'**
   String get familyName;
-
-  /// No description provided for @skipForNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip for now'**
-  String get skipForNow;
-
-  /// No description provided for @setUpProfile.
-  ///
-  /// In en, this message translates to:
-  /// **'Set Up'**
-  String get setUpProfile;
-
-  /// No description provided for @useDefaults.
-  ///
-  /// In en, this message translates to:
-  /// **'Default'**
-  String get useDefaults;
 
   /// No description provided for @syncPlaceholderTutorialStep1.
   ///
@@ -1926,23 +1452,11 @@ abstract class AppLocalizations {
   /// **'Low'**
   String get tokenPresetLow;
 
-  /// No description provided for @tokenPresetLowDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Best for small files and quick tasks.\nUses the least resources and processes fastest.'**
-  String get tokenPresetLowDescription;
-
   /// No description provided for @tokenPresetMedium.
   ///
   /// In en, this message translates to:
   /// **'Medium'**
   String get tokenPresetMedium;
-
-  /// No description provided for @tokenPresetMediumDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Good for most use cases.\nBalances file size, processing time, and resource usage.'**
-  String get tokenPresetMediumDescription;
 
   /// No description provided for @tokenPresetHigh.
   ///
@@ -1950,23 +1464,11 @@ abstract class AppLocalizations {
   /// **'High'**
   String get tokenPresetHigh;
 
-  /// No description provided for @tokenPresetHighDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Best for large files and complex processing.\nUses more resources and battery, and takes longer to complete.'**
-  String get tokenPresetHighDescription;
-
   /// No description provided for @tokenPresetCustom.
   ///
   /// In en, this message translates to:
   /// **'Custom'**
   String get tokenPresetCustom;
-
-  /// No description provided for @tokenPresetCustomDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Set custom amount of tokens you want to use.'**
-  String get tokenPresetCustomDescription;
 
   /// No description provided for @setTokens.
   ///
@@ -2046,18 +1548,6 @@ abstract class AppLocalizations {
   /// **'Emergency Phone Contact'**
   String get emergencyContact;
 
-  /// No description provided for @emergencyContactHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Phone number'**
-  String get emergencyContactHint;
-
-  /// No description provided for @searchCountry.
-  ///
-  /// In en, this message translates to:
-  /// **'Search country...'**
-  String get searchCountry;
-
   /// No description provided for @rotatePage.
   ///
   /// In en, this message translates to:
@@ -2082,18 +1572,6 @@ abstract class AppLocalizations {
   /// **'This page will be removed from the document.'**
   String get deletePageConfirmMessage;
 
-  /// No description provided for @cannotDeleteLastPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Cannot delete the last page'**
-  String get cannotDeleteLastPage;
-
-  /// No description provided for @pageRotated.
-  ///
-  /// In en, this message translates to:
-  /// **'Page rotated'**
-  String get pageRotated;
-
   /// No description provided for @regionAndUnits.
   ///
   /// In en, this message translates to:
@@ -2105,12 +1583,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Country'**
   String get country;
-
-  /// No description provided for @patientModifiedNewWillBeCreated.
-  ///
-  /// In en, this message translates to:
-  /// **'Modified — a new patient will be created'**
-  String get patientModifiedNewWillBeCreated;
 
   /// No description provided for @patientModifiedUpdating.
   ///
@@ -2135,18 +1607,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your changes to the patient fields will be discarded.'**
   String get dropModificationsMessage;
-
-  /// No description provided for @modifyPatientTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Modify patient?'**
-  String get modifyPatientTitle;
-
-  /// No description provided for @modifyPatientMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'This will update the existing patient record with your changes.'**
-  String get modifyPatientMessage;
 
   /// No description provided for @scanIdCard.
   ///
@@ -2231,12 +1691,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deep Scan requires an additional download (~{size} MB). Download now?'**
   String deepScanDownloadMessage(int size);
-
-  /// No description provided for @downloadingVisionModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Downloading vision model...'**
-  String get downloadingVisionModel;
 
   /// No description provided for @shareUnknownDevice.
   ///
@@ -2736,12 +2190,6 @@ abstract class AppLocalizations {
   /// **'The {peerRole} wants to extend the session by {duration}'**
   String shareExtensionRequestMessage(String peerRole, String duration);
 
-  /// No description provided for @shareExtensionDurationRequested.
-  ///
-  /// In en, this message translates to:
-  /// **'{duration} requested'**
-  String shareExtensionDurationRequested(String duration);
-
   /// No description provided for @desktopSyncNotYet.
   ///
   /// In en, this message translates to:
@@ -3132,12 +2580,6 @@ abstract class AppLocalizations {
   /// **'Backup'**
   String get desktopBackup;
 
-  /// No description provided for @desktopBackupLocation.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup Location'**
-  String get desktopBackupLocation;
-
   /// No description provided for @desktopChange.
   ///
   /// In en, this message translates to:
@@ -3281,24 +2723,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue Importing'**
   String get desktopContinueImporting;
-
-  /// No description provided for @desktopConnectToDesktop.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to Desktop'**
-  String get desktopConnectToDesktop;
-
-  /// No description provided for @desktopCouldNotReconnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not reconnect. Scan QR code to pair again.'**
-  String get desktopCouldNotReconnect;
-
-  /// No description provided for @desktopScanQrToPair.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan the QR code on your desktop app to pair.'**
-  String get desktopScanQrToPair;
 
   /// No description provided for @desktopHandoverToDesktop.
   ///

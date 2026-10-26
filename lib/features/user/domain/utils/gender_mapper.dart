@@ -3,7 +3,9 @@ import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 
 class GenderMapper {
   static String mapFhirGenderToDisplay(
-      String? fhirGender, AppLocalizations l10n) {
+    String? fhirGender,
+    AppLocalizations l10n,
+  ) {
     if (fhirGender == null) return l10n.preferNotToSay;
 
     switch (fhirGender.toLowerCase()) {
@@ -30,7 +32,8 @@ class GenderMapper {
   }
 
   static fhir_r4.AdministrativeGender? mapDisplayGenderToFhir(
-      String displayGender) {
+    String displayGender,
+  ) {
     switch (displayGender.toLowerCase()) {
       case 'male':
         return fhir_r4.AdministrativeGender.male;

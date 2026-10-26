@@ -6,7 +6,9 @@ project(runner LANGUAGES CXX)
 # work.
 #
 # Any new source files that you add to the application should be added here.
-add_executable(${BINARY_NAME} WIN32
+add_executable(
+  ${BINARY_NAME}
+  WIN32
   "flutter_window.cpp"
   "main.cpp"
   "utils.cpp"
@@ -19,13 +21,10 @@ add_executable(${BINARY_NAME} WIN32
 
 # Apply the standard set of build settings. This can be removed for applications
 # that need different build settings.
-apply_standard_settings(${BINARY_NAME})
+APPLY_STANDARD_SETTINGS(${BINARY_NAME})
 
 # Enable C++/WinRT for Windows.Media.Ocr
-set_target_properties(${BINARY_NAME} PROPERTIES
-  CXX_STANDARD 20
-  CXX_STANDARD_REQUIRED YES
-)
+set_target_properties(${BINARY_NAME} PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
 
 # Add preprocessor definitions for the build version.
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION=\"${FLUTTER_VERSION}\"")

@@ -1,0 +1,21 @@
+# Bulk formatting commits that git blame should skip.
+# Enable once per clone with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format all Dart sources with dart format
+32931e7688bf142401d3a44e267a8a7a914eb50c
+# style: format YAML, JSON, ARB and Markdown files with Prettier
+620fc676e0fc4da62ec0282c643bbe2d1b327986
+# style(android): format the XML resources and manifests with Prettier
+9a8667935f19b1874740c51144d62f94ad86d781
+# style(emergency-page): format the page with Prettier
+169161261ba5659532b91298f2882a494312ae2b
+# style: format the iOS and macOS Swift sources with swift-format
+f12125159d1e650e4a367ba0ddcd78f22fa91f88
+# style(android): format the Kotlin sources and Gradle scripts with ktlint
+a9ee58b91eefcbd32122d455b8ac77747a7f4a53
+# style(windows): format the runner C++ with clang-format
+4db64a0cf7f68ac85869db0f1061544187d170e0
+# style(windows): format the CMake files with gersemi
+bd86f086a7768b1c7fa42508dbf55e71701ed8a2
+# style: remove trailing whitespace and add missing final newlines
+e524c505e62b2d62cab99a80b91674a228be4bcc

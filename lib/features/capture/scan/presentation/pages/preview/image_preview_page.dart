@@ -1,14 +1,14 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/preview/bloc/preview_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final String imagePath;
@@ -41,10 +41,12 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
     final initialPage =
         widget.currentIndex ?? previewBloc.state.currentPageIndex;
     _pageController = PageController(initialPage: initialPage);
-    previewBloc.add(PreviewInitialized(
-      initialPageIndex: initialPage,
-      images: images,
-    ));
+    previewBloc.add(
+      PreviewInitialized(
+        initialPageIndex: initialPage,
+        images: images,
+      ),
+    );
   }
 
   @override
@@ -93,8 +95,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           );
         }
 
-        final currentIndex =
-            state.currentPageIndex.clamp(0, images.length - 1);
+        final currentIndex = state.currentPageIndex.clamp(0, images.length - 1);
 
         return PopScope(
           canPop: false,
@@ -105,8 +106,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
               bloc.add(const PreviewReorderModeToggled(enabled: false));
               return;
             }
-            Navigator.of(context)
-                .pop(state.hasChanges ? state.images : null);
+            Navigator.of(context).pop(state.hasChanges ? state.images : null);
           },
           child: Scaffold(
             backgroundColor: Colors.black,
@@ -117,15 +117,18 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                 state.isReordering
                     ? context.l10n.reorderPages
                     : images.length > 1
-                        ? context.l10n.pageOfTotal('${currentIndex + 1}', '${images.length}')
-                        : widget.title,
+                    ? context.l10n.pageOfTotal(
+                        '${currentIndex + 1}',
+                        '${images.length}',
+                      )
+                    : widget.title,
               ),
               actions: [
                 if (state.isReordering)
                   TextButton(
-                    onPressed: () => context
-                        .read<PreviewBloc>()
-                        .add(const PreviewReorderModeToggled(enabled: false)),
+                    onPressed: () => context.read<PreviewBloc>().add(
+                      const PreviewReorderModeToggled(enabled: false),
+                    ),
                     child: Text(
                       context.l10n.done,
                       style: const TextStyle(
@@ -143,10 +146,12 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                   _ReorderGrid(
                     images: images,
                     onReorder: (oldIndex, newIndex) {
-                      context.read<PreviewBloc>().add(PreviewPagesReordered(
-                            oldIndex: oldIndex,
-                            newIndex: newIndex,
-                          ));
+                      context.read<PreviewBloc>().add(
+                        PreviewPagesReordered(
+                          oldIndex: oldIndex,
+                          newIndex: newIndex,
+                        ),
+                      );
                     },
                   )
                 else ...[
@@ -166,12 +171,14 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                     child: _BottomActionBar(
                       onReorder: images.length > 1
                           ? () => context.read<PreviewBloc>().add(
-                              const PreviewReorderModeToggled(enabled: true))
+                              const PreviewReorderModeToggled(enabled: true),
+                            )
                           : null,
                       onRotate: state.isReordering
                           ? null
                           : () => context.read<PreviewBloc>().add(
-                              PreviewPageRotated(pageIndex: currentIndex)),
+                              PreviewPageRotated(pageIndex: currentIndex),
+                            ),
                       onDelete: state.isReordering || state.images.length <= 1
                           ? null
                           : () => _onDeleteTapped(currentIndex),
@@ -285,11 +292,15 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           file,
           fit: BoxFit.contain,
           key: ValueKey(
-              '${file.path}_${file.lastModifiedSync().millisecondsSinceEpoch}'),
+            '${file.path}_${file.lastModifiedSync().millisecondsSinceEpoch}',
+          ),
           errorBuilder: (context, error, stackTrace) {
             return const Center(
-              child: Icon(Icons.image_not_supported_outlined,
-                  size: 40, color: Colors.grey),
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                size: 40,
+                color: Colors.grey,
+              ),
             );
           },
         ),
@@ -313,7 +324,7 @@ class _ReorderGrid extends StatelessWidget {
         opaque: false,
         barrierColor: Colors.black87,
         barrierDismissible: true,
-        pageBuilder: (_, __, ___) => _QuickPreviewOverlay(
+        pageBuilder: (_, _, _) => _QuickPreviewOverlay(
           path: path,
           index: index,
           total: images.length,
@@ -370,16 +381,20 @@ class _GridTile extends StatelessWidget {
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(7)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(7),
+              ),
               child: Image.file(
                 File(path),
                 fit: BoxFit.cover,
                 width: double.infinity,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: Colors.grey[800],
-                  child: const Icon(Icons.image,
-                      color: Colors.white38, size: 32),
+                  child: const Icon(
+                    Icons.image,
+                    color: Colors.white38,
+                    size: 32,
+                  ),
                 ),
               ),
             ),
@@ -389,8 +404,7 @@ class _GridTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4),
             decoration: const BoxDecoration(
               color: Color(0xFF2A2A2A),
-              borderRadius:
-                  BorderRadius.vertical(bottom: Radius.circular(7)),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(7)),
             ),
             child: Text(
               '${index + 1}',
@@ -426,7 +440,7 @@ class _BottomActionBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E).withOpacity(0.85),
+        color: const Color(0xFF1E1E1E).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white10),
       ),
@@ -483,8 +497,8 @@ class _ActionButton extends StatelessWidget {
     final color = isActive
         ? Colors.blueAccent
         : isEnabled
-            ? Colors.white
-            : Colors.white38;
+        ? Colors.white
+        : Colors.white38;
 
     return GestureDetector(
       onTap: onTap,
@@ -545,7 +559,7 @@ class _QuickPreviewOverlay extends StatelessWidget {
               child: Image.file(
                 File(path),
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
+                errorBuilder: (_, _, _) => const Icon(
                   Icons.error_outline,
                   color: Colors.white,
                   size: 64,

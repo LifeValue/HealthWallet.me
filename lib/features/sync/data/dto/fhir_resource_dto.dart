@@ -13,32 +13,34 @@ abstract class FhirResourceDto with _$FhirResourceDto {
   const FhirResourceDto._();
 
   const factory FhirResourceDto({
-    @JsonKey(name: "id") String? id,
-    @JsonKey(name: "source_id") String? sourceId,
-    @JsonKey(name: "source_resource_type") String? resourceType,
-    @JsonKey(name: "source_resource_id") String? resourceId,
-    @JsonKey(name: "sort_title") String? title,
-    @JsonKey(name: "sort_date", fromJson: dateTimeFromJson) DateTime? date,
-    @JsonKey(name: "resource_raw") Map<String, dynamic>? resourceRaw,
+    @JsonKey(name: 'id') String? id,
+    @JsonKey(name: 'source_id') String? sourceId,
+    @JsonKey(name: 'source_resource_type') String? resourceType,
+    @JsonKey(name: 'source_resource_id') String? resourceId,
+    @JsonKey(name: 'sort_title') String? title,
+    @JsonKey(name: 'sort_date', fromJson: dateTimeFromJson) DateTime? date,
+    @JsonKey(name: 'resource_raw') Map<String, dynamic>? resourceRaw,
     String? encounterId,
     String? subjectId,
-    @JsonKey(name: "deleted_at", fromJson: dateTimeFromJson)
+    @JsonKey(name: 'deleted_at', fromJson: dateTimeFromJson)
     DateTime? deletedAt,
-    @JsonKey(name: "change_type") String? changeType,
+    @JsonKey(name: 'change_type') String? changeType,
   }) = _FhirResourceDto;
 
   factory FhirResourceDto.fromJson(Map<String, dynamic> json) =>
       _$FhirResourceDtoFromJson(json);
 
   FhirResourceDto populateEncounterIdFromRaw() {
-    String? encounterId = extractReferenceId("encounter");
+    String? encounterId = extractReferenceId('encounter');
 
     if (encounterId == null) {
       final context = resourceRaw?['context'] as Map<String, dynamic>?;
       if (context != null) {
         final encounterList = context['encounter'] as List?;
         if (encounterList != null && encounterList.isNotEmpty) {
-          final ref = Reference.fromJson(encounterList[0] as Map<String, dynamic>);
+          final ref = Reference.fromJson(
+            encounterList[0] as Map<String, dynamic>,
+          );
           final refString = ref.reference?.valueString;
           if (refString != null) {
             encounterId = FhirReferenceUtils.extractReferenceId(refString);
@@ -53,7 +55,7 @@ abstract class FhirResourceDto with _$FhirResourceDto {
   }
 
   FhirResourceDto populateSubjectIdFromRaw() {
-    String? subjectId = extractReferenceId("subject");
+    final String? subjectId = extractReferenceId('subject');
 
     if (subjectId == null) return this;
 
@@ -63,8 +65,8 @@ abstract class FhirResourceDto with _$FhirResourceDto {
   String? extractReferenceId(String key) {
     if (!(resourceRaw?.containsKey(key) ?? false)) return null;
 
-    Reference reference = Reference.fromJson(resourceRaw![key]);
-    String? refString = reference.reference?.valueString;
+    final Reference reference = Reference.fromJson(resourceRaw![key]);
+    final String? refString = reference.reference?.valueString;
     if (refString == null) return null;
 
     return FhirReferenceUtils.extractReferenceId(refString);

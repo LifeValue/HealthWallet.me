@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:health_wallet/features/processing/presentation/helpers/processing_path_helper.dart';
 import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
@@ -36,17 +36,15 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
     setState(() => isScanning = true);
 
     try {
-      final scannedResult =
-          await FlutterDocScanner().getScannedDocumentAsImages(page: 1);
+      final scannedResult = await FlutterDocScanner()
+          .getScannedDocumentAsImages(page: 1);
 
       if (scannedResult == null || scannedResult.images.isEmpty) {
         if (mounted) setState(() => isScanning = false);
         return;
       }
 
-      final rawPaths = scannedResult.images
-          .where((p) => p.isNotEmpty)
-          .toList();
+      final rawPaths = scannedResult.images.where((p) => p.isNotEmpty).toList();
       final sanitizedPaths = ProcessingPathHelper.normalizePaths(rawPaths);
       if (sanitizedPaths.isEmpty) {
         if (mounted) setState(() => isScanning = false);
@@ -101,8 +99,10 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
       }
       return;
     }
+    if (!mounted) return;
 
-    final countryCode = scanCountryCode ?? context.read<UserBloc>().state.countryCode;
+    final countryCode =
+        scanCountryCode ?? context.read<UserBloc>().state.countryCode;
     final result = IdCardExtractor.extract(ocrText, countryCode);
 
     if (mounted && result.hasData) {

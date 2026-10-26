@@ -5,7 +5,6 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/features/records/domain/entity/date_filter/date_filter.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class RecordsActiveFiltersBar extends StatelessWidget {
@@ -33,45 +32,41 @@ class RecordsActiveFiltersBar extends StatelessWidget {
     final List<Widget> allChips = [];
 
     for (final specialty in activeSpecialties) {
-          allChips.add(
-            _buildFilterChip(
-              context,
-              label: specialty.displayName,
-              onTap: () {
-                final updated = activeSpecialties
-                    .where((s) => s != specialty)
-                    .toList();
-                context
-                    .read<RecordsBloc>()
-                    .add(RecordsSpecialtyApplied(updated));
-              },
-            ),
-          );
-        }
+      allChips.add(
+        _buildFilterChip(
+          context,
+          label: specialty.displayName,
+          onTap: () {
+            final updated = activeSpecialties
+                .where((s) => s != specialty)
+                .toList();
+            context.read<RecordsBloc>().add(RecordsSpecialtyApplied(updated));
+          },
+        ),
+      );
+    }
 
-        if (hasDateFilter) {
-          allChips.add(
-            _buildFilterChip(
-              context,
-              label: dateFilter!.formatChipLabel(),
-              onTap: () => context
-                  .read<RecordsBloc>()
-                  .add(const RecordsDateRangeCleared()),
-            ),
-          );
-        }
+    if (hasDateFilter) {
+      allChips.add(
+        _buildFilterChip(
+          context,
+          label: dateFilter!.formatChipLabel(),
+          onTap: () =>
+              context.read<RecordsBloc>().add(const RecordsDateRangeCleared()),
+        ),
+      );
+    }
 
-        allChips.addAll(
-          activeFilters.map(
-            (filter) => _buildFilterChip(
-              context,
-              label: filter.display,
-              onTap: () => context
-                  .read<RecordsBloc>()
-                  .add(RecordsFilterRemoved(filter)),
-            ),
-          ),
-        );
+    allChips.addAll(
+      activeFilters.map(
+        (filter) => _buildFilterChip(
+          context,
+          label: filter.display,
+          onTap: () =>
+              context.read<RecordsBloc>().add(RecordsFilterRemoved(filter)),
+        ),
+      ),
+    );
 
     return Padding(
       padding: EdgeInsets.only(top: 4, bottom: allChips.length > 2 ? 4 : 0),
@@ -139,7 +134,7 @@ class RecordsActiveFiltersBar extends StatelessWidget {
                 AppColors.primary,
                 BlendMode.srcIn,
               ),
-            )
+            ),
           ],
         ),
       ),

@@ -2,16 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:get_it/get_it.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
-import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:get_it/get_it.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:path_provider/path_provider.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 class MediaFullscreenViewer extends StatelessWidget {
   final entities.Media media;
@@ -74,7 +73,10 @@ class MediaFullscreenViewer extends StatelessWidget {
             'application/pdf' ||
         media.content?.data?.valueString == null) {
       return _buildPlaceholder(
-          context, Icons.picture_as_pdf, context.l10n.noPdfDataAvailable);
+        context,
+        Icons.picture_as_pdf,
+        context.l10n.noPdfDataAvailable,
+      );
     }
 
     return FutureBuilder<File>(
@@ -96,21 +98,30 @@ class MediaFullscreenViewer extends StatelessWidget {
               onError: (error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(context.l10n.errorLoadingPdf('$error'))),
+                    SnackBar(
+                      content: Text(context.l10n.errorLoadingPdf('$error')),
+                    ),
                   );
                 }
               },
               onPageError: (page, error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(context.l10n.errorOnPage('$page', '$error'))),
+                    SnackBar(
+                      content: Text(
+                        context.l10n.errorOnPage('$page', '$error'),
+                      ),
+                    ),
                   );
                 }
               },
             );
           } else {
             return _buildPlaceholder(
-                context, Icons.picture_as_pdf, context.l10n.failedToLoadPdf);
+              context,
+              Icons.picture_as_pdf,
+              context.l10n.failedToLoadPdf,
+            );
           }
         } else {
           return const Center(child: CircularProgressIndicator());
@@ -122,8 +133,9 @@ class MediaFullscreenViewer extends StatelessWidget {
   Future<File> _createTempPdfFile() async {
     final bytes = base64Decode(media.content!.data!.valueString!);
     final dir = await getTemporaryDirectory();
-    final file =
-        File('${dir.path}/${media.displayTitle.replaceAll(' ', '_')}.pdf');
+    final file = File(
+      '${dir.path}/${media.displayTitle.replaceAll(' ', '_')}.pdf',
+    );
     await file.writeAsBytes(bytes, flush: true);
     if (!await file.exists()) {
       throw Exception('Failed to create PDF file on disk');
@@ -132,7 +144,10 @@ class MediaFullscreenViewer extends StatelessWidget {
   }
 
   Widget _buildPlaceholder(
-      BuildContext context, IconData icon, String message) {
+    BuildContext context,
+    IconData icon,
+    String message,
+  ) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -164,21 +179,36 @@ class MediaFullscreenViewer extends StatelessWidget {
               _buildInfoRow(context.l10n.mediaInfoTitle, media.displayTitle),
               if (media.content?.contentType?.valueString != null)
                 _buildInfoRow(
-                    context.l10n.mediaInfoType, media.content!.contentType!.valueString!),
+                  context.l10n.mediaInfoType,
+                  media.content!.contentType!.valueString!,
+                ),
               if (media.statusDisplay.isNotEmpty)
-                _buildInfoRow(context.l10n.mediaInfoStatus, media.statusDisplay),
+                _buildInfoRow(
+                  context.l10n.mediaInfoStatus,
+                  media.statusDisplay,
+                ),
               if (media.subject?.display?.valueString != null)
-                _buildInfoRow(context.l10n.mediaInfoPatient, media.subject!.display!.valueString!),
+                _buildInfoRow(
+                  context.l10n.mediaInfoPatient,
+                  media.subject!.display!.valueString!,
+                ),
               if (media.encounter?.display?.valueString != null)
                 _buildInfoRow(
-                    context.l10n.mediaInfoEncounter, media.encounter!.display!.valueString!),
+                  context.l10n.mediaInfoEncounter,
+                  media.encounter!.display!.valueString!,
+                ),
               if (media.content?.size?.valueString != null)
                 _buildInfoRow(
-                    context.l10n.mediaInfoFileSize,
-                    _formatFileSize(
-                        _parseFileSize(media.content!.size!.valueString!))),
+                  context.l10n.mediaInfoFileSize,
+                  _formatFileSize(
+                    _parseFileSize(media.content!.size!.valueString!),
+                  ),
+                ),
               if (media.date != null)
-                _buildInfoRow(context.l10n.mediaInfoCreated, media.date!.toString().split(' ')[0]),
+                _buildInfoRow(
+                  context.l10n.mediaInfoCreated,
+                  media.date!.toString().split(' ')[0],
+                ),
               _buildInfoRow(context.l10n.mediaInfoResourceId, media.resourceId),
               _buildInfoRow(context.l10n.mediaInfoSource, media.sourceId),
             ],

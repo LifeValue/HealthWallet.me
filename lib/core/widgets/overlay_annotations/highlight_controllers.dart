@@ -16,10 +16,10 @@ class HomeHighlightController {
   }
 
   List<GlobalKey> get highlightTargetKeys => [
-        firstVitalCardKey,
-        firstSpecialtyCardKey,
-        firstOverviewCardKey,
-      ];
+    firstVitalCardKey,
+    firstSpecialtyCardKey,
+    firstOverviewCardKey,
+  ];
 }
 
 class SyncPlaceholderHighlightController {
@@ -38,8 +38,8 @@ class SyncPlaceholderHighlightController {
   }
 
   List<GlobalKey> get highlightTargetKeys => [
-        setupButtonKey,
-        loadDemoDataButtonKey,
-        syncDataButtonKey,
-      ];
+    setupButtonKey,
+    loadDemoDataButtonKey,
+    syncDataButtonKey,
+  ];
 }

@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -91,16 +92,16 @@ abstract class ExplanationOfBenefit
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'ExplanationOfBenefit',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'ExplanationOfBenefit',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -116,7 +117,7 @@ abstract class ExplanationOfBenefit
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     ResourceFieldMapper.addIfNotNull(
@@ -147,48 +148,61 @@ abstract class ExplanationOfBenefit
     final insurerDisplay = FhirFieldExtractor.extractReferenceDisplay(insurer);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(insurerDisplay,
-          prefix: 'Insurer'),
+      ResourceFieldMapper.createOrganizationLine(
+        insurerDisplay,
+        prefix: 'Insurer',
+      ),
     );
 
     // Provider
-    final providerDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(provider);
+    final providerDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      provider,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(providerDisplay,
-          prefix: 'Provider'),
+      ResourceFieldMapper.createOrganizationLine(
+        providerDisplay,
+        prefix: 'Provider',
+      ),
     );
 
     // Billable Period
-    final billablePeriodDisplay =
-        FhirFieldExtractor.extractPeriodFormatted(billablePeriod);
+    final billablePeriodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      billablePeriod,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTimelineLine(billablePeriodDisplay,
-          prefix: 'Billable Period'),
+      ResourceFieldMapper.createTimelineLine(
+        billablePeriodDisplay,
+        prefix: 'Billable Period',
+      ),
     );
 
     // Disposition
     final dispositionText = disposition?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(dispositionText,
-          prefix: 'Disposition'),
+      ResourceFieldMapper.createNotesLine(
+        dispositionText,
+        prefix: 'Disposition',
+      ),
     );
 
     // Total
     if (total != null && total!.isNotEmpty) {
       for (final totalItem in total!.take(2)) {
-        final category =
-            FhirFieldExtractor.extractCodeableConceptText(totalItem.category);
+        final category = FhirFieldExtractor.extractCodeableConceptText(
+          totalItem.category,
+        );
         final value = totalItem.amount.value?.valueDouble?.toStringAsFixed(2);
         final currency = totalItem.amount.currency?.toString() ?? '';
         if (value != null) {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
-            ResourceFieldMapper.createValueLine('$currency $value',
-                prefix: category ?? 'Total'),
+            ResourceFieldMapper.createValueLine(
+              '$currency $value',
+              prefix: category ?? 'Total',
+            ),
           );
         }
       }
@@ -196,10 +210,12 @@ abstract class ExplanationOfBenefit
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     return infoLines;

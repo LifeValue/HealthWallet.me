@@ -1,8 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -11,8 +13,6 @@ import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/r
 import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class RecordsListBody extends StatelessWidget {
   final RecordsState state;
@@ -53,7 +53,7 @@ class RecordsListBody extends StatelessWidget {
               Icon(
                 Icons.search_off,
                 size: 64,
-                color: context.colorScheme.onSurface.withOpacity(0.4),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 16),
               Text(
@@ -66,7 +66,7 @@ class RecordsListBody extends StatelessWidget {
               Text(
                 context.l10n.tryDifferentKeywords,
                 style: AppTextStyle.bodyMedium.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.6),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -84,10 +84,8 @@ class RecordsListBody extends StatelessWidget {
           pageController: pageController,
           recordTypeName: state.activeFilters.isNotEmpty
               ? state.activeFilters.length == 1
-                  ? state.activeFilters.first.display
-                  : state.activeFilters
-                      .map((f) => f.display)
-                      .join(', ')
+                    ? state.activeFilters.first.display
+                    : state.activeFilters.map((f) => f.display).join(', ')
               : null,
           onImportDocument: onImportDocument,
           onPickImage: onPickImage,
@@ -128,10 +126,8 @@ class RecordsListBody extends StatelessWidget {
       controller: scrollController,
       padding: EdgeInsets.only(
         top: 8,
-        bottom: bottomSafeInset +
-            bottomBarHeight +
-            bottomBarOffset +
-            extraSpacing,
+        bottom:
+            bottomSafeInset + bottomBarHeight + bottomBarOffset + extraSpacing,
       ),
       itemCount: resources.length + (state.hasMorePages ? 1 : 0),
       itemBuilder: (context, index) {
@@ -149,8 +145,7 @@ class RecordsListBody extends StatelessWidget {
 
         final resource = resources[index];
         return TimelineEntry(
-          key: ValueKey(
-              'timeline-${resource.fhirType}-${resource.id}-$index'),
+          key: ValueKey('timeline-${resource.fhirType}-${resource.id}-$index'),
           isFirst: index == 0,
           isLast: index == resources.length - 1,
           isSelected: state.selectedResourceIds.contains(resource.id),
@@ -158,8 +153,8 @@ class RecordsListBody extends StatelessWidget {
           onTap: () {
             if (state.isSelectionMode) {
               context.read<RecordsBloc>().add(
-                    RecordsSelectionToggled(resource.id),
-                  );
+                RecordsSelectionToggled(resource.id),
+              );
             } else {
               context.router.push(
                 RecordDetailsRoute(resource: resource),
@@ -183,8 +178,8 @@ class RecordsListBody extends StatelessWidget {
                     ? null
                     : () {
                         context.read<RecordsBloc>().add(
-                              RecordsFiltersApplied([resource.fhirType]),
-                            );
+                          RecordsFiltersApplied([resource.fhirType]),
+                        );
                       },
               ),
               const SizedBox(height: Insets.small),

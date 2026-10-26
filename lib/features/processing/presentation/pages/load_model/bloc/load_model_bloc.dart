@@ -5,18 +5,18 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
-import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
+import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/services/ai_model_download_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+part 'load_model_bloc.freezed.dart';
 part 'load_model_event.dart';
 part 'load_model_state.dart';
-part 'load_model_bloc.freezed.dart';
 
 const String kAiModelDownloadNotificationId = 'ai_model_download';
 const String kNoInternetErrorKey = 'no_internet';
@@ -63,16 +63,15 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     LoadModelInitialized event,
     Emitter<LoadModelState> emit,
   ) async {
-    final selectedName =
-        _prefs.getString(SharedPrefsConstants.aiSelectedModel);
+    final selectedName = _prefs.getString(SharedPrefsConstants.aiSelectedModel);
     final selectedVariant = selectedName != null
         ? AiModelConfig.getActive(_prefs).variant
         : null;
 
     final downloaded = <AiModelVariant, bool>{};
     for (final config in AiModelConfig.availableVariants) {
-      downloaded[config.variant] =
-          await _downloadService.checkModelExistsForVariant(config.variant);
+      downloaded[config.variant] = await _downloadService
+          .checkModelExistsForVariant(config.variant);
     }
 
     final capability = await _deviceCapabilityService.getCapability();
@@ -81,22 +80,27 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
 
     final downloading = <AiModelVariant, bool>{};
     for (final config in AiModelConfig.availableVariants) {
-      downloading[config.variant] =
-          _downloadService.isVariantDownloading(config.variant);
+      downloading[config.variant] = _downloadService.isVariantDownloading(
+        config.variant,
+      );
     }
 
-    emit(state.copyWith(
-      selectedVariant: autoSelected,
-      downloadedVariants: downloaded,
-      deviceCapability: capability,
-      downloadingVariants: downloading,
-    ));
+    emit(
+      state.copyWith(
+        selectedVariant: autoSelected,
+        downloadedVariants: downloaded,
+        deviceCapability: capability,
+        downloadingVariants: downloading,
+      ),
+    );
 
     if (_downloadService.isAnyDownloading) {
-      emit(state.copyWith(
-        status: LoadModelStatus.loading,
-        isBackgroundDownload: true,
-      ));
+      emit(
+        state.copyWith(
+          status: LoadModelStatus.loading,
+          isBackgroundDownload: true,
+        ),
+      );
       return;
     }
 
@@ -112,14 +116,16 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     }
 
     if (serviceState.status == AiModelDownloadStatus.completed) {
-      final activeLoaded = autoSelected != null &&
-          (downloaded[autoSelected] ?? false);
-      emit(state.copyWith(
-        status: activeLoaded
-            ? LoadModelStatus.modelLoaded
-            : LoadModelStatus.modelAbsent,
-        isBackgroundDownload: false,
-      ));
+      final activeLoaded =
+          autoSelected != null && (downloaded[autoSelected] ?? false);
+      emit(
+        state.copyWith(
+          status: activeLoaded
+              ? LoadModelStatus.modelLoaded
+              : LoadModelStatus.modelAbsent,
+          isBackgroundDownload: false,
+        ),
+      );
       return;
     }
 
@@ -137,22 +143,27 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
 
     bool isModelLoaded = false;
     try {
-      isModelLoaded = await _downloadService
-          .checkModelExistsForVariant(autoSelected);
+      isModelLoaded = await _downloadService.checkModelExistsForVariant(
+        autoSelected,
+      );
     } on Exception catch (e) {
       log(e.toString());
-      emit(state.copyWith(
-        status: LoadModelStatus.error,
-        errorMessage: 'An error appeared while checking model existence',
-      ));
+      emit(
+        state.copyWith(
+          status: LoadModelStatus.error,
+          errorMessage: 'An error appeared while checking model existence',
+        ),
+      );
       return;
     }
 
-    emit(state.copyWith(
-      status: isModelLoaded
-          ? LoadModelStatus.modelLoaded
-          : LoadModelStatus.modelAbsent,
-    ));
+    emit(
+      state.copyWith(
+        status: isModelLoaded
+            ? LoadModelStatus.modelLoaded
+            : LoadModelStatus.modelAbsent,
+      ),
+    );
   }
 
   AiModelVariant? _autoSelectSingleModel(
@@ -165,7 +176,9 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
 
     if (downloaded.length == 1) {
       _prefs.setString(
-          SharedPrefsConstants.aiSelectedModel, downloaded.first.name);
+        SharedPrefsConstants.aiSelectedModel,
+        downloaded.first.name,
+      );
       return downloaded.first;
     }
     return null;
@@ -191,42 +204,50 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     if (_downloadService.isVariantDownloading(variant)) return;
 
     if (state.status == LoadModelStatus.error) {
-      emit(state.copyWith(status: LoadModelStatus.modelAbsent, errorMessage: null));
+      emit(
+        state.copyWith(status: LoadModelStatus.modelAbsent, errorMessage: null),
+      );
     }
 
     if (!await _hasInternetConnection()) {
-      emit(state.copyWith(
-        status: LoadModelStatus.error,
-        errorMessage: kNoInternetErrorKey,
-      ));
+      emit(
+        state.copyWith(
+          status: LoadModelStatus.error,
+          errorMessage: kNoInternetErrorKey,
+        ),
+      );
       return;
     }
 
-    emit(state.copyWith(
-      status: LoadModelStatus.loading,
-      isBackgroundDownload: true,
-      downloadProgress: 0.0,
-      downloadingVariant: variant,
-      downloadingVariants: {...state.downloadingVariants, variant: true},
-      variantProgress: {...state.variantProgress, variant: 0.0},
-    ));
+    emit(
+      state.copyWith(
+        status: LoadModelStatus.loading,
+        isBackgroundDownload: true,
+        downloadProgress: 0.0,
+        downloadingVariant: variant,
+        downloadingVariants: {...state.downloadingVariants, variant: true},
+        variantProgress: {...state.variantProgress, variant: 0.0},
+      ),
+    );
 
     final modelName = AiModelConfig.fromVariant(variant).displayName;
 
     final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
-    _notificationBloc.add(NotificationAdded(
-      notification: Notification(
-        id: notifId,
-        text: 'Downloading $modelName',
-        description: 'Starting download...',
-        type: NotificationType.progress,
-        progress: 0.0,
-        time: DateTime.now(),
-        read: false,
+    _notificationBloc.add(
+      NotificationAdded(
+        notification: Notification(
+          id: notifId,
+          text: 'Downloading $modelName',
+          description: 'Starting download...',
+          type: NotificationType.progress,
+          progress: 0.0,
+          time: DateTime.now(),
+          read: false,
+        ),
       ),
-    ));
+    );
 
-    _downloadService.startDownloadForVariant(variant);
+    unawaited(_downloadService.startDownloadForVariant(variant));
   }
 
   void _onServiceStateChanged(
@@ -242,24 +263,28 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         break;
 
       case AiModelDownloadStatus.downloading:
-        emit(state.copyWith(
-          status: LoadModelStatus.loading,
-          downloadProgress: serviceState.progress,
-          isBackgroundDownload: true,
-          downloadingVariant: variant,
-          downloadingVariants: variant != null
-              ? {...state.downloadingVariants, variant: true}
-              : state.downloadingVariants,
-          variantProgress: variant != null
-              ? {...state.variantProgress, variant: serviceState.progress ?? 0.0}
-              : state.variantProgress,
-        ));
+        emit(
+          state.copyWith(
+            status: LoadModelStatus.loading,
+            downloadProgress: serviceState.progress,
+            isBackgroundDownload: true,
+            downloadingVariant: variant,
+            downloadingVariants: variant != null
+                ? {...state.downloadingVariants, variant: true}
+                : state.downloadingVariants,
+            variantProgress: variant != null
+                ? {...state.variantProgress, variant: serviceState.progress}
+                : state.variantProgress,
+          ),
+        );
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
-          _notificationBloc.add(NotificationProgressUpdated(
-            id: notifId,
-            progress: serviceState.progress,
-          ));
+          _notificationBloc.add(
+            NotificationProgressUpdated(
+              id: notifId,
+              progress: serviceState.progress,
+            ),
+          );
         }
         break;
 
@@ -277,41 +302,47 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
                 ..remove(variant))
             : state.variantProgress;
 
-        final anyStillDownloading = updatedDownloading.entries
-            .any((e) => e.value && e.key != variant);
+        final anyStillDownloading = updatedDownloading.entries.any(
+          (e) => e.value && e.key != variant,
+        );
 
         var effectiveSelected = state.selectedVariant;
-        if (effectiveSelected == null) {
-          effectiveSelected = _autoSelectSingleModel(updatedDownloaded);
-        }
+        effectiveSelected ??= _autoSelectSingleModel(updatedDownloaded);
 
-        final selectedIsLoaded = effectiveSelected != null &&
+        final selectedIsLoaded =
+            effectiveSelected != null &&
             (updatedDownloaded[effectiveSelected] ?? false);
 
         final newStatus = anyStillDownloading
             ? LoadModelStatus.loading
             : (selectedIsLoaded
-                ? LoadModelStatus.modelLoaded
-                : LoadModelStatus.modelAbsent);
+                  ? LoadModelStatus.modelLoaded
+                  : LoadModelStatus.modelAbsent);
 
-        emit(state.copyWith(
-          status: newStatus,
-          selectedVariant: effectiveSelected,
-          downloadProgress: anyStillDownloading ? state.downloadProgress : 100.0,
-          isBackgroundDownload: anyStillDownloading,
-          downloadedVariants: updatedDownloaded,
-          downloadingVariants: updatedDownloading,
-          variantProgress: updatedProgress,
-        ));
+        emit(
+          state.copyWith(
+            status: newStatus,
+            selectedVariant: effectiveSelected,
+            downloadProgress: anyStillDownloading
+                ? state.downloadProgress
+                : 100.0,
+            isBackgroundDownload: anyStillDownloading,
+            downloadedVariants: updatedDownloaded,
+            downloadingVariants: updatedDownloading,
+            variantProgress: updatedProgress,
+          ),
+        );
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
           final modelName = AiModelConfig.fromVariant(variant).displayName;
-          _notificationBloc.add(NotificationTypeUpdated(
-            id: notifId,
-            type: NotificationType.success,
-            text: '$modelName Ready',
-            description: '$modelName has been downloaded successfully.',
-          ));
+          _notificationBloc.add(
+            NotificationTypeUpdated(
+              id: notifId,
+              type: NotificationType.success,
+              text: '$modelName Ready',
+              description: '$modelName has been downloaded successfully.',
+            ),
+          );
         }
         break;
 
@@ -325,26 +356,31 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
                 ..remove(variant))
             : state.variantProgress;
 
-        final anyStillDownloading = updatedDownloading.entries
-            .any((e) => e.value && e.key != variant);
+        final anyStillDownloading = updatedDownloading.entries.any(
+          (e) => e.value && e.key != variant,
+        );
 
-        emit(state.copyWith(
-          status: anyStillDownloading
-              ? LoadModelStatus.loading
-              : LoadModelStatus.error,
-          errorMessage: serviceState.errorMessage ?? 'Download failed',
-          isBackgroundDownload: anyStillDownloading,
-          downloadingVariants: updatedDownloading,
-          variantProgress: updatedProgress,
-        ));
+        emit(
+          state.copyWith(
+            status: anyStillDownloading
+                ? LoadModelStatus.loading
+                : LoadModelStatus.error,
+            errorMessage: serviceState.errorMessage ?? 'Download failed',
+            isBackgroundDownload: anyStillDownloading,
+            downloadingVariants: updatedDownloading,
+            variantProgress: updatedProgress,
+          ),
+        );
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
-          _notificationBloc.add(NotificationTypeUpdated(
-            id: notifId,
-            type: NotificationType.error,
-            text: 'Download Failed',
-            description: 'AI model download failed. Please check your connection and try again.',
-          ));
+          _notificationBloc.add(
+            NotificationTypeUpdated(
+              id: notifId,
+              type: NotificationType.error,
+              text: 'Download Failed',
+              description: 'AI model download failed. Please check your connection and try again.',
+            ),
+          );
         }
         break;
 
@@ -358,37 +394,44 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
                 ..remove(variant))
             : state.variantProgress;
 
-        final anyStillDownloading = updatedDownloading.entries
-            .any((e) => e.value && e.key != variant);
+        final anyStillDownloading = updatedDownloading.entries.any(
+          (e) => e.value && e.key != variant,
+        );
 
-        emit(state.copyWith(
-          status: anyStillDownloading
-              ? LoadModelStatus.loading
-              : LoadModelStatus.modelAbsent,
-          isBackgroundDownload: anyStillDownloading,
-          downloadingVariants: updatedDownloading,
-          variantProgress: updatedProgress,
-        ));
+        emit(
+          state.copyWith(
+            status: anyStillDownloading
+                ? LoadModelStatus.loading
+                : LoadModelStatus.modelAbsent,
+            isBackgroundDownload: anyStillDownloading,
+            downloadingVariants: updatedDownloading,
+            variantProgress: updatedProgress,
+          ),
+        );
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
-          _notificationBloc.add(NotificationTypeUpdated(
-            id: notifId,
-            type: NotificationType.error,
-            text: 'Download Cancelled',
-            description: 'The download was interrupted. Please try again.',
-          ));
+          _notificationBloc.add(
+            NotificationTypeUpdated(
+              id: notifId,
+              type: NotificationType.error,
+              text: 'Download Cancelled',
+              description: 'The download was interrupted. Please try again.',
+            ),
+          );
         }
         break;
     }
   }
 
   void _addCancelledNotification() {
-    _notificationBloc.add(NotificationTypeUpdated(
-      id: kAiModelDownloadNotificationId,
-      type: NotificationType.error,
-      text: 'AI Model Download Cancelled',
-      description: 'The download was interrupted. Please try again.',
-    ));
+    _notificationBloc.add(
+      const NotificationTypeUpdated(
+        id: kAiModelDownloadNotificationId,
+        type: NotificationType.error,
+        text: 'AI Model Download Cancelled',
+        description: 'The download was interrupted. Please try again.',
+      ),
+    );
   }
 
   Future<void> _onLoadModelDownloadCancelled(
@@ -396,13 +439,15 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     Emitter<LoadModelState> emit,
   ) async {
     await _downloadService.cancelDownload();
-    emit(state.copyWith(
-      status: LoadModelStatus.modelAbsent,
-      isBackgroundDownload: false,
-      downloadProgress: null,
-      downloadingVariants: {},
-      variantProgress: {},
-    ));
+    emit(
+      state.copyWith(
+        status: LoadModelStatus.modelAbsent,
+        isBackgroundDownload: false,
+        downloadProgress: null,
+        downloadingVariants: {},
+        variantProgress: {},
+      ),
+    );
     _addCancelledNotification();
   }
 
@@ -411,7 +456,9 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     Emitter<LoadModelState> emit,
   ) async {
     await _prefs.setString(
-        SharedPrefsConstants.aiSelectedModel, event.variant.name);
+      SharedPrefsConstants.aiSelectedModel,
+      event.variant.name,
+    );
     emit(state.copyWith(selectedVariant: event.variant));
     add(const LoadModelInitialized());
   }
@@ -422,9 +469,11 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
   ) async {
     await _downloadService.deleteModelForVariant(event.variant);
 
-    emit(state.copyWith(
-      downloadedVariants: {...state.downloadedVariants, event.variant: false},
-    ));
+    emit(
+      state.copyWith(
+        downloadedVariants: {...state.downloadedVariants, event.variant: false},
+      ),
+    );
 
     if (state.selectedVariant == event.variant) {
       emit(state.copyWith(status: LoadModelStatus.modelAbsent));

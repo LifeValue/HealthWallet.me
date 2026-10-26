@@ -1,24 +1,33 @@
-# HealthWallet.me CI/CD — replaces the GitHub Actions workflows in .github/workflows/.
+# HealthWallet.me CI/CD. GitLab CI is the only CI; .github/workflows/ is unused.
 #
-#   checks                  every branch push                   Linux instance runner (Docker)
-#   ios / android / macos   automatic on develop,               shell-macmini (fastlane)
-#                           manual on every other branch
-#   windows                 manual on every branch              needs a `windows` runner (none yet)
+# Checks run in parallel on every branch push and any failure fails the pipeline:
+#   checks                  dart format, flutter analyze (infos and   Linux instance runner (Docker)
+#                           warnings fatal), flutter test
+#   lint                    formatters on the files the branch        Linux instance runner (Docker)
+#                           changed + commit messages (commitlint)
+#   scan:dependencies       known vulnerabilities in every lockfile   Linux instance runner (Docker)
+#   scan:secrets            secrets anywhere in the git history       Linux instance runner (Docker)
+#
+# Deploys follow Gitflow and only start once every check has passed:
+#   ios / android / macos   manual on develop, release/* and master   shell-macmini (fastlane)
+#   windows                 manual on develop, release/* and master   needs a `windows` runner (none yet)
 #                           → GitLab Release with zip + msix
-#   shorebird patches       manual on master                    shell-macmini
+#   shorebird patches       manual on master                          shell-macmini
+# feature/*, bugfix/* and hotfix/* branches get the checks only.
 #
-# Deploy jobs need the PROTECTED CI/CD variables, which GitLab only exposes to protected branches.
-# To deploy from a working branch, protect it (or a wildcard such as `fix/*`) first; otherwise the
-# job stops at its first step and says so.
+# Deploy jobs need the PROTECTED CI/CD variables, which GitLab only exposes to protected branches;
+# on an unprotected branch the job stops at its first step and says so.
 #
-# Every push to develop uploads a beta to TestFlight (iOS, macOS) and the Play internal track.
-# On other branches each platform is its own manual job, which replaces the GitHub "platform"
-# dropdown (android / ios / macos / windows / both / all). Nothing goes to production from CI: a
-# tested beta is promoted to the App Store / Play production in App Store Connect and Play Console.
+# Every deploy is started by hand from the pipeline, including on develop: a beta goes to TestFlight
+# (iOS, macOS) and the Play internal track only when someone runs it. Nothing goes to production from CI: a tested beta is promoted to the App Store / Play production
+# in App Store Connect and Play Console.
+#
+# The Flutter version comes from .fvmrc, the same pin FVM uses locally.
 #
 # One-time project setup — the pipeline cannot do these itself:
-#   1. Protect `develop` and `master` (Settings → Repository), plus any branch you want to deploy
-#      from. Protected variables below are only exposed to protected branches.
+#   1. Protect `develop`, `master` and `release/*` (Settings → Repository). Protected variables
+#      below are only exposed to protected branches. Turn on "Pipelines must succeed"
+#      (Settings → Merge requests) so a failing check blocks the merge.
 #   2. In mobile/flutter/packages/flutter-airdrop and mobile/health-wallet/fhir-ips-export:
 #      Settings → CI/CD → Job token permissions → add mobile/health-wallet/app. The private pub
 #      dependencies are fetched with CI_JOB_TOKEN instead of an SSH deploy key.
@@ -52,8 +61,15 @@ default:
   interruptible: true
 
 variables:
-  FLUTTER_VERSION: "3.47.7"
   GIT_DEPTH: "20"
+  # Cache archives are zipped on the runner itself; fastzip with the fastest level keeps the
+  # build_runner cache save and the Flutter/pub cache restores quick.
+  FF_USE_FASTZIP: "true"
+  CACHE_COMPRESSION_LEVEL: "fastest"
+  # Scanner images, pinned like every other tool.
+  OSV_SCANNER_IMAGE: "ghcr.io/google/osv-scanner:v2.6.0"
+  GITLEAKS_IMAGE: "ghcr.io/gitleaks/gitleaks:v8.30.1"
+  PRE_COMMIT_VERSION: "4.7.0"
   # JDK for Gradle in the Android jobs (see .android_env).
   ANDROID_JDK_VERSION: "17.0.20.1+1"
   ANDROID_JDK_URL: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.20.1%2B1/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.20.1_1.tar.gz"
@@ -71,33 +87,30 @@ stages:
   - export GIT_CONFIG_KEY_0="url.https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/.insteadOf"
   - export GIT_CONFIG_VALUE_0="ssh://git@${CI_SERVER_HOST}:2822/"
 
+# The Flutter version pinned in .fvmrc (FVM's config), so CI and local builds cannot drift apart.
+.flutter_version: &flutter_version
+  - export FLUTTER_VERSION="$(sed -n 's/.*"flutter"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' .fvmrc)"
+  - '[ -n "$FLUTTER_VERSION" ] || { echo "No Flutter version found in .fvmrc"; exit 1; }'
+
 # =============================================================================
-# Checks — analyze + tests on every branch push
+# Checks — run in parallel on every branch push; any failure fails the pipeline
 # =============================================================================
 # Needs no secrets: every Envied field has a default, so codegen runs against an empty .env.
 #
 # Flutter is installed by the job rather than taken from a prebuilt image: the cirruslabs/flutter
 # images stop at 3.44.0. A shallow clone at the release tag is far smaller than the 1.5 GB release
-# archive, and the SDK (with the tools it downloads on first run) is cached per Flutter version.
-checks:
-  stage: check
-  image: debian:bookworm-slim
+# archive, and the SDK (with the tools it downloads on first run) is cached per .fvmrc.
+#
+# The Flutter SDK (~21k files) and the pub cache (~49k files) are saved only by `cache:flutter`,
+# which runs only when .fvmrc or pubspec.lock changes (and on a branch's first pipeline).
+# `checks` just restores them: re-zipping both after every run took over 10 minutes.
+.flutter_job:
+  image: buildpack-deps:bookworm
   variables:
     PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
     FLUTTER_HOME: "$CI_PROJECT_DIR/.flutter-sdk"
-  cache:
-    - key: flutter-sdk-$FLUTTER_VERSION
-      paths:
-        - .flutter-sdk
-    - key: pub-$CI_COMMIT_REF_SLUG
-      fallback_keys:
-        - pub-develop
-        - pub-master
-      paths:
-        - .pub-cache
-      when: always
   before_script:
-    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git curl unzip xz-utils ca-certificates > /dev/null
+    - *flutter_version
     - |
       if [ ! -x "$FLUTTER_HOME/bin/flutter" ]; then
         rm -rf "$FLUTTER_HOME"
@@ -110,13 +123,191 @@ checks:
     # Declared asset directories that only hold secrets in release builds.
     - mkdir -p assets/certs/android
     - touch .env
-    - flutter pub get
-    - dart run build_runner build
+    - flutter pub get --enforce-lockfile
+
+.flutter_sdk_cache: &flutter_sdk_cache
+  key:
+    files: [.fvmrc]
+    prefix: flutter-sdk
+  paths:
+    - .flutter-sdk
+
+.pub_cache: &pub_cache
+  key:
+    files: [pubspec.lock]
+    prefix: pub
+  paths:
+    - .pub-cache
+
+# Fills the Flutter SDK and pub caches for `checks`, including the Linux host tools that
+# flutter test uses. If the runner's caches were cleared, run a pipeline with
+# REFRESH_FLUTTER_CACHE=true (CI/CD → Run pipeline) to fill them again.
+cache:flutter:
+  stage: .pre
+  extends: .flutter_job
+  rules:
+    - if: $REFRESH_FLUTTER_CACHE == "true"
+    - changes: [.fvmrc, pubspec.lock]
+  cache:
+    - <<: *flutter_sdk_cache
+      policy: pull-push
+    - <<: *pub_cache
+      policy: pull-push
   script:
-    # Errors fail the job; the ~110 existing warnings (mostly unused imports) don't yet.
-    # Drop --no-fatal-warnings once they are cleaned up.
-    - flutter analyze --no-fatal-infos --no-fatal-warnings
-    - flutter test
+    - flutter precache --linux --no-android --no-ios
+
+# Kept fast: buildpack-deps already has git, curl, unzip and xz (no apt-get per run), the SDK and
+# pub caches are only restored, build_runner reuses its cached state so it only rebuilds what
+# changed, and analyze and test run in parallel.
+checks:
+  stage: check
+  extends: .flutter_job
+  needs:
+    - job: cache:flutter
+      optional: true
+  cache:
+    - <<: *flutter_sdk_cache
+      policy: pull
+    - <<: *pub_cache
+      policy: pull
+    # build_runner's asset graph and the files it generated (all gitignored); small, so saved
+    # after every run.
+    - key: build-runner-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - build-runner-develop
+        - build-runner-master
+      paths:
+        - .dart_tool/build/
+        - lib/**/*.g.dart
+        - lib/**/*.freezed.dart
+        - lib/**/*.gr.dart
+        - lib/**/*.config.dart
+  before_script:
+    - !reference [.flutter_job, before_script]
+    # Incremental thanks to the cache; a stale cached output is replaced, never a failure.
+    - dart run build_runner build --delete-conflicting-outputs
+  script:
+    # Same exclusions as .pre-commit-config.yaml: generated files are never formatted.
+    - git ls-files '*.dart' | grep -vE '\.(g|freezed|gr|config|gen)\.dart$|/app_localizations[^/]*\.dart$|^test/drift/my_database/generated/' | xargs dart format --output=none --set-exit-if-changed
+    # Analyze (errors, warnings and infos all fail, as in scripts/check.sh) and test run in
+    # parallel; the job fails if either fails.
+    - |
+      flutter analyze --no-pub > analyze.log 2>&1 &
+      analyze_pid=$!
+      test_status=0
+      flutter test --no-pub || test_status=$?
+      analyze_status=0
+      wait "$analyze_pid" || analyze_status=$?
+      echo "==> flutter analyze"
+      cat analyze.log
+      [ "$analyze_status" -eq 0 ] && [ "$test_status" -eq 0 ]
+
+# BASE = where this branch left its Gitflow parent (develop, or master for hotfix/*); on develop
+# and master, the previous push. Only that parent is fetched, only as deep as needed, instead of the
+# whole 150 MB history. Used by `lint` and `scan:secrets` to check just this branch's changes.
+.diff_base: &diff_base
+  - git config --global --add safe.directory "$CI_PROJECT_DIR"
+  - |
+    TARGET=""
+    case "$CI_COMMIT_BRANCH" in
+      develop|master) BASE="$CI_COMMIT_BEFORE_SHA" ;;
+      hotfix/*) TARGET=master ;;
+      *) TARGET=develop ;;
+    esac
+    if [ -n "$TARGET" ]; then
+      # Explicit refspecs: CI clones one branch, so a plain `git fetch origin develop` would not
+      # create origin/develop.
+      git fetch -q --depth=100 origin "+refs/heads/$TARGET:refs/remotes/origin/$TARGET"
+      tries=0
+      until BASE="$(git merge-base "origin/$TARGET" HEAD 2>/dev/null)"; do
+        tries=$((tries + 1))
+        if [ "$tries" -gt 10 ]; then echo "No common history with $TARGET"; exit 1; fi
+        git fetch -q --deepen=200 origin "+refs/heads/$TARGET:refs/remotes/origin/$TARGET" \
+          "+refs/heads/$CI_COMMIT_BRANCH:refs/remotes/origin/$CI_COMMIT_BRANCH"
+      done
+    fi
+    if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then BASE="$(git rev-parse HEAD~1)"; fi
+    echo "Checking changes since $BASE"
+
+# Every other formatter (.pre-commit-config.yaml) on the files this branch changed, and the commit
+# messages against Conventional Commits. Dart is formatted in `checks`; swift-format needs Xcode,
+# so Swift is only formatted by the local hook.
+#
+# Kept fast: a hook whose file types the branch did not touch is skipped, so its tool is never
+# installed (Java and Ruby too); the image already has git, curl and xz; Node is a pinned,
+# checksum-verified 31 MB download; only the small pip and npm download caches are kept.
+# Python 3.13 image: gersemi's native module needs a Python below 3.15 (see .pre-commit-config.yaml).
+lint:
+  stage: check
+  image: python:3.13-bookworm
+  variables:
+    NODE_VERSION: "22.23.3"
+    NODE_SHA256_X64: "df450af89261115ef9f9e3830c3eeb2cc9213b63c720b1af623cb5dcbe2e02de"
+    NODE_SHA256_ARM64: "a44aeb94849a299b22df10b9e622ec2f605c2183501bc40590705131de7c740f"
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    npm_config_cache: "$CI_PROJECT_DIR/.cache/npm"
+  cache:
+    - key:
+        files: [.pre-commit-config.yaml, package-lock.json]
+        prefix: lint-downloads
+      paths:
+        - .cache/pip/
+        - .cache/npm/
+  before_script:
+    - *diff_base
+    - CHANGED="$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD)"
+    - |
+      SKIP="dart-format,swift-format"
+      needs() { echo "$CHANGED" | grep -qE "$1"; }
+      needs '\.(kt|kts)$' || SKIP="$SKIP,pretty-format-kotlin"
+      needs '(^|/)(Gemfile|Podfile|Fastfile|Appfile)$|\.rb$' || SKIP="$SKIP,rubocop"
+      needs '\.(c|cc|cpp|h|hpp)$' || SKIP="$SKIP,clang-format"
+      needs '(^|/)CMakeLists\.txt$|\.cmake$' || SKIP="$SKIP,gersemi"
+      needs '\.(sh|bash)$|^scripts/' || SKIP="$SKIP,shfmt,shellcheck"
+      export SKIP
+      echo "Skipping hooks with nothing to check: $SKIP"
+    - |
+      if ! echo "$SKIP" | grep -q pretty-format-kotlin || ! echo "$SKIP" | grep -q rubocop; then
+        apt-get update -qq
+        echo "$SKIP" | grep -q pretty-format-kotlin || apt-get install -y -qq --no-install-recommends default-jre-headless > /dev/null
+        echo "$SKIP" | grep -q rubocop || apt-get install -y -qq --no-install-recommends ruby ruby-dev > /dev/null
+      fi
+    - |
+      case "$(uname -m)" in
+        x86_64) node_arch=x64; node_sha="$NODE_SHA256_X64" ;;
+        aarch64) node_arch=arm64; node_sha="$NODE_SHA256_ARM64" ;;
+        *) echo "Unsupported runner architecture $(uname -m)"; exit 1 ;;
+      esac
+      curl -fsSL --retry 3 -o /tmp/node.tar.xz "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$node_arch.tar.xz"
+      echo "$node_sha  /tmp/node.tar.xz" | sha256sum -c - > /dev/null
+      mkdir -p /opt/node && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components 1
+      export PATH="/opt/node/bin:$PATH"
+    - pip install -q "pre-commit==$PRE_COMMIT_VERSION"
+    - npm ci --ignore-scripts --no-audit --no-fund
+  script:
+    - pre-commit run --show-diff-on-failure --from-ref "$BASE" --to-ref HEAD
+    - npx --no-install commitlint --from "$BASE" --to HEAD --verbose
+
+# Known vulnerabilities (OSV database) in every lockfile: pub, npm, RubyGems, Swift packages.
+scan:dependencies:
+  stage: check
+  image:
+    name: $OSV_SCANNER_IMAGE
+    entrypoint: [""]
+  script:
+    # The image only puts the binary at /osv-scanner (its entrypoint), not on PATH.
+    - /osv-scanner scan source --recursive .
+
+# Secrets in the commits this branch adds (the full history was scanned clean when this job was
+# introduced); .gitleaks.toml documents the allowlisted false positives.
+scan:secrets:
+  stage: check
+  image:
+    name: $GITLEAKS_IMAGE
+    entrypoint: [""]
+  script:
+    - *diff_base
+    - gitleaks git --redact --config .gitleaks.toml --verbose --log-opts="$BASE..HEAD" .
 
 # =============================================================================
 # Mac mini — iOS, macOS and Android store uploads via fastlane
@@ -139,6 +330,7 @@ checks:
       echo "Missing on the Mac mini runner:$missing"
       exit 1
     fi
+  - *flutter_version
   - fvm install "$FLUTTER_VERSION"
   # The Android Fastfile calls plain `flutter`; make it the pinned version.
   - export PATH="${FVM_CACHE_PATH:-$HOME/fvm}/versions/$FLUTTER_VERSION/bin:$PATH"
@@ -230,7 +422,7 @@ checks:
   tags: [shell-macmini]
   # A store upload must not be killed mid-flight by a newer push.
   interruptible: false
-  needs: ["checks"]
+  needs: &all_checks ["checks", "lint", "scan:dependencies", "scan:secrets"]
   cache:
     - &bundle_cache
       key: bundle-macos
@@ -251,18 +443,12 @@ checks:
     - rm -f android/app/upload-keystore.jks android/key.properties android/fastlane/service-account.json
     - rm -f AuthKey.p8
 
-# allow_failure: a manual job from `rules:` defaults to false, which would leave every pipeline
-# "blocked" until someone ran each deploy. Deploys are optional, so the pipeline passes on checks
-# alone.
-.on_any_branch: &on_any_branch
-  - if: $CI_COMMIT_BRANCH
-    when: manual
-    allow_failure: true
-
-# Beta uploads: automatic on develop, so every merge reaches testers; manual elsewhere.
-.on_develop: &on_develop
-  - if: $CI_COMMIT_BRANCH == "develop"
-  - if: $CI_COMMIT_BRANCH
+# Deploys follow Gitflow: only develop, release/* and master can deploy; feature/*, bugfix/* and
+# hotfix/* branches get no deploy jobs. allow_failure: a manual job from `rules:` defaults to
+# false, which would leave every pipeline "blocked" until someone ran each deploy. Deploys are
+# optional, so the pipeline passes on the checks alone.
+.on_deploy_branches: &on_deploy_branches
+  - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
     when: manual
     allow_failure: true
 
@@ -274,7 +460,7 @@ checks:
 ios:testflight:
   extends: .macmini
   stage: deploy
-  rules: *on_develop
+  rules: *on_deploy_branches
   # One upload per platform at a time: the next build number is read from the store, so two
   # overlapping pipelines would pick the same one.
   resource_group: ios:testflight
@@ -290,7 +476,7 @@ ios:testflight:
 macos:testflight:
   extends: .macmini
   stage: deploy
-  rules: *on_develop
+  rules: *on_deploy_branches
   # One upload per platform at a time: the next build number is read from the store, so two
   # overlapping pipelines would pick the same one.
   resource_group: macos:testflight
@@ -307,7 +493,7 @@ macos:testflight:
 android:play-internal:
   extends: .macmini
   stage: deploy
-  rules: *on_develop
+  rules: *on_deploy_branches
   # One upload per platform at a time: the next build number is read from the store, so two
   # overlapping pipelines would pick the same one.
   resource_group: android:play-internal
@@ -372,14 +558,15 @@ windows:release:
   stage: deploy
   tags: [windows]
   interruptible: false
-  needs: ["checks"]
-  rules: *on_any_branch
+  needs: *all_checks
+  rules: *on_deploy_branches
   before_script:
     - $env:GIT_CONFIG_COUNT = "1"
     - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:$env:CI_JOB_TOKEN@$env:CI_SERVER_HOST/.insteadOf"
     - $env:GIT_CONFIG_VALUE_0 = "ssh://git@$env:CI_SERVER_HOST:2822/"
   script:
     - if (-not $env:ENV_FILE_CONTENT) { throw "Protected CI/CD variables are not available on $env:CI_COMMIT_BRANCH. Protect this branch to deploy from it." }
+    - $env:FLUTTER_VERSION = (Get-Content .fvmrc -Raw | ConvertFrom-Json).flutter
     - if (-not ((flutter --version) -match "Flutter $env:FLUTTER_VERSION")) { throw "flutter on PATH is not $env:FLUTTER_VERSION" }
     - Copy-Item $env:ENV_FILE_CONTENT .env
     - flutter config --enable-windows-desktop

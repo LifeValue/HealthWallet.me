@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -33,13 +34,15 @@ class ShareLogBuffer extends ChangeNotifier {
   }
 
   void _appendToFile(String message) {
-    _ensureLogFile().then((_) {
-      _logFile?.writeAsString(
-        '$message\n',
-        mode: FileMode.append,
-        flush: true,
-      );
-    }).catchError((_) {});
+    _ensureLogFile()
+        .then((_) {
+          _logFile?.writeAsString(
+            '$message\n',
+            mode: FileMode.append,
+            flush: true,
+          );
+        })
+        .catchError((_) {});
   }
 
   Future<String> readPersistedLogs() async {

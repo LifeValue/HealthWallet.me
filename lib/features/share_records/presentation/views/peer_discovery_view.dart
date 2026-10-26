@@ -1,7 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -15,7 +16,6 @@ import 'package:health_wallet/features/share_records/presentation/bloc/share_rec
 import 'package:health_wallet/features/share_records/presentation/widgets/peer_invitation_view.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/peer_search_status_view.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PeerDiscoveryView extends StatefulWidget {
   final ShareRecordsState state;
@@ -55,8 +55,8 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
   void _handleRetry() {
     _startSearchTimer();
     context.read<ShareRecordsBloc>().add(
-          const ShareRecordsEvent.selectionConfirmed(),
-        );
+      const ShareRecordsEvent.selectionConfirmed(),
+    );
   }
 
   @override
@@ -120,8 +120,8 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
           peer: peer,
           onTap: () {
             context.read<ShareRecordsBloc>().add(
-                  ShareRecordsEvent.peerSelected(peer.deviceId),
-                );
+              ShareRecordsEvent.peerSelected(peer.deviceId),
+            );
           },
         );
       },
@@ -141,8 +141,8 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
         child: AppButton(
           onPressed: () {
             context.read<ShareRecordsBloc>().add(
-                  const ShareRecordsEvent.sendModeSelected(),
-                );
+              const ShareRecordsEvent.sendModeSelected(),
+            );
           },
           label: context.l10n.cancel,
           variant: AppButtonVariant.outlined,
@@ -204,8 +204,9 @@ class _PeerDeviceTile extends StatelessWidget {
                     Text(
                       context.l10n.shareHealthWalletDevice,
                       style: AppTextStyle.labelMedium.copyWith(
-                        color: context.colorScheme.onSurface
-                            .withValues(alpha: 0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],

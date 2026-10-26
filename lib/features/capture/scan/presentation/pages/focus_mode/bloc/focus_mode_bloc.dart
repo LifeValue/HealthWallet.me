@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -38,7 +39,7 @@ class FocusModeBloc extends Bloc<FocusModeEvent, FocusModeState> {
       final batteryState = await _battery.batteryState;
       emit(state.copyWith(batteryState: batteryState));
 
-      _batterySubscription?.cancel();
+      unawaited(_batterySubscription?.cancel());
       _batterySubscription = _battery.onBatteryStateChanged.listen((state) {
         add(FocusModeBatteryStateChanged(batteryState: state));
       });
@@ -59,15 +60,19 @@ class FocusModeBloc extends Bloc<FocusModeEvent, FocusModeState> {
     Emitter<FocusModeState> emit,
   ) {
     if (event.remainingSeconds > 0) {
-      emit(state.copyWith(
-        remainingSeconds: event.remainingSeconds,
-        isScreenDarkened: false,
-      ));
+      emit(
+        state.copyWith(
+          remainingSeconds: event.remainingSeconds,
+          isScreenDarkened: false,
+        ),
+      );
     } else {
-      emit(state.copyWith(
-        remainingSeconds: 0,
-        isScreenDarkened: true,
-      ));
+      emit(
+        state.copyWith(
+          remainingSeconds: 0,
+          isScreenDarkened: true,
+        ),
+      );
       _countdownTimer?.cancel();
     }
   }
@@ -92,10 +97,12 @@ class FocusModeBloc extends Bloc<FocusModeEvent, FocusModeState> {
     FocusModeNotificationDisplayed event,
     Emitter<FocusModeState> emit,
   ) {
-    emit(state.copyWith(
-      waitingForNotification: false,
-      shouldExit: true,
-    ));
+    emit(
+      state.copyWith(
+        waitingForNotification: false,
+        shouldExit: true,
+      ),
+    );
   }
 
   void _onFocusModeDisposed(

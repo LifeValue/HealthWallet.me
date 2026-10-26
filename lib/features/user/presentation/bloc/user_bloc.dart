@@ -1,17 +1,16 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
+import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
-import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
-import 'package:health_wallet/core/di/injection.dart';
 import 'package:injectable/injectable.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'user_bloc.freezed.dart';
@@ -51,11 +50,13 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   ) async {
     emit(state.copyWith(status: const UserStatus.loading()));
 
-    final isBiometricAuthEnabled =
-        await _userRepository.isBiometricAuthEnabled();
+    final isBiometricAuthEnabled = await _userRepository
+        .isBiometricAuthEnabled();
 
     final prefs = await SharedPreferences.getInstance();
-    final savedRegionString = prefs.getString(SharedPrefsConstants.regionPreset);
+    final savedRegionString = prefs.getString(
+      SharedPrefsConstants.regionPreset,
+    );
     final RegionPreset savedRegion;
     if (savedRegionString == null) {
       savedRegion = _detectRegionFromLocale();
@@ -70,7 +71,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     var savedCountryCode = prefs.getString(SharedPrefsConstants.countryCode);
     if (savedCountryCode == null) {
       savedCountryCode = WidgetsBinding
-          .instance.platformDispatcher.locale.countryCode
+          .instance
+          .platformDispatcher
+          .locale
+          .countryCode
           ?.toUpperCase();
       if (savedCountryCode != null) {
         await prefs.setString(
@@ -81,14 +85,16 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
 
     final savedLocaleCode = prefs.getString(SharedPrefsConstants.appLocale);
-    final Locale? savedLocale =
-        savedLocaleCode != null ? Locale(savedLocaleCode) : null;
+    final Locale? savedLocale = savedLocaleCode != null
+        ? Locale(savedLocaleCode)
+        : null;
 
     try {
       User user;
       try {
         user = await _userRepository.getCurrentUser(
-            fetchFromNetwork: fetchFromNetwork);
+          fetchFromNetwork: fetchFromNetwork,
+        );
       } catch (e) {
         final systemTheme =
             WidgetsBinding.instance.platformDispatcher.platformBrightness;
@@ -101,14 +107,16 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         await _userRepository.updateUser(user);
       }
 
-      emit(state.copyWith(
-        status: const UserStatus.success(),
-        user: user,
-        isBiometricAuthEnabled: isBiometricAuthEnabled,
-        regionPreset: savedRegion,
-        countryCode: savedCountryCode,
-        appLocale: savedLocale,
-      ));
+      emit(
+        state.copyWith(
+          status: const UserStatus.success(),
+          user: user,
+          isBiometricAuthEnabled: isBiometricAuthEnabled,
+          regionPreset: savedRegion,
+          countryCode: savedCountryCode,
+          appLocale: savedLocale,
+        ),
+      );
     } catch (e) {
       final systemTheme =
           WidgetsBinding.instance.platformDispatcher.platformBrightness;
@@ -118,14 +126,16 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         isDarkMode: isSystemDarkMode,
       );
 
-      emit(state.copyWith(
-        status: const UserStatus.success(),
-        user: defaultUser,
-        isBiometricAuthEnabled: isBiometricAuthEnabled,
-        regionPreset: savedRegion,
-        countryCode: savedCountryCode,
-        appLocale: savedLocale,
-      ));
+      emit(
+        state.copyWith(
+          status: const UserStatus.success(),
+          user: defaultUser,
+          isBiometricAuthEnabled: isBiometricAuthEnabled,
+          regionPreset: savedRegion,
+          countryCode: savedCountryCode,
+          appLocale: savedLocale,
+        ),
+      );
     }
   }
 
@@ -256,10 +266,12 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         }
       }
 
-      emit(state.copyWith(
-        status: const UserStatus.success(),
-        user: updatedUser,
-      ));
+      emit(
+        state.copyWith(
+          status: const UserStatus.success(),
+          user: updatedUser,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(status: UserStatus.failure(e)));
     }
@@ -302,18 +314,52 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       if (country == 'GB') return RegionPreset.uk;
 
       const europeanCountries = {
-        'DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'CH', 'PT', 'SE',
-        'NO', 'DK', 'FI', 'PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR',
-        'SI', 'EE', 'LV', 'LT', 'IE', 'GR', 'LU', 'MT', 'CY',
+        'DE',
+        'FR',
+        'ES',
+        'IT',
+        'NL',
+        'BE',
+        'AT',
+        'CH',
+        'PT',
+        'SE',
+        'NO',
+        'DK',
+        'FI',
+        'PL',
+        'CZ',
+        'SK',
+        'HU',
+        'RO',
+        'BG',
+        'HR',
+        'SI',
+        'EE',
+        'LV',
+        'LT',
+        'IE',
+        'GR',
+        'LU',
+        'MT',
+        'CY',
       };
       if (europeanCountries.contains(country)) return RegionPreset.europe;
     }
 
     final lang = locale.languageCode.toLowerCase();
     if (lang == 'en') return RegionPreset.us;
-    if (lang == 'de' || lang == 'fr' || lang == 'es' || lang == 'it' ||
-        lang == 'nl' || lang == 'pt' || lang == 'pl' || lang == 'sv' ||
-        lang == 'da' || lang == 'fi' || lang == 'no') {
+    if (lang == 'de' ||
+        lang == 'fr' ||
+        lang == 'es' ||
+        lang == 'it' ||
+        lang == 'nl' ||
+        lang == 'pt' ||
+        lang == 'pl' ||
+        lang == 'sv' ||
+        lang == 'da' ||
+        lang == 'fi' ||
+        lang == 'no') {
       return RegionPreset.europe;
     }
 

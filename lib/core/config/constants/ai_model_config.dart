@@ -35,11 +35,9 @@ class AiModelConfig {
     variant: AiModelVariant.medGemma,
     displayName: 'Medical',
     description: 'Medical-trained, higher accuracy (~2.5 GB)',
-    modelUrl:
-        'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf',
+    modelUrl: 'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf',
     modelId: 'medgemma-4b-it_Q4_K_M.gguf',
-    mmprojUrl:
-        'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/mmproj-medgemma-4b-it-F16.gguf',
+    mmprojUrl: 'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/mmproj-medgemma-4b-it-F16.gguf',
     mmprojId: 'mmproj-medgemma-4b-it-F16.gguf',
     modelSizeMB: 2490,
     mmprojSizeMB: 851,
@@ -50,11 +48,9 @@ class AiModelConfig {
     variant: AiModelVariant.qwen,
     displayName: 'Lite',
     description: 'Fast and lightweight (~1.1 GB)',
-    modelUrl:
-        'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf',
+    modelUrl: 'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf',
     modelId: 'Qwen3VL-2B-Instruct-Q4_K_M.gguf',
-    mmprojUrl:
-        'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-F16.gguf',
+    mmprojUrl: 'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-F16.gguf',
     mmprojId: 'mmproj-Qwen3VL-2B-Instruct-F16.gguf',
     modelSizeMB: 1056,
     mmprojSizeMB: 445,
@@ -65,11 +61,9 @@ class AiModelConfig {
     variant: AiModelVariant.qwen7b,
     displayName: 'Ultra',
     description: 'Best accuracy for desktop (~5 GB)',
-    modelUrl:
-        'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q4_K_M.gguf',
+    modelUrl: 'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q4_K_M.gguf',
     modelId: 'Qwen3VL-8B-Instruct-Q4_K_M.gguf',
-    mmprojUrl:
-        'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-F16.gguf',
+    mmprojUrl: 'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-F16.gguf',
     mmprojId: 'mmproj-Qwen3VL-8B-Instruct-F16.gguf',
     modelSizeMB: 4560,
     mmprojSizeMB: 815,
@@ -83,14 +77,18 @@ class AiModelConfig {
     return [qwen, medGemma];
   }
 
-  static AiModelConfig getActive(SharedPreferences prefs,
-      {DeviceProfile? profile}) {
+  static AiModelConfig getActive(
+    SharedPreferences prefs, {
+    DeviceProfile? profile,
+  }) {
     final name = prefs.getString(SharedPrefsConstants.aiSelectedModel);
     if (name == AiModelVariant.medGemma.name) return medGemma;
     if (name == AiModelVariant.qwen.name) return qwen;
     if (name == AiModelVariant.qwen7b.name) return qwen7b;
     if (profile != null) return fromVariant(recommendedVariant(profile));
-    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) return qwen7b;
+    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+      return qwen7b;
+    }
     return qwen;
   }
 

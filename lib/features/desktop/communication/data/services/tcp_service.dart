@@ -3,12 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
-import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/features/desktop/communication/data/services/transport/communication_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pointycastle/export.dart';
 
@@ -180,7 +178,7 @@ class TcpService {
   }
 
   static Future<void> _isolateServer(_IsolateServerConfig config) async {
-    runZonedGuarded(() => _isolateServerImpl(config), (_, __) {});
+    unawaited(runZonedGuarded(() => _isolateServerImpl(config), (_, _) {}));
   }
 
   static Future<void> _isolateServerImpl(_IsolateServerConfig config) async {
@@ -346,8 +344,12 @@ class TcpService {
         final brand = android.brand;
         final model = android.model;
         if (brand.isEmpty) return model;
-        final words = brand.split(' ').map((w) =>
-            w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w);
+        final words = brand
+            .split(' ')
+            .map(
+              (w) =>
+                  w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w,
+            );
         return '${words.join(' ')} $model';
       }
       var hostname = Platform.localHostname;
@@ -356,7 +358,9 @@ class TcpService {
       }
       return hostname.replaceAll('-', ' ');
     } catch (_) {
-      return Platform.localHostname.replaceAll('.local', '').replaceAll('-', ' ');
+      return Platform.localHostname
+          .replaceAll('.local', '')
+          .replaceAll('-', ' ');
     }
   }
 
@@ -369,7 +373,11 @@ class TcpService {
 
     final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
     final virtualKeywords = [
-      'vethernet', 'vmware', 'virtualbox', 'docker', 'hyper-v',
+      'vethernet',
+      'vmware',
+      'virtualbox',
+      'docker',
+      'hyper-v',
     ];
 
     bool isVpn(String name) =>
@@ -377,13 +385,16 @@ class TcpService {
     bool isVirtual(String name) =>
         virtualKeywords.any((k) => name.toLowerCase().contains(k));
     bool isUsable(NetworkInterface iface) =>
-        !isVpn(iface.name) && !isVirtual(iface.name) && iface.addresses.isNotEmpty;
+        !isVpn(iface.name) &&
+        !isVirtual(iface.name) &&
+        iface.addresses.isNotEmpty;
     bool isWifi(String name) {
       final lower = name.toLowerCase();
       return lower.startsWith('en') ||
           lower.startsWith('wlan') ||
           lower.startsWith('wi-fi');
     }
+
     bool isEthernet(String name) {
       final lower = name.toLowerCase();
       return lower.startsWith('eth');
@@ -464,9 +475,7 @@ class TcpService {
       onError: (_) {
         _handleDisconnect();
       },
-      onDone: () {
-        _handleDisconnect();
-      },
+      onDone: _handleDisconnect,
     );
   }
 
@@ -514,7 +523,8 @@ class TcpService {
       case MessageType.hello:
         if (_pairingKey != null && _clientSocket == null) {
           try {
-            final json = jsonDecode(message.payloadString) as Map<String, dynamic>;
+            final json =
+                jsonDecode(message.payloadString) as Map<String, dynamic>;
             final remoteHash = json['pairing_key_hash'] as String?;
             final localHash = _hashKey(_pairingKey!);
             if (remoteHash != null && remoteHash != localHash) {
@@ -621,8 +631,9 @@ class TcpService {
 
   Uint8List _deriveKey(String pairingKey) {
     final keyBytes = base64Url.decode(pairingKey);
-    if (keyBytes.length >= 32)
+    if (keyBytes.length >= 32) {
       return Uint8List.fromList(keyBytes.sublist(0, 32));
+    }
     final padded = Uint8List(32);
     padded.setAll(0, keyBytes);
     return padded;

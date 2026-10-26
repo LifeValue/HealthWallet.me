@@ -10,30 +10,6 @@ class AppLocalizationsRo extends AppLocalizations {
   AppLocalizationsRo([String locale = 'ro']) : super(locale);
 
   @override
-  String get appTitle => 'HealthWallet.me';
-
-  @override
-  String get homeTitle => 'Acasă';
-
-  @override
-  String get profileTitle => 'Profil';
-
-  @override
-  String get settingsTitle => 'Setări';
-
-  @override
-  String get welcomeMessage => 'Bine ai venit la HealthWallet.me!';
-
-  @override
-  String get onboardingBack => 'Înapoi';
-
-  @override
-  String get onboardingGetStarted => 'Începe';
-
-  @override
-  String get onboardingNext => 'Următorul';
-
-  @override
   String get onboardingWelcomeTitle => 'un Portofel de Sănătate pentru Tine!';
 
   @override
@@ -81,42 +57,16 @@ class AppLocalizationsRo extends AppLocalizations {
       'Vizualizează istoricul medical în modul avion, în străinătate sau fără internet — înregistrările tale rămân cu tine oriunde mergi. Adaugă un nivel suplimentar de securitate activând autentificarea biometrică.';
 
   @override
-  String get onboardingBiometricText =>
-      'Poți bloca HealthWallet cu securitate biometrică precum Face ID sau scanare de amprentă.';
-
-  @override
   String get homeHi => 'Salut, ';
-
-  @override
-  String get homeLastSynced => 'Ultima sincronizare: ';
-
-  @override
-  String get homeNever => 'Niciodată';
 
   @override
   String get homeVitalSigns => 'Semne vitale';
 
   @override
-  String get homeOverview => 'Înregistrări Medicale';
-
-  @override
   String get homeSource => 'Sursă:';
 
   @override
-  String get homeAll => 'Toate';
-
-  @override
-  String get homeRecentRecords => 'Înregistrări Recente';
-
-  @override
-  String get homeViewAll => 'Vezi Tot';
-
-  @override
   String get homeNA => 'N/A';
-
-  @override
-  String get bluetoothRequired =>
-      'Activează Bluetooth pentru a utiliza Partajarea în proximitate';
 
   @override
   String get dashboardTitle => 'Panou';
@@ -129,9 +79,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get syncTitle => 'Sincronizare';
-
-  @override
-  String get scanFastenQr => 'Scan Fasten Health QR';
 
   @override
   String get syncSuccessful => 'Sincronizare reușită!';
@@ -154,37 +101,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get continueSync => 'Continuă Sincronizarea';
 
   @override
-  String get syncAgain => 'Sincronizează Din Nou';
-
-  @override
-  String get syncFailed => 'Sincronizare eșuată: ';
-
-  @override
   String get tryAgain => 'Încearcă Din Nou';
 
   @override
-  String get syncedAt => 'Sincronizat la: ';
-
-  @override
-  String get pasteSyncData => 'Lipește Date de Sincronizare';
-
-  @override
-  String get submit => 'Trimite';
-
-  @override
-  String get hideManualEntry => 'Ascunde Introducerea Manuală';
-
-  @override
-  String get enterDataManually => 'Introdu datele manual';
-
-  @override
-  String get medicalRecords => 'Înregistrări Medicale';
-
-  @override
   String get searchRecordsHint => 'Caută înregistrări, doctori, locații...';
-
-  @override
-  String get detailsFor => 'Detalii pentru ';
 
   @override
   String get patientId => 'CNP: ';
@@ -199,40 +119,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get bloodType => 'Grupa Sanguină';
 
   @override
-  String get lastSyncedProfile => 'Ultima sincronizare: acum 2 ore';
-
-  @override
-  String get syncLatestRecords =>
-      'Sincronizează cele mai recente înregistrări medicale de la furnizorul tău de servicii de sănătate.';
-
-  @override
-  String get scanToSync => 'Scanează pentru Sincronizare';
-
-  @override
   String get theme => 'Temă';
 
   @override
-  String get pleaseAuthenticate =>
-      'Te rugăm să te autentifici pentru a continua';
-
-  @override
   String get authenticate => 'Autentifică-te';
-
-  @override
-  String get bypass => 'Ocolește';
-
-  @override
-  String get onboardingAuthTitle => 'Activează Autentificarea Biometrică';
-
-  @override
-  String get onboardingAuthDescription =>
-      'Adaugă un nivel suplimentar de securitate contului tău activând autentificarea biometrică.';
-
-  @override
-  String get onboardingAuthEnable => 'Activează Acum';
-
-  @override
-  String get onboardingAuthSkip => 'Omite Deocamdată';
 
   @override
   String get biometricAuthentication => 'Autentificare Biometrică';
@@ -283,45 +173,20 @@ class AppLocalizationsRo extends AppLocalizations {
   String get ok => 'OK';
 
   @override
-  String get scanCode => 'Scanează codul';
-
-  @override
   String get or => 'sau';
-
-  @override
-  String get manualSyncMessage => 'Cod QR brut';
-
-  @override
-  String get pasteSyncDataHint => 'Lipește codul QR brut';
 
   @override
   String get connect => 'Conectare';
 
   @override
-  String get scanNewQRCode => 'Scanează Cod QR Nou';
-
-  @override
   String get loadDemoData => 'Încarcă Date Demo';
-
-  @override
-  String get syncData => 'Sincronizează Date';
 
   @override
   String get noMedicalRecordsYet => 'Nu există înregistrări medicale încă';
 
   @override
-  String noRecordTypeYet(Object recordType) {
-    return 'Nu există $recordType încă';
-  }
-
-  @override
   String get loadDemoDataMessage =>
       'Încarcă date demo pentru a explora aplicația sau sincronizează înregistrările tale medicale reale';
-
-  @override
-  String syncDataMessage(Object recordType) {
-    return 'Sincronizează sau actualizează datele pentru a vizualiza înregistrările $recordType';
-  }
 
   @override
   String get retry => 'Reîncearcă';
@@ -347,22 +212,6 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get errorUpdatingSourceLabel =>
       'Eroare la actualizarea etichetei sursei';
-
-  @override
-  String get noChangesDetected => 'Nu s-au detectat modificări';
-
-  @override
-  String get pleaseSelectBirthDate => 'Te rugăm să selectezi data nașterii';
-
-  @override
-  String get errorSavingPatientData => 'Eroare la salvarea datelor pacientului';
-
-  @override
-  String get walletHolder => 'Deținător Portofel';
-
-  @override
-  String get walletHolderDescription =>
-      'Acest pacient este proprietarul principal al acestui portofel de sănătate';
 
   @override
   String get getStarted => 'Începe';
@@ -395,16 +244,6 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String deleteRecordsConfirm(int count) {
     return 'Ești sigur că vrei să ștergi $count elemente?';
-  }
-
-  @override
-  String confirmDeleteFile(Object filename) {
-    return 'Ești sigur că vrei să ștergi \"$filename\"?';
-  }
-
-  @override
-  String selectAtLeastOne(Object type) {
-    return 'Selectează cel puțin un $type pentru a continua.';
   }
 
   @override
@@ -441,51 +280,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get recentRecords => 'Înregistrări recente';
 
   @override
-  String chooseToDisplay(Object type) {
-    return 'Alege ce $type vrei să vezi pe panoul tău.';
-  }
-
-  @override
   String get displayName => 'Nume afișat';
 
   @override
-  String get bloodTypeAPositive => 'A pozitiv';
-
-  @override
-  String get bloodTypeANegative => 'A negativ';
-
-  @override
-  String get bloodTypeBPositive => 'B pozitiv';
-
-  @override
-  String get bloodTypeBNegative => 'B negativ';
-
-  @override
-  String get bloodTypeABPositive => 'AB pozitiv';
-
-  @override
-  String get bloodTypeABNegative => 'AB negativ';
-
-  @override
-  String get bloodTypeOPositive => 'O pozitiv';
-
-  @override
-  String get bloodTypeONegative => 'O negativ';
-
-  @override
-  String get serverError => 'Ceva nu a funcționat pe server';
-
-  @override
-  String get serverTimeout => 'Timeout server';
-
-  @override
-  String get connectionError => 'Eroare de conexiune';
-
-  @override
   String get unknownSource => 'Sursă Necunoscută';
-
-  @override
-  String get synchronization => 'Sincronizare';
 
   @override
   String get desktopSyncAndBackup => 'Desktop Sync & Backup';
@@ -496,9 +294,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get processOnDesktop => 'Procesează pe desktop';
-
-  @override
-  String get sendToDesktop => 'Trimite pe desktop';
 
   @override
   String get continueImporting => 'Continuă importul';
@@ -512,13 +307,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get syncMedicalRecords => 'Sincronizează Înregistrări Medicale';
-
-  @override
-  String get syncLatestMedicalRecords =>
-      'Sincronizează cele mai recente înregistrări medicale de la furnizorul tău de servicii de sănătate folosind un token JWT securizat.';
-
-  @override
-  String get neverSynced => 'Niciodată sincronizat';
 
   @override
   String get lastSynced => 'Ultima sincronizare';
@@ -575,9 +363,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get source => 'Sursă';
 
   @override
-  String get showAll => 'Arată Tot';
-
-  @override
   String get records => 'Înregistrări';
 
   @override
@@ -603,17 +388,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Încearcă să cauți cu cuvinte cheie diferite';
 
   @override
-  String get clearAllFilters => 'Șterge tot';
-
-  @override
   String get syncingData => 'Se sincronizează datele';
 
   @override
   String get syncingMessage => 'Poate dura puțin. Te rugăm să aștepți.';
-
-  @override
-  String get scanQRMessage =>
-      'Scanează codul QR de pe serverul tău Fasten Health pentru a crea o nouă conexiune de sincronizare.';
 
   @override
   String get viewAll => 'Vezi tot';
@@ -649,10 +427,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get recordsSavedTitle => 'Salvat cu succes';
-
-  @override
-  String get recordsSavedMessage =>
-      'Înregistrările tale de sănătate au fost salvate cu succes.';
 
   @override
   String get whatNextQuestion => 'Ce ai dori să faci în continuare?';
@@ -774,47 +548,14 @@ class AppLocalizationsRo extends AppLocalizations {
   String get setup => 'Configurare';
 
   @override
-  String get patientSetupTitle => 'Configurează-ți Profilul';
-
-  @override
   String get patientSetupSubtitle =>
       'Personalizează portofelul tău de sănătate cu informațiile tale';
-
-  @override
-  String get onboardingSetupTitle => 'Configurează Portofelul de Sănătate';
-
-  @override
-  String get onboardingSetupBody =>
-      'Creează-ți profilul personal de sănătate pentru a începe cu HealthWallet';
-
-  @override
-  String get onboardingDemoTitle => 'Încearcă Date Demo';
-
-  @override
-  String get onboardingDemoBody =>
-      'Explorează aplicația cu înregistrări medicale de exemplu pentru a vedea cum funcționează';
-
-  @override
-  String get onboardingSyncTitle2 => 'Sincronizează Înregistrările';
-
-  @override
-  String get onboardingSyncBody =>
-      'Conectează-te la furnizorii tăi de servicii de sănătate pentru a importa înregistrările medicale reale';
 
   @override
   String get givenName => 'Prenume';
 
   @override
   String get familyName => 'Nume de Familie';
-
-  @override
-  String get skipForNow => 'Omite deocamdată';
-
-  @override
-  String get setUpProfile => 'Configurează';
-
-  @override
-  String get useDefaults => 'Implicit';
 
   @override
   String get syncPlaceholderTutorialStep1 =>
@@ -1007,29 +748,13 @@ class AppLocalizationsRo extends AppLocalizations {
   String get tokenPresetLow => 'Scăzut';
 
   @override
-  String get tokenPresetLowDescription =>
-      'Cel mai bun pentru fișiere mici și sarcini rapide.\nFolosește cele mai puține resurse și procesează cel mai rapid.';
-
-  @override
   String get tokenPresetMedium => 'Mediu';
-
-  @override
-  String get tokenPresetMediumDescription =>
-      'Bun pentru majoritatea cazurilor.\nEchilibrează dimensiunea fișierului, timpul de procesare și utilizarea resurselor.';
 
   @override
   String get tokenPresetHigh => 'Ridicat';
 
   @override
-  String get tokenPresetHighDescription =>
-      'Cel mai bun pentru fișiere mari și procesare complexă.\nFolosește mai multe resurse și baterie, și durează mai mult.';
-
-  @override
   String get tokenPresetCustom => 'Personalizat';
-
-  @override
-  String get tokenPresetCustomDescription =>
-      'Setează cantitatea personalizată de token-uri pe care vrei să o folosești.';
 
   @override
   String get setTokens => 'Setează';
@@ -1078,12 +803,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get emergencyContact => 'Contact Telefonic de Urgență';
 
   @override
-  String get emergencyContactHint => 'Număr de telefon';
-
-  @override
-  String get searchCountry => 'Caută țara...';
-
-  @override
   String get rotatePage => 'Rotește';
 
   @override
@@ -1097,20 +816,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Această pagină va fi eliminată din document.';
 
   @override
-  String get cannotDeleteLastPage => 'Nu se poate șterge ultima pagină';
-
-  @override
-  String get pageRotated => 'Pagină rotită';
-
-  @override
   String get regionAndUnits => 'Limbă și Unități';
 
   @override
   String get country => 'Țara';
-
-  @override
-  String get patientModifiedNewWillBeCreated =>
-      'Modificat — va fi creat un pacient nou';
 
   @override
   String patientModifiedUpdating(String name) {
@@ -1128,13 +837,6 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get dropModificationsMessage =>
       'Modificările aduse câmpurilor pacientului vor fi pierdute.';
-
-  @override
-  String get modifyPatientTitle => 'Modifici pacientul?';
-
-  @override
-  String get modifyPatientMessage =>
-      'Datele pacientului existent vor fi actualizate cu modificările tale.';
 
   @override
   String get scanIdCard => 'Scanează carte de identitate sau pașaport';
@@ -1185,9 +887,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String deepScanDownloadMessage(int size) {
     return 'Scanarea Profundă necesită o descărcare suplimentară (~$size MB). Descarci acum?';
   }
-
-  @override
-  String get downloadingVisionModel => 'Se descarcă modelul de viziune...';
 
   @override
   String get shareUnknownDevice => 'Dispozitiv Necunoscut';
@@ -1491,11 +1190,6 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String shareExtensionDurationRequested(String duration) {
-    return '$duration solicitat';
-  }
-
-  @override
   String get desktopSyncNotYet => 'Nu încă';
 
   @override
@@ -1713,9 +1407,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get desktopBackup => 'Copie de siguranță';
 
   @override
-  String get desktopBackupLocation => 'Backup Location';
-
-  @override
   String get desktopChange => 'Schimbă';
 
   @override
@@ -1793,17 +1484,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get desktopContinueImporting => 'Continuă importul';
-
-  @override
-  String get desktopConnectToDesktop => 'Conectează la desktop';
-
-  @override
-  String get desktopCouldNotReconnect =>
-      'Nu s-a putut reconecta. Scanează codul QR pentru a asocia din nou.';
-
-  @override
-  String get desktopScanQrToPair =>
-      'Scanează codul QR din aplicația desktop pentru a asocia.';
 
   @override
   String get desktopHandoverToDesktop => 'Predare pe desktop';

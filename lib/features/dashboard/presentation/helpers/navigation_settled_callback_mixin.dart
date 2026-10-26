@@ -74,8 +74,11 @@ mixin NavigationSettledCallbackMixin<T extends StatefulWidget> on State<T> {
       if (attempt == 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && !_hasTriggered) {
-            _checkForSettleWithRetry(controller,
-                attempt: attempt + 1, maxAttempts: maxAttempts);
+            _checkForSettleWithRetry(
+              controller,
+              attempt: attempt + 1,
+              maxAttempts: maxAttempts,
+            );
           } else {
             _isCheckingForSettle = false;
           }
@@ -83,8 +86,11 @@ mixin NavigationSettledCallbackMixin<T extends StatefulWidget> on State<T> {
       } else {
         Future.microtask(() {
           if (mounted && !_hasTriggered) {
-            _checkForSettleWithRetry(controller,
-                attempt: attempt + 1, maxAttempts: maxAttempts);
+            _checkForSettleWithRetry(
+              controller,
+              attempt: attempt + 1,
+              maxAttempts: maxAttempts,
+            );
           } else {
             _isCheckingForSettle = false;
           }

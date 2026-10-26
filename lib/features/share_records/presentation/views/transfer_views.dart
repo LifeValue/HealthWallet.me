@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/share_debug_log_sheet.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ConnectingView extends StatelessWidget {
   final ShareRecordsState state;
@@ -52,7 +51,9 @@ class ConnectingView extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           Text(
-            isRetrying ? context.l10n.shareRetryingCount(retryCount) : context.l10n.shareConnecting,
+            isRetrying
+                ? context.l10n.shareRetryingCount(retryCount)
+                : context.l10n.shareConnecting,
             style: AppTextStyle.bodyLarge.copyWith(
               color: context.colorScheme.onSurface,
             ),
@@ -119,7 +120,9 @@ class TransferProgressView extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              state.isSending ? context.l10n.shareSendingRecords : context.l10n.shareReceivingRecords,
+              state.isSending
+                  ? context.l10n.shareSendingRecords
+                  : context.l10n.shareReceivingRecords,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             if (state.statusMessage != null) ...[

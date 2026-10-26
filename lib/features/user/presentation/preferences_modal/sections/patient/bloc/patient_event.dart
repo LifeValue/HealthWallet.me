@@ -5,14 +5,16 @@ abstract class PatientEvent {
 }
 
 @freezed
-abstract class PatientInitialised extends PatientEvent with _$PatientInitialised {
+abstract class PatientInitialised extends PatientEvent
+    with _$PatientInitialised {
   const PatientInitialised._();
 
   const factory PatientInitialised() = _PatientInitialised;
 }
 
 @freezed
-abstract class PatientPatientsLoaded extends PatientEvent with _$PatientPatientsLoaded {
+abstract class PatientPatientsLoaded extends PatientEvent
+    with _$PatientPatientsLoaded {
   const PatientPatientsLoaded._();
 
   const factory PatientPatientsLoaded({
@@ -37,14 +39,16 @@ abstract class PatientDataUpdatedFromSync extends PatientEvent
 }
 
 @freezed
-abstract class PatientEditStarted extends PatientEvent with _$PatientEditStarted {
+abstract class PatientEditStarted extends PatientEvent
+    with _$PatientEditStarted {
   const PatientEditStarted._();
 
   const factory PatientEditStarted(String patientId) = _PatientEditStarted;
 }
 
 @freezed
-abstract class PatientEditCancelled extends PatientEvent with _$PatientEditCancelled {
+abstract class PatientEditCancelled extends PatientEvent
+    with _$PatientEditCancelled {
   const PatientEditCancelled._();
 
   const factory PatientEditCancelled() = _PatientEditCancelled;

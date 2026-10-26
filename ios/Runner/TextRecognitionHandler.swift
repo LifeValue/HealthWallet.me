@@ -6,15 +6,18 @@ import Vision
 /// channel the macOS, Windows and Android runners implement.
 class TextRecognitionHandler {
     func register(with messenger: FlutterBinaryMessenger) {
-        let channel = FlutterMethodChannel(name: "dev.lifevalue.healthwallet/ocr", binaryMessenger: messenger)
+        let channel = FlutterMethodChannel(
+            name: "dev.lifevalue.healthwallet/ocr", binaryMessenger: messenger)
         channel.setMethodCallHandler { [weak self] (call, result) in
             guard call.method == "recognizeText" else {
                 result(FlutterMethodNotImplemented)
                 return
             }
             guard let args = call.arguments as? [String: Any],
-                  let imagePath = args["imagePath"] as? String else {
-                result(FlutterError(code: "INVALID_ARGS", message: "imagePath required", details: nil))
+                let imagePath = args["imagePath"] as? String
+            else {
+                result(
+                    FlutterError(code: "INVALID_ARGS", message: "imagePath required", details: nil))
                 return
             }
             DispatchQueue.global(qos: .userInitiated).async {
@@ -23,7 +26,10 @@ class TextRecognitionHandler {
                     if let text = text {
                         result(text)
                     } else {
-                        result(FlutterError(code: "OCR_FAILED", message: "Could not read \(imagePath)", details: nil))
+                        result(
+                            FlutterError(
+                                code: "OCR_FAILED", message: "Could not read \(imagePath)",
+                                details: nil))
                     }
                 }
             }
@@ -33,14 +39,16 @@ class TextRecognitionHandler {
     private func recognizeText(imagePath: String) -> String? {
         let url = URL(fileURLWithPath: imagePath)
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-              let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+            let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        else {
             return nil
         }
 
         // Camera photos are stored rotated with an EXIF orientation tag; Vision needs it to read
         // the text upright.
         let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
-        let orientation = (properties?[kCGImagePropertyOrientation] as? UInt32)
+        let orientation =
+            (properties?[kCGImagePropertyOrientation] as? UInt32)
             .flatMap(CGImagePropertyOrientation.init(rawValue:)) ?? .up
 
         let request = VNRecognizeTextRequest()
@@ -49,7 +57,8 @@ class TextRecognitionHandler {
         request.automaticallyDetectsLanguage = true
 
         do {
-            try VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:]).perform([request])
+            try VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
+                .perform([request])
         } catch {
             return nil
         }

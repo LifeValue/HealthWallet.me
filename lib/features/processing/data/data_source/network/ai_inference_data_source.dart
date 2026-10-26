@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
-import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_handler.dart';
+import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:injectable/injectable.dart';
 import 'package:llamadart/llamadart.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class AiInferenceDataSource {
@@ -70,7 +70,7 @@ abstract class AiInferenceDataSource {
   Future<void> disposeModel();
 
   Future<({int availableMB, int requiredMB, bool canProceed})>
-      checkMemoryHealth({
+  checkMemoryHealth({
     bool withVision = true,
     int? contextSize,
   });
@@ -156,7 +156,8 @@ class AiInferenceDataSourceImpl
   static Future<int?> _readWindowsRamMB() async {
     try {
       final result = await Process.run('powershell', [
-        '-NoProfile', '-Command',
+        '-NoProfile',
+        '-Command',
         '(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory',
       ]);
       if (result.exitCode == 0) {
@@ -180,7 +181,8 @@ class AiInferenceDataSourceImpl
     if (Platform.isWindows) {
       try {
         final result = await Process.run('powershell', [
-          '-NoProfile', '-Command',
+          '-NoProfile',
+          '-Command',
           '(Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory',
         ]);
         if (result.exitCode == 0) {
@@ -212,7 +214,8 @@ class AiInferenceDataSourceImpl
     final headroom = safeLimit - currentRssMB;
     final available = headroom > 0 ? headroom : 0;
     ProcessingLogBuffer.instance.log(
-        '[$ts][ScanAI] iOS memory: RSS=${currentRssMB}MB, deviceRAM=${deviceRam}MB, ceiling=${(_iosMemoryCeiling * 100).toInt()}%, safeLimit=${safeLimit}MB, headroom=${available}MB');
+      '[$ts][ScanAI] iOS memory: RSS=${currentRssMB}MB, deviceRAM=${deviceRam}MB, ceiling=${(_iosMemoryCeiling * 100).toInt()}%, safeLimit=${safeLimit}MB, headroom=${available}MB',
+    );
     return available;
   }
 
@@ -236,14 +239,14 @@ class AiInferenceDataSourceImpl
     int threads,
     int threadsBatch,
     int contextSize,
-  }) computeModelConfigFromProfile({
+  })
+  computeModelConfigFromProfile({
     required bool withVision,
     required DeviceProfile profile,
-  }) =>
-      DeviceCapabilityService.computeModelConfig(
-        withVision: withVision,
-        profile: profile,
-      );
+  }) => DeviceCapabilityService.computeModelConfig(
+    withVision: withVision,
+    profile: profile,
+  );
 
   Future<String> _getModelDirectory() async {
     final directory = await getApplicationDocumentsDirectory();
@@ -396,30 +399,32 @@ class AiInferenceDataSourceImpl
 
     final completer = Completer<void>();
 
-    FileDownloader().download(
-      task,
-      onProgress: (progress) {
-        final percent = (progress * 100).round();
-        onProgress(percent);
-      },
-      onStatus: (status) {
-        if (status == TaskStatus.complete) {
-          if (!completer.isCompleted) completer.complete();
-        } else if (status == TaskStatus.failed ||
-            status == TaskStatus.notFound) {
-          if (!completer.isCompleted) {
-            completer.completeError(
-              Exception('Download failed for $filename: $status'),
-            );
+    unawaited(
+      FileDownloader().download(
+        task,
+        onProgress: (progress) {
+          final percent = (progress * 100).round();
+          onProgress(percent);
+        },
+        onStatus: (status) {
+          if (status == TaskStatus.complete) {
+            if (!completer.isCompleted) completer.complete();
+          } else if (status == TaskStatus.failed ||
+              status == TaskStatus.notFound) {
+            if (!completer.isCompleted) {
+              completer.completeError(
+                Exception('Download failed for $filename: $status'),
+              );
+            }
+          } else if (status == TaskStatus.canceled) {
+            if (!completer.isCompleted) {
+              completer.completeError(
+                Exception('Download cancelled for $filename'),
+              );
+            }
           }
-        } else if (status == TaskStatus.canceled) {
-          if (!completer.isCompleted) {
-            completer.completeError(
-              Exception('Download cancelled for $filename'),
-            );
-          }
-        }
-      },
+        },
+      ),
     );
 
     await completer.future;
@@ -533,8 +538,10 @@ class AiInferenceDataSourceImpl
     final modelFile = File(modelPath);
     final fileSize = await modelFile.length();
     final profile = await _getDeviceProfile();
-    final autoConfig =
-        computeModelConfigFromProfile(withVision: withVision, profile: profile);
+    final autoConfig = computeModelConfigFromProfile(
+      withVision: withVision,
+      profile: profile,
+    );
     final effectiveGpuLayers = gpuLayers ?? autoConfig.gpuLayers;
     final effectiveThreads = threads ?? autoConfig.threads;
     final effectiveThreadsBatch = threads ?? autoConfig.threadsBatch;
@@ -545,30 +552,37 @@ class AiInferenceDataSourceImpl
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
     ProcessingLogBuffer.instance.log('[$ts][ScanAI] --- INIT MODEL ---');
     ProcessingLogBuffer.instance.log(
-        '[$ts][ScanAI] model loaded (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)');
+      '[$ts][ScanAI] model loaded (${(fileSize / 1024 / 1024).toStringAsFixed(0)}MB)',
+    );
     ProcessingLogBuffer.instance.log(
-        '[$ts][ScanAI] device: ${profile.platform}, ram=${profile.ramMB}MB, '
-        'cores=${profile.physicalCores}p/${profile.logicalCores}l, '
-        'gpu=${profile.gpuType.name}');
+      '[$ts][ScanAI] device: ${profile.platform}, ram=${profile.ramMB}MB, '
+      'cores=${profile.physicalCores}p/${profile.logicalCores}l, '
+      'gpu=${profile.gpuType.name}',
+    );
     ProcessingLogBuffer.instance.log(
-        '[$ts][ScanAI] config: ctx=$ctx, gpu_layers=$effectiveGpuLayers, '
-        'threads=$effectiveThreads, threadsBatch=$effectiveThreadsBatch, '
-        'available=${availableMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, '
-        'required~${requiredMB}MB');
+      '[$ts][ScanAI] config: ctx=$ctx, gpu_layers=$effectiveGpuLayers, '
+      'threads=$effectiveThreads, threadsBatch=$effectiveThreadsBatch, '
+      'available=${availableMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, '
+      'required~${requiredMB}MB',
+    );
 
     if (availableMB >= 0 && availableMB < requiredMB && !profile.isDesktop) {
       ProcessingLogBuffer.instance.log(
-          '[$ts][ScanAI] ABORT: only ${availableMB}MB available, need ~${requiredMB}MB');
+        '[$ts][ScanAI] ABORT: only ${availableMB}MB available, need ~${requiredMB}MB',
+      );
       throw Exception(
-          'Not enough memory to load the AI model. Available: ${availableMB}MB, required: ~${requiredMB}MB. Close other apps and try again.');
+        'Not enough memory to load the AI model. Available: ${availableMB}MB, required: ~${requiredMB}MB. Close other apps and try again.',
+      );
     }
 
     if (!await _isValidGgufFile(modelPath)) {
       ProcessingLogBuffer.instance.log(
-          '[$ts][ScanAI] ERROR: corrupt GGUF header, deleting file');
+        '[$ts][ScanAI] ERROR: corrupt GGUF header, deleting file',
+      );
       await modelFile.delete();
       throw Exception(
-          'Model file is corrupted. Please re-download the AI model.');
+        'Model file is corrupted. Please re-download the AI model.',
+      );
     }
 
     final GpuBackend backend;
@@ -579,8 +593,9 @@ class AiInferenceDataSourceImpl
     } else {
       backend = GpuBackend.auto;
     }
-    ProcessingLogBuffer.instance
-        .log('[$ts][ScanAI] creating engine with backend=$backend');
+    ProcessingLogBuffer.instance.log(
+      '[$ts][ScanAI] creating engine with backend=$backend',
+    );
 
     _engine = LlamaEngine(LlamaBackend());
 
@@ -592,18 +607,21 @@ class AiInferenceDataSourceImpl
       numberOfThreadsBatch: effectiveThreadsBatch,
     );
     ProcessingLogBuffer.instance.log(
-        '[$ts][ScanAI] loadModel: ctx=${params.contextSize}, gpuLayers=${params.gpuLayers}, backend=${params.preferredBackend}, threads=${params.numberOfThreads}, threadsBatch=${params.numberOfThreadsBatch}');
+      '[$ts][ScanAI] loadModel: ctx=${params.contextSize}, gpuLayers=${params.gpuLayers}, backend=${params.preferredBackend}, threads=${params.numberOfThreads}, threadsBatch=${params.numberOfThreadsBatch}',
+    );
 
     final loadSw = Stopwatch()..start();
     try {
       await _engine!.loadModel(modelPath, modelParams: params);
       loadSw.stop();
       ProcessingLogBuffer.instance.log(
-          '[$ts][ScanAI] model loaded in ${(loadSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
+        '[$ts][ScanAI] model loaded in ${(loadSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s',
+      );
     } catch (e) {
       loadSw.stop();
       ProcessingLogBuffer.instance.log(
-          '[$ts][ScanAI] model load FAILED after ${loadSw.elapsedMilliseconds}ms: $e');
+        '[$ts][ScanAI] model load FAILED after ${loadSw.elapsedMilliseconds}ms: $e',
+      );
       await _engine?.dispose();
       _engine = null;
       rethrow;
@@ -614,7 +632,8 @@ class AiInferenceDataSourceImpl
       if (File(mmprojPath).existsSync()) {
         if (!await _isValidGgufFile(mmprojPath)) {
           ProcessingLogBuffer.instance.log(
-              '[$ts][ScanAI] ERROR: corrupt mmproj GGUF, deleting');
+            '[$ts][ScanAI] ERROR: corrupt mmproj GGUF, deleting',
+          );
           await File(mmprojPath).delete();
           return;
         }
@@ -624,40 +643,47 @@ class AiInferenceDataSourceImpl
           _hasVisionProjector = true;
           mmprojSw.stop();
           ProcessingLogBuffer.instance.log(
-              '[$ts][ScanAI] vision projector loaded in ${(mmprojSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
+            '[$ts][ScanAI] vision projector loaded in ${(mmprojSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s',
+          );
         } catch (e) {
           mmprojSw.stop();
-          ProcessingLogBuffer.instance
-              .log('[$ts][ScanAI] vision projector FAILED: $e');
+          ProcessingLogBuffer.instance.log(
+            '[$ts][ScanAI] vision projector FAILED: $e',
+          );
         }
       } else {
         ProcessingLogBuffer.instance.log(
-            '[$ts][ScanAI] WARNING: mmproj file not found, vision disabled');
+          '[$ts][ScanAI] WARNING: mmproj file not found, vision disabled',
+        );
       }
     }
   }
 
   @override
   Future<({int availableMB, int requiredMB, bool canProceed})>
-      checkMemoryHealth({
+  checkMemoryHealth({
     bool withVision = true,
     int? contextSize,
   }) async {
     final profile = await _getDeviceProfile();
-    final autoConfig =
-        computeModelConfigFromProfile(withVision: withVision, profile: profile);
+    final autoConfig = computeModelConfigFromProfile(
+      withVision: withVision,
+      profile: profile,
+    );
     final ctx = contextSize ?? autoConfig.contextSize;
     final availableMB = Platform.isIOS
         ? await _getAvailableRamMBForIos()
         : await _getAvailableRamMB();
     final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
-    final canProceed = (availableMB < 0) || availableMB >= requiredMB || profile.isDesktop;
+    final canProceed =
+        (availableMB < 0) || availableMB >= requiredMB || profile.isDesktop;
     ProcessingLogBuffer.instance.log(
-        '[$ts][ScanAI] health check: available=${availableMB}MB, required~=${requiredMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, canProceed=$canProceed');
+      '[$ts][ScanAI] health check: available=${availableMB}MB, required~=${requiredMB}MB, rssMB=${ProcessInfo.currentRss ~/ (1024 * 1024)}, canProceed=$canProceed',
+    );
     return (
       availableMB: availableMB,
       requiredMB: requiredMB,
-      canProceed: canProceed
+      canProceed: canProceed,
     );
   }
 
@@ -667,12 +693,12 @@ class AiInferenceDataSourceImpl
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
-  }) =>
-      runVisionPromptImpl(
-          prompt: prompt,
-          imagePaths: imagePaths,
-          maxTokens: maxTokens,
-          grammar: grammar);
+  }) => runVisionPromptImpl(
+    prompt: prompt,
+    imagePaths: imagePaths,
+    maxTokens: maxTokens,
+    grammar: grammar,
+  );
 
   @override
   Future<String?> runTextPrompt({
@@ -680,6 +706,5 @@ class AiInferenceDataSourceImpl
     int? maxTokens,
     String? grammar,
   }) =>
-      runTextPromptImpl(
-          prompt: prompt, maxTokens: maxTokens, grammar: grammar);
+      runTextPromptImpl(prompt: prompt, maxTokens: maxTokens, grammar: grammar);
 }

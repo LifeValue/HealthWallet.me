@@ -55,7 +55,7 @@ class DemoDataExtractor {
       'occurrenceDateTime',
       'created',
       'recordedDate',
-      'onsetDateTime'
+      'onsetDateTime',
     ];
 
     for (final field in dateFields) {
@@ -66,7 +66,8 @@ class DemoDataExtractor {
             return date;
           } catch (e) {
             logger.w(
-                '⚠️ Failed to parse date from $field: ${resource[field]} - $e');
+              '⚠️ Failed to parse date from $field: ${resource[field]} - $e',
+            );
           }
         }
       } catch (e) {
@@ -125,12 +126,14 @@ class DemoDataExtractor {
         if (nameList.isNotEmpty && nameList[0] != null) {
           final name = nameList[0];
           if (name is Map<String, dynamic>) {
-            final prefix = name['prefix'] != null &&
+            final prefix =
+                name['prefix'] != null &&
                     name['prefix'] is List &&
                     (name['prefix'] as List).isNotEmpty
                 ? '${(name['prefix'] as List)[0]} '
                 : '';
-            final given = name['given'] != null &&
+            final given =
+                name['given'] != null &&
                     name['given'] is List &&
                     (name['given'] as List).isNotEmpty
                 ? '${(name['given'] as List)[0]} '

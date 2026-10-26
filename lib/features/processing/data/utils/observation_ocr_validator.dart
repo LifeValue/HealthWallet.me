@@ -1,7 +1,7 @@
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_observation.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:uuid/uuid.dart';
 
 class _OcrObservation {
@@ -48,12 +48,10 @@ class ObservationOcrValidator {
     final ocrObs = _parseOcrObservations(ocrText);
     if (ocrObs.isEmpty) return resources;
 
-    final observations =
-        resources.whereType<MappingObservation>().toList();
+    final observations = resources.whereType<MappingObservation>().toList();
     if (observations.isEmpty) return resources;
 
-    final others =
-        resources.where((r) => r is! MappingObservation).toList();
+    final others = resources.where((r) => r is! MappingObservation).toList();
 
     final corrected = <MappingObservation>[];
     final matchedOcrIndices = <int>{};
@@ -79,26 +77,28 @@ class ObservationOcrValidator {
             '[$_ts][OcrValidator] CORRECTED "${obs.observationName.value}": '
             '"${obs.value.value}" -> "${ocrMatch.value}"',
           );
-          corrected.add(MappingObservation(
-            id: obs.id,
-            observationName: obs.observationName,
-            value: MappedProperty(
-              value: ocrMatch.value,
-              confidenceLevel: 1,
+          corrected.add(
+            MappingObservation(
+              id: obs.id,
+              observationName: obs.observationName,
+              value: MappedProperty(
+                value: ocrMatch.value,
+                confidenceLevel: 1,
+              ),
+              unit: obs.unit.value.isNotEmpty
+                  ? obs.unit
+                  : MappedProperty(
+                      value: ocrMatch.unit,
+                      confidenceLevel: 0.8,
+                    ),
+              referenceRange: obs.referenceRange.value.isNotEmpty
+                  ? obs.referenceRange
+                  : MappedProperty(
+                      value: ocrMatch.range,
+                      confidenceLevel: 0.8,
+                    ),
             ),
-            unit: obs.unit.value.isNotEmpty
-                ? obs.unit
-                : MappedProperty(
-                    value: ocrMatch.unit,
-                    confidenceLevel: 0.8,
-                  ),
-            referenceRange: obs.referenceRange.value.isNotEmpty
-                ? obs.referenceRange
-                : MappedProperty(
-                    value: ocrMatch.range,
-                    confidenceLevel: 0.8,
-                  ),
-          ));
+          );
         } else {
           corrected.add(obs);
         }
@@ -122,25 +122,27 @@ class ObservationOcrValidator {
         '[$_ts][OcrValidator] ADDED missing "${ocrMatch.name}": '
         '${ocrMatch.value} ${ocrMatch.unit}',
       );
-      corrected.add(MappingObservation(
-        id: const Uuid().v4(),
-        observationName: MappedProperty(
-          value: ocrMatch.name,
-          confidenceLevel: 0.7,
+      corrected.add(
+        MappingObservation(
+          id: const Uuid().v4(),
+          observationName: MappedProperty(
+            value: ocrMatch.name,
+            confidenceLevel: 0.7,
+          ),
+          value: MappedProperty(
+            value: ocrMatch.value,
+            confidenceLevel: 0.7,
+          ),
+          unit: MappedProperty(
+            value: ocrMatch.unit,
+            confidenceLevel: 0.7,
+          ),
+          referenceRange: MappedProperty(
+            value: ocrMatch.range,
+            confidenceLevel: 0.7,
+          ),
         ),
-        value: MappedProperty(
-          value: ocrMatch.value,
-          confidenceLevel: 0.7,
-        ),
-        unit: MappedProperty(
-          value: ocrMatch.unit,
-          confidenceLevel: 0.7,
-        ),
-        referenceRange: MappedProperty(
-          value: ocrMatch.range,
-          confidenceLevel: 0.7,
-        ),
-      ));
+      );
     }
 
     if (corrections > 0 || added > 0) {
@@ -168,12 +170,14 @@ class ObservationOcrValidator {
         final name = _cleanName(match.group(1)!);
         if (name.isEmpty || _isExcludedName(name)) continue;
 
-        observations.add(_OcrObservation(
-          name: name,
-          value: match.group(2)!.replaceAll(',', '.'),
-          unit: match.group(3)!.trim(),
-          range: match.group(4)!.trim(),
-        ));
+        observations.add(
+          _OcrObservation(
+            name: name,
+            value: match.group(2)!.replaceAll(',', '.'),
+            unit: match.group(3)!.trim(),
+            range: match.group(4)!.trim(),
+          ),
+        );
         continue;
       }
 
@@ -182,11 +186,13 @@ class ObservationOcrValidator {
         final name = _cleanName(matchNoRange.group(1)!);
         if (name.isEmpty || _isExcludedName(name)) continue;
 
-        observations.add(_OcrObservation(
-          name: name,
-          value: matchNoRange.group(2)!.replaceAll(',', '.'),
-          unit: matchNoRange.group(3)!.trim(),
-        ));
+        observations.add(
+          _OcrObservation(
+            name: name,
+            value: matchNoRange.group(2)!.replaceAll(',', '.'),
+            unit: matchNoRange.group(3)!.trim(),
+          ),
+        );
       }
     }
 

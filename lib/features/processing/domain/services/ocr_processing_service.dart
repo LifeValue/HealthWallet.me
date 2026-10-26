@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:health_wallet/core/utils/logger.dart';
 
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
@@ -20,8 +21,9 @@ class OcrProcessingHelper {
         continue;
       }
 
-      final text =
-          await _textRecognitionService.recognizeTextFromImage(imagePath);
+      final text = await _textRecognitionService.recognizeTextFromImage(
+        imagePath,
+      );
 
       if (text.isNotEmpty) {
         pageTexts.add(text);
@@ -43,12 +45,15 @@ class OcrProcessingHelper {
         allImages.add(path);
       } else {
         try {
-          final convertedImages =
-              await _textRecognitionService.convertPdfToImagesForPreview(path);
+          final convertedImages = await _textRecognitionService
+              .convertPdfToImagesForPreview(path);
           allImages.addAll(convertedImages);
         } catch (e, stackTrace) {
           logger.e(
-              'prepareAllImages - Error converting PDF: $e', e, stackTrace);
+            'prepareAllImages - Error converting PDF: $e',
+            e,
+            stackTrace,
+          );
         }
       }
     }

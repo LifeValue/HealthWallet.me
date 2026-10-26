@@ -25,6 +25,8 @@ class MessageRouter {
 
       if (type == null) return;
 
+      // The controller is owned by _controllers and closed in dispose().
+      // ignore: close_sinks
       final controller = _controllers[type];
       if (controller != null && !controller.isClosed) {
         controller.add(payload);

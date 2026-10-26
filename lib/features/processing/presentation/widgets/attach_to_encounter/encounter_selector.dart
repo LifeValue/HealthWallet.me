@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/create_encounter_dialog.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 class EncounterSelector extends StatefulWidget {
   const EncounterSelector({super.key});
@@ -33,15 +32,15 @@ class _EncounterSelectorState extends State<EncounterSelector> {
     final encounter = await CreateEncounterDialog.show(context);
     if (encounter != null && context.mounted) {
       context.read<AttachToEncounterBloc>().add(
-            AttachToEncounterNewEncounterCreated(encounter),
-          );
+        AttachToEncounterNewEncounterCreated(encounter),
+      );
     }
   }
 
   void _handleSelect(BuildContext context, dynamic encounter) {
     context.read<AttachToEncounterBloc>().add(
-          AttachToEncounterSelected(encounter),
-        );
+      AttachToEncounterSelected(encounter),
+    );
   }
 
   @override
@@ -60,8 +59,8 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                 controller: _searchController,
                 onChanged: (value) {
                   context.read<AttachToEncounterBloc>().add(
-                        AttachToEncounterSearchQueryChanged(value),
-                      );
+                    AttachToEncounterSearchQueryChanged(value),
+                  );
                 },
                 onSubmitted: (_) => FocusScope.of(context).unfocus(),
                 style: AppTextStyle.bodyMedium,
@@ -70,7 +69,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                   isDense: true,
                   hintText: context.l10n.searchEncounters,
                   hintStyle: AppTextStyle.labelLarge.copyWith(
-                    color: context.colorScheme.onSurface.withOpacity(0.6),
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   prefixIcon: Padding(
                     padding: const EdgeInsets.all(12),
@@ -87,14 +86,16 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                           onPressed: () {
                             _searchController.clear();
                             context.read<AttachToEncounterBloc>().add(
-                                  const AttachToEncounterSearchQueryChanged(''),
-                                );
+                              const AttachToEncounterSearchQueryChanged(''),
+                            );
                           },
                           icon: Assets.icons.close.svg(
                             width: Insets.normal,
                             height: Insets.normal,
                             colorFilter: ColorFilter.mode(
-                              context.colorScheme.onSurface.withOpacity(0.6),
+                              context.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                               BlendMode.srcIn,
                             ),
                           ),
@@ -130,69 +131,75 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                       ),
                     )
                   : state.filteredEncounters.isEmpty &&
-                          state.encounter.draft == null
-                      ? SingleChildScrollView(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.inbox_outlined,
-                                size: 48,
-                                color: iconColor,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                context.l10n.noEncountersFound,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: textColor,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                context.l10n.noEncountersFoundMessage,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: iconColor,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildCreateEncounterButton(context, borderColor),
-                            ],
+                        state.encounter.draft == null
+                  ? SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inbox_outlined,
+                            size: 48,
+                            color: iconColor,
                           ),
-                        )
-                      : ListView(shrinkWrap: true, children: [
-                          if (state.encounter.draft != null)
-                            _buildEncounterCard(
-                              state.encounter.draft,
-                              state.encounter.mode == ImportMode.createNew,
+                          const SizedBox(height: 16),
+                          Text(
+                            context.l10n.noEncountersFound,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            context.l10n.noEncountersFoundMessage,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: iconColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildCreateEncounterButton(context, borderColor),
+                        ],
+                      ),
+                    )
+                  : ListView(
+                      shrinkWrap: true,
+                      children: [
+                        if (state.encounter.draft != null)
+                          _buildEncounterCard(
+                            state.encounter.draft,
+                            state.encounter.mode == ImportMode.createNew,
+                            borderColor,
+                            textColor,
+                            iconColor,
+                          ),
+                        ...state.existingEncounters.map(
+                          (encounter) {
+                            final isSelected =
+                                state.encounter.mode ==
+                                    ImportMode.linkExisting &&
+                                state.encounter.existing?.id == encounter.id;
+
+                            return _buildEncounterCard(
+                              encounter,
+                              isSelected,
                               borderColor,
                               textColor,
                               iconColor,
+                            );
+                          },
+                        ),
+                        if (state.encounter.draft == null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _buildCreateEncounterButton(
+                              context,
+                              borderColor,
                             ),
-                          ...state.existingEncounters.map(
-                            (encounter) {
-                              final isSelected = state.encounter.mode ==
-                                      ImportMode.linkExisting &&
-                                  state.encounter.existing?.id == encounter.id;
-
-                              return _buildEncounterCard(
-                                encounter,
-                                isSelected,
-                                borderColor,
-                                textColor,
-                                iconColor,
-                              );
-                            },
                           ),
-                          if (state.encounter.draft == null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: _buildCreateEncounterButton(
-                                  context, borderColor),
-                            ),
-                        ]),
+                      ],
+                    ),
             ),
           ],
         );
@@ -210,7 +217,8 @@ class _EncounterSelectorState extends State<EncounterSelector> {
     String title = '';
 
     if (encounter is MappingEncounter) {
-      title = "${context.l10n.newEncounterPrefix}: ${encounter.encounterType.value}";
+      title =
+          '${context.l10n.newEncounterPrefix}: ${encounter.encounterType.value}';
     } else if (encounter is Encounter) {
       title = encounter.displayTitle;
     } else {
@@ -224,7 +232,7 @@ class _EncounterSelectorState extends State<EncounterSelector> {
         border: BoxBorder.all(
           color: isSelected
               ? context.colorScheme.primary
-              : borderColor.withOpacity(0.3),
+              : borderColor.withValues(alpha: 0.3),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -255,12 +263,17 @@ class _EncounterSelectorState extends State<EncounterSelector> {
                 style: AppTextStyle.bodySmall.copyWith(color: textColor),
               ),
             ),
-            Radio<bool>(
-              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-              value: true,
+            RadioGroup<bool>(
               groupValue: isSelected,
               onChanged: (_) => _handleSelect(context, encounter),
-              activeColor: context.colorScheme.primary,
+              child: Radio<bool>(
+                visualDensity: const VisualDensity(
+                  horizontal: -4,
+                  vertical: -4,
+                ),
+                value: true,
+                activeColor: context.colorScheme.primary,
+              ),
             ),
           ],
         ),
