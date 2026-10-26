@@ -1,9 +1,14 @@
 {
   "proseWrap": "preserve",
+  "plugins": ["@prettier/plugin-xml"],
   "overrides": [
     {
       "files": "*.arb",
       "options": { "parser": "json" }
+    },
+    {
+      "files": "*.xml",
+      "options": { "printWidth": 120, "xmlWhitespaceSensitivity": "ignore" }
     }
   ]
 }

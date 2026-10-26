@@ -1,0 +1,2 @@
+# C and C++ in windows/runner follow Flutter's runner template, which uses Google style.
+BasedOnStyle: Google

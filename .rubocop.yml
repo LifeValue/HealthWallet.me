@@ -1,0 +1,12 @@
+# RuboCop runs as a formatter only (layout cops) for the Fastlane, Podfile and Gemfile scripts.
+AllCops:
+  DisabledByDefault: true
+  NewCops: disable
+  SuggestExtensions: false
+  TargetRubyVersion: 3.3
+
+Layout:
+  Enabled: true
+
+Layout/LineLength:
+  Enabled: false
