@@ -101,38 +101,14 @@ stages:
 # images stop at 3.44.0. A shallow clone at the release tag is far smaller than the 1.5 GB release
 # archive, and the SDK (with the tools it downloads on first run) is cached per .fvmrc.
 #
-# Kept fast: buildpack-deps already has git, curl, unzip and xz (no apt-get per run), build_runner
-# reuses its cached state so it only rebuilds what changed, and analyze and test run in parallel.
-checks:
-  stage: check
+# The Flutter SDK (~21k files) and the pub cache (~49k files) are saved only by `cache:flutter`,
+# which runs only when .fvmrc or pubspec.lock changes (and on a branch's first pipeline).
+# `checks` just restores them: re-zipping both after every run took over 10 minutes.
+.flutter_job:
   image: buildpack-deps:bookworm
   variables:
     PUB_CACHE: "$CI_PROJECT_DIR/.pub-cache"
     FLUTTER_HOME: "$CI_PROJECT_DIR/.flutter-sdk"
-  cache:
-    - key:
-        files: [.fvmrc]
-        prefix: flutter-sdk
-      paths:
-        - .flutter-sdk
-    - key: pub-$CI_COMMIT_REF_SLUG
-      fallback_keys:
-        - pub-develop
-        - pub-master
-      paths:
-        - .pub-cache
-      when: always
-    # build_runner's asset graph and the files it generated (all gitignored).
-    - key: build-runner-$CI_COMMIT_REF_SLUG
-      fallback_keys:
-        - build-runner-develop
-        - build-runner-master
-      paths:
-        - .dart_tool/build/
-        - lib/**/*.g.dart
-        - lib/**/*.freezed.dart
-        - lib/**/*.gr.dart
-        - lib/**/*.config.dart
   before_script:
     - *flutter_version
     - |
@@ -148,6 +124,66 @@ checks:
     - mkdir -p assets/certs/android
     - touch .env
     - flutter pub get --enforce-lockfile
+
+.flutter_sdk_cache: &flutter_sdk_cache
+  key:
+    files: [.fvmrc]
+    prefix: flutter-sdk
+  paths:
+    - .flutter-sdk
+
+.pub_cache: &pub_cache
+  key:
+    files: [pubspec.lock]
+    prefix: pub
+  paths:
+    - .pub-cache
+
+# Fills the Flutter SDK and pub caches for `checks`, including the Linux host tools that
+# flutter test uses. If the runner's caches were cleared, run a pipeline with
+# REFRESH_FLUTTER_CACHE=true (CI/CD → Run pipeline) to fill them again.
+cache:flutter:
+  stage: .pre
+  extends: .flutter_job
+  rules:
+    - if: $REFRESH_FLUTTER_CACHE == "true"
+    - changes: [.fvmrc, pubspec.lock]
+  cache:
+    - <<: *flutter_sdk_cache
+      policy: pull-push
+    - <<: *pub_cache
+      policy: pull-push
+  script:
+    - flutter precache --linux --no-android --no-ios
+
+# Kept fast: buildpack-deps already has git, curl, unzip and xz (no apt-get per run), the SDK and
+# pub caches are only restored, build_runner reuses its cached state so it only rebuilds what
+# changed, and analyze and test run in parallel.
+checks:
+  stage: check
+  extends: .flutter_job
+  needs:
+    - job: cache:flutter
+      optional: true
+  cache:
+    - <<: *flutter_sdk_cache
+      policy: pull
+    - <<: *pub_cache
+      policy: pull
+    # build_runner's asset graph and the files it generated (all gitignored); small, so saved
+    # after every run.
+    - key: build-runner-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - build-runner-develop
+        - build-runner-master
+      paths:
+        - .dart_tool/build/
+        - lib/**/*.g.dart
+        - lib/**/*.freezed.dart
+        - lib/**/*.gr.dart
+        - lib/**/*.config.dart
+  before_script:
+    - !reference [.flutter_job, before_script]
     # Incremental thanks to the cache; a stale cached output is replaced, never a failure.
     - dart run build_runner build --delete-conflicting-outputs
   script:
