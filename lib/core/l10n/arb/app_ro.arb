@@ -1,12 +1,4 @@
 {
-  "appTitle": "HealthWallet.me",
-  "homeTitle": "Acasă",
-  "profileTitle": "Profil",
-  "settingsTitle": "Setări",
-  "welcomeMessage": "Bine ai venit la HealthWallet.me!",
-  "onboardingBack": "Înapoi",
-  "onboardingGetStarted": "Începe",
-  "onboardingNext": "Următorul",
   "onboardingWelcomeTitle": "un Portofel de Sănătate pentru Tine!",
   "onboardingWelcomeSubtitle": "<link>HealthWallet.me</link> se conectează deja la peste 100.000 de furnizori de servicii medicale din SUA și ne extindem în noi țări.",
   "onboardingWelcomeDescription": "Adaugă înregistrări de la orice furnizor, importă documente manual sau solicită suport pentru țara ta.",
@@ -20,18 +12,10 @@
   "onboardingSyncTitle": "Securitate și Confidențialitate",
   "onboardingSyncSubtitle": "<link>HealthWallet.me</link> este construit cu confidențialitatea în centru. Datele tale medicale sunt criptate și stocate doar pe telefonul tău, niciodată pe servere cloud.",
   "onboardingSyncDescription": "Vizualizează istoricul medical în modul avion, în străinătate sau fără internet — înregistrările tale rămân cu tine oriunde mergi. Adaugă un nivel suplimentar de securitate activând autentificarea biometrică.",
-  "onboardingBiometricText": "Poți bloca HealthWallet cu securitate biometrică precum Face ID sau scanare de amprentă.",
   "homeHi": "Salut, ",
-  "homeLastSynced": "Ultima sincronizare: ",
-  "homeNever": "Niciodată",
   "homeVitalSigns": "Semne vitale",
-  "homeOverview": "Înregistrări Medicale",
   "homeSource": "Sursă:",
-  "homeAll": "Toate",
-  "homeRecentRecords": "Înregistrări Recente",
-  "homeViewAll": "Vezi Tot",
   "homeNA": "N/A",
-  "bluetoothRequired": "Activează Bluetooth pentru a utiliza Partajarea în proximitate",
   "dashboardTitle": "Panou",
   "recordsTitle": "Înregistrări",
   "goToRecords": "Mergi la Înregistrări",
@@ -42,32 +26,14 @@
   "cancelSyncMessage": "Ești sigur că vrei să anulezi sincronizarea? Aceasta va opri procesul curent de sincronizare.",
   "yesCancel": "Da, Anulează",
   "continueSync": "Continuă Sincronizarea",
-  "syncAgain": "Sincronizează Din Nou",
-  "syncFailed": "Sincronizare eșuată: ",
   "tryAgain": "Încearcă Din Nou",
-  "syncedAt": "Sincronizat la: ",
-  "pasteSyncData": "Lipește Date de Sincronizare",
-  "submit": "Trimite",
-  "hideManualEntry": "Ascunde Introducerea Manuală",
-  "enterDataManually": "Introdu datele manual",
-  "medicalRecords": "Înregistrări Medicale",
   "searchRecordsHint": "Caută înregistrări, doctori, locații...",
-  "detailsFor": "Detalii pentru ",
   "patientId": "CNP: ",
   "age": "Vârstă",
   "sex": "Sex",
   "bloodType": "Grupa Sanguină",
-  "lastSyncedProfile": "Ultima sincronizare: acum 2 ore",
-  "syncLatestRecords": "Sincronizează cele mai recente înregistrări medicale de la furnizorul tău de servicii de sănătate.",
-  "scanToSync": "Scanează pentru Sincronizare",
   "theme": "Temă",
-  "pleaseAuthenticate": "Te rugăm să te autentifici pentru a continua",
   "authenticate": "Autentifică-te",
-  "bypass": "Ocolește",
-  "onboardingAuthTitle": "Activează Autentificarea Biometrică",
-  "onboardingAuthDescription": "Adaugă un nivel suplimentar de securitate contului tău activând autentificarea biometrică.",
-  "onboardingAuthEnable": "Activează Acum",
-  "onboardingAuthSkip": "Omite Deocamdată",
   "biometricAuthentication": "Autentificare Biometrică",
   "privacyPolicy": "Politica de Confidențialitate",
   "setupDeviceSecurity": "Configurează Securitatea Dispozitivului",
@@ -82,32 +48,11 @@
   "settingsNotAvailable": "Setări Indisponibile",
   "settingsNotAvailableMessage": "Nu s-au putut deschide setările dispozitivului automat. Te rugăm manual:\n\n1. Deschide Setările\n2. Mergi la Securitate → Biometrie\n3. Adaugă deblocare cu amprentă sau recunoaștere facială\n4. Revino la această aplicație și încearcă din nou",
   "ok": "OK",
-  "scanCode": "Scanează codul",
   "or": "sau",
-  "manualSyncMessage": "Cod QR brut",
-  "pasteSyncDataHint": "Lipește codul QR brut",
   "connect": "Conectare",
-  "scanNewQRCode": "Scanează Cod QR Nou",
   "loadDemoData": "Încarcă Date Demo",
-  "syncData": "Sincronizează Date",
   "noMedicalRecordsYet": "Nu există înregistrări medicale încă",
-  "noRecordTypeYet": "Nu există {recordType} încă",
-  "@noRecordTypeYet": {
-    "placeholders": {
-      "recordType": {
-        "type": "Object"
-      }
-    }
-  },
   "loadDemoDataMessage": "Încarcă date demo pentru a explora aplicația sau sincronizează înregistrările tale medicale reale",
-  "syncDataMessage": "Sincronizează sau actualizează datele pentru a vizualiza înregistrările {recordType}",
-  "@syncDataMessage": {
-    "placeholders": {
-      "recordType": {
-        "type": "Object"
-      }
-    }
-  },
   "retry": "Reîncearcă",
   "pleaseEnterSourceName": "Te rugăm să introduci un nume de sursă",
   "selectBirthDate": "Selectează data nașterii",
@@ -116,11 +61,6 @@
   "female": "Feminin",
   "preferNotToSay": "Prefer să nu spun",
   "errorUpdatingSourceLabel": "Eroare la actualizarea etichetei sursei",
-  "noChangesDetected": "Nu s-au detectat modificări",
-  "pleaseSelectBirthDate": "Te rugăm să selectezi data nașterii",
-  "errorSavingPatientData": "Eroare la salvarea datelor pacientului",
-  "walletHolder": "Deținător Portofel",
-  "walletHolderDescription": "Acest pacient este proprietarul principal al acestui portofel de sănătate",
   "getStarted": "Începe",
   "failedToUpdateDisplayName": "Nu s-a putut actualiza numele afișat",
   "actionCannotBeUndone": "Această acțiune nu poate fi anulată.",
@@ -128,22 +68,6 @@
   "deleteNoteConfirm": "Ești sigur că vrei să ștergi această notă?",
   "deleteAttachmentConfirm": "Ești sigur că vrei să ștergi acest atașament?",
   "deleteRecordsConfirm": "Ești sigur că vrei să ștergi {count} elemente?",
-  "confirmDeleteFile": "Ești sigur că vrei să ștergi \"{filename}\"?",
-  "@confirmDeleteFile": {
-    "placeholders": {
-      "filename": {
-        "type": "Object"
-      }
-    }
-  },
-  "selectAtLeastOne": "Selectează cel puțin un {type} pentru a continua.",
-  "@selectAtLeastOne": {
-    "placeholders": {
-      "type": {
-        "type": "Object"
-      }
-    }
-  },
   "editSourceLabel": "Editează eticheta sursei",
   "saveDetails": "Salvează detaliile",
   "editDetails": "Editează detaliile",
@@ -155,37 +79,14 @@
   "attachFile": "Atașează fișier",
   "overview": "Privire de ansamblu",
   "recentRecords": "Înregistrări recente",
-  "chooseToDisplay": "Alege ce {type} vrei să vezi pe panoul tău.",
-  "@chooseToDisplay": {
-    "placeholders": {
-      "type": {
-        "type": "Object"
-      }
-    }
-  },
   "displayName": "Nume afișat",
-  "bloodTypeAPositive": "A pozitiv",
-  "bloodTypeANegative": "A negativ",
-  "bloodTypeBPositive": "B pozitiv",
-  "bloodTypeBNegative": "B negativ",
-  "bloodTypeABPositive": "AB pozitiv",
-  "bloodTypeABNegative": "AB negativ",
-  "bloodTypeOPositive": "O pozitiv",
-  "bloodTypeONegative": "O negativ",
-  "serverError": "Ceva nu a funcționat pe server",
-  "serverTimeout": "Timeout server",
-  "connectionError": "Eroare de conexiune",
   "unknownSource": "Sursă Necunoscută",
-  "synchronization": "Sincronizare",
   "desktopSyncAndBackup": "Desktop Sync & Backup",
   "desktopSyncDescription": "Sincronizează și salvează datele tale medicale.\nPredă documente pentru procesare digitală pe desktop.",
   "processOnDesktop": "Procesează pe desktop",
-  "sendToDesktop": "Trimite pe desktop",
   "continueImporting": "Continuă importul",
   "noAiModelOnDesktop": "Nu există model AI pe Desktop. Te rugăm să descarci modelul AI pe aplicația desktop mai întâi.",
   "syncMedicalRecords": "Sincronizează Înregistrări Medicale",
-  "syncLatestMedicalRecords": "Sincronizează cele mai recente înregistrări medicale de la furnizorul tău de servicii de sănătate folosind un token JWT securizat.",
-  "neverSynced": "Niciodată sincronizat",
   "lastSynced": "Ultima sincronizare",
   "tapToSelectPatient": "Apasă pentru a selecta pacientul",
   "preferences": "Preferințe",
@@ -203,7 +104,6 @@
   "gender": "Gen",
   "loading": "Se încarcă...",
   "source": "Sursă",
-  "showAll": "Arată Tot",
   "records": "Înregistrări",
   "vitals": "Semne Vitale",
   "selectAll": "Selectează tot",
@@ -212,10 +112,8 @@
   "noRecordsFound": "Nu s-au găsit înregistrări",
   "noRecords": "Fără înregistrări",
   "tryDifferentKeywords": "Încearcă să cauți cu cuvinte cheie diferite",
-  "clearAllFilters": "Șterge tot",
   "syncingData": "Se sincronizează datele",
   "syncingMessage": "Poate dura puțin. Te rugăm să aștepți.",
-  "scanQRMessage": "Scanează codul QR de pe serverul tău Fasten Health pentru a crea o nouă conexiune de sincronizare.",
   "viewAll": "Vezi tot",
   "vitalSigns": "Semne Vitale",
   "longPressToReorder": "Apasă lung pentru a muta și reordona cardurile, sau filtrează pentru a selecta care apar pe panoul tău.",
@@ -227,7 +125,6 @@
   "attachToEncounter": "Atașează la Consultație",
   "continueProcessing": "Continuă Procesarea",
   "recordsSavedTitle": "Salvat cu succes",
-  "recordsSavedMessage": "Înregistrările tale de sănătate au fost salvate cu succes.",
   "whatNextQuestion": "Ce ai dori să faci în continuare?",
   "continueScanning": "Continuă Scanarea",
   "effectiveDate": "Data Efectivă",
@@ -264,19 +161,9 @@
   "aiModelUnlockDescription": "Pentru a citi și organiza automat documentele tale medicale, această funcție folosește un model AI securizat, pe dispozitiv.\n\n**Datele tale rămân private pe dispozitivul tău.**",
   "aiModelDownloadInfo": "Pentru a începe, alege și descarcă una din cele două opțiuni AI disponibile. Aceasta este o configurare unică.",
   "setup": "Configurare",
-  "patientSetupTitle": "Configurează-ți Profilul",
   "patientSetupSubtitle": "Personalizează portofelul tău de sănătate cu informațiile tale",
-  "onboardingSetupTitle": "Configurează Portofelul de Sănătate",
-  "onboardingSetupBody": "Creează-ți profilul personal de sănătate pentru a începe cu HealthWallet",
-  "onboardingDemoTitle": "Încearcă Date Demo",
-  "onboardingDemoBody": "Explorează aplicația cu înregistrări medicale de exemplu pentru a vedea cum funcționează",
-  "onboardingSyncTitle2": "Sincronizează Înregistrările",
-  "onboardingSyncBody": "Conectează-te la furnizorii tăi de servicii de sănătate pentru a importa înregistrările medicale reale",
   "givenName": "Prenume",
   "familyName": "Nume de Familie",
-  "skipForNow": "Omite deocamdată",
-  "setUpProfile": "Configurează",
-  "useDefaults": "Implicit",
   "syncPlaceholderTutorialStep1": "Completează-ți profilul pentru a debloca toate funcțiile.",
   "syncPlaceholderTutorialStep2": "Nu ești pregătit să importi? Încarcă date demo pentru a vedea cum arată aplicația în acțiune.",
   "syncPlaceholderTutorialStep3": "Menține portofelul de pe desktop și mobil actualizat.",
@@ -341,13 +228,9 @@
   "threadsDescription": "Numărul de fire CPU pentru inferență. Mai multe fire = mai rapid, dar consumă mai multă baterie.",
   "recommended": "Recomandat",
   "tokenPresetLow": "Scăzut",
-  "tokenPresetLowDescription": "Cel mai bun pentru fișiere mici și sarcini rapide.\nFolosește cele mai puține resurse și procesează cel mai rapid.",
   "tokenPresetMedium": "Mediu",
-  "tokenPresetMediumDescription": "Bun pentru majoritatea cazurilor.\nEchilibrează dimensiunea fișierului, timpul de procesare și utilizarea resurselor.",
   "tokenPresetHigh": "Ridicat",
-  "tokenPresetHighDescription": "Cel mai bun pentru fișiere mari și procesare complexă.\nFolosește mai multe resurse și baterie, și durează mai mult.",
   "tokenPresetCustom": "Personalizat",
-  "tokenPresetCustomDescription": "Setează cantitatea personalizată de token-uri pe care vrei să o folosești.",
   "setTokens": "Setează",
   "tokens": "token-uri",
   "contextSizeLabel": "Dimensiune Context",
@@ -361,30 +244,29 @@
   "processingStep2NotAvailableTitle": "Scanare Profundă indisponibilă pe acest dispozitiv",
   "processingStep2NotEnoughRam": "Acest dispozitiv nu are suficientă memorie pentru Scanare Profundă. Procesarea bazată pe text este încă disponibilă și funcționează bine pentru majoritatea documentelor.",
   "emergencyContact": "Contact Telefonic de Urgență",
-  "emergencyContactHint": "Număr de telefon",
-  "searchCountry": "Caută țara...",
   "rotatePage": "Rotește",
   "deletePage": "Șterge",
   "deletePageConfirmTitle": "Șterge Pagina",
   "deletePageConfirmMessage": "Această pagină va fi eliminată din document.",
-  "cannotDeleteLastPage": "Nu se poate șterge ultima pagină",
-  "pageRotated": "Pagină rotită",
   "regionAndUnits": "Limbă și Unități",
   "country": "Țara",
-  "patientModifiedNewWillBeCreated": "Modificat — va fi creat un pacient nou",
   "patientModifiedUpdating": "Modificare pacient existent: {name}",
   "patientSavingModified": "Salvare pacient modificat: {name}",
   "dropModificationsTitle": "Renunți la modificări?",
   "dropModificationsMessage": "Modificările aduse câmpurilor pacientului vor fi pierdute.",
-  "modifyPatientTitle": "Modifici pacientul?",
-  "modifyPatientMessage": "Datele pacientului existent vor fi actualizate cu modificările tale.",
   "scanIdCard": "Scanează carte de identitate sau pașaport",
   "scanIdCardDescription": "Completare automată din document. Datele rămân pe dispozitivul tău.",
   "newLabel": "Nou",
   "newPatient": "Pacient nou",
   "patientChangedTo": "Schimbat la: {name}",
   "patientMatchFound": "Pacient existent: {name}",
-  "@patientMatchFound": { "placeholders": { "name": { "type": "String" } } },
+  "@patientMatchFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "language": "Limbă",
   "systemDefault": "Implicit Sistem",
   "regionUS": "SUA",
@@ -400,8 +282,6 @@
       }
     }
   },
-  "downloadingVisionModel": "Se descarcă modelul de viziune...",
-
   "shareUnknownDevice": "Dispozitiv Necunoscut",
   "shareViewOnlyBanner": "DOAR VIZUALIZARE - Datele vor fi șterse când închizi sesiunea sau părăsești zona de proximitate",
   "shareViewOnlyBannerViewing": "DOAR VIZUALIZARE - Datele vor fi șterse la ieșire",
@@ -615,15 +495,6 @@
       }
     }
   },
-  "shareExtensionDurationRequested": "{duration} solicitat",
-  "@shareExtensionDurationRequested": {
-    "placeholders": {
-      "duration": {
-        "type": "String"
-      }
-    }
-  },
-
   "desktopSyncNotYet": "Nu încă",
   "desktopSyncTransfer": "Transfer",
   "desktopSyncTransferValue": "{sentRows} trimise, {receivedRows} primite",
@@ -802,13 +673,9 @@
   "desktopHandoverSuccess": "Predat pe desktop",
   "desktopClose": "Închide",
   "desktopContinueImporting": "Continuă importul",
-  "desktopConnectToDesktop": "Conectează la desktop",
-  "desktopCouldNotReconnect": "Nu s-a putut reconecta. Scanează codul QR pentru a asocia din nou.",
-  "desktopScanQrToPair": "Scanează codul QR din aplicația desktop pentru a asocia.",
   "desktopHandoverToDesktop": "Predare pe desktop",
   "desktopHandoverProcessingMessage": "Procesarea este în curs. Predarea va anula procesarea curentă și va trimite fișierele pe desktop.",
   "desktopHandover": "Predare",
-
   "attachedDocuments": "Documente atașate",
   "cameraPermissionRequired": "Permisiune cameră necesară",
   "cameraPermissionRequiredMessage": "Această aplicație necesită acces la cameră pentru scanare. Te rugăm să acorzi permisiunea.",
@@ -918,7 +785,6 @@
   "labelValue": "Valoare",
   "labelUnit": "Unitate",
   "labelReferenceRange": "Interval de referință",
-
   "permissionsRequired": "Permisiuni necesare",
   "recordsSelectedCount": "{count} selectate",
   "@recordsSelectedCount": {
@@ -1043,7 +909,6 @@
     }
   },
   "link": "Leagă",
-
   "connectionLabel": "Conexiune",
   "connectionStatusConnected": "Conectat",
   "connectionStatusConnecting": "Se conectează...",
