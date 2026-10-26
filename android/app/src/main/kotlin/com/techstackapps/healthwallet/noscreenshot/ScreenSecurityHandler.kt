@@ -6,9 +6,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
-class ScreenSecurityHandler(
-    private val window: Window
-) {
+class ScreenSecurityHandler(private val window: Window) {
 
     fun register(flutterEngine: FlutterEngine) {
         val messenger = flutterEngine.dartExecutor.binaryMessenger
@@ -22,10 +20,12 @@ class ScreenSecurityHandler(
                     )
                     result.success(null)
                 }
+
                 "disable" -> {
                     window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                     result.success(null)
                 }
+
                 else -> result.notImplemented()
             }
         }

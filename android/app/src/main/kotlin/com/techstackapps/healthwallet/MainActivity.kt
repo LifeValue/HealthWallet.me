@@ -20,37 +20,54 @@ class MainActivity : FlutterFragmentActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         ScreenSecurityHandler(window).register(flutterEngine)
-        textRecognition = TextRecognitionHandler(applicationContext).also { it.register(flutterEngine) }
+        textRecognition =
+            TextRecognitionHandler(applicationContext).also { it.register(flutterEngine) }
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.techstackapps.healthwallet/bluetooth")
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.techstackapps.healthwallet/bluetooth"
+        )
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "isBluetoothEnabled" -> {
-                        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+                        val bluetoothManager = getSystemService(
+                            Context.BLUETOOTH_SERVICE
+                        ) as? BluetoothManager
                         val adapter = bluetoothManager?.adapter
                         result.success(adapter?.isEnabled == true)
                     }
+
                     "requestEnable" -> {
                         val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                         startActivity(intent)
                         result.success(null)
                     }
+
                     else -> result.notImplemented()
                 }
             }
 
-        EventChannel(flutterEngine.dartExecutor.binaryMessenger, "com.techstackapps.healthwallet/bluetooth_state")
+        EventChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.techstackapps.healthwallet/bluetooth_state"
+        )
             .setStreamHandler(object : EventChannel.StreamHandler {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
                     bluetoothReceiver = object : BroadcastReceiver() {
                         override fun onReceive(context: Context?, intent: Intent?) {
                             if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
-                                val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+                                val state = intent.getIntExtra(
+                                    BluetoothAdapter.EXTRA_STATE,
+                                    BluetoothAdapter.ERROR
+                                )
                                 events?.success(state == BluetoothAdapter.STATE_ON)
                             }
                         }
                     }
-                    registerReceiver(bluetoothReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+                    registerReceiver(
+                        bluetoothReceiver,
+                        IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+                    )
                 }
 
                 override fun onCancel(arguments: Any?) {

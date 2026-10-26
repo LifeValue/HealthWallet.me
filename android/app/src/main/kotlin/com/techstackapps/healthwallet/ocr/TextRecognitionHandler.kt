@@ -13,14 +13,15 @@ import java.io.File
  * On-device OCR with ML Kit (Latin script), on the same `dev.lifevalue.healthwallet/ocr`
  * channel the iOS, macOS and Windows runners implement.
  */
-class TextRecognitionHandler(
-    private val context: Context
-) {
+class TextRecognitionHandler(private val context: Context) {
 
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
     fun register(flutterEngine: FlutterEngine) {
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
+                call,
+                result
+            ->
             if (call.method != "recognizeText") {
                 result.notImplemented()
                 return@setMethodCallHandler
