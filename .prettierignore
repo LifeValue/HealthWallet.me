@@ -25,7 +25,6 @@ windows/flutter/
 # Data kept byte for byte
 assets/
 LICENSE.md
-test_sync_data.json
 
 # Unused GitHub workflows, left untouched by policy
 .github/
