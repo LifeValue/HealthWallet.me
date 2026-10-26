@@ -45,7 +45,7 @@ List<BenchDoc> loadBenchDocs(Directory dataset) {
 /// caller can go on with the next document.
 ///
 /// Mirrors `ProcessingHandler`: phase 1, `docCategory` from the container,
-/// then phase 2 with every yielded batch appended. [pref] returns the tuning
+/// then phase 2, keeping its last yielded snapshot. [pref] returns the tuning
 /// pref for a `SharedPrefsConstants` key (null on desktop, as in the app).
 Future<RunRecord> runBenchDocument({
   required BenchDoc doc,
@@ -88,8 +88,9 @@ Future<RunRecord> runBenchDocument({
     final docCategory = container is MappingDiagnosticReport ? 'lab_report' : 'visit';
 
     recorder.phase = 'remaining';
-    // ProcessingHandler appends every yielded batch to the session.
-    final remaining = <MappingResource>[];
+    // Each yield is a snapshot of every phase-2 resource so far; the last one
+    // is what ProcessingHandler leaves in the session.
+    var remaining = <MappingResource>[];
     await for (final (resources, _) in repository.mapRemainingResources(
       degraded,
       documentCategory: docCategory,
@@ -99,7 +100,7 @@ Future<RunRecord> runBenchDocument({
       threads: pref(SharedPrefsConstants.aiThreads),
       contextSize: pref(SharedPrefsConstants.aiContextSize),
     )) {
-      remaining.addAll(resources);
+      remaining = resources;
     }
 
     for (final resource in <MappingResource>[patient, container, ...remaining]) {
@@ -144,6 +145,7 @@ Future<RunRecord> runBenchDocument({
     model: model,
     platform: Platform.operatingSystem,
     useVision: useVision,
+    gpuLayers: recorder.gpuLayersOverride,
     predictedResources: predicted,
     generations: List.of(recorder.generations),
     peakRssBytes: peakRss,

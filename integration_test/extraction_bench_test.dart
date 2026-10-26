@@ -2,9 +2,10 @@
 // the app's documents directory and writes one prediction record per document.
 //
 //   fvm flutter test integration_test/extraction_bench_test.dart -d macos \
+//     [--no-uninstall on a phone, or the results are deleted with the app] \
 //     --dart-define=BENCH_MODEL=qwen [--dart-define=BENCH_VISION=false] \
 //     [--dart-define=BENCH_RUN_ID=<id>] [--dart-define=BENCH_LIMIT=<n>] \
-//     [--dart-define=BENCH_COOLDOWN_S=<seconds>]
+//     [--dart-define=BENCH_COOLDOWN_S=<seconds>] [--dart-define=BENCH_GPU_LAYERS=<n>]
 //
 // Input:  <documents>/extraction_bench/dataset/<split>/<docId>/
 //         {document.pdf | page-*.png | page-*.jpg, meta.json}
@@ -39,6 +40,8 @@ const _useVision = bool.fromEnvironment('BENCH_VISION', defaultValue: true);
 const _runIdDefine = String.fromEnvironment('BENCH_RUN_ID');
 const _limit = int.fromEnvironment('BENCH_LIMIT');
 const _cooldownSeconds = int.fromEnvironment('BENCH_COOLDOWN_S');
+// A string, so that 0 (CPU only) is distinguishable from unset.
+const _gpuLayersDefine = String.fromEnvironment('BENCH_GPU_LAYERS');
 
 final _pageImage = RegExp(r'^page-(\d+)\.(png|jpe?g)$', caseSensitive: false);
 
@@ -64,6 +67,10 @@ void main() {
     if (variant == null) {
       fail('Set --dart-define=BENCH_MODEL=<${AiModelVariant.values.map((v) => v.name).join('|')}> '
           '(got "$_model").');
+    }
+    final gpuLayers = _gpuLayersDefine.isEmpty ? null : int.tryParse(_gpuLayersDefine);
+    if (_gpuLayersDefine.isNotEmpty && (gpuLayers == null || gpuLayers < 0)) {
+      fail('BENCH_GPU_LAYERS must be a non-negative integer (got "$_gpuLayersDefine").');
     }
 
     final documents = await getApplicationDocumentsDirectory();
@@ -96,7 +103,7 @@ void main() {
     final previousModel = prefs.getString(SharedPrefsConstants.aiSelectedModel);
     await prefs.setString(SharedPrefsConstants.aiSelectedModel, variant.name);
 
-    final recorder = RecordingAiInferenceDataSource(AiInferenceDataSourceImpl(prefs));
+    final recorder = RecordingAiInferenceDataSource(AiInferenceDataSourceImpl(prefs), gpuLayersOverride: gpuLayers);
     final ocr = getIt<TextRecognitionService>();
     final repository = ProcessingRepositoryImpl(
       recorder,

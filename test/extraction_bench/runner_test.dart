@@ -89,8 +89,11 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
     remainingCategories.add(documentCategory);
     final hb = MappingResource.fromJson(
         {'resourceType': 'Observation', 'observationName': 'Hemoglobina', 'value': '13,5', 'unit': 'g/dL'});
+    final wbc = MappingResource.fromJson(
+        {'resourceType': 'Observation', 'observationName': 'Leucocite', 'value': '6,2', 'unit': '10^9/L'});
+    // Snapshots, as the production stream yields them: each holds everything so far.
     yield ([hb], 0.5);
-    yield ([hb], 1.0);
+    yield ([hb, wbc], 1.0);
   }
 }
 
@@ -100,6 +103,18 @@ class _DisposableFakeDataSource extends FakeAiInferenceDataSource {
 
   @override
   Future<void> disposeModel() async => disposed++;
+}
+
+class _InitRecordingFakeDataSource extends FakeAiInferenceDataSource {
+  _InitRecordingFakeDataSource() : super(const []);
+  final gpuLayers = <int?>[];
+  final withVision = <bool>[];
+
+  @override
+  Future<void> initModel({bool withVision = true, int? contextSize, int? gpuLayers, int? threads}) async {
+    this.gpuLayers.add(gpuLayers);
+    this.withVision.add(withVision);
+  }
 }
 
 void main() {
@@ -154,6 +169,42 @@ void main() {
     expect(parsed.generations.map((g) => g.strictJsonValid), [true, false]);
     expect(parsed.generations[1].imageEncodeMs, 412);
     expect(parsed.error, isNull);
+  });
+
+  test('the GPU-layer override replaces every model load and is recorded', () async {
+    final inner = _InitRecordingFakeDataSource();
+    await RecordingAiInferenceDataSource(inner).initModel(withVision: false, gpuLayers: 4);
+    final overridden = RecordingAiInferenceDataSource(inner, gpuLayersOverride: 0);
+    await overridden.initModel(withVision: false);
+    await overridden.initModel(gpuLayers: 4);
+    expect(inner.gpuLayers, [4, 0, 0]);
+    expect(inner.withVision, [false, false, true]);
+
+    final record = RunRecord(
+      docId: 'd',
+      runId: 'r',
+      model: 'qwen',
+      platform: 'ios',
+      useVision: false,
+      gpuLayers: overridden.gpuLayersOverride,
+      predictedResources: const [],
+      generations: const [],
+      peakRssBytes: 1,
+      wallMs: 2,
+    );
+    expect(record.toJson()['gpuLayers'], 0);
+    expect(PredictionRecord.fromJson(jsonDecode(jsonEncode(record.toJson())) as Map<String, dynamic>).gpuLayers, 0);
+    expect(RunRecord(
+      docId: 'd',
+      runId: 'r',
+      model: 'qwen',
+      platform: 'ios',
+      useVision: false,
+      predictedResources: const [],
+      generations: const [],
+      peakRssBytes: 1,
+      wallMs: 2,
+    ).toJson(), isNot(contains('gpuLayers')));
   });
 
   test('pipeline-shaped predictions are read by the field specs', () {
@@ -360,9 +411,11 @@ void main() {
     expect(inner.disposed, 1);
     expect(records[1].error, isNull);
     expect(repository.remainingCategories, ['lab_report']);
-    // Patient, the DiagnosticReport container and both yielded batches.
+    // Patient, the DiagnosticReport container and the last snapshot, without
+    // repeating the first one.
     expect(records[1].predictedResources.map((r) => r['resourceType']),
         ['Patient', 'DiagnosticReport', 'Observation', 'Observation']);
+    expect(records[1].predictedResources.skip(2).map((r) => r['code']['text']), ['Hemoglobina', 'Leucocite']);
     expect(File(p.join(ok.dir, 'page-1.png')).existsSync(), isTrue, reason: 'dataset images are kept');
     // The report had no date, so the DateTime.now() fill-in is dropped.
     expect(records[1].predictedResources[1], isNot(contains('issued')));

@@ -38,7 +38,7 @@ fvm dart run tool/extraction_bench/bench.dart compare --dataset build/extraction
   --b build/extraction_bench/results/<runB>/predictions.jsonl --out build/extraction_bench/compare/<runA>-vs-<runB>
 ```
 
-`generate` options: `--seed` (default 1234), `--per-cell` documents per language × family (default 10), `--langs en,es,de,ro`, `--families lab_report,discharge_letter`, `--font-dir` (default `assets/font/matter-font`; run from the repository root). `score` and `compare` take `--seed` (default 1234) for the bootstrap. `generate` refuses a non-empty `--out`, and empty or repeated `--langs` / `--families`. Every command exits non-zero with a message on bad input.
+`generate` options: `--seed` (default 1234), `--per-cell` documents per language × family (default 10), `--langs en,es,de,ro`, `--families lab_report,discharge_letter`, `--font-dir` (default `assets/font/matter-font`; run from the repository root). `score` and `compare` take `--seed` (default 1234) for the bootstrap. `score --only-predicted` scores only the documents that have a record, for a `BENCH_LIMIT` run; without it the rest of the dataset counts as missing and pulls the means down. `generate` refuses a non-empty `--out`, and empty or repeated `--langs` / `--families`. Every command exits non-zero with a message on bad input.
 
 ## Runner
 
@@ -47,10 +47,11 @@ fvm dart run tool/extraction_bench/bench.dart compare --dataset build/extraction
 | Define | Default | Meaning |
 |---|---|---|
 | `BENCH_MODEL` | required | `AiModelVariant` name: `qwen`, `medGemma`, `qwen7b` |
-| `BENCH_VISION` | `true` | `useVision` for phase 2 (phase 1 always falls back to vision as in production) |
+| `BENCH_VISION` | `true` | `useVision` for phase 2 (phase 1 always falls back to vision as in production). The app defaults to vision on desktop and text-only on phones (AI settings → vision off), so pass `false` for a phone run that matches what users get |
 | `BENCH_RUN_ID` | `<model>-<os>-<UTC timestamp>` | Results folder; re-using an id appends, and `score` keeps the last record per document |
 | `BENCH_LIMIT` | all | Process only the first N documents (sorted by docId) |
 | `BENCH_COOLDOWN_S` | `0` | Pause between documents, to keep phones out of thermal throttling |
+| `BENCH_GPU_LAYERS` | the app's config | GPU layers for every model load, text and vision (`0` = CPU only, `99` = all). Without it the app's `DeviceCapabilityService.computeModelConfig` decides, and its text paths never take the AI-settings value; on iOS that is 0 layers for text and at most 4 for vision. Recorded as `gpuLayers` in each record |
 
 The runner fails before the first document when the model or mmproj file of `BENCH_MODEL` is missing from `<documents>/ai_models/`, naming the expected paths. Download the model in the app once (Settings → AI model) or copy the files there.
 
@@ -58,7 +59,7 @@ For each document it:
 
 1. Rasterizes `document.pdf` with the production `PdfConversionMixin.convertPdfToImages` (200 dpi), or takes `page-<n>.png|jpg` in page-number order (`page-2` before `page-10`).
 2. Applies the document's seeded degradation: `scan` (rotation within ±2°, blur, noise, JPEG q60) or `photo` (rotation within ±4°, brightness gradient, blur, JPEG q70); `clean` is untouched.
-3. Mirrors `ProcessingHandler`: `ProcessingRepositoryImpl.mapBasicInfo`, then `docCategory` = `lab_report` when the container is a `MappingDiagnosticReport`, else `visit`, then `mapRemainingResources` with `useVision` from `BENCH_VISION`. Every yielded batch is appended, as `ProcessingHandler` appends it to the session. Tuning prefs (max tokens, GPU layers, threads, context) are passed on mobile and left null on desktop, as in the app.
+3. Mirrors `ProcessingHandler`: `ProcessingRepositoryImpl.mapBasicInfo`, then `docCategory` = `lab_report` when the container is a `MappingDiagnosticReport`, else `visit`, then `mapRemainingResources` with `useVision` from `BENCH_VISION`. Each yield is a snapshot of every phase-2 resource so far; the last one is kept, as `ProcessingHandler` keeps it in the session. Tuning prefs (max tokens, GPU layers, threads, context) are passed on mobile and left null on desktop, as in the app.
 4. Maps the patient, the container and every phase-2 resource with `toFhirResource(subjectId: 'bench-patient', encounterId: 'bench-container')`. A resource whose mapping throws is left out and listed in `mappingErrors`.
 5. Samples `ProcessInfo.currentRss` every 250 ms and appends one JSON line to `predictions.jsonl`.
 
@@ -69,7 +70,7 @@ The production classes are used unchanged. A recording decorator wraps `AiInfere
 ### Record format
 
 ```json
-{"docId": "de-lab-001", "runId": "qwen-macos-…", "model": "qwen", "platform": "macos", "useVision": true,
+{"docId": "de-lab-001", "runId": "qwen-macos-…", "model": "qwen", "platform": "macos", "useVision": true, "gpuLayers": 99,
  "predictedResources": [{"resourceType": "Patient", …}, …],
  "generations": [{"phase": "basic", "mode": "text", "strictJsonValid": true, "promptTokens": 812,
    "completionTokens": 143, "timeToFirstTokenMs": 950.2, "promptEvalMs": 901.0, "durationMs": 4210.7,
@@ -77,7 +78,7 @@ The production classes are used unchanged. A recording decorator wraps `AiInfere
  "peakRssBytes": 3012345856, "wallMs": 48211, "mappingErrors": ["…"], "error": "…"}
 ```
 
-`error` is present only when the pipeline threw; `predictedResources` is then empty.
+`error` is present only when the pipeline threw; `predictedResources` is then empty. `gpuLayers` is present only with `BENCH_GPU_LAYERS`.
 
 ### Per platform
 
@@ -97,12 +98,14 @@ The model files go to `$DOCS/ai_models/` (download them in the app, or copy `Qwe
 
 **Windows** (`-d windows`): documents = `%USERPROFILE%\Documents` (the test runs the unpackaged build). Copy the dataset to `%USERPROFILE%\Documents\extraction_bench\dataset` and read results from `%USERPROFILE%\Documents\extraction_bench\results`.
 
+**On a phone or simulator, always pass `--no-uninstall`.** By default `flutter test` uninstalls the app when the test ends, which deletes the results, the dataset and the downloaded models with it. Keep the screen on (Auto-Lock: Never on iOS, stay awake while charging on Android): the runner holds no wake lock, and a locked phone suspends the app and stops the inference.
+
 **Android** (debug build, documents = `/data/data/com.techstackapps.healthwallet/app_flutter`): install the app once (run the test, which fails fast without a dataset), then:
 
 ```bash
 adb push build/extraction_bench/dataset /data/local/tmp/bench_dataset
 adb shell "run-as com.techstackapps.healthwallet sh -c 'mkdir -p app_flutter/extraction_bench && rm -rf app_flutter/extraction_bench/dataset && cp -R /data/local/tmp/bench_dataset app_flutter/extraction_bench/dataset'"
-fvm flutter test integration_test/extraction_bench_test.dart -d <device> --dart-define=BENCH_MODEL=qwen --dart-define=BENCH_RUN_ID=qwen-a54-1
+fvm flutter test integration_test/extraction_bench_test.dart -d <device> --no-uninstall --dart-define=BENCH_MODEL=qwen --dart-define=BENCH_RUN_ID=qwen-a54-1
 adb exec-out run-as com.techstackapps.healthwallet cat app_flutter/extraction_bench/results/qwen-a54-1/predictions.jsonl \
   > build/extraction_bench/results/qwen-a54-1.jsonl
 ```
@@ -115,7 +118,7 @@ Model files go to `app_flutter/ai_models/` the same way, or download them in the
 xcrun devicectl device copy to --device <udid> --domain-type appDataContainer \
   --domain-identifier com.techstackapps.healthwallet \
   --source build/extraction_bench/dataset --destination Documents/extraction_bench/dataset
-fvm flutter test integration_test/extraction_bench_test.dart -d <udid> --dart-define=BENCH_MODEL=qwen --dart-define=BENCH_RUN_ID=qwen-ip15-1
+fvm flutter test integration_test/extraction_bench_test.dart -d <udid> --no-uninstall --dart-define=BENCH_MODEL=qwen --dart-define=BENCH_RUN_ID=qwen-ip15-1
 xcrun devicectl device copy from --device <udid> --domain-type appDataContainer \
   --domain-identifier com.techstackapps.healthwallet \
   --source Documents/extraction_bench/results/qwen-ip15-1/predictions.jsonl \

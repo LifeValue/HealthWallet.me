@@ -15,6 +15,7 @@ class RunRecord {
     required this.generations,
     required this.peakRssBytes,
     required this.wallMs,
+    this.gpuLayers,
     this.mappingErrors = const [],
     this.error,
   });
@@ -28,6 +29,9 @@ class RunRecord {
   /// `Platform.operatingSystem`.
   final String platform;
   final bool useVision;
+
+  /// `BENCH_GPU_LAYERS`; null when the app's own config chose them.
+  final int? gpuLayers;
 
   /// FHIR R4 JSON of the patient, the container and every phase-2 resource.
   final List<Map<String, dynamic>> predictedResources;
@@ -48,6 +52,7 @@ class RunRecord {
         'model': model,
         'platform': platform,
         'useVision': useVision,
+        if (gpuLayers != null) 'gpuLayers': gpuLayers,
         'predictedResources': predictedResources,
         'generations': [for (final g in generations) g.toJson()],
         'peakRssBytes': peakRssBytes,

@@ -98,6 +98,7 @@ class PredictionRecord {
     required this.platform,
     required this.predictedResources,
     required this.generations,
+    this.gpuLayers,
     this.peakRssBytes,
     this.wallMs,
     this.error,
@@ -116,6 +117,7 @@ class PredictionRecord {
           for (final g in (json['generations'] as List?) ?? const [])
             if (g is Map<String, dynamic>) GenerationRecord(g),
         ],
+        gpuLayers: (json['gpuLayers'] as num?)?.toInt(),
         peakRssBytes: (json['peakRssBytes'] as num?)?.toInt(),
         wallMs: (json['wallMs'] as num?)?.toDouble(),
         error: json['error'] as String?,
@@ -127,6 +129,9 @@ class PredictionRecord {
   final String platform;
   final List<Map<String, dynamic>> predictedResources;
   final List<GenerationRecord> generations;
+
+  /// `BENCH_GPU_LAYERS` of the run; null when the app chose them.
+  final int? gpuLayers;
   final int? peakRssBytes;
   final double? wallMs;
   final String? error;

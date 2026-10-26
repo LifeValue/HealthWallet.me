@@ -39,7 +39,9 @@ ArgParser _parser() {
       ..addOption('dataset', mandatory: true)
       ..addOption('predictions', mandatory: true, help: 'predictions.jsonl')
       ..addOption('out', mandatory: true)
-      ..addOption('seed', defaultsTo: '$_defaultSeed', help: 'Bootstrap seed.'),
+      ..addOption('seed', defaultsTo: '$_defaultSeed', help: 'Bootstrap seed.')
+      ..addFlag('only-predicted',
+          negatable: false, help: 'Score only the documents with a record (a BENCH_LIMIT run), not the whole dataset.'),
   );
   parser.addCommand(
     'compare',
@@ -124,6 +126,7 @@ Future<int> run(List<String> args) async {
           outDir: command['out'] as String,
           seed: _int(command, 'seed'),
           samples: _bootstrapSamples,
+          onlyPredicted: command['only-predicted'] as bool,
         );
         final overall = report['overall'] as Map;
         final f1 = overall['f1'] as Map;

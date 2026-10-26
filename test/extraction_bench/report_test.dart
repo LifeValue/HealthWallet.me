@@ -117,6 +117,40 @@ void main() {
     expect(File(p.join(tmp.path, 'partial', 'report.md')).readAsStringSync(), contains('| n/a | n/a |'));
   });
 
+  test('--only-predicted scores only documents with a record and keeps their errors', () {
+    final records = [for (final l in File(oracle()).readAsLinesSync()) jsonDecode(l) as Map<String, dynamic>];
+    final path = p.join(tmp.path, 'limited.jsonl');
+    File(path).writeAsStringSync([
+      {...records[0], 'gpuLayers': 99},
+      {...records[1], 'gpuLayers': 99, 'error': 'Exception: boom'},
+    ].map(jsonEncode).join('\n'));
+    final out = p.join(tmp.path, 'limited');
+    final report = runScore(
+        datasetPath: dataset, predictionsPath: path, outDir: out, seed: 1, samples: 100, onlyPredicted: true);
+    final counts = report['counts'] as Map;
+    expect(counts['documents'], 2);
+    expect(counts['missing'], 0);
+    expect(counts['errors'], 1);
+    expect(counts['excludedMissing'], 14);
+    expect(((report['overall'] as Map)['f1'] as Map)['mean'], closeTo(0.5, 1e-9));
+    expect((report['runs'] as Map)['gpuLayers'], ['99']);
+    final md = File(p.join(out, 'report.md')).readAsStringSync();
+    expect(md, contains('GPU layers: 99'));
+    expect(md, contains('14 dataset documents without a record are left out (--only-predicted)'));
+
+    final full = runScore(datasetPath: dataset, predictionsPath: path, outDir: '$out-full', seed: 1, samples: 100);
+    expect((full['counts'] as Map)['missing'], 14);
+    expect((full['counts'] as Map).containsKey('excludedMissing'), isFalse);
+    expect((full['runs'] as Map)['gpuLayers'], ['99']);
+    expect((runScore(datasetPath: dataset, predictionsPath: oracle(), outDir: '$out-auto', seed: 1, samples: 100)['runs']
+        as Map)['gpuLayers'], ['auto']);
+
+    final none = p.join(tmp.path, 'none.jsonl');
+    File(none).writeAsStringSync(jsonEncode({...records[0], 'docId': 'not-in-dataset'}));
+    expect(() => runScore(datasetPath: dataset, predictionsPath: none, outDir: '$out-none', seed: 1, onlyPredicted: true),
+        throwsA(isA<BenchInputException>()));
+  });
+
   test('a later line for the same document replaces an earlier one', () {
     final records = [for (final l in File(oracle()).readAsLinesSync()) jsonDecode(l) as Map<String, dynamic>];
     final id = records[3]['docId'];

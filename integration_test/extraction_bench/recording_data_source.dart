@@ -45,9 +45,13 @@ class GenerationLog {
 /// [GenerationStats], and image-encode times from llama.cpp's native log
 /// (fed through [onLog]). Behaviour is otherwise passed through unchanged.
 class RecordingAiInferenceDataSource implements AiInferenceDataSource {
-  RecordingAiInferenceDataSource(this._inner);
+  RecordingAiInferenceDataSource(this._inner, {this.gpuLayersOverride});
 
   final AiInferenceDataSource _inner;
+
+  /// When set, replaces the GPU layers of every model load, text and vision;
+  /// the pipeline's text paths otherwise never pass any (auto config).
+  final int? gpuLayersOverride;
 
   /// Label stored on the next generations.
   String phase = '';
@@ -134,7 +138,12 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
 
   @override
   Future<void> initModel({bool withVision = true, int? contextSize, int? gpuLayers, int? threads}) =>
-      _inner.initModel(withVision: withVision, contextSize: contextSize, gpuLayers: gpuLayers, threads: threads);
+      _inner.initModel(
+        withVision: withVision,
+        contextSize: contextSize,
+        gpuLayers: gpuLayersOverride ?? gpuLayers,
+        threads: threads,
+      );
 
   @override
   Future<void> disposeModel() => _inner.disposeModel();

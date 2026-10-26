@@ -112,6 +112,7 @@ Map<String, dynamic> buildReport(
   required String datasetPath,
   required String predictionsPath,
   List<String> unknownDocIds = const [],
+  int? excludedMissing,
 }) {
   final records = [for (final d in scored) ?d.record];
   final generations = [for (final r in records) ...r.generations];
@@ -128,6 +129,7 @@ Map<String, dynamic> buildReport(
       'runIds': {for (final r in records) r.runId}.toList()..sort(),
       'models': {for (final r in records) r.model}.toList()..sort(),
       'platforms': {for (final r in records) r.platform}.toList()..sort(),
+      'gpuLayers': {for (final r in records) r.gpuLayers?.toString() ?? 'auto'}.toList()..sort(),
     },
     'counts': {
       'documents': scored.length,
@@ -135,6 +137,7 @@ Map<String, dynamic> buildReport(
       'errors': scored.where((d) => d.status == DocStatus.error).length,
       'missing': scored.where((d) => d.status == DocStatus.missing).length,
       'predictionsNotInDataset': unknownDocIds,
+      'excludedMissing': ?excludedMissing,
     },
     'overall': _groupStats(scored, seed: seed, samples: samples, label: 'overall'),
     'strata': {
@@ -225,9 +228,11 @@ String renderReportMarkdown(Map<String, dynamic> r) {
     ..writeln('- Dataset: `${r['dataset']}`')
     ..writeln('- Predictions: `${r['predictions']}`')
     ..writeln('- Runs: ${(runs['runIds'] as List).join(', ')}; models: ${(runs['models'] as List).join(', ')}; '
-        'platforms: ${(runs['platforms'] as List).join(', ')}')
+        'platforms: ${(runs['platforms'] as List).join(', ')}; GPU layers: ${(runs['gpuLayers'] as List).join(', ')}')
     ..writeln('- Documents: ${counts['documents']} (scored ${counts['ok']}, pipeline errors ${counts['errors']}, '
-        'missing ${counts['missing']}); errors and missing documents are scored with no predictions')
+        'missing ${counts['missing']}); errors and missing documents are scored with no predictions'
+        '${counts['excludedMissing'] == null ? '' : '; ${counts['excludedMissing']} dataset documents without a '
+            'record are left out (--only-predicted)'}')
     ..writeln('- F1, precision and recall are per-document micro averages, then the mean over documents, with 95% '
         'percentile bootstrap CIs over documents (${boot['samples']} resamples, seed ${boot['seed']})');
   final unknown = counts['predictionsNotInDataset'] as List;
@@ -309,11 +314,14 @@ Map<String, dynamic> runScore({
   required String outDir,
   required int seed,
   int samples = 10000,
+  bool onlyPredicted = false,
 }) {
-  final dataset = loadDataset(datasetPath);
+  final fullDataset = loadDataset(datasetPath);
   final predictions = loadPredictions(predictionsPath);
-  final ids = {for (final d in dataset) d.docId};
+  final ids = {for (final d in fullDataset) d.docId};
   final unknown = predictions.keys.where((k) => !ids.contains(k)).toList()..sort();
+  final dataset = onlyPredicted ? [for (final d in fullDataset) if (predictions.containsKey(d.docId)) d] : fullDataset;
+  if (dataset.isEmpty) throw BenchInputException('No dataset document has a record in $predictionsPath');
   final report = buildReport(
     scoreRun(dataset, predictions),
     seed: seed,
@@ -321,6 +329,7 @@ Map<String, dynamic> runScore({
     datasetPath: datasetPath,
     predictionsPath: predictionsPath,
     unknownDocIds: unknown,
+    excludedMissing: onlyPredicted ? fullDataset.length - dataset.length : null,
   );
   Directory(outDir).createSync(recursive: true);
   File(p.join(outDir, 'report.json')).writeAsStringSync('${_json.convert(report)}\n');
