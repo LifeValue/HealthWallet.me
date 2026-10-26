@@ -12,7 +12,7 @@ Patient-controlled health record app in Flutter: FHIR R4 records from providers 
 - Keep Clean Architecture: presentation → domain → data, dependencies by constructor. Business logic (transformations, calculations, validation) belongs in BLoCs, repositories, services or use cases, never in widgets.
 - Never move or rename `docs/`: it is the live emergency.healthwallet.me page (GitHub Pages) that the QR code on every wallet pass opens. Put developer and agent docs in `doc/`.
 - Change the QR payload in `lib/features/wallet_pass/data/service/emergency_qr_encoder.dart` only together with `docs/index.html`, and keep the page decoding the old format; passes already in users' wallets keep their QR.
-- Branches: `master` is production, `develop` staging (every push uploads betas to TestFlight and Play internal), work happens on `dev/*`, `feature/*`, `fix/*`, `release/*`, `hotfix/*`. Merge with `--no-ff`, never fast-forward.
+- Branches follow Gitflow: `master` is production, `develop` staging (every push uploads betas to TestFlight and Play internal). `feature/*` and `bugfix/*` branch from `develop` and merge back into it; `release/*` branches from `develop` and merges into `master` and `develop`; `hotfix/*` branches from `master` and merges into both. Name branches after the work, without the ticket number. Merge with `--no-ff`, never fast-forward.
 - GitLab CI (`.gitlab-ci.yml`) is the only CI. Don't edit `.github/workflows/`; they are unused and the GitHub repo is left untouched.
 
 ## Where things are
@@ -26,10 +26,10 @@ Patient-controlled health record app in Flutter: FHIR R4 records from providers 
 - Run Flutter and Dart through FVM (`fvm flutter …`, `fvm dart …`); the pinned version is in `.fvmrc`.
 - After changing Freezed models, routes, injectable registrations, Drift tables or envied variables, run `fvm dart run build_runner build`. Its outputs are gitignored, so never commit them.
 - Desktop builds and runs need the desktop entry point (`fvm flutter build macos --release --target lib/main_desktop.dart`, same for `windows`, and `fvm flutter run -d macos -t lib/main_desktop.dart`); without it you build the mobile app.
-- Run `scripts/check.sh` before committing (`--fix` formats first): it runs `dart format`, Prettier, `fvm flutter analyze` and `fvm flutter test`, and must pass with no issues, infos included. The CI `checks` job fails only on analyzer errors, so it won't catch what this script does.
-- Dart is formatted by `dart format` (settings under `formatter:` in `analysis_options.yaml`); YAML, JSON, ARB and Markdown by Prettier, pinned in `package.json` (`npm install` once). Generated files are skipped: `app_localizations*.dart`, `*.gen.dart` and `test/drift/my_database/generated/`.
+- Every file is formatted before it is committed. `pre-commit install` (once per clone, after `npm install`) adds the hooks from `.pre-commit-config.yaml`: `dart format` for Dart; Prettier for YAML, JSON, ARB, Markdown, HTML, CSS, JavaScript and XML; swift-format for Swift; ktlint for Kotlin and Gradle scripts; clang-format for C/C++; gersemi for CMake; RuboCop (layout only) for Fastlane, Podfile and Gemfile; shfmt and shellcheck for shell scripts; whitespace and end-of-file fixes for everything else. A hook that reformats a file fails the commit: review the change, `git add` it and commit again.
+- Generated and tool-managed files are never reformatted: `app_localizations*.dart`, `*.gen.dart`, `test/drift/my_database/generated/`, `windows/flutter/`, Xcode project files (`.pbxproj`, `.plist`, storyboards, `.xcassets`) and `assets/`. The exclusions are listed in `.pre-commit-config.yaml` and `.prettierignore`.
+- Run `scripts/check.sh` before pushing: it runs every formatter on the whole repo, then `fvm flutter analyze` and `fvm flutter test`, and must pass with no issues, infos included. The CI `checks` job fails only on analyzer errors, so it won't catch what this script does.
 - Fix lints rather than silencing them; when a rule is wrong for one line, use `// ignore: <rule>` with a comment saying why. Never write an empty `catch`: log the error with `logger` or comment why it is safe to ignore.
-- `git config core.hooksPath .githooks` enables a pre-commit hook that runs the checks, plus the secrets check, on staged files.
 - `pub get` needs SSH access to `git.techstackapps.com` for `fhir_ips_export` and `airdrop`; if it fails, tell the user rather than removing or stubbing the dependency.
 
 ## Conventions that differ from defaults
@@ -44,7 +44,7 @@ Patient-controlled health record app in Flutter: FHIR R4 records from providers 
 - Drift schema change: bump `schemaVersion` and add the step to `onUpgrade` as hand-written SQL (v1→8 stay on `stepByStep`), declaring added nullable columns as `TYPE NULL` so they match drift's snapshots. Then run `fvm dart run drift_dev schema dump lib/core/data/local/app_database.dart drift_schemas/my_database/` and `fvm dart run drift_dev schema generate --data-classes --companions drift_schemas/my_database/ test/drift/my_database/generated/`, and add a test to `test/drift/my_database/migration_test.dart`.
 - Only `fhir_resource`, `sources` and `record_notes` sync between mobile and desktop (last write wins on `updated_at`, kept current by triggers); `processing_sessions` stays local. A change to a synced table's columns or row shape must work on both ends.
 - Tests use fake repositories (see `test/widget_test.dart`), not mocks, for the repository layer.
-- Commit messages are conventional commits, `type(scope): subject`, with a feature (`desktop`, `records`, `db`) or a ticket (`HM-181`) as scope.
+- Commits follow Conventional Commits, enforced by commitlint in the `commit-msg` hook: `type(scope): subject`, one short sentence, no body or footers (no `Co-Authored-By`). The scope is the area of code (`desktop`, `records`, `db`, `deps`), never a ticket number; leave it out for cross-cutting changes. Keep each commit to one logical change.
 - Keep the `Platform.isLinux` branches for a future port, and don't scaffold `linux/`.
 - Keep `android.builtInKotlin=false` and `android.newDsl=false` in `android/gradle.properties`; AGP 9 runs in compatibility mode because most plugins still apply the Kotlin Gradle plugin.
 

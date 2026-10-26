@@ -208,13 +208,15 @@ flutter test
 
 ### Code quality
 
-Dart is formatted with `dart format` and checked with `flutter analyze` (rules in `analysis_options.yaml`). YAML, JSON, ARB and Markdown files are formatted with [Prettier](https://prettier.io/), pinned in `package.json` (needs Node).
+Every file type has a formatter, run by [pre-commit](https://pre-commit.com/) before each commit (`.pre-commit-config.yaml`): `dart format`, [Prettier](https://prettier.io/) for YAML/JSON/ARB/Markdown/HTML/XML, swift-format, ktlint, clang-format, gersemi, RuboCop (layout) and shfmt. Commit messages are checked against [Conventional Commits](https://www.conventionalcommits.org/) by commitlint. Dart is also checked with `flutter analyze` (rules in `analysis_options.yaml`).
+
+Needs Node (Prettier, commitlint), Java (ktlint), Ruby (RuboCop) and Xcode (swift-format).
 
 ```bash
-npm install                       # once, installs Prettier
-git config core.hooksPath .githooks   # once, runs the checks on staged files before each commit
-scripts/check.sh                  # format check, Prettier, analyze and tests
-scripts/check.sh --fix            # format everything first, then check
+brew install pre-commit   # once per machine
+npm install               # once per clone: Prettier and commitlint
+pre-commit install        # once per clone: format on commit, check commit messages
+scripts/check.sh          # all formatters on the whole repo, then analyze and tests
 ```
 
 ---
