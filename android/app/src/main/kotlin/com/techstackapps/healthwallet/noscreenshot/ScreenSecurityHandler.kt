@@ -1,4 +1,4 @@
-package com.techstackapps.healthwallet.no_screenshot
+package com.techstackapps.healthwallet.noscreenshot
 
 import android.view.Window
 import android.view.WindowManager
@@ -9,8 +9,6 @@ import io.flutter.plugin.common.MethodChannel
 class ScreenSecurityHandler(
     private val window: Window
 ) {
-    private val CHANNEL = "app.screen_security"
-    private val EVENT_CHANNEL = "app.screen_security/events"
 
     fun register(flutterEngine: FlutterEngine) {
         val messenger = flutterEngine.dartExecutor.binaryMessenger
@@ -38,5 +36,10 @@ class ScreenSecurityHandler(
                 override fun onCancel(arguments: Any?) {}
             }
         )
+    }
+
+    companion object {
+        private const val CHANNEL = "app.screen_security"
+        private const val EVENT_CHANNEL = "app.screen_security/events"
     }
 }

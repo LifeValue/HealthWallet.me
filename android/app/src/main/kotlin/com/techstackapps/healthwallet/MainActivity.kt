@@ -6,7 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import com.techstackapps.healthwallet.no_screenshot.ScreenSecurityHandler
+import com.techstackapps.healthwallet.noscreenshot.ScreenSecurityHandler
 import com.techstackapps.healthwallet.ocr.TextRecognitionHandler
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine

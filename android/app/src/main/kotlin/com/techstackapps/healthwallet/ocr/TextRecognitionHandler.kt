@@ -16,7 +16,6 @@ import java.io.File
 class TextRecognitionHandler(
     private val context: Context
 ) {
-    private val CHANNEL = "dev.lifevalue.healthwallet/ocr"
 
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
@@ -48,5 +47,9 @@ class TextRecognitionHandler(
 
     fun close() {
         recognizer.close()
+    }
+
+    companion object {
+        private const val CHANNEL = "dev.lifevalue.healthwallet/ocr"
     }
 }
