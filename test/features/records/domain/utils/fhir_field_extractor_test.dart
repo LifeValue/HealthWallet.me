@@ -2,7 +2,6 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/utils/fhir_entity_factory.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 
 import '../../../../fixtures/fhir/fhir_fixtures.dart';
@@ -27,8 +26,8 @@ void main() {
   );
   final immunization = fhir.Immunization.fromJson(immunizationJson());
   final fhirPatient = fhir.Patient.fromJson(patientJson());
-  final patient = FhirEntityFactory.createFromRawData(patientJson()) as Patient;
-  final heartRate = FhirEntityFactory.createFromRawData(
+  final patient = entityFromJson(patientJson()) as Patient;
+  final heartRate = entityFromJson(
     observationJson(
       code: '8867-4',
       codeDisplay: 'Heart rate',
@@ -46,7 +45,7 @@ void main() {
       ],
     ),
   ) as Observation;
-  final bloodType = FhirEntityFactory.createFromRawData(
+  final bloodType = entityFromJson(
     observationJson(
       code: '34530-6',
       value: {'valueCodeableConcept': codeableConcept(text: 'O+')},

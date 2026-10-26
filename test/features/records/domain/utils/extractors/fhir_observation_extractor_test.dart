@@ -3,13 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_observation_extractor.dart';
-import 'package:health_wallet/features/records/domain/utils/fhir_entity_factory.dart';
 
 import '../../../../../fixtures/fhir/fhir_fixtures.dart';
 
 /// Parses a FHIR Observation into the app entity.
 Observation _obs(Map<String, dynamic> json) =>
-    FhirEntityFactory.createFromRawData(json) as Observation;
+    entityFromJson(json) as Observation;
 
 /// Returns the parsed `value[x]` of an Observation with [value].
 dynamic _value(Map<String, dynamic> value) =>

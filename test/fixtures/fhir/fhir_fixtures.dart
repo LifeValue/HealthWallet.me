@@ -1,3 +1,21 @@
+import 'dart:convert';
+
+import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+
+/// Turns a FHIR JSON fixture into the app's entity the way records are loaded:
+/// through [FhirResourceLocalDto] and [IFhirResource.fromLocalDto].
+IFhirResource entityFromJson(Map<String, dynamic> data) =>
+    IFhirResource.fromLocalDto(
+      FhirResourceLocalDto(
+        id: data['id'] as String? ?? '',
+        resourceType: data['resourceType'] as String? ?? 'Unknown',
+        resourceRaw: jsonEncode(data),
+        sourceId: '',
+        resourceId: data['id'] as String? ?? '',
+        title: '',
+      ),
+    );
 // Realistic FHIR R4 JSON fixtures shared by the records and share_records
 // tests. Every builder returns a fresh, mutable map so tests can tweak fields
 // without leaking state into other tests.

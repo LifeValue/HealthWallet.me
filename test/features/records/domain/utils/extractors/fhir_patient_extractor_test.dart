@@ -4,12 +4,10 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_patient_extractor.dart';
-import 'package:health_wallet/features/records/domain/utils/fhir_entity_factory.dart';
 
 import '../../../../../fixtures/fhir/fhir_fixtures.dart';
 
-Patient _patient(Map<String, dynamic> json) =>
-    FhirEntityFactory.createFromRawData(json) as Patient;
+Patient _patient(Map<String, dynamic> json) => entityFromJson(json) as Patient;
 
 Patient _withIds(List<Map<String, dynamic>> identifiers) =>
     _patient(patientJson(identifiers: identifiers));
