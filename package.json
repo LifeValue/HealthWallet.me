@@ -1,12 +1,15 @@
 {
   "name": "health-wallet-tooling",
   "private": true,
-  "description": "Dev tooling only: Prettier for the YAML, JSON, ARB and Markdown files. Dart is formatted by dart format.",
+  "description": "Dev tooling only: Prettier and commitlint, run through pre-commit (see .pre-commit-config.yaml).",
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@prettier/plugin-xml": "3.4.2",
     "prettier": "3.9.9"
   }
 }
