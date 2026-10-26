@@ -42,7 +42,6 @@ dependencies:
   flutter_svg: ^2.2.4
   vector_graphics: ^1.1.19
   flutter_native_splash: ^2.3.8
-  flutter_launcher_icons: ^0.14.3
 
   # Desktop
   qr_flutter: ^4.1.0
@@ -106,6 +105,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.3
   flutter_lints: ^6.0.0
 
   # Code Generation
