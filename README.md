@@ -186,7 +186,7 @@ Gitflow. Every push runs the checks in parallel: `dart format`, `flutter analyze
 | Branch      | From      | Purpose               | Deploys                                                      |
 | ----------- | --------- | --------------------- | ------------------------------------------------------------ |
 | `master`    | —         | Production            | Manual: TestFlight / Play internal, Shorebird patch, Windows |
-| `develop`   | —         | Staging               | Automatic beta to TestFlight and Play internal               |
+| `develop`   | —         | Staging               | Manual beta to TestFlight and Play internal                  |
 | `release/*` | `develop` | Release stabilization | Manual beta for testers                                      |
 | `feature/*` | `develop` | New features          | None, checks only                                            |
 | `bugfix/*`  | `develop` | Fixes for develop     | None, checks only                                            |

@@ -12,8 +12,8 @@ Patient-controlled health record app in Flutter: FHIR R4 records from providers 
 - Keep Clean Architecture: presentation → domain → data, dependencies by constructor. Business logic (transformations, calculations, validation) belongs in BLoCs, repositories, services or use cases, never in widgets.
 - Never move or rename `docs/`: it is the live emergency.healthwallet.me page (GitHub Pages) that the QR code on every wallet pass opens. Put developer and agent docs in `doc/`.
 - Change the QR payload in `lib/features/wallet_pass/data/service/emergency_qr_encoder.dart` only together with `docs/index.html`, and keep the page decoding the old format; passes already in users' wallets keep their QR.
-- Branches follow Gitflow: `master` is production, `develop` staging (every push uploads betas to TestFlight and Play internal). `feature/*` and `bugfix/*` branch from `develop` and merge back into it; `release/*` branches from `develop` and merges into `master` and `develop`; `hotfix/*` branches from `master` and merges into both. Name branches after the work, without the ticket number. Merge with `--no-ff`, never fast-forward.
-- GitLab CI (`.gitlab-ci.yml`) is the only CI. Don't edit `.github/workflows/`; they are unused and the GitHub repo is left untouched. Deploys run only from `develop` (automatic beta), `release/*` and `master` (manual), after every check passes.
+- Branches follow Gitflow: `master` is production, `develop` staging (betas to TestFlight and Play internal are deployed by hand from its pipeline). `feature/*` and `bugfix/*` branch from `develop` and merge back into it; `release/*` branches from `develop` and merges into `master` and `develop`; `hotfix/*` branches from `master` and merges into both. Name branches after the work, without the ticket number. Merge with `--no-ff`, never fast-forward.
+- GitLab CI (`.gitlab-ci.yml`) is the only CI. Don't edit `.github/workflows/`; they are unused and the GitHub repo is left untouched. Deploys run only from `develop`, `release/*` and `master`, always started by hand, after every check passes.
 
 ## Where things are
 
