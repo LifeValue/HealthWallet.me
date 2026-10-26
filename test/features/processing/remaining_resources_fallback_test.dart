@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_condition.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 
@@ -37,13 +38,19 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) async {
     visionPrompts++;
     return '[]';
   }
 
   @override
-  Future<String?> runTextPrompt({required String prompt, int? maxTokens, String? grammar}) async =>
+  Future<String?> runTextPrompt({
+    required String prompt,
+    int? maxTokens,
+    String? grammar,
+    Map<String, dynamic>? responseFormat,
+  }) async =>
       '[{"resourceType":"Condition","conditionName":"Vorhofflimmern","onsetDateTime":"2019","clinicalStatus":"active"}]';
 }
 
@@ -69,7 +76,8 @@ void main() {
   test('a vision model that fails to load falls back to text-only instead of throwing', () async {
     final dataSource = _FakeDataSource();
     final events = await _Repository(dataSource)
-        .processMapRemainingResources(const ['page-1.png'], documentCategory: 'visit', useVision: true)
+        .processMapRemainingResources(const ['page-1.png'],
+            documentCategory: 'visit', useVision: true, outputMode: ExtractionOutputMode.grammar)
         .toList();
 
     expect(dataSource.loads, [true, false]);

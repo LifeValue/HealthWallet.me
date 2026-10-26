@@ -85,6 +85,15 @@ class GenerationRecord {
   String? get phase => json['phase'] as String?;
 
   bool get strictJsonValid => json['strictJsonValid'] == true;
+
+  /// `stop`, or `length` when the generation hit maxTokens or a full context
+  /// (truncated); null in records written before it was recorded.
+  String? get finishReason => json['finishReason'] as String?;
+  bool get truncated => finishReason == 'length';
+
+  /// False for a schemaDraft draft call, which is free text by design
+  /// (`constraint: none`); records without the field were all constrained.
+  bool get constrained => json['constraint'] != 'none';
   double? get timeToFirstTokenMs => _num('timeToFirstTokenMs');
   double? get promptEvalMs => _num('promptEvalMs');
   double? get imageEncodeMs => _num('imageEncodeMs');
@@ -98,6 +107,7 @@ class PredictionRecord {
     required this.platform,
     required this.predictedResources,
     required this.generations,
+    this.outputMode,
     this.gpuLayers,
     this.peakRssBytes,
     this.wallMs,
@@ -117,6 +127,7 @@ class PredictionRecord {
           for (final g in (json['generations'] as List?) ?? const [])
             if (g is Map<String, dynamic>) GenerationRecord(g),
         ],
+        outputMode: json['outputMode'] as String?,
         gpuLayers: (json['gpuLayers'] as num?)?.toInt(),
         peakRssBytes: (json['peakRssBytes'] as num?)?.toInt(),
         wallMs: (json['wallMs'] as num?)?.toDouble(),
@@ -130,6 +141,10 @@ class PredictionRecord {
   final List<Map<String, dynamic>> predictedResources;
   final List<GenerationRecord> generations;
 
+  /// `ExtractionOutputMode` name of the run; null in records written before
+  /// it was recorded (those runs used `grammar`).
+  final String? outputMode;
+
   /// `BENCH_GPU_LAYERS` of the run; null when the app chose them.
   final int? gpuLayers;
   final int? peakRssBytes;
@@ -141,6 +156,7 @@ class PredictionRecord {
         'runId': runId,
         'model': model,
         'platform': platform,
+        if (outputMode != null) 'outputMode': outputMode,
         'predictedResources': predictedResources,
         'generations': [for (final g in generations) g.json],
         'peakRssBytes': peakRssBytes,

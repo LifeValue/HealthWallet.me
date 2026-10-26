@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
@@ -47,7 +48,9 @@ List<BenchDoc> loadBenchDocs(Directory dataset) {
 ///
 /// Mirrors `ProcessingHandler`: phase 1, `docCategory` from the container,
 /// then phase 2, keeping its last yielded snapshot. [pref] returns the tuning
-/// pref for a `SharedPrefsConstants` key (null on desktop, as in the app).
+/// pref for a `SharedPrefsConstants` key (null on desktop, as in the app);
+/// [outputMode] is what `ProcessingHandler` reads from the `aiOutputMode`
+/// pref on every platform.
 Future<RunRecord> runBenchDocument({
   required BenchDoc doc,
   required ProcessingRepository repository,
@@ -58,6 +61,7 @@ Future<RunRecord> runBenchDocument({
   required String model,
   required bool useVision,
   required int? Function(String key) pref,
+  ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
 }) async {
   recorder.beginDocument();
   final pipelineLog = <String>[];
@@ -93,6 +97,7 @@ Future<RunRecord> runBenchDocument({
       gpuLayers: pref(SharedPrefsConstants.aiGpuLayers),
       threads: pref(SharedPrefsConstants.aiThreads),
       contextSize: pref(SharedPrefsConstants.aiContextSize),
+      outputMode: outputMode,
     );
     final docCategory = container is MappingDiagnosticReport ? 'lab_report' : 'visit';
 
@@ -108,6 +113,7 @@ Future<RunRecord> runBenchDocument({
       gpuLayers: pref(SharedPrefsConstants.aiGpuLayers),
       threads: pref(SharedPrefsConstants.aiThreads),
       contextSize: pref(SharedPrefsConstants.aiContextSize),
+      outputMode: outputMode,
     )) {
       remaining = resources;
     }
@@ -155,6 +161,7 @@ Future<RunRecord> runBenchDocument({
     model: model,
     platform: Platform.operatingSystem,
     useVision: useVision,
+    outputMode: outputMode.name,
     gpuLayers: recorder.gpuLayersOverride,
     pipelineLog: pipelineLog,
     predictedResources: predicted,

@@ -12,6 +12,10 @@ class GenerationLog {
   /// `basic` (phase 1) or `remaining` (phase 2), set by the runner.
   final String phase;
   final GenerationMode mode;
+
+  /// How the call was constrained: `grammar`, `schema` (a `json_schema`
+  /// response format) or `none` (a schemaDraft draft call).
+  String constraint = 'none';
   String? rawOutput;
   bool strictJsonValid = false;
   GenerationStats? stats;
@@ -33,6 +37,8 @@ class GenerationLog {
         'timeToFirstTokenMs': stats?.timeToFirstTokenMs,
         'promptEvalMs': stats?.promptEvalMs,
         'durationMs': stats?.durationMs,
+        'finishReason': stats?.finishReason,
+        'constraint': constraint,
         'imageEncodeMs': imageEncodeMs,
         'imageDecodeMs': imageDecodeMs,
         'rawOutput': rawOutput,
@@ -107,8 +113,18 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
     }
   }
 
-  Future<String?> _record(GenerationMode mode, Future<String?> Function() call) async {
-    final log = GenerationLog(phase: phase, mode: mode);
+  Future<String?> _record(
+    GenerationMode mode,
+    Future<String?> Function() call, {
+    String? grammar,
+    Map<String, dynamic>? responseFormat,
+  }) async {
+    final log = GenerationLog(phase: phase, mode: mode)
+      ..constraint = responseFormat != null
+          ? 'schema'
+          : grammar != null
+              ? 'grammar'
+              : 'none';
     generations.add(log);
     _current = log;
     try {
@@ -135,16 +151,38 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) =>
       _record(
         GenerationMode.vision,
-        () => _inner.runVisionPrompt(prompt: prompt, imagePaths: imagePaths, maxTokens: maxTokens, grammar: grammar),
+        () => _inner.runVisionPrompt(
+          prompt: prompt,
+          imagePaths: imagePaths,
+          maxTokens: maxTokens,
+          grammar: grammar,
+          responseFormat: responseFormat,
+        ),
+        grammar: grammar,
+        responseFormat: responseFormat,
       );
 
   @override
-  Future<String?> runTextPrompt({required String prompt, int? maxTokens, String? grammar}) => _record(
+  Future<String?> runTextPrompt({
+    required String prompt,
+    int? maxTokens,
+    String? grammar,
+    Map<String, dynamic>? responseFormat,
+  }) =>
+      _record(
         GenerationMode.text,
-        () => _inner.runTextPrompt(prompt: prompt, maxTokens: maxTokens, grammar: grammar),
+        () => _inner.runTextPrompt(
+          prompt: prompt,
+          maxTokens: maxTokens,
+          grammar: grammar,
+          responseFormat: responseFormat,
+        ),
+        grammar: grammar,
+        responseFormat: responseFormat,
       );
 
   @override

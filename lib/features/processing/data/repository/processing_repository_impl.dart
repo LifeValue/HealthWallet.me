@@ -4,6 +4,7 @@ import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/features/processing/data/data_source/local/processing_local_data_source.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/repository/ai_extraction_repository.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
@@ -386,6 +387,7 @@ class ProcessingRepositoryImpl extends Object
     int? gpuLayers,
     int? threads,
     int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async {
     return processMapBasicInfo(
       imagePaths,
@@ -393,6 +395,7 @@ class ProcessingRepositoryImpl extends Object
       gpuLayers: gpuLayers,
       threads: threads,
       contextSize: contextSize,
+      outputMode: outputMode,
     );
   }
 
@@ -405,6 +408,7 @@ class ProcessingRepositoryImpl extends Object
     int? gpuLayers,
     int? threads,
     int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async* {
     try {
       _isStreamActive = true;
@@ -419,6 +423,7 @@ class ProcessingRepositoryImpl extends Object
         gpuLayers: gpuLayers,
         threads: threads,
         contextSize: contextSize,
+        outputMode: outputMode,
       );
     } finally {
       await disposeModel();

@@ -48,17 +48,21 @@ abstract class AiInferenceDataSource {
 
   bool isVisionModelAvailable();
 
+  /// [grammar] (GBNF) or [responseFormat] (llamadart `json_schema` response
+  /// format) constrain the output; pass at most one.
   Future<String?> runVisionPrompt({
     required String prompt,
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   });
 
   Future<String?> runTextPrompt({
     required String prompt,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   });
 
   /// Token counts and timings of the last [runVisionPrompt] or
@@ -684,19 +688,25 @@ class AiInferenceDataSourceImpl
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) =>
       runVisionPromptImpl(
           prompt: prompt,
           imagePaths: imagePaths,
           maxTokens: maxTokens,
-          grammar: grammar);
+          grammar: grammar,
+          responseFormat: responseFormat);
 
   @override
   Future<String?> runTextPrompt({
     required String prompt,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) =>
       runTextPromptImpl(
-          prompt: prompt, maxTokens: maxTokens, grammar: grammar);
+          prompt: prompt,
+          maxTokens: maxTokens,
+          grammar: grammar,
+          responseFormat: responseFormat);
 }

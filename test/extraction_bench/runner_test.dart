@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
@@ -23,12 +24,22 @@ class FakeAiInferenceDataSource extends Fake implements AiInferenceDataSource {
   var _calls = 0;
   GenerationStats? _stats;
 
+  /// (grammar, responseFormat) of each call, as received.
+  final constraints = <(String?, Map<String, dynamic>?)>[];
+
   @override
   GenerationStats? get lastGenerationStats => _stats;
 
   @override
-  Future<String?> runTextPrompt({required String prompt, int? maxTokens, String? grammar}) async {
-    _stats = const GenerationStats(mode: GenerationMode.text, promptTokens: 10, timeToFirstTokenMs: 12.5);
+  Future<String?> runTextPrompt({
+    required String prompt,
+    int? maxTokens,
+    String? grammar,
+    Map<String, dynamic>? responseFormat,
+  }) async {
+    constraints.add((grammar, responseFormat));
+    _stats = const GenerationStats(
+        mode: GenerationMode.text, promptTokens: 10, timeToFirstTokenMs: 12.5, finishReason: 'length');
     return outputs[_calls++];
   }
 
@@ -38,7 +49,9 @@ class FakeAiInferenceDataSource extends Fake implements AiInferenceDataSource {
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) async {
+    constraints.add((grammar, responseFormat));
     _stats = const GenerationStats(mode: GenerationMode.vision, promptEvalMs: 900);
     return outputs[_calls++];
   }
@@ -56,6 +69,7 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
   /// Phase 1's container, in the model's JSON shape.
   final Map<String, dynamic> container;
   final remainingCategories = <String?>[];
+  final outputModes = <ExtractionOutputMode>[];
 
   @override
   Future<(MappingPatient, MappingResource)> mapBasicInfo(
@@ -64,7 +78,9 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
     int? gpuLayers,
     int? threads,
     int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async {
+    outputModes.add(outputMode);
     if (imagePaths.any(failingImages.contains)) throw Exception('boom');
     return (
       MappingResource.fromJson({
@@ -86,8 +102,10 @@ class _FakeProcessingRepository extends Fake implements ProcessingRepository {
     int? gpuLayers,
     int? threads,
     int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async* {
     remainingCategories.add(documentCategory);
+    outputModes.add(outputMode);
     final hb = MappingResource.fromJson(
         {'resourceType': 'Observation', 'observationName': 'Hemoglobina', 'value': '13,5', 'unit': 'g/dL'});
     final wbc = MappingResource.fromJson(
@@ -148,6 +166,8 @@ void main() {
     expect(text.strictJsonValid, isTrue);
     expect(text.phase, 'basic');
     expect(text.stats!.timeToFirstTokenMs, 12.5);
+    expect(text.toJson()['finishReason'], 'length');
+    expect(text.toJson()['constraint'], 'none');
     expect(text.imageEncodeMs, isNull);
     expect(vision.strictJsonValid, isFalse);
     expect(vision.phase, 'remaining');
@@ -170,6 +190,20 @@ void main() {
     expect(parsed.generations.map((g) => g.strictJsonValid), [true, false]);
     expect(parsed.generations[1].imageEncodeMs, 412);
     expect(parsed.error, isNull);
+  });
+
+  test('recording decorator passes grammar and responseFormat through and labels the constraint', () async {
+    const format = {
+      'type': 'json_schema',
+      'json_schema': {'schema': {'type': 'object'}},
+    };
+    final inner = FakeAiInferenceDataSource(['{}', '[]', '{}']);
+    final recorder = RecordingAiInferenceDataSource(inner);
+    await recorder.runTextPrompt(prompt: 'p', responseFormat: format);
+    await recorder.runVisionPrompt(prompt: 'p', imagePaths: const [], grammar: 'root ::= "x"');
+    await recorder.runVisionPrompt(prompt: 'p', imagePaths: const [], responseFormat: format);
+    expect(recorder.generations.map((g) => g.toJson()['constraint']), ['schema', 'grammar', 'schema']);
+    expect(inner.constraints, [(null, format), ('root ::= "x"', null), (null, format)]);
   });
 
   test('native log drained after each call is parsed into that generation', () async {
@@ -477,6 +511,7 @@ void main() {
         model: 'qwen',
         useVision: false,
         pref: (_) => null,
+        outputMode: ExtractionOutputMode.schema,
       );
       return (record, repository);
     }
@@ -484,6 +519,10 @@ void main() {
     final (visit, visitRepo) = await run(const {'resourceType': 'Encounter', 'encounterType': 'Bilet de ieșire din spital'});
     expect(visitRepo.remainingCategories, ['visit']);
     expect(visit.predictedResources[1]['resourceType'], 'Encounter');
+    // Both phases get the run's output mode, and the record names it.
+    expect(visitRepo.outputModes, [ExtractionOutputMode.schema, ExtractionOutputMode.schema]);
+    expect(visit.toJson()['outputMode'], 'schema');
+    expect(PredictionRecord.fromJson(jsonDecode(jsonEncode(visit.toJson())) as Map<String, dynamic>).outputMode, 'schema');
 
     final (lab, labRepo) = await run(const {
       'resourceType': 'DiagnosticReport',

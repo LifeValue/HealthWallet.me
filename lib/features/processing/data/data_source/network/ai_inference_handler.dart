@@ -28,8 +28,9 @@ mixin AiInferenceHandler {
 
   Future<GenerationStats> buildGenerationStats(
     GenerationMode mode,
-    LlamaGenerationUsage? usage,
-  ) async {
+    LlamaGenerationUsage? usage, {
+    String? finishReason,
+  }) async {
     BackendPerfContextData? perf;
     try {
       perf = await engine?.getPerformanceContext();
@@ -45,6 +46,7 @@ mixin AiInferenceHandler {
       durationMs: usage?.duration == null
           ? null
           : usage!.duration!.inMicroseconds / 1000.0,
+      finishReason: finishReason,
     );
   }
 
@@ -100,6 +102,7 @@ mixin AiInferenceHandler {
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) async {
     lastGenerationStats = null;
     if (engine == null) {
@@ -162,6 +165,7 @@ mixin AiInferenceHandler {
       final buffer = StringBuffer();
       int tokenCount = 0;
       LlamaGenerationUsage? usage;
+      String? finishReason;
       ProcessingLogBuffer.instance.log(
           '[$ts][ScanAI] encoding image + prompt (native, no callbacks available)...');
 
@@ -184,8 +188,10 @@ mixin AiInferenceHandler {
           grammar: grammar,
         ),
         enableThinking: false,
+        responseFormat: responseFormat,
       )) {
         usage = chunk.usage ?? usage;
+        finishReason = chunk.choices.firstOrNull?.finishReason ?? finishReason;
         final text = chunk.choices.first.delta.content;
         if (text != null) {
           buffer.write(text);
@@ -212,7 +218,7 @@ mixin AiInferenceHandler {
       heartbeat?.cancel();
       sw.stop();
       lastGenerationStats =
-          await buildGenerationStats(GenerationMode.vision, usage);
+          await buildGenerationStats(GenerationMode.vision, usage, finishReason: finishReason);
       final totalSec = sw.elapsedMilliseconds / 1000.0;
       final tokPerSec = tokenCount > 0
           ? (tokenCount / totalSec).toStringAsFixed(1)
@@ -247,6 +253,7 @@ mixin AiInferenceHandler {
     required String prompt,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) async {
     lastGenerationStats = null;
     if (engine == null) {
@@ -277,6 +284,7 @@ mixin AiInferenceHandler {
       final buffer = StringBuffer();
       int tokenCount = 0;
       LlamaGenerationUsage? usage;
+      String? finishReason;
 
       heartbeat = Timer.periodic(const Duration(seconds: 5), (_) {
         final elapsed =
@@ -303,8 +311,10 @@ mixin AiInferenceHandler {
           grammar: grammar,
         ),
         enableThinking: false,
+        responseFormat: responseFormat,
       )) {
         usage = chunk.usage ?? usage;
+        finishReason = chunk.choices.firstOrNull?.finishReason ?? finishReason;
         final text = chunk.choices.first.delta.content;
         if (text != null) {
           buffer.write(text);
@@ -320,7 +330,7 @@ mixin AiInferenceHandler {
       heartbeat.cancel();
       sw.stop();
       lastGenerationStats =
-          await buildGenerationStats(GenerationMode.text, usage);
+          await buildGenerationStats(GenerationMode.text, usage, finishReason: finishReason);
       final totalSec = sw.elapsedMilliseconds / 1000.0;
       final tokPerSec = tokenCount > 0
           ? (tokenCount / totalSec).toStringAsFixed(1)

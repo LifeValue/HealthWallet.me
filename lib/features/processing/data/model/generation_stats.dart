@@ -17,6 +17,10 @@ abstract class GenerationStats with _$GenerationStats {
     double? timeToFirstTokenMs,
     double? promptEvalMs,
     double? durationMs,
+
+    /// The final chunk's `finishReason`: `stop` when the model ended its
+    /// output, `length` when it hit maxTokens or a full context (truncated).
+    String? finishReason,
   }) = _GenerationStats;
 
   factory GenerationStats.fromJson(Map<String, dynamic> json) =>

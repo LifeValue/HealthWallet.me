@@ -51,6 +51,7 @@ fvm dart run tool/extraction_bench/bench.dart compare --dataset build/extraction
 | `BENCH_RUN_ID` | `<model>-<os>-<UTC timestamp>` | Results folder; re-using an id appends, and `score` keeps the last record per document |
 | `BENCH_LIMIT` | all | Process only the first N documents (sorted by docId) |
 | `BENCH_COOLDOWN_S` | `0` | Pause between documents, to keep phones out of thermal throttling |
+| `BENCH_OUTPUT` | the app's pref (unset: `schema`) | `ExtractionOutputMode` for every phase: `grammar` (the generic JSON-array grammar), `schema` (a flat per-phase JSON schema as llamadart `responseFormat`) or `schemaDraft` (an unconstrained draft call, then the schema call with the draft in its prompt). Sets the `aiOutputMode` pref for the run and restores it afterwards, so the runner reads the mode the way `ProcessingHandler` does. Recorded as `outputMode` in each record |
 | `BENCH_GPU_LAYERS` | the app's config | GPU layers for every model load, text and vision (`0` = CPU only, `99` = all). Without it the app's `DeviceCapabilityService.computeModelConfig` decides, and its text paths never take the AI-settings value; on iOS that is 0 layers for text and at most 4 for vision. Recorded as `gpuLayers` in each record |
 
 The runner fails before the first document when the model or mmproj file of `BENCH_MODEL` is missing from `<documents>/ai_models/`, naming the expected paths. Download the model in the app once (Settings → AI model) or copy the files there.
@@ -59,13 +60,13 @@ For each document it:
 
 1. Rasterizes `document.pdf` with the production `PdfConversionMixin.convertPdfToImages` (200 dpi), or takes `page-<n>.png|jpg` in page-number order (`page-2` before `page-10`).
 2. Applies the document's seeded degradation: `scan` (rotation within ±2°, blur, noise, JPEG q60) or `photo` (rotation within ±4°, brightness gradient, blur, JPEG q70); `clean` is untouched.
-3. Mirrors `ProcessingHandler`: `ProcessingRepositoryImpl.mapBasicInfo`, then `docCategory` = `lab_report` when the container is a `MappingDiagnosticReport`, else `visit`, then `mapRemainingResources` with `useVision` from `BENCH_VISION`. Each yield is a snapshot of every phase-2 resource so far; the last one is kept, as `ProcessingHandler` keeps it in the session. Tuning prefs (max tokens, GPU layers, threads, context) are passed on mobile and left null on desktop, as in the app.
+3. Mirrors `ProcessingHandler`: `ProcessingRepositoryImpl.mapBasicInfo`, then `docCategory` = `lab_report` when the container is a `MappingDiagnosticReport`, else `visit`, then `mapRemainingResources` with `useVision` from `BENCH_VISION`; both phases get the output mode read from the `aiOutputMode` pref. Each yield is a snapshot of every phase-2 resource so far; the last one is kept, as `ProcessingHandler` keeps it in the session. Tuning prefs (max tokens, GPU layers, threads, context) are passed on mobile and left null on desktop, as in the app.
 4. Maps the patient, the container and every phase-2 resource with `toFhirResource(subjectId: 'bench-patient', encounterId: 'bench-container')`. A resource whose mapping throws is left out and listed in `mappingErrors`.
 5. Samples `ProcessInfo.currentRss` every 250 ms and appends one JSON line to `predictions.jsonl`.
 
 The runner skips `ProcessingHandler`'s OCR pre-match against existing patient records (`mapContainerOnly`), since the benchmark has no records; it always runs the full phase 1.
 
-The production classes are used unchanged. A recording decorator wraps `AiInferenceDataSourceImpl` and keeps each generation's raw output, whether it parses as JSON exactly as produced (`strictJsonValid`), the call's `GenerationStats` (prompt and completion tokens, time to first token, prompt-eval and total duration from llamadart's final chunk and performance context), and the image-encode and image-decode times from llama.cpp's mtmd log lines (`image slice encoded in N ms`, `image decoded (batch i/n) in N ms`).
+The production classes are used unchanged. A recording decorator wraps `AiInferenceDataSourceImpl` and keeps each generation's raw output, whether it parses as JSON exactly as produced (`strictJsonValid`), how it was constrained (`constraint`: `grammar`, `schema`, or `none` for a schemaDraft draft call), the call's `GenerationStats` (prompt and completion tokens, time to first token, prompt-eval and total duration and `finishReason` from llamadart's final chunk and performance context; `finishReason` is `length` when the generation stopped at maxTokens or a full context, i.e. was truncated), and the image-encode and image-decode times from llama.cpp's mtmd log lines (`image slice encoded in N ms`, `image decoded (batch i/n) in N ms`).
 
 llama.cpp writes its log to stderr, and llamadart never forwards it to a Dart handler, so the runner points the process's stderr (fd 2) at `results/<runId>/native.log` for the run (`NativeLogCapture`), reads what each generation wrote after it returns and copies it on to the real stderr. `native.log` is kept as the run's full native log. llamadart 0.15 encodes images with `mtmd_encode_chunk` itself and only decodes through mtmd's helper, so the decode line appears but the encode line does not: `imageEncodeMs` is `null` and the report prints "n/a". Use the vision calls' time to first token, which includes the encode, until llamadart logs or reports it.
 
@@ -74,11 +75,12 @@ Each record also keeps the pipeline's own `ProcessingLogBuffer` lines for the do
 ### Record format
 
 ```json
-{"docId": "de-lab-001", "runId": "qwen-macos-…", "model": "qwen", "platform": "macos", "useVision": true, "gpuLayers": 99,
+{"docId": "de-lab-001", "runId": "qwen-macos-…", "model": "qwen", "platform": "macos", "useVision": true,
+ "outputMode": "schema", "gpuLayers": 99,
  "predictedResources": [{"resourceType": "Patient", …}, …],
  "generations": [{"phase": "basic", "mode": "text", "strictJsonValid": true, "promptTokens": 812,
    "completionTokens": 143, "timeToFirstTokenMs": 950.2, "promptEvalMs": 901.0, "durationMs": 4210.7,
-   "imageEncodeMs": null, "imageDecodeMs": null, "rawOutput": "[…]"}],
+   "finishReason": "stop", "constraint": "schema", "imageEncodeMs": null, "imageDecodeMs": null, "rawOutput": "{…}"}],
  "peakRssBytes": 3012345856, "wallMs": 48211, "pipelineLog": ["[12:25:05.290][ScanAI] loadModel: ctx=2048, gpuLayers=99, …", …],
  "mappingErrors": ["…"], "error": "…"}
 ```
@@ -154,6 +156,23 @@ emulator -avd bench_pixel -no-snapshot-save -no-audio &
 
 Then follow the Android steps above with `-d emulator-5554`, pushing `build/extraction_bench/models` the same way as the dataset. A document takes about 6 minutes there (Apple M-series CPU).
 
+## Output-mode measurement (2026-10-26)
+
+Dataset `generate --seed 7 --per-cell 3` (24 documents), Qwen3-VL-2B, iPhone 17 Pro simulator (CPU), one run per mode with `BENCH_OUTPUT` and `BENCH_VISION`; `compare` with `--seed 1234`. Run ids `qwen-sim-<text|vision>-<mode>`.
+
+| Run | F1 [95% CI] | Recall | Omission | Strict JSON | Truncated | Median wall / doc |
+|---|---|---|---:|---:|---:|---:|
+| text, grammar | 0.564 [0.524, 0.603] | 0.587 | 14.2% | 95.8% | 4.2% | 47 s |
+| text, schema | 0.602 [0.573, 0.631] | 0.645 | 6.0% | 100.0% | 0.0% | 42 s |
+| text, schemaDraft | 0.606 [0.581, 0.633] | 0.649 | 6.1% | 100.0% | 0.0% | 59 s |
+| vision, grammar | 0.558 [0.516, 0.599] | 0.572 | 16.0% | 93.8% | 6.3% | 49 s |
+| vision, schema | 0.599 [0.570, 0.629] | 0.641 | 6.4% | 97.9% | 2.1% | 44 s |
+| vision, schemaDraft | 0.597 [0.571, 0.622] | 0.640 | 6.1% | 100.0% | 0.0% | 51 s |
+
+ΔF1 schema − grammar (text): +0.038 [0.006, 0.072], P(≤ 0) = 0.011; largest on ro (+0.111) and es (+0.070), de and en within ±0.014. ΔF1 schemaDraft − schema (text): +0.004 [−0.012, 0.020], P(≤ 0) = 0.303. Vision runs: schema − grammar +0.041 [0.006, 0.077], schemaDraft − schema −0.003 [−0.016, 0.011]. By the rule fixed before measuring (text run decides: schema if ΔF1 ≥ 0 and strict JSON not lower; schemaDraft only if its lower CI bound over schema is > 0), `ExtractionOutputMode.defaultMode` is `schema`.
+
+The two grammar truncations (ro-dis-003, ro-lab-003, phase 2) are gone under the schema's `maxItems`. No run put a Condition on a lab report or a CNP label on a German patient. In the simulator the vision runs mostly measure the text path: its memory check (60% of the RAM estimated for the simulator's machine id, minus the RSS) stops the vision batch on most documents and phase 2 falls back to text, (20–22 of 24 documents; 2–4 vision generations per run), so read them as a check that the vision code paths run, not as vision accuracy; measure vision on a phone.
+
 ## Datasets
 
 ```
@@ -226,6 +245,6 @@ Comparators:
 - **set**: Jaccard of the elements' folded tokens (`["Ana Maria"]` = `["Ana", "Maria"]`).
 - **concept**: a shared `system|code` → 1; a gold-listed alternative code → 0.75; otherwise 0.5 × the best text score between the texts and displays. A gold concept with no codings (document title, qualification) is compared as text at full weight. The app codes only the patient identifier type, the encounter specialty and vital-sign observations, so for most concepts the text tier is what a prediction can earn.
 
-`report.json` / `report.md`: overall and per stratum (split, lang, family, degradation), per resource type, F1/P/R and omission and hallucination rates with CIs, strict-JSON validity rate of the generations, error and missing counts, median/p90 of time to first token, prompt eval and image encode (per generation, pooled and per mode, since a vision call's time to first token includes the image encode) and wall time (per document), and peak RSS (median, p90, max per document).
+`report.json` / `report.md`: the runs' output modes (a record without `outputMode` counts as `grammar`), overall and per stratum (split, lang, family, degradation), per resource type, F1/P/R and omission and hallucination rates with CIs, strict-JSON validity rate and truncated rate (`finishReason: length`, over the generations that recorded a finish reason) of the constrained generations (schemaDraft draft calls are free text and left out of both; `draftGenerations` counts them), error and missing counts, median/p90 of time to first token, prompt eval and image encode (per generation, pooled and per mode, since a vision call's time to first token includes the image encode) and wall time (per document), and peak RSS (median, p90, max per document).
 
 `compare`: the per-document F1 difference B − A over documents present in both prediction files, paired bootstrap (same resamples for both runs), its 95% CI and P(B − A ≤ 0), overall and per stratum. Same seed, same output.

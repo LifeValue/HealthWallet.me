@@ -10,6 +10,7 @@ import 'package:health_wallet/features/processing/domain/services/processing_log
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -110,6 +111,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           gpuLayers: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiGpuLayers),
           threads: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads),
           contextSize: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize),
+          outputMode: ExtractionOutputMode.fromPref(prefs.getString(SharedPrefsConstants.aiOutputMode)),
         );
         final finalSession =
             state.sessions.firstWhereOrNull((s) => s.id == event.sessionId);
@@ -147,6 +149,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         gpuLayers: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiGpuLayers),
         threads: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiThreads),
         contextSize: isDesktop ? null : prefs.getInt(SharedPrefsConstants.aiContextSize),
+        outputMode: ExtractionOutputMode.fromPref(prefs.getString(SharedPrefsConstants.aiOutputMode)),
       );
       final stagedPatient = await _matchOrCreatePatient(patient);
       final finalSession =
@@ -291,7 +294,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
               maxTokens: savedMaxTokens,
               gpuLayers: savedGpuLayers,
               threads: savedThreads,
-              contextSize: savedContextSize);
+              contextSize: savedContextSize,
+              outputMode: ExtractionOutputMode.fromPref(
+                  prefs.getString(SharedPrefsConstants.aiOutputMode)));
 
       // Each yield is every phase-2 resource so far, not a delta: it replaces
       // the previous yield on top of the resources the session started with.

@@ -5,7 +5,8 @@
 //     [--no-uninstall on a phone, or the results are deleted with the app] \
 //     --dart-define=BENCH_MODEL=qwen [--dart-define=BENCH_VISION=false] \
 //     [--dart-define=BENCH_RUN_ID=<id>] [--dart-define=BENCH_LIMIT=<n>] \
-//     [--dart-define=BENCH_COOLDOWN_S=<seconds>] [--dart-define=BENCH_GPU_LAYERS=<n>]
+//     [--dart-define=BENCH_COOLDOWN_S=<seconds>] [--dart-define=BENCH_GPU_LAYERS=<n>] \
+//     [--dart-define=BENCH_OUTPUT=grammar|schema|schemaDraft]
 //
 // Input:  <documents>/extraction_bench/dataset/<split>/<docId>/
 //         {document.pdf | page-*.png | page-*.jpg, meta.json}
@@ -25,6 +26,7 @@ import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/processing/data/data_source/local/processing_local_data_source.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
 import 'package:health_wallet/features/processing/data/repository/processing_repository_impl.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:llamadart/llamadart.dart';
@@ -43,6 +45,8 @@ const _limit = int.fromEnvironment('BENCH_LIMIT');
 const _cooldownSeconds = int.fromEnvironment('BENCH_COOLDOWN_S');
 // A string, so that 0 (CPU only) is distinguishable from unset.
 const _gpuLayersDefine = String.fromEnvironment('BENCH_GPU_LAYERS');
+// Empty: the app's aiOutputMode pref as it is.
+const _outputDefine = String.fromEnvironment('BENCH_OUTPUT');
 
 final _pageImage = RegExp(r'^page-(\d+)\.(png|jpe?g)$', caseSensitive: false);
 
@@ -73,6 +77,10 @@ void main() {
     if (_gpuLayersDefine.isNotEmpty && (gpuLayers == null || gpuLayers < 0)) {
       fail('BENCH_GPU_LAYERS must be a non-negative integer (got "$_gpuLayersDefine").');
     }
+    if (_outputDefine.isNotEmpty && !ExtractionOutputMode.values.any((m) => m.name == _outputDefine)) {
+      fail('BENCH_OUTPUT must be one of ${ExtractionOutputMode.values.map((m) => m.name).join('|')} '
+          '(got "$_outputDefine").');
+    }
 
     final documents = await getApplicationDocumentsDirectory();
     debugPrint('[bench] documents: ${documents.path}');
@@ -102,38 +110,45 @@ void main() {
 
     final prefs = getIt<SharedPreferences>();
     final previousModel = prefs.getString(SharedPrefsConstants.aiSelectedModel);
-    await prefs.setString(SharedPrefsConstants.aiSelectedModel, variant.name);
-
-    final runId = _runIdDefine.isNotEmpty ? _runIdDefine : '${variant.name}-${Platform.operatingSystem}-${_timestamp()}';
-    final resultsDir = Directory(p.join(benchRoot, 'results', runId))..createSync(recursive: true);
-    // llama.cpp logs image-encode times only to stderr; see NativeLogCapture.
+    final previousOutput = prefs.getString(SharedPrefsConstants.aiOutputMode);
     NativeLogCapture? nativeLog;
+    Directory? workDir;
+    // The finally restores both prefs, whatever fails after they are set.
     try {
-      nativeLog = NativeLogCapture.start(p.join(resultsDir.path, 'native.log'));
-    } catch (e) {
-      debugPrint('[bench] stderr capture unavailable, image-encode times will be n/a: $e');
-    }
-    final recorder = RecordingAiInferenceDataSource(
-      AiInferenceDataSourceImpl(prefs),
-      gpuLayersOverride: gpuLayers,
-      drainNativeLog: nativeLog?.drain,
-    );
-    final ocr = getIt<TextRecognitionService>();
-    final repository = ProcessingRepositoryImpl(
-      recorder,
-      getIt<ProcessingLocalDataSource>(),
-      ocr,
-      getIt<PathResolver>(),
-    );
-    await LlamaLogging.configure(level: LlamaLogLevel.info, handler: recorder.onLog);
+      await prefs.setString(SharedPrefsConstants.aiSelectedModel, variant.name);
+      if (_outputDefine.isNotEmpty) await prefs.setString(SharedPrefsConstants.aiOutputMode, _outputDefine);
+      // Read back as ProcessingHandler reads it.
+      final outputMode = ExtractionOutputMode.fromPref(prefs.getString(SharedPrefsConstants.aiOutputMode));
+      debugPrint('[bench] output mode: ${outputMode.name}');
 
-    final output = File(p.join(resultsDir.path, 'predictions.jsonl'));
-    final workDir = Directory(p.join(resultsDir.path, 'pages'))..createSync(recursive: true);
+      final runId = _runIdDefine.isNotEmpty ? _runIdDefine : '${variant.name}-${Platform.operatingSystem}-${_timestamp()}';
+      final resultsDir = Directory(p.join(benchRoot, 'results', runId))..createSync(recursive: true);
+      // llama.cpp logs image-encode times only to stderr; see NativeLogCapture.
+      try {
+        nativeLog = NativeLogCapture.start(p.join(resultsDir.path, 'native.log'));
+      } catch (e) {
+        debugPrint('[bench] stderr capture unavailable, image-encode times will be n/a: $e');
+      }
+      final recorder = RecordingAiInferenceDataSource(
+        AiInferenceDataSourceImpl(prefs),
+        gpuLayersOverride: gpuLayers,
+        drainNativeLog: nativeLog?.drain,
+      );
+      final ocr = getIt<TextRecognitionService>();
+      final repository = ProcessingRepositoryImpl(
+        recorder,
+        getIt<ProcessingLocalDataSource>(),
+        ocr,
+        getIt<PathResolver>(),
+      );
+      await LlamaLogging.configure(level: LlamaLogLevel.info, handler: recorder.onLog);
 
-    // ProcessingHandler passes the tuning prefs on mobile and null on desktop.
-    int? pref(String key) => isDesktop ? null : prefs.getInt(key);
+      final output = File(p.join(resultsDir.path, 'predictions.jsonl'));
+      workDir = Directory(p.join(resultsDir.path, 'pages'))..createSync(recursive: true);
 
-    try {
+      // ProcessingHandler passes the tuning prefs on mobile and null on desktop.
+      int? pref(String key) => isDesktop ? null : prefs.getInt(key);
+
       for (final (index, doc) in docs.indexed) {
         debugPrint('[bench] ${index + 1}/${docs.length} ${doc.docId} (${doc.degradation})');
         final record = await runBenchDocument(
@@ -146,6 +161,7 @@ void main() {
           model: variant.name,
           useVision: _useVision,
           pref: pref,
+          outputMode: outputMode,
         );
         await record.appendTo(output);
 
@@ -153,6 +169,7 @@ void main() {
           await Future<void>.delayed(const Duration(seconds: _cooldownSeconds));
         }
       }
+      debugPrint('[bench] wrote ${output.path}');
     } finally {
       await LlamaLogging.configure();
       nativeLog?.stop();
@@ -161,8 +178,12 @@ void main() {
       } else {
         await prefs.setString(SharedPrefsConstants.aiSelectedModel, previousModel);
       }
-      if (workDir.existsSync()) workDir.deleteSync(recursive: true);
+      if (previousOutput == null) {
+        await prefs.remove(SharedPrefsConstants.aiOutputMode);
+      } else {
+        await prefs.setString(SharedPrefsConstants.aiOutputMode, previousOutput);
+      }
+      if (workDir != null && workDir.existsSync()) workDir.deleteSync(recursive: true);
     }
-    debugPrint('[bench] wrote ${output.path}');
   }, timeout: Timeout.none);
 }

@@ -151,6 +151,41 @@ void main() {
         throwsA(isA<BenchInputException>()));
   });
 
+  test('the report shows the output mode and the truncated rate; drafts stay out of the JSON rates', () {
+    final records = [for (final l in File(oracle()).readAsLinesSync()) jsonDecode(l) as Map<String, dynamic>];
+    final path = p.join(tmp.path, 'modes.jsonl');
+    File(path).writeAsStringSync([
+      for (final r in records.take(2))
+        {
+          ...r,
+          'outputMode': 'schemaDraft',
+          'generations': [
+            {'phase': 'remaining', 'mode': 'text', 'constraint': 'none', 'strictJsonValid': false, 'finishReason': 'length'},
+            {'phase': 'remaining', 'mode': 'text', 'constraint': 'schema', 'strictJsonValid': true, 'finishReason': 'stop'},
+            {'phase': 'remaining', 'mode': 'text', 'constraint': 'schema', 'strictJsonValid': false, 'finishReason': 'length'},
+            // Written before finishReason was recorded: left out of the truncated rate.
+            {'phase': 'basic', 'mode': 'text', 'strictJsonValid': true},
+          ],
+        },
+    ].map(jsonEncode).join('\n'));
+    final out = p.join(tmp.path, 'modes');
+    final report = runScore(
+        datasetPath: dataset, predictionsPath: path, outDir: out, seed: 1, samples: 100, onlyPredicted: true);
+    expect((report['runs'] as Map)['outputModes'], ['schemaDraft']);
+    final overall = report['overall'] as Map;
+    expect(overall['generations'], 6);
+    expect(overall['draftGenerations'], 2);
+    expect(overall['strictJsonValidRate'], closeTo(4 / 6, 1e-9));
+    expect(overall['truncatedRate'], 0.5);
+    final md = File(p.join(out, 'report.md')).readAsStringSync();
+    expect(md, contains('output modes: schemaDraft'));
+    expect(md, contains('| Strict JSON | Truncated |'));
+    expect(md, contains('| 66.7% | 50.0% |'));
+    // Records without an outputMode come from grammar runs.
+    expect((runScore(datasetPath: dataset, predictionsPath: oracle(), outDir: '$out-oracle', seed: 1, samples: 100)['runs']
+        as Map)['outputModes'], ['grammar']);
+  });
+
   test('a later line for the same document replaces an earlier one', () {
     final records = [for (final l in File(oracle()).readAsLinesSync()) jsonDecode(l) as Map<String, dynamic>];
     final id = records[3]['docId'];

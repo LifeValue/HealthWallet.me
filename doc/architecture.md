@@ -77,6 +77,22 @@ Fasten sync flow: parse QR → create wallet source → create default patient �
 4. **Text fallback**: if vision fails, `runTextPrompt()` runs on the OCR text.
 5. **FHIR mapping**: `ProcessingRepository` (`processing/domain/repository/`, implemented in `processing/data/repository/processing_repository_impl.dart`) maps the staged `MappingResources` (`processing/domain/entity/mapping_resources/`) to FHIR R4 and writes them through Drift.
 
+### Output modes
+
+`ExtractionOutputMode` (`processing/domain/entity/extraction_output_mode.dart`), read from the `aiOutputMode` pref on every platform and passed by `ProcessingHandler` to `mapContainerOnly`, `mapBasicInfo` and `mapRemainingResources` like the other AI tuning prefs. Unset or unknown → `ExtractionOutputMode.defaultMode`, which is `schema` since the 2026-10-26 measurement (`tool/extraction_bench/README.md`, "Output-mode measurement").
+
+| Mode | Each generation |
+|------|-----------------|
+| `grammar` | `GbnfGrammars.jsonArray`: any JSON array of objects; prompts describe `resourceType`-tagged objects |
+| `schema` | A flat JSON schema per phase as llamadart `responseFormat` (no grammar): phase 1 one object (patient fields, `documentTitle`, `documentDate`, `conclusion`, `documentCategory` enum), container-only the document fields, phase 2 one object of arrays per category (`lab_report`: observations, practitioners, organizations; `visit`: conditions, medications, procedures, allergies, vitalSigns, practitioners, organizations; anything else the union). Enums for closed sets, dates as `^([0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?)?$` (llamadart's pattern subset has no `\d`), `maxItems` on every array, `additionalProperties: false` |
+| `schemaDraft` | An unconstrained draft call (≤ 384 tokens, same modality as the step), then the `schema` call text-only with the draft and the OCR text in the prompt (text context ≥ 4096). A failed draft leaves the constrained call without one |
+
+`processing/data/model/structured_output/extraction_schemas.dart` holds the schemas, the shape text the prompts show (llama.cpp does not inject the schema into the prompt) and the mappers from the schema output back to the legacy `resourceType` maps, so `MappingResource.fromJson`, the dedupe and skip rules, the review UI, sync and the DB are the same in every mode. Output cut off mid-JSON is salvaged up to the last complete array item; unusable phase-2 output gives no resources, unusable phase-1 output takes the vision fallback as before. Every schema is checked with llamadart's `LlamaStructuredOutput.jsonValueSchema` in `test/features/processing/extraction_schemas_test.dart`.
+
+Shared by all modes: the basic-info prompts and `PatientPostProcessor`'s default label take their country from the document (`CountryIdentifier.forDocument`: identifier names and field labels scored in the OCR text, the phone locale only when nothing or a tie matches), and lab-report prompts and their few-shot example no longer offer Condition. In `grammar` and `schema` modes the vision phase-2 call gets the same 2000 OCR characters and few-shot example as the text fallback; in `schemaDraft` the vision draft call gets the 2000 OCR characters only (no example, no shape), and the constrained text pass gets the example. `GenerationStats.finishReason` (`length` = truncated) is recorded per generation.
+
+`fhir_r4_validation` (probe, 2026-10-26): not used. 0.14 needs `fhir_r4 ^0.14` (the app and `fhir_ips_export` are on 0.6), validates against an R4B (4.3.0) model, and ships no definitions: offline, with its default cache, every resource fails with "No StructureDefinition found". With the HL7 R4 or R4B `definitions.json` loaded into a cache it still needed two workarounds (complex types are looked up by bare name, and a binding to a terminology.hl7.org value set outside the core package throws and aborts the run), and then 32 of 40 `toFhirResource` samples (4 per type, from benchmark runs) failed on validator-internal errors on Reference, Period, Quantity and ContactPoint ("Element type or path is missing", "Context is null for <invariant>"), every type but Patient and Practitioner. 6 came out valid (2 Patients, 4 Practitioners); the other 2 Patients carry the one real defect it found, a model-written `gender` of `Female`, which the required administrative-gender binding rejects and the `schema` mode's gender enum rules out.
+
 | Type | Location |
 |------|----------|
 | `ProcessingBloc` | `processing/presentation/bloc/` |

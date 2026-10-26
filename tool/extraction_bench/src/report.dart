@@ -85,14 +85,20 @@ Map<String, dynamic> _countStats(
 }
 
 Map<String, dynamic> _groupStats(List<ScoredDoc> docs, {required int seed, required int samples, required String label}) {
-  final generations = [for (final d in docs) ...?d.record?.generations];
+  // Draft calls are free text by design, so the JSON rates leave them out.
+  final all = [for (final d in docs) ...?d.record?.generations];
+  final generations = all.where((g) => g.constrained).toList();
   final valid = generations.where((g) => g.strictJsonValid).length;
+  final withReason = generations.where((g) => g.finishReason != null).toList();
   return {
     ..._countStats([for (final d in docs) d.score.total], seed: seed, samples: samples, label: label),
     'errors': docs.where((d) => d.status == DocStatus.error).length,
     'missing': docs.where((d) => d.status == DocStatus.missing).length,
     'generations': generations.length,
+    'draftGenerations': all.length - generations.length,
     'strictJsonValidRate': generations.isEmpty ? null : valid / generations.length,
+    // Over the generations that recorded a finishReason.
+    'truncatedRate': withReason.isEmpty ? null : withReason.where((g) => g.truncated).length / withReason.length,
   };
 }
 
@@ -129,6 +135,7 @@ Map<String, dynamic> buildReport(
       'runIds': {for (final r in records) r.runId}.toList()..sort(),
       'models': {for (final r in records) r.model}.toList()..sort(),
       'platforms': {for (final r in records) r.platform}.toList()..sort(),
+      'outputModes': {for (final r in records) r.outputMode ?? 'grammar'}.toList()..sort(),
       'gpuLayers': {for (final r in records) r.gpuLayers?.toString() ?? 'auto'}.toList()..sort(),
     },
     'counts': {
@@ -209,13 +216,14 @@ String _pctCi(Object? ci) {
   return '${_pct(ci['mean'])} [${_pct(ci['lo'])}, ${_pct(ci['hi'])}]';
 }
 
-const _groupHeader = '| Docs | F1 | Precision | Recall | Omission | Hallucination | Strict JSON | Errors | Missing |';
-const _groupRule = '|---:|---|---|---|---:|---:|---:|---:|---:|';
+const _groupHeader =
+    '| Docs | F1 | Precision | Recall | Omission | Hallucination | Strict JSON | Truncated | Errors | Missing |';
+const _groupRule = '|---:|---|---|---|---:|---:|---:|---:|---:|---:|';
 
 String _groupCells(Map g) =>
     '| ${g['docs']} | ${_ci(g['f1'])} | ${_ci(g['precision'])} | ${_ci(g['recall'])} | '
     '${_pctCi(g['omissionRate'])} | ${_pctCi(g['hallucinationRate'])} | ${_pct(g['strictJsonValidRate'])} | '
-    '${g['errors']} | ${g['missing']} |';
+    '${_pct(g['truncatedRate'])} | ${g['errors']} | ${g['missing']} |';
 
 String renderReportMarkdown(Map<String, dynamic> r) {
   final b = StringBuffer();
@@ -228,7 +236,8 @@ String renderReportMarkdown(Map<String, dynamic> r) {
     ..writeln('- Dataset: `${r['dataset']}`')
     ..writeln('- Predictions: `${r['predictions']}`')
     ..writeln('- Runs: ${(runs['runIds'] as List).join(', ')}; models: ${(runs['models'] as List).join(', ')}; '
-        'platforms: ${(runs['platforms'] as List).join(', ')}; GPU layers: ${(runs['gpuLayers'] as List).join(', ')}')
+        'platforms: ${(runs['platforms'] as List).join(', ')}; GPU layers: ${(runs['gpuLayers'] as List).join(', ')}; '
+        'output modes: ${(runs['outputModes'] as List).join(', ')}')
     ..writeln('- Documents: ${counts['documents']} (scored ${counts['ok']}, pipeline errors ${counts['errors']}, '
         'missing ${counts['missing']}); errors and missing documents are scored with no predictions'
         '${counts['excludedMissing'] == null ? '' : '; ${counts['excludedMissing']} dataset documents without a '

@@ -11,6 +11,7 @@ class RunRecord {
     required this.model,
     required this.platform,
     required this.useVision,
+    this.outputMode = 'grammar',
     required this.predictedResources,
     required this.generations,
     required this.peakRssBytes,
@@ -30,6 +31,9 @@ class RunRecord {
   /// `Platform.operatingSystem`.
   final String platform;
   final bool useVision;
+
+  /// `ExtractionOutputMode` name of the run (`BENCH_OUTPUT`).
+  final String outputMode;
 
   /// `BENCH_GPU_LAYERS`; null when the app's own config chose them.
   final int? gpuLayers;
@@ -57,6 +61,7 @@ class RunRecord {
         'model': model,
         'platform': platform,
         'useVision': useVision,
+        'outputMode': outputMode,
         if (gpuLayers != null) 'gpuLayers': gpuLayers,
         'predictedResources': predictedResources,
         'generations': [for (final g in generations) g.toJson()],

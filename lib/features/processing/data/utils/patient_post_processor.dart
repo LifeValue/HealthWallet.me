@@ -36,7 +36,9 @@ class PatientPostProcessor {
     return result;
   }
 
-  static final _knownLabels = {'CNP', 'MRN', 'SSN', 'NHS', 'KVNR', 'SVNr', 'DNI', 'CIP', 'NIR', 'CF', 'BSN', 'PESEL', 'PNR', 'AHV', 'Identifier'};
+  /// Patient identifier labels the post-processor recognises; also the
+  /// `identifierLabel` enum of the phase-1 schema.
+  static const knownLabels = {'CNP', 'MRN', 'SSN', 'NHS', 'KVNR', 'SVNr', 'DNI', 'CIP', 'NIR', 'CF', 'BSN', 'PESEL', 'PNR', 'AHV', 'Identifier'};
   static final _numericPattern = RegExp(r'^\d[\d\s\-\.]+$');
 
   static MappingPatient _fixSwappedIdentifierFields(MappingPatient patient) {
@@ -44,14 +46,14 @@ class PatientPostProcessor {
     final mrn = patient.patientIdentifier.value.trim();
 
     final labelLooksNumeric = _numericPattern.hasMatch(label);
-    final mrnLooksLikeLabel = _knownLabels.contains(mrn) ||
+    final mrnLooksLikeLabel = knownLabels.contains(mrn) ||
         (mrn.isNotEmpty && RegExp(r'^[A-Za-z]+$').hasMatch(mrn));
 
     if (labelLooksNumeric && (mrn.isEmpty || mrnLooksLikeLabel)) {
       ProcessingLogBuffer.instance.log('[$_ts][PostProcessor] swapped fields: moving "$label" from label to MRN box');
       return patient.copyWith(
         patientIdentifier: MappedProperty(value: label, confidenceLevel: patient.patientIdentifier.confidenceLevel),
-        identifierLabel: mrn.isNotEmpty && _knownLabels.contains(mrn) ? mrn : 'Identifier',
+        identifierLabel: mrn.isNotEmpty && knownLabels.contains(mrn) ? mrn : 'Identifier',
       );
     }
 
