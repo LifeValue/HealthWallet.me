@@ -87,7 +87,6 @@ pubspec_overrides.yaml
 
 # FVM Version Cache
 .fvm/
-.fvmrc
 
 .vscode/settings.json
 
