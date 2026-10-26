@@ -1,24 +1,34 @@
-# HealthWallet.me CI/CD — replaces the GitHub Actions workflows in .github/workflows/.
+# HealthWallet.me CI/CD. GitLab CI is the only CI; .github/workflows/ is unused.
 #
-#   checks                  every branch push                   Linux instance runner (Docker)
-#   ios / android / macos   automatic on develop,               shell-macmini (fastlane)
-#                           manual on every other branch
-#   windows                 manual on every branch              needs a `windows` runner (none yet)
+# Checks run in parallel on every branch push and any failure fails the pipeline:
+#   checks                  dart format, flutter analyze (infos and   Linux instance runner (Docker)
+#                           warnings fatal), flutter test
+#   lint                    formatters on the files the branch        Linux instance runner (Docker)
+#                           changed + commit messages (commitlint)
+#   scan:dependencies       known vulnerabilities in every lockfile   Linux instance runner (Docker)
+#   scan:secrets            secrets anywhere in the git history       Linux instance runner (Docker)
+#
+# Deploys follow Gitflow and only start once every check has passed:
+#   ios / android / macos   automatic on develop,                     shell-macmini (fastlane)
+#                           manual on release/* and master
+#   windows                 manual on develop, release/* and master   needs a `windows` runner (none yet)
 #                           → GitLab Release with zip + msix
-#   shorebird patches       manual on master                    shell-macmini
+#   shorebird patches       manual on master                          shell-macmini
+# feature/*, bugfix/* and hotfix/* branches get the checks only.
 #
-# Deploy jobs need the PROTECTED CI/CD variables, which GitLab only exposes to protected branches.
-# To deploy from a working branch, protect it (or a wildcard such as `fix/*`) first; otherwise the
-# job stops at its first step and says so.
+# Deploy jobs need the PROTECTED CI/CD variables, which GitLab only exposes to protected branches;
+# on an unprotected branch the job stops at its first step and says so.
 #
 # Every push to develop uploads a beta to TestFlight (iOS, macOS) and the Play internal track.
-# On other branches each platform is its own manual job, which replaces the GitHub "platform"
-# dropdown (android / ios / macos / windows / both / all). Nothing goes to production from CI: a
-# tested beta is promoted to the App Store / Play production in App Store Connect and Play Console.
+# Nothing goes to production from CI: a tested beta is promoted to the App Store / Play production
+# in App Store Connect and Play Console.
+#
+# The Flutter version comes from .fvmrc, the same pin FVM uses locally.
 #
 # One-time project setup — the pipeline cannot do these itself:
-#   1. Protect `develop` and `master` (Settings → Repository), plus any branch you want to deploy
-#      from. Protected variables below are only exposed to protected branches.
+#   1. Protect `develop`, `master` and `release/*` (Settings → Repository). Protected variables
+#      below are only exposed to protected branches. Turn on "Pipelines must succeed"
+#      (Settings → Merge requests) so a failing check blocks the merge.
 #   2. In mobile/flutter/packages/flutter-airdrop and mobile/health-wallet/fhir-ips-export:
 #      Settings → CI/CD → Job token permissions → add mobile/health-wallet/app. The private pub
 #      dependencies are fetched with CI_JOB_TOKEN instead of an SSH deploy key.
@@ -354,18 +364,20 @@ scan:secrets:
     - rm -f android/app/upload-keystore.jks android/key.properties android/fastlane/service-account.json
     - rm -f AuthKey.p8
 
-# allow_failure: a manual job from `rules:` defaults to false, which would leave every pipeline
-# "blocked" until someone ran each deploy. Deploys are optional, so the pipeline passes on checks
-# alone.
-.on_any_branch: &on_any_branch
-  - if: $CI_COMMIT_BRANCH
+# Deploys follow Gitflow: only develop, release/* and master can deploy; feature/*, bugfix/* and
+# hotfix/* branches get no deploy jobs. allow_failure: a manual job from `rules:` defaults to
+# false, which would leave every pipeline "blocked" until someone ran each deploy. Deploys are
+# optional, so the pipeline passes on the checks alone.
+.on_deploy_branches: &on_deploy_branches
+  - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
     when: manual
     allow_failure: true
 
-# Beta uploads: automatic on develop, so every merge reaches testers; manual elsewhere.
+# Beta uploads: automatic on develop, so every merge reaches testers; manual on release/* (a
+# release candidate for testers) and master.
 .on_develop: &on_develop
   - if: $CI_COMMIT_BRANCH == "develop"
-  - if: $CI_COMMIT_BRANCH
+  - if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH =~ /^release\//
     when: manual
     allow_failure: true
 
@@ -476,7 +488,7 @@ windows:release:
   tags: [windows]
   interruptible: false
   needs: *all_checks
-  rules: *on_any_branch
+  rules: *on_deploy_branches
   before_script:
     - $env:GIT_CONFIG_COUNT = "1"
     - $env:GIT_CONFIG_KEY_0 = "url.https://gitlab-ci-token:$env:CI_JOB_TOKEN@$env:CI_SERVER_HOST/.insteadOf"
