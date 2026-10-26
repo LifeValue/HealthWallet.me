@@ -191,57 +191,57 @@ checks:
 
 # Every other formatter (.pre-commit-config.yaml) on the files this branch changed, and the commit
 # messages against Conventional Commits. Dart is formatted in `checks`; swift-format needs Xcode,
-# so Swift is only formatted by the local hook. Java and Ruby are installed only when Kotlin or
-# Ruby files changed.
+# so Swift is only formatted by the local hook.
 #
+# Kept fast: a hook whose file types the branch did not touch is skipped, so its tool is never
+# installed (Java and Ruby too); the image already has git, curl and xz; Node is a pinned,
+# checksum-verified 31 MB download; only the small pip and npm download caches are kept.
 # Python 3.13 image: gersemi's native module needs a Python below 3.15 (see .pre-commit-config.yaml).
-# Node (Prettier, commitlint) is a pinned, checksum-verified tarball kept in the job cache.
 lint:
   stage: check
-  image: python:3.13-slim-bookworm
+  image: python:3.13-bookworm
   variables:
-    GIT_DEPTH: "0"
     NODE_VERSION: "22.23.3"
     NODE_SHA256_X64: "df450af89261115ef9f9e3830c3eeb2cc9213b63c720b1af623cb5dcbe2e02de"
     NODE_SHA256_ARM64: "a44aeb94849a299b22df10b9e622ec2f605c2183501bc40590705131de7c740f"
-    PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
     npm_config_cache: "$CI_PROJECT_DIR/.cache/npm"
   cache:
     - key:
         files: [.pre-commit-config.yaml, package-lock.json]
-        prefix: lint
+        prefix: lint-downloads
       paths:
-        - .cache/
-      when: always
+        - .cache/pip/
+        - .cache/npm/
   before_script:
-    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git curl xz-utils ca-certificates > /dev/null
+    - *diff_base
+    - CHANGED="$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD)"
+    - |
+      SKIP="dart-format,swift-format"
+      needs() { echo "$CHANGED" | grep -qE "$1"; }
+      needs '\.(kt|kts)$' || SKIP="$SKIP,pretty-format-kotlin"
+      needs '(^|/)(Gemfile|Podfile|Fastfile|Appfile)$|\.rb$' || SKIP="$SKIP,rubocop"
+      needs '\.(c|cc|cpp|h|hpp)$' || SKIP="$SKIP,clang-format"
+      needs '(^|/)CMakeLists\.txt$|\.cmake$' || SKIP="$SKIP,gersemi"
+      needs '\.(sh|bash)$|^scripts/' || SKIP="$SKIP,shfmt,shellcheck"
+      export SKIP
+      echo "Skipping hooks with nothing to check: $SKIP"
+    - |
+      if ! echo "$SKIP" | grep -q pretty-format-kotlin || ! echo "$SKIP" | grep -q rubocop; then
+        apt-get update -qq
+        echo "$SKIP" | grep -q pretty-format-kotlin || apt-get install -y -qq --no-install-recommends default-jre-headless > /dev/null
+        echo "$SKIP" | grep -q rubocop || apt-get install -y -qq --no-install-recommends ruby ruby-dev > /dev/null
+      fi
     - |
       case "$(uname -m)" in
         x86_64) node_arch=x64; node_sha="$NODE_SHA256_X64" ;;
         aarch64) node_arch=arm64; node_sha="$NODE_SHA256_ARM64" ;;
         *) echo "Unsupported runner architecture $(uname -m)"; exit 1 ;;
       esac
-      node_dir="$CI_PROJECT_DIR/.cache/node-v$NODE_VERSION-$node_arch"
-      if [ ! -x "$node_dir/bin/node" ]; then
-        curl -fsSL --retry 3 -o /tmp/node.tar.xz "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$node_arch.tar.xz"
-        echo "$node_sha  /tmp/node.tar.xz" | sha256sum -c -
-        mkdir -p "$node_dir" && tar -xJf /tmp/node.tar.xz -C "$node_dir" --strip-components 1
-      fi
-      export PATH="$node_dir/bin:$PATH"
-    - node --version
-    - *diff_base
-    - CHANGED="$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD)"
-    - SKIP="dart-format,swift-format"
-    - |
-      if echo "$CHANGED" | grep -qE '\.(kt|kts)$'; then
-        apt-get install -y -qq --no-install-recommends default-jre-headless > /dev/null
-      else SKIP="$SKIP,pretty-format-kotlin"; fi
-    - |
-      if echo "$CHANGED" | grep -qE '(^|/)(Gemfile|Podfile|Fastfile|Appfile)$|\.rb$'; then
-        apt-get install -y -qq --no-install-recommends ruby ruby-dev build-essential > /dev/null
-      else SKIP="$SKIP,rubocop"; fi
-    - export SKIP
+      curl -fsSL --retry 3 -o /tmp/node.tar.xz "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$node_arch.tar.xz"
+      echo "$node_sha  /tmp/node.tar.xz" | sha256sum -c - > /dev/null
+      mkdir -p /opt/node && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components 1
+      export PATH="/opt/node/bin:$PATH"
     - pip install -q "pre-commit==$PRE_COMMIT_VERSION"
     - npm ci --ignore-scripts --no-audit --no-fund
   script:
