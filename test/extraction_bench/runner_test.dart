@@ -32,6 +32,9 @@ class FakeAiInferenceDataSource extends Fake implements AiInferenceDataSource {
   PromptFamily get promptFamily => PromptFamily.standard;
 
   @override
+  int get visionPagesPerBatch => 2;
+
+  @override
   GenerationStats? get lastGenerationStats => _stats;
 
   @override

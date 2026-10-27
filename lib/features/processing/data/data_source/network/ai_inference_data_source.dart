@@ -72,6 +72,9 @@ abstract class AiInferenceDataSource {
   /// The [PromptFamily] of the active model.
   PromptFamily get promptFamily;
 
+  /// [AiModelConfig.visionPagesPerBatch] of the active model.
+  int get visionPagesPerBatch;
+
   /// Token counts and timings of the last [runVisionPrompt] or
   /// [runTextPrompt] call. Reset when a call starts; null when the call
   /// failed or none has run.
@@ -721,4 +724,7 @@ class AiInferenceDataSourceImpl
 
   @override
   PromptFamily get promptFamily => _activeConfig.promptFamily;
+
+  @override
+  int get visionPagesPerBatch => _activeConfig.visionPagesPerBatch;
 }

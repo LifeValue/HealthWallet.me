@@ -4,9 +4,11 @@ import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart'
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// [qwen35x2b], [nuExtract2], [qwen35x4b], [nuExtract3] and [medGemma15] are
-/// benchmark candidates: [AiModelConfig.availableVariants] leaves them out, so
-/// only the extraction benchmark selects them (through the aiSelectedModel pref).
+/// [qwen35x2b], [nuExtract2], [nuExtract3] and [medGemma15] are benchmark
+/// candidates: [AiModelConfig.availableVariants] leaves them out, so only the
+/// extraction benchmark selects them (through the aiSelectedModel pref).
+/// [medGemma] was the Advanced model before [qwen35x4b]; see
+/// [AiModelConfig.retiredVariants].
 /// How prompts reach the model. NuExtract's chat templates take the extraction
 /// template (and, for NuExtract3, instructions) as chat-template kwargs and
 /// put the user message in their document slot; without a template NuExtract3
@@ -28,6 +30,11 @@ class AiModelConfig {
   final bool skipDeviceCheck;
   final PromptFamily promptFamily;
 
+  /// Pages per phase-2 vision call. Qwen3.5's encoder gives a page ~840
+  /// tokens, so two pages, their OCR, the prompt and a long lab answer
+  /// overflow the 4096 vision context; MedGemma's pages are 256 tokens each.
+  final int visionPagesPerBatch;
+
   const AiModelConfig._({
     required this.variant,
     required this.displayName,
@@ -40,12 +47,13 @@ class AiModelConfig {
     required this.mmprojSizeMB,
     required this.skipDeviceCheck,
     this.promptFamily = PromptFamily.standard,
+    this.visionPagesPerBatch = 2,
   });
 
   static const medGemma = AiModelConfig._(
     variant: AiModelVariant.medGemma,
     displayName: 'Medical',
-    description: 'Medical-trained, higher accuracy (~2.5 GB)',
+    description: 'Previous Advanced model (~2.5 GB)',
     modelUrl:
         'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf',
     modelId: 'medgemma-4b-it_Q4_K_M.gguf',
@@ -116,8 +124,8 @@ class AiModelConfig {
 
   static const qwen35x4b = AiModelConfig._(
     variant: AiModelVariant.qwen35x4b,
-    displayName: 'Qwen3.5 4B',
-    description: 'Benchmark candidate (~3.4 GB)',
+    displayName: 'Advanced',
+    description: 'Higher accuracy (~2.6 GB)',
     modelUrl: 'https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf',
     modelId: 'Qwen3.5-4B-Q4_K_M.gguf',
     mmprojUrl: 'https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/mmproj-F16.gguf',
@@ -125,6 +133,7 @@ class AiModelConfig {
     modelSizeMB: 2614,
     mmprojSizeMB: 641,
     skipDeviceCheck: true,
+    visionPagesPerBatch: 1,
   );
 
   static const nuExtract3 = AiModelConfig._(
@@ -156,10 +165,22 @@ class AiModelConfig {
 
   static List<AiModelConfig> get availableVariants {
     if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
-      return [qwen, medGemma, qwen7b];
+      return [qwen, qwen35x4b, qwen7b];
     }
-    return [qwen, medGemma];
+    return [qwen, qwen35x4b];
   }
+
+  /// No longer offered for download, but kept working (and listed) where its
+  /// files are already on the device, so nobody has to download a new model
+  /// to keep scanning.
+  static const retiredVariants = [medGemma];
+
+  /// [availableVariants], then each retired variant whose files
+  /// [isDownloaded].
+  static List<AiModelConfig> listedVariants(bool Function(AiModelVariant) isDownloaded) => [
+        ...availableVariants,
+        ...retiredVariants.where((c) => isDownloaded(c.variant)),
+      ];
 
   static AiModelConfig getActive(SharedPreferences prefs,
       {DeviceProfile? profile}) {
@@ -195,13 +216,13 @@ class AiModelConfig {
 
   static AiModelVariant recommendedVariant(DeviceProfile profile) {
     if (!profile.isDesktop) {
-      if (profile.ramMB >= 6144) return AiModelVariant.medGemma;
+      if (profile.ramMB >= 6144) return AiModelVariant.qwen35x4b;
       return AiModelVariant.qwen;
     }
 
     if (profile.gpuType == GpuType.appleSilicon) {
       if (profile.ramMB >= 16384) return AiModelVariant.qwen7b;
-      return AiModelVariant.medGemma;
+      return AiModelVariant.qwen35x4b;
     }
 
     if (profile.hasUsableGpu && profile.ramMB >= 16384) {
@@ -209,7 +230,7 @@ class AiModelConfig {
     }
 
     if (profile.physicalCores >= 4 && profile.ramMB >= 16384) {
-      return AiModelVariant.medGemma;
+      return AiModelVariant.qwen35x4b;
     }
 
     return AiModelVariant.qwen;

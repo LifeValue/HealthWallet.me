@@ -28,7 +28,6 @@ mixin AiExtractionRepository {
   static final _markdownFenceRegex = RegExp(r'```(?:json)?\s*');
 
   static const int _minOcrCharsForTextOnly = 200;
-  static const int _visionBatchSize = 2;
 
   /// OCR characters in a phase-2 vision prompt (the OCR of the batch's pages).
   static const int _remainingOcrMaxLength = 2000;
@@ -634,13 +633,14 @@ Rules:
     var textPassRan = false;
 
     if (visionLoaded) {
+      final pagesPerBatch = networkDataSource.visionPagesPerBatch;
       final batches = <(List<String>, String)>[];
-      for (var i = 0; i < imagePaths.length; i += _visionBatchSize) {
-        final end = math.min(i + _visionBatchSize, imagePaths.length);
+      for (var i = 0; i < imagePaths.length; i += pagesPerBatch) {
+        final end = math.min(i + pagesPerBatch, imagePaths.length);
         batches.add((imagePaths.sublist(i, end), ocrPages.sublist(i, math.min(end, ocrPages.length)).join('\n')));
       }
 
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $_visionBatchSize images, each with its pages\' OCR trimmed to $_remainingOcrMaxLength chars, few-shot${drafting ? ', draft pass' : ''}');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $pagesPerBatch images, each with its pages\' OCR trimmed to $_remainingOcrMaxLength chars, few-shot${drafting ? ', draft pass' : ''}');
 
       final drafts = <String>[];
       for (var batchIdx = 0; batchIdx < batches.length; batchIdx++) {

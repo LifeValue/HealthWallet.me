@@ -30,7 +30,7 @@ class _PageOcr extends Fake implements TextRecognitionService {
 /// Answers every call with one observation named after the TEST-n markers
 /// in its prompt; records prompts, loads and vision batches.
 class _FakeDataSource extends Fake implements AiInferenceDataSource {
-  _FakeDataSource({this.memoryLimitCtx});
+  _FakeDataSource({this.memoryLimitCtx, this.visionPagesPerBatch = 2});
 
   /// Text loads above this context throw the app's not-enough-memory error.
   final int? memoryLimitCtx;
@@ -40,6 +40,9 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
 
   @override
   PromptFamily get promptFamily => PromptFamily.standard;
+
+  @override
+  final int visionPagesPerBatch;
 
   @override
   GenerationStats? get lastGenerationStats => null;
@@ -156,6 +159,20 @@ void main() {
     ]);
     expect(dataSource.visionCalls[0].prompt, allOf(contains('TEST-1'), isNot(contains('TEST-3'))));
     expect(dataSource.visionCalls[1].prompt, allOf(contains('TEST-3'), isNot(contains('TEST-1'))));
+    expect(names, ['TEST-1', 'TEST-2', 'TEST-3', 'TEST-4']);
+  });
+
+  test('a model with one page per vision call gets one call per page', () async {
+    final dataSource = _FakeDataSource(visionPagesPerBatch: 1);
+    final names = await _observationNames(dataSource, useVision: true);
+
+    expect(dataSource.visionCalls.map((c) => c.images), [
+      ['page-1.png'],
+      ['page-2.png'],
+      ['page-3.png'],
+      ['page-4.png'],
+    ]);
+    expect(dataSource.visionCalls[1].prompt, allOf(contains('TEST-2'), isNot(contains('TEST-1'))));
     expect(names, ['TEST-1', 'TEST-2', 'TEST-3', 'TEST-4']);
   });
 }

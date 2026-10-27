@@ -112,9 +112,11 @@ HealthWallet runs a quantized LLM directly on your phone using [llama.cpp](https
 | Model | Size | Best For |
 |-------|------|----------|
 | **Standard** ([Qwen3-VL-2B](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF)) | ~1.1 GB | Fast, lightweight, works on most devices |
-| **Advanced** ([MedGemma-4B](https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF)) | ~2.5 GB | Higher accuracy for complex medical documents |
+| **Advanced** ([Qwen3.5-4B](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF)) | ~2.6 GB | Higher accuracy for complex medical documents |
 
-**Deep Scan** (optional vision projector) lets the AI read directly from photos instead of OCR text. One-time download: ~445 MB (Standard) or ~851 MB (Advanced).
+**Deep Scan** (optional vision projector) lets the AI read directly from photos instead of OCR text. One-time download: ~445 MB (Standard) or ~641 MB (Advanced).
+
+Advanced was MedGemma-4B until 2026-10; Qwen3.5-4B scored higher on the extraction benchmark (`tool/extraction_bench/README.md`). Devices that already have MedGemma keep it, listed as "Medical", until it is deleted.
 
 <details>
 <summary><strong>Device Requirements</strong></summary>

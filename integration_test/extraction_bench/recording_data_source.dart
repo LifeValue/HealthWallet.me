@@ -194,6 +194,9 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   PromptFamily get promptFamily => _inner.promptFamily;
 
   @override
+  int get visionPagesPerBatch => _inner.visionPagesPerBatch;
+
+  @override
   Future<void> initModel({bool withVision = true, int? contextSize, int? gpuLayers, int? threads}) =>
       _inner.initModel(
         withVision: withVision,

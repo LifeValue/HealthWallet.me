@@ -59,6 +59,9 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
 
   @override
   final PromptFamily promptFamily;
+
+  @override
+  int get visionPagesPerBatch => 2;
   final calls = <_Call>[];
   final loads = <({bool withVision, int? contextSize})>[];
 

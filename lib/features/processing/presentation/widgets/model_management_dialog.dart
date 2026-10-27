@@ -39,8 +39,10 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     _bloc.add(const LoadModelInitialized());
   }
 
+  static const _advancedVariants = {AiModelVariant.qwen35x4b, AiModelVariant.medGemma};
+
   bool _isIncompatible(AiModelConfig config, DeviceAiCapability capability) {
-    if (config.variant == AiModelVariant.medGemma) {
+    if (_advancedVariants.contains(config.variant)) {
       return capability != DeviceAiCapability.full;
     }
     if (config.variant == AiModelVariant.qwen) {
@@ -54,7 +56,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
     AiModelConfig config,
     DeviceAiCapability capability,
   ) {
-    if (config.variant == AiModelVariant.medGemma &&
+    if (_advancedVariants.contains(config.variant) &&
         capability == DeviceAiCapability.basicOnly) {
       return context.l10n.medGemmaIncompatibleDevice;
     }
@@ -145,7 +147,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                         ),
                       ],
                       const SizedBox(height: Insets.smallNormal),
-                      ...AiModelConfig.availableVariants.map((config) {
+                      ...AiModelConfig.listedVariants(state.isVariantDownloaded).map((config) {
                         final variant = config.variant;
                         final incompatible =
                             _isIncompatible(config, state.deviceCapability);

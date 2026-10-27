@@ -70,7 +70,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         : null;
 
     final downloaded = <AiModelVariant, bool>{};
-    for (final config in AiModelConfig.availableVariants) {
+    for (final config in [...AiModelConfig.availableVariants, ...AiModelConfig.retiredVariants]) {
       downloaded[config.variant] =
           await _downloadService.checkModelExistsForVariant(config.variant);
     }
