@@ -1,4 +1,5 @@
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
@@ -46,8 +47,10 @@ abstract class ProcessingRepository {
   Future<MappingResource> mapContainerOnly(
     String ocrText, {
     int? maxTokens,
+    int? gpuLayers,
     int? threads,
     int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   });
 
   Future<(MappingPatient, MappingResource)> mapBasicInfo(
@@ -56,8 +59,11 @@ abstract class ProcessingRepository {
     int? gpuLayers,
     int? threads,
     int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   });
 
+  /// Each event carries every resource extracted so far (a snapshot that
+  /// replaces the previous one, not a delta) and the progress.
   Stream<MappingResourcesWithProgress> mapRemainingResources(
     List<String> imagePaths, {
     String? documentCategory,
@@ -66,6 +72,7 @@ abstract class ProcessingRepository {
     int? gpuLayers,
     int? threads,
     int? contextSize,
+    ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   });
 
   bool get shouldCancelGeneration;

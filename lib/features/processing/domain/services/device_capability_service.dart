@@ -123,15 +123,18 @@ class DeviceCapabilityService {
       threadsBatch = logCores.clamp(1, 4);
       threads = physCores.clamp(1, 4);
 
+      // Every layer on Metal, text and vision: the GPU shares memory with the
+      // CPU, and on an iPhone 17 full offload cut time to first token from
+      // 19 s to 0.8 s (extraction benchmark, tool/extraction_bench).
       if (profile.ramMB >= 8192) {
         contextSize = 4096;
-        gpuLayers = withVision ? 4 : 0;
+        gpuLayers = 99;
       } else if (profile.ramMB >= 6144) {
         contextSize = 2048;
-        gpuLayers = withVision ? 2 : 0;
+        gpuLayers = 99;
       } else if (profile.ramMB >= 4096) {
         contextSize = 1024;
-        gpuLayers = withVision ? 1 : 0;
+        gpuLayers = 99;
       } else {
         contextSize = 512;
       }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:health_wallet/core/config/constants/app_constants.dart';
+import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:image/image.dart' as img;
 import 'package:llamadart/llamadart.dart';
@@ -21,6 +22,33 @@ mixin AiInferenceHandler {
 
   bool isGenerating = false;
   bool pendingDisposal = false;
+
+  /// Stats of the most recent generation; null until it completes.
+  GenerationStats? lastGenerationStats;
+
+  Future<GenerationStats> buildGenerationStats(
+    GenerationMode mode,
+    LlamaGenerationUsage? usage, {
+    String? finishReason,
+  }) async {
+    BackendPerfContextData? perf;
+    try {
+      perf = await engine?.getPerformanceContext();
+    } catch (_) {}
+    return GenerationStats(
+      mode: mode,
+      promptTokens: usage?.promptTokens,
+      completionTokens: usage?.completionTokens,
+      timeToFirstTokenMs: usage?.timeToFirstToken == null
+          ? null
+          : usage!.timeToFirstToken!.inMicroseconds / 1000.0,
+      promptEvalMs: perf?.promptEvalMs,
+      durationMs: usage?.duration == null
+          ? null
+          : usage!.duration!.inMicroseconds / 1000.0,
+      finishReason: finishReason,
+    );
+  }
 
   Future<void> disposeModel() async {
     pendingDisposal = true;
@@ -79,7 +107,9 @@ mixin AiInferenceHandler {
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) async {
+    lastGenerationStats = null;
     if (engine == null) {
       throw Exception('Model not initialized. Call initModel() first.');
     }
@@ -143,6 +173,8 @@ mixin AiInferenceHandler {
     try {
       final buffer = StringBuffer();
       int tokenCount = 0;
+      LlamaGenerationUsage? usage;
+      String? finishReason;
       ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] encoding image + prompt (native, no callbacks available)...',
       );
@@ -166,7 +198,10 @@ mixin AiInferenceHandler {
           grammar: grammar,
         ),
         enableThinking: false,
+        responseFormat: responseFormat,
       )) {
+        usage = chunk.usage ?? usage;
+        finishReason = chunk.choices.firstOrNull?.finishReason ?? finishReason;
         final text = chunk.choices.first.delta.content;
         if (text != null) {
           buffer.write(text);
@@ -195,6 +230,11 @@ mixin AiInferenceHandler {
 
       heartbeat?.cancel();
       sw.stop();
+      lastGenerationStats = await buildGenerationStats(
+        GenerationMode.vision,
+        usage,
+        finishReason: finishReason,
+      );
       final totalSec = sw.elapsedMilliseconds / 1000.0;
       final tokPerSec = tokenCount > 0
           ? (tokenCount / totalSec).toStringAsFixed(1)
@@ -232,7 +272,10 @@ mixin AiInferenceHandler {
     required String prompt,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   }) async {
+    lastGenerationStats = null;
     if (engine == null) {
       throw Exception('Model not initialized. Call initModel() first.');
     }
@@ -243,16 +286,20 @@ mixin AiInferenceHandler {
       '[$ts][ScanAI] prompt ${prompt.length} chars, maxTokens=$effectiveTokens',
     );
 
-    final messages = [
-      const LlamaChatMessage.fromText(
-        role: LlamaChatRole.system,
-        text: 'You are a medical document data extractor. Output only valid JSON.',
-      ),
-      LlamaChatMessage.fromText(
-        role: LlamaChatRole.user,
-        text: '$prompt\n\nJSON:\n',
-      ),
-    ];
+    // NuExtract's chat template renders its own task, template and document
+    // sections around the user message.
+    final messages = chatTemplateKwargs != null
+        ? [LlamaChatMessage.fromText(role: LlamaChatRole.user, text: prompt)]
+        : [
+            const LlamaChatMessage.fromText(
+              role: LlamaChatRole.system,
+              text: 'You are a medical document data extractor. Output only valid JSON.',
+            ),
+            LlamaChatMessage.fromText(
+              role: LlamaChatRole.user,
+              text: '$prompt\n\nJSON:\n',
+            ),
+          ];
 
     isGenerating = true;
     final sw = Stopwatch()..start();
@@ -260,6 +307,8 @@ mixin AiInferenceHandler {
     try {
       final buffer = StringBuffer();
       int tokenCount = 0;
+      LlamaGenerationUsage? usage;
+      String? finishReason;
 
       heartbeat = Timer.periodic(const Duration(seconds: 5), (_) {
         final elapsed = (sw.elapsedMilliseconds / 1000.0).toStringAsFixed(0);
@@ -287,7 +336,11 @@ mixin AiInferenceHandler {
           grammar: grammar,
         ),
         enableThinking: false,
+        responseFormat: responseFormat,
+        chatTemplateKwargs: chatTemplateKwargs,
       )) {
+        usage = chunk.usage ?? usage;
+        finishReason = chunk.choices.firstOrNull?.finishReason ?? finishReason;
         final text = chunk.choices.first.delta.content;
         if (text != null) {
           buffer.write(text);
@@ -303,6 +356,11 @@ mixin AiInferenceHandler {
 
       heartbeat.cancel();
       sw.stop();
+      lastGenerationStats = await buildGenerationStats(
+        GenerationMode.text,
+        usage,
+        finishReason: finishReason,
+      );
       final totalSec = sw.elapsedMilliseconds / 1000.0;
       final tokPerSec = tokenCount > 0
           ? (tokenCount / totalSec).toStringAsFixed(1)

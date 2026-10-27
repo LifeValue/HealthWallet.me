@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_handler.dart';
+import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:injectable/injectable.dart';
@@ -47,18 +48,37 @@ abstract class AiInferenceDataSource {
 
   bool isVisionModelAvailable();
 
+  /// [grammar] (GBNF) or [responseFormat] (llamadart `json_schema` response
+  /// format) constrain the output; pass at most one.
   Future<String?> runVisionPrompt({
     required String prompt,
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   });
 
+  /// With [chatTemplateKwargs] (NuExtract's `template`/`instructions`),
+  /// [prompt] is sent alone as the user message: the chat template adds the
+  /// rest.
   Future<String?> runTextPrompt({
     required String prompt,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
   });
+
+  /// The [PromptFamily] of the active model.
+  PromptFamily get promptFamily;
+
+  /// [AiModelConfig.visionPagesPerBatch] of the active model.
+  int get visionPagesPerBatch;
+
+  /// Token counts and timings of the last [runVisionPrompt] or
+  /// [runTextPrompt] call. Reset when a call starts; null when the call
+  /// failed or none has run.
+  GenerationStats? get lastGenerationStats;
 
   Future<void> initModel({
     bool withVision = true,
@@ -612,7 +632,10 @@ class AiInferenceDataSourceImpl
 
     final loadSw = Stopwatch()..start();
     try {
-      await _engine!.loadModel(modelPath, modelParams: params);
+      await _engine!.setModel(
+        LlamaModel(ModelSource.path(modelPath)),
+        params: params,
+      );
       loadSw.stop();
       ProcessingLogBuffer.instance.log(
         '[$ts][ScanAI] model loaded in ${(loadSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s',
@@ -639,7 +662,9 @@ class AiInferenceDataSourceImpl
         }
         final mmprojSw = Stopwatch()..start();
         try {
-          await _engine!.loadMultimodalProjector(mmprojPath);
+          await _engine!.loadMultimodalProjectorSource(
+            ModelSource.path(mmprojPath),
+          );
           _hasVisionProjector = true;
           mmprojSw.stop();
           ProcessingLogBuffer.instance.log(
@@ -674,7 +699,17 @@ class AiInferenceDataSourceImpl
     final availableMB = Platform.isIOS
         ? await _getAvailableRamMBForIos()
         : await _getAvailableRamMB();
-    final requiredMB = estimateRequiredMB(ctx, withVision: withVision);
+    // The pipeline checks after initModel: weights already loaded are in RSS
+    // (iOS) or gone from MemAvailable (Android), so only what is not loaded
+    // yet, the context and the working memory still have to fit.
+    final loadedMB = _engine == null
+        ? 0
+        : _activeConfig.modelSizeMB +
+              (withVision && _hasVisionProjector
+                  ? _activeConfig.mmprojSizeMB
+                  : 0);
+    final requiredMB =
+        estimateRequiredMB(ctx, withVision: withVision) - loadedMB;
     final canProceed =
         (availableMB < 0) || availableMB >= requiredMB || profile.isDesktop;
     ProcessingLogBuffer.instance.log(
@@ -693,11 +728,13 @@ class AiInferenceDataSourceImpl
     required List<String> imagePaths,
     int? maxTokens,
     String? grammar,
+    Map<String, dynamic>? responseFormat,
   }) => runVisionPromptImpl(
     prompt: prompt,
     imagePaths: imagePaths,
     maxTokens: maxTokens,
     grammar: grammar,
+    responseFormat: responseFormat,
   );
 
   @override
@@ -705,6 +742,19 @@ class AiInferenceDataSourceImpl
     required String prompt,
     int? maxTokens,
     String? grammar,
-  }) =>
-      runTextPromptImpl(prompt: prompt, maxTokens: maxTokens, grammar: grammar);
+    Map<String, dynamic>? responseFormat,
+    Map<String, dynamic>? chatTemplateKwargs,
+  }) => runTextPromptImpl(
+    prompt: prompt,
+    maxTokens: maxTokens,
+    grammar: grammar,
+    responseFormat: responseFormat,
+    chatTemplateKwargs: chatTemplateKwargs,
+  );
+
+  @override
+  PromptFamily get promptFamily => _activeConfig.promptFamily;
+
+  @override
+  int get visionPagesPerBatch => _activeConfig.visionPagesPerBatch;
 }

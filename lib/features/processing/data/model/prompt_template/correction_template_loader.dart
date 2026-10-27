@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:health_wallet/features/processing/data/model/structured_output/extraction_schemas.dart';
 
 class CorrectionTemplateLoader {
   static final CorrectionTemplateLoader _instance =
@@ -34,6 +35,49 @@ class CorrectionTemplateLoader {
   }
 
   Future<String?> getBestExample({
+    String? documentCategory,
+    String? ocrText,
+  }) async {
+    final template = await _bestTemplate(
+      documentCategory: documentCategory,
+      ocrText: ocrText,
+    );
+    if (template == null) return null;
+    // Lab-report prompts offer no Condition, so neither does their example.
+    return _formatExample(
+      template,
+      exclude: documentCategory == 'lab_report'
+          ? const {'Condition'}
+          : const {},
+    );
+  }
+
+  /// The best template as the phase-2 schema object of [documentCategory]:
+  /// its first 8 resources of a type that category has an array for.
+  Future<String?> getBestExampleObject({
+    String? documentCategory,
+    String? ocrText,
+  }) async {
+    final template = await _bestTemplate(
+      documentCategory: documentCategory,
+      ocrText: ocrText,
+    );
+    if (template == null) return null;
+    final types = {
+      for (final s in ExtractionSchemas.sectionsFor(documentCategory))
+        s.resourceType,
+    };
+    final resources = [
+      for (final r in template['extraction'] as List<dynamic>)
+        if (r is Map<String, dynamic> && types.contains(r['resourceType'])) r,
+    ].take(8).toList();
+    if (resources.isEmpty) return null;
+    return jsonEncode(
+      ExtractionSchemas.legacyToRemaining(resources, documentCategory),
+    );
+  }
+
+  Future<Map<String, dynamic>?> _bestTemplate({
     String? documentCategory,
     String? ocrText,
   }) async {
@@ -80,9 +124,7 @@ class CorrectionTemplateLoader {
       }
     }
 
-    bestTemplate ??= candidates.first;
-
-    return _formatExample(bestTemplate);
+    return bestTemplate ?? candidates.first;
   }
 
   String? _detectGender(String ocrLower) {
@@ -129,8 +171,13 @@ class CorrectionTemplateLoader {
     return null;
   }
 
-  String _formatExample(Map<String, dynamic> template) {
-    final extraction = template['extraction'] as List<dynamic>;
+  String _formatExample(
+    Map<String, dynamic> template, {
+    Set<String> exclude = const {},
+  }) {
+    final extraction = (template['extraction'] as List<dynamic>).where(
+      (r) => !exclude.contains((r as Map<String, dynamic>)['resourceType']),
+    );
 
     final condensed = extraction
         .take(8)

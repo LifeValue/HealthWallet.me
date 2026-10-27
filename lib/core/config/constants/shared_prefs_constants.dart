@@ -12,6 +12,9 @@ class SharedPrefsConstants {
   static const aiContextSize = 'aiContextSize';
   static const aiSelectedModel = 'aiSelectedModel';
   static const aiUseVision = 'aiUseVision';
+
+  /// `ExtractionOutputMode` name: grammar, schema or schemaDraft.
+  static const aiOutputMode = 'aiOutputMode';
   static const regionPreset = 'regionPreset';
   static const countryCode = 'countryCode';
   static const appLocale = 'appLocale';

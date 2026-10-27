@@ -58,7 +58,7 @@ dependencies:
   reorderable_grid_view: ^2.2.8
   url_launcher: ^6.2.5
   android_intent_plus: ^5.0.2
-  fhir_r4: ^0.4.2
+  fhir_r4: ^0.6.0
   file_picker: ^13.1.0
   path: ^1.9.1
   share_plus: ^13.3.1
@@ -73,9 +73,9 @@ dependencies:
   image_picker: ^1.0.7
   battery_plus: ^7.1.2
   pdfx: ^2.9.2
-  pdf: ^3.11.3
+  pdf: ^3.13.1
   printing: ^5.13.4
-  llamadart: ^0.6.8
+  llamadart: ^0.15.6
   image: ^4.0.0
   background_downloader: ^9.5.4
   flutter_pdfview: ^1.4.3
@@ -105,8 +105,14 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   flutter_launcher_icons: ^0.14.3
   flutter_lints: ^6.0.0
+
+  # Extraction benchmark (tool/extraction_bench, integration_test/)
+  args: ^2.7.0
+  ffi: ^2.2.0
 
   # Code Generation
   build_runner: ^2.15.0
@@ -192,3 +198,5 @@ msix_config:
   capabilities: internetClient, privateNetworkClientServer
   install_certificate: false
   store: true
+dependency_overrides:
+  fhir_r4: ^0.6.0
