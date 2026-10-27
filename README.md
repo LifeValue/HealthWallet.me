@@ -183,7 +183,7 @@ lib/
 <details>
 <summary><strong>Branch Strategy</strong></summary>
 
-Gitflow. Every push runs the checks in parallel: `dart format`, `flutter analyze` and `flutter test`; the formatters and commitlint on the changed files; dependency (osv-scanner) and secret (gitleaks) scans. Any failure fails the pipeline, and deploys start only after every check passes.
+Gitflow. Every push runs the checks in parallel: `dart format`, `flutter analyze` and `flutter test`; the formatters on the changed files; dependency (osv-scanner) and secret (gitleaks) scans. Any failure fails the pipeline, and deploys start only after every check passes. Commit messages are checked by commitlint on working branches only (not on `develop`, `release/*` or `master`, where rewording a commit would need a force-push), and no deploy waits for that check.
 
 | Branch      | From      | Purpose               | Deploys                                                      |
 | ----------- | --------- | --------------------- | ------------------------------------------------------------ |
