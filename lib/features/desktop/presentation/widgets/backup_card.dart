@@ -149,7 +149,7 @@ class _BackupCardState extends State<BackupCard> {
             top: Insets.normal,
           ),
           child: Text(
-            'Location',
+            context.l10n.desktopBackupLocation,
             style: AppTextStyle.labelSmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.5),
               fontSize: 11,
@@ -172,7 +172,7 @@ class _BackupCardState extends State<BackupCard> {
             bottom: Insets.small,
           ),
           child: Text(
-            'History',
+            context.l10n.desktopBackupHistory,
             style: AppTextStyle.labelSmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.5),
               fontSize: 11,

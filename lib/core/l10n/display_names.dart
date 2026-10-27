@@ -1,4 +1,5 @@
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
@@ -169,3 +170,15 @@ String localizedUnit(String unit, AppLocalizations l10n) =>
       'centimeters' || 'centimeter' => l10n.unitCentimeters,
       _ => unit,
     };
+
+/// Message the phone shows for a handover that failed, as seen from the
+/// phone: [HandoverFailure.modelNotFound] means the desktop has no model.
+extension HandoverFailureL10n on HandoverFailure {
+  String localizedMessage(AppLocalizations l10n) => switch (this) {
+    HandoverFailure.notAccepted => l10n.desktopHandoverNotAccepted,
+    HandoverFailure.fileNotFound => l10n.desktopHandoverFileMissing,
+    HandoverFailure.cancelled => l10n.desktopHandoverCancelled,
+    HandoverFailure.modelNotFound => l10n.noAiModelOnDesktop,
+    HandoverFailure.failed => l10n.desktopHandoverFailed,
+  };
+}

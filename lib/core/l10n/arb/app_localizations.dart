@@ -4535,6 +4535,228 @@ abstract class AppLocalizations {
   /// **'Handover patient matched'**
   String get handoverPatientMatched;
 
+  /// No description provided for @desktopDiscovering.
+  ///
+  /// In en, this message translates to:
+  /// **'Discovering...'**
+  String get desktopDiscovering;
+
+  /// No description provided for @desktopTransportWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'WiFi'**
+  String get desktopTransportWifi;
+
+  /// No description provided for @desktopTransportDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get desktopTransportDirect;
+
+  /// No description provided for @desktopDeviceSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Sync'**
+  String get desktopDeviceSync;
+
+  /// No description provided for @desktopBackupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get desktopBackupLocation;
+
+  /// No description provided for @desktopBackupHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get desktopBackupHistory;
+
+  /// No description provided for @desktopPairedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired with {name}'**
+  String desktopPairedWith(String name);
+
+  /// No description provided for @desktopMobileDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Device'**
+  String get desktopMobileDevice;
+
+  /// No description provided for @desktopNotFoundScanAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop not found. Try scanning QR again.'**
+  String get desktopNotFoundScanAgain;
+
+  /// No description provided for @desktopPairingExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect. Scan QR code to pair again.'**
+  String get desktopPairingExpired;
+
+  /// No description provided for @desktopRemoteBackupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote {date}'**
+  String desktopRemoteBackupName(String date);
+
+  /// No description provided for @desktopNoBackupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup location set on desktop. Open the desktop app and choose a backup folder first.'**
+  String get desktopNoBackupLocation;
+
+  /// No description provided for @desktopBackupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup failed. Please try again.'**
+  String get desktopBackupFailed;
+
+  /// No description provided for @desktopRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore failed. Please try again.'**
+  String get desktopRestoreFailed;
+
+  /// No description provided for @desktopBackupActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update the backups. Please try again.'**
+  String get desktopBackupActionFailed;
+
+  /// No description provided for @desktopSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed. Check the connection and try again.'**
+  String get desktopSyncFailed;
+
+  /// No description provided for @desktopHandoverTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get desktopHandoverTransfer;
+
+  /// No description provided for @desktopHandoverNoActive.
+  ///
+  /// In en, this message translates to:
+  /// **'No active handovers'**
+  String get desktopHandoverNoActive;
+
+  /// No description provided for @desktopHandoverSendFromPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Send documents from your phone.'**
+  String get desktopHandoverSendFromPhone;
+
+  /// No description provided for @desktopHandoverFilesProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{received}/{total} files'**
+  String desktopHandoverFilesProgress(String received, String total);
+
+  /// No description provided for @desktopHandoverTransferComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer complete'**
+  String get desktopHandoverTransferComplete;
+
+  /// No description provided for @desktopHandoverReceivingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving files...'**
+  String get desktopHandoverReceivingFiles;
+
+  /// No description provided for @desktopHandoverProcessingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing...'**
+  String get desktopHandoverProcessingStatus;
+
+  /// No description provided for @desktopHandoverSendingResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending results...'**
+  String get desktopHandoverSendingResults;
+
+  /// No description provided for @desktopHandoverDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get desktopHandoverDone;
+
+  /// No description provided for @desktopHandoverStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get desktopHandoverStatusError;
+
+  /// No description provided for @desktopHandoverWaitingForResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for results...'**
+  String get desktopHandoverWaitingForResults;
+
+  /// No description provided for @desktopHandoverNotAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop did not accept the documents.'**
+  String get desktopHandoverNotAccepted;
+
+  /// No description provided for @desktopHandoverFileMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'A document could not be found on this device.'**
+  String get desktopHandoverFileMissing;
+
+  /// No description provided for @desktopHandoverCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get desktopHandoverCancelled;
+
+  /// No description provided for @desktopHandoverFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing failed. Please try again.'**
+  String get desktopHandoverFailed;
+
+  /// No description provided for @trayShowWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Window'**
+  String get trayShowWindow;
+
+  /// No description provided for @trayHideWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Window'**
+  String get trayHideWindow;
+
+  /// No description provided for @trayNoDeviceConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'No device connected'**
+  String get trayNoDeviceConnected;
+
+  /// No description provided for @traySyncStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync: {status}'**
+  String traySyncStatus(String status);
+
+  /// No description provided for @trayUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get trayUpToDate;
+
+  /// No description provided for @trayQuit.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit {appName}'**
+  String trayQuit(String appName);
+
   /// No description provided for @desktopFinishedProcessing.
   ///
   /// In en, this message translates to:

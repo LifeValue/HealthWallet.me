@@ -1132,6 +1132,81 @@
   "resourceNotViewable": "This resource is not a viewable file",
   "noFilePathFound": "No file path found",
   "handoverPatientMatched": "Handover patient matched",
+  "desktopDiscovering": "Discovering...",
+  "desktopTransportWifi": "WiFi",
+  "desktopTransportDirect": "Direct",
+  "desktopDeviceSync": "Device Sync",
+  "desktopBackupLocation": "Location",
+  "desktopBackupHistory": "History",
+  "desktopPairedWith": "Paired with {name}",
+  "@desktopPairedWith": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopMobileDevice": "Mobile Device",
+  "desktopNotFoundScanAgain": "Desktop not found. Try scanning QR again.",
+  "desktopPairingExpired": "Could not connect. Scan QR code to pair again.",
+  "desktopRemoteBackupName": "Remote {date}",
+  "@desktopRemoteBackupName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopNoBackupLocation": "No backup location set on desktop. Open the desktop app and choose a backup folder first.",
+  "desktopBackupFailed": "Backup failed. Please try again.",
+  "desktopRestoreFailed": "Restore failed. Please try again.",
+  "desktopBackupActionFailed": "Could not update the backups. Please try again.",
+  "desktopSyncFailed": "Sync failed. Check the connection and try again.",
+  "desktopHandoverTransfer": "Transfer",
+  "desktopHandoverNoActive": "No active handovers",
+  "desktopHandoverSendFromPhone": "Send documents from your phone.",
+  "desktopHandoverFilesProgress": "{received}/{total} files",
+  "@desktopHandoverFilesProgress": {
+    "placeholders": {
+      "received": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopHandoverTransferComplete": "Transfer complete",
+  "desktopHandoverReceivingFiles": "Receiving files...",
+  "desktopHandoverProcessingStatus": "Processing...",
+  "desktopHandoverSendingResults": "Sending results...",
+  "desktopHandoverDone": "Complete",
+  "desktopHandoverStatusError": "Error",
+  "desktopHandoverWaitingForResults": "Waiting for results...",
+  "desktopHandoverNotAccepted": "The desktop did not accept the documents.",
+  "desktopHandoverFileMissing": "A document could not be found on this device.",
+  "desktopHandoverCancelled": "Cancelled",
+  "desktopHandoverFailed": "Processing failed. Please try again.",
+  "trayShowWindow": "Show Window",
+  "trayHideWindow": "Hide Window",
+  "trayNoDeviceConnected": "No device connected",
+  "traySyncStatus": "Sync: {status}",
+  "@traySyncStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "trayUpToDate": "Up to date",
+  "trayQuit": "Quit {appName}",
+  "@trayQuit": {
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFinishedProcessing": "Desktop finished processing",
   "biometricAuthReason": "Please authenticate to access your HealthWallet.me",
   "sourceUploadedOn": "Uploaded {date}",

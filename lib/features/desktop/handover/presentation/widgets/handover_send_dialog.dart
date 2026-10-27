@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -159,12 +160,8 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
       case HandoverStatus.complete:
         return context.l10n.desktopHandoverComplete;
       case HandoverStatus.error:
-        final error = _session!.error ?? '';
-        if (error.contains('Model file not found') ||
-            (error.contains('model') && error.contains('not found'))) {
-          return context.l10n.noAiModelOnDesktop;
-        }
-        return error.isNotEmpty ? error : context.l10n.desktopHandoverError;
+        return _session!.failure?.localizedMessage(context.l10n) ??
+            context.l10n.desktopHandoverError;
       default:
         return context.l10n.desktopHandoverSending;
     }

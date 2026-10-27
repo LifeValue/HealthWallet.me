@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
@@ -23,11 +25,16 @@ part 'backup_state.dart';
 class BackupBloc extends Bloc<BackupEvent, BackupState> {
   final BackupService _backupService;
   final TcpService _tcpService;
+  final AppStringsProvider _strings;
 
   StreamSubscription? _messageSub;
   static const _chunkSize = 64 * 1024;
 
-  BackupBloc(this._backupService, this._tcpService)
+  /// `backup.error` code sent when the desktop has no backup folder. Desktops
+  /// from before the code send only the English `error` text, for this case.
+  static const noBackupLocationCode = 'no_backup_location';
+
+  BackupBloc(this._backupService, this._tcpService, this._strings)
     : super(BackupState.initial()) {
     on<BackupRequested>(_onBackupRequested);
     on<RestoreRequested>(_onRestoreRequested);
@@ -80,7 +87,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
           add(
             RemoteBackupStatusChanged(
               isBackingUp: false,
-              error: payload['error'] as String?,
+              error: _remoteErrorMessage(payload['code'] as String?),
             ),
           );
         }
@@ -144,7 +151,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         state.copyWith(
           isBackingUp: false,
           progress: 0.0,
-          error: e.toString(),
+          error: _failed(e, _strings.l10n.desktopBackupFailed),
         ),
       );
     }
@@ -223,7 +230,7 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         state.copyWith(
           isRestoring: false,
           progress: 0.0,
-          error: e.toString(),
+          error: _failed(e, _strings.l10n.desktopRestoreFailed),
         ),
       );
     }
@@ -248,7 +255,11 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
 
       sendBackupStatus();
     } catch (e) {
-      emit(state.copyWith(error: e.toString()));
+      emit(
+        state.copyWith(
+          error: _failed(e, _strings.l10n.desktopBackupActionFailed),
+        ),
+      );
     }
   }
 
@@ -277,7 +288,11 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         ),
       );
     } catch (e) {
-      emit(state.copyWith(error: e.toString()));
+      emit(
+        state.copyWith(
+          error: _failed(e, _strings.l10n.desktopBackupActionFailed),
+        ),
+      );
     }
   }
 
@@ -300,7 +315,11 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
 
       sendBackupStatus();
     } catch (e) {
-      emit(state.copyWith(error: e.toString()));
+      emit(
+        state.copyWith(
+          error: _failed(e, _strings.l10n.desktopBackupActionFailed),
+        ),
+      );
     }
   }
 
@@ -321,7 +340,11 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
         ),
       );
     } catch (e) {
-      emit(state.copyWith(error: e.toString()));
+      emit(
+        state.copyWith(
+          error: _failed(e, _strings.l10n.desktopBackupActionFailed),
+        ),
+      );
     }
   }
 
@@ -334,6 +357,8 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     if (!state.hasUserSelectedPath) {
       unawaited(
         _tcpService.sendData('backup.error', {
+          'code': noBackupLocationCode,
+          // Shown by phones from before the code.
           'error': 'No backup location set on desktop. Open the desktop app and choose a backup folder first.',
         }),
       );
@@ -354,8 +379,9 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
       }),
     );
 
-    final name =
-        'Remote ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
+    final name = _strings.l10n.desktopRemoteBackupName(
+      DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now()),
+    );
     add(BackupRequested(name: name));
   }
 
@@ -391,4 +417,15 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     _messageSub?.cancel();
     return super.close();
   }
+
+  /// Logs [error] and returns [message], the localized text shown instead.
+  String _failed(Object error, String message) {
+    logger.e('[Backup] $message', error);
+    return message;
+  }
+
+  String _remoteErrorMessage(String? code) => switch (code) {
+    null || noBackupLocationCode => _strings.l10n.desktopNoBackupLocation,
+    _ => _strings.l10n.desktopBackupFailed,
+  };
 }

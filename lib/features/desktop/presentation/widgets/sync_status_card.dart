@@ -91,7 +91,7 @@ class SyncStatusCard extends StatelessWidget {
           if (syncState.error != null) ...[
             const SizedBox(height: Insets.small),
             Text(
-              syncState.error!,
+              context.l10n.desktopSyncFailed,
               style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

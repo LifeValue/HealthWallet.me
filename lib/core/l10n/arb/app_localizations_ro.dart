@@ -287,7 +287,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get unknownSource => 'Sursă Necunoscută';
 
   @override
-  String get desktopSyncAndBackup => 'Desktop Sync & Backup';
+  String get desktopSyncAndBackup => 'Sincronizare și backup date';
 
   @override
   String get desktopSyncDescription =>
@@ -2450,6 +2450,134 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get handoverPatientMatched => 'Pacientul din predare a fost asociat';
+
+  @override
+  String get desktopDiscovering => 'Se caută...';
+
+  @override
+  String get desktopTransportWifi => 'Wi-Fi';
+
+  @override
+  String get desktopTransportDirect => 'Direct';
+
+  @override
+  String get desktopDeviceSync => 'Sincronizare dispozitive';
+
+  @override
+  String get desktopBackupLocation => 'Locație';
+
+  @override
+  String get desktopBackupHistory => 'Istoric';
+
+  @override
+  String desktopPairedWith(String name) {
+    return 'Asociat cu $name';
+  }
+
+  @override
+  String get desktopMobileDevice => 'Dispozitiv mobil';
+
+  @override
+  String get desktopNotFoundScanAgain =>
+      'Desktopul nu a fost găsit. Scanează din nou codul QR.';
+
+  @override
+  String get desktopPairingExpired =>
+      'Conectarea a eșuat. Scanează codul QR pentru a asocia din nou.';
+
+  @override
+  String desktopRemoteBackupName(String date) {
+    return 'De pe telefon $date';
+  }
+
+  @override
+  String get desktopNoBackupLocation =>
+      'Nu este setată o locație de backup pe desktop. Deschide aplicația desktop și alege mai întâi un folder de backup.';
+
+  @override
+  String get desktopBackupFailed => 'Backup-ul a eșuat. Încearcă din nou.';
+
+  @override
+  String get desktopRestoreFailed => 'Restaurarea a eșuat. Încearcă din nou.';
+
+  @override
+  String get desktopBackupActionFailed =>
+      'Backup-urile nu au putut fi actualizate. Încearcă din nou.';
+
+  @override
+  String get desktopSyncFailed =>
+      'Sincronizarea a eșuat. Verifică conexiunea și încearcă din nou.';
+
+  @override
+  String get desktopHandoverTransfer => 'Transfer';
+
+  @override
+  String get desktopHandoverNoActive => 'Nicio predare activă';
+
+  @override
+  String get desktopHandoverSendFromPhone => 'Trimite documente de pe telefon.';
+
+  @override
+  String desktopHandoverFilesProgress(String received, String total) {
+    return '$received/$total fișiere';
+  }
+
+  @override
+  String get desktopHandoverTransferComplete => 'Transfer finalizat';
+
+  @override
+  String get desktopHandoverReceivingFiles => 'Se primesc fișierele...';
+
+  @override
+  String get desktopHandoverProcessingStatus => 'Se procesează...';
+
+  @override
+  String get desktopHandoverSendingResults => 'Se trimit rezultatele...';
+
+  @override
+  String get desktopHandoverDone => 'Finalizat';
+
+  @override
+  String get desktopHandoverStatusError => 'Eroare';
+
+  @override
+  String get desktopHandoverWaitingForResults => 'Se așteaptă rezultatele...';
+
+  @override
+  String get desktopHandoverNotAccepted =>
+      'Desktopul nu a acceptat documentele.';
+
+  @override
+  String get desktopHandoverFileMissing =>
+      'Un document nu a fost găsit pe acest dispozitiv.';
+
+  @override
+  String get desktopHandoverCancelled => 'Anulat';
+
+  @override
+  String get desktopHandoverFailed => 'Procesarea a eșuat. Încearcă din nou.';
+
+  @override
+  String get trayShowWindow => 'Afișează fereastra';
+
+  @override
+  String get trayHideWindow => 'Ascunde fereastra';
+
+  @override
+  String get trayNoDeviceConnected => 'Niciun dispozitiv conectat';
+
+  @override
+  String traySyncStatus(String status) {
+    return 'Sincronizare: $status';
+  }
+
+  @override
+  String get trayUpToDate => 'La zi';
+
+  @override
+  String trayQuit(String appName) {
+    return 'Închide $appName';
+  }
 
   @override
   String get desktopFinishedProcessing => 'Desktopul a terminat procesarea';

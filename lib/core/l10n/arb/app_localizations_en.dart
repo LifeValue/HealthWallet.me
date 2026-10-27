@@ -2427,6 +2427,134 @@ class AppLocalizationsEn extends AppLocalizations {
   String get handoverPatientMatched => 'Handover patient matched';
 
   @override
+  String get desktopDiscovering => 'Discovering...';
+
+  @override
+  String get desktopTransportWifi => 'WiFi';
+
+  @override
+  String get desktopTransportDirect => 'Direct';
+
+  @override
+  String get desktopDeviceSync => 'Device Sync';
+
+  @override
+  String get desktopBackupLocation => 'Location';
+
+  @override
+  String get desktopBackupHistory => 'History';
+
+  @override
+  String desktopPairedWith(String name) {
+    return 'Paired with $name';
+  }
+
+  @override
+  String get desktopMobileDevice => 'Mobile Device';
+
+  @override
+  String get desktopNotFoundScanAgain =>
+      'Desktop not found. Try scanning QR again.';
+
+  @override
+  String get desktopPairingExpired =>
+      'Could not connect. Scan QR code to pair again.';
+
+  @override
+  String desktopRemoteBackupName(String date) {
+    return 'Remote $date';
+  }
+
+  @override
+  String get desktopNoBackupLocation =>
+      'No backup location set on desktop. Open the desktop app and choose a backup folder first.';
+
+  @override
+  String get desktopBackupFailed => 'Backup failed. Please try again.';
+
+  @override
+  String get desktopRestoreFailed => 'Restore failed. Please try again.';
+
+  @override
+  String get desktopBackupActionFailed =>
+      'Could not update the backups. Please try again.';
+
+  @override
+  String get desktopSyncFailed =>
+      'Sync failed. Check the connection and try again.';
+
+  @override
+  String get desktopHandoverTransfer => 'Transfer';
+
+  @override
+  String get desktopHandoverNoActive => 'No active handovers';
+
+  @override
+  String get desktopHandoverSendFromPhone => 'Send documents from your phone.';
+
+  @override
+  String desktopHandoverFilesProgress(String received, String total) {
+    return '$received/$total files';
+  }
+
+  @override
+  String get desktopHandoverTransferComplete => 'Transfer complete';
+
+  @override
+  String get desktopHandoverReceivingFiles => 'Receiving files...';
+
+  @override
+  String get desktopHandoverProcessingStatus => 'Processing...';
+
+  @override
+  String get desktopHandoverSendingResults => 'Sending results...';
+
+  @override
+  String get desktopHandoverDone => 'Complete';
+
+  @override
+  String get desktopHandoverStatusError => 'Error';
+
+  @override
+  String get desktopHandoverWaitingForResults => 'Waiting for results...';
+
+  @override
+  String get desktopHandoverNotAccepted =>
+      'The desktop did not accept the documents.';
+
+  @override
+  String get desktopHandoverFileMissing =>
+      'A document could not be found on this device.';
+
+  @override
+  String get desktopHandoverCancelled => 'Cancelled';
+
+  @override
+  String get desktopHandoverFailed => 'Processing failed. Please try again.';
+
+  @override
+  String get trayShowWindow => 'Show Window';
+
+  @override
+  String get trayHideWindow => 'Hide Window';
+
+  @override
+  String get trayNoDeviceConnected => 'No device connected';
+
+  @override
+  String traySyncStatus(String status) {
+    return 'Sync: $status';
+  }
+
+  @override
+  String get trayUpToDate => 'Up to date';
+
+  @override
+  String trayQuit(String appName) {
+    return 'Quit $appName';
+  }
+
+  @override
   String get desktopFinishedProcessing => 'Desktop finished processing';
 
   @override

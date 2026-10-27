@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
@@ -26,6 +28,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   final PairingStorageService _pairingStorage;
   final TcpService _tcpService;
   final DiscoveryService _discoveryService;
+
+  AppLocalizations get _l10n => getIt<AppStringsProvider>().l10n;
 
   StreamSubscription? _connectionSub;
   StreamSubscription? _pendingClientSub;
@@ -93,7 +97,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
               remoteName.isEmpty ||
               remoteName == 'localhost' ||
               remoteName == 'unknown') {
-            remoteName = 'Mobile Device';
+            remoteName = _l10n.desktopMobileDevice;
           }
           add(CommunicationRemoteDeviceNameReceived(name: remoteName));
         } catch (_) {}
@@ -259,9 +263,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     if (await _tryMpc()) return;
 
     add(
-      const CommunicationConnectionFailed(
-        error: 'Desktop not found. Try scanning QR again.',
-      ),
+      CommunicationConnectionFailed(error: _l10n.desktopNotFoundScanAgain),
     );
   }
 
@@ -395,9 +397,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
         await _pairingStorage.clearPairing();
         emit(state.copyWith(pairedDevice: null));
         add(
-          const CommunicationConnectionFailed(
-            error: 'Could not connect. Scan QR code to pair again.',
-          ),
+          CommunicationConnectionFailed(error: _l10n.desktopPairingExpired),
         );
         return;
       }

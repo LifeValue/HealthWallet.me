@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -51,7 +52,7 @@ class HandoverPage extends StatelessWidget {
                               children: [
                                 if (transferSessions.isNotEmpty) ...[
                                   Text(
-                                    'Transfer',
+                                    context.l10n.desktopHandoverTransfer,
                                     style: AppTextStyle.labelSmall.copyWith(
                                       color: context.colorScheme.onSurface
                                           .withValues(alpha: 0.4),
@@ -74,7 +75,7 @@ class HandoverPage extends StatelessWidget {
                                   if (transferSessions.isNotEmpty)
                                     const SizedBox(height: Insets.normal),
                                   Text(
-                                    'Processing',
+                                    context.l10n.processing,
                                     style: AppTextStyle.labelSmall.copyWith(
                                       color: context.colorScheme.onSurface
                                           .withValues(alpha: 0.4),
@@ -114,14 +115,14 @@ class _HandoverEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: Insets.medium),
           Text(
-            'No active handovers',
+            context.l10n.desktopHandoverNoActive,
             style: AppTextStyle.titleSmall.copyWith(
               color: context.primaryTextColor,
             ),
           ),
           const SizedBox(height: Insets.small),
           Text(
-            'Send documents from your phone.',
+            context.l10n.desktopHandoverSendFromPhone,
             style: AppTextStyle.bodyMedium.copyWith(
               color: context.secondaryTextColor,
             ),
@@ -155,7 +156,7 @@ class _HandoverTransferCard extends StatelessWidget {
               const SizedBox(width: Insets.smallNormal),
               Expanded(
                 child: Text(
-                  _statusLabel(session.status),
+                  _statusLabel(context.l10n, session.status),
                   style: AppTextStyle.bodyMedium.copyWith(
                     color: context.primaryTextColor,
                     fontWeight: FontWeight.w500,
@@ -164,7 +165,10 @@ class _HandoverTransferCard extends StatelessWidget {
               ),
               if (session.fileCount > 0)
                 Text(
-                  '${session.receivedCount}/${session.fileCount} files',
+                  context.l10n.desktopHandoverFilesProgress(
+                    '${session.receivedCount}',
+                    '${session.fileCount}',
+                  ),
                   style: AppTextStyle.labelSmall.copyWith(
                     color: context.secondaryTextColor,
                   ),
@@ -198,7 +202,7 @@ class _HandoverTransferCard extends StatelessWidget {
                 ),
                 const SizedBox(width: Insets.extraSmall),
                 Text(
-                  'Transfer complete',
+                  context.l10n.desktopHandoverTransferComplete,
                   style: AppTextStyle.labelSmall.copyWith(
                     color: AppColors.success,
                   ),
@@ -206,10 +210,12 @@ class _HandoverTransferCard extends StatelessWidget {
               ],
             ),
           ],
-          if (session.error != null) ...[
+          if (session.status == HandoverStatus.error) ...[
             const SizedBox(height: Insets.small),
             Text(
-              session.error!,
+              session.failure == HandoverFailure.modelNotFound
+                  ? context.l10n.modelNotFoundError
+                  : context.l10n.desktopHandoverFailed,
               style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
             ),
           ],
@@ -218,23 +224,16 @@ class _HandoverTransferCard extends StatelessWidget {
     );
   }
 
-  String _statusLabel(HandoverStatus status) {
-    switch (status) {
-      case HandoverStatus.receiving:
-        return 'Receiving files...';
-      case HandoverStatus.processing:
-        return 'Processing...';
-      case HandoverStatus.sendingResults:
-        return 'Sending results...';
-      case HandoverStatus.complete:
-        return 'Complete';
-      case HandoverStatus.error:
-        return 'Error';
-      case HandoverStatus.sending:
-        return 'Sending...';
-      case HandoverStatus.waitingForResults:
-        return 'Waiting for results...';
-    }
+  String _statusLabel(AppLocalizations l10n, HandoverStatus status) {
+    return switch (status) {
+      HandoverStatus.receiving => l10n.desktopHandoverReceivingFiles,
+      HandoverStatus.processing => l10n.desktopHandoverProcessingStatus,
+      HandoverStatus.sendingResults => l10n.desktopHandoverSendingResults,
+      HandoverStatus.complete => l10n.desktopHandoverDone,
+      HandoverStatus.error => l10n.desktopHandoverStatusError,
+      HandoverStatus.sending => l10n.desktopHandoverSending,
+      HandoverStatus.waitingForResults => l10n.desktopHandoverWaitingForResults,
+    };
   }
 }
 

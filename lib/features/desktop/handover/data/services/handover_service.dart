@@ -270,7 +270,13 @@ class HandoverService {
 
     if (processingState.status is Failure) {
       final failure = processingState.status as Failure;
-      _updateSessionError(sessionId, failure.error);
+      _updateSessionError(
+        sessionId,
+        failure.error,
+        failure: failure.reason == PipelineFailureReason.modelNotFound
+            ? HandoverFailure.modelNotFound
+            : HandoverFailure.failed,
+      );
     }
   }
 
@@ -320,13 +326,18 @@ class HandoverService {
     }
   }
 
-  void _updateSessionError(String sessionId, String error) {
+  void _updateSessionError(
+    String sessionId,
+    String error, {
+    HandoverFailure failure = HandoverFailure.failed,
+  }) {
     final session = _sessions[sessionId];
     if (session == null) return;
 
     final errorSession = session.copyWith(
       status: HandoverStatus.error,
       error: error,
+      failure: failure,
     );
     _sessions[sessionId] = errorSession;
     _sessionUpdateController.add(errorSession);
@@ -336,6 +347,8 @@ class HandoverService {
       'progress': session.progress,
       'status': 'error',
       'error': error,
+      if (failure == HandoverFailure.modelNotFound)
+        'reason': HandoverFailure.modelNotFoundReason,
     });
   }
 

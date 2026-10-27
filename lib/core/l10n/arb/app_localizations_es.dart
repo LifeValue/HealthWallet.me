@@ -286,7 +286,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get unknownSource => 'Fuente desconocida';
 
   @override
-  String get desktopSyncAndBackup => 'Sincronización y respaldo de escritorio';
+  String get desktopSyncAndBackup =>
+      'Sincronización y copia de seguridad de datos';
 
   @override
   String get desktopSyncDescription =>
@@ -2447,6 +2448,138 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get handoverPatientMatched => 'Paciente de la entrega asociado';
+
+  @override
+  String get desktopDiscovering => 'Buscando...';
+
+  @override
+  String get desktopTransportWifi => 'Wi-Fi';
+
+  @override
+  String get desktopTransportDirect => 'Directa';
+
+  @override
+  String get desktopDeviceSync => 'Sincronización de dispositivos';
+
+  @override
+  String get desktopBackupLocation => 'Ubicación';
+
+  @override
+  String get desktopBackupHistory => 'Historial';
+
+  @override
+  String desktopPairedWith(String name) {
+    return 'Emparejado con $name';
+  }
+
+  @override
+  String get desktopMobileDevice => 'Dispositivo móvil';
+
+  @override
+  String get desktopNotFoundScanAgain =>
+      'No se encontró el escritorio. Vuelve a escanear el código QR.';
+
+  @override
+  String get desktopPairingExpired =>
+      'No se pudo conectar. Escanea el código QR para volver a emparejar.';
+
+  @override
+  String desktopRemoteBackupName(String date) {
+    return 'Desde el móvil $date';
+  }
+
+  @override
+  String get desktopNoBackupLocation =>
+      'No hay una ubicación de copia de seguridad en el escritorio. Abre la app de escritorio y elige primero una carpeta.';
+
+  @override
+  String get desktopBackupFailed =>
+      'La copia de seguridad falló. Inténtalo de nuevo.';
+
+  @override
+  String get desktopRestoreFailed =>
+      'La restauración falló. Inténtalo de nuevo.';
+
+  @override
+  String get desktopBackupActionFailed =>
+      'No se pudieron actualizar las copias de seguridad. Inténtalo de nuevo.';
+
+  @override
+  String get desktopSyncFailed =>
+      'La sincronización falló. Comprueba la conexión e inténtalo de nuevo.';
+
+  @override
+  String get desktopHandoverTransfer => 'Transferencia';
+
+  @override
+  String get desktopHandoverNoActive => 'No hay transferencias activas';
+
+  @override
+  String get desktopHandoverSendFromPhone =>
+      'Envía documentos desde tu teléfono.';
+
+  @override
+  String desktopHandoverFilesProgress(String received, String total) {
+    return '$received/$total archivos';
+  }
+
+  @override
+  String get desktopHandoverTransferComplete => 'Transferencia completada';
+
+  @override
+  String get desktopHandoverReceivingFiles => 'Recibiendo archivos...';
+
+  @override
+  String get desktopHandoverProcessingStatus => 'Procesando...';
+
+  @override
+  String get desktopHandoverSendingResults => 'Enviando resultados...';
+
+  @override
+  String get desktopHandoverDone => 'Completado';
+
+  @override
+  String get desktopHandoverStatusError => 'Error';
+
+  @override
+  String get desktopHandoverWaitingForResults => 'Esperando resultados...';
+
+  @override
+  String get desktopHandoverNotAccepted =>
+      'El escritorio no aceptó los documentos.';
+
+  @override
+  String get desktopHandoverFileMissing =>
+      'No se encontró un documento en este dispositivo.';
+
+  @override
+  String get desktopHandoverCancelled => 'Cancelado';
+
+  @override
+  String get desktopHandoverFailed =>
+      'El procesamiento falló. Inténtalo de nuevo.';
+
+  @override
+  String get trayShowWindow => 'Mostrar ventana';
+
+  @override
+  String get trayHideWindow => 'Ocultar ventana';
+
+  @override
+  String get trayNoDeviceConnected => 'Ningún dispositivo conectado';
+
+  @override
+  String traySyncStatus(String status) {
+    return 'Sincronización: $status';
+  }
+
+  @override
+  String get trayUpToDate => 'Actualizado';
+
+  @override
+  String trayQuit(String appName) {
+    return 'Salir de $appName';
+  }
 
   @override
   String get desktopFinishedProcessing =>
