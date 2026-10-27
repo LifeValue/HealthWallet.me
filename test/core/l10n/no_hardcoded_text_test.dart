@@ -2,19 +2,22 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Guards against user-visible English literals in the mobile app.
+/// Guards against user-visible English literals in the mobile and desktop
+/// app.
 ///
-/// Scans [_scannedDirs] (the mobile parts of `lib/`) for `Text('…')` and for `label:`, `title:`, `message:`,
-/// `hintText:`, `labelText:` and `tooltip:` given a string literal that
-/// starts with a letter. Strings shown to the user go through the ARB files
-/// (`context.l10n`, an `AppLocalizations` parameter or `AppStringsProvider`).
+/// Scans [_scannedDirs] for `Text('…')` and for `label:`, `title:`,
+/// `message:`, `hintText:`, `labelText:` and `tooltip:` given a string
+/// literal that starts with a letter, and for `subtitle:`, `description:`,
+/// `content:`, `errorText:`, `helperText:` and semantic labels given one that
+/// starts with a capital letter. Strings shown to the user go through the ARB
+/// files (`context.l10n`, an `AppLocalizations` parameter or
+/// `AppStringsProvider`).
 
-/// The whole app is scanned, except the paths excluded below.
+/// The whole app, mobile and desktop, is scanned except the paths below.
 const _scannedDirs = ['lib'];
 
-/// Paths that are not part of the mobile UI or are generated.
+/// Generated code and debug-only screens.
 const _excludedPaths = [
-  'lib/features/desktop/',
   'lib/core/l10n/arb/',
   'lib/gen/',
   // Removed from release builds by security item S3.
@@ -51,8 +54,18 @@ final _pattern = RegExp(
   r'''(?:\bText\(|\b(?:label|title|message|hintText|labelText|tooltip):)\s*(['"])([A-Za-z][^'"]*)\1''',
 );
 
+final _sentencePattern = RegExp(
+  r'''\b(?:subtitle|description|content|errorText|helperText|semanticLabel|semanticsLabel):\s*(['"])([A-Z][^'"]*)\1''',
+);
+
+/// Files whose English `description:` texts are not shown: the UI uses
+/// `AiModelConfig.localizedDescription`.
+const _englishMetadataFiles = [
+  'lib/core/config/constants/ai_model_config.dart',
+];
+
 void main() {
-  test('mobile code has no hardcoded user-visible English text', () {
+  test('the app has no hardcoded user-visible English text', () {
     final offenders = <String>[];
     final files = _scannedDirs
         .expand((dir) => Directory(dir).listSync(recursive: true))
@@ -63,7 +76,12 @@ void main() {
 
     for (final file in files) {
       final source = file.readAsStringSync();
-      for (final match in _pattern.allMatches(source)) {
+      final matches = [
+        ..._pattern.allMatches(source),
+        if (!_englishMetadataFiles.any(file.path.endsWith))
+          ..._sentencePattern.allMatches(source),
+      ];
+      for (final match in matches) {
         final literal = match.group(2)!;
         if (_allowedLiterals.contains(literal)) continue;
         final line = '\n'.allMatches(source.substring(0, match.start)).length;
