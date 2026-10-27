@@ -67,11 +67,19 @@ context:
 - [x] Code Map files -- replace the literals; make the two string comparisons typed.
 - [x] `country_names.dart` -- per-locale maps for en, es, de and ro, generated from CLDR territory names by a script in `tool/`. Look them up by the app locale.
 - [x] ARB files -- add the keys, fill the missing ones, set `dashboardTitle` in de to "Übersicht", run `fvm flutter gen-l10n`, delete `ios/untranslated_messages.json`.
+- [x] Units -- `localizedUnit` with tests in `display_names_test.dart` and `fhir_observation_extractor_test.dart`.
+- [x] Region units -- title normalization and inch conversion, `test/features/home/domain/factory/patient_vitals_factory_test.dart` with the demo vitals in Europe and the US.
+- [x] Desktop -- replace the literals in `lib/features/desktop/`, type the handover failures, add the wire codes; tests in `test/features/desktop/` (backup error codes, tray menu, connection chip, handover failures on both sides) and `test/core/l10n/app_strings_provider_test.dart`.
+- [x] `no_hardcoded_text_test.dart` -- scan the whole `lib/` including desktop, and also `subtitle:`, `description:`, `content:`, `errorText:`, `helperText:` and semantic labels.
+- [x] `integration_test/app_l10n_test.dart` -- boots the app in German, checks the tab bar and that nothing overflows, switches to Romanian and checks that °C is shown and no English or imperial vital unit with the Europe region.
+- [x] Handover status texts -- moved from the two screens to `HandoverStatusL10n.localizedLabel` and `phoneHandoverStatusText` in `display_names.dart`, with tests, since both screens take their blocs and services from `getIt`.
 
 **Acceptance Criteria:**
 - Given the ro, de or es locale, when each mobile tab, its dialogs and settings are opened, then no English text appears outside the exclusions.
 - Given `fvm flutter gen-l10n`, when it runs, then `untranslated_messages.json` is `{}`.
 - Given an existing install with a saved dashboard order, when the app updates, then the order and visibility are unchanged.
+- Given the Europe region, when the dashboard shows weight, height and temperature recorded in pounds, inches and °F, then they show in kg, cm and °C.
+- Given the ro, de or es locale on the desktop, when the From Phone tab, the tray menu, pairing and backup are used, then no English text appears outside the brand name.
 
 ## Implementation Notes
 
@@ -80,8 +88,24 @@ context:
 - String logic made typed: `PipelineFailureReason.modelNotFound` / `ModelNotFoundException` (its `toString()` keeps "Model file not found" for the desktop handover), `FieldValidationError`, `DateField` in the date picker, `ShareSessionEndReason` for the declined screen, and gender saved as a FHIR code.
 - Bugs found and fixed on the way: gender saved as `unknown` in es/de/ro; the year and day pickers chosen by English label; the declined-share screen chosen by searching the status text; the MedicationRequest refills line never shown; the sync success message typo.
 - Kept in English as stored or wire data: the default patient and source names, the FHIR titles stored by attachments and received shares, `HealthWallet Device` sent to peers, and the desktop's model-not-found error text.
+- Units (added after the simulator review, see the change log): `localizedUnit` in `display_names.dart` translates units that FHIR data spells out in English (`beats/min`, `breaths/min`, `pounds`, `inches`, `kilograms`, `centimeters`) at display time, on the vital cards and in record details. Symbols (mmHg, %, kg, °C, mg/dL, kg/m²) and `BPM` stay as they are, so English is unchanged.
+- Region units (bug found during the simulator review): `PatientVital.fromObservation` looked up the vital type by the raw FHIR title, so "Body Weight", "Body Height" and "Body Temperature" were never converted and Europe showed 200 pounds, 70 inches and 98.6 °F. The title is now normalized first (`PatientVitalTypeX.normalizeTitle`, moved from the factory). Inches were treated as "ft/in" and never converted; they are now their own unit (`UnitConverter.heightInCm`), converted to cm for Europe and to feet and inches for the US, on the dashboard and in record details. A height stored as "centimeters" now shows the region's "cm".
+- Desktop (scope extension, see the change log): about 40 strings in `lib/features/desktop/` and the tray menu. Part of that folder runs on the phone (the Data Sync & Backup section, pairing, the backup card, sending to the desktop), so the phone still showed English there and the guard test, which excluded the folder, could not see it.
+  - Widgets use `context.l10n`; `BackupBloc` and `TrayService` take `AppStringsProvider` by constructor; `CommunicationBloc` (built by hand in both `main` files) reads it through `getIt`.
+  - `AppStringsProvider` is now a `ChangeNotifier` that notifies only when the language changes, so the tray menu, which stays on screen, rebuilds in the new language.
+  - Errors are no longer shown raw. LWW sync and backup failures show a localized message and log the exception. Handover failures are typed (`HandoverFailure`: notAccepted, fileNotFound, cancelled, modelNotFound, failed) and `HandoverSession.error` stays as technical detail.
+  - Wire changes are additive, so old peers keep working: `backup.error` carries `code: no_backup_location` next to the English `error` (a phone treats a missing code as that case), and a `handover.progress` error carries `reason: model_not_found` (a phone still recognizes the old text through `ModelNotFoundException.message`).
+  - `desktopSyncAndBackup` had been renamed in English to "Data Sync & Backup" while es, de and ro kept the old meaning or English text; all three are updated.
+- End-to-end test: `integration_test/app_l10n_test.dart` boots the real app, loads the demo data when there are no records, checks German and then Romanian, and fails on any Flutter error, an overflow included. `bootstrap()` silences Flutter errors, so the test puts the test binding's handler back before the first frame. It must run on a simulator kept for tests: restoring the user's language afterwards does not work, because iOS loses preference writes made just before the runner closes the app (verified: the restored value read back in the test but was gone on the next launch). It catches regressions: with the region fix undone it fails on the missing °C.
+- Bug found by the end-to-end test on a fresh install: `App._startSymmetricDiscovery` called `getCurrentUser()`, which throws before onboarding creates the user, on start and on every resume, leaving an unhandled exception. It now logs and returns. Fixed in a separate commit.
+- `ios/Podfile.lock` and `macos/Podfile.lock` are not committed: a local `pod install` with CocoaPods 1.17.0 rewrites only the CocoaPods version and the Podfile checksum, while the repo is on 1.16.2.
 
 ## Spec Change Log
+
+- 2026-10-27, after the simulator review, requested by the user: translate units that the data spells out in English ("beats, breaths are not translated to romanian"). This reverses the frozen "Don't translate units" for spelled-out words; symbols stay untranslated.
+- 2026-10-27, found by the user: the Europe region (°C, cm, kg) was not applied to weight, height and temperature. Fixed in the same branch as a separate commit; not a translation change.
+- 2026-10-27, requested by the user ("check thing on desktop to not have hardcoded text"): extend the change to `lib/features/desktop/` and the tray menu, and the guard test to the whole `lib/`. This reverses the frozen Boundaries line that left desktop screens to be translated only as a side effect. Review row 35 (desktop errors shown in its own language) is superseded: those errors are now typed and localized on the phone.
+- 2026-10-27: added an end-to-end test (`integration_test/app_l10n_test.dart`) that boots the app on a simulator in German and Romanian.
 
 ## Review Triage Log
 
@@ -143,6 +167,9 @@ extension MedicalSpecialtyL10n on MedicalSpecialty {
 - `fvm flutter gen-l10n && cat untranslated_messages.json` -- expected: `{}`
 - `scripts/check.sh` -- expected: format, analyze and tests pass, with no infos
 - `fvm flutter analyze lib/main_desktop.dart` -- expected: the desktop still compiles
+- `fvm flutter test integration_test/app_l10n_test.dart -d <test simulator id>` -- expected: passes on a fresh install and on one with data; use a simulator kept for tests, since the run changes the app's language
+- `fvm flutter build ios --simulator`, `fvm flutter build apk --debug`, `fvm flutter build macos --debug -t lib/main_desktop.dart` -- expected: all build
 
 **Manual checks:**
 - On the iOS simulator, in ro, de and es, walk the dashboard, Records, a record detail, Scan, Import, Settings, Sync and Share. Check that there is no English and that the tab bar doesn't overflow.
+- On the macOS desktop app, in ro and de, open the From Phone tab and the tray menu, then change the language and reopen the tray menu.

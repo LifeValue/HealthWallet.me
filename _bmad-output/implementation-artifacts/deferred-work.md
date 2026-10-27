@@ -11,8 +11,8 @@
   summary: Stop both patient dialogs resetting the selected gender in didChangeDependencies.
   evidence: The reset exists at baseline 49fd6d53; any Theme or Localizations change while the dialog is open discards the user's choice.
 - source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
-  summary: Widen no_hardcoded_text_test to getters, text:/description:/subtitle: arguments and TextSpan, with an allowlist for keys.
-  evidence: The current regex let statusDisplay 'Active'/'Inactive' through.
+  summary: Widen no_hardcoded_text_test further, to getters, switch arms returning text and TextSpan, with an allowlist for keys.
+  evidence: The regex let statusDisplay 'Active'/'Inactive' through. The desktop extension added subtitle:, description:, content:, errorText:, helperText: and semantic labels; a trial of switch arms and returned sentences found only the GeneralResource 'Resource' fallback and the unused JwtService.getExpirationDescription.
 - source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
   summary: Make arb_parity_test check plural categories per locale and flag translation-only keys; remove the stale counterAppBarTitle from app_es.arb.
   evidence: app_es.arb:3 still has counterAppBarTitle; the parity test checks keys and placeholders only.
@@ -33,7 +33,25 @@
   evidence: An optional l10n falls back to English silently when a caller forgets it.
 - source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
   summary: Replace raw exception text (e.toString()) in user-facing error messages with localized, user-friendly text.
-  evidence: syncErrorGeneric, scanFailedWithError, failedToImportDocument and PipelineStatus.failure append English technical detail.
+  evidence: Done for the desktop LWW sync, backup and handover errors. Still open on mobile: syncErrorGeneric, scanFailedWithError, failedToImportDocument and PipelineStatus.failure append English technical detail.
 - source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
   summary: Decide whether the translated privacy policy needs a clause naming the authoritative language version.
   evidence: Legal question for the product owner (maybe-false as a defect); the policy now exists in four languages.
+- source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
+  summary: Detect translations that went stale when an English value changed, for example by storing the English source next to each translation and failing a test when it differs.
+  evidence: desktopSyncAndBackup was renamed in English to "Data Sync & Backup" in 00b3afc6 while es, de and ro kept the old meaning; arb_parity_test checks only keys and placeholders.
+- source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
+  summary: Delete or translate JwtService.getExpirationDescription.
+  evidence: It builds English sentences ("Expires in 3 days") and nothing calls it.
+- source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
+  summary: Translate the macOS tray tooltip and native menu items if the app ever localizes its native shell.
+  evidence: The tray tooltip is the brand name only; the native macOS app menu follows the system language, not the in-app language.
+- source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
+  summary: Test CommunicationBloc and the HandoverPage and HandoverSendDialog widgets.
+  evidence: scripts/coverage.sh --files lib/features/desktop/ shows communication_bloc.dart 0/250, handover_send_dialog.dart 0/137 and handover_page.dart 1/115 lines; their texts are tested through the display_names mappings. They read their blocs and services from getIt, so a widget test needs those registered.
+- source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
+  summary: Run integration_test/app_l10n_test.dart in CI on a macOS runner with a simulator created for the job.
+  evidence: GitLab CI runs only unit and widget tests; the end-to-end test needs an iOS simulator and changes the app's language, so it cannot share a developer's simulator.
+- source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
+  summary: Check the desktop app by hand in ro and de (From Phone tab, tray menu, pairing, backup) before release.
+  evidence: The desktop texts are covered by unit and widget tests and the macOS build succeeds, but no one has looked at the running desktop app in another language.
