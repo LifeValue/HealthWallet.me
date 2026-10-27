@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -112,7 +113,7 @@ abstract class PractitionerRole
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
     // Active Status
@@ -121,8 +122,8 @@ abstract class PractitionerRole
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-          activeStatus ? 'Active' : 'Inactive',
-          prefix: 'Status',
+          activeStatus ? l10n.active : l10n.inactive,
+          prefix: l10n.fieldStatus,
         ),
       );
     }
@@ -133,7 +134,7 @@ abstract class PractitionerRole
       infoLines,
       ResourceFieldMapper.createUserLine(
         practitionerDisplay,
-        prefix: 'Practitioner',
+        prefix: l10n.fieldPractitioner,
       ),
     );
 
@@ -143,7 +144,7 @@ abstract class PractitionerRole
       infoLines,
       ResourceFieldMapper.createOrganizationLine(
         organizationDisplay,
-        prefix: 'Organization',
+        prefix: l10n.fieldOrganization,
       ),
     );
 
@@ -153,7 +154,7 @@ abstract class PractitionerRole
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(roleDisplay, prefix: 'Role'),
+      ResourceFieldMapper.createStatusLine(roleDisplay, prefix: l10n.fieldRole),
     );
 
     // Specialty
@@ -167,7 +168,7 @@ abstract class PractitionerRole
         infoLines,
         ResourceFieldMapper.createStatusLine(
           specialtyDisplay.isNotEmpty ? specialtyDisplay : null,
-          prefix: 'Specialty',
+          prefix: l10n.fieldSpecialty,
         ),
       );
     }
@@ -183,7 +184,7 @@ abstract class PractitionerRole
         infoLines,
         ResourceFieldMapper.createLocationLine(
           locationDisplay.isNotEmpty ? locationDisplay : null,
-          prefix: 'Location',
+          prefix: l10n.fieldLocation,
         ),
       );
     }
@@ -199,7 +200,7 @@ abstract class PractitionerRole
         infoLines,
         ResourceFieldMapper.createStatusLine(
           serviceDisplay.isNotEmpty ? serviceDisplay : null,
-          prefix: 'Healthcare Service',
+          prefix: l10n.fieldHealthcareService,
         ),
       );
     }
@@ -213,7 +214,7 @@ abstract class PractitionerRole
           ?.valueString;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+        ResourceFieldMapper.createStatusLine(phone, prefix: l10n.fieldPhone),
       );
 
       final email = telecom!
@@ -223,15 +224,21 @@ abstract class PractitionerRole
           ?.valueString;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+        ResourceFieldMapper.createStatusLine(email, prefix: l10n.fieldEmail),
       );
     }
 
     // Period
-    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      period,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(periodDisplay, prefix: 'Period'),
+      ResourceFieldMapper.createDateLine(
+        periodDisplay,
+        prefix: l10n.fieldPeriod,
+      ),
     );
 
     // Availability Exceptions
@@ -240,7 +247,7 @@ abstract class PractitionerRole
       infoLines,
       ResourceFieldMapper.createNotesLine(
         exceptionsDisplay,
-        prefix: 'Availability Notes',
+        prefix: l10n.fieldAvailabilityNotes,
       ),
     );
 
@@ -249,7 +256,8 @@ abstract class PractitionerRole
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: 'Last Updated: ${DateFormat.yMMMMd().format(date!)}',
+          info:
+              '${l10n.fieldLastUpdated}: ${DateFormat.yMMMMd().format(date!)}',
         ),
       );
     }

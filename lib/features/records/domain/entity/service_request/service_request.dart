@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -144,28 +145,37 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Intent
     final intentText = intent?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(intentText, prefix: 'Intent'),
+      ResourceFieldMapper.createStatusLine(
+        intentText,
+        prefix: l10n.fieldIntent,
+      ),
     );
 
     // Priority
     final priorityText = priority?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(priorityText, prefix: 'Priority'),
+      ResourceFieldMapper.createWarningLine(
+        priorityText,
+        prefix: l10n.fieldPriority,
+      ),
     );
 
     // Category
@@ -175,7 +185,7 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
@@ -185,7 +195,10 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(requesterDisplay, prefix: 'Requester'),
+      ResourceFieldMapper.createUserLine(
+        requesterDisplay,
+        prefix: l10n.fieldRequester,
+      ),
     );
 
     // Performer
@@ -193,7 +206,10 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
         FhirFieldExtractor.extractMultipleReferenceDisplays(performer);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
+      ResourceFieldMapper.createUserLine(
+        performerDisplay,
+        prefix: l10n.fieldPerformer,
+      ),
     );
 
     // Performer Type
@@ -204,19 +220,20 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         performerTypeDisplay,
-        prefix: 'Performer Type',
+        prefix: l10n.fieldPerformerType,
       ),
     );
 
     // Occurrence
     final occurrenceDisplay = FhirFieldExtractor.extractOccurrenceX(
       occurrenceX,
+      l10n: l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(
         occurrenceDisplay,
-        prefix: 'Occurrence',
+        prefix: l10n.fieldOccurrence,
       ),
     );
 
@@ -227,7 +244,7 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createBodySiteLine(
         bodySiteDisplay,
-        prefix: 'Body Site',
+        prefix: l10n.fieldBodySite,
       ),
     );
 
@@ -235,7 +252,10 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
     final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+      ResourceFieldMapper.createNotesLine(
+        reasonCodeDisplay,
+        prefix: l10n.fieldReason,
+      ),
     );
 
     // Patient Instruction
@@ -244,7 +264,7 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createNotesLine(
         patientInstructionText,
-        prefix: 'Instructions',
+        prefix: l10n.fieldInstructions,
       ),
     );
 
@@ -262,7 +282,10 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

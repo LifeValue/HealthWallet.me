@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -135,10 +136,10 @@ abstract class Immunization with _$Immunization implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Vaccination Details'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldVaccinationDetails),
     );
 
     // Vaccine Name (already in title via vaccineCode)
@@ -149,7 +150,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createImmunizationLine(
         vaccineDisplay,
-        prefix: 'Vaccine',
+        prefix: l10n.fieldVaccine,
       ),
     );
 
@@ -176,16 +177,16 @@ abstract class Immunization with _$Immunization implements IFhirResource {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createImmunizationLine(
-            'Dose $doseNumber of $seriesDoses',
-            prefix: 'Dose',
+            l10n.doseNumberOfTotal(doseNumber, seriesDoses),
+            prefix: l10n.fieldDose,
           ),
         );
       } else if (doseNumber != null) {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createImmunizationLine(
-            'Dose $doseNumber',
-            prefix: 'Dose',
+            l10n.doseNumber(doseNumber),
+            prefix: l10n.fieldDose,
           ),
         );
       }
@@ -196,19 +197,23 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createTimelineLine(series, prefix: 'Series'),
+        ResourceFieldMapper.createTimelineLine(
+          series,
+          prefix: l10n.fieldSeries,
+        ),
       );
     }
 
     // Date Given (Occurrence)
     final occurrenceDisplay = FhirFieldExtractor.extractOccurrenceX(
       occurrenceX,
+      l10n: l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(
         occurrenceDisplay,
-        prefix: 'Date Given',
+        prefix: l10n.fieldDateGiven,
       ),
     );
 
@@ -222,7 +227,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createUserLine(
           performerDisplay.isNotEmpty ? performerDisplay : null,
-          prefix: 'Administered By',
+          prefix: l10n.fieldAdministeredBy,
         ),
       );
     }
@@ -231,23 +236,34 @@ abstract class Immunization with _$Immunization implements IFhirResource {
     final siteDisplay = FhirFieldExtractor.extractCodeableConceptText(site);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createBodySiteLine(siteDisplay, prefix: 'Site'),
+      ResourceFieldMapper.createBodySiteLine(
+        siteDisplay,
+        prefix: l10n.fieldSite,
+      ),
     );
 
     // Route (Administration Method - e.g., "Intramuscular injection")
     final routeDisplay = FhirFieldExtractor.extractCodeableConceptText(route);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createActivityLine(routeDisplay, prefix: 'Route'),
+      ResourceFieldMapper.createActivityLine(
+        routeDisplay,
+        prefix: l10n.fieldRoute,
+      ),
     );
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
+    );
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Lot Number
@@ -256,7 +272,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createIdentificationLine(
         lotNumberDisplay,
-        prefix: 'Lot Number',
+        prefix: l10n.fieldLotNumber,
       ),
     );
 
@@ -266,7 +282,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createDateLine(
         expirationDisplay,
-        prefix: 'Expiration Date',
+        prefix: l10n.fieldExpirationDate,
       ),
     );
 
@@ -278,7 +294,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createOrganizationLine(
         manufacturerDisplay,
-        prefix: 'Manufacturer',
+        prefix: l10n.fieldManufacturer,
       ),
     );
 
@@ -286,7 +302,10 @@ abstract class Immunization with _$Immunization implements IFhirResource {
     final doseDisplay = FhirFieldExtractor.extractQuantity(doseQuantity);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createValueLine(doseDisplay, prefix: 'Dose Quantity'),
+      ResourceFieldMapper.createValueLine(
+        doseDisplay,
+        prefix: l10n.fieldDoseQuantity,
+      ),
     );
 
     // Location (Where given)
@@ -297,19 +316,22 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createLocationLine(
         locationDisplay,
-        prefix: 'Location',
+        prefix: l10n.fieldLocation,
       ),
     );
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     // Reason
     final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+      ResourceFieldMapper.createNotesLine(
+        reasonCodeDisplay,
+        prefix: l10n.fieldReason,
+      ),
     );
 
     // Funding Source
@@ -320,7 +342,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         fundingDisplay,
-        prefix: 'Funding Source',
+        prefix: l10n.fieldFundingSource,
       ),
     );
 
@@ -328,13 +350,13 @@ abstract class Immunization with _$Immunization implements IFhirResource {
     final primarySourceValue = primarySource?.valueBoolean;
     if (primarySourceValue != null) {
       final primarySourceDisplay = primarySourceValue
-          ? 'Yes (directly administered)'
-          : 'No (reported by patient or other source)';
+          ? l10n.immunizationPrimarySourceYes
+          : l10n.immunizationPrimarySourceNo;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
           primarySourceDisplay,
-          prefix: 'Primary Source',
+          prefix: l10n.fieldPrimarySource,
         ),
       );
     }
@@ -348,7 +370,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createStatusLine(
           reportOriginDisplay,
-          prefix: 'Reported By',
+          prefix: l10n.fieldReportedBy,
         ),
       );
     }
@@ -374,15 +396,15 @@ abstract class Immunization with _$Immunization implements IFhirResource {
             infoLines,
             ResourceFieldMapper.createWarningLine(
               reactionDetails,
-              prefix: 'Reaction',
+              prefix: l10n.fieldReaction,
             ),
           );
         } else {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
             ResourceFieldMapper.createStatusLine(
-              'Reaction reported',
-              prefix: 'Reaction',
+              l10n.immunizationReactionReported,
+              prefix: l10n.fieldReaction,
             ),
           );
         }
@@ -390,8 +412,8 @@ abstract class Immunization with _$Immunization implements IFhirResource {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createStatusLine(
-            'No adverse reactions reported',
-            prefix: 'Reaction',
+            l10n.immunizationNoReactions,
+            prefix: l10n.fieldReaction,
           ),
         );
       }
@@ -415,16 +437,16 @@ abstract class Immunization with _$Immunization implements IFhirResource {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
             ResourceFieldMapper.createStatusLine(
-              'Not scheduled (series complete)',
-              prefix: 'Next Dose',
+              l10n.immunizationSeriesComplete,
+              prefix: l10n.fieldNextDose,
             ),
           );
         } else {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
             ResourceFieldMapper.createTimelineLine(
-              'Dose ${doseNumberInt + 1} of $seriesDosesInt',
-              prefix: 'Next Dose',
+              l10n.doseNumberOfTotal('${doseNumberInt + 1}', '$seriesDosesInt'),
+              prefix: l10n.fieldNextDose,
             ),
           );
         }
@@ -441,7 +463,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createStatusLine(
           eligibilityDisplay.isNotEmpty ? eligibilityDisplay : null,
-          prefix: 'Program Eligibility',
+          prefix: l10n.fieldProgramEligibility,
         ),
       );
     }
@@ -453,7 +475,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
             final docType = e.documentType?.valueString;
             final pubDate = e.publicationDate?.valueString;
             return docType != null && pubDate != null
-                ? '$docType (published $pubDate)'
+                ? l10n.documentPublished(docType, pubDate)
                 : docType ?? pubDate;
           })
           .where((e) => e != null && e.isNotEmpty)
@@ -462,7 +484,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createNotesLine(
           educationDisplay.isNotEmpty ? educationDisplay : null,
-          prefix: 'Education Provided',
+          prefix: l10n.fieldEducationProvided,
         ),
       );
     }
@@ -478,8 +500,8 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createWarningLine(
-          subpotentReasonDisplay ?? 'Vaccine is subpotent',
-          prefix: 'Subpotent',
+          subpotentReasonDisplay ?? l10n.immunizationSubpotent,
+          prefix: l10n.fieldSubpotent,
         ),
       );
     }
@@ -492,7 +514,7 @@ abstract class Immunization with _$Immunization implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         statusReasonDisplay,
-        prefix: 'Status Reason',
+        prefix: l10n.fieldStatusReason,
       ),
     );
 
@@ -500,7 +522,10 @@ abstract class Immunization with _$Immunization implements IFhirResource {
     final recordedDisplay = recorded?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(recordedDisplay, prefix: 'Recorded'),
+      ResourceFieldMapper.createDateLine(
+        recordedDisplay,
+        prefix: l10n.fieldRecorded,
+      ),
     );
 
     // Date
@@ -517,7 +542,10 @@ abstract class Immunization with _$Immunization implements IFhirResource {
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

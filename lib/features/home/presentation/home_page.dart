@@ -609,7 +609,10 @@ class _SyncMiniCard extends StatelessWidget {
           final subtitle = isSyncing
               ? context.l10n.syncStatusSyncing
               : syncState.lastSyncTime != null
-              ? DateFormatUtils.getSincePretty(syncState.lastSyncTime!)
+              ? DateFormatUtils.getSincePretty(
+                  syncState.lastSyncTime!,
+                  context.l10n,
+                )
               : context.l10n.syncStatusNotSynced;
 
           return _MiniStatusCard(
@@ -650,10 +653,12 @@ class _BackupMiniCard extends StatelessWidget {
           } else if (hasBackup) {
             subtitle = DateFormatUtils.getSincePretty(
               backupState.backupHistory.first.timestamp,
+              context.l10n,
             );
           } else if (hasRemoteBackup) {
             subtitle = DateFormatUtils.getSincePretty(
               backupState.desktopLastBackupTime!,
+              context.l10n,
             );
           } else {
             subtitle = context.l10n.backupStatusNoBackup;

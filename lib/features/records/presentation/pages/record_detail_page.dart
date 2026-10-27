@@ -83,10 +83,10 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     if (resource is Observation) {
       try {
         final region = context.read<UserBloc>().state.regionPreset;
-        return resource.additionalInfoForRegion(region);
+        return resource.additionalInfoForRegion(region, context.l10n);
       } catch (_) {}
     }
-    return resource.additionalInfo;
+    return resource.additionalInfo(context.l10n);
   }
 
   void _onViewDocument(IFhirResource resource) {
@@ -350,7 +350,8 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     BuildContext context,
     IFhirResource resource,
   ) {
-    final infoLines = resource.additionalInfo
+    final infoLines = resource
+        .additionalInfo(context.l10n)
         .where((line) => !line.isSection)
         .take(2)
         .toList();

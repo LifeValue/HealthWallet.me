@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -116,32 +117,35 @@ abstract class ExplanationOfBenefit
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
     // Status
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(status, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(status, prefix: l10n.fieldStatus),
     );
 
     // Type
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Type'),
+      ResourceFieldMapper.createCategoryLine(
+        typeDisplay,
+        prefix: l10n.fieldType,
+      ),
     );
 
     // Use
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(use, prefix: 'Use'),
+      ResourceFieldMapper.createStatusLine(use, prefix: l10n.fieldUse),
     );
 
     // Outcome
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(outcome, prefix: 'Outcome'),
+      ResourceFieldMapper.createStatusLine(outcome, prefix: l10n.fieldOutcome),
     );
 
     // Insurer
@@ -150,7 +154,7 @@ abstract class ExplanationOfBenefit
       infoLines,
       ResourceFieldMapper.createOrganizationLine(
         insurerDisplay,
-        prefix: 'Insurer',
+        prefix: l10n.fieldInsurer,
       ),
     );
 
@@ -162,19 +166,20 @@ abstract class ExplanationOfBenefit
       infoLines,
       ResourceFieldMapper.createOrganizationLine(
         providerDisplay,
-        prefix: 'Provider',
+        prefix: l10n.fieldProvider,
       ),
     );
 
     // Billable Period
     final billablePeriodDisplay = FhirFieldExtractor.extractPeriodFormatted(
       billablePeriod,
+      l10n: l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createTimelineLine(
         billablePeriodDisplay,
-        prefix: 'Billable Period',
+        prefix: l10n.fieldBillablePeriod,
       ),
     );
 
@@ -184,7 +189,7 @@ abstract class ExplanationOfBenefit
       infoLines,
       ResourceFieldMapper.createNotesLine(
         dispositionText,
-        prefix: 'Disposition',
+        prefix: l10n.fieldDisposition,
       ),
     );
 
@@ -201,7 +206,7 @@ abstract class ExplanationOfBenefit
             infoLines,
             ResourceFieldMapper.createValueLine(
               '$currency $value',
-              prefix: category ?? 'Total',
+              prefix: category ?? l10n.fieldTotal,
             ),
           );
         }

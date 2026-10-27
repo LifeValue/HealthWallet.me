@@ -1438,5 +1438,499 @@
         "type": "String"
       }
     }
-  }
+  },
+  "fieldAccessionNumber": "Accession Number",
+  "fieldAchievementStatus": "Achievement Status",
+  "fieldActuality": "Actuality",
+  "fieldAdditionalInformation": "Additional Information",
+  "fieldAddress": "Address",
+  "fieldAddresses": "Addresses",
+  "fieldAdministeredBy": "Administered By",
+  "fieldAdmissionSource": "Admission Source",
+  "fieldAlert": "Alert",
+  "fieldAllergyDetails": "Allergy Details",
+  "fieldAlsoKnownAs": "Also Known As",
+  "fieldAsserter": "Asserter",
+  "fieldAttachmentTitle": "Attachment Title",
+  "fieldAuthenticatedBy": "Authenticated By",
+  "fieldAuthor": "Author",
+  "fieldAvailabilityExceptions": "Availability Exceptions",
+  "fieldAvailabilityNotes": "Availability Notes",
+  "fieldBasedOn": "Based On",
+  "fieldBasicInformation": "Basic Information",
+  "fieldBeneficiary": "Beneficiary",
+  "fieldBillablePeriod": "Billable Period",
+  "fieldBirthDate": "Birth Date",
+  "fieldBirthPlace": "Birth Place",
+  "fieldBirthSex": "Birth Sex",
+  "fieldBodySite": "Body Site",
+  "fieldCareTeam": "Care Team",
+  "fieldCategory": "Category",
+  "fieldClinicalNotes": "Clinical Notes",
+  "fieldClinicalStatus": "Clinical Status",
+  "fieldCollectedBy": "Collected By",
+  "fieldCollectionDate": "Collection Date",
+  "fieldCollectionDuration": "Collection Duration",
+  "fieldCollectionInformation": "Collection Information",
+  "fieldCollectionMethod": "Collection Method",
+  "fieldCollectionPeriod": "Collection Period",
+  "fieldComplicationDetails": "Complication Details",
+  "fieldComplications": "Complications",
+  "fieldConclusion": "Conclusion",
+  "fieldConclusionCode": "Conclusion Code",
+  "fieldCondition": "Condition",
+  "fieldContactEmail": "Contact Email",
+  "fieldContactInformation": "Contact Information",
+  "fieldContactPerson": "Contact Person",
+  "fieldContactPhone": "Contact Phone",
+  "fieldContainerAdditive": "Container Additive",
+  "fieldContainerCapacity": "Container Capacity",
+  "fieldContainerType": "Container Type",
+  "fieldContainers": "Containers",
+  "fieldContentType": "Content Type",
+  "fieldContext": "Context",
+  "fieldContract": "Contract",
+  "fieldCostSharing": "Cost Sharing",
+  "fieldCourseOfTherapy": "Course of Therapy",
+  "fieldCoverage": "Coverage",
+  "fieldCoverageClass": "Coverage Class",
+  "fieldCoverageDetails": "Coverage Details",
+  "fieldCreated": "Created",
+  "fieldCriticality": "Criticality",
+  "fieldCustodian": "Custodian",
+  "fieldDataAbsentReason": "Data Absent Reason",
+  "fieldDateGiven": "Date Given",
+  "fieldDatePerformed": "Date Performed",
+  "fieldDaysSupply": "Days Supply",
+  "fieldDependent": "Dependent",
+  "fieldDerivedFrom": "Derived From",
+  "fieldDescription": "Description",
+  "fieldDetected": "Detected",
+  "fieldDevice": "Device",
+  "fieldDiagnoses": "Diagnoses",
+  "fieldDietPreference": "Diet Preference",
+  "fieldDimensions": "Dimensions",
+  "fieldDischargeDisposition": "Discharge Disposition",
+  "fieldDischargeTo": "Discharge To",
+  "fieldDisposition": "Disposition",
+  "fieldDocumentDetails": "Document Details",
+  "fieldDocumentId": "Document ID",
+  "fieldDocumentStatus": "Document Status",
+  "fieldDosage": "Dosage",
+  "fieldDose": "Dose",
+  "fieldDoseQuantity": "Dose Quantity",
+  "fieldDriversLicenseNumber": "Driver's License Number",
+  "fieldDuration": "Duration",
+  "fieldEducationProvided": "Education Provided",
+  "fieldEffective": "Effective",
+  "fieldEffectiveDates": "Effective Dates",
+  "fieldEmail": "Email",
+  "fieldEmergency": "Emergency",
+  "fieldEncounterType": "Encounter Type",
+  "fieldEndpoints": "Endpoints",
+  "fieldEpisodeOfCare": "Episode of Care",
+  "fieldEthnicity": "Ethnicity",
+  "fieldExpiration": "Expiration",
+  "fieldExpirationDate": "Expiration Date",
+  "fieldFacility": "Facility",
+  "fieldFacilityDetails": "Facility Details",
+  "fieldFacilityType": "Facility Type",
+  "fieldFastingStatus": "Fasting Status",
+  "fieldFax": "Fax",
+  "fieldFocalDevice": "Focal Device",
+  "fieldFollowUp": "Follow-up",
+  "fieldForm": "Form",
+  "fieldFormat": "Format",
+  "fieldFundingSource": "Funding Source",
+  "fieldGender": "Gender",
+  "fieldGeneralPractitioner": "General Practitioner",
+  "fieldGoal": "Goal",
+  "fieldGoalDetails": "Goal Details",
+  "fieldGpsCoordinates": "GPS Coordinates",
+  "fieldGroupNumber": "Group Number",
+  "fieldHandedOver": "Handed Over",
+  "fieldHealthcareFacility": "Healthcare Facility",
+  "fieldHealthcareService": "Healthcare Service",
+  "fieldHours": "Hours",
+  "fieldHowToTake": "How to Take",
+  "fieldIdentifiers": "Identifiers",
+  "fieldInformationSource": "Information Source",
+  "fieldIngredients": "Ingredients",
+  "fieldInstructions": "Instructions",
+  "fieldInsuranceCompany": "Insurance Company",
+  "fieldInsurer": "Insurer",
+  "fieldIntent": "Intent",
+  "fieldInterpreter": "Interpreter",
+  "fieldItemsUsed": "Items Used",
+  "fieldLanguage": "Language",
+  "fieldLanguages": "Languages",
+  "fieldLastOccurrence": "Last Occurrence",
+  "fieldLifecycleStatus": "Lifecycle Status",
+  "fieldLocation": "Location",
+  "fieldLocationProvider": "Location & Provider",
+  "fieldLotNumber": "Lot Number",
+  "fieldManagingOrganization": "Managing Organization",
+  "fieldManufacturer": "Manufacturer",
+  "fieldMaritalStatus": "Marital Status",
+  "fieldMedia": "Media",
+  "fieldMedicalRecordNumber": "Medical Record Number",
+  "fieldMedication": "Medication",
+  "fieldMedicationDetails": "Medication Details",
+  "fieldMemberId": "Member ID",
+  "fieldMembers": "Members",
+  "fieldMethod": "Method",
+  "fieldModality": "Modality",
+  "fieldMode": "Mode",
+  "fieldMothersMaidenName": "Mother's Maiden Name",
+  "fieldMultipleBirth": "Multiple Birth",
+  "fieldNetwork": "Network",
+  "fieldNextDose": "Next Dose",
+  "fieldNotes": "Notes",
+  "fieldOccurrence": "Occurrence",
+  "fieldOnset": "Onset",
+  "fieldOperationalStatus": "Operational Status",
+  "fieldOperator": "Operator",
+  "fieldOrder": "Order",
+  "fieldOrderedBy": "Ordered By",
+  "fieldOrganization": "Organization",
+  "fieldOrganizationDetails": "Organization Details",
+  "fieldOutcome": "Outcome",
+  "fieldOutcomeMeasurements": "Outcome Measurements",
+  "fieldPanelComponents": "Panel Components",
+  "fieldParentSpecimen": "Parent Specimen",
+  "fieldPartOf": "Part Of",
+  "fieldPassportNumber": "Passport Number",
+  "fieldPatient": "Patient",
+  "fieldPerformedBy": "Performed By",
+  "fieldPerformer": "Performer",
+  "fieldPerformerType": "Performer Type",
+  "fieldPeriod": "Period",
+  "fieldPhone": "Phone",
+  "fieldPhysicalType": "Physical Type",
+  "fieldPlanName": "Plan Name",
+  "fieldPlanType": "Plan Type",
+  "fieldPolicyHolder": "Policy Holder",
+  "fieldPracticeSetting": "Practice Setting",
+  "fieldPractitioner": "Practitioner",
+  "fieldPrepared": "Prepared",
+  "fieldPrescribed": "Prescribed",
+  "fieldPrescribedBy": "Prescribed By",
+  "fieldPrimarySource": "Primary Source",
+  "fieldPriority": "Priority",
+  "fieldProcedureCode": "Procedure Code",
+  "fieldProcedureDetails": "Procedure Details",
+  "fieldProcessingStorage": "Processing & Storage",
+  "fieldProfessionalInformation": "Professional Information",
+  "fieldProgramEligibility": "Program Eligibility",
+  "fieldProgressNotes": "Progress Notes",
+  "fieldProvider": "Provider",
+  "fieldQualification": "Qualification",
+  "fieldQuantity": "Quantity",
+  "fieldQuantityCollected": "Quantity Collected",
+  "fieldRace": "Race",
+  "fieldRangeAppliesTo": "Range Applies To",
+  "fieldRangeNotes": "Range Notes",
+  "fieldReAdmission": "Re-admission",
+  "fieldReaction": "Reaction",
+  "fieldReactions": "Reactions",
+  "fieldReason": "Reason",
+  "fieldReasonForVisit": "Reason for Visit",
+  "fieldReceivedAtLab": "Received at Lab",
+  "fieldRecorded": "Recorded",
+  "fieldRecorder": "Recorder",
+  "fieldReferenceRange": "Reference Range",
+  "fieldRefills": "Refills",
+  "fieldRelatedAppointment": "Related Appointment",
+  "fieldRelatedCondition": "Related Condition",
+  "fieldRelatedDocument": "Related Document",
+  "fieldRelationship": "Relationship",
+  "fieldRelationshipToSubscriber": "Relationship to Subscriber",
+  "fieldReport": "Report",
+  "fieldReportedBy": "Reported By",
+  "fieldRequestedBy": "Requested By",
+  "fieldRequester": "Requester",
+  "fieldResolved": "Resolved",
+  "fieldResult": "Result",
+  "fieldResultDate": "Result Date",
+  "fieldResults": "Results",
+  "fieldRole": "Role",
+  "fieldRoute": "Route",
+  "fieldSecurityClassification": "Security Classification",
+  "fieldSeries": "Series",
+  "fieldSeriousness": "Seriousness",
+  "fieldServicePeriod": "Service Period",
+  "fieldServiceType": "Service Type",
+  "fieldSetBy": "Set By",
+  "fieldSeverity": "Severity",
+  "fieldSite": "Site",
+  "fieldSize": "Size",
+  "fieldSpecialArrangements": "Special Arrangements",
+  "fieldSpecialty": "Specialty",
+  "fieldSpecimenDetails": "Specimen Details",
+  "fieldSpecimenQuantity": "Specimen Quantity",
+  "fieldSpecimenType": "Specimen Type",
+  "fieldSpecimens": "Specimens",
+  "fieldStage": "Stage",
+  "fieldStartDate": "Start Date",
+  "fieldStatus": "Status",
+  "fieldStatusDate": "Status Date",
+  "fieldStatusHistory": "Status History",
+  "fieldStatusReason": "Status Reason",
+  "fieldStrength": "Strength",
+  "fieldSubpotent": "Subpotent",
+  "fieldSubrogation": "Subrogation",
+  "fieldSubscriber": "Subscriber",
+  "fieldSubstitution": "Substitution",
+  "fieldSupplies": "Supplies",
+  "fieldTarget": "Target",
+  "fieldTestDate": "Test Date",
+  "fieldTimePeriod": "Time Period",
+  "fieldTotal": "Total",
+  "fieldType": "Type",
+  "fieldUse": "Use",
+  "fieldVaccinationDetails": "Vaccination Details",
+  "fieldVaccine": "Vaccine",
+  "fieldValue": "Value",
+  "fieldVerification": "Verification",
+  "fieldVerifiedBy": "Verified By",
+  "fieldView": "View",
+  "fieldVisitDetails": "Visit Details",
+  "fieldVisitType": "Visit Type",
+  "fieldWebsite": "Website",
+  "fieldDateOfBirth": "Date of Birth",
+  "fieldAge": "Age",
+  "fieldLastUpdated": "Last Updated",
+  "fieldAdditive": "Additive",
+  "fieldTime": "Time",
+  "fieldProcessingNumber": "Processing {number}",
+  "@fieldProcessingNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "inactive": "Inactive",
+  "yes": "Yes",
+  "no": "No",
+  "moreCount": "{count} more",
+  "@moreCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "qualificationIssuedBy": "{qualification} (issued by {issuer})",
+  "@qualificationIssuedBy": {
+    "placeholders": {
+      "qualification": {
+        "type": "String"
+      },
+      "issuer": {
+        "type": "String"
+      }
+    }
+  },
+  "qualificationValidPeriod": "{qualification} - Valid: {period}",
+  "@qualificationValidPeriod": {
+    "placeholders": {
+      "qualification": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeBytes": "{size} bytes",
+  "@sizeBytes": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "doseNumberOfTotal": "Dose {dose} of {total}",
+  "@doseNumberOfTotal": {
+    "placeholders": {
+      "dose": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "doseNumber": "Dose {dose}",
+  "@doseNumber": {
+    "placeholders": {
+      "dose": {
+        "type": "String"
+      }
+    }
+  },
+  "immunizationPrimarySourceYes": "Yes (directly administered)",
+  "immunizationPrimarySourceNo": "No (reported by patient or other source)",
+  "immunizationReactionReported": "Reaction reported",
+  "immunizationNoReactions": "No adverse reactions reported",
+  "immunizationSeriesComplete": "Not scheduled (series complete)",
+  "immunizationSubpotent": "Vaccine is subpotent",
+  "documentPublished": "{document} (published {date})",
+  "@documentPublished": {
+    "placeholders": {
+      "document": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "refillsRemaining": "{count, plural, other{{count} refills remaining}}",
+  "@refillsRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "validUntil": "Valid until {date}",
+  "@validUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "validFrom": "Valid from {date}",
+  "@validFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "substitutionAllowed": "Generic substitution allowed",
+  "substitutionNotAllowed": "Brand name required - no substitution",
+  "doNotPerformRequest": "Do NOT perform this request",
+  "complicationsNone": "None",
+  "fastedFor": "Fasted for {duration}",
+  "@fastedFor": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "containerCount": "{count, plural, other{{count} container(s)}}",
+  "@containerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coverageOrderPrimary": "Primary (1)",
+  "coverageOrderSecondary": "Secondary (2)",
+  "coverageOrderTertiary": "Tertiary (3)",
+  "coverageOrderNumber": "Order {order}",
+  "@coverageOrderNumber": {
+    "placeholders": {
+      "order": {
+        "type": "int"
+      }
+    }
+  },
+  "goalDueBy": "by {date}",
+  "@goalDueBy": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "durationSeconds": "{seconds} seconds",
+  "@durationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "ingredientCount": "{count, plural, other{{count} ingredient(s)}}",
+  "@ingredientCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultCount": "{count, plural, other{{count} result(s)}}",
+  "@resultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "specimenCount": "{count, plural, other{{count} specimen(s)}}",
+  "@specimenCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "imageCount": "{count, plural, other{{count} image(s)}}",
+  "@imageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageYears": "{count, plural, other{{count} years}}",
+  "@ageYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "identifierPassport": "Passport",
+  "multipleBirthOrder": "Yes (Birth order: {order})",
+  "@multipleBirthOrder": {
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "timeAgoDays": "{count, plural, one{{count} day ago} other{{count} days ago}}",
+  "@timeAgoDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeAgoHours": "{count, plural, one{{count} hour ago} other{{count} hours ago}}",
+  "@timeAgoHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeAgoMinutes": "{count, plural, one{{count} minute ago} other{{count} minutes ago}}",
+  "@timeAgoMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "justNow": "Just now",
+  "bloodTypeNotAvailable": "Not Available"
 }

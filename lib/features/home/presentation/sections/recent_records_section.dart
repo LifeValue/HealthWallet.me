@@ -35,7 +35,9 @@ class RecentRecordsSection extends StatelessWidget {
 
   Widget _buildRecentRecordCard(BuildContext context, IFhirResource record) {
     final tag = record.fhirType.localizedName(context.l10n);
-    final RecordInfoLine? infoLine = record.additionalInfo.firstOrNull;
+    final RecordInfoLine? infoLine = record
+        .additionalInfo(context.l10n)
+        .firstOrNull;
 
     // Get icon based on resource type
     Widget icon;

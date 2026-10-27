@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -112,9 +113,11 @@ abstract class Goal with _$Goal implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Goal Details'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldGoalDetails),
+    );
 
     // Description (What is the goal - CRITICAL)
     final descriptionDisplay = FhirFieldExtractor.extractCodeableConceptText(
@@ -124,7 +127,7 @@ abstract class Goal with _$Goal implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createActivityLine(
         descriptionDisplay,
-        prefix: 'Goal',
+        prefix: l10n.fieldGoal,
       ),
     );
 
@@ -160,7 +163,9 @@ abstract class Goal with _$Goal implements IFhirResource {
         } else if (tgt.detailString != null) {
           targetValue = tgt.detailString!.valueString;
         } else if (tgt.detailBoolean != null) {
-          targetValue = tgt.detailBoolean!.valueBoolean == true ? 'Yes' : 'No';
+          targetValue = tgt.detailBoolean!.valueBoolean == true
+              ? l10n.yes
+              : l10n.no;
         } else if (tgt.detailInteger != null) {
           targetValue = tgt.detailInteger!.valueString;
         } else if (tgt.detailRatio != null) {
@@ -184,14 +189,14 @@ abstract class Goal with _$Goal implements IFhirResource {
         final targetDisplay = [
           ?measure,
           ?targetValue,
-          if (dueDate != null) 'by $dueDate',
+          if (dueDate != null) l10n.goalDueBy(dueDate),
         ].join(': ');
 
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createValueLine(
             targetDisplay.isNotEmpty ? targetDisplay : null,
-            prefix: 'Target',
+            prefix: l10n.fieldTarget,
           ),
         );
       }
@@ -205,11 +210,13 @@ abstract class Goal with _$Goal implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         achievementDisplay,
-        prefix: 'Achievement Status',
+        prefix: l10n.fieldAchievementStatus,
       ),
     );
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
+    );
 
     // Lifecycle Status (Active, Completed, Cancelled)
     final lifecycleDisplay = lifecycleStatus?.valueString;
@@ -217,7 +224,7 @@ abstract class Goal with _$Goal implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         lifecycleDisplay,
-        prefix: 'Lifecycle Status',
+        prefix: l10n.fieldLifecycleStatus,
       ),
     );
 
@@ -227,7 +234,7 @@ abstract class Goal with _$Goal implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createDateLine(
         statusDateDisplay,
-        prefix: 'Status Date',
+        prefix: l10n.fieldStatusDate,
       ),
     );
 
@@ -241,7 +248,7 @@ abstract class Goal with _$Goal implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createCategoryLine(
           categoryDisplay.isNotEmpty ? categoryDisplay : null,
-          prefix: 'Category',
+          prefix: l10n.fieldCategory,
         ),
       );
     }
@@ -254,7 +261,7 @@ abstract class Goal with _$Goal implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createWarningLine(
         priorityDisplay,
-        prefix: 'Priority',
+        prefix: l10n.fieldPriority,
       ),
     );
 
@@ -266,7 +273,10 @@ abstract class Goal with _$Goal implements IFhirResource {
         );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(startDisplay, prefix: 'Start Date'),
+      ResourceFieldMapper.createDateLine(
+        startDisplay,
+        prefix: l10n.fieldStartDate,
+      ),
     );
 
     // Set By / Expressed By
@@ -275,7 +285,10 @@ abstract class Goal with _$Goal implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(expressedByDisplay, prefix: 'Set By'),
+      ResourceFieldMapper.createUserLine(
+        expressedByDisplay,
+        prefix: l10n.fieldSetBy,
+      ),
     );
 
     // Addresses (What conditions/issues this goal addresses)
@@ -288,13 +301,13 @@ abstract class Goal with _$Goal implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createNotesLine(
           addressesDisplay.isNotEmpty ? addressesDisplay : null,
-          prefix: 'Addresses',
+          prefix: l10n.fieldAddresses,
         ),
       );
     }
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     // Status Reason (Why goal is in this status)
@@ -303,7 +316,7 @@ abstract class Goal with _$Goal implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createNotesLine(
         statusReasonText,
-        prefix: 'Status Reason',
+        prefix: l10n.fieldStatusReason,
       ),
     );
 
@@ -317,7 +330,7 @@ abstract class Goal with _$Goal implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createStatusLine(
           outcomeDisplay.isNotEmpty ? outcomeDisplay : null,
-          prefix: 'Outcome',
+          prefix: l10n.fieldOutcome,
         ),
       );
     }
@@ -332,13 +345,13 @@ abstract class Goal with _$Goal implements IFhirResource {
 
       if (outcomeRefDisplay.isNotEmpty) {
         final suffix = outcomeReference!.length > 3
-            ? ' (${outcomeReference!.length - 3} more)'
+            ? ' (${l10n.moreCount(outcomeReference!.length - 3)})'
             : '';
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createLabLine(
             outcomeRefDisplay + suffix,
-            prefix: 'Outcome Measurements',
+            prefix: l10n.fieldOutcomeMeasurements,
           ),
         );
       }
@@ -360,7 +373,7 @@ abstract class Goal with _$Goal implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createNotesLine(
         notesDisplay,
-        prefix: 'Progress Notes',
+        prefix: l10n.fieldProgressNotes,
       ),
     );
 

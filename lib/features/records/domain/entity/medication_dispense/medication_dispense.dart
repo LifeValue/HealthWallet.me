@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -128,7 +129,7 @@ abstract class MedicationDispense
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
     // Medication
@@ -148,7 +149,7 @@ abstract class MedicationDispense
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
@@ -156,14 +157,17 @@ abstract class MedicationDispense
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(typeDisplay, prefix: 'Type'),
+      ResourceFieldMapper.createStatusLine(typeDisplay, prefix: l10n.fieldType),
     );
 
     // Quantity
     final quantityDisplay = FhirFieldExtractor.extractQuantity(quantity);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createValueLine(quantityDisplay, prefix: 'Quantity'),
+      ResourceFieldMapper.createValueLine(
+        quantityDisplay,
+        prefix: l10n.fieldQuantity,
+      ),
     );
 
     // Days Supply
@@ -172,7 +176,7 @@ abstract class MedicationDispense
       infoLines,
       ResourceFieldMapper.createValueLine(
         daysSupplyDisplay,
-        prefix: 'Days Supply',
+        prefix: l10n.fieldDaysSupply,
       ),
     );
 
@@ -186,7 +190,7 @@ abstract class MedicationDispense
         infoLines,
         ResourceFieldMapper.createUserLine(
           performerDisplay.isNotEmpty ? performerDisplay : null,
-          prefix: 'Performer',
+          prefix: l10n.fieldPerformer,
         ),
       );
     }
@@ -199,7 +203,7 @@ abstract class MedicationDispense
       infoLines,
       ResourceFieldMapper.createLocationLine(
         locationDisplay,
-        prefix: 'Location',
+        prefix: l10n.fieldLocation,
       ),
     );
 
@@ -209,7 +213,7 @@ abstract class MedicationDispense
       infoLines,
       ResourceFieldMapper.createDateLine(
         whenPreparedDisplay,
-        prefix: 'Prepared',
+        prefix: l10n.fieldPrepared,
       ),
     );
 
@@ -219,7 +223,7 @@ abstract class MedicationDispense
       infoLines,
       ResourceFieldMapper.createDateLine(
         whenHandedOverDisplay,
-        prefix: 'Handed Over',
+        prefix: l10n.fieldHandedOver,
       ),
     );
 
@@ -229,7 +233,10 @@ abstract class MedicationDispense
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
+      ResourceFieldMapper.createNotesLine(
+        dosageDisplay,
+        prefix: l10n.fieldDosage,
+      ),
     );
 
     // Date
@@ -246,7 +253,10 @@ abstract class MedicationDispense
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

@@ -2851,4 +2851,1047 @@ class AppLocalizationsRo extends AppLocalizations {
   String failedToAttachDocuments(String error) {
     return 'Atașarea documentelor a eșuat: $error';
   }
+
+  @override
+  String get fieldAccessionNumber => 'Număr de acces';
+
+  @override
+  String get fieldAchievementStatus => 'Stadiu de realizare';
+
+  @override
+  String get fieldActuality => 'Realitate';
+
+  @override
+  String get fieldAdditionalInformation => 'Informații suplimentare';
+
+  @override
+  String get fieldAddress => 'Adresă';
+
+  @override
+  String get fieldAddresses => 'Adrese';
+
+  @override
+  String get fieldAdministeredBy => 'Administrat de';
+
+  @override
+  String get fieldAdmissionSource => 'Sursa internării';
+
+  @override
+  String get fieldAlert => 'Alertă';
+
+  @override
+  String get fieldAllergyDetails => 'Detalii despre alergie';
+
+  @override
+  String get fieldAlsoKnownAs => 'Cunoscut și ca';
+
+  @override
+  String get fieldAsserter => 'Declarant';
+
+  @override
+  String get fieldAttachmentTitle => 'Titlul atașamentului';
+
+  @override
+  String get fieldAuthenticatedBy => 'Autentificat de';
+
+  @override
+  String get fieldAuthor => 'Autor';
+
+  @override
+  String get fieldAvailabilityExceptions => 'Excepții de disponibilitate';
+
+  @override
+  String get fieldAvailabilityNotes => 'Note despre disponibilitate';
+
+  @override
+  String get fieldBasedOn => 'Pe baza';
+
+  @override
+  String get fieldBasicInformation => 'Informații de bază';
+
+  @override
+  String get fieldBeneficiary => 'Beneficiar';
+
+  @override
+  String get fieldBillablePeriod => 'Perioadă facturabilă';
+
+  @override
+  String get fieldBirthDate => 'Data nașterii';
+
+  @override
+  String get fieldBirthPlace => 'Locul nașterii';
+
+  @override
+  String get fieldBirthSex => 'Sexul la naștere';
+
+  @override
+  String get fieldBodySite => 'Localizare anatomică';
+
+  @override
+  String get fieldCareTeam => 'Echipa de îngrijire';
+
+  @override
+  String get fieldCategory => 'Categorie';
+
+  @override
+  String get fieldClinicalNotes => 'Note clinice';
+
+  @override
+  String get fieldClinicalStatus => 'Stare clinică';
+
+  @override
+  String get fieldCollectedBy => 'Recoltat de';
+
+  @override
+  String get fieldCollectionDate => 'Data recoltării';
+
+  @override
+  String get fieldCollectionDuration => 'Durata recoltării';
+
+  @override
+  String get fieldCollectionInformation => 'Informații despre recoltare';
+
+  @override
+  String get fieldCollectionMethod => 'Metoda de recoltare';
+
+  @override
+  String get fieldCollectionPeriod => 'Perioada recoltării';
+
+  @override
+  String get fieldComplicationDetails => 'Detalii despre complicații';
+
+  @override
+  String get fieldComplications => 'Complicații';
+
+  @override
+  String get fieldConclusion => 'Concluzie';
+
+  @override
+  String get fieldConclusionCode => 'Codul concluziei';
+
+  @override
+  String get fieldCondition => 'Afecțiune';
+
+  @override
+  String get fieldContactEmail => 'E-mail de contact';
+
+  @override
+  String get fieldContactInformation => 'Informații de contact';
+
+  @override
+  String get fieldContactPerson => 'Persoană de contact';
+
+  @override
+  String get fieldContactPhone => 'Telefon de contact';
+
+  @override
+  String get fieldContainerAdditive => 'Aditivul recipientului';
+
+  @override
+  String get fieldContainerCapacity => 'Capacitatea recipientului';
+
+  @override
+  String get fieldContainerType => 'Tipul recipientului';
+
+  @override
+  String get fieldContainers => 'Recipiente';
+
+  @override
+  String get fieldContentType => 'Tipul conținutului';
+
+  @override
+  String get fieldContext => 'Context';
+
+  @override
+  String get fieldContract => 'Contract';
+
+  @override
+  String get fieldCostSharing => 'Contribuție la costuri';
+
+  @override
+  String get fieldCourseOfTherapy => 'Durata tratamentului';
+
+  @override
+  String get fieldCoverage => 'Acoperire';
+
+  @override
+  String get fieldCoverageClass => 'Clasa de acoperire';
+
+  @override
+  String get fieldCoverageDetails => 'Detalii despre acoperire';
+
+  @override
+  String get fieldCreated => 'Creat';
+
+  @override
+  String get fieldCriticality => 'Criticitate';
+
+  @override
+  String get fieldCustodian => 'Custode';
+
+  @override
+  String get fieldDataAbsentReason => 'Motivul lipsei datelor';
+
+  @override
+  String get fieldDateGiven => 'Data administrării';
+
+  @override
+  String get fieldDatePerformed => 'Data efectuării';
+
+  @override
+  String get fieldDaysSupply => 'Zile de tratament';
+
+  @override
+  String get fieldDependent => 'Persoană în întreținere';
+
+  @override
+  String get fieldDerivedFrom => 'Derivat din';
+
+  @override
+  String get fieldDescription => 'Descriere';
+
+  @override
+  String get fieldDetected => 'Detectat';
+
+  @override
+  String get fieldDevice => 'Dispozitiv';
+
+  @override
+  String get fieldDiagnoses => 'Diagnostice';
+
+  @override
+  String get fieldDietPreference => 'Preferință alimentară';
+
+  @override
+  String get fieldDimensions => 'Dimensiuni';
+
+  @override
+  String get fieldDischargeDisposition => 'Destinația la externare';
+
+  @override
+  String get fieldDischargeTo => 'Externat către';
+
+  @override
+  String get fieldDisposition => 'Dispoziție';
+
+  @override
+  String get fieldDocumentDetails => 'Detalii despre document';
+
+  @override
+  String get fieldDocumentId => 'ID document';
+
+  @override
+  String get fieldDocumentStatus => 'Starea documentului';
+
+  @override
+  String get fieldDosage => 'Posologie';
+
+  @override
+  String get fieldDose => 'Doză';
+
+  @override
+  String get fieldDoseQuantity => 'Cantitatea dozei';
+
+  @override
+  String get fieldDriversLicenseNumber => 'Numărul permisului de conducere';
+
+  @override
+  String get fieldDuration => 'Durată';
+
+  @override
+  String get fieldEducationProvided => 'Informații oferite';
+
+  @override
+  String get fieldEffective => 'Data efectivă';
+
+  @override
+  String get fieldEffectiveDates => 'Perioada de valabilitate';
+
+  @override
+  String get fieldEmail => 'E-mail';
+
+  @override
+  String get fieldEmergency => 'Urgență';
+
+  @override
+  String get fieldEncounterType => 'Tipul consultației';
+
+  @override
+  String get fieldEndpoints => 'Puncte de conectare';
+
+  @override
+  String get fieldEpisodeOfCare => 'Episod de îngrijire';
+
+  @override
+  String get fieldEthnicity => 'Etnie';
+
+  @override
+  String get fieldExpiration => 'Expirare';
+
+  @override
+  String get fieldExpirationDate => 'Data expirării';
+
+  @override
+  String get fieldFacility => 'Unitate';
+
+  @override
+  String get fieldFacilityDetails => 'Detalii despre unitate';
+
+  @override
+  String get fieldFacilityType => 'Tipul unității';
+
+  @override
+  String get fieldFastingStatus => 'Stare de repaus alimentar';
+
+  @override
+  String get fieldFax => 'Fax';
+
+  @override
+  String get fieldFocalDevice => 'Dispozitiv principal';
+
+  @override
+  String get fieldFollowUp => 'Monitorizare ulterioară';
+
+  @override
+  String get fieldForm => 'Formă farmaceutică';
+
+  @override
+  String get fieldFormat => 'Format';
+
+  @override
+  String get fieldFundingSource => 'Sursa de finanțare';
+
+  @override
+  String get fieldGender => 'Gen';
+
+  @override
+  String get fieldGeneralPractitioner => 'Medic de familie';
+
+  @override
+  String get fieldGoal => 'Obiectiv';
+
+  @override
+  String get fieldGoalDetails => 'Detalii despre obiectiv';
+
+  @override
+  String get fieldGpsCoordinates => 'Coordonate GPS';
+
+  @override
+  String get fieldGroupNumber => 'Numărul grupului';
+
+  @override
+  String get fieldHandedOver => 'Predat';
+
+  @override
+  String get fieldHealthcareFacility => 'Unitate sanitară';
+
+  @override
+  String get fieldHealthcareService => 'Serviciu medical';
+
+  @override
+  String get fieldHours => 'Program';
+
+  @override
+  String get fieldHowToTake => 'Mod de administrare';
+
+  @override
+  String get fieldIdentifiers => 'Identificatori';
+
+  @override
+  String get fieldInformationSource => 'Sursa informației';
+
+  @override
+  String get fieldIngredients => 'Ingrediente';
+
+  @override
+  String get fieldInstructions => 'Instrucțiuni';
+
+  @override
+  String get fieldInsuranceCompany => 'Societate de asigurări';
+
+  @override
+  String get fieldInsurer => 'Asigurător';
+
+  @override
+  String get fieldIntent => 'Intenție';
+
+  @override
+  String get fieldInterpreter => 'Interpret';
+
+  @override
+  String get fieldItemsUsed => 'Materiale folosite';
+
+  @override
+  String get fieldLanguage => 'Limbă';
+
+  @override
+  String get fieldLanguages => 'Limbi';
+
+  @override
+  String get fieldLastOccurrence => 'Ultima apariție';
+
+  @override
+  String get fieldLifecycleStatus => 'Stadiu în ciclul de viață';
+
+  @override
+  String get fieldLocation => 'Locație';
+
+  @override
+  String get fieldLocationProvider => 'Locație și furnizor';
+
+  @override
+  String get fieldLotNumber => 'Număr de lot';
+
+  @override
+  String get fieldManagingOrganization => 'Organizație responsabilă';
+
+  @override
+  String get fieldManufacturer => 'Producător';
+
+  @override
+  String get fieldMaritalStatus => 'Stare civilă';
+
+  @override
+  String get fieldMedia => 'Media';
+
+  @override
+  String get fieldMedicalRecordNumber => 'Număr de fișă medicală';
+
+  @override
+  String get fieldMedication => 'Medicament';
+
+  @override
+  String get fieldMedicationDetails => 'Detalii despre medicament';
+
+  @override
+  String get fieldMemberId => 'ID asigurat';
+
+  @override
+  String get fieldMembers => 'Membri';
+
+  @override
+  String get fieldMethod => 'Metodă';
+
+  @override
+  String get fieldModality => 'Modalitate';
+
+  @override
+  String get fieldMode => 'Mod';
+
+  @override
+  String get fieldMothersMaidenName => 'Numele de fată al mamei';
+
+  @override
+  String get fieldMultipleBirth => 'Naștere multiplă';
+
+  @override
+  String get fieldNetwork => 'Rețea';
+
+  @override
+  String get fieldNextDose => 'Doza următoare';
+
+  @override
+  String get fieldNotes => 'Note';
+
+  @override
+  String get fieldOccurrence => 'Data';
+
+  @override
+  String get fieldOnset => 'Debut';
+
+  @override
+  String get fieldOperationalStatus => 'Stare operațională';
+
+  @override
+  String get fieldOperator => 'Operator';
+
+  @override
+  String get fieldOrder => 'Ordine';
+
+  @override
+  String get fieldOrderedBy => 'Solicitat de';
+
+  @override
+  String get fieldOrganization => 'Organizație';
+
+  @override
+  String get fieldOrganizationDetails => 'Detalii despre organizație';
+
+  @override
+  String get fieldOutcome => 'Rezultat';
+
+  @override
+  String get fieldOutcomeMeasurements => 'Măsurători ale rezultatului';
+
+  @override
+  String get fieldPanelComponents => 'Componentele panelului';
+
+  @override
+  String get fieldParentSpecimen => 'Proba de origine';
+
+  @override
+  String get fieldPartOf => 'Parte din';
+
+  @override
+  String get fieldPassportNumber => 'Numărul pașaportului';
+
+  @override
+  String get fieldPatient => 'Pacient';
+
+  @override
+  String get fieldPerformedBy => 'Efectuat de';
+
+  @override
+  String get fieldPerformer => 'Executant';
+
+  @override
+  String get fieldPerformerType => 'Tipul executantului';
+
+  @override
+  String get fieldPeriod => 'Perioadă';
+
+  @override
+  String get fieldPhone => 'Telefon';
+
+  @override
+  String get fieldPhysicalType => 'Tip fizic';
+
+  @override
+  String get fieldPlanName => 'Denumirea planului';
+
+  @override
+  String get fieldPlanType => 'Tipul planului';
+
+  @override
+  String get fieldPolicyHolder => 'Titularul poliței';
+
+  @override
+  String get fieldPracticeSetting => 'Cadru de practică';
+
+  @override
+  String get fieldPractitioner => 'Medic';
+
+  @override
+  String get fieldPrepared => 'Preparat';
+
+  @override
+  String get fieldPrescribed => 'Prescris';
+
+  @override
+  String get fieldPrescribedBy => 'Prescris de';
+
+  @override
+  String get fieldPrimarySource => 'Sursă primară';
+
+  @override
+  String get fieldPriority => 'Prioritate';
+
+  @override
+  String get fieldProcedureCode => 'Codul procedurii';
+
+  @override
+  String get fieldProcedureDetails => 'Detalii despre procedură';
+
+  @override
+  String get fieldProcessingStorage => 'Procesare și depozitare';
+
+  @override
+  String get fieldProfessionalInformation => 'Informații profesionale';
+
+  @override
+  String get fieldProgramEligibility => 'Eligibilitate pentru programe';
+
+  @override
+  String get fieldProgressNotes => 'Note de evoluție';
+
+  @override
+  String get fieldProvider => 'Furnizor';
+
+  @override
+  String get fieldQualification => 'Calificare';
+
+  @override
+  String get fieldQuantity => 'Cantitate';
+
+  @override
+  String get fieldQuantityCollected => 'Cantitate recoltată';
+
+  @override
+  String get fieldRace => 'Rasă';
+
+  @override
+  String get fieldRangeAppliesTo => 'Intervalul se aplică pentru';
+
+  @override
+  String get fieldRangeNotes => 'Note despre interval';
+
+  @override
+  String get fieldReAdmission => 'Reinternare';
+
+  @override
+  String get fieldReaction => 'Reacție';
+
+  @override
+  String get fieldReactions => 'Reacții';
+
+  @override
+  String get fieldReason => 'Motiv';
+
+  @override
+  String get fieldReasonForVisit => 'Motivul vizitei';
+
+  @override
+  String get fieldReceivedAtLab => 'Primit la laborator';
+
+  @override
+  String get fieldRecorded => 'Înregistrat';
+
+  @override
+  String get fieldRecorder => 'Înregistrat de';
+
+  @override
+  String get fieldReferenceRange => 'Interval de referință';
+
+  @override
+  String get fieldRefills => 'Reînnoiri';
+
+  @override
+  String get fieldRelatedAppointment => 'Programare asociată';
+
+  @override
+  String get fieldRelatedCondition => 'Afecțiune asociată';
+
+  @override
+  String get fieldRelatedDocument => 'Document asociat';
+
+  @override
+  String get fieldRelationship => 'Relație';
+
+  @override
+  String get fieldRelationshipToSubscriber => 'Relația cu titularul';
+
+  @override
+  String get fieldReport => 'Raport';
+
+  @override
+  String get fieldReportedBy => 'Raportat de';
+
+  @override
+  String get fieldRequestedBy => 'Solicitat de';
+
+  @override
+  String get fieldRequester => 'Solicitant';
+
+  @override
+  String get fieldResolved => 'Rezolvat';
+
+  @override
+  String get fieldResult => 'Rezultat';
+
+  @override
+  String get fieldResultDate => 'Data rezultatului';
+
+  @override
+  String get fieldResults => 'Rezultate';
+
+  @override
+  String get fieldRole => 'Rol';
+
+  @override
+  String get fieldRoute => 'Cale de administrare';
+
+  @override
+  String get fieldSecurityClassification => 'Clasificare de securitate';
+
+  @override
+  String get fieldSeries => 'Serie';
+
+  @override
+  String get fieldSeriousness => 'Gravitate';
+
+  @override
+  String get fieldServicePeriod => 'Perioada serviciului';
+
+  @override
+  String get fieldServiceType => 'Tipul serviciului';
+
+  @override
+  String get fieldSetBy => 'Stabilit de';
+
+  @override
+  String get fieldSeverity => 'Severitate';
+
+  @override
+  String get fieldSite => 'Loc';
+
+  @override
+  String get fieldSize => 'Dimensiune';
+
+  @override
+  String get fieldSpecialArrangements => 'Aranjamente speciale';
+
+  @override
+  String get fieldSpecialty => 'Specialitate';
+
+  @override
+  String get fieldSpecimenDetails => 'Detalii despre probă';
+
+  @override
+  String get fieldSpecimenQuantity => 'Cantitatea probei';
+
+  @override
+  String get fieldSpecimenType => 'Tipul probei';
+
+  @override
+  String get fieldSpecimens => 'Probe';
+
+  @override
+  String get fieldStage => 'Stadiu';
+
+  @override
+  String get fieldStartDate => 'Data de început';
+
+  @override
+  String get fieldStatus => 'Stare';
+
+  @override
+  String get fieldStatusDate => 'Data stării';
+
+  @override
+  String get fieldStatusHistory => 'Istoricul stării';
+
+  @override
+  String get fieldStatusReason => 'Motivul stării';
+
+  @override
+  String get fieldStrength => 'Concentrație';
+
+  @override
+  String get fieldSubpotent => 'Potență redusă';
+
+  @override
+  String get fieldSubrogation => 'Subrogare';
+
+  @override
+  String get fieldSubscriber => 'Titular';
+
+  @override
+  String get fieldSubstitution => 'Substituție';
+
+  @override
+  String get fieldSupplies => 'Consumabile';
+
+  @override
+  String get fieldTarget => 'Țintă';
+
+  @override
+  String get fieldTestDate => 'Data testului';
+
+  @override
+  String get fieldTimePeriod => 'Interval de timp';
+
+  @override
+  String get fieldTotal => 'Total';
+
+  @override
+  String get fieldType => 'Tip';
+
+  @override
+  String get fieldUse => 'Utilizare';
+
+  @override
+  String get fieldVaccinationDetails => 'Detalii despre vaccinare';
+
+  @override
+  String get fieldVaccine => 'Vaccin';
+
+  @override
+  String get fieldValue => 'Valoare';
+
+  @override
+  String get fieldVerification => 'Verificare';
+
+  @override
+  String get fieldVerifiedBy => 'Verificat de';
+
+  @override
+  String get fieldView => 'Vizualizare';
+
+  @override
+  String get fieldVisitDetails => 'Detalii despre vizită';
+
+  @override
+  String get fieldVisitType => 'Tipul vizitei';
+
+  @override
+  String get fieldWebsite => 'Site web';
+
+  @override
+  String get fieldDateOfBirth => 'Data nașterii';
+
+  @override
+  String get fieldAge => 'Vârstă';
+
+  @override
+  String get fieldLastUpdated => 'Ultima actualizare';
+
+  @override
+  String get fieldAdditive => 'Aditiv';
+
+  @override
+  String get fieldTime => 'Ora';
+
+  @override
+  String fieldProcessingNumber(int number) {
+    return 'Procesare $number';
+  }
+
+  @override
+  String get inactive => 'Inactiv';
+
+  @override
+  String get yes => 'Da';
+
+  @override
+  String get no => 'Nu';
+
+  @override
+  String moreCount(int count) {
+    return 'încă $count';
+  }
+
+  @override
+  String qualificationIssuedBy(String qualification, String issuer) {
+    return '$qualification (eliberat de $issuer)';
+  }
+
+  @override
+  String qualificationValidPeriod(String qualification, String period) {
+    return '$qualification - Valabil: $period';
+  }
+
+  @override
+  String sizeBytes(String size) {
+    return '$size octeți';
+  }
+
+  @override
+  String doseNumberOfTotal(String dose, String total) {
+    return 'Doza $dose din $total';
+  }
+
+  @override
+  String doseNumber(String dose) {
+    return 'Doza $dose';
+  }
+
+  @override
+  String get immunizationPrimarySourceYes => 'Da (administrat direct)';
+
+  @override
+  String get immunizationPrimarySourceNo =>
+      'Nu (raportat de pacient sau de altă sursă)';
+
+  @override
+  String get immunizationReactionReported => 'Reacție raportată';
+
+  @override
+  String get immunizationNoReactions => 'Nicio reacție adversă raportată';
+
+  @override
+  String get immunizationSeriesComplete => 'Neprogramată (schemă completă)';
+
+  @override
+  String get immunizationSubpotent => 'Vaccinul are potență redusă';
+
+  @override
+  String documentPublished(String document, String date) {
+    return '$document (publicat la $date)';
+  }
+
+  @override
+  String refillsRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de reînnoiri rămase',
+      few: '$count reînnoiri rămase',
+      one: '$count reînnoire rămasă',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String validUntil(String date) {
+    return 'Valabil până la $date';
+  }
+
+  @override
+  String validFrom(String date) {
+    return 'Valabil din $date';
+  }
+
+  @override
+  String get substitutionAllowed => 'Substituirea cu generic este permisă';
+
+  @override
+  String get substitutionNotAllowed =>
+      'Este necesar medicamentul de marcă - fără substituire';
+
+  @override
+  String get doNotPerformRequest => 'NU efectuați această solicitare';
+
+  @override
+  String get complicationsNone => 'Niciuna';
+
+  @override
+  String fastedFor(String duration) {
+    return 'În repaus alimentar de $duration';
+  }
+
+  @override
+  String containerCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de recipiente',
+      few: '$count recipiente',
+      one: '$count recipient',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get coverageOrderPrimary => 'Principală (1)';
+
+  @override
+  String get coverageOrderSecondary => 'Secundară (2)';
+
+  @override
+  String get coverageOrderTertiary => 'Terțiară (3)';
+
+  @override
+  String coverageOrderNumber(int order) {
+    return 'Ordinea $order';
+  }
+
+  @override
+  String goalDueBy(String date) {
+    return 'până la $date';
+  }
+
+  @override
+  String durationSeconds(String seconds) {
+    return '$seconds secunde';
+  }
+
+  @override
+  String ingredientCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de ingrediente',
+      few: '$count ingrediente',
+      one: '$count ingredient',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String resultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de rezultate',
+      few: '$count rezultate',
+      one: '$count rezultat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String specimenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de probe',
+      few: '$count probe',
+      one: '$count probă',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String imageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de imagini',
+      few: '$count imagini',
+      one: '$count imagine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de ani',
+      few: '$count ani',
+      one: '$count an',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get identifierPassport => 'Pașaport';
+
+  @override
+  String multipleBirthOrder(String order) {
+    return 'Da (ordinea nașterii: $order)';
+  }
+
+  @override
+  String timeAgoDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count de zile',
+      few: 'acum $count zile',
+      one: 'acum o zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeAgoHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count de ore',
+      few: 'acum $count ore',
+      one: 'acum o oră',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeAgoMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count de minute',
+      few: 'acum $count minute',
+      one: 'acum un minut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get justNow => 'Chiar acum';
+
+  @override
+  String get bloodTypeNotAvailable => 'Indisponibil';
 }

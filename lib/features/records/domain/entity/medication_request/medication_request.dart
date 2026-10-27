@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -146,9 +147,9 @@ abstract class MedicationRequest
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('How to Take'));
+    infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldHowToTake));
 
     // Medication Name
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
@@ -158,7 +159,7 @@ abstract class MedicationRequest
       infoLines,
       ResourceFieldMapper.createMedicationLine(
         medicationDisplay,
-        prefix: 'Medication',
+        prefix: l10n.fieldMedication,
       ),
     );
 
@@ -168,20 +169,24 @@ abstract class MedicationRequest
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(dosageDisplay, prefix: 'Dosage'),
+      ResourceFieldMapper.createNotesLine(
+        dosageDisplay,
+        prefix: l10n.fieldDosage,
+      ),
     );
 
     // Dispense Request Details (Refills, Quantity, Days Supply)
     if (dispenseRequest != null) {
       // Refills
-      final numberOfRepeatsAllowed =
-          dispenseRequest!.numberOfRepeatsAllowed?.element;
+      final numberOfRepeatsAllowed = int.tryParse(
+        dispenseRequest!.numberOfRepeatsAllowed?.valueString ?? '',
+      );
       if (numberOfRepeatsAllowed != null) {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createValueLine(
-            '$numberOfRepeatsAllowed refills remaining',
-            prefix: 'Refills',
+            l10n.refillsRemaining(numberOfRepeatsAllowed),
+            prefix: l10n.fieldRefills,
           ),
         );
       }
@@ -192,7 +197,10 @@ abstract class MedicationRequest
       );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createValueLine(quantity, prefix: 'Quantity'),
+        ResourceFieldMapper.createValueLine(
+          quantity,
+          prefix: l10n.fieldQuantity,
+        ),
       );
 
       // Days Supply
@@ -203,7 +211,7 @@ abstract class MedicationRequest
         infoLines,
         ResourceFieldMapper.createValueLine(
           expectedSupplyDuration,
-          prefix: 'Days Supply',
+          prefix: l10n.fieldDaysSupply,
         ),
       );
 
@@ -214,26 +222,31 @@ abstract class MedicationRequest
         final validityEnd = dispenseRequest!.validityPeriod!.end?.valueString;
         if (validityStart != null || validityEnd != null) {
           final validityDisplay = validityEnd != null
-              ? 'Valid until $validityEnd'
-              : 'Valid from $validityStart';
+              ? l10n.validUntil(validityEnd)
+              : l10n.validFrom(validityStart ?? '');
           ResourceFieldMapper.addIfNotNull(
             infoLines,
             ResourceFieldMapper.createTimelineLine(
               validityDisplay,
-              prefix: 'Duration',
+              prefix: l10n.fieldDuration,
             ),
           );
         }
       }
     }
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
+    );
 
     // Status
     final statusDisplay = status?.display?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusDisplay, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusDisplay,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Prescribed Date (Authored On)
@@ -242,7 +255,7 @@ abstract class MedicationRequest
       infoLines,
       ResourceFieldMapper.createDateLine(
         authoredOnDisplay,
-        prefix: 'Prescribed',
+        prefix: l10n.fieldPrescribed,
       ),
     );
 
@@ -254,7 +267,7 @@ abstract class MedicationRequest
       infoLines,
       ResourceFieldMapper.createUserLine(
         requesterDisplay,
-        prefix: 'Prescribed By',
+        prefix: l10n.fieldPrescribedBy,
       ),
     );
 
@@ -262,7 +275,10 @@ abstract class MedicationRequest
     final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+      ResourceFieldMapper.createNotesLine(
+        reasonCodeDisplay,
+        prefix: l10n.fieldReason,
+      ),
     );
 
     // Priority
@@ -271,7 +287,7 @@ abstract class MedicationRequest
       infoLines,
       ResourceFieldMapper.createWarningLine(
         priorityDisplay,
-        prefix: 'Priority',
+        prefix: l10n.fieldPriority,
       ),
     );
 
@@ -282,19 +298,22 @@ abstract class MedicationRequest
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     // Intent
     final intentDisplay = FhirFieldExtractor.extractIntent(intent);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(intentDisplay, prefix: 'Intent'),
+      ResourceFieldMapper.createStatusLine(
+        intentDisplay,
+        prefix: l10n.fieldIntent,
+      ),
     );
 
     // Performer (Intended Dispenser)
@@ -303,7 +322,10 @@ abstract class MedicationRequest
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
+      ResourceFieldMapper.createUserLine(
+        performerDisplay,
+        prefix: l10n.fieldPerformer,
+      ),
     );
 
     // Substitution (Generic Allowed?)
@@ -311,13 +333,13 @@ abstract class MedicationRequest
       final substitutionAllowed = substitution!.allowedBoolean?.valueBoolean;
       if (substitutionAllowed != null) {
         final substitutionDisplay = substitutionAllowed
-            ? 'Generic substitution allowed'
-            : 'Brand name required - no substitution';
+            ? l10n.substitutionAllowed
+            : l10n.substitutionNotAllowed;
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createStatusLine(
             substitutionDisplay,
-            prefix: 'Substitution',
+            prefix: l10n.fieldSubstitution,
           ),
         );
       } else {
@@ -330,7 +352,7 @@ abstract class MedicationRequest
           infoLines,
           ResourceFieldMapper.createStatusLine(
             substitutionCodeDisplay,
-            prefix: 'Substitution',
+            prefix: l10n.fieldSubstitution,
           ),
         );
       }
@@ -344,7 +366,7 @@ abstract class MedicationRequest
       infoLines,
       ResourceFieldMapper.createTimelineLine(
         courseDisplay,
-        prefix: 'Course of Therapy',
+        prefix: l10n.fieldCourseOfTherapy,
       ),
     );
 
@@ -354,8 +376,8 @@ abstract class MedicationRequest
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createWarningLine(
-          'Do NOT perform this request',
-          prefix: '⚠️ Alert',
+          l10n.doNotPerformRequest,
+          prefix: '⚠️ ${l10n.fieldAlert}',
         ),
       );
     }
@@ -366,7 +388,10 @@ abstract class MedicationRequest
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
+      ResourceFieldMapper.createUserLine(
+        recorderDisplay,
+        prefix: l10n.fieldRecorder,
+      ),
     );
 
     // Date
@@ -383,7 +408,10 @@ abstract class MedicationRequest
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

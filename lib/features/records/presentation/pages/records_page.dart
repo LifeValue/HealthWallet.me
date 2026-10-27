@@ -1013,7 +1013,7 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                 record.displayTitle,
                 style: AppTextStyle.bodyMedium.copyWith(color: onSurface),
               ),
-              ...record.additionalInfo.map((info) {
+              ...record.additionalInfo(context.l10n).map((info) {
                 if (info.isSection) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 20, bottom: 8),
@@ -1098,7 +1098,8 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
   }
 
   Widget _buildResourceInfo(IFhirResource resource, Color dimColor) {
-    final lines = resource.additionalInfo
+    final lines = resource
+        .additionalInfo(context.l10n)
         .where((l) => !l.isSection)
         .take(2)
         .toList();

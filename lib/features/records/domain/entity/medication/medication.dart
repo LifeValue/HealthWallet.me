@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -94,10 +95,10 @@ abstract class Medication with _$Medication implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Medication Details'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldMedicationDetails),
     );
 
     // Medication Code (already in title, but could show NDC or other codes here)
@@ -106,7 +107,7 @@ abstract class Medication with _$Medication implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createMedicationLine(
         codeDisplay,
-        prefix: 'Medication',
+        prefix: l10n.fieldMedication,
       ),
     );
 
@@ -114,7 +115,10 @@ abstract class Medication with _$Medication implements IFhirResource {
     final formDisplay = FhirFieldExtractor.extractCodeableConceptText(form);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createMedicationLine(formDisplay, prefix: 'Form'),
+      ResourceFieldMapper.createMedicationLine(
+        formDisplay,
+        prefix: l10n.fieldForm,
+      ),
     );
 
     // Amount/Strength
@@ -136,17 +140,25 @@ abstract class Medication with _$Medication implements IFhirResource {
 
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createValueLine(amountDisplay, prefix: 'Strength'),
+        ResourceFieldMapper.createValueLine(
+          amountDisplay,
+          prefix: l10n.fieldStrength,
+        ),
       );
     }
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
+    );
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Manufacturer
@@ -157,12 +169,12 @@ abstract class Medication with _$Medication implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createOrganizationLine(
         manufacturerDisplay,
-        prefix: 'Manufacturer',
+        prefix: l10n.fieldManufacturer,
       ),
     );
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     // Ingredients
@@ -171,8 +183,8 @@ abstract class Medication with _$Medication implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createMedicationLine(
-          '${ingredient!.length} ingredient(s)',
-          prefix: 'Ingredients',
+          l10n.ingredientCount(ingredient!.length),
+          prefix: l10n.fieldIngredients,
         ),
       );
     }
@@ -184,7 +196,7 @@ abstract class Medication with _$Medication implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createIdentificationLine(
           lotNumber,
-          prefix: 'Lot Number',
+          prefix: l10n.fieldLotNumber,
         ),
       );
 
@@ -193,7 +205,7 @@ abstract class Medication with _$Medication implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createDateLine(
           expirationDate,
-          prefix: 'Expiration',
+          prefix: l10n.fieldExpiration,
         ),
       );
     }

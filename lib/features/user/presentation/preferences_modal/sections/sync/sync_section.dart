@@ -494,7 +494,7 @@ class SyncSection extends StatelessWidget {
       return l10n.syncStatusPending(lww.pendingChangeCount);
     }
     if (lww.lastSyncTime != null) {
-      return DateFormatUtils.getSincePretty(lww.lastSyncTime!);
+      return DateFormatUtils.getSincePretty(lww.lastSyncTime!, l10n);
     }
     return l10n.connectionStatusNotPaired;
   }
@@ -519,10 +519,11 @@ class SyncSection extends StatelessWidget {
     if (state.backupHistory.isNotEmpty) {
       return DateFormatUtils.getSincePretty(
         state.backupHistory.first.timestamp,
+        l10n,
       );
     }
     if (state.desktopLastBackupTime != null) {
-      return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!);
+      return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!, l10n);
     }
     if (comm.connectionStatus == ConnectionStatus.connected) {
       return l10n.backupStatusWaiting;

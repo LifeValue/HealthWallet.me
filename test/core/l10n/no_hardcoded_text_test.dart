@@ -21,6 +21,7 @@ const _scannedDirs = [
   'lib/features/capture',
   'lib/features/onboarding',
   'lib/features/notifications',
+  'lib/features/records/domain',
 ];
 
 /// Paths that are not part of the mobile UI or are generated.
@@ -31,9 +32,6 @@ const _excludedPaths = [
   // Removed from release builds by security item S3.
   'debug_log_sheet.dart',
   'share_debug_log_sheet.dart',
-  // Record-detail domain formatter, translated together with the record
-  // entities' additionalInfo; remove this line once it takes AppLocalizations.
-  'lib/core/utils/blood_observation_utils.dart',
 ];
 
 const _generatedSuffixes = [
@@ -52,6 +50,8 @@ const _allowedLiterals = {
   'Health Wallet Holder',
   // Stored FHIR data: the title of a blood-pressure observation built from a scan.
   'Blood Pressure Panel',
+  // Stored FHIR data: the title of a blood-type observation saved from the profile.
+  r'Blood Type: $bloodType',
   // Contact address and domain shown in the privacy policy.
   'hello@healthwallet.me',
   'healthwallet.me',

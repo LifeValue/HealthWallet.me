@@ -2855,4 +2855,1039 @@ class AppLocalizationsDe extends AppLocalizations {
   String failedToAttachDocuments(String error) {
     return 'Dokumente konnten nicht angehängt werden: $error';
   }
+
+  @override
+  String get fieldAccessionNumber => 'Eingangsnummer';
+
+  @override
+  String get fieldAchievementStatus => 'Erreichungsstatus';
+
+  @override
+  String get fieldActuality => 'Tatsächlichkeit';
+
+  @override
+  String get fieldAdditionalInformation => 'Zusätzliche Informationen';
+
+  @override
+  String get fieldAddress => 'Adresse';
+
+  @override
+  String get fieldAddresses => 'Adressen';
+
+  @override
+  String get fieldAdministeredBy => 'Verabreicht von';
+
+  @override
+  String get fieldAdmissionSource => 'Aufnahmequelle';
+
+  @override
+  String get fieldAlert => 'Warnung';
+
+  @override
+  String get fieldAllergyDetails => 'Allergiedetails';
+
+  @override
+  String get fieldAlsoKnownAs => 'Auch bekannt als';
+
+  @override
+  String get fieldAsserter => 'Feststellende Person';
+
+  @override
+  String get fieldAttachmentTitle => 'Titel des Anhangs';
+
+  @override
+  String get fieldAuthenticatedBy => 'Beglaubigt von';
+
+  @override
+  String get fieldAuthor => 'Autor';
+
+  @override
+  String get fieldAvailabilityExceptions => 'Ausnahmen der Verfügbarkeit';
+
+  @override
+  String get fieldAvailabilityNotes => 'Hinweise zur Verfügbarkeit';
+
+  @override
+  String get fieldBasedOn => 'Basierend auf';
+
+  @override
+  String get fieldBasicInformation => 'Grundlegende Informationen';
+
+  @override
+  String get fieldBeneficiary => 'Begünstigter';
+
+  @override
+  String get fieldBillablePeriod => 'Abrechnungszeitraum';
+
+  @override
+  String get fieldBirthDate => 'Geburtsdatum';
+
+  @override
+  String get fieldBirthPlace => 'Geburtsort';
+
+  @override
+  String get fieldBirthSex => 'Geburtsgeschlecht';
+
+  @override
+  String get fieldBodySite => 'Körperstelle';
+
+  @override
+  String get fieldCareTeam => 'Behandlungsteam';
+
+  @override
+  String get fieldCategory => 'Kategorie';
+
+  @override
+  String get fieldClinicalNotes => 'Klinische Notizen';
+
+  @override
+  String get fieldClinicalStatus => 'Klinischer Status';
+
+  @override
+  String get fieldCollectedBy => 'Entnommen von';
+
+  @override
+  String get fieldCollectionDate => 'Entnahmedatum';
+
+  @override
+  String get fieldCollectionDuration => 'Entnahmedauer';
+
+  @override
+  String get fieldCollectionInformation => 'Angaben zur Entnahme';
+
+  @override
+  String get fieldCollectionMethod => 'Entnahmemethode';
+
+  @override
+  String get fieldCollectionPeriod => 'Entnahmezeitraum';
+
+  @override
+  String get fieldComplicationDetails => 'Details zu Komplikationen';
+
+  @override
+  String get fieldComplications => 'Komplikationen';
+
+  @override
+  String get fieldConclusion => 'Schlussfolgerung';
+
+  @override
+  String get fieldConclusionCode => 'Befundcode';
+
+  @override
+  String get fieldCondition => 'Erkrankung';
+
+  @override
+  String get fieldContactEmail => 'Kontakt-E-Mail';
+
+  @override
+  String get fieldContactInformation => 'Kontaktinformationen';
+
+  @override
+  String get fieldContactPerson => 'Ansprechperson';
+
+  @override
+  String get fieldContactPhone => 'Kontakttelefon';
+
+  @override
+  String get fieldContainerAdditive => 'Zusatz im Behälter';
+
+  @override
+  String get fieldContainerCapacity => 'Fassungsvermögen des Behälters';
+
+  @override
+  String get fieldContainerType => 'Behältertyp';
+
+  @override
+  String get fieldContainers => 'Behälter';
+
+  @override
+  String get fieldContentType => 'Inhaltstyp';
+
+  @override
+  String get fieldContext => 'Kontext';
+
+  @override
+  String get fieldContract => 'Vertrag';
+
+  @override
+  String get fieldCostSharing => 'Kostenbeteiligung';
+
+  @override
+  String get fieldCourseOfTherapy => 'Therapieverlauf';
+
+  @override
+  String get fieldCoverage => 'Versicherungsschutz';
+
+  @override
+  String get fieldCoverageClass => 'Versicherungsklasse';
+
+  @override
+  String get fieldCoverageDetails => 'Details zum Versicherungsschutz';
+
+  @override
+  String get fieldCreated => 'Erstellt';
+
+  @override
+  String get fieldCriticality => 'Kritikalität';
+
+  @override
+  String get fieldCustodian => 'Verwahrer';
+
+  @override
+  String get fieldDataAbsentReason => 'Grund für fehlende Daten';
+
+  @override
+  String get fieldDateGiven => 'Verabreichungsdatum';
+
+  @override
+  String get fieldDatePerformed => 'Durchführungsdatum';
+
+  @override
+  String get fieldDaysSupply => 'Reichdauer in Tagen';
+
+  @override
+  String get fieldDependent => 'Mitversicherte Person';
+
+  @override
+  String get fieldDerivedFrom => 'Abgeleitet von';
+
+  @override
+  String get fieldDescription => 'Beschreibung';
+
+  @override
+  String get fieldDetected => 'Festgestellt';
+
+  @override
+  String get fieldDevice => 'Gerät';
+
+  @override
+  String get fieldDiagnoses => 'Diagnosen';
+
+  @override
+  String get fieldDietPreference => 'Ernährungspräferenz';
+
+  @override
+  String get fieldDimensions => 'Abmessungen';
+
+  @override
+  String get fieldDischargeDisposition => 'Entlassungsart';
+
+  @override
+  String get fieldDischargeTo => 'Entlassen nach';
+
+  @override
+  String get fieldDisposition => 'Verbleib';
+
+  @override
+  String get fieldDocumentDetails => 'Dokumentdetails';
+
+  @override
+  String get fieldDocumentId => 'Dokument-ID';
+
+  @override
+  String get fieldDocumentStatus => 'Dokumentstatus';
+
+  @override
+  String get fieldDosage => 'Dosierung';
+
+  @override
+  String get fieldDose => 'Dosis';
+
+  @override
+  String get fieldDoseQuantity => 'Dosismenge';
+
+  @override
+  String get fieldDriversLicenseNumber => 'Führerscheinnummer';
+
+  @override
+  String get fieldDuration => 'Dauer';
+
+  @override
+  String get fieldEducationProvided => 'Erteilte Aufklärung';
+
+  @override
+  String get fieldEffective => 'Zeitpunkt';
+
+  @override
+  String get fieldEffectiveDates => 'Gültigkeitszeitraum';
+
+  @override
+  String get fieldEmail => 'E-Mail';
+
+  @override
+  String get fieldEmergency => 'Notfall';
+
+  @override
+  String get fieldEncounterType => 'Art des Kontakts';
+
+  @override
+  String get fieldEndpoints => 'Endpunkte';
+
+  @override
+  String get fieldEpisodeOfCare => 'Behandlungsepisode';
+
+  @override
+  String get fieldEthnicity => 'Ethnische Zugehörigkeit';
+
+  @override
+  String get fieldExpiration => 'Ablauf';
+
+  @override
+  String get fieldExpirationDate => 'Verfallsdatum';
+
+  @override
+  String get fieldFacility => 'Einrichtung';
+
+  @override
+  String get fieldFacilityDetails => 'Details zur Einrichtung';
+
+  @override
+  String get fieldFacilityType => 'Art der Einrichtung';
+
+  @override
+  String get fieldFastingStatus => 'Nüchternstatus';
+
+  @override
+  String get fieldFax => 'Fax';
+
+  @override
+  String get fieldFocalDevice => 'Hauptgerät';
+
+  @override
+  String get fieldFollowUp => 'Nachsorge';
+
+  @override
+  String get fieldForm => 'Darreichungsform';
+
+  @override
+  String get fieldFormat => 'Format';
+
+  @override
+  String get fieldFundingSource => 'Kostenträger';
+
+  @override
+  String get fieldGender => 'Geschlecht';
+
+  @override
+  String get fieldGeneralPractitioner => 'Hausarzt';
+
+  @override
+  String get fieldGoal => 'Ziel';
+
+  @override
+  String get fieldGoalDetails => 'Details zum Ziel';
+
+  @override
+  String get fieldGpsCoordinates => 'GPS-Koordinaten';
+
+  @override
+  String get fieldGroupNumber => 'Gruppennummer';
+
+  @override
+  String get fieldHandedOver => 'Ausgehändigt';
+
+  @override
+  String get fieldHealthcareFacility => 'Gesundheitseinrichtung';
+
+  @override
+  String get fieldHealthcareService => 'Gesundheitsdienst';
+
+  @override
+  String get fieldHours => 'Öffnungszeiten';
+
+  @override
+  String get fieldHowToTake => 'Einnahme';
+
+  @override
+  String get fieldIdentifiers => 'Kennungen';
+
+  @override
+  String get fieldInformationSource => 'Informationsquelle';
+
+  @override
+  String get fieldIngredients => 'Bestandteile';
+
+  @override
+  String get fieldInstructions => 'Anweisungen';
+
+  @override
+  String get fieldInsuranceCompany => 'Versicherungsgesellschaft';
+
+  @override
+  String get fieldInsurer => 'Versicherer';
+
+  @override
+  String get fieldIntent => 'Absicht';
+
+  @override
+  String get fieldInterpreter => 'Dolmetscher';
+
+  @override
+  String get fieldItemsUsed => 'Verwendete Materialien';
+
+  @override
+  String get fieldLanguage => 'Sprache';
+
+  @override
+  String get fieldLanguages => 'Sprachen';
+
+  @override
+  String get fieldLastOccurrence => 'Letztes Auftreten';
+
+  @override
+  String get fieldLifecycleStatus => 'Lebenszyklusstatus';
+
+  @override
+  String get fieldLocation => 'Ort';
+
+  @override
+  String get fieldLocationProvider => 'Ort und Behandelnde';
+
+  @override
+  String get fieldLotNumber => 'Chargennummer';
+
+  @override
+  String get fieldManagingOrganization => 'Verwaltende Organisation';
+
+  @override
+  String get fieldManufacturer => 'Hersteller';
+
+  @override
+  String get fieldMaritalStatus => 'Familienstand';
+
+  @override
+  String get fieldMedia => 'Medien';
+
+  @override
+  String get fieldMedicalRecordNumber => 'Patientennummer';
+
+  @override
+  String get fieldMedication => 'Medikament';
+
+  @override
+  String get fieldMedicationDetails => 'Medikamentendetails';
+
+  @override
+  String get fieldMemberId => 'Versichertennummer';
+
+  @override
+  String get fieldMembers => 'Mitglieder';
+
+  @override
+  String get fieldMethod => 'Methode';
+
+  @override
+  String get fieldModality => 'Modalität';
+
+  @override
+  String get fieldMode => 'Modus';
+
+  @override
+  String get fieldMothersMaidenName => 'Geburtsname der Mutter';
+
+  @override
+  String get fieldMultipleBirth => 'Mehrlingsgeburt';
+
+  @override
+  String get fieldNetwork => 'Netzwerk';
+
+  @override
+  String get fieldNextDose => 'Nächste Dosis';
+
+  @override
+  String get fieldNotes => 'Notizen';
+
+  @override
+  String get fieldOccurrence => 'Zeitpunkt';
+
+  @override
+  String get fieldOnset => 'Beginn';
+
+  @override
+  String get fieldOperationalStatus => 'Betriebsstatus';
+
+  @override
+  String get fieldOperator => 'Bediener';
+
+  @override
+  String get fieldOrder => 'Rang';
+
+  @override
+  String get fieldOrderedBy => 'Angeordnet von';
+
+  @override
+  String get fieldOrganization => 'Organisation';
+
+  @override
+  String get fieldOrganizationDetails => 'Details zur Organisation';
+
+  @override
+  String get fieldOutcome => 'Ergebnis';
+
+  @override
+  String get fieldOutcomeMeasurements => 'Ergebnismessungen';
+
+  @override
+  String get fieldPanelComponents => 'Bestandteile des Panels';
+
+  @override
+  String get fieldParentSpecimen => 'Ausgangsprobe';
+
+  @override
+  String get fieldPartOf => 'Teil von';
+
+  @override
+  String get fieldPassportNumber => 'Reisepassnummer';
+
+  @override
+  String get fieldPatient => 'Patient';
+
+  @override
+  String get fieldPerformedBy => 'Durchgeführt von';
+
+  @override
+  String get fieldPerformer => 'Durchführende Person';
+
+  @override
+  String get fieldPerformerType => 'Art der durchführenden Person';
+
+  @override
+  String get fieldPeriod => 'Zeitraum';
+
+  @override
+  String get fieldPhone => 'Telefon';
+
+  @override
+  String get fieldPhysicalType => 'Physischer Typ';
+
+  @override
+  String get fieldPlanName => 'Tarifname';
+
+  @override
+  String get fieldPlanType => 'Tarifart';
+
+  @override
+  String get fieldPolicyHolder => 'Versicherungsnehmer';
+
+  @override
+  String get fieldPracticeSetting => 'Versorgungsbereich';
+
+  @override
+  String get fieldPractitioner => 'Behandelnde Person';
+
+  @override
+  String get fieldPrepared => 'Zubereitet';
+
+  @override
+  String get fieldPrescribed => 'Verordnet';
+
+  @override
+  String get fieldPrescribedBy => 'Verordnet von';
+
+  @override
+  String get fieldPrimarySource => 'Primärquelle';
+
+  @override
+  String get fieldPriority => 'Priorität';
+
+  @override
+  String get fieldProcedureCode => 'Prozedurcode';
+
+  @override
+  String get fieldProcedureDetails => 'Details zur Prozedur';
+
+  @override
+  String get fieldProcessingStorage => 'Verarbeitung und Lagerung';
+
+  @override
+  String get fieldProfessionalInformation => 'Berufliche Informationen';
+
+  @override
+  String get fieldProgramEligibility => 'Programmberechtigung';
+
+  @override
+  String get fieldProgressNotes => 'Verlaufsnotizen';
+
+  @override
+  String get fieldProvider => 'Leistungserbringer';
+
+  @override
+  String get fieldQualification => 'Qualifikation';
+
+  @override
+  String get fieldQuantity => 'Menge';
+
+  @override
+  String get fieldQuantityCollected => 'Entnommene Menge';
+
+  @override
+  String get fieldRace => 'Abstammung';
+
+  @override
+  String get fieldRangeAppliesTo => 'Bereich gilt für';
+
+  @override
+  String get fieldRangeNotes => 'Hinweise zum Bereich';
+
+  @override
+  String get fieldReAdmission => 'Wiederaufnahme';
+
+  @override
+  String get fieldReaction => 'Reaktion';
+
+  @override
+  String get fieldReactions => 'Reaktionen';
+
+  @override
+  String get fieldReason => 'Grund';
+
+  @override
+  String get fieldReasonForVisit => 'Anlass des Besuchs';
+
+  @override
+  String get fieldReceivedAtLab => 'Im Labor eingegangen';
+
+  @override
+  String get fieldRecorded => 'Erfasst';
+
+  @override
+  String get fieldRecorder => 'Erfasst von';
+
+  @override
+  String get fieldReferenceRange => 'Referenzbereich';
+
+  @override
+  String get fieldRefills => 'Folgeverordnungen';
+
+  @override
+  String get fieldRelatedAppointment => 'Zugehöriger Termin';
+
+  @override
+  String get fieldRelatedCondition => 'Zugehörige Erkrankung';
+
+  @override
+  String get fieldRelatedDocument => 'Zugehöriges Dokument';
+
+  @override
+  String get fieldRelationship => 'Beziehung';
+
+  @override
+  String get fieldRelationshipToSubscriber =>
+      'Beziehung zum Versicherungsnehmer';
+
+  @override
+  String get fieldReport => 'Bericht';
+
+  @override
+  String get fieldReportedBy => 'Gemeldet von';
+
+  @override
+  String get fieldRequestedBy => 'Angefordert von';
+
+  @override
+  String get fieldRequester => 'Anfordernde Person';
+
+  @override
+  String get fieldResolved => 'Abgeklungen';
+
+  @override
+  String get fieldResult => 'Ergebnis';
+
+  @override
+  String get fieldResultDate => 'Ergebnisdatum';
+
+  @override
+  String get fieldResults => 'Ergebnisse';
+
+  @override
+  String get fieldRole => 'Rolle';
+
+  @override
+  String get fieldRoute => 'Verabreichungsweg';
+
+  @override
+  String get fieldSecurityClassification => 'Vertraulichkeitsstufe';
+
+  @override
+  String get fieldSeries => 'Serie';
+
+  @override
+  String get fieldSeriousness => 'Schweregrad';
+
+  @override
+  String get fieldServicePeriod => 'Leistungszeitraum';
+
+  @override
+  String get fieldServiceType => 'Leistungsart';
+
+  @override
+  String get fieldSetBy => 'Festgelegt von';
+
+  @override
+  String get fieldSeverity => 'Schweregrad';
+
+  @override
+  String get fieldSite => 'Stelle';
+
+  @override
+  String get fieldSize => 'Größe';
+
+  @override
+  String get fieldSpecialArrangements => 'Besondere Vorkehrungen';
+
+  @override
+  String get fieldSpecialty => 'Fachrichtung';
+
+  @override
+  String get fieldSpecimenDetails => 'Details zur Probe';
+
+  @override
+  String get fieldSpecimenQuantity => 'Probenmenge';
+
+  @override
+  String get fieldSpecimenType => 'Probenart';
+
+  @override
+  String get fieldSpecimens => 'Proben';
+
+  @override
+  String get fieldStage => 'Stadium';
+
+  @override
+  String get fieldStartDate => 'Startdatum';
+
+  @override
+  String get fieldStatus => 'Status';
+
+  @override
+  String get fieldStatusDate => 'Statusdatum';
+
+  @override
+  String get fieldStatusHistory => 'Statusverlauf';
+
+  @override
+  String get fieldStatusReason => 'Grund für den Status';
+
+  @override
+  String get fieldStrength => 'Wirkstärke';
+
+  @override
+  String get fieldSubpotent => 'Verminderte Wirksamkeit';
+
+  @override
+  String get fieldSubrogation => 'Forderungsübergang';
+
+  @override
+  String get fieldSubscriber => 'Versicherungsnehmer';
+
+  @override
+  String get fieldSubstitution => 'Austausch';
+
+  @override
+  String get fieldSupplies => 'Hilfsmittel';
+
+  @override
+  String get fieldTarget => 'Zielwert';
+
+  @override
+  String get fieldTestDate => 'Testdatum';
+
+  @override
+  String get fieldTimePeriod => 'Zeitraum';
+
+  @override
+  String get fieldTotal => 'Gesamt';
+
+  @override
+  String get fieldType => 'Typ';
+
+  @override
+  String get fieldUse => 'Verwendung';
+
+  @override
+  String get fieldVaccinationDetails => 'Details zur Impfung';
+
+  @override
+  String get fieldVaccine => 'Impfstoff';
+
+  @override
+  String get fieldValue => 'Wert';
+
+  @override
+  String get fieldVerification => 'Verifizierung';
+
+  @override
+  String get fieldVerifiedBy => 'Überprüft von';
+
+  @override
+  String get fieldView => 'Ansicht';
+
+  @override
+  String get fieldVisitDetails => 'Details zum Besuch';
+
+  @override
+  String get fieldVisitType => 'Art des Besuchs';
+
+  @override
+  String get fieldWebsite => 'Website';
+
+  @override
+  String get fieldDateOfBirth => 'Geburtsdatum';
+
+  @override
+  String get fieldAge => 'Alter';
+
+  @override
+  String get fieldLastUpdated => 'Zuletzt aktualisiert';
+
+  @override
+  String get fieldAdditive => 'Zusatz';
+
+  @override
+  String get fieldTime => 'Uhrzeit';
+
+  @override
+  String fieldProcessingNumber(int number) {
+    return 'Verarbeitung $number';
+  }
+
+  @override
+  String get inactive => 'Inaktiv';
+
+  @override
+  String get yes => 'Ja';
+
+  @override
+  String get no => 'Nein';
+
+  @override
+  String moreCount(int count) {
+    return '$count weitere';
+  }
+
+  @override
+  String qualificationIssuedBy(String qualification, String issuer) {
+    return '$qualification (ausgestellt von $issuer)';
+  }
+
+  @override
+  String qualificationValidPeriod(String qualification, String period) {
+    return '$qualification - Gültig: $period';
+  }
+
+  @override
+  String sizeBytes(String size) {
+    return '$size Byte';
+  }
+
+  @override
+  String doseNumberOfTotal(String dose, String total) {
+    return 'Dosis $dose von $total';
+  }
+
+  @override
+  String doseNumber(String dose) {
+    return 'Dosis $dose';
+  }
+
+  @override
+  String get immunizationPrimarySourceYes => 'Ja (direkt verabreicht)';
+
+  @override
+  String get immunizationPrimarySourceNo =>
+      'Nein (vom Patienten oder einer anderen Quelle gemeldet)';
+
+  @override
+  String get immunizationReactionReported => 'Reaktion gemeldet';
+
+  @override
+  String get immunizationNoReactions => 'Keine Nebenwirkungen gemeldet';
+
+  @override
+  String get immunizationSeriesComplete =>
+      'Nicht geplant (Serie abgeschlossen)';
+
+  @override
+  String get immunizationSubpotent =>
+      'Der Impfstoff hat eine verminderte Wirksamkeit';
+
+  @override
+  String documentPublished(String document, String date) {
+    return '$document (veröffentlicht am $date)';
+  }
+
+  @override
+  String refillsRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Folgeverordnungen übrig',
+      one: '$count Folgeverordnung übrig',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String validUntil(String date) {
+    return 'Gültig bis $date';
+  }
+
+  @override
+  String validFrom(String date) {
+    return 'Gültig ab $date';
+  }
+
+  @override
+  String get substitutionAllowed => 'Austausch gegen Generikum erlaubt';
+
+  @override
+  String get substitutionNotAllowed =>
+      'Markenpräparat erforderlich - kein Austausch';
+
+  @override
+  String get doNotPerformRequest => 'Diese Anforderung NICHT durchführen';
+
+  @override
+  String get complicationsNone => 'Keine';
+
+  @override
+  String fastedFor(String duration) {
+    return 'Nüchtern seit $duration';
+  }
+
+  @override
+  String containerCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Behälter',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get coverageOrderPrimary => 'Primär (1)';
+
+  @override
+  String get coverageOrderSecondary => 'Sekundär (2)';
+
+  @override
+  String get coverageOrderTertiary => 'Tertiär (3)';
+
+  @override
+  String coverageOrderNumber(int order) {
+    return 'Rang $order';
+  }
+
+  @override
+  String goalDueBy(String date) {
+    return 'bis $date';
+  }
+
+  @override
+  String durationSeconds(String seconds) {
+    return '$seconds Sekunden';
+  }
+
+  @override
+  String ingredientCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Bestandteile',
+      one: '$count Bestandteil',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String resultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Ergebnisse',
+      one: '$count Ergebnis',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String specimenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Proben',
+      one: '$count Probe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String imageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Bilder',
+      one: '$count Bild',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Jahre',
+      one: '$count Jahr',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get identifierPassport => 'Reisepass';
+
+  @override
+  String multipleBirthOrder(String order) {
+    return 'Ja (Geburtsreihenfolge: $order)';
+  }
+
+  @override
+  String timeAgoDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'vor $count Tagen',
+      one: 'vor $count Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeAgoHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'vor $count Stunden',
+      one: 'vor $count Stunde',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeAgoMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'vor $count Minuten',
+      one: 'vor $count Minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get justNow => 'Gerade eben';
+
+  @override
+  String get bloodTypeNotAvailable => 'Nicht verfügbar';
 }
