@@ -9,23 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 /// starts with a letter. Strings shown to the user go through the ARB files
 /// (`context.l10n`, an `AppLocalizations` parameter or `AppStringsProvider`).
 
-/// The directories scanned so far. Widen this list as each feature is
-/// translated, until it is just `lib/`.
-const _scannedDirs = [
-  'lib/core',
-  'lib/features/home',
-  'lib/features/dashboard',
-  'lib/features/share_records',
-  'lib/features/records/presentation',
-  'lib/features/processing',
-  'lib/features/capture',
-  'lib/features/onboarding',
-  'lib/features/notifications',
-  'lib/features/records/domain',
-  'lib/features/user',
-  'lib/features/sync',
-  'lib/features/wallet_pass',
-];
+/// The whole app is scanned, except the paths excluded below.
+const _scannedDirs = ['lib'];
 
 /// Paths that are not part of the mobile UI or are generated.
 const _excludedPaths = [
