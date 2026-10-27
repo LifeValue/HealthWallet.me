@@ -4,6 +4,23 @@ import 'package:health_wallet/features/records/domain/utils/extractors/fhir_comm
 import 'package:intl/intl.dart';
 
 class FhirTemporalExtractor {
+  /// Medium date plus time in the locale's own order and clock (en:
+  /// "Oct 5, 2024 3:00 PM", de: "5. Okt. 2024 15:00"). A null [locale] uses
+  /// `Intl.defaultLocale`, which the app keeps on the active language.
+  static DateFormat _dateTimeFormat(
+    String? locale, {
+    String separator = ' ',
+    bool withSeconds = false,
+  }) => DateFormat.yMMMd(locale).addPattern(
+    (withSeconds ? DateFormat.jms(locale) : DateFormat.jm(locale)).pattern,
+    separator,
+  );
+
+  /// CLDR puts a narrow no-break space before AM/PM; keep the plain space
+  /// the app has always shown.
+  static String _format(DateFormat format, DateTime date) =>
+      format.format(date).replaceAll('\u202f', ' ');
+
   static String? extractPeriod(
     fhir_r4.Period? period, {
     AppLocalizations? l10n,
@@ -37,6 +54,7 @@ class FhirTemporalExtractor {
   }) {
     if (period == null) return null;
 
+    final locale = l10n?.localeName;
     try {
       final start = period.start?.toString();
       final end = period.end?.toString();
@@ -52,26 +70,24 @@ class FhirTemporalExtractor {
       }
 
       if (startDate != null && endDate != null) {
-        final formatter = DateFormat('MMM d, yyyy h:mm a');
-        final startFormatted = formatter.format(startDate);
-        final endFormatted = formatter.format(endDate);
+        final formatter = _dateTimeFormat(locale);
+        final startFormatted = _format(formatter, startDate);
+        final endFormatted = _format(formatter, endDate);
 
         if (startDate.year == endDate.year &&
             startDate.month == endDate.month &&
             startDate.day == endDate.day) {
-          final dateFormatter = DateFormat('MMM d, yyyy');
-          final timeFormatter = DateFormat('h:mm a');
-          return '${dateFormatter.format(startDate)}, ${timeFormatter.format(startDate)} - ${timeFormatter.format(endDate)}';
+          final dateFormatter = DateFormat.yMMMd(locale);
+          final timeFormatter = DateFormat.jm(locale);
+          return '${_format(dateFormatter, startDate)}, ${_format(timeFormatter, startDate)} - ${_format(timeFormatter, endDate)}';
         }
 
         return '$startFormatted - $endFormatted';
       } else if (startDate != null) {
-        final formatter = DateFormat('MMM d, yyyy h:mm a');
-        final formatted = formatter.format(startDate);
+        final formatted = _format(_dateTimeFormat(locale), startDate);
         return l10n?.fromDate(formatted) ?? 'From $formatted';
       } else if (endDate != null) {
-        final formatter = DateFormat('MMM d, yyyy h:mm a');
-        final formatted = formatter.format(endDate);
+        final formatted = _format(_dateTimeFormat(locale), endDate);
         return l10n?.untilDate(formatted) ?? 'Until $formatted';
       }
     } catch (e) {
@@ -219,8 +235,7 @@ class FhirTemporalExtractor {
 
     try {
       final dateTime = DateTime.parse(dateTimeString);
-      final formatter = DateFormat('MMM d, yyyy, h:mm a');
-      return formatter.format(dateTime);
+      return _format(_dateTimeFormat(null, separator: ', '), dateTime);
     } catch (e) {
       return dateTimeString;
     }
@@ -234,8 +249,7 @@ class FhirTemporalExtractor {
 
     try {
       final date = DateTime.parse(dateString);
-      final formatter = DateFormat('MMM d, yyyy');
-      return formatter.format(date);
+      return _format(DateFormat.yMMMd(), date);
     } catch (e) {
       return dateString;
     }
@@ -249,8 +263,10 @@ class FhirTemporalExtractor {
 
     try {
       final dateTime = DateTime.parse(instantString);
-      final formatter = DateFormat('MMM d, yyyy, h:mm:ss a');
-      return formatter.format(dateTime);
+      return _format(
+        _dateTimeFormat(null, separator: ', ', withSeconds: true),
+        dateTime,
+      );
     } catch (e) {
       return instantString;
     }
@@ -266,11 +282,9 @@ class FhirTemporalExtractor {
           dateTimeString.contains('T') || dateTimeString.contains(':');
 
       if (hasTime) {
-        final formatter = DateFormat('MMM d, yyyy, h:mm a');
-        return formatter.format(dateTime);
+        return _format(_dateTimeFormat(null, separator: ', '), dateTime);
       } else {
-        final formatter = DateFormat('MMM d, yyyy');
-        return formatter.format(dateTime);
+        return _format(DateFormat.yMMMd(), dateTime);
       }
     } catch (e) {
       return dateTimeString;

@@ -86,7 +86,8 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
           final patientForSource = selectedPatient ?? homeState.patient;
           final patientId = patientForSource?.id ?? 'patient-default';
           final patientName =
-              patientForSource?.displayTitle ?? context.l10n.unknownPatient;
+              patientForSource?.displayTitle ??
+              SourceTypeService.unknownPatientName;
 
           final sourceTypeService = getIt<SourceTypeService>();
           final walletSource = await sourceTypeService
@@ -146,7 +147,8 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
 
       final patient = selectedPatient ?? homeState.patient;
       final patientId = patient?.id ?? 'patient-default';
-      final patientName = patient?.displayTitle ?? context.l10n.unknownPatient;
+      final patientName =
+          patient?.displayTitle ?? SourceTypeService.unknownPatientName;
 
       final sourceTypeService = getIt<SourceTypeService>();
       final walletSource = await sourceTypeService.getWritableSourceForPatient(

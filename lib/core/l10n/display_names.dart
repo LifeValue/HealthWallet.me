@@ -139,3 +139,14 @@ extension ProcessingStatusL10n on ProcessingStatus {
     ProcessingStatus.cancelled => l10n.processingStatusCancelled,
   };
 }
+
+/// Localizes an `IFhirResource.statusDisplay` for display. The 'Active' and
+/// 'Inactive' values built from a resource's `active` flag are translated;
+/// raw FHIR status codes are returned unchanged. `statusDisplay` itself stays
+/// English because search matches on it.
+String localizedStatusDisplay(String status, AppLocalizations l10n) =>
+    switch (status) {
+      'Active' => l10n.active,
+      'Inactive' => l10n.inactive,
+      _ => status,
+    };

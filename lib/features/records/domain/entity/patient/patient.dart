@@ -172,7 +172,7 @@ abstract class Patient with _$Patient implements IFhirResource {
         RecordInfoLine(
           icon: Assets.icons.calendar,
           info:
-              '${l10n.fieldDateOfBirth}: ${DateFormat.yMMMd().format(parsedBirthDate)}',
+              '${l10n.fieldDateOfBirth}: ${DateFormat.yMMMd(l10n.localeName).format(parsedBirthDate)}',
         ),
       );
     }

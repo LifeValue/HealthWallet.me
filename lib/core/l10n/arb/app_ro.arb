@@ -1187,7 +1187,7 @@
   "switchToEncounter": "Comută la consultație",
   "previewDocument": "Previzualizează documentul",
   "summaryTitle": "Rezumat",
-  "pagesAvailableForProcessing": "Total: {count} pagini disponibile pentru procesare",
+  "pagesAvailableForProcessing": "{count, plural, one{Total: {count} pagină disponibilă pentru procesare} few{Total: {count} pagini disponibile pentru procesare} other{Total: {count} de pagini disponibile pentru procesare}}",
   "betaBadge": "Beta",
   "pleaseSelectSpecialty": "Selectează o specialitate",
   "patientAndSourceInformation": "Informații despre pacient și sursă",

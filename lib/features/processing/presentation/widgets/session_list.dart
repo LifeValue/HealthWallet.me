@@ -94,7 +94,15 @@ class SessionList extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 6),
                                         Text(
-                                          DateFormat('MMMM d, HH:mm:ss')
+                                          DateFormat.MMMMd(
+                                                context.l10n.localeName,
+                                              )
+                                              .addPattern(
+                                                DateFormat.Hms(
+                                                  context.l10n.localeName,
+                                                ).pattern,
+                                                ', ',
+                                              )
                                               .format(session.createdAt!),
                                         ),
                                         if (isThisSessionDeleting) ...[

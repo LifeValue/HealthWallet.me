@@ -9,6 +9,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
+import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class SourceListDialog extends StatefulWidget {
@@ -328,10 +329,12 @@ class _SourceListDialogState extends State<SourceListDialog> {
 
     if (source.labelSource?.isNotEmpty == true) {
       final label = source.labelSource!;
-      if (label.startsWith('Wallet - ')) {
-        return label.substring('Wallet - '.length);
-      }
-      return label;
+      final name = label.startsWith('Wallet - ')
+          ? label.substring('Wallet - '.length)
+          : label;
+      return name == SourceTypeService.unknownPatientName
+          ? context.l10n.unknownPatient
+          : name;
     }
     if (source.platformName?.isNotEmpty == true) {
       return source.platformName!;

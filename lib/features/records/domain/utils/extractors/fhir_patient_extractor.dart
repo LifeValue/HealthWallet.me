@@ -106,11 +106,11 @@ class FhirPatientExtractor {
 
   /// The patient's age in years; English unless [l10n] is given.
   static String extractPatientAge(Patient patient, {AppLocalizations? l10n}) {
-    if (patient.birthDate == null) return 'N/A';
+    if (patient.birthDate == null) return l10n?.homeNA ?? 'N/A';
 
     try {
       final birthDateStr = patient.birthDate!.toString();
-      if (birthDateStr.isEmpty) return 'N/A';
+      if (birthDateStr.isEmpty) return l10n?.homeNA ?? 'N/A';
 
       final birthDate = DateTime.parse(birthDateStr);
       final now = DateTime.now();
@@ -123,7 +123,7 @@ class FhirPatientExtractor {
 
       return l10n?.ageYears(age) ?? '$age years';
     } catch (e) {
-      return 'N/A';
+      return l10n?.homeNA ?? 'N/A';
     }
   }
 
@@ -140,9 +140,14 @@ class FhirPatientExtractor {
     }
   }
 
-  static String extractPatientGender(Patient patient) {
+  /// The FHIR gender code; a missing gender is 'Unknown', localized when
+  /// [l10n] is given.
+  static String extractPatientGender(
+    Patient patient, {
+    AppLocalizations? l10n,
+  }) {
     final gender = FhirCommonExtractor.extractStatus(patient.gender);
-    return gender ?? 'Unknown';
+    return gender ?? l10n?.genderUnknown ?? 'Unknown';
   }
 
   /// The label of the patient's main identifier. National ID names (CNP,
@@ -152,7 +157,7 @@ class FhirPatientExtractor {
     AppLocalizations? l10n,
   }) {
     if (patient.identifier == null || patient.identifier!.isEmpty) {
-      return 'ID';
+      return l10n?.id ?? 'ID';
     }
 
     for (final id in patient.identifier!) {
@@ -211,7 +216,7 @@ class FhirPatientExtractor {
             if (profile.identifierFhirCode == 'SS') {
               return profile.identifierLabel;
             }
-            return 'ID';
+            return l10n?.id ?? 'ID';
           case 'NI':
             final displayText = id.type?.text?.toString().toUpperCase() ?? '';
             if (displayText.contains('DNI')) return 'DNI';
@@ -233,7 +238,7 @@ class FhirPatientExtractor {
       return firstWithType.type!.text!.toString();
     }
 
-    return 'ID';
+    return l10n?.id ?? 'ID';
   }
 
   static String extractPatientIdentifierValue(Patient patient) {

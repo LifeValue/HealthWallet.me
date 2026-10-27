@@ -7,6 +7,7 @@ import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import '../../../../fixtures/fhir/fhir_fixtures.dart';
 
@@ -17,6 +18,9 @@ List<String> _sections(List<RecordInfoLine> lines) =>
     lines.where((l) => l.isSection).map((l) => l.info).toList();
 
 void main() {
+  // Record dates are formatted in the record's locale, as in the app.
+  setUpAll(initializeDateFormatting);
+
   final en = lookupAppLocalizations(const Locale('en'));
   final ro = lookupAppLocalizations(const Locale('ro'));
 

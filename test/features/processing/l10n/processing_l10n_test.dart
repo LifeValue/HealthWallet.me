@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -11,9 +12,17 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
+import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
+import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
+import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/resources_form.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
+import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _en = lookupAppLocalizations(const Locale('en'));
 final _de = lookupAppLocalizations(const Locale('de'));
@@ -26,8 +35,117 @@ Widget _app(Locale locale, Widget child) => MaterialApp(
   home: Scaffold(body: SingleChildScrollView(child: child)),
 );
 
+/// Answers only `checkModelExistence`; the activation path reads nothing else.
+class _FakeProcessingRepository extends Fake implements ProcessingRepository {
+  _FakeProcessingRepository({required this.modelExists});
+
+  final bool modelExists;
+
+  @override
+  Future<bool> checkModelExistence() async => modelExists;
+}
+
+/// Prepares the page images of a session, or throws [error].
+class _FakeOcrProcessingHelper extends Fake implements OcrProcessingHelper {
+  _FakeOcrProcessingHelper({this.error});
+
+  final Exception? error;
+
+  @override
+  Future<List<String>> prepareAllImages({
+    required List<String> filePaths,
+  }) async {
+    if (error != null) throw error!;
+    return filePaths;
+  }
+}
+
+class _FakeSyncRepository extends Fake implements SyncRepository {}
+
+class _FakeRecordsRepository extends Fake implements RecordsRepository {}
+
+class _FakeDocumentReferenceService extends Fake
+    implements DocumentReferenceService {}
+
+class _FakePatientDeduplicationService extends Fake
+    implements PatientDeduplicationService {}
+
+class _FakeSourceTypeService extends Fake implements SourceTypeService {}
+
+Future<ProcessingBloc> _bloc({
+  required bool modelExists,
+  Exception? prepareError,
+}) async {
+  SharedPreferences.setMockInitialValues({});
+  return ProcessingBloc(
+    _FakeProcessingRepository(modelExists: modelExists),
+    _FakeOcrProcessingHelper(error: prepareError),
+    _FakeSyncRepository(),
+    _FakeDocumentReferenceService(),
+    _FakePatientDeduplicationService(),
+    _FakeSourceTypeService(),
+    _FakeRecordsRepository(),
+    await SharedPreferences.getInstance(),
+    AppStringsProvider(),
+  );
+}
+
+/// Activates one pending session and returns the failure it ends in.
+Future<Failure> _activatePendingSession(ProcessingBloc bloc) async {
+  const session = ProcessingSession(
+    id: 's1',
+    filePaths: ['/tmp/page-1.jpg'],
+  );
+  // ignore: invalid_use_of_visible_for_testing_member
+  bloc.emit(const ProcessingState(sessions: [session]));
+  final failure = bloc.stream
+      .map((state) => state.status)
+      .firstWhere((status) => status is Failure)
+      .then((status) => status as Failure);
+  bloc.add(const SessionActivated(sessionId: 's1'));
+  return failure;
+}
+
 void main() {
   group('model not found is a typed failure', () {
+    test(
+      'a missing model fails the activated session as modelNotFound',
+      () async {
+        final bloc = await _bloc(modelExists: false);
+        addTearDown(bloc.close);
+
+        final status = await _activatePendingSession(bloc);
+
+        expect(status.reason, PipelineFailureReason.modelNotFound);
+      },
+    );
+
+    test(
+      'a step throwing ModelNotFoundException fails as modelNotFound',
+      () async {
+        final bloc = await _bloc(
+          modelExists: true,
+          prepareError: const ModelNotFoundException('/m.gguf'),
+        );
+        addTearDown(bloc.close);
+
+        final status = await _activatePendingSession(bloc);
+
+        expect(status.reason, PipelineFailureReason.modelNotFound);
+      },
+    );
+
+    test('the English text keeps "Model file not found" for the desktop', () {
+      expect(
+        const ModelNotFoundException().toString(),
+        contains('Model file not found'),
+      );
+      expect(
+        const ModelNotFoundException('/p').toString(),
+        allOf(contains('Model file not found'), contains('/p')),
+      );
+    });
+
     test('a ModelNotFoundException maps to modelNotFound', () {
       expect(
         PipelineFailureReason.of(const ModelNotFoundException('/m.gguf')),
@@ -141,6 +259,12 @@ void main() {
         _de.labelIdentifier,
       );
       expect(cnp.getFieldDescriptors(_de)['patientIdentifier']!.label, 'CNP');
+      const passport = MappingPatient(identifierLabel: 'Passport');
+      expect(
+        passport.getFieldDescriptors(_de)['patientIdentifier']!.label,
+        _de.identifierPassport,
+      );
+      expect(_de.identifierPassport, isNot('Passport'));
     });
 
     test('confidence and status names are German', () {

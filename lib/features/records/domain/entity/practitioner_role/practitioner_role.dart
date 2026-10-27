@@ -257,7 +257,7 @@ abstract class PractitionerRole
         RecordInfoLine(
           icon: Assets.icons.calendar,
           info:
-              '${l10n.fieldLastUpdated}: ${DateFormat.yMMMMd().format(date!)}',
+              '${l10n.fieldLastUpdated}: ${DateFormat.yMMMMd(l10n.localeName).format(date!)}',
         ),
       );
     }

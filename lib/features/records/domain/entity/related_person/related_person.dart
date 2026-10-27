@@ -171,7 +171,7 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
             RecordInfoLine(
               icon: Assets.icons.calendar,
               info:
-                  '${l10n.fieldBirthDate}: ${DateFormat.yMMMMd().format(parsedDate)}',
+                  '${l10n.fieldBirthDate}: ${DateFormat.yMMMMd(l10n.localeName).format(parsedDate)}',
             ),
           );
         } catch (_) {
@@ -255,7 +255,7 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
         RecordInfoLine(
           icon: Assets.icons.calendar,
           info:
-              '${l10n.fieldLastUpdated}: ${DateFormat.yMMMMd().format(date!)}',
+              '${l10n.fieldLastUpdated}: ${DateFormat.yMMMMd(l10n.localeName).format(date!)}',
         ),
       );
     }

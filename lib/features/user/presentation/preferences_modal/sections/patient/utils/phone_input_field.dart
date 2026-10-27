@@ -48,7 +48,7 @@ List<CountryEntry> buildCountryList(String languageCode) {
     entries.sort((a, b) => a.name.compareTo(b.name));
   } else {
     entries.sort((a, b) {
-      final byKey = _sortKey(a.name).compareTo(_sortKey(b.name));
+      final byKey = foldCountryName(a.name).compareTo(foldCountryName(b.name));
       return byKey != 0 ? byKey : a.name.compareTo(b.name);
     });
   }
@@ -94,7 +94,9 @@ const _foldedLetters = {
   'ß': 'ss',
 };
 
-String _sortKey(String name) =>
+/// Lower-cases [name] and folds its diacritics ("Österreich" ->
+/// "osterreich"), for sorting and searching country names.
+String foldCountryName(String name) =>
     name.toLowerCase().split('').map((c) => _foldedLetters[c] ?? c).join();
 
 String _isoToFlag(String code) {

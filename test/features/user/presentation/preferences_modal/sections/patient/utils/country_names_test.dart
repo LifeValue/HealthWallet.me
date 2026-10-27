@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/country_names.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/country_names_cldr.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/country_picker_dialog.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/phone_input_field.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 
@@ -47,6 +49,30 @@ void main() {
     test('keeps English sorting unchanged', () {
       final names = buildCountryList('en').map((c) => c.name).toList();
       expect(names, [...names]..sort());
+    });
+  });
+
+  group('country search', () {
+    test('foldCountryName folds diacritics', () {
+      expect(foldCountryName('Österreich'), 'osterreich');
+      expect(foldCountryName('România'), 'romania');
+    });
+
+    testWidgets('finds a country typed without diacritics', (tester) async {
+      final countries = buildCountryList('de');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CountryPickerDialog(
+            countries: countries,
+            selected: countries.first,
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), 'osterreich');
+      await tester.pump();
+
+      expect(find.text('Österreich'), findsOneWidget);
     });
   });
 }

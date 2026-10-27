@@ -58,7 +58,7 @@ Widget _bar(Locale locale, double textScale) {
 
 void main() {
   for (final code in ['de', 'ro', 'es', 'en']) {
-    for (final scale in [1.0, 1.3]) {
+    for (final scale in [1.0, 1.3, 2.0]) {
       testWidgets(
         '$code tab labels fit on one line at 390 px, text scale $scale',
         (tester) async {

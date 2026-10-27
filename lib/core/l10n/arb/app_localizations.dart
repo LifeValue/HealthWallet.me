@@ -4844,7 +4844,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteRecordOfType.
   ///
   /// In en, this message translates to:
-  /// **'{type} delete'**
+  /// **'Delete {type}'**
   String deleteRecordOfType(String type);
 
   /// No description provided for @dateFilterEndBeforeStart.
@@ -5036,7 +5036,7 @@ abstract class AppLocalizations {
   /// No description provided for @pagesAvailableForProcessing.
   ///
   /// In en, this message translates to:
-  /// **'Total: {count} pages available for processing'**
+  /// **'{count, plural, one{Total: {count} page available for processing} other{Total: {count} pages available for processing}}'**
   String pagesAvailableForProcessing(int count);
 
   /// No description provided for @betaBadge.
@@ -6920,7 +6920,7 @@ abstract class AppLocalizations {
   /// No description provided for @ageYears.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, other{{count} years}}'**
+  /// **'{count, plural, one{{count} year} other{{count} years}}'**
   String ageYears(int count);
 
   /// No description provided for @identifierPassport.

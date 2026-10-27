@@ -142,8 +142,10 @@ class FhirFieldExtractor {
   static DateTime? extractPatientBirthDate(Patient patient) =>
       FhirPatientExtractor.extractPatientBirthDate(patient);
 
-  static String extractPatientGender(Patient patient) =>
-      FhirPatientExtractor.extractPatientGender(patient);
+  static String extractPatientGender(
+    Patient patient, {
+    AppLocalizations? l10n,
+  }) => FhirPatientExtractor.extractPatientGender(patient, l10n: l10n);
 
   static String extractPatientIdentifierLabel(
     Patient patient, {

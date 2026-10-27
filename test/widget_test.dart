@@ -36,6 +36,7 @@ import 'package:health_wallet/features/user/domain/services/patient_selection_se
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -224,94 +225,99 @@ class MockWalletPassBloc extends MockBloc<WalletPassEvent, WalletPassState>
 // Test
 // ---------------------------------------------------------------------------
 
+/// Resets getIt and registers the fakes and blocs the App widget resolves.
+Future<void> _registerAppDependencies() async {
+  // Provide fake SharedPreferences values before any code touches it
+  SharedPreferences.setMockInitialValues({});
+
+  // Reset the service locator to a clean state
+  await getIt.reset();
+
+  // --- Fake repositories & services ---
+  final fakeUserRepo = FakeUserRepository();
+  final fakeBiometricAuth = FakeBiometricAuthService();
+  final fakeRecordsRepo = FakeRecordsRepository();
+  final fakeSyncRepo = FakeSyncRepository();
+
+  final deduplicationService = PatientDeduplicationService(
+    fakeRecordsRepo,
+    fakeSyncRepo,
+  );
+  final selectionService = PatientSelectionService(deduplicationService);
+  final getSourcesUseCase = GetSourcesUseCase(fakeSyncRepo);
+  final walletPatientService = WalletPatientService(fakeSyncRepo);
+
+  // --- Blocs (constructed with fake dependencies) ---
+  final userBloc = UserBloc(fakeUserRepo, fakeBiometricAuth);
+  final syncBloc = SyncBloc(
+    fakeSyncRepo,
+    fakeRecordsRepo,
+    DefaultPatientService(
+      fakeRecordsRepo,
+      FakeSyncLocalDataSource(),
+      walletPatientService,
+    ),
+    AppStringsProvider(),
+  );
+  final recordsBloc = RecordsBloc(fakeRecordsRepo, SpecialtyClassifierImpl());
+  final prefs = await SharedPreferences.getInstance();
+  final notificationBloc = NotificationBloc(prefs);
+  final patientBloc = PatientBloc(
+    fakeRecordsRepo,
+    deduplicationService,
+    MockPatientEditService(),
+  );
+
+  // Blocs with heavy dependency graphs (AI models, native plugins) are
+  // mocked; the smoke test only needs their initial state.
+  final processingBloc = MockProcessingBloc();
+  whenListen(
+    processingBloc,
+    const Stream<ProcessingState>.empty(),
+    initialState: const ProcessingState(),
+  );
+  final homeBloc = MockHomeBloc();
+  whenListen(
+    homeBloc,
+    const Stream<HomeState>.empty(),
+    initialState: const HomeState(),
+  );
+  final walletPassBloc = MockWalletPassBloc();
+  whenListen(
+    walletPassBloc,
+    const Stream<WalletPassState>.empty(),
+    initialState: const WalletPassState(),
+  );
+
+  // --- Register everything the App widget resolves from getIt ---
+  getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
+  getIt.registerSingleton<AppStringsProvider>(AppStringsProvider());
+  getIt.registerSingleton<AppRouter>(AppRouter());
+  getIt.registerFactory<AppRouteObserver>(AppRouteObserver.new);
+  getIt.registerSingleton<BluetoothStateService>(FakeBluetoothStateService());
+  getIt.registerSingleton<ReceiveModeService>(FakeReceiveModeService());
+  getIt.registerFactory<UserRepository>(() => fakeUserRepo);
+  getIt.registerFactory<BiometricAuthService>(() => fakeBiometricAuth);
+  getIt.registerFactory<UserBloc>(() => userBloc);
+  getIt.registerFactory<SyncBloc>(() => syncBloc);
+  getIt.registerFactory<RecordsBloc>(() => recordsBloc);
+  getIt.registerSingleton<ProcessingBloc>(processingBloc);
+  getIt.registerSingleton<HomeBloc>(homeBloc);
+  getIt.registerFactory<WalletPassBloc>(() => walletPassBloc);
+  getIt.registerFactory<GetSourcesUseCase>(() => getSourcesUseCase);
+  getIt.registerFactory<RecordsRepository>(() => fakeRecordsRepo);
+  getIt.registerFactory<SyncRepository>(() => fakeSyncRepo);
+  getIt.registerFactory<PatientDeduplicationService>(
+    () => deduplicationService,
+  );
+  getIt.registerFactory<PatientSelectionService>(() => selectionService);
+  getIt.registerFactory<PatientBloc>(() => patientBloc);
+  getIt.registerSingleton<NotificationBloc>(notificationBloc);
+}
+
 void main() {
   testWidgets('App starts', (WidgetTester tester) async {
-    // Provide fake SharedPreferences values before any code touches it
-    SharedPreferences.setMockInitialValues({});
-
-    // Reset the service locator to a clean state
-    await getIt.reset();
-
-    // --- Fake repositories & services ---
-    final fakeUserRepo = FakeUserRepository();
-    final fakeBiometricAuth = FakeBiometricAuthService();
-    final fakeRecordsRepo = FakeRecordsRepository();
-    final fakeSyncRepo = FakeSyncRepository();
-
-    final deduplicationService = PatientDeduplicationService(
-      fakeRecordsRepo,
-      fakeSyncRepo,
-    );
-    final selectionService = PatientSelectionService(deduplicationService);
-    final getSourcesUseCase = GetSourcesUseCase(fakeSyncRepo);
-    final walletPatientService = WalletPatientService(fakeSyncRepo);
-
-    // --- Blocs (constructed with fake dependencies) ---
-    final userBloc = UserBloc(fakeUserRepo, fakeBiometricAuth);
-    final syncBloc = SyncBloc(
-      fakeSyncRepo,
-      fakeRecordsRepo,
-      DefaultPatientService(
-        fakeRecordsRepo,
-        FakeSyncLocalDataSource(),
-        walletPatientService,
-      ),
-      AppStringsProvider(),
-    );
-    final recordsBloc = RecordsBloc(fakeRecordsRepo, SpecialtyClassifierImpl());
-    final prefs = await SharedPreferences.getInstance();
-    final notificationBloc = NotificationBloc(prefs);
-    final patientBloc = PatientBloc(
-      fakeRecordsRepo,
-      deduplicationService,
-      MockPatientEditService(),
-    );
-
-    // Blocs with heavy dependency graphs (AI models, native plugins) are
-    // mocked; the smoke test only needs their initial state.
-    final processingBloc = MockProcessingBloc();
-    whenListen(
-      processingBloc,
-      const Stream<ProcessingState>.empty(),
-      initialState: const ProcessingState(),
-    );
-    final homeBloc = MockHomeBloc();
-    whenListen(
-      homeBloc,
-      const Stream<HomeState>.empty(),
-      initialState: const HomeState(),
-    );
-    final walletPassBloc = MockWalletPassBloc();
-    whenListen(
-      walletPassBloc,
-      const Stream<WalletPassState>.empty(),
-      initialState: const WalletPassState(),
-    );
-
-    // --- Register everything the App widget resolves from getIt ---
-    getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
-    getIt.registerSingleton<AppStringsProvider>(AppStringsProvider());
-    getIt.registerSingleton<AppRouter>(AppRouter());
-    getIt.registerFactory<AppRouteObserver>(AppRouteObserver.new);
-    getIt.registerSingleton<BluetoothStateService>(FakeBluetoothStateService());
-    getIt.registerSingleton<ReceiveModeService>(FakeReceiveModeService());
-    getIt.registerFactory<UserRepository>(() => fakeUserRepo);
-    getIt.registerFactory<BiometricAuthService>(() => fakeBiometricAuth);
-    getIt.registerFactory<UserBloc>(() => userBloc);
-    getIt.registerFactory<SyncBloc>(() => syncBloc);
-    getIt.registerFactory<RecordsBloc>(() => recordsBloc);
-    getIt.registerSingleton<ProcessingBloc>(processingBloc);
-    getIt.registerSingleton<HomeBloc>(homeBloc);
-    getIt.registerFactory<WalletPassBloc>(() => walletPassBloc);
-    getIt.registerFactory<GetSourcesUseCase>(() => getSourcesUseCase);
-    getIt.registerFactory<RecordsRepository>(() => fakeRecordsRepo);
-    getIt.registerFactory<SyncRepository>(() => fakeSyncRepo);
-    getIt.registerFactory<PatientDeduplicationService>(
-      () => deduplicationService,
-    );
-    getIt.registerFactory<PatientSelectionService>(() => selectionService);
-    getIt.registerFactory<PatientBloc>(() => patientBloc);
-    getIt.registerSingleton<NotificationBloc>(notificationBloc);
+    await _registerAppDependencies();
 
     // Build the App widget and pump a single frame.
     // Using pump() (not pumpAndSettle) because the route pages may have
@@ -326,6 +332,24 @@ void main() {
     // Awaiting bloc.close() directly would hang, because close() waits for
     // in-flight handlers that never finish under the test's fake async zone.
     // The extra pump lets the splash page's 1s minimum-display timer fire.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('follows the device language for code without a context', (
+    WidgetTester tester,
+  ) async {
+    tester.platformDispatcher.localesTestValue = const [Locale('ro')];
+    addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+    addTearDown(() => Intl.defaultLocale = null);
+    await _registerAppDependencies();
+
+    await tester.pumpWidget(const App());
+    await tester.pump();
+
+    expect(getIt<AppStringsProvider>().l10n.localeName, 'ro');
+    expect(Intl.defaultLocale, 'ro');
+
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
   });

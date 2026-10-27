@@ -1192,7 +1192,7 @@
   "switchToEncounter": "Cambiar a encuentro",
   "previewDocument": "Vista previa del documento",
   "summaryTitle": "Resumen",
-  "pagesAvailableForProcessing": "Total: {count} páginas disponibles para procesar",
+  "pagesAvailableForProcessing": "{count, plural, one{Total: {count} página disponible para procesar} other{Total: {count} páginas disponibles para procesar}}",
   "betaBadge": "Beta",
   "pleaseSelectSpecialty": "Selecciona una especialidad",
   "patientAndSourceInformation": "Información del paciente y de la fuente",

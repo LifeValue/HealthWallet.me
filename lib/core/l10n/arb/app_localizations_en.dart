@@ -2636,7 +2636,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteRecordOfType(String type) {
-    return '$type delete';
+    return 'Delete $type';
   }
 
   @override
@@ -2759,7 +2759,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pagesAvailableForProcessing(int count) {
-    return 'Total: $count pages available for processing';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Total: $count pages available for processing',
+      one: 'Total: $count page available for processing',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3786,6 +3792,7 @@ class AppLocalizationsEn extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count years',
+      one: '$count year',
     );
     return '$_temp0';
   }

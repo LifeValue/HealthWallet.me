@@ -1188,7 +1188,7 @@
   "switchToEncounter": "Zu Termin wechseln",
   "previewDocument": "Dokumentvorschau",
   "summaryTitle": "Zusammenfassung",
-  "pagesAvailableForProcessing": "Gesamt: {count} Seiten zur Verarbeitung verfügbar",
+  "pagesAvailableForProcessing": "{count, plural, one{Gesamt: {count} Seite zur Verarbeitung verfügbar} other{Gesamt: {count} Seiten zur Verarbeitung verfügbar}}",
   "betaBadge": "Beta",
   "pleaseSelectSpecialty": "Bitte wählen Sie ein Fachgebiet aus",
   "patientAndSourceInformation": "Patienten- und Quelleninformationen",

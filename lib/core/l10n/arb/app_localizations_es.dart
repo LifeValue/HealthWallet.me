@@ -2794,7 +2794,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String pagesAvailableForProcessing(int count) {
-    return 'Total: $count páginas disponibles para procesar';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Total: $count páginas disponibles para procesar',
+      one: 'Total: $count página disponible para procesar',
+    );
+    return '$_temp0';
   }
 
   @override

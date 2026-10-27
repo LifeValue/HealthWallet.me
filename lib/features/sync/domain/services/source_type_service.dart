@@ -25,6 +25,11 @@ class SourceTypeService {
     }
   }
 
+  /// Stored as the patient name of a wallet source when the patient has no
+  /// name. It is synced data, so it stays English; screens show
+  /// `l10n.unknownPatient` in its place.
+  static const unknownPatientName = 'Unknown Patient';
+
   bool canEditSource(Source source) {
     if (isSourceWritable(source.platformType)) {
       return true;

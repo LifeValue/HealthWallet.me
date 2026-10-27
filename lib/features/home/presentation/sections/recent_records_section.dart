@@ -134,7 +134,10 @@ class RecentRecordsSection extends StatelessWidget {
                   ),
                   if (record.statusDisplay.isNotEmpty)
                     Text(
-                      record.statusDisplay,
+                      localizedStatusDisplay(
+                        record.statusDisplay,
+                        context.l10n,
+                      ),
                       style: AppTextStyle.labelMedium.copyWith(
                         color: context.colorScheme.onSurface,
                       ),

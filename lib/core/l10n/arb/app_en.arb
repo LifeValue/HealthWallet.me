@@ -1280,7 +1280,7 @@
   "loadingRelatedResources": "Loading related resources...",
   "noRelatedResourcesForEncounter": "No related resources found for this encounter",
   "cannotAttachToDocumentReference": "Cannot attach files to DocumentReference resources",
-  "deleteRecordOfType": "{type} delete",
+  "deleteRecordOfType": "Delete {type}",
   "@deleteRecordOfType": {
     "placeholders": {
       "type": {
@@ -1389,7 +1389,7 @@
   "switchToEncounter": "Switch to Encounter",
   "previewDocument": "Preview document",
   "summaryTitle": "Summary",
-  "pagesAvailableForProcessing": "Total: {count} pages available for processing",
+  "pagesAvailableForProcessing": "{count, plural, one{Total: {count} page available for processing} other{Total: {count} pages available for processing}}",
   "@pagesAvailableForProcessing": {
     "placeholders": {
       "count": {
@@ -1890,7 +1890,7 @@
       }
     }
   },
-  "ageYears": "{count, plural, other{{count} years}}",
+  "ageYears": "{count, plural, one{{count} year} other{{count} years}}",
   "@ageYears": {
     "placeholders": {
       "count": {

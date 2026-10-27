@@ -5,9 +5,9 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 
 /// One tab of the dashboard's bottom bar: an icon over a label.
 ///
-/// The label always stays on one line: a label wider than the tab (long
-/// German or Romanian words, larger text scales) is scaled down to fit,
-/// never wrapped or cut.
+/// The label always stays on one line: when the icon and label don't fit the
+/// tab (long German or Romanian words, larger text scales), both are scaled
+/// down together, never wrapped or cut.
 class DashboardNavItem extends StatelessWidget {
   const DashboardNavItem({
     required this.icon,
@@ -33,18 +33,18 @@ class DashboardNavItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(100),
         ),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              icon,
-              const SizedBox(height: Insets.extraSmall),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Insets.extraSmall,
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Insets.extraSmall),
+            // Scales icon and label together, so a long label or a large
+            // text scale shrinks the content to fit the tab in both axes.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  icon,
+                  const SizedBox(height: Insets.extraSmall),
+                  Text(
                     label,
                     maxLines: 1,
                     softWrap: false,
@@ -56,9 +56,9 @@ class DashboardNavItem extends StatelessWidget {
                           : context.colorScheme.onSurface,
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

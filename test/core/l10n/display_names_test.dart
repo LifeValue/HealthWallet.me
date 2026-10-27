@@ -99,4 +99,12 @@ void main() {
     expect(localizedSpecialtyName('Cardiology', de), 'Kardiologie');
     expect(localizedSpecialtyName('Podiatry', de), 'Podiatry');
   });
+
+  test('localizedStatusDisplay translates Active/Inactive only', () {
+    final ro = lookupAppLocalizations(const Locale('ro'));
+    expect(localizedStatusDisplay('Active', ro), ro.active);
+    expect(localizedStatusDisplay('Inactive', ro), ro.inactive);
+    expect(ro.active, isNot('Active'));
+    expect(localizedStatusDisplay('final', ro), 'final');
+  });
 }
