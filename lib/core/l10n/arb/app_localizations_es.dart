@@ -2452,4 +2452,174 @@ class AppLocalizationsEs extends AppLocalizations {
   String errorOpeningPdf(String error) {
     return 'Error al abrir el PDF: $error';
   }
+
+  @override
+  String get shareStatusReadyToShare => 'Listo para compartir';
+
+  @override
+  String get shareStatusWaitingForSender => 'Esperando al remitente...';
+
+  @override
+  String get shareStatusPermissionsRequired => 'Se requieren permisos';
+
+  @override
+  String get shareStatusEnablePermissionsInSettings =>
+      'Activa los permisos en Configuración';
+
+  @override
+  String get shareSelectAtLeastOneRecord => 'Selecciona al menos un registro';
+
+  @override
+  String get shareStatusLookingForDevices =>
+      'Buscando dispositivos cercanos...';
+
+  @override
+  String get shareStatusTransferFailed => 'La transferencia falló';
+
+  @override
+  String get shareStatusConfirmExit =>
+      '¿Seguro que quieres salir? Los datos se eliminarán.';
+
+  @override
+  String shareStatusViewingRecords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Viendo $count registros',
+      one: 'Viendo 1 registro',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareStatusViewingRecordsFrom(int count, String deviceName) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Viendo $count registros de $deviceName',
+      one: 'Viendo 1 registro de $deviceName',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareStatusDataDeleted =>
+      'Los datos se han eliminado de forma segura';
+
+  @override
+  String get shareStatusSessionExpired => 'La sesión ha caducado';
+
+  @override
+  String get shareStatusTerminatingSession => 'Finalizando la sesión remota...';
+
+  @override
+  String get shareStatusSessionTerminated => 'Sesión finalizada';
+
+  @override
+  String get shareStatusRemoteSessionTerminated =>
+      'El otro dispositivo finalizó la sesión';
+
+  @override
+  String get shareStatusExtensionDeclined =>
+      'Se rechazó la solicitud de extensión';
+
+  @override
+  String get shareStatusReceiverViewing =>
+      'El receptor está viendo los registros - supervisando la sesión';
+
+  @override
+  String get shareStatusReceiverDeclined => 'El receptor rechazó la invitación';
+
+  @override
+  String shareStatusReceivingFrom(String deviceName) {
+    return 'Recibiendo registros de $deviceName...';
+  }
+
+  @override
+  String get shareNoDataAvailable => 'No hay datos disponibles';
+
+  @override
+  String shareStatusDeviceWantsToShare(String deviceName) {
+    return '$deviceName quiere compartir registros';
+  }
+
+  @override
+  String get shareStatusScanning => 'Buscando dispositivos...';
+
+  @override
+  String shareStatusFoundDevices(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se encontraron $count dispositivos',
+      one: 'Se encontró 1 dispositivo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareStatusConnectingTo(String deviceName) {
+    return 'Conectando con $deviceName...';
+  }
+
+  @override
+  String get shareStatusPreparingRecords => 'Preparando registros...';
+
+  @override
+  String get shareErrorPrepareFiles =>
+      'No se pudieron preparar los archivos para el envío';
+
+  @override
+  String shareStatusTransferring(int percent) {
+    return 'Transfiriendo $percent %';
+  }
+
+  @override
+  String get shareStatusRecordsSentWaiting =>
+      'Registros enviados - esperando a que el receptor acepte';
+
+  @override
+  String get shareStatusTransferCancelled => 'Transferencia cancelada';
+
+  @override
+  String get shareStatusInvitationRejected => 'Invitación rechazada';
+
+  @override
+  String get shareErrorParseData => 'No se pudieron leer los datos recibidos';
+
+  @override
+  String get shareStatusProcessingReceived =>
+      'Procesando los registros recibidos...';
+
+  @override
+  String get shareErrorParseFile => 'No se pudo leer el archivo recibido';
+
+  @override
+  String get shareIncomingHealthRecords => 'Registros de salud entrantes';
+
+  @override
+  String shareDeviceWantsToShareHealthRecords(String deviceName) {
+    return '$deviceName quiere compartir registros de salud contigo';
+  }
+
+  @override
+  String get sharePermissionExplanationIos =>
+      'Para compartir registros con dispositivos cercanos, HealthWallet necesita acceso a:\n\n• Bluetooth - para encontrar dispositivos cercanos y conectarse a ellos\n\nAsí puedes compartir registros de salud de forma segura con otros dispositivos cercanos.';
+
+  @override
+  String get sharePermissionExplanationAndroid =>
+      'Para compartir registros con dispositivos cercanos, HealthWallet necesita acceso a:\n\n• Bluetooth - para encontrar dispositivos cercanos y conectarse a ellos\n• Ubicación/Dispositivos cercanos - Android lo exige para buscar dispositivos Bluetooth y WiFi Direct\n\nTu ubicación nunca se guarda ni se transmite.';
+
+  @override
+  String get sharePermissionsDeniedMessage =>
+      'Concede todos los permisos para compartir registros con dispositivos cercanos.';
+
+  @override
+  String get sharePermissionsPermanentlyDeniedMessage =>
+      'Se denegaron algunos permisos. Actívalos en Configuración para usar esta función.';
+
+  @override
+  String shareDurationRequested(String duration) {
+    return '$duration solicitados';
+  }
 }

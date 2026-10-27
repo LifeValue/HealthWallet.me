@@ -24,30 +24,32 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         emit(
           state.copyWith(
             discoveredPeers: [],
-            statusMessage: 'Scanning for devices...',
+            statusMessage: _strings.l10n.shareStatusScanning,
           ),
         );
         await _service.disconnect();
         await _service.startDiscovery(useBluetooth: event.useBluetooth);
 
-      case PermissionDenied(:final message):
-        _shareLog('ERROR: Permissions denied: $message');
+      case PermissionDenied():
+        _shareLog('ERROR: Permissions denied: ${result.permissions}');
         emit(
           state.copyWith(
             phase: SharePhase.error,
-            errorMessage: message,
-            statusMessage: 'Permissions required',
+            errorMessage: result.message(_strings.l10n),
+            statusMessage: _strings.l10n.shareStatusPermissionsRequired,
           ),
         );
 
-      case PermissionPermanentlyDenied(:final message):
-        _shareLog('ERROR: Permissions permanently denied: $message');
+      case PermissionPermanentlyDenied():
+        _shareLog(
+          'ERROR: Permissions permanently denied: ${result.permissions}',
+        );
         emit(
           state.copyWith(
             phase: SharePhase.error,
-            errorMessage: message,
+            errorMessage: result.message(_strings.l10n),
             showSettingsDialog: true,
-            statusMessage: 'Please enable permissions in Settings',
+            statusMessage: _strings.l10n.shareStatusEnablePermissionsInSettings,
           ),
         );
     }
@@ -70,33 +72,35 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           state.copyWith(
             phase: SharePhase.discoveringPeers,
             discoveredPeers: [],
-            statusMessage: 'Looking for nearby devices...',
+            statusMessage: _strings.l10n.shareStatusLookingForDevices,
           ),
         );
         await _service.disconnect();
         await _service.startSymmetricDiscovery();
 
-      case PermissionDenied(:final message):
+      case PermissionDenied():
         emit(
           state.copyWith(
             phase: SharePhase.error,
-            errorMessage: message,
-            statusMessage: 'Permissions required',
+            errorMessage: result.message(_strings.l10n),
+            statusMessage: _strings.l10n.shareStatusPermissionsRequired,
           ),
         );
 
-      case PermissionPermanentlyDenied(:final message):
+      case PermissionPermanentlyDenied():
         emit(
           state.copyWith(
             phase: SharePhase.error,
-            errorMessage: message,
+            errorMessage: result.message(_strings.l10n),
             showSettingsDialog: true,
-            statusMessage: 'Please enable permissions in Settings',
+            statusMessage: _strings.l10n.shareStatusEnablePermissionsInSettings,
           ),
         );
     }
   }
 
+  /// Names the native layer reports for a peer it could not name. They come
+  /// from the other device, not from the app's own strings.
   bool _isUnknownName(String? name) {
     return name == null ||
         name == 'Unknown' ||
@@ -147,7 +151,9 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           emit(
             state.copyWith(
               discoveredPeers: peers,
-              statusMessage: 'Found ${peers.length} device(s)',
+              statusMessage: _strings.l10n.shareStatusFoundDevices(
+                peers.length,
+              ),
             ),
           );
           return;
@@ -163,7 +169,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     emit(
       state.copyWith(
         discoveredPeers: peers,
-        statusMessage: 'Found ${peers.length} device(s)',
+        statusMessage: _strings.l10n.shareStatusFoundDevices(peers.length),
       ),
     );
   }
@@ -175,10 +181,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     _shareLog('Peer selected: ${event.deviceId}');
     final peer = state.discoveredPeers.firstWhere(
       (p) => p.deviceId == event.deviceId,
-      orElse: () => PeerDevice(
-        deviceId: event.deviceId,
-        deviceName: 'Unknown Device',
-      ),
+      orElse: () => PeerDevice(deviceId: event.deviceId),
     );
 
     _shareLog('Connecting to ${peer.deviceName}...');
@@ -186,14 +189,16 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       state.copyWith(
         selectedPeer: peer,
         phase: SharePhase.connecting,
-        statusMessage: 'Connecting to ${peer.deviceName}...',
+        statusMessage: _strings.l10n.shareStatusConnectingTo(
+          peer.displayName(_strings.l10n),
+        ),
       ),
     );
 
     if (state.isSending && state.selection.isNotEmpty) {
       emit(
         state.copyWith(
-          statusMessage: 'Preparing records...',
+          statusMessage: _strings.l10n.shareStatusPreparingRecords,
         ),
       );
 
@@ -237,7 +242,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         emit(
           state.copyWith(
             phase: SharePhase.error,
-            errorMessage: 'Failed to prepare files for sending',
+            errorMessage: _strings.l10n.shareErrorPrepareFiles,
           ),
         );
         return;
@@ -303,14 +308,12 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     TransferProgressUpdated event,
     Emitter<ShareRecordsState> emit,
   ) {
-    _shareLog(
-      'Transfer progress: ${(state.progressPercentage * 100).toInt()}%',
-    );
+    final percent = (event.progress.progress * 100).toInt();
+    _shareLog('Transfer progress: $percent%');
     emit(
       state.copyWith(
         transferProgress: event.progress,
-        statusMessage:
-            'Transferring ${(state.progressPercentage * 100).toInt()}%',
+        statusMessage: _strings.l10n.shareStatusTransferring(percent),
       ),
     );
   }
@@ -330,7 +333,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
             isSessionActive: true,
             sessionStartedAt: DateTime.now(),
             viewingTimeRemaining: state.selectedViewingDuration,
-            statusMessage: 'Receiver is viewing records - monitoring session',
+            statusMessage: _strings.l10n.shareStatusReceiverViewing,
           ),
         );
         _startViewingTimer();
@@ -342,7 +345,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           state.copyWith(
             phase: SharePhase.connecting,
             isSessionActive: true,
-            statusMessage: 'Records sent - waiting for receiver to accept',
+            statusMessage: _strings.l10n.shareStatusRecordsSentWaiting,
           ),
         );
         _startMonitoringFallbackTimer();
@@ -375,7 +378,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         state.copyWith(
           phase: SharePhase.connecting,
           connectionRetryCount: retryCount,
-          statusMessage: 'Retrying ($retryCount/3)...',
+          statusMessage: _strings.l10n.shareRetryingCount(retryCount),
           errorMessage: null,
         ),
       );
@@ -393,7 +396,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         phase: SharePhase.error,
         isSessionActive: false,
         errorMessage: event.error,
-        statusMessage: 'Transfer failed',
+        statusMessage: _strings.l10n.shareStatusTransferFailed,
         connectionRetryCount: 0,
       ),
     );
@@ -408,7 +411,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       state.copyWith(
         mode: ShareMode.idle,
         isSessionActive: false,
-        statusMessage: 'Transfer cancelled',
+        statusMessage: _strings.l10n.shareStatusTransferCancelled,
       ),
     );
   }
@@ -424,8 +427,8 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         phase: SharePhase.discoveringPeers,
         errorMessage: null,
         statusMessage: state.isSending
-            ? 'Looking for nearby devices...'
-            : 'Waiting for sender...',
+            ? _strings.l10n.shareStatusLookingForDevices
+            : _strings.l10n.shareStatusWaitingForSender,
         discoveredPeers: [],
         selectedPeer: null,
         isSessionActive: false,
@@ -447,7 +450,9 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       state.copyWith(
         pendingInvitationId: event.invitationId,
         pendingInvitationDeviceName: event.deviceName,
-        statusMessage: '${event.deviceName} wants to share records',
+        statusMessage: _strings.l10n.shareStatusDeviceWantsToShare(
+          event.deviceName,
+        ),
       ),
     );
   }
@@ -460,7 +465,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       state.copyWith(
         pendingInvitationId: null,
         phase: SharePhase.transferring,
-        statusMessage: 'Receiving records...',
+        statusMessage: _strings.l10n.shareReceivingRecords,
       ),
     );
 
@@ -475,7 +480,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       state.copyWith(
         pendingInvitationId: null,
         pendingInvitationDeviceName: null,
-        statusMessage: 'Invitation rejected',
+        statusMessage: _strings.l10n.shareStatusInvitationRejected,
       ),
     );
 
@@ -500,7 +505,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       emit(
         state.copyWith(
           phase: SharePhase.error,
-          errorMessage: 'Failed to parse received data',
+          errorMessage: _strings.l10n.shareErrorParseData,
         ),
       );
     }
@@ -511,7 +516,11 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     Emitter<ShareRecordsState> emit,
   ) async {
     _shareLog('Files received: ${event.filePaths.length} file(s)');
-    emit(state.copyWith(statusMessage: 'Processing received records...'));
+    emit(
+      state.copyWith(
+        statusMessage: _strings.l10n.shareStatusProcessingReceived,
+      ),
+    );
 
     for (final filePath in event.filePaths) {
       _shareLog('Parsing file: $filePath');
@@ -526,7 +535,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         emit(
           state.copyWith(
             phase: SharePhase.error,
-            errorMessage: 'Failed to parse received file',
+            errorMessage: _strings.l10n.shareErrorParseFile,
           ),
         );
       }
@@ -550,8 +559,10 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         receivedData: event.container,
         viewingTimeRemaining: event.container.viewDuration,
         isSessionActive: true,
-        statusMessage:
-            'Viewing ${event.container.recordCount} records from ${event.container.senderDeviceName}',
+        statusMessage: _strings.l10n.shareStatusViewingRecordsFrom(
+          event.container.recordCount,
+          event.container.senderDeviceName,
+        ),
       ),
     );
 

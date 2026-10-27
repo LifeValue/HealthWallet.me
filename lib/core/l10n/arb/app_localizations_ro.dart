@@ -2454,4 +2454,178 @@ class AppLocalizationsRo extends AppLocalizations {
   String errorOpeningPdf(String error) {
     return 'Eroare la deschiderea PDF-ului: $error';
   }
+
+  @override
+  String get shareStatusReadyToShare => 'Gata de partajare';
+
+  @override
+  String get shareStatusWaitingForSender => 'Se așteaptă expeditorul...';
+
+  @override
+  String get shareStatusPermissionsRequired => 'Sunt necesare permisiuni';
+
+  @override
+  String get shareStatusEnablePermissionsInSettings =>
+      'Activează permisiunile din Setări';
+
+  @override
+  String get shareSelectAtLeastOneRecord =>
+      'Selectează cel puțin o înregistrare';
+
+  @override
+  String get shareStatusLookingForDevices =>
+      'Se caută dispozitive din apropiere...';
+
+  @override
+  String get shareStatusTransferFailed => 'Transferul a eșuat';
+
+  @override
+  String get shareStatusConfirmExit =>
+      'Sigur vrei să ieși? Datele vor fi șterse.';
+
+  @override
+  String shareStatusViewingRecords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se vizualizează $count de înregistrări',
+      few: 'Se vizualizează $count înregistrări',
+      one: 'Se vizualizează o înregistrare',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareStatusViewingRecordsFrom(int count, String deviceName) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se vizualizează $count de înregistrări de la $deviceName',
+      few: 'Se vizualizează $count înregistrări de la $deviceName',
+      one: 'Se vizualizează o înregistrare de la $deviceName',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareStatusDataDeleted => 'Datele au fost șterse în siguranță';
+
+  @override
+  String get shareStatusSessionExpired => 'Sesiunea a expirat';
+
+  @override
+  String get shareStatusTerminatingSession =>
+      'Se încheie sesiunea de la distanță...';
+
+  @override
+  String get shareStatusSessionTerminated => 'Sesiune încheiată';
+
+  @override
+  String get shareStatusRemoteSessionTerminated =>
+      'Celălalt dispozitiv a încheiat sesiunea';
+
+  @override
+  String get shareStatusExtensionDeclined =>
+      'Cererea de prelungire a fost refuzată';
+
+  @override
+  String get shareStatusReceiverViewing =>
+      'Destinatarul vizualizează înregistrările - sesiune monitorizată';
+
+  @override
+  String get shareStatusReceiverDeclined => 'Destinatarul a refuzat invitația';
+
+  @override
+  String shareStatusReceivingFrom(String deviceName) {
+    return 'Se primesc înregistrări de la $deviceName...';
+  }
+
+  @override
+  String get shareNoDataAvailable => 'Nu există date disponibile';
+
+  @override
+  String shareStatusDeviceWantsToShare(String deviceName) {
+    return '$deviceName dorește să partajeze înregistrări';
+  }
+
+  @override
+  String get shareStatusScanning => 'Se caută dispozitive...';
+
+  @override
+  String shareStatusFoundDevices(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'S-au găsit $count de dispozitive',
+      few: 'S-au găsit $count dispozitive',
+      one: 'S-a găsit un dispozitiv',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareStatusConnectingTo(String deviceName) {
+    return 'Se conectează la $deviceName...';
+  }
+
+  @override
+  String get shareStatusPreparingRecords => 'Se pregătesc înregistrările...';
+
+  @override
+  String get shareErrorPrepareFiles =>
+      'Fișierele nu au putut fi pregătite pentru trimitere';
+
+  @override
+  String shareStatusTransferring(int percent) {
+    return 'Se transferă $percent%';
+  }
+
+  @override
+  String get shareStatusRecordsSentWaiting =>
+      'Înregistrări trimise - se așteaptă acceptul destinatarului';
+
+  @override
+  String get shareStatusTransferCancelled => 'Transfer anulat';
+
+  @override
+  String get shareStatusInvitationRejected => 'Invitație refuzată';
+
+  @override
+  String get shareErrorParseData => 'Datele primite nu au putut fi citite';
+
+  @override
+  String get shareStatusProcessingReceived =>
+      'Se procesează înregistrările primite...';
+
+  @override
+  String get shareErrorParseFile => 'Fișierul primit nu a putut fi citit';
+
+  @override
+  String get shareIncomingHealthRecords => 'Înregistrări medicale primite';
+
+  @override
+  String shareDeviceWantsToShareHealthRecords(String deviceName) {
+    return '$deviceName dorește să partajeze înregistrări medicale cu tine';
+  }
+
+  @override
+  String get sharePermissionExplanationIos =>
+      'Pentru a partaja înregistrări cu dispozitive din apropiere, HealthWallet are nevoie de acces la:\n\n• Bluetooth - pentru a găsi dispozitivele din apropiere și a se conecta la ele\n\nAstfel poți partaja în siguranță înregistrări medicale cu alte dispozitive din apropiere.';
+
+  @override
+  String get sharePermissionExplanationAndroid =>
+      'Pentru a partaja înregistrări cu dispozitive din apropiere, HealthWallet are nevoie de acces la:\n\n• Bluetooth - pentru a găsi dispozitivele din apropiere și a se conecta la ele\n• Locație/Dispozitive din apropiere - cerute de Android pentru a căuta dispozitive Bluetooth și WiFi Direct\n\nLocația ta nu este niciodată stocată sau transmisă.';
+
+  @override
+  String get sharePermissionsDeniedMessage =>
+      'Acordă toate permisiunile pentru a partaja înregistrări cu dispozitive din apropiere.';
+
+  @override
+  String get sharePermissionsPermanentlyDeniedMessage =>
+      'Unele permisiuni au fost refuzate. Activează-le din Setări pentru a folosi această funcție.';
+
+  @override
+  String shareDurationRequested(String duration) {
+    return '$duration solicitate';
+  }
 }

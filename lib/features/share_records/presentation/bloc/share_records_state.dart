@@ -23,6 +23,16 @@ enum SharePhase {
   error,
 }
 
+/// Why a share session reached [SharePhase.sessionEnded]; the ended view
+/// picks its texts from it.
+enum ShareSessionEndReason {
+  expired,
+  terminated,
+  remoteTerminated,
+  invitationDeclined,
+  dataDeleted,
+}
+
 @freezed
 abstract class ShareRecordsState with _$ShareRecordsState {
   const ShareRecordsState._();
@@ -42,6 +52,7 @@ abstract class ShareRecordsState with _$ShareRecordsState {
     String? pendingInvitationDeviceName,
     String? errorMessage,
     String? statusMessage,
+    ShareSessionEndReason? sessionEndReason,
     @Default(false) bool showSettingsDialog,
     @Default(false) bool showExitConfirmationDialog,
     String? connectionMethod,

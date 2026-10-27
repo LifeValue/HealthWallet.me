@@ -571,13 +571,13 @@ class _RecordsViewState extends State<RecordsView> {
           userBloc.add(const UserReceiveModeToggled(true));
         }
         break;
-      case PermissionDenied(:final message):
+      case PermissionDenied():
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
+          SnackBar(content: Text(result.message(context.l10n))),
         );
         return;
-      case PermissionPermanentlyDenied(:final message):
-        _showPermissionsSettingsDialog(context, message);
+      case PermissionPermanentlyDenied():
+        _showPermissionsSettingsDialog(context, result.message(context.l10n));
         return;
     }
 

@@ -1151,5 +1151,111 @@
         "type": "String"
       }
     }
+  },
+  "shareStatusReadyToShare": "Ready to share",
+  "shareStatusWaitingForSender": "Waiting for sender...",
+  "shareStatusPermissionsRequired": "Permissions required",
+  "shareStatusEnablePermissionsInSettings": "Please enable permissions in Settings",
+  "shareSelectAtLeastOneRecord": "Please select at least one record",
+  "shareStatusLookingForDevices": "Looking for nearby devices...",
+  "shareStatusTransferFailed": "Transfer failed",
+  "shareStatusConfirmExit": "Are you sure you want to exit? Data will be deleted.",
+  "shareStatusViewingRecords": "{count, plural, one{Viewing 1 record} other{Viewing {count} records}}",
+  "@shareStatusViewingRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareStatusViewingRecordsFrom": "{count, plural, one{Viewing 1 record from {deviceName}} other{Viewing {count} records from {deviceName}}}",
+  "@shareStatusViewingRecordsFrom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareStatusDataDeleted": "Data has been securely deleted",
+  "shareStatusSessionExpired": "Session expired",
+  "shareStatusTerminatingSession": "Terminating remote session...",
+  "shareStatusSessionTerminated": "Session terminated",
+  "shareStatusRemoteSessionTerminated": "Remote session terminated",
+  "shareStatusExtensionDeclined": "Extension request was declined",
+  "shareStatusReceiverViewing": "Receiver is viewing records - monitoring session",
+  "shareStatusReceiverDeclined": "Receiver declined invitation",
+  "shareStatusReceivingFrom": "Receiving records from {deviceName}...",
+  "@shareStatusReceivingFrom": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareNoDataAvailable": "No data available",
+  "shareStatusDeviceWantsToShare": "{deviceName} wants to share records",
+  "@shareStatusDeviceWantsToShare": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareStatusScanning": "Scanning for devices...",
+  "shareStatusFoundDevices": "{count, plural, one{Found 1 device} other{Found {count} devices}}",
+  "@shareStatusFoundDevices": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareStatusConnectingTo": "Connecting to {deviceName}...",
+  "@shareStatusConnectingTo": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareStatusPreparingRecords": "Preparing records...",
+  "shareErrorPrepareFiles": "Failed to prepare files for sending",
+  "shareStatusTransferring": "Transferring {percent}%",
+  "@shareStatusTransferring": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "shareStatusRecordsSentWaiting": "Records sent - waiting for receiver to accept",
+  "shareStatusTransferCancelled": "Transfer cancelled",
+  "shareStatusInvitationRejected": "Invitation rejected",
+  "shareErrorParseData": "Failed to parse received data",
+  "shareStatusProcessingReceived": "Processing received records...",
+  "shareErrorParseFile": "Failed to parse received file",
+  "shareIncomingHealthRecords": "Incoming Health Records",
+  "shareDeviceWantsToShareHealthRecords": "{deviceName} wants to share health records with you",
+  "@shareDeviceWantsToShareHealthRecords": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "sharePermissionExplanationIos": "To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n\nThis allows you to securely share health records with other devices nearby.",
+  "sharePermissionExplanationAndroid": "To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n• Location/Nearby Devices - required by Android to scan for Bluetooth and WiFi Direct devices\n\nYour location is never stored or transmitted.",
+  "sharePermissionsDeniedMessage": "Please grant all permissions to share records with nearby devices.",
+  "sharePermissionsPermanentlyDeniedMessage": "Some permissions were denied. Please enable them in Settings to use this feature.",
+  "shareDurationRequested": "{duration} requested",
+  "@shareDurationRequested": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
   }
 }

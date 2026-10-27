@@ -15,6 +15,7 @@ const _scannedDirs = [
   'lib/core',
   'lib/features/home',
   'lib/features/dashboard',
+  'lib/features/share_records',
 ];
 
 /// Paths that are not part of the mobile UI or are generated.
@@ -24,6 +25,7 @@ const _excludedPaths = [
   'lib/gen/',
   // Removed from release builds by security item S3.
   'debug_log_sheet.dart',
+  'share_debug_log_sheet.dart',
   // The field-descriptor labels are English defaults; the review form shows
   // `localizedLabels(l10n)` instead.
   'lib/features/processing/domain/entity/mapping_resources/',

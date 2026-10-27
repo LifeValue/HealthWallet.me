@@ -4528,6 +4528,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error opening PDF: {error}'**
   String errorOpeningPdf(String error);
+
+  /// No description provided for @shareStatusReadyToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to share'**
+  String get shareStatusReadyToShare;
+
+  /// No description provided for @shareStatusWaitingForSender.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for sender...'**
+  String get shareStatusWaitingForSender;
+
+  /// No description provided for @shareStatusPermissionsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions required'**
+  String get shareStatusPermissionsRequired;
+
+  /// No description provided for @shareStatusEnablePermissionsInSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enable permissions in Settings'**
+  String get shareStatusEnablePermissionsInSettings;
+
+  /// No description provided for @shareSelectAtLeastOneRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one record'**
+  String get shareSelectAtLeastOneRecord;
+
+  /// No description provided for @shareStatusLookingForDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for nearby devices...'**
+  String get shareStatusLookingForDevices;
+
+  /// No description provided for @shareStatusTransferFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer failed'**
+  String get shareStatusTransferFailed;
+
+  /// No description provided for @shareStatusConfirmExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to exit? Data will be deleted.'**
+  String get shareStatusConfirmExit;
+
+  /// No description provided for @shareStatusViewingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Viewing 1 record} other{Viewing {count} records}}'**
+  String shareStatusViewingRecords(int count);
+
+  /// No description provided for @shareStatusViewingRecordsFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Viewing 1 record from {deviceName}} other{Viewing {count} records from {deviceName}}}'**
+  String shareStatusViewingRecordsFrom(int count, String deviceName);
+
+  /// No description provided for @shareStatusDataDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Data has been securely deleted'**
+  String get shareStatusDataDeleted;
+
+  /// No description provided for @shareStatusSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired'**
+  String get shareStatusSessionExpired;
+
+  /// No description provided for @shareStatusTerminatingSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminating remote session...'**
+  String get shareStatusTerminatingSession;
+
+  /// No description provided for @shareStatusSessionTerminated.
+  ///
+  /// In en, this message translates to:
+  /// **'Session terminated'**
+  String get shareStatusSessionTerminated;
+
+  /// No description provided for @shareStatusRemoteSessionTerminated.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote session terminated'**
+  String get shareStatusRemoteSessionTerminated;
+
+  /// No description provided for @shareStatusExtensionDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Extension request was declined'**
+  String get shareStatusExtensionDeclined;
+
+  /// No description provided for @shareStatusReceiverViewing.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiver is viewing records - monitoring session'**
+  String get shareStatusReceiverViewing;
+
+  /// No description provided for @shareStatusReceiverDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiver declined invitation'**
+  String get shareStatusReceiverDeclined;
+
+  /// No description provided for @shareStatusReceivingFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving records from {deviceName}...'**
+  String shareStatusReceivingFrom(String deviceName);
+
+  /// No description provided for @shareNoDataAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get shareNoDataAvailable;
+
+  /// No description provided for @shareStatusDeviceWantsToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'{deviceName} wants to share records'**
+  String shareStatusDeviceWantsToShare(String deviceName);
+
+  /// No description provided for @shareStatusScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning for devices...'**
+  String get shareStatusScanning;
+
+  /// No description provided for @shareStatusFoundDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Found 1 device} other{Found {count} devices}}'**
+  String shareStatusFoundDevices(int count);
+
+  /// No description provided for @shareStatusConnectingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {deviceName}...'**
+  String shareStatusConnectingTo(String deviceName);
+
+  /// No description provided for @shareStatusPreparingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing records...'**
+  String get shareStatusPreparingRecords;
+
+  /// No description provided for @shareErrorPrepareFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to prepare files for sending'**
+  String get shareErrorPrepareFiles;
+
+  /// No description provided for @shareStatusTransferring.
+  ///
+  /// In en, this message translates to:
+  /// **'Transferring {percent}%'**
+  String shareStatusTransferring(int percent);
+
+  /// No description provided for @shareStatusRecordsSentWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Records sent - waiting for receiver to accept'**
+  String get shareStatusRecordsSentWaiting;
+
+  /// No description provided for @shareStatusTransferCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer cancelled'**
+  String get shareStatusTransferCancelled;
+
+  /// No description provided for @shareStatusInvitationRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation rejected'**
+  String get shareStatusInvitationRejected;
+
+  /// No description provided for @shareErrorParseData.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to parse received data'**
+  String get shareErrorParseData;
+
+  /// No description provided for @shareStatusProcessingReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing received records...'**
+  String get shareStatusProcessingReceived;
+
+  /// No description provided for @shareErrorParseFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to parse received file'**
+  String get shareErrorParseFile;
+
+  /// No description provided for @shareIncomingHealthRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming Health Records'**
+  String get shareIncomingHealthRecords;
+
+  /// No description provided for @shareDeviceWantsToShareHealthRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'{deviceName} wants to share health records with you'**
+  String shareDeviceWantsToShareHealthRecords(String deviceName);
+
+  /// No description provided for @sharePermissionExplanationIos.
+  ///
+  /// In en, this message translates to:
+  /// **'To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n\nThis allows you to securely share health records with other devices nearby.'**
+  String get sharePermissionExplanationIos;
+
+  /// No description provided for @sharePermissionExplanationAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n• Location/Nearby Devices - required by Android to scan for Bluetooth and WiFi Direct devices\n\nYour location is never stored or transmitted.'**
+  String get sharePermissionExplanationAndroid;
+
+  /// No description provided for @sharePermissionsDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please grant all permissions to share records with nearby devices.'**
+  String get sharePermissionsDeniedMessage;
+
+  /// No description provided for @sharePermissionsPermanentlyDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Some permissions were denied. Please enable them in Settings to use this feature.'**
+  String get sharePermissionsPermanentlyDeniedMessage;
+
+  /// No description provided for @shareDurationRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} requested'**
+  String shareDurationRequested(String duration);
 }
 
 class _AppLocalizationsDelegate

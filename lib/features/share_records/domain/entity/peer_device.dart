@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 
 part 'peer_device.freezed.dart';
 part 'peer_device.g.dart';
@@ -36,7 +37,8 @@ abstract class PeerDevice with _$PeerDevice {
     );
   }
 
-  String get displayName => deviceName ?? 'Unknown Device';
+  String displayName(AppLocalizations l10n) =>
+      deviceName ?? l10n.shareUnknownDevice;
 
   bool get isIOS => osType?.toLowerCase() == 'ios';
 
