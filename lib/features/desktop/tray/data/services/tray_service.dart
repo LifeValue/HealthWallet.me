@@ -42,7 +42,10 @@ class TrayService with TrayListener {
     await trayManager.setIcon(iconPath);
     await trayManager.setToolTip(_appName);
     trayManager.addListener(this);
-    _strings.addListener(_onLanguageChanged);
+    // init() runs again to recreate the tray; keep a single listener.
+    _strings
+      ..removeListener(_onLanguageChanged)
+      ..addListener(_onLanguageChanged);
     _initialized = true;
 
     await _rebuildMenu();
