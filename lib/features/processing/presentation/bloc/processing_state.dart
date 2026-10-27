@@ -1,5 +1,16 @@
 part of 'processing_bloc.dart';
 
+/// What kind of failure a [Failure] is, so the UI branches on a type rather
+/// than on the error text.
+enum PipelineFailureReason {
+  /// The AI model is not downloaded.
+  modelNotFound,
+  other;
+
+  static PipelineFailureReason of(Object error) =>
+      error is ModelNotFoundException ? modelNotFound : other;
+}
+
 @freezed
 sealed class PipelineStatus with _$PipelineStatus {
   const factory PipelineStatus.initial() = Initial;
@@ -7,7 +18,13 @@ sealed class PipelineStatus with _$PipelineStatus {
   const factory PipelineStatus.sessionCreated({
     required ProcessingSession session,
   }) = SessionCreated;
-  const factory PipelineStatus.failure({required String error}) = Failure;
+
+  /// [error] is the message shown for [PipelineFailureReason.other]; the
+  /// other reasons show their own localized text.
+  const factory PipelineStatus.failure({
+    required String error,
+    @Default(PipelineFailureReason.other) PipelineFailureReason reason,
+  }) = Failure;
   const factory PipelineStatus.capacityFailure({required String sessionId}) =
       CapacityFailure;
   const factory PipelineStatus.convertingPdfs() = ConvertingPdfs;

@@ -61,7 +61,7 @@ class AiVisionToggleSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  'Beta',
+                  context.l10n.betaBadge,
                   style: AppTextStyle.labelSmall.copyWith(
                     color: AppColors.warning,
                     fontWeight: FontWeight.w700,
@@ -121,8 +121,8 @@ class AiVisionToggleSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
-                  child: Text(
-                    'OFF',
+                  child: _ToggleLabel(
+                    context.l10n.off,
                     style: context.textTheme.bodySmall?.copyWith(
                       color: !useVision
                           ? (context.isDarkMode
@@ -143,8 +143,8 @@ class AiVisionToggleSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
-                  child: Text(
-                    'ON',
+                  child: _ToggleLabel(
+                    context.l10n.on,
                     style: context.textTheme.bodySmall?.copyWith(
                       color: useVision
                           ? (context.isDarkMode
@@ -191,6 +191,26 @@ class AiVisionToggleSection extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// An ON/OFF segment label: shrinks to one line when the translation is
+/// longer than the 38 px segment (e.g. "DEZACTIVAT").
+class _ToggleLabel extends StatelessWidget {
+  const _ToggleLabel(this.text, {this.style});
+
+  final String text;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Insets.extraSmall),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(text, maxLines: 1, style: style),
       ),
     );
   }

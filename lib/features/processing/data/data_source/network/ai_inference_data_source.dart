@@ -9,6 +9,7 @@ import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_handler.dart';
 import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
+import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:injectable/injectable.dart';
@@ -552,7 +553,7 @@ class AiInferenceDataSourceImpl
 
     final modelPath = await _getModelFilePath();
     if (!File(modelPath).existsSync()) {
-      throw Exception('Model file not found at $modelPath');
+      throw ModelNotFoundException(modelPath);
     }
 
     final modelFile = File(modelPath);

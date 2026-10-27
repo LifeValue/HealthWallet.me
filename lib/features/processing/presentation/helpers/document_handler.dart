@@ -38,7 +38,10 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       unawaited(navigateToLoadModel(context, session));
     } catch (e) {
       if (context.mounted) {
-        DialogHelper.showErrorDialog(context, 'Failed to create encounter: $e');
+        DialogHelper.showErrorDialog(
+          context,
+          context.l10n.failedToCreateEncounter('$e'),
+        );
       }
     }
   }
@@ -83,7 +86,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
           final patientForSource = selectedPatient ?? homeState.patient;
           final patientId = patientForSource?.id ?? 'patient-default';
           final patientName =
-              patientForSource?.displayTitle ?? 'Unknown Patient';
+              patientForSource?.displayTitle ?? context.l10n.unknownPatient;
 
           final sourceTypeService = getIt<SourceTypeService>();
           final walletSource = await sourceTypeService
@@ -143,7 +146,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
 
       final patient = selectedPatient ?? homeState.patient;
       final patientId = patient?.id ?? 'patient-default';
-      final patientName = patient?.displayTitle ?? 'Unknown Patient';
+      final patientName = patient?.displayTitle ?? context.l10n.unknownPatient;
 
       final sourceTypeService = getIt<SourceTypeService>();
       final walletSource = await sourceTypeService.getWritableSourceForPatient(
@@ -179,7 +182,10 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       if (context.mounted) Navigator.of(context).pop();
 
       if (context.mounted) {
-        DialogHelper.showErrorDialog(context, 'Failed to attach documents: $e');
+        DialogHelper.showErrorDialog(
+          context,
+          context.l10n.failedToAttachDocuments('$e'),
+        );
       }
     }
   }

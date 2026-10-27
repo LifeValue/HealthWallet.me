@@ -2685,4 +2685,174 @@ class AppLocalizationsDe extends AppLocalizations {
   String dateFilterChip(String range) {
     return 'Datum: $range';
   }
+
+  @override
+  String get aiModelCheckFailed =>
+      'Beim Prüfen, ob das Modell vorhanden ist, ist ein Fehler aufgetreten';
+
+  @override
+  String get aiModelExistenceCheckFailed =>
+      'Prüfung, ob das Modell vorhanden ist, fehlgeschlagen';
+
+  @override
+  String aiModelDownloadingTitle(String modelName) {
+    return '$modelName wird heruntergeladen';
+  }
+
+  @override
+  String get aiModelDownloadStarting => 'Download wird gestartet...';
+
+  @override
+  String aiModelReadyTitle(String modelName) {
+    return '$modelName bereit';
+  }
+
+  @override
+  String aiModelDownloadedMessage(String modelName) {
+    return '$modelName wurde erfolgreich heruntergeladen.';
+  }
+
+  @override
+  String get aiModelDownloadFailedTitle => 'Download fehlgeschlagen';
+
+  @override
+  String get aiModelDownloadFailedMessage =>
+      'Der Download des KI-Modells ist fehlgeschlagen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.';
+
+  @override
+  String get aiModelDownloadFailed => 'Download fehlgeschlagen';
+
+  @override
+  String get aiModelDownloadCancelledTitle => 'Download abgebrochen';
+
+  @override
+  String get aiModelDownloadInterruptedMessage =>
+      'Der Download wurde unterbrochen. Bitte versuchen Sie es erneut.';
+
+  @override
+  String get aiModelDownloadCancelledNotificationTitle =>
+      'Download des KI-Modells abgebrochen';
+
+  @override
+  String get aiModelDownloadWasCancelled =>
+      'Der Download des KI-Modells wurde abgebrochen';
+
+  @override
+  String get aiModelDownloadCancelled => 'Download abgebrochen';
+
+  @override
+  String aiModelDownloadingPercent(String percent) {
+    return 'Wird heruntergeladen... $percent %';
+  }
+
+  @override
+  String get processingNoImagesGenerated =>
+      'Beim Scannen wurden keine Bilder erzeugt. Bitte scannen Sie erneut.';
+
+  @override
+  String processingPatientMatched(String origin) {
+    return '$origin: Patient zugeordnet';
+  }
+
+  @override
+  String processingPatientInfoExtracted(String origin) {
+    return '$origin: Patientendaten extrahiert';
+  }
+
+  @override
+  String processingFinished(String origin) {
+    return '$origin: Verarbeitung abgeschlossen';
+  }
+
+  @override
+  String scanFailedWithError(String error) {
+    return 'Scannen fehlgeschlagen: $error';
+  }
+
+  @override
+  String get noValidFilesFound => 'Keine gültigen Dateien gefunden';
+
+  @override
+  String failedToImportDocument(String error) {
+    return 'Dokument konnte nicht importiert werden: $error';
+  }
+
+  @override
+  String get couldNotOpenLink =>
+      'Der Link konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.';
+
+  @override
+  String get continueProcessingOnDesktop =>
+      'Verarbeitung auf dem Desktop fortsetzen';
+
+  @override
+  String get deleteResourcesTitle => 'Ressourcen löschen';
+
+  @override
+  String get switchToDiagnosticReport => 'Zu Befundbericht wechseln';
+
+  @override
+  String get switchToEncounter => 'Zu Termin wechseln';
+
+  @override
+  String get previewDocument => 'Dokumentvorschau';
+
+  @override
+  String get summaryTitle => 'Zusammenfassung';
+
+  @override
+  String pagesAvailableForProcessing(int count) {
+    return 'Gesamt: $count Seiten zur Verarbeitung verfügbar';
+  }
+
+  @override
+  String get betaBadge => 'Beta';
+
+  @override
+  String get pleaseSelectSpecialty => 'Bitte wählen Sie ein Fachgebiet aus';
+
+  @override
+  String get patientAndSourceInformation =>
+      'Patienten- und Quelleninformationen';
+
+  @override
+  String get noPatientsAvailable => 'Keine Patienten verfügbar';
+
+  @override
+  String get selectPatient => 'Patient auswählen';
+
+  @override
+  String get unknownPatient => 'Unbekannter Patient';
+
+  @override
+  String get documentPreview => 'Dokumentvorschau';
+
+  @override
+  String filePathLabel(String path) {
+    return 'Pfad: $path';
+  }
+
+  @override
+  String get confidenceMedium => 'Mittlere Zuverlässigkeit';
+
+  @override
+  String get confidenceLow => 'Geringe Zuverlässigkeit';
+
+  @override
+  String get dateFormatHintIso => 'JJJJ-MM-TT';
+
+  @override
+  String retryStep(int step) {
+    return 'Erneut versuchen (Schritt $step)';
+  }
+
+  @override
+  String failedToCreateEncounter(String error) {
+    return 'Termin konnte nicht erstellt werden: $error';
+  }
+
+  @override
+  String failedToAttachDocuments(String error) {
+    return 'Dokumente konnten nicht angehängt werden: $error';
+  }
 }

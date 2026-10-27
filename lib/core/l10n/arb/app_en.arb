@@ -1296,5 +1296,147 @@
         "type": "String"
       }
     }
+  },
+  "aiModelCheckFailed": "An error appeared while checking model existence",
+  "aiModelExistenceCheckFailed": "Failed to check model existence",
+  "aiModelDownloadingTitle": "Downloading {modelName}",
+  "@aiModelDownloadingTitle": {
+    "placeholders": {
+      "modelName": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelDownloadStarting": "Starting download...",
+  "aiModelReadyTitle": "{modelName} Ready",
+  "@aiModelReadyTitle": {
+    "placeholders": {
+      "modelName": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelDownloadedMessage": "{modelName} has been downloaded successfully.",
+  "@aiModelDownloadedMessage": {
+    "placeholders": {
+      "modelName": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelDownloadFailedTitle": "Download Failed",
+  "aiModelDownloadFailedMessage": "AI model download failed. Please check your connection and try again.",
+  "aiModelDownloadFailed": "Download failed",
+  "aiModelDownloadCancelledTitle": "Download Cancelled",
+  "aiModelDownloadInterruptedMessage": "The download was interrupted. Please try again.",
+  "aiModelDownloadCancelledNotificationTitle": "AI Model Download Cancelled",
+  "aiModelDownloadWasCancelled": "AI model download was cancelled",
+  "aiModelDownloadCancelled": "Download cancelled",
+  "aiModelDownloadingPercent": "Downloading... {percent}%",
+  "@aiModelDownloadingPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "processingNoImagesGenerated": "No images were generated from the scan. Please try scanning again.",
+  "processingPatientMatched": "{origin} patient matched",
+  "@processingPatientMatched": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "processingPatientInfoExtracted": "{origin} patient info extracted",
+  "@processingPatientInfoExtracted": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "processingFinished": "{origin} processing finished",
+  "@processingFinished": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "scanFailedWithError": "Scan failed: {error}",
+  "@scanFailedWithError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noValidFilesFound": "No valid files found",
+  "failedToImportDocument": "Failed to import document: {error}",
+  "@failedToImportDocument": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenLink": "Could not open link. Please try again.",
+  "continueProcessingOnDesktop": "Continue processing on Desktop",
+  "deleteResourcesTitle": "Delete Resources",
+  "switchToDiagnosticReport": "Switch to Diagnostic Report",
+  "switchToEncounter": "Switch to Encounter",
+  "previewDocument": "Preview document",
+  "summaryTitle": "Summary",
+  "pagesAvailableForProcessing": "Total: {count} pages available for processing",
+  "@pagesAvailableForProcessing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "betaBadge": "Beta",
+  "pleaseSelectSpecialty": "Please select a specialty",
+  "patientAndSourceInformation": "Patient & Source Information",
+  "noPatientsAvailable": "No patients available",
+  "selectPatient": "Select patient",
+  "unknownPatient": "Unknown Patient",
+  "documentPreview": "Document Preview",
+  "filePathLabel": "Path: {path}",
+  "@filePathLabel": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "confidenceMedium": "Medium confidence",
+  "confidenceLow": "Low confidence",
+  "dateFormatHintIso": "YYYY-MM-DD",
+  "retryStep": "Retry (Step {step})",
+  "@retryStep": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "failedToCreateEncounter": "Failed to create encounter: {error}",
+  "@failedToCreateEncounter": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToAttachDocuments": "Failed to attach documents: {error}",
+  "@failedToAttachDocuments": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

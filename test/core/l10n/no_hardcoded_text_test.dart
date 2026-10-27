@@ -17,6 +17,10 @@ const _scannedDirs = [
   'lib/features/dashboard',
   'lib/features/share_records',
   'lib/features/records/presentation',
+  'lib/features/processing',
+  'lib/features/capture',
+  'lib/features/onboarding',
+  'lib/features/notifications',
 ];
 
 /// Paths that are not part of the mobile UI or are generated.
@@ -27,9 +31,6 @@ const _excludedPaths = [
   // Removed from release builds by security item S3.
   'debug_log_sheet.dart',
   'share_debug_log_sheet.dart',
-  // The field-descriptor labels are English defaults; the review form shows
-  // `localizedLabels(l10n)` instead.
-  'lib/features/processing/domain/entity/mapping_resources/',
   // Record-detail domain formatter, translated together with the record
   // entities' additionalInfo; remove this line once it takes AppLocalizations.
   'lib/core/utils/blood_observation_utils.dart',

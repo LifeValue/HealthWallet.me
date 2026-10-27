@@ -2682,4 +2682,173 @@ class AppLocalizationsRo extends AppLocalizations {
   String dateFilterChip(String range) {
     return 'Dată: $range';
   }
+
+  @override
+  String get aiModelCheckFailed =>
+      'A apărut o eroare la verificarea existenței modelului';
+
+  @override
+  String get aiModelExistenceCheckFailed =>
+      'Verificarea existenței modelului a eșuat';
+
+  @override
+  String aiModelDownloadingTitle(String modelName) {
+    return 'Se descarcă $modelName';
+  }
+
+  @override
+  String get aiModelDownloadStarting => 'Se pornește descărcarea...';
+
+  @override
+  String aiModelReadyTitle(String modelName) {
+    return '$modelName este gata';
+  }
+
+  @override
+  String aiModelDownloadedMessage(String modelName) {
+    return '$modelName a fost descărcat cu succes.';
+  }
+
+  @override
+  String get aiModelDownloadFailedTitle => 'Descărcare eșuată';
+
+  @override
+  String get aiModelDownloadFailedMessage =>
+      'Descărcarea modelului AI a eșuat. Verifică conexiunea și încearcă din nou.';
+
+  @override
+  String get aiModelDownloadFailed => 'Descărcarea a eșuat';
+
+  @override
+  String get aiModelDownloadCancelledTitle => 'Descărcare anulată';
+
+  @override
+  String get aiModelDownloadInterruptedMessage =>
+      'Descărcarea a fost întreruptă. Încearcă din nou.';
+
+  @override
+  String get aiModelDownloadCancelledNotificationTitle =>
+      'Descărcarea modelului AI a fost anulată';
+
+  @override
+  String get aiModelDownloadWasCancelled =>
+      'Descărcarea modelului AI a fost anulată';
+
+  @override
+  String get aiModelDownloadCancelled => 'Descărcare anulată';
+
+  @override
+  String aiModelDownloadingPercent(String percent) {
+    return 'Se descarcă... $percent%';
+  }
+
+  @override
+  String get processingNoImagesGenerated =>
+      'Scanarea nu a generat nicio imagine. Încearcă să scanezi din nou.';
+
+  @override
+  String processingPatientMatched(String origin) {
+    return '$origin: pacientul a fost asociat';
+  }
+
+  @override
+  String processingPatientInfoExtracted(String origin) {
+    return '$origin: datele pacientului au fost extrase';
+  }
+
+  @override
+  String processingFinished(String origin) {
+    return '$origin: procesarea s-a încheiat';
+  }
+
+  @override
+  String scanFailedWithError(String error) {
+    return 'Scanarea a eșuat: $error';
+  }
+
+  @override
+  String get noValidFilesFound => 'Nu s-au găsit fișiere valide';
+
+  @override
+  String failedToImportDocument(String error) {
+    return 'Importul documentului a eșuat: $error';
+  }
+
+  @override
+  String get couldNotOpenLink =>
+      'Linkul nu a putut fi deschis. Încearcă din nou.';
+
+  @override
+  String get continueProcessingOnDesktop => 'Continuă procesarea pe desktop';
+
+  @override
+  String get deleteResourcesTitle => 'Șterge resursele';
+
+  @override
+  String get switchToDiagnosticReport => 'Comută la raport de diagnostic';
+
+  @override
+  String get switchToEncounter => 'Comută la consultație';
+
+  @override
+  String get previewDocument => 'Previzualizează documentul';
+
+  @override
+  String get summaryTitle => 'Rezumat';
+
+  @override
+  String pagesAvailableForProcessing(int count) {
+    return 'Total: $count pagini disponibile pentru procesare';
+  }
+
+  @override
+  String get betaBadge => 'Beta';
+
+  @override
+  String get pleaseSelectSpecialty => 'Selectează o specialitate';
+
+  @override
+  String get patientAndSourceInformation =>
+      'Informații despre pacient și sursă';
+
+  @override
+  String get noPatientsAvailable => 'Nu există pacienți disponibili';
+
+  @override
+  String get selectPatient => 'Selectează pacientul';
+
+  @override
+  String get unknownPatient => 'Pacient necunoscut';
+
+  @override
+  String get documentPreview => 'Previzualizare document';
+
+  @override
+  String filePathLabel(String path) {
+    return 'Cale: $path';
+  }
+
+  @override
+  String get confidenceMedium => 'Încredere medie';
+
+  @override
+  String get confidenceLow => 'Încredere scăzută';
+
+  @override
+  String get dateFormatHintIso => 'AAAA-LL-ZZ';
+
+  @override
+  String retryStep(int step) {
+    return 'Reîncearcă (pasul $step)';
+  }
+
+  @override
+  String failedToCreateEncounter(String error) {
+    return 'Crearea consultației a eșuat: $error';
+  }
+
+  @override
+  String failedToAttachDocuments(String error) {
+    return 'Atașarea documentelor a eșuat: $error';
+  }
 }

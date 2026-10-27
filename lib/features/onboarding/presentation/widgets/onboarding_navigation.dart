@@ -365,7 +365,9 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Downloading... ${loadModelState.downloadProgress!.toStringAsFixed(0)}%',
+                      context.l10n.aiModelDownloadingPercent(
+                        loadModelState.downloadProgress!.toStringAsFixed(0),
+                      ),
                       style: AppTextStyle.labelSmall.copyWith(
                         color: context.colorScheme.onSurface.withValues(
                           alpha: 0.6,

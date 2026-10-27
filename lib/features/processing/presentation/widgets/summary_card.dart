@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 
@@ -16,14 +17,14 @@ class SummaryCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Summary',
+          context.l10n.summaryTitle,
           style: AppTextStyle.titleMedium.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Total: $totalPagesForOcr pages available for processing',
+          context.l10n.pagesAvailableForProcessing(totalPagesForOcr),
           style: AppTextStyle.bodySmall.copyWith(
             color: context.colorScheme.primary,
             fontWeight: FontWeight.w500,

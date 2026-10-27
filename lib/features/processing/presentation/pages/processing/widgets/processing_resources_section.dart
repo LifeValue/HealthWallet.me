@@ -288,7 +288,7 @@ class _ScannedBasicButtons extends StatelessWidget {
                 ),
                 const SizedBox(width: Insets.small),
                 Text(
-                  'Continue processing on Desktop',
+                  context.l10n.continueProcessingOnDesktop,
                   style: AppTextStyle.bodySmall.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w600,

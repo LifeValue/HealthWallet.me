@@ -2677,4 +2677,174 @@ class AppLocalizationsEs extends AppLocalizations {
   String dateFilterChip(String range) {
     return 'Fecha: $range';
   }
+
+  @override
+  String get aiModelCheckFailed =>
+      'Se produjo un error al comprobar si el modelo existe';
+
+  @override
+  String get aiModelExistenceCheckFailed =>
+      'No se pudo comprobar si el modelo existe';
+
+  @override
+  String aiModelDownloadingTitle(String modelName) {
+    return 'Descargando $modelName';
+  }
+
+  @override
+  String get aiModelDownloadStarting => 'Iniciando la descarga...';
+
+  @override
+  String aiModelReadyTitle(String modelName) {
+    return '$modelName listo';
+  }
+
+  @override
+  String aiModelDownloadedMessage(String modelName) {
+    return '$modelName se ha descargado correctamente.';
+  }
+
+  @override
+  String get aiModelDownloadFailedTitle => 'Error en la descarga';
+
+  @override
+  String get aiModelDownloadFailedMessage =>
+      'No se pudo descargar el modelo de IA. Comprueba tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get aiModelDownloadFailed => 'La descarga ha fallado';
+
+  @override
+  String get aiModelDownloadCancelledTitle => 'Descarga cancelada';
+
+  @override
+  String get aiModelDownloadInterruptedMessage =>
+      'La descarga se interrumpió. Inténtalo de nuevo.';
+
+  @override
+  String get aiModelDownloadCancelledNotificationTitle =>
+      'Descarga del modelo de IA cancelada';
+
+  @override
+  String get aiModelDownloadWasCancelled =>
+      'Se canceló la descarga del modelo de IA';
+
+  @override
+  String get aiModelDownloadCancelled => 'Descarga cancelada';
+
+  @override
+  String aiModelDownloadingPercent(String percent) {
+    return 'Descargando... $percent %';
+  }
+
+  @override
+  String get processingNoImagesGenerated =>
+      'No se generaron imágenes del escaneo. Vuelve a escanear.';
+
+  @override
+  String processingPatientMatched(String origin) {
+    return '$origin: paciente asociado';
+  }
+
+  @override
+  String processingPatientInfoExtracted(String origin) {
+    return '$origin: datos del paciente extraídos';
+  }
+
+  @override
+  String processingFinished(String origin) {
+    return '$origin: procesamiento finalizado';
+  }
+
+  @override
+  String scanFailedWithError(String error) {
+    return 'Error al escanear: $error';
+  }
+
+  @override
+  String get noValidFilesFound => 'No se encontraron archivos válidos';
+
+  @override
+  String failedToImportDocument(String error) {
+    return 'No se pudo importar el documento: $error';
+  }
+
+  @override
+  String get couldNotOpenLink =>
+      'No se pudo abrir el enlace. Inténtalo de nuevo.';
+
+  @override
+  String get continueProcessingOnDesktop =>
+      'Continuar el procesamiento en el escritorio';
+
+  @override
+  String get deleteResourcesTitle => 'Eliminar recursos';
+
+  @override
+  String get switchToDiagnosticReport => 'Cambiar a informe diagnóstico';
+
+  @override
+  String get switchToEncounter => 'Cambiar a encuentro';
+
+  @override
+  String get previewDocument => 'Vista previa del documento';
+
+  @override
+  String get summaryTitle => 'Resumen';
+
+  @override
+  String pagesAvailableForProcessing(int count) {
+    return 'Total: $count páginas disponibles para procesar';
+  }
+
+  @override
+  String get betaBadge => 'Beta';
+
+  @override
+  String get pleaseSelectSpecialty => 'Selecciona una especialidad';
+
+  @override
+  String get patientAndSourceInformation =>
+      'Información del paciente y de la fuente';
+
+  @override
+  String get noPatientsAvailable => 'No hay pacientes disponibles';
+
+  @override
+  String get selectPatient => 'Seleccionar paciente';
+
+  @override
+  String get unknownPatient => 'Paciente desconocido';
+
+  @override
+  String get documentPreview => 'Vista previa del documento';
+
+  @override
+  String filePathLabel(String path) {
+    return 'Ruta: $path';
+  }
+
+  @override
+  String get confidenceMedium => 'Confianza media';
+
+  @override
+  String get confidenceLow => 'Confianza baja';
+
+  @override
+  String get dateFormatHintIso => 'AAAA-MM-DD';
+
+  @override
+  String retryStep(int step) {
+    return 'Reintentar (paso $step)';
+  }
+
+  @override
+  String failedToCreateEncounter(String error) {
+    return 'No se pudo crear el encuentro: $error';
+  }
+
+  @override
+  String failedToAttachDocuments(String error) {
+    return 'No se pudieron adjuntar los documentos: $error';
+  }
 }

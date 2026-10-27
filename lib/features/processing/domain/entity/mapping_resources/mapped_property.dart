@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -191,10 +192,11 @@ enum ConfidenceLevel {
     ConfidenceLevel.low => AppColors.error,
   };
 
-  String getString() => switch (this) {
+  /// Empty for [ConfidenceLevel.high], which shows no hint.
+  String localizedName(AppLocalizations l10n) => switch (this) {
     ConfidenceLevel.high => '',
-    ConfidenceLevel.medium => 'Medium confidence',
-    ConfidenceLevel.low => 'Low confidence',
+    ConfidenceLevel.medium => l10n.confidenceMedium,
+    ConfidenceLevel.low => l10n.confidenceLow,
   };
 
   SvgGenImage? getIcon() => switch (this) {

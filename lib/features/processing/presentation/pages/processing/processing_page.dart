@@ -437,8 +437,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
               color: context.colorScheme.onSurface,
             ),
             tooltip: isStep2Retry
-                ? '${context.l10n.retry} (Step 2)'
-                : '${context.l10n.retry} (Step 1)',
+                ? context.l10n.retryStep(2)
+                : context.l10n.retryStep(1),
             onPressed: () {
               if (isStep2Retry) {
                 context.read<ProcessingBloc>().add(

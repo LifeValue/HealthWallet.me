@@ -102,24 +102,25 @@ abstract class MappingCondition
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'conditionName': TextFieldDescriptor(
-      label: 'Condition Name',
-      value: conditionName.value,
-      confidenceLevel: conditionName.confidenceLevel,
-    ),
-    'onsetDateTime': TextFieldDescriptor(
-      label: 'Onset Date',
-      value: onsetDateTime.value,
-      confidenceLevel: onsetDateTime.confidenceLevel,
-      fieldType: FieldType.date,
-    ),
-    'clinicalStatus': TextFieldDescriptor(
-      label: 'Clinical Status',
-      value: clinicalStatus.value,
-      confidenceLevel: clinicalStatus.confidenceLevel,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'conditionName': TextFieldDescriptor(
+          label: l10n.labelConditionName,
+          value: conditionName.value,
+          confidenceLevel: conditionName.confidenceLevel,
+        ),
+        'onsetDateTime': TextFieldDescriptor(
+          label: l10n.labelOnsetDate,
+          value: onsetDateTime.value,
+          confidenceLevel: onsetDateTime.confidenceLevel,
+          fieldType: FieldType.date,
+        ),
+        'clinicalStatus': TextFieldDescriptor(
+          label: l10n.labelClinicalStatus,
+          value: clinicalStatus.value,
+          confidenceLevel: clinicalStatus.confidenceLevel,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -146,7 +147,7 @@ abstract class MappingCondition
       );
 
   @override
-  String get label => 'Condition';
+  String localizedLabel(AppLocalizations l10n) => l10n.condition;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

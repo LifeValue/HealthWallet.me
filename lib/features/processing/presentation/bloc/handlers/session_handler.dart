@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
@@ -18,6 +20,7 @@ import 'package:path_provider/path_provider.dart';
 mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
   OcrProcessingHelper get ocrProcessingHelper;
   ProcessingRepository get processingRepository;
+  AppStringsProvider get strings;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -86,7 +89,9 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     } catch (e) {
       emit(
         state.copyWith(
-          status: PipelineStatus.failure(error: 'Scan failed: $e'),
+          status: PipelineStatus.failure(
+            error: strings.l10n.scanFailedWithError('$e'),
+          ),
         ),
       );
     }
@@ -111,7 +116,9 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       if (persistedPaths.isEmpty) {
         emit(
           state.copyWith(
-            status: const PipelineStatus.failure(error: 'No valid files found'),
+            status: PipelineStatus.failure(
+              error: strings.l10n.noValidFilesFound,
+            ),
           ),
         );
         return;
@@ -139,7 +146,7 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       emit(
         state.copyWith(
           status: PipelineStatus.failure(
-            error: 'Failed to import document: $e',
+            error: strings.l10n.failedToImportDocument('$e'),
           ),
         ),
       );
@@ -228,7 +235,10 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
     } on Exception catch (e) {
       emit(
         state.copyWith(
-          status: PipelineStatus.failure(error: e.toString()),
+          status: PipelineStatus.failure(
+            error: e.toString(),
+            reason: PipelineFailureReason.of(e),
+          ),
           deletingSessionId: null,
         ),
       );
@@ -295,8 +305,11 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           } else {
             emit(
               state.copyWith(
-                status: const PipelineStatus.failure(
-                  error: 'Model file not found. Please download the AI model first.',
+                status: PipelineStatus.failure(
+                  // Shown localized through the reason; the English text is
+                  // what a desktop sends to the phone as the handover error.
+                  error: const ModelNotFoundException().toString(),
+                  reason: PipelineFailureReason.modelNotFound,
                 ),
               ),
             );
@@ -306,7 +319,14 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         }
       }
     } catch (e) {
-      emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
+      emit(
+        state.copyWith(
+          status: PipelineStatus.failure(
+            error: e.toString(),
+            reason: PipelineFailureReason.of(e),
+          ),
+        ),
+      );
     }
   }
 

@@ -2646,4 +2646,169 @@ class AppLocalizationsEn extends AppLocalizations {
   String dateFilterChip(String range) {
     return 'Date: $range';
   }
+
+  @override
+  String get aiModelCheckFailed =>
+      'An error appeared while checking model existence';
+
+  @override
+  String get aiModelExistenceCheckFailed => 'Failed to check model existence';
+
+  @override
+  String aiModelDownloadingTitle(String modelName) {
+    return 'Downloading $modelName';
+  }
+
+  @override
+  String get aiModelDownloadStarting => 'Starting download...';
+
+  @override
+  String aiModelReadyTitle(String modelName) {
+    return '$modelName Ready';
+  }
+
+  @override
+  String aiModelDownloadedMessage(String modelName) {
+    return '$modelName has been downloaded successfully.';
+  }
+
+  @override
+  String get aiModelDownloadFailedTitle => 'Download Failed';
+
+  @override
+  String get aiModelDownloadFailedMessage =>
+      'AI model download failed. Please check your connection and try again.';
+
+  @override
+  String get aiModelDownloadFailed => 'Download failed';
+
+  @override
+  String get aiModelDownloadCancelledTitle => 'Download Cancelled';
+
+  @override
+  String get aiModelDownloadInterruptedMessage =>
+      'The download was interrupted. Please try again.';
+
+  @override
+  String get aiModelDownloadCancelledNotificationTitle =>
+      'AI Model Download Cancelled';
+
+  @override
+  String get aiModelDownloadWasCancelled => 'AI model download was cancelled';
+
+  @override
+  String get aiModelDownloadCancelled => 'Download cancelled';
+
+  @override
+  String aiModelDownloadingPercent(String percent) {
+    return 'Downloading... $percent%';
+  }
+
+  @override
+  String get processingNoImagesGenerated =>
+      'No images were generated from the scan. Please try scanning again.';
+
+  @override
+  String processingPatientMatched(String origin) {
+    return '$origin patient matched';
+  }
+
+  @override
+  String processingPatientInfoExtracted(String origin) {
+    return '$origin patient info extracted';
+  }
+
+  @override
+  String processingFinished(String origin) {
+    return '$origin processing finished';
+  }
+
+  @override
+  String scanFailedWithError(String error) {
+    return 'Scan failed: $error';
+  }
+
+  @override
+  String get noValidFilesFound => 'No valid files found';
+
+  @override
+  String failedToImportDocument(String error) {
+    return 'Failed to import document: $error';
+  }
+
+  @override
+  String get couldNotOpenLink => 'Could not open link. Please try again.';
+
+  @override
+  String get continueProcessingOnDesktop => 'Continue processing on Desktop';
+
+  @override
+  String get deleteResourcesTitle => 'Delete Resources';
+
+  @override
+  String get switchToDiagnosticReport => 'Switch to Diagnostic Report';
+
+  @override
+  String get switchToEncounter => 'Switch to Encounter';
+
+  @override
+  String get previewDocument => 'Preview document';
+
+  @override
+  String get summaryTitle => 'Summary';
+
+  @override
+  String pagesAvailableForProcessing(int count) {
+    return 'Total: $count pages available for processing';
+  }
+
+  @override
+  String get betaBadge => 'Beta';
+
+  @override
+  String get pleaseSelectSpecialty => 'Please select a specialty';
+
+  @override
+  String get patientAndSourceInformation => 'Patient & Source Information';
+
+  @override
+  String get noPatientsAvailable => 'No patients available';
+
+  @override
+  String get selectPatient => 'Select patient';
+
+  @override
+  String get unknownPatient => 'Unknown Patient';
+
+  @override
+  String get documentPreview => 'Document Preview';
+
+  @override
+  String filePathLabel(String path) {
+    return 'Path: $path';
+  }
+
+  @override
+  String get confidenceMedium => 'Medium confidence';
+
+  @override
+  String get confidenceLow => 'Low confidence';
+
+  @override
+  String get dateFormatHintIso => 'YYYY-MM-DD';
+
+  @override
+  String retryStep(int step) {
+    return 'Retry (Step $step)';
+  }
+
+  @override
+  String failedToCreateEncounter(String error) {
+    return 'Failed to create encounter: $error';
+  }
+
+  @override
+  String failedToAttachDocuments(String error) {
+    return 'Failed to attach documents: $error';
+  }
 }

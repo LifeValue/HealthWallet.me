@@ -4858,6 +4858,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Date: {range}'**
   String dateFilterChip(String range);
+
+  /// No description provided for @aiModelCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error appeared while checking model existence'**
+  String get aiModelCheckFailed;
+
+  /// No description provided for @aiModelExistenceCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check model existence'**
+  String get aiModelExistenceCheckFailed;
+
+  /// No description provided for @aiModelDownloadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {modelName}'**
+  String aiModelDownloadingTitle(String modelName);
+
+  /// No description provided for @aiModelDownloadStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting download...'**
+  String get aiModelDownloadStarting;
+
+  /// No description provided for @aiModelReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{modelName} Ready'**
+  String aiModelReadyTitle(String modelName);
+
+  /// No description provided for @aiModelDownloadedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{modelName} has been downloaded successfully.'**
+  String aiModelDownloadedMessage(String modelName);
+
+  /// No description provided for @aiModelDownloadFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Failed'**
+  String get aiModelDownloadFailedTitle;
+
+  /// No description provided for @aiModelDownloadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'AI model download failed. Please check your connection and try again.'**
+  String get aiModelDownloadFailedMessage;
+
+  /// No description provided for @aiModelDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed'**
+  String get aiModelDownloadFailed;
+
+  /// No description provided for @aiModelDownloadCancelledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Cancelled'**
+  String get aiModelDownloadCancelledTitle;
+
+  /// No description provided for @aiModelDownloadInterruptedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The download was interrupted. Please try again.'**
+  String get aiModelDownloadInterruptedMessage;
+
+  /// No description provided for @aiModelDownloadCancelledNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Model Download Cancelled'**
+  String get aiModelDownloadCancelledNotificationTitle;
+
+  /// No description provided for @aiModelDownloadWasCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'AI model download was cancelled'**
+  String get aiModelDownloadWasCancelled;
+
+  /// No description provided for @aiModelDownloadCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Download cancelled'**
+  String get aiModelDownloadCancelled;
+
+  /// No description provided for @aiModelDownloadingPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading... {percent}%'**
+  String aiModelDownloadingPercent(String percent);
+
+  /// No description provided for @processingNoImagesGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'No images were generated from the scan. Please try scanning again.'**
+  String get processingNoImagesGenerated;
+
+  /// No description provided for @processingPatientMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} patient matched'**
+  String processingPatientMatched(String origin);
+
+  /// No description provided for @processingPatientInfoExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} patient info extracted'**
+  String processingPatientInfoExtracted(String origin);
+
+  /// No description provided for @processingFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'{origin} processing finished'**
+  String processingFinished(String origin);
+
+  /// No description provided for @scanFailedWithError.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan failed: {error}'**
+  String scanFailedWithError(String error);
+
+  /// No description provided for @noValidFilesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No valid files found'**
+  String get noValidFilesFound;
+
+  /// No description provided for @failedToImportDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import document: {error}'**
+  String failedToImportDocument(String error);
+
+  /// No description provided for @couldNotOpenLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open link. Please try again.'**
+  String get couldNotOpenLink;
+
+  /// No description provided for @continueProcessingOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue processing on Desktop'**
+  String get continueProcessingOnDesktop;
+
+  /// No description provided for @deleteResourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Resources'**
+  String get deleteResourcesTitle;
+
+  /// No description provided for @switchToDiagnosticReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Diagnostic Report'**
+  String get switchToDiagnosticReport;
+
+  /// No description provided for @switchToEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Encounter'**
+  String get switchToEncounter;
+
+  /// No description provided for @previewDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview document'**
+  String get previewDocument;
+
+  /// No description provided for @summaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get summaryTitle;
+
+  /// No description provided for @pagesAvailableForProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {count} pages available for processing'**
+  String pagesAvailableForProcessing(int count);
+
+  /// No description provided for @betaBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Beta'**
+  String get betaBadge;
+
+  /// No description provided for @pleaseSelectSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a specialty'**
+  String get pleaseSelectSpecialty;
+
+  /// No description provided for @patientAndSourceInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient & Source Information'**
+  String get patientAndSourceInformation;
+
+  /// No description provided for @noPatientsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No patients available'**
+  String get noPatientsAvailable;
+
+  /// No description provided for @selectPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Select patient'**
+  String get selectPatient;
+
+  /// No description provided for @unknownPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Patient'**
+  String get unknownPatient;
+
+  /// No description provided for @documentPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Document Preview'**
+  String get documentPreview;
+
+  /// No description provided for @filePathLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Path: {path}'**
+  String filePathLabel(String path);
+
+  /// No description provided for @confidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium confidence'**
+  String get confidenceMedium;
+
+  /// No description provided for @confidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low confidence'**
+  String get confidenceLow;
+
+  /// No description provided for @dateFormatHintIso.
+  ///
+  /// In en, this message translates to:
+  /// **'YYYY-MM-DD'**
+  String get dateFormatHintIso;
+
+  /// No description provided for @retryStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry (Step {step})'**
+  String retryStep(int step);
+
+  /// No description provided for @failedToCreateEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create encounter: {error}'**
+  String failedToCreateEncounter(String error);
+
+  /// No description provided for @failedToAttachDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to attach documents: {error}'**
+  String failedToAttachDocuments(String error);
 }
 
 class _AppLocalizationsDelegate

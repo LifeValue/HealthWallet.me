@@ -47,8 +47,7 @@ class ProcessingMappingSection extends StatelessWidget {
     if (state.status is CapacityFailure) {
       content = _buildCapacityFailure(context);
     } else if (state.status is Failure) {
-      final error = (state.status as Failure).error;
-      content = _buildFailure(context, error);
+      content = _buildFailure(context, state.status as Failure);
     } else if (displayedSession.status == ProcessingStatus.cancelled) {
       content = _buildCancelled(context);
     } else if (displayedSession.isProcessing) {
@@ -83,7 +82,7 @@ class ProcessingMappingSection extends StatelessWidget {
               ),
               const SizedBox(width: Insets.small),
               Text(
-                'Process on Desktop',
+                context.l10n.processOnDesktop,
                 style: AppTextStyle.bodySmall.copyWith(
                   color: context.colorScheme.primary,
                   fontWeight: FontWeight.w600,
@@ -96,10 +95,13 @@ class ProcessingMappingSection extends StatelessWidget {
     );
   }
 
-  String _sanitizeError(BuildContext context, String error) {
-    if (error.contains('Model file not found')) {
+  String _sanitizeError(BuildContext context, Failure failure) {
+    if (failure.reason == PipelineFailureReason.modelNotFound) {
       return context.l10n.modelNotFoundError;
     }
+    final error = failure.error;
+    // The two checks below read the English exception text of the AI engine
+    // (ai_inference_data_source.dart), not translated text.
     if (error.contains('Not enough memory')) {
       return context.l10n.processingFailedCapacity;
     }
@@ -114,10 +116,8 @@ class ProcessingMappingSection extends StatelessWidget {
     return error;
   }
 
-  bool _isModelNotFound(String error) => error.contains('Model file not found');
-
-  Widget _buildFailure(BuildContext context, String error) {
-    final isNoModel = _isModelNotFound(error);
+  Widget _buildFailure(BuildContext context, Failure failure) {
+    final isNoModel = failure.reason == PipelineFailureReason.modelNotFound;
     final title = isNoModel
         ? context.l10n.noAiModel
         : context.l10n.processingFailed;
@@ -166,7 +166,7 @@ class ProcessingMappingSection extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                _sanitizeError(context, error),
+                _sanitizeError(context, failure),
                 style: AppTextStyle.bodySmall.copyWith(
                   color: context.colorScheme.onSurface,
                 ),
