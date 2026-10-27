@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -1001,7 +1002,7 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      record.fhirType.display,
+                      record.fhirType.localizedName(context.l10n),
                       style: AppTextStyle.labelSmall,
                     ),
                   ],

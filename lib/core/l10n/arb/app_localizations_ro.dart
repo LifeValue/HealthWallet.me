@@ -2628,4 +2628,58 @@ class AppLocalizationsRo extends AppLocalizations {
   String shareDurationRequested(String duration) {
     return '$duration solicitate';
   }
+
+  @override
+  String get noAttachments => 'Fără atașamente';
+
+  @override
+  String get attachingFiles => 'Se atașează fișierele...';
+
+  @override
+  String get addAttachment => 'Adaugă atașament';
+
+  @override
+  String get noFileName => 'Fără nume de fișier';
+
+  @override
+  String attachmentFileOfTotal(int current, int total) {
+    return '( $current din $total fișiere )';
+  }
+
+  @override
+  String get showDetails => 'Afișează detaliile';
+
+  @override
+  String get viewRelated => 'Vezi asociate';
+
+  @override
+  String get hideRelated => 'Ascunde asociate';
+
+  @override
+  String get noRelatedResourcesFound => 'Nu s-au găsit resurse asociate';
+
+  @override
+  String get loadingRelatedResources => 'Se încarcă resursele asociate...';
+
+  @override
+  String get noRelatedResourcesForEncounter =>
+      'Nu s-au găsit resurse asociate acestei consultații';
+
+  @override
+  String get cannotAttachToDocumentReference =>
+      'Nu se pot atașa fișiere la un document';
+
+  @override
+  String deleteRecordOfType(String type) {
+    return 'Șterge $type';
+  }
+
+  @override
+  String get dateFilterEndBeforeStart =>
+      'Data de sfârșit trebuie să fie după data de început';
+
+  @override
+  String dateFilterChip(String range) {
+    return 'Dată: $range';
+  }
 }

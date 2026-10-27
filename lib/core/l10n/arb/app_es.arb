@@ -1147,5 +1147,20 @@
   "sharePermissionExplanationAndroid": "Para compartir registros con dispositivos cercanos, HealthWallet necesita acceso a:\n\n• Bluetooth - para encontrar dispositivos cercanos y conectarse a ellos\n• Ubicación/Dispositivos cercanos - Android lo exige para buscar dispositivos Bluetooth y WiFi Direct\n\nTu ubicación nunca se guarda ni se transmite.",
   "sharePermissionsDeniedMessage": "Concede todos los permisos para compartir registros con dispositivos cercanos.",
   "sharePermissionsPermanentlyDeniedMessage": "Se denegaron algunos permisos. Actívalos en Configuración para usar esta función.",
-  "shareDurationRequested": "{duration} solicitados"
+  "shareDurationRequested": "{duration} solicitados",
+  "noAttachments": "Sin archivos adjuntos",
+  "attachingFiles": "Adjuntando archivos...",
+  "addAttachment": "Añadir archivo adjunto",
+  "noFileName": "Sin nombre de archivo",
+  "attachmentFileOfTotal": "( {current} de {total} archivos )",
+  "showDetails": "Ver detalles",
+  "viewRelated": "Ver relacionados",
+  "hideRelated": "Ocultar relacionados",
+  "noRelatedResourcesFound": "No se encontraron recursos relacionados",
+  "loadingRelatedResources": "Cargando recursos relacionados...",
+  "noRelatedResourcesForEncounter": "No se encontraron recursos relacionados con este encuentro",
+  "cannotAttachToDocumentReference": "No se pueden adjuntar archivos a un documento",
+  "deleteRecordOfType": "Eliminar {type}",
+  "dateFilterEndBeforeStart": "La fecha de fin debe ser posterior a la fecha de inicio",
+  "dateFilterChip": "Fecha: {range}"
 }

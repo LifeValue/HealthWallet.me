@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -84,8 +85,10 @@ class RecordsListBody extends StatelessWidget {
           pageController: pageController,
           recordTypeName: state.activeFilters.isNotEmpty
               ? state.activeFilters.length == 1
-                    ? state.activeFilters.first.display
-                    : state.activeFilters.map((f) => f.display).join(', ')
+                    ? state.activeFilters.first.localizedName(context.l10n)
+                    : state.activeFilters
+                          .map((f) => f.localizedName(context.l10n))
+                          .join(', ')
               : null,
           onImportDocument: onImportDocument,
           onPickImage: onPickImage,

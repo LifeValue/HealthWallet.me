@@ -4768,6 +4768,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{duration} requested'**
   String shareDurationRequested(String duration);
+
+  /// No description provided for @noAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'No attachments'**
+  String get noAttachments;
+
+  /// No description provided for @attachingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Attaching files...'**
+  String get attachingFiles;
+
+  /// No description provided for @addAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Attachment'**
+  String get addAttachment;
+
+  /// No description provided for @noFileName.
+  ///
+  /// In en, this message translates to:
+  /// **'No file name'**
+  String get noFileName;
+
+  /// No description provided for @attachmentFileOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'( {current} of {total} files )'**
+  String attachmentFileOfTotal(int current, int total);
+
+  /// No description provided for @showDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Details'**
+  String get showDetails;
+
+  /// No description provided for @viewRelated.
+  ///
+  /// In en, this message translates to:
+  /// **'View Related'**
+  String get viewRelated;
+
+  /// No description provided for @hideRelated.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Related'**
+  String get hideRelated;
+
+  /// No description provided for @noRelatedResourcesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No related resources found'**
+  String get noRelatedResourcesFound;
+
+  /// No description provided for @loadingRelatedResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading related resources...'**
+  String get loadingRelatedResources;
+
+  /// No description provided for @noRelatedResourcesForEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'No related resources found for this encounter'**
+  String get noRelatedResourcesForEncounter;
+
+  /// No description provided for @cannotAttachToDocumentReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot attach files to DocumentReference resources'**
+  String get cannotAttachToDocumentReference;
+
+  /// No description provided for @deleteRecordOfType.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} delete'**
+  String deleteRecordOfType(String type);
+
+  /// No description provided for @dateFilterEndBeforeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'End date must be after start date'**
+  String get dateFilterEndBeforeStart;
+
+  /// No description provided for @dateFilterChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Date: {range}'**
+  String dateFilterChip(String range);
 }
 
 class _AppLocalizationsDelegate

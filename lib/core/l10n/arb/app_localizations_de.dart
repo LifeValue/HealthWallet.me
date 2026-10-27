@@ -2631,4 +2631,58 @@ class AppLocalizationsDe extends AppLocalizations {
   String shareDurationRequested(String duration) {
     return '$duration angefragt';
   }
+
+  @override
+  String get noAttachments => 'Keine Anhänge';
+
+  @override
+  String get attachingFiles => 'Dateien werden angehängt...';
+
+  @override
+  String get addAttachment => 'Anhang hinzufügen';
+
+  @override
+  String get noFileName => 'Kein Dateiname';
+
+  @override
+  String attachmentFileOfTotal(int current, int total) {
+    return '( $current von $total Dateien )';
+  }
+
+  @override
+  String get showDetails => 'Details anzeigen';
+
+  @override
+  String get viewRelated => 'Zugehörige anzeigen';
+
+  @override
+  String get hideRelated => 'Zugehörige ausblenden';
+
+  @override
+  String get noRelatedResourcesFound => 'Keine zugehörigen Einträge gefunden';
+
+  @override
+  String get loadingRelatedResources => 'Zugehörige Einträge werden geladen...';
+
+  @override
+  String get noRelatedResourcesForEncounter =>
+      'Keine zugehörigen Einträge zu diesem Termin gefunden';
+
+  @override
+  String get cannotAttachToDocumentReference =>
+      'An ein Dokument können keine Dateien angehängt werden';
+
+  @override
+  String deleteRecordOfType(String type) {
+    return '$type löschen';
+  }
+
+  @override
+  String get dateFilterEndBeforeStart =>
+      'Das Enddatum muss nach dem Startdatum liegen';
+
+  @override
+  String dateFilterChip(String range) {
+    return 'Datum: $range';
+  }
 }

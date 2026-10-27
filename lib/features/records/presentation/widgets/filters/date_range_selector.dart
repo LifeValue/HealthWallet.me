@@ -72,6 +72,7 @@ class DateRangeSelector extends StatelessWidget {
             Expanded(
               child: DateFieldDropdown(
                 label: context.l10n.day,
+                field: DateField.day,
                 value: day,
                 items: DateRangeDropdownService.getDays(year, month),
                 containerKey: containerKey,
@@ -85,8 +86,11 @@ class DateRangeSelector extends StatelessWidget {
             Expanded(
               child: DateFieldDropdown(
                 label: context.l10n.month,
+                field: DateField.month,
                 value: month,
-                items: DateRangeDropdownService.getMonths(),
+                items: DateRangeDropdownService.getMonths(
+                  context.l10n.localeName,
+                ),
                 containerKey: containerKey,
                 openUpward: openUpward,
                 onChanged: onMonthChanged,
@@ -96,6 +100,7 @@ class DateRangeSelector extends StatelessWidget {
             Expanded(
               child: DateFieldDropdown(
                 label: context.l10n.year,
+                field: DateField.year,
                 value: year,
                 items: DateRangeDropdownService.getYears(),
                 containerKey: containerKey,

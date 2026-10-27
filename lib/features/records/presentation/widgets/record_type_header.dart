@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -25,7 +27,7 @@ class RecordTypeHeader extends StatelessWidget {
         _buildTypeBadge(context),
         if (date != null)
           Text(
-            DateFormat.yMMMMd().format(date!),
+            DateFormat.yMMMMd(context.l10n.localeName).format(date!),
             style: AppTextStyle.labelMedium.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
@@ -55,7 +57,7 @@ class RecordTypeHeader extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            fhirType.display,
+            fhirType.localizedName(context.l10n),
             style: AppTextStyle.labelSmall,
           ),
         ],

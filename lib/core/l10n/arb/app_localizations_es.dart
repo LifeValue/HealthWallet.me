@@ -2622,4 +2622,59 @@ class AppLocalizationsEs extends AppLocalizations {
   String shareDurationRequested(String duration) {
     return '$duration solicitados';
   }
+
+  @override
+  String get noAttachments => 'Sin archivos adjuntos';
+
+  @override
+  String get attachingFiles => 'Adjuntando archivos...';
+
+  @override
+  String get addAttachment => 'Añadir archivo adjunto';
+
+  @override
+  String get noFileName => 'Sin nombre de archivo';
+
+  @override
+  String attachmentFileOfTotal(int current, int total) {
+    return '( $current de $total archivos )';
+  }
+
+  @override
+  String get showDetails => 'Ver detalles';
+
+  @override
+  String get viewRelated => 'Ver relacionados';
+
+  @override
+  String get hideRelated => 'Ocultar relacionados';
+
+  @override
+  String get noRelatedResourcesFound =>
+      'No se encontraron recursos relacionados';
+
+  @override
+  String get loadingRelatedResources => 'Cargando recursos relacionados...';
+
+  @override
+  String get noRelatedResourcesForEncounter =>
+      'No se encontraron recursos relacionados con este encuentro';
+
+  @override
+  String get cannotAttachToDocumentReference =>
+      'No se pueden adjuntar archivos a un documento';
+
+  @override
+  String deleteRecordOfType(String type) {
+    return 'Eliminar $type';
+  }
+
+  @override
+  String get dateFilterEndBeforeStart =>
+      'La fecha de fin debe ser posterior a la fecha de inicio';
+
+  @override
+  String dateFilterChip(String range) {
+    return 'Fecha: $range';
+  }
 }

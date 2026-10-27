@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -8,6 +9,7 @@ import 'date_range_filter_model.dart';
 
 class DateWideDropdown extends StatefulWidget {
   final String label;
+  final DateField field;
   final int? value;
   final List<DateDropdownItem> items;
   final ValueChanged<int?>? onChanged;
@@ -20,6 +22,7 @@ class DateWideDropdown extends StatefulWidget {
   const DateWideDropdown({
     super.key,
     required this.label,
+    required this.field,
     required this.value,
     required this.items,
     required this.onChanged,
@@ -77,14 +80,14 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
 
     final menuContent = StatefulBuilder(
       builder: (context, setOverlayState) {
-        final content = widget.label == 'Year'
-            ? _buildYearPicker(setOverlayState)
-            : widget.label == 'Day'
-            ? _buildDayCalendar()
-            : _buildMonthGrid();
+        final content = switch (widget.field) {
+          DateField.year => _buildYearPicker(setOverlayState),
+          DateField.day => _buildDayCalendar(),
+          DateField.month => _buildMonthGrid(),
+        };
 
         // Calculate menu height based on type
-        final menuHeight = widget.label == 'Day' ? 340.0 : 260.0;
+        final menuHeight = widget.field == DateField.day ? 340.0 : 260.0;
 
         double? top;
         double? bottom;
@@ -293,7 +296,9 @@ class _DateWideDropdownState extends State<DateWideDropdown> {
     final daysInMonth = DateTime(year, monthValue + 1, 0).day;
     final startWeekday = firstDayOfMonth.weekday % 7;
 
-    final dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    final dayNames = DateRangeDropdownService.getWeekdayInitials(
+      context.l10n.localeName,
+    );
 
     const double cellHeight = 36;
     // 6 rows max + header + gaps + padding

@@ -24,6 +24,6 @@ abstract class AttachmentInfo with _$AttachmentInfo {
     String? contentType,
     String? filePath,
     String? sourceRecordTitle,
-    String? sourceRecordType,
+    FhirType? sourceRecordType,
   }) = _AttachmentInfo;
 }

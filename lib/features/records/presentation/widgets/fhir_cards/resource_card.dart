@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -182,7 +184,9 @@ class _ResourceCardState extends State<ResourceCard> {
                         )
                       else
                         Text(
-                          _isExpanded ? 'Hide Related' : 'View Related',
+                          _isExpanded
+                              ? context.l10n.hideRelated
+                              : context.l10n.viewRelated,
                           style: AppTextStyle.bodySmall,
                         ),
                       if (!isLoadingRelated) ...[
@@ -260,7 +264,9 @@ class _ResourceCardState extends State<ResourceCard> {
               child: Row(
                 children: [
                   Text(
-                    _isExpanded ? 'Hide Related' : 'View Related',
+                    _isExpanded
+                        ? context.l10n.hideRelated
+                        : context.l10n.viewRelated,
                     style: AppTextStyle.bodySmall,
                   ),
                   const SizedBox(width: Insets.extraSmall),
@@ -370,7 +376,7 @@ class _ResourceCardState extends State<ResourceCard> {
                     ),
                     const SizedBox(height: Insets.small),
                     Text(
-                      'No related resources found',
+                      context.l10n.noRelatedResourcesFound,
                       style: AppTextStyle.labelLarge.copyWith(
                         color: context.colorScheme.onSurface.withValues(
                           alpha: 0.6,
@@ -400,7 +406,7 @@ class _ResourceCardState extends State<ResourceCard> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Text(
-                              '${resource.fhirType.display}: ${resource.title}',
+                              '${resource.fhirType.localizedName(context.l10n)}: ${resource.title}',
                               style: AppTextStyle.bodySmall.copyWith(
                                 color: context.colorScheme.onSurface,
                               ),
@@ -452,7 +458,7 @@ class _ResourceCardState extends State<ResourceCard> {
                       ),
                       const SizedBox(height: Insets.small),
                       Text(
-                        'Loading related resources...',
+                        context.l10n.loadingRelatedResources,
                         style: AppTextStyle.labelLarge.copyWith(
                           color: context.colorScheme.onSurface,
                         ),
@@ -480,7 +486,7 @@ class _ResourceCardState extends State<ResourceCard> {
                     ),
                     const SizedBox(height: Insets.small),
                     Text(
-                      'No related resources found for this encounter',
+                      context.l10n.noRelatedResourcesForEncounter,
                       style: AppTextStyle.labelLarge.copyWith(
                         color: context.colorScheme.onSurface.withValues(
                           alpha: 0.6,
@@ -509,7 +515,7 @@ class _ResourceCardState extends State<ResourceCard> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: Text(
-                            '${resource.fhirType.display}: ${resource.title}',
+                            '${resource.fhirType.localizedName(context.l10n)}: ${resource.title}',
                             style: AppTextStyle.bodySmall.copyWith(
                               color: context.colorScheme.onSurface,
                             ),

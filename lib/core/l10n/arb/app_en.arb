@@ -1257,5 +1257,44 @@
         "type": "String"
       }
     }
+  },
+  "noAttachments": "No attachments",
+  "attachingFiles": "Attaching files...",
+  "addAttachment": "Add Attachment",
+  "noFileName": "No file name",
+  "attachmentFileOfTotal": "( {current} of {total} files )",
+  "@attachmentFileOfTotal": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "showDetails": "Show Details",
+  "viewRelated": "View Related",
+  "hideRelated": "Hide Related",
+  "noRelatedResourcesFound": "No related resources found",
+  "loadingRelatedResources": "Loading related resources...",
+  "noRelatedResourcesForEncounter": "No related resources found for this encounter",
+  "cannotAttachToDocumentReference": "Cannot attach files to DocumentReference resources",
+  "deleteRecordOfType": "{type} delete",
+  "@deleteRecordOfType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "dateFilterEndBeforeStart": "End date must be after start date",
+  "dateFilterChip": "Date: {range}",
+  "@dateFilterChip": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
   }
 }

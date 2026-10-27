@@ -16,6 +16,7 @@ const _scannedDirs = [
   'lib/features/home',
   'lib/features/dashboard',
   'lib/features/share_records',
+  'lib/features/records/presentation',
 ];
 
 /// Paths that are not part of the mobile UI or are generated.

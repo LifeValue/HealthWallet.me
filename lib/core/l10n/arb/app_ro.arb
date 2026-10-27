@@ -1142,5 +1142,20 @@
   "sharePermissionExplanationAndroid": "Pentru a partaja înregistrări cu dispozitive din apropiere, HealthWallet are nevoie de acces la:\n\n• Bluetooth - pentru a găsi dispozitivele din apropiere și a se conecta la ele\n• Locație/Dispozitive din apropiere - cerute de Android pentru a căuta dispozitive Bluetooth și WiFi Direct\n\nLocația ta nu este niciodată stocată sau transmisă.",
   "sharePermissionsDeniedMessage": "Acordă toate permisiunile pentru a partaja înregistrări cu dispozitive din apropiere.",
   "sharePermissionsPermanentlyDeniedMessage": "Unele permisiuni au fost refuzate. Activează-le din Setări pentru a folosi această funcție.",
-  "shareDurationRequested": "{duration} solicitate"
+  "shareDurationRequested": "{duration} solicitate",
+  "noAttachments": "Fără atașamente",
+  "attachingFiles": "Se atașează fișierele...",
+  "addAttachment": "Adaugă atașament",
+  "noFileName": "Fără nume de fișier",
+  "attachmentFileOfTotal": "( {current} din {total} fișiere )",
+  "showDetails": "Afișează detaliile",
+  "viewRelated": "Vezi asociate",
+  "hideRelated": "Ascunde asociate",
+  "noRelatedResourcesFound": "Nu s-au găsit resurse asociate",
+  "loadingRelatedResources": "Se încarcă resursele asociate...",
+  "noRelatedResourcesForEncounter": "Nu s-au găsit resurse asociate acestei consultații",
+  "cannotAttachToDocumentReference": "Nu se pot atașa fișiere la un document",
+  "deleteRecordOfType": "Șterge {type}",
+  "dateFilterEndBeforeStart": "Data de sfârșit trebuie să fie după data de început",
+  "dateFilterChip": "Dată: {range}"
 }

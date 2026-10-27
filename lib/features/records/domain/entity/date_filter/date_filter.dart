@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 part 'date_filter.freezed.dart';
 
@@ -82,89 +84,61 @@ abstract class DateFilter with _$DateFilter {
     return true;
   }
 
-  /// Returns a validation error message, or null if valid.
-  String? validate() {
-    // Only validate when both sides have comparable fields
+  /// Whether the end side is before the start side. Only components set on
+  /// both sides are compared.
+  bool get hasInvalidRange {
     if (fromYear != null && toYear != null) {
-      if (fromYear! > toYear!) return 'End date must be after start date';
-      if (fromYear! == toYear!) {
-        if (fromMonth != null && toMonth != null) {
-          if (fromMonth! > toMonth!) return 'End date must be after start date';
-          if (fromMonth! == toMonth!) {
-            if (fromDay != null && toDay != null) {
-              if (fromDay! > toDay!) {
-                return 'End date must be after start date';
-              }
-            }
-          }
-        }
-      }
+      if (fromYear! > toYear!) return true;
+      return fromYear! == toYear! && _monthAfterEnd();
     }
-
     if (fromYear == null && toYear == null) {
-      if (fromMonth != null && toMonth != null) {
-        if (fromMonth! > toMonth!) return 'End date must be after start date';
-        if (fromMonth! == toMonth!) {
-          if (fromDay != null && toDay != null) {
-            if (fromDay! > toDay!) {
-              return 'End date must be after start date';
-            }
-          }
-        }
-      }
-
-      if (fromMonth == null && toMonth == null) {
-        if (fromDay != null && toDay != null) {
-          if (fromDay! > toDay!) return 'End date must be after start date';
-        }
-      }
+      if (_monthAfterEnd()) return true;
+      if (fromMonth == null && toMonth == null) return _dayAfterEnd();
     }
-
-    return null;
+    return false;
   }
 
-  String formatChipLabel() {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
+  bool _monthAfterEnd() {
+    if (fromMonth == null || toMonth == null) return false;
+    if (fromMonth! > toMonth!) return true;
+    return fromMonth! == toMonth! && _dayAfterEnd();
+  }
 
-    String formatSide(int? year, int? month, int? day) {
-      final parts = <String>[];
-      if (day != null) parts.add('$day');
-      if (month != null) parts.add(months[month - 1]);
-      if (year != null) parts.add('$year');
-      return parts.join(' ');
+  bool _dayAfterEnd() => fromDay != null && toDay != null && fromDay! > toDay!;
+
+  /// Formats the set components of one side as "day month year" (for example
+  /// "5 Mar 2024"), with the month abbreviated in [locale].
+  static String formatDateParts(
+    int? year,
+    int? month,
+    int? day,
+    String locale,
+  ) {
+    final parts = <String>[];
+    if (day != null) parts.add('$day');
+    if (month != null) {
+      parts.add(DateFormat.MMM(locale).format(DateTime(2000, month)));
     }
+    if (year != null) parts.add('$year');
+    return parts.join(' ');
+  }
 
-    final from = formatSide(fromYear, fromMonth, fromDay);
-    final to = formatSide(toYear, toMonth, toDay);
+  String formatChipLabel(AppLocalizations l10n) {
+    final locale = l10n.localeName;
+    final from = formatDateParts(fromYear, fromMonth, fromDay, locale);
+    final to = formatDateParts(toYear, toMonth, toDay, locale);
 
-    String dateText;
+    final String dateText;
     if (from.isNotEmpty && to.isNotEmpty) {
-      if (from == to) {
-        dateText = from;
-      } else {
-        dateText = '$from - $to';
-      }
+      dateText = from == to ? from : '$from - $to';
     } else if (from.isNotEmpty) {
-      dateText = 'From $from';
+      dateText = l10n.fromDate(from);
     } else if (to.isNotEmpty) {
-      dateText = 'Until $to';
+      dateText = l10n.untilDate(to);
     } else {
-      return 'Date';
+      return l10n.date;
     }
 
-    return 'Date: $dateText';
+    return l10n.dateFilterChip(dateText);
   }
 }

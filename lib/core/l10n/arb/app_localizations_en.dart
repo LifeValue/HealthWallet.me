@@ -2593,4 +2593,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String shareDurationRequested(String duration) {
     return '$duration requested';
   }
+
+  @override
+  String get noAttachments => 'No attachments';
+
+  @override
+  String get attachingFiles => 'Attaching files...';
+
+  @override
+  String get addAttachment => 'Add Attachment';
+
+  @override
+  String get noFileName => 'No file name';
+
+  @override
+  String attachmentFileOfTotal(int current, int total) {
+    return '( $current of $total files )';
+  }
+
+  @override
+  String get showDetails => 'Show Details';
+
+  @override
+  String get viewRelated => 'View Related';
+
+  @override
+  String get hideRelated => 'Hide Related';
+
+  @override
+  String get noRelatedResourcesFound => 'No related resources found';
+
+  @override
+  String get loadingRelatedResources => 'Loading related resources...';
+
+  @override
+  String get noRelatedResourcesForEncounter =>
+      'No related resources found for this encounter';
+
+  @override
+  String get cannotAttachToDocumentReference =>
+      'Cannot attach files to DocumentReference resources';
+
+  @override
+  String deleteRecordOfType(String type) {
+    return '$type delete';
+  }
+
+  @override
+  String get dateFilterEndBeforeStart => 'End date must be after start date';
+
+  @override
+  String dateFilterChip(String range) {
+    return 'Date: $range';
+  }
 }

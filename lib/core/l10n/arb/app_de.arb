@@ -1143,5 +1143,20 @@
   "sharePermissionExplanationAndroid": "Um Aufzeichnungen mit Geräten in der Nähe zu teilen, benötigt HealthWallet Zugriff auf:\n\n• Bluetooth - um Geräte in der Nähe zu finden und sich mit ihnen zu verbinden\n• Standort/Geräte in der Nähe - von Android verlangt, um nach Bluetooth- und WiFi-Direct-Geräten zu suchen\n\nDein Standort wird nie gespeichert oder übertragen.",
   "sharePermissionsDeniedMessage": "Bitte erteile alle Berechtigungen, um Aufzeichnungen mit Geräten in der Nähe zu teilen.",
   "sharePermissionsPermanentlyDeniedMessage": "Einige Berechtigungen wurden verweigert. Bitte aktiviere sie in den Einstellungen, um diese Funktion zu nutzen.",
-  "shareDurationRequested": "{duration} angefragt"
+  "shareDurationRequested": "{duration} angefragt",
+  "noAttachments": "Keine Anhänge",
+  "attachingFiles": "Dateien werden angehängt...",
+  "addAttachment": "Anhang hinzufügen",
+  "noFileName": "Kein Dateiname",
+  "attachmentFileOfTotal": "( {current} von {total} Dateien )",
+  "showDetails": "Details anzeigen",
+  "viewRelated": "Zugehörige anzeigen",
+  "hideRelated": "Zugehörige ausblenden",
+  "noRelatedResourcesFound": "Keine zugehörigen Einträge gefunden",
+  "loadingRelatedResources": "Zugehörige Einträge werden geladen...",
+  "noRelatedResourcesForEncounter": "Keine zugehörigen Einträge zu diesem Termin gefunden",
+  "cannotAttachToDocumentReference": "An ein Dokument können keine Dateien angehängt werden",
+  "deleteRecordOfType": "{type} löschen",
+  "dateFilterEndBeforeStart": "Das Enddatum muss nach dem Startdatum liegen",
+  "dateFilterChip": "Datum: {range}"
 }
