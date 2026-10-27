@@ -224,11 +224,12 @@ class AppLocalizationsRo extends AppLocalizations {
   String get actionCannotBeUndone => 'Această acțiune nu poate fi anulată.';
 
   @override
-  String get deleteSourceConfirmPrefix => 'This will permanently delete ';
+  String get deleteSourceConfirmPrefix =>
+      'Această acțiune va șterge definitiv ';
 
   @override
   String get deleteSourceConfirmSuffix =>
-      ' and all its records. To confirm, type the source name below.';
+      ' și toate înregistrările sale. Pentru confirmare, introdu mai jos numele sursei.';
 
   @override
   String get deleteRecordConfirm =>
@@ -299,7 +300,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get continueImporting => 'Continuă importul';
 
   @override
-  String get noAiModel => 'No AI model';
+  String get noAiModel => 'Niciun model AI';
 
   @override
   String get noAiModelOnDesktop =>
@@ -2100,19 +2101,357 @@ class AppLocalizationsRo extends AppLocalizations {
   String get minimizeToTray => 'Minimizează în bara de sistem';
 
   @override
-  String get changeSpecialty => 'Change Specialty';
+  String get changeSpecialty => 'Schimbă specialitatea';
 
   @override
-  String get changeSpecialtyConfirm =>
-      'Are you sure you want to change the specialty to';
+  String get changeSpecialtyConfirm => 'Sigur vrei să schimbi specialitatea în';
 
   @override
   String get removeSpecialtyConfirm =>
-      'Are you sure you want to remove the specialty from this record?';
+      'Sigur vrei să elimini specialitatea din această înregistrare?';
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'Confirmă';
 
   @override
   String get currentRecord => 'Înregistrarea curentă';
+
+  @override
+  String get vitalHeartRate => 'Frecvență cardiacă';
+
+  @override
+  String get vitalBloodPressure => 'Tensiune arterială';
+
+  @override
+  String get vitalTemperature => 'Temperatură';
+
+  @override
+  String get vitalBloodOxygen => 'Oxigen în sânge';
+
+  @override
+  String get vitalRespiratoryRate => 'Frecvență respiratorie';
+
+  @override
+  String get vitalWeight => 'Greutate';
+
+  @override
+  String get vitalHeight => 'Înălțime';
+
+  @override
+  String get vitalBmi => 'IMC';
+
+  @override
+  String get vitalBloodGlucose => 'Glicemie';
+
+  @override
+  String get vitalSystolicBloodPressure => 'Tensiune arterială sistolică';
+
+  @override
+  String get vitalDiastolicBloodPressure => 'Tensiune arterială diastolică';
+
+  @override
+  String get specialtyAllergology => 'Alergologie';
+
+  @override
+  String get specialtyCardiology => 'Cardiologie';
+
+  @override
+  String get specialtyDental => 'Stomatologie';
+
+  @override
+  String get specialtyDermatology => 'Dermatologie';
+
+  @override
+  String get specialtyEmergencyMedicine => 'Medicină de urgență';
+
+  @override
+  String get specialtyEndocrinology => 'Endocrinologie';
+
+  @override
+  String get specialtyGastroenterology => 'Gastroenterologie';
+
+  @override
+  String get specialtyGeneralCare => 'Medicină generală';
+
+  @override
+  String get specialtyGynecology => 'Ginecologie';
+
+  @override
+  String get specialtyNephrology => 'Nefrologie';
+
+  @override
+  String get specialtyNeurology => 'Neurologie';
+
+  @override
+  String get specialtyOncology => 'Oncologie';
+
+  @override
+  String get specialtyOphthalmology => 'Oftalmologie';
+
+  @override
+  String get specialtyOrthopedics => 'Ortopedie';
+
+  @override
+  String get specialtyPsychiatry => 'Psihiatrie';
+
+  @override
+  String get specialtyPulmonology => 'Pneumologie';
+
+  @override
+  String get specialtyRheumatology => 'Reumatologie';
+
+  @override
+  String get specialtyUrology => 'Urologie';
+
+  @override
+  String get categoryAllergies => 'Alergii';
+
+  @override
+  String get categoryCareTeam => 'Echipa medicală';
+
+  @override
+  String get categoryClinicalNotes => 'Note clinice';
+
+  @override
+  String get categoryFiles => 'Fișiere';
+
+  @override
+  String get categoryLabResults => 'Rezultate de laborator';
+
+  @override
+  String get categoryHealthIssues => 'Probleme de sănătate';
+
+  @override
+  String get categoryFacilities => 'Unități medicale';
+
+  @override
+  String get categoryHealthGoals => 'Obiective de sănătate';
+
+  @override
+  String get categoryImmunizations => 'Vaccinări';
+
+  @override
+  String get categoryMedications => 'Medicamente';
+
+  @override
+  String get categoryDemographics => 'Date personale';
+
+  @override
+  String get categoryProcedures => 'Proceduri';
+
+  @override
+  String get categoryHealthInsurance => 'Asigurare de sănătate';
+
+  @override
+  String get fhirTypeAdverseEvent => 'Eveniment advers';
+
+  @override
+  String get fhirTypeAllergyIntolerance => 'Alergie';
+
+  @override
+  String get fhirTypeBinary => 'Fișier binar';
+
+  @override
+  String get fhirTypeCareTeam => 'Echipa medicală';
+
+  @override
+  String get fhirTypeClaim => 'Cerere de decontare';
+
+  @override
+  String get fhirTypeCondition => 'Afecțiune';
+
+  @override
+  String get fhirTypeCoverage => 'Acoperire asigurare';
+
+  @override
+  String get fhirTypeDiagnosticReport => 'Raport de diagnostic';
+
+  @override
+  String get fhirTypeDocumentReference => 'Document';
+
+  @override
+  String get fhirTypeEncounter => 'Consultație';
+
+  @override
+  String get fhirTypeExplanationOfBenefit => 'Decont de beneficii';
+
+  @override
+  String get fhirTypeGoal => 'Obiectiv';
+
+  @override
+  String get fhirTypeImmunization => 'Vaccinare';
+
+  @override
+  String get fhirTypeLocation => 'Locație';
+
+  @override
+  String get fhirTypeMedia => 'Media';
+
+  @override
+  String get fhirTypeMedication => 'Medicament';
+
+  @override
+  String get fhirTypeMedicationAdministration => 'Administrare medicament';
+
+  @override
+  String get fhirTypeMedicationDispense => 'Eliberare medicament';
+
+  @override
+  String get fhirTypeMedicationRequest => 'Prescripție medicament';
+
+  @override
+  String get fhirTypeMedicationStatement => 'Declarație medicament';
+
+  @override
+  String get fhirTypeObservation => 'Observație';
+
+  @override
+  String get fhirTypeOrganization => 'Organizație';
+
+  @override
+  String get fhirTypePatient => 'Pacient';
+
+  @override
+  String get fhirTypePractitioner => 'Practician';
+
+  @override
+  String get fhirTypePractitionerRole => 'Rol practician';
+
+  @override
+  String get fhirTypeProcedure => 'Procedură';
+
+  @override
+  String get fhirTypeRelatedPerson => 'Persoană apropiată';
+
+  @override
+  String get fhirTypeServiceRequest => 'Cerere de servicii';
+
+  @override
+  String get fhirTypeSpecimen => 'Probă';
+
+  @override
+  String get fhirTypeGeneralResource => 'Resursă';
+
+  @override
+  String get processingOriginScan => 'Scanare';
+
+  @override
+  String get processingOriginImport => 'Import';
+
+  @override
+  String get processingOriginHandover => 'Predare';
+
+  @override
+  String get processingStatusPending => 'În așteptare';
+
+  @override
+  String get processingStatusProcessingPatient => 'Se procesează pacientul';
+
+  @override
+  String get processingStatusPatientExtracted => 'Pacient extras';
+
+  @override
+  String get processingStatusProcessing => 'Se procesează';
+
+  @override
+  String get processingStatusDraft => 'Ciornă';
+
+  @override
+  String get processingStatusCancelled => 'Anulat';
+
+  @override
+  String get showAll => 'Afișează tot';
+
+  @override
+  String get showLess => 'Afișează mai puțin';
+
+  @override
+  String get all => 'Toate';
+
+  @override
+  String get gotIt => 'Am înțeles';
+
+  @override
+  String get homeSpecialties => 'Specialități';
+
+  @override
+  String get homeResources => 'Resurse';
+
+  @override
+  String get homeDefaultUserName => 'Utilizator';
+
+  @override
+  String get selectSpecialty => 'Selectează specialitatea';
+
+  @override
+  String get removeSpecialty => 'Elimină specialitatea';
+
+  @override
+  String get chooseRecordsForDashboard =>
+      'Alege înregistrările pe care vrei să le vezi pe panou.';
+
+  @override
+  String get selectAtLeastOneRecordType =>
+      'Selectează cel puțin un tip de înregistrare pentru a continua.';
+
+  @override
+  String get chooseVitalsForDashboard =>
+      'Alege semnele vitale pe care vrei să le vezi pe panou.';
+
+  @override
+  String get selectAtLeastOneVital =>
+      'Selectează cel puțin un semn vital pentru a continua.';
+
+  @override
+  String get chooseSpecialtiesForDashboard =>
+      'Alege specialitățile pe care vrei să le vezi pe panou.';
+
+  @override
+  String get selectAtLeastOneSpecialty =>
+      'Selectează cel puțin o specialitate pentru a continua.';
+
+  @override
+  String get selectAtLeastOneItem =>
+      'Selectează cel puțin un element pentru a continua.';
+
+  @override
+  String get sourceSectionWallet => 'PORTOFEL';
+
+  @override
+  String get sourceSectionEhr => 'SURSE DOSAR MEDICAL';
+
+  @override
+  String get areYouSure => 'Ești sigur?';
+
+  @override
+  String get resourceNotViewable =>
+      'Această resursă nu este un fișier care poate fi vizualizat';
+
+  @override
+  String get noFilePathFound => 'Nu s-a găsit calea fișierului';
+
+  @override
+  String get handoverPatientMatched => 'Pacientul din predare a fost asociat';
+
+  @override
+  String get desktopFinishedProcessing => 'Desktopul a terminat procesarea';
+
+  @override
+  String get biometricAuthReason =>
+      'Autentifică-te pentru a accesa HealthWallet.me';
+
+  @override
+  String sourceUploadedOn(String date) {
+    return 'Încărcat $date';
+  }
+
+  @override
+  String couldNotOpenPdf(String message) {
+    return 'PDF-ul nu a putut fi deschis: $message';
+  }
+
+  @override
+  String errorOpeningPdf(String error) {
+    return 'Eroare la deschiderea PDF-ului: $error';
+  }
 }

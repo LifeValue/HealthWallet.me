@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -130,7 +132,9 @@ class VitalsSection extends StatelessWidget {
                     color: context.colorScheme.primary,
                   ),
                   label: Text(
-                    vitalsExpanded ? 'Show Less' : 'Show All',
+                    vitalsExpanded
+                        ? context.l10n.showLess
+                        : context.l10n.showAll,
                     style: AppTextStyle.bodySmall.copyWith(
                       color: context.colorScheme.primary,
                     ),
@@ -381,7 +385,7 @@ class VitalsSection extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        title,
+                        localizedVitalTitle(title, context.l10n),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: titleStyle,

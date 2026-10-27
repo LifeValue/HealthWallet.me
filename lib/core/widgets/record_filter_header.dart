@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -229,7 +230,11 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
 
   Widget _buildFilterChips(BuildContext context) {
     final sortedTypes = _availableTypes.toList()
-      ..sort((a, b) => a.display.compareTo(b.display));
+      ..sort(
+        (a, b) => a
+            .localizedName(context.l10n)
+            .compareTo(b.localizedName(context.l10n)),
+      );
 
     return Row(
       children: [
@@ -255,7 +260,7 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    'All',
+                    context.l10n.all,
                     style: AppTextStyle.labelSmall.copyWith(
                       color: _filterTypes.isEmpty
                           ? AppColors.primary
@@ -307,7 +312,7 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${type.display} ($count)',
+                          '${type.localizedName(context.l10n)} ($count)',
                           style: AppTextStyle.labelSmall.copyWith(
                             color: isActive
                                 ? AppColors.primary

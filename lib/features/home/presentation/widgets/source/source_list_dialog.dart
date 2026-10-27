@@ -219,7 +219,11 @@ class _SourceListDialogState extends State<SourceListDialog> {
                                 if (source.platformName == 'wallet-manual' &&
                                     source.createdAt != null)
                                   Text(
-                                    'Uploaded ${DateFormatUtils.humanReadable(source.createdAt)}',
+                                    context.l10n.sourceUploadedOn(
+                                      DateFormatUtils.humanReadable(
+                                        source.createdAt,
+                                      ),
+                                    ),
                                     style: AppTextStyle.bodySmall.copyWith(
                                       color: context.isDarkMode
                                           ? AppColors.textSecondaryDark
@@ -307,11 +311,11 @@ class _SourceListDialogState extends State<SourceListDialog> {
 
     final items = <dynamic>[...allSource];
     if (walletSource.isNotEmpty) {
-      items.add('WALLET');
+      items.add(context.l10n.sourceSectionWallet);
       items.addAll(walletSource);
     }
     if (otherSources.isNotEmpty) {
-      items.add('EHR SOURCES');
+      items.add(context.l10n.sourceSectionEhr);
       items.addAll(otherSources);
     }
     return items;
@@ -319,7 +323,7 @@ class _SourceListDialogState extends State<SourceListDialog> {
 
   String _getSourceDisplayName(BuildContext context, Source source) {
     if (source.id == 'All') {
-      return 'All';
+      return context.l10n.all;
     }
 
     if (source.labelSource?.isNotEmpty == true) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -90,7 +91,7 @@ class _HomePatientBarState extends State<HomePatientBar> {
             children: [
               Flexible(
                 child: Text(
-                  'Patient: ${FhirFieldExtractor.extractHumanNameFamilyFirst(widget.state.patient?.name?.first) ?? 'Loading...'}',
+                  '${context.l10n.patient}: ${FhirFieldExtractor.extractHumanNameFamilyFirst(widget.state.patient?.name?.first) ?? context.l10n.loading}',
                   style: AppTextStyle.bodyMedium.copyWith(
                     color: context.colorScheme.onSurface,
                   ),

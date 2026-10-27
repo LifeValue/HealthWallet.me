@@ -3880,6 +3880,654 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Current record'**
   String get currentRecord;
+
+  /// No description provided for @vitalHeartRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Heart Rate'**
+  String get vitalHeartRate;
+
+  /// No description provided for @vitalBloodPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood Pressure'**
+  String get vitalBloodPressure;
+
+  /// No description provided for @vitalTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get vitalTemperature;
+
+  /// No description provided for @vitalBloodOxygen.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood Oxygen'**
+  String get vitalBloodOxygen;
+
+  /// No description provided for @vitalRespiratoryRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Respiratory Rate'**
+  String get vitalRespiratoryRate;
+
+  /// No description provided for @vitalWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get vitalWeight;
+
+  /// No description provided for @vitalHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get vitalHeight;
+
+  /// No description provided for @vitalBmi.
+  ///
+  /// In en, this message translates to:
+  /// **'BMI'**
+  String get vitalBmi;
+
+  /// No description provided for @vitalBloodGlucose.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood Glucose'**
+  String get vitalBloodGlucose;
+
+  /// No description provided for @vitalSystolicBloodPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Systolic Blood Pressure'**
+  String get vitalSystolicBloodPressure;
+
+  /// No description provided for @vitalDiastolicBloodPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Diastolic Blood Pressure'**
+  String get vitalDiastolicBloodPressure;
+
+  /// No description provided for @specialtyAllergology.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergology'**
+  String get specialtyAllergology;
+
+  /// No description provided for @specialtyCardiology.
+  ///
+  /// In en, this message translates to:
+  /// **'Cardiology'**
+  String get specialtyCardiology;
+
+  /// No description provided for @specialtyDental.
+  ///
+  /// In en, this message translates to:
+  /// **'Dental'**
+  String get specialtyDental;
+
+  /// No description provided for @specialtyDermatology.
+  ///
+  /// In en, this message translates to:
+  /// **'Dermatology'**
+  String get specialtyDermatology;
+
+  /// No description provided for @specialtyEmergencyMedicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Medicine'**
+  String get specialtyEmergencyMedicine;
+
+  /// No description provided for @specialtyEndocrinology.
+  ///
+  /// In en, this message translates to:
+  /// **'Endocrinology'**
+  String get specialtyEndocrinology;
+
+  /// No description provided for @specialtyGastroenterology.
+  ///
+  /// In en, this message translates to:
+  /// **'Gastroenterology'**
+  String get specialtyGastroenterology;
+
+  /// No description provided for @specialtyGeneralCare.
+  ///
+  /// In en, this message translates to:
+  /// **'General Care'**
+  String get specialtyGeneralCare;
+
+  /// No description provided for @specialtyGynecology.
+  ///
+  /// In en, this message translates to:
+  /// **'Gynecology'**
+  String get specialtyGynecology;
+
+  /// No description provided for @specialtyNephrology.
+  ///
+  /// In en, this message translates to:
+  /// **'Nephrology'**
+  String get specialtyNephrology;
+
+  /// No description provided for @specialtyNeurology.
+  ///
+  /// In en, this message translates to:
+  /// **'Neurology'**
+  String get specialtyNeurology;
+
+  /// No description provided for @specialtyOncology.
+  ///
+  /// In en, this message translates to:
+  /// **'Oncology'**
+  String get specialtyOncology;
+
+  /// No description provided for @specialtyOphthalmology.
+  ///
+  /// In en, this message translates to:
+  /// **'Ophthalmology'**
+  String get specialtyOphthalmology;
+
+  /// No description provided for @specialtyOrthopedics.
+  ///
+  /// In en, this message translates to:
+  /// **'Orthopedics'**
+  String get specialtyOrthopedics;
+
+  /// No description provided for @specialtyPsychiatry.
+  ///
+  /// In en, this message translates to:
+  /// **'Psychiatry'**
+  String get specialtyPsychiatry;
+
+  /// No description provided for @specialtyPulmonology.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulmonology'**
+  String get specialtyPulmonology;
+
+  /// No description provided for @specialtyRheumatology.
+  ///
+  /// In en, this message translates to:
+  /// **'Rheumatology'**
+  String get specialtyRheumatology;
+
+  /// No description provided for @specialtyUrology.
+  ///
+  /// In en, this message translates to:
+  /// **'Urology'**
+  String get specialtyUrology;
+
+  /// No description provided for @categoryAllergies.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergies'**
+  String get categoryAllergies;
+
+  /// No description provided for @categoryCareTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Care Team'**
+  String get categoryCareTeam;
+
+  /// No description provided for @categoryClinicalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinical Notes'**
+  String get categoryClinicalNotes;
+
+  /// No description provided for @categoryFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get categoryFiles;
+
+  /// No description provided for @categoryLabResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Lab Results'**
+  String get categoryLabResults;
+
+  /// No description provided for @categoryHealthIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Issues'**
+  String get categoryHealthIssues;
+
+  /// No description provided for @categoryFacilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Facilities'**
+  String get categoryFacilities;
+
+  /// No description provided for @categoryHealthGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Goals'**
+  String get categoryHealthGoals;
+
+  /// No description provided for @categoryImmunizations.
+  ///
+  /// In en, this message translates to:
+  /// **'Immunizations'**
+  String get categoryImmunizations;
+
+  /// No description provided for @categoryMedications.
+  ///
+  /// In en, this message translates to:
+  /// **'Medications'**
+  String get categoryMedications;
+
+  /// No description provided for @categoryDemographics.
+  ///
+  /// In en, this message translates to:
+  /// **'Demographics'**
+  String get categoryDemographics;
+
+  /// No description provided for @categoryProcedures.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedures'**
+  String get categoryProcedures;
+
+  /// No description provided for @categoryHealthInsurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Insurance'**
+  String get categoryHealthInsurance;
+
+  /// No description provided for @fhirTypeAdverseEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Adverse Event'**
+  String get fhirTypeAdverseEvent;
+
+  /// No description provided for @fhirTypeAllergyIntolerance.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergy'**
+  String get fhirTypeAllergyIntolerance;
+
+  /// No description provided for @fhirTypeBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary'**
+  String get fhirTypeBinary;
+
+  /// No description provided for @fhirTypeCareTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Care Team'**
+  String get fhirTypeCareTeam;
+
+  /// No description provided for @fhirTypeClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim'**
+  String get fhirTypeClaim;
+
+  /// No description provided for @fhirTypeCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get fhirTypeCondition;
+
+  /// No description provided for @fhirTypeCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Coverage'**
+  String get fhirTypeCoverage;
+
+  /// No description provided for @fhirTypeDiagnosticReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostic Report'**
+  String get fhirTypeDiagnosticReport;
+
+  /// No description provided for @fhirTypeDocumentReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get fhirTypeDocumentReference;
+
+  /// No description provided for @fhirTypeEncounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Encounter'**
+  String get fhirTypeEncounter;
+
+  /// No description provided for @fhirTypeExplanationOfBenefit.
+  ///
+  /// In en, this message translates to:
+  /// **'Explanation of Benefit'**
+  String get fhirTypeExplanationOfBenefit;
+
+  /// No description provided for @fhirTypeGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal'**
+  String get fhirTypeGoal;
+
+  /// No description provided for @fhirTypeImmunization.
+  ///
+  /// In en, this message translates to:
+  /// **'Immunization'**
+  String get fhirTypeImmunization;
+
+  /// No description provided for @fhirTypeLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get fhirTypeLocation;
+
+  /// No description provided for @fhirTypeMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Media'**
+  String get fhirTypeMedia;
+
+  /// No description provided for @fhirTypeMedication.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication'**
+  String get fhirTypeMedication;
+
+  /// No description provided for @fhirTypeMedicationAdministration.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Administration'**
+  String get fhirTypeMedicationAdministration;
+
+  /// No description provided for @fhirTypeMedicationDispense.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Dispense'**
+  String get fhirTypeMedicationDispense;
+
+  /// No description provided for @fhirTypeMedicationRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Request'**
+  String get fhirTypeMedicationRequest;
+
+  /// No description provided for @fhirTypeMedicationStatement.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication Statement'**
+  String get fhirTypeMedicationStatement;
+
+  /// No description provided for @fhirTypeObservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation'**
+  String get fhirTypeObservation;
+
+  /// No description provided for @fhirTypeOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization'**
+  String get fhirTypeOrganization;
+
+  /// No description provided for @fhirTypePatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient'**
+  String get fhirTypePatient;
+
+  /// No description provided for @fhirTypePractitioner.
+  ///
+  /// In en, this message translates to:
+  /// **'Practitioner'**
+  String get fhirTypePractitioner;
+
+  /// No description provided for @fhirTypePractitionerRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Practitioner Role'**
+  String get fhirTypePractitionerRole;
+
+  /// No description provided for @fhirTypeProcedure.
+  ///
+  /// In en, this message translates to:
+  /// **'Procedure'**
+  String get fhirTypeProcedure;
+
+  /// No description provided for @fhirTypeRelatedPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Related Person'**
+  String get fhirTypeRelatedPerson;
+
+  /// No description provided for @fhirTypeServiceRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Request'**
+  String get fhirTypeServiceRequest;
+
+  /// No description provided for @fhirTypeSpecimen.
+  ///
+  /// In en, this message translates to:
+  /// **'Specimen'**
+  String get fhirTypeSpecimen;
+
+  /// No description provided for @fhirTypeGeneralResource.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource'**
+  String get fhirTypeGeneralResource;
+
+  /// No description provided for @processingOriginScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get processingOriginScan;
+
+  /// No description provided for @processingOriginImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get processingOriginImport;
+
+  /// No description provided for @processingOriginHandover.
+  ///
+  /// In en, this message translates to:
+  /// **'Handover'**
+  String get processingOriginHandover;
+
+  /// No description provided for @processingStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get processingStatusPending;
+
+  /// No description provided for @processingStatusProcessingPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing Patient'**
+  String get processingStatusProcessingPatient;
+
+  /// No description provided for @processingStatusPatientExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient Extracted'**
+  String get processingStatusPatientExtracted;
+
+  /// No description provided for @processingStatusProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing'**
+  String get processingStatusProcessing;
+
+  /// No description provided for @processingStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get processingStatusDraft;
+
+  /// No description provided for @processingStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get processingStatusCancelled;
+
+  /// No description provided for @showAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show All'**
+  String get showAll;
+
+  /// No description provided for @showLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Less'**
+  String get showLess;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @gotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gotIt;
+
+  /// No description provided for @homeSpecialties.
+  ///
+  /// In en, this message translates to:
+  /// **'Specialties'**
+  String get homeSpecialties;
+
+  /// No description provided for @homeResources.
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get homeResources;
+
+  /// No description provided for @homeDefaultUserName.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get homeDefaultUserName;
+
+  /// No description provided for @selectSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Specialty'**
+  String get selectSpecialty;
+
+  /// No description provided for @removeSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Specialty'**
+  String get removeSpecialty;
+
+  /// No description provided for @chooseRecordsForDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the records you want to see on your dashboard.'**
+  String get chooseRecordsForDashboard;
+
+  /// No description provided for @selectAtLeastOneRecordType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one record type to continue.'**
+  String get selectAtLeastOneRecordType;
+
+  /// No description provided for @chooseVitalsForDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the vitals you want to see on your dashboard.'**
+  String get chooseVitalsForDashboard;
+
+  /// No description provided for @selectAtLeastOneVital.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one vital sign to continue.'**
+  String get selectAtLeastOneVital;
+
+  /// No description provided for @chooseSpecialtiesForDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the specialities you want to see on your dashboard.'**
+  String get chooseSpecialtiesForDashboard;
+
+  /// No description provided for @selectAtLeastOneSpecialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one specialty to continue.'**
+  String get selectAtLeastOneSpecialty;
+
+  /// No description provided for @selectAtLeastOneItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one item to continue.'**
+  String get selectAtLeastOneItem;
+
+  /// No description provided for @sourceSectionWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'WALLET'**
+  String get sourceSectionWallet;
+
+  /// No description provided for @sourceSectionEhr.
+  ///
+  /// In en, this message translates to:
+  /// **'EHR SOURCES'**
+  String get sourceSectionEhr;
+
+  /// No description provided for @areYouSure.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure?'**
+  String get areYouSure;
+
+  /// No description provided for @resourceNotViewable.
+  ///
+  /// In en, this message translates to:
+  /// **'This resource is not a viewable file'**
+  String get resourceNotViewable;
+
+  /// No description provided for @noFilePathFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No file path found'**
+  String get noFilePathFound;
+
+  /// No description provided for @handoverPatientMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Handover patient matched'**
+  String get handoverPatientMatched;
+
+  /// No description provided for @desktopFinishedProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop finished processing'**
+  String get desktopFinishedProcessing;
+
+  /// No description provided for @biometricAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Please authenticate to access your HealthWallet.me'**
+  String get biometricAuthReason;
+
+  /// No description provided for @sourceUploadedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded {date}'**
+  String sourceUploadedOn(String date);
+
+  /// No description provided for @couldNotOpenPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open PDF: {message}'**
+  String couldNotOpenPdf(String message);
+
+  /// No description provided for @errorOpeningPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Error opening PDF: {error}'**
+  String errorOpeningPdf(String error);
 }
 
 class _AppLocalizationsDelegate

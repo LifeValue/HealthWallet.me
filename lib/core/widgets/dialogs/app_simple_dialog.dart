@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -294,7 +295,7 @@ class AppSimpleDialog {
                     elevation: 0,
                   ),
                   child: Text(
-                    'OK',
+                    dialogContext.l10n.ok,
                     style: AppTextStyle.buttonSmall.copyWith(
                       color: Colors.white,
                     ),

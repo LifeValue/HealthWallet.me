@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/app/app.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
@@ -288,6 +289,7 @@ void main() {
 
     // --- Register everything the App widget resolves from getIt ---
     getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
+    getIt.registerSingleton<AppStringsProvider>(AppStringsProvider());
     getIt.registerSingleton<AppRouter>(AppRouter());
     getIt.registerFactory<AppRouteObserver>(AppRouteObserver.new);
     getIt.registerSingleton<BluetoothStateService>(FakeBluetoothStateService());

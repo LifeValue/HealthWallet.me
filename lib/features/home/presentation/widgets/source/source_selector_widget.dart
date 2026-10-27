@@ -249,7 +249,7 @@ class SourceSelectorWidget extends StatelessWidget {
   String _getSelectedSourceDisplayName(BuildContext context) {
     // Handle "All" option first
     if (selectedSource == 'All') {
-      return 'All';
+      return context.l10n.all;
     }
 
     final patientSources = _getPatientSources(context);
@@ -278,7 +278,7 @@ class SourceSelectorWidget extends StatelessWidget {
         }
         return patientSources.isNotEmpty
             ? _getSourceDisplayName(context, patientSources.first)
-            : 'All';
+            : context.l10n.all;
       }
     }
   }

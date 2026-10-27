@@ -223,11 +223,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get actionCannotBeUndone => 'Esta acción no se puede deshacer.';
 
   @override
-  String get deleteSourceConfirmPrefix => 'This will permanently delete ';
+  String get deleteSourceConfirmPrefix => 'Esto eliminará permanentemente ';
 
   @override
   String get deleteSourceConfirmSuffix =>
-      ' and all its records. To confirm, type the source name below.';
+      ' y todos sus registros. Para confirmar, escribe el nombre de la fuente a continuación.';
 
   @override
   String get deleteRecordConfirm =>
@@ -299,7 +299,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get continueImporting => 'Continuar importando';
 
   @override
-  String get noAiModel => 'No AI model';
+  String get noAiModel => 'Sin modelo de IA';
 
   @override
   String get noAiModelOnDesktop =>
@@ -2096,19 +2096,360 @@ class AppLocalizationsEs extends AppLocalizations {
   String get minimizeToTray => 'Minimizar a la bandeja';
 
   @override
-  String get changeSpecialty => 'Change Specialty';
+  String get changeSpecialty => 'Cambiar especialidad';
 
   @override
   String get changeSpecialtyConfirm =>
-      'Are you sure you want to change the specialty to';
+      '¿Seguro que quieres cambiar la especialidad a';
 
   @override
   String get removeSpecialtyConfirm =>
-      'Are you sure you want to remove the specialty from this record?';
+      '¿Seguro que quieres quitar la especialidad de este registro?';
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'Confirmar';
 
   @override
   String get currentRecord => 'Registro actual';
+
+  @override
+  String get vitalHeartRate => 'Frecuencia cardíaca';
+
+  @override
+  String get vitalBloodPressure => 'Presión arterial';
+
+  @override
+  String get vitalTemperature => 'Temperatura';
+
+  @override
+  String get vitalBloodOxygen => 'Oxígeno en sangre';
+
+  @override
+  String get vitalRespiratoryRate => 'Frecuencia respiratoria';
+
+  @override
+  String get vitalWeight => 'Peso';
+
+  @override
+  String get vitalHeight => 'Altura';
+
+  @override
+  String get vitalBmi => 'IMC';
+
+  @override
+  String get vitalBloodGlucose => 'Glucosa en sangre';
+
+  @override
+  String get vitalSystolicBloodPressure => 'Presión arterial sistólica';
+
+  @override
+  String get vitalDiastolicBloodPressure => 'Presión arterial diastólica';
+
+  @override
+  String get specialtyAllergology => 'Alergología';
+
+  @override
+  String get specialtyCardiology => 'Cardiología';
+
+  @override
+  String get specialtyDental => 'Odontología';
+
+  @override
+  String get specialtyDermatology => 'Dermatología';
+
+  @override
+  String get specialtyEmergencyMedicine => 'Medicina de urgencias';
+
+  @override
+  String get specialtyEndocrinology => 'Endocrinología';
+
+  @override
+  String get specialtyGastroenterology => 'Gastroenterología';
+
+  @override
+  String get specialtyGeneralCare => 'Medicina general';
+
+  @override
+  String get specialtyGynecology => 'Ginecología';
+
+  @override
+  String get specialtyNephrology => 'Nefrología';
+
+  @override
+  String get specialtyNeurology => 'Neurología';
+
+  @override
+  String get specialtyOncology => 'Oncología';
+
+  @override
+  String get specialtyOphthalmology => 'Oftalmología';
+
+  @override
+  String get specialtyOrthopedics => 'Ortopedia';
+
+  @override
+  String get specialtyPsychiatry => 'Psiquiatría';
+
+  @override
+  String get specialtyPulmonology => 'Neumología';
+
+  @override
+  String get specialtyRheumatology => 'Reumatología';
+
+  @override
+  String get specialtyUrology => 'Urología';
+
+  @override
+  String get categoryAllergies => 'Alergias';
+
+  @override
+  String get categoryCareTeam => 'Equipo de atención';
+
+  @override
+  String get categoryClinicalNotes => 'Notas clínicas';
+
+  @override
+  String get categoryFiles => 'Archivos';
+
+  @override
+  String get categoryLabResults => 'Resultados de laboratorio';
+
+  @override
+  String get categoryHealthIssues => 'Problemas de salud';
+
+  @override
+  String get categoryFacilities => 'Centros médicos';
+
+  @override
+  String get categoryHealthGoals => 'Objetivos de salud';
+
+  @override
+  String get categoryImmunizations => 'Vacunas';
+
+  @override
+  String get categoryMedications => 'Medicamentos';
+
+  @override
+  String get categoryDemographics => 'Datos personales';
+
+  @override
+  String get categoryProcedures => 'Procedimientos';
+
+  @override
+  String get categoryHealthInsurance => 'Seguro médico';
+
+  @override
+  String get fhirTypeAdverseEvent => 'Evento adverso';
+
+  @override
+  String get fhirTypeAllergyIntolerance => 'Alergia';
+
+  @override
+  String get fhirTypeBinary => 'Archivo binario';
+
+  @override
+  String get fhirTypeCareTeam => 'Equipo de atención';
+
+  @override
+  String get fhirTypeClaim => 'Reclamación';
+
+  @override
+  String get fhirTypeCondition => 'Condición';
+
+  @override
+  String get fhirTypeCoverage => 'Cobertura';
+
+  @override
+  String get fhirTypeDiagnosticReport => 'Informe diagnóstico';
+
+  @override
+  String get fhirTypeDocumentReference => 'Documento';
+
+  @override
+  String get fhirTypeEncounter => 'Encuentro';
+
+  @override
+  String get fhirTypeExplanationOfBenefit => 'Explicación de beneficios';
+
+  @override
+  String get fhirTypeGoal => 'Objetivo';
+
+  @override
+  String get fhirTypeImmunization => 'Vacuna';
+
+  @override
+  String get fhirTypeLocation => 'Ubicación';
+
+  @override
+  String get fhirTypeMedia => 'Multimedia';
+
+  @override
+  String get fhirTypeMedication => 'Medicamento';
+
+  @override
+  String get fhirTypeMedicationAdministration =>
+      'Administración de medicamento';
+
+  @override
+  String get fhirTypeMedicationDispense => 'Dispensación de medicamento';
+
+  @override
+  String get fhirTypeMedicationRequest => 'Prescripción de medicamento';
+
+  @override
+  String get fhirTypeMedicationStatement => 'Declaración de medicación';
+
+  @override
+  String get fhirTypeObservation => 'Observación';
+
+  @override
+  String get fhirTypeOrganization => 'Organización';
+
+  @override
+  String get fhirTypePatient => 'Paciente';
+
+  @override
+  String get fhirTypePractitioner => 'Profesional';
+
+  @override
+  String get fhirTypePractitionerRole => 'Rol del profesional';
+
+  @override
+  String get fhirTypeProcedure => 'Procedimiento';
+
+  @override
+  String get fhirTypeRelatedPerson => 'Persona relacionada';
+
+  @override
+  String get fhirTypeServiceRequest => 'Solicitud de servicio';
+
+  @override
+  String get fhirTypeSpecimen => 'Muestra';
+
+  @override
+  String get fhirTypeGeneralResource => 'Recurso';
+
+  @override
+  String get processingOriginScan => 'Escaneo';
+
+  @override
+  String get processingOriginImport => 'Importación';
+
+  @override
+  String get processingOriginHandover => 'Entrega';
+
+  @override
+  String get processingStatusPending => 'Pendiente';
+
+  @override
+  String get processingStatusProcessingPatient => 'Procesando paciente';
+
+  @override
+  String get processingStatusPatientExtracted => 'Paciente extraído';
+
+  @override
+  String get processingStatusProcessing => 'Procesando';
+
+  @override
+  String get processingStatusDraft => 'Borrador';
+
+  @override
+  String get processingStatusCancelled => 'Cancelado';
+
+  @override
+  String get showAll => 'Mostrar todo';
+
+  @override
+  String get showLess => 'Mostrar menos';
+
+  @override
+  String get all => 'Todos';
+
+  @override
+  String get gotIt => 'Entendido';
+
+  @override
+  String get homeSpecialties => 'Especialidades';
+
+  @override
+  String get homeResources => 'Recursos';
+
+  @override
+  String get homeDefaultUserName => 'Usuario';
+
+  @override
+  String get selectSpecialty => 'Seleccionar especialidad';
+
+  @override
+  String get removeSpecialty => 'Quitar especialidad';
+
+  @override
+  String get chooseRecordsForDashboard =>
+      'Elige los registros que quieres ver en tu panel.';
+
+  @override
+  String get selectAtLeastOneRecordType =>
+      'Selecciona al menos un tipo de registro para continuar.';
+
+  @override
+  String get chooseVitalsForDashboard =>
+      'Elige los signos vitales que quieres ver en tu panel.';
+
+  @override
+  String get selectAtLeastOneVital =>
+      'Selecciona al menos un signo vital para continuar.';
+
+  @override
+  String get chooseSpecialtiesForDashboard =>
+      'Elige las especialidades que quieres ver en tu panel.';
+
+  @override
+  String get selectAtLeastOneSpecialty =>
+      'Selecciona al menos una especialidad para continuar.';
+
+  @override
+  String get selectAtLeastOneItem =>
+      'Selecciona al menos un elemento para continuar.';
+
+  @override
+  String get sourceSectionWallet => 'WALLET';
+
+  @override
+  String get sourceSectionEhr => 'FUENTES DE HCE';
+
+  @override
+  String get areYouSure => '¿Estás seguro?';
+
+  @override
+  String get resourceNotViewable =>
+      'Este recurso no es un archivo visualizable';
+
+  @override
+  String get noFilePathFound => 'No se encontró la ruta del archivo';
+
+  @override
+  String get handoverPatientMatched => 'Paciente de la entrega asociado';
+
+  @override
+  String get desktopFinishedProcessing =>
+      'El escritorio terminó el procesamiento';
+
+  @override
+  String get biometricAuthReason =>
+      'Autentícate para acceder a tu HealthWallet.me';
+
+  @override
+  String sourceUploadedOn(String date) {
+    return 'Subido $date';
+  }
+
+  @override
+  String couldNotOpenPdf(String message) {
+    return 'No se pudo abrir el PDF: $message';
+  }
+
+  @override
+  String errorOpeningPdf(String error) {
+    return 'Error al abrir el PDF: $error';
+  }
 }

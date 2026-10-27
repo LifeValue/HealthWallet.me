@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
@@ -66,11 +67,14 @@ class PdfPreviewService {
       if (!context.mounted) return;
 
       if (result.type != ResultType.done) {
-        _showWarningSnackBar(context, 'Could not open PDF: ${result.message}');
+        _showWarningSnackBar(
+          context,
+          context.l10n.couldNotOpenPdf(result.message),
+        );
       }
     } catch (e) {
       if (!context.mounted) return;
-      _showErrorSnackBar(context, 'Error opening PDF: $e');
+      _showErrorSnackBar(context, context.l10n.errorOpeningPdf(e.toString()));
     }
   }
 
@@ -109,7 +113,7 @@ class PdfPreviewService {
     IFhirResource resource,
   ) async {
     if (!_previewableTypes.contains(resource.fhirType)) {
-      _showErrorSnackBar(context, 'This resource is not a viewable file');
+      _showErrorSnackBar(context, context.l10n.resourceNotViewable);
       return;
     }
 
@@ -125,14 +129,14 @@ class PdfPreviewService {
 
       if (!context.mounted) return;
       if (filePath == null) {
-        _showErrorSnackBar(context, 'No file path found');
+        _showErrorSnackBar(context, context.l10n.noFilePathFound);
         return;
       }
 
       final exists = await File(filePath).exists();
       if (!context.mounted) return;
       if (!exists) {
-        _showErrorSnackBar(context, 'File not available on this device');
+        _showErrorSnackBar(context, context.l10n.fileNotAvailable);
         return;
       }
 
@@ -160,7 +164,8 @@ class PdfPreviewService {
         );
       }
     } catch (e) {
-      _showErrorSnackBar(context, 'Error opening file: $e');
+      if (!context.mounted) return;
+      _showErrorSnackBar(context, context.l10n.errorOpeningFile(e.toString()));
     }
   }
 
@@ -195,14 +200,14 @@ class _InAppImageViewer extends StatelessWidget {
           child: Image.file(
             File(filePath),
             fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Column(
+            errorBuilder: (context, error, stackTrace) => Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.broken_image, color: Colors.white54, size: 64),
-                SizedBox(height: 16),
+                const Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                const SizedBox(height: 16),
                 Text(
-                  'Failed to load image',
-                  style: TextStyle(color: Colors.white54),
+                  context.l10n.failedToLoadImage,
+                  style: const TextStyle(color: Colors.white54),
                 ),
               ],
             ),
@@ -241,14 +246,25 @@ class _InAppPdfViewer extends StatelessWidget {
               onError: (error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error loading PDF: $error')),
+                    SnackBar(
+                      content: Text(
+                        context.l10n.errorLoadingPdf(error.toString()),
+                      ),
+                    ),
                   );
                 }
               },
               onPageError: (page, error) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error on page $page: $error')),
+                    SnackBar(
+                      content: Text(
+                        context.l10n.errorOnPage(
+                          page.toString(),
+                          error.toString(),
+                        ),
+                      ),
+                    ),
                   );
                 }
               },
