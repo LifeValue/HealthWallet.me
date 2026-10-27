@@ -3947,6 +3947,42 @@ abstract class AppLocalizations {
   /// **'Diastolic Blood Pressure'**
   String get vitalDiastolicBloodPressure;
 
+  /// No description provided for @unitBeatsPerMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'beats/min'**
+  String get unitBeatsPerMinute;
+
+  /// No description provided for @unitBreathsPerMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'breaths/min'**
+  String get unitBreathsPerMinute;
+
+  /// No description provided for @unitPounds.
+  ///
+  /// In en, this message translates to:
+  /// **'pounds'**
+  String get unitPounds;
+
+  /// No description provided for @unitInches.
+  ///
+  /// In en, this message translates to:
+  /// **'inches'**
+  String get unitInches;
+
+  /// No description provided for @unitKilograms.
+  ///
+  /// In en, this message translates to:
+  /// **'kilograms'**
+  String get unitKilograms;
+
+  /// No description provided for @unitCentimeters.
+  ///
+  /// In en, this message translates to:
+  /// **'centimeters'**
+  String get unitCentimeters;
+
   /// No description provided for @specialtyAllergology.
   ///
   /// In en, this message translates to:

@@ -2151,6 +2151,24 @@ class AppLocalizationsDe extends AppLocalizations {
   String get vitalDiastolicBloodPressure => 'Diastolischer Blutdruck';
 
   @override
+  String get unitBeatsPerMinute => 'Schläge/min';
+
+  @override
+  String get unitBreathsPerMinute => 'Atemzüge/min';
+
+  @override
+  String get unitPounds => 'Pfund';
+
+  @override
+  String get unitInches => 'Zoll';
+
+  @override
+  String get unitKilograms => 'Kilogramm';
+
+  @override
+  String get unitCentimeters => 'Zentimeter';
+
+  @override
   String get specialtyAllergology => 'Allergologie';
 
   @override

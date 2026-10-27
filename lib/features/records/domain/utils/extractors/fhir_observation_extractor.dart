@@ -1,15 +1,22 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
 
 class FhirObservationExtractor {
-  static String? extractObservationValue(dynamic valueX) {
+  /// With [l10n], a unit spelled out in English is shown in the app language
+  /// (see [localizedUnit]).
+  static String? extractObservationValue(
+    dynamic valueX, {
+    AppLocalizations? l10n,
+  }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
-      return '${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${valueQuantity.unit}';
+      return '${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${_unit(valueQuantity.unit.toString(), l10n)}';
     }
 
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
@@ -64,8 +71,9 @@ class FhirObservationExtractor {
 
   static String? extractObservationValueForRegion(
     dynamic valueX,
-    RegionPreset region,
-  ) {
+    RegionPreset region, {
+    AppLocalizations? l10n,
+  }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
       final rawValue = valueQuantity.value?.valueDouble;
@@ -77,13 +85,16 @@ class FhirObservationExtractor {
           return converted.unit;
         }
         final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-        return '${converted.value.toStringAsFixed(2)} ${converted.unit}';
+        return '${converted.value.toStringAsFixed(2)} ${_unit(converted.unit, l10n)}';
       }
-      return '${rawValue?.toStringAsFixed(2)} $rawUnit';
+      return '${rawValue?.toStringAsFixed(2)} ${_unit(rawUnit, l10n)}';
     }
 
-    return extractObservationValue(valueX);
+    return extractObservationValue(valueX, l10n: l10n);
   }
+
+  static String _unit(String unit, AppLocalizations? l10n) =>
+      l10n == null ? unit : localizedUnit(unit, l10n);
 
   static ({double value, String unit}) convertQuantityForRegion(
     double value,

@@ -150,3 +150,22 @@ String localizedStatusDisplay(String status, AppLocalizations l10n) =>
       'Inactive' => l10n.inactive,
       _ => status,
     };
+
+/// Localizes a unit that FHIR data spells out in English (`Quantity.unit` is
+/// free text, e.g. 'beats/min' or 'pounds'). Symbols such as mmHg, %, kg, °C
+/// and mg/dL read the same in every language and are returned unchanged, as
+/// is any unit not listed here.
+String localizedUnit(String unit, AppLocalizations l10n) =>
+    switch (unit.trim().toLowerCase()) {
+      'beats/min' ||
+      'beats/minute' ||
+      'beats per minute' => l10n.unitBeatsPerMinute,
+      'breaths/min' ||
+      'breaths/minute' ||
+      'breaths per minute' => l10n.unitBreathsPerMinute,
+      'pounds' || 'pound' => l10n.unitPounds,
+      'inches' || 'inch' => l10n.unitInches,
+      'kilograms' || 'kilogram' => l10n.unitKilograms,
+      'centimeters' || 'centimeter' => l10n.unitCentimeters,
+      _ => unit,
+    };

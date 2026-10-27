@@ -2150,6 +2150,24 @@ class AppLocalizationsRo extends AppLocalizations {
   String get vitalDiastolicBloodPressure => 'Tensiune arterială diastolică';
 
   @override
+  String get unitBeatsPerMinute => 'bătăi/min';
+
+  @override
+  String get unitBreathsPerMinute => 'respirații/min';
+
+  @override
+  String get unitPounds => 'livre';
+
+  @override
+  String get unitInches => 'inci';
+
+  @override
+  String get unitKilograms => 'kilograme';
+
+  @override
+  String get unitCentimeters => 'centimetri';
+
+  @override
   String get specialtyAllergology => 'Alergologie';
 
   @override

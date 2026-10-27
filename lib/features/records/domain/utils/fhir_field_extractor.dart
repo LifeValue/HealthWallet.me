@@ -79,14 +79,20 @@ class FhirFieldExtractor {
   static String? extractIntent(dynamic intent) =>
       FhirCommonExtractor.extractIntent(intent);
 
-  static String? extractObservationValue(dynamic valueX) =>
-      FhirObservationExtractor.extractObservationValue(valueX);
+  static String? extractObservationValue(
+    dynamic valueX, {
+    AppLocalizations? l10n,
+  }) => FhirObservationExtractor.extractObservationValue(valueX, l10n: l10n);
 
   static String? extractObservationValueForRegion(
     dynamic valueX,
-    RegionPreset region,
-  ) =>
-      FhirObservationExtractor.extractObservationValueForRegion(valueX, region);
+    RegionPreset region, {
+    AppLocalizations? l10n,
+  }) => FhirObservationExtractor.extractObservationValueForRegion(
+    valueX,
+    region,
+    l10n: l10n,
+  );
 
   static ({double value, String unit}) convertQuantityForRegion(
     double value,

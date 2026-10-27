@@ -107,4 +107,17 @@ void main() {
     expect(ro.active, isNot('Active'));
     expect(localizedStatusDisplay('final', ro), 'final');
   });
+
+  test('localizedUnit translates spelled-out units and keeps symbols', () {
+    final ro = lookupAppLocalizations(const Locale('ro'));
+    final en = lookupAppLocalizations(const Locale('en'));
+    expect(localizedUnit('beats/min', ro), 'bătăi/min');
+    expect(localizedUnit('Breaths/Min', ro), 'respirații/min');
+    expect(localizedUnit('pounds', ro), 'livre');
+    expect(localizedUnit('inches', ro), 'inci');
+    expect(localizedUnit('beats/min', en), 'beats/min');
+    for (final symbol in ['mmHg', '%', '°F', 'kg/m²', 'mmol/L', 'kg', '']) {
+      expect(localizedUnit(symbol, ro), symbol);
+    }
+  });
 }

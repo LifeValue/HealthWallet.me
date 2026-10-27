@@ -413,7 +413,7 @@ class VitalsSection extends StatelessWidget {
                   ),
                   if (unit.isNotEmpty && !value.contains(unit)) ...[
                     const SizedBox(width: 4),
-                    Text(unit, style: unitStyle),
+                    Text(localizedUnit(unit, context.l10n), style: unitStyle),
                   ],
                 ],
               ),

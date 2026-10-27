@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -133,7 +134,10 @@ abstract class Observation with _$Observation implements IFhirResource {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
 
-    final valueDisplay = FhirFieldExtractor.extractObservationValue(valueX);
+    final valueDisplay = FhirFieldExtractor.extractObservationValue(
+      valueX,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createValueLine(
@@ -149,6 +153,7 @@ abstract class Observation with _$Observation implements IFhirResource {
         );
         final componentValue = FhirFieldExtractor.extractObservationValue(
           comp.valueX,
+          l10n: l10n,
         );
 
         if (componentCode != null && componentValue != null) {
@@ -178,7 +183,10 @@ abstract class Observation with _$Observation implements IFhirResource {
       final range = referenceRange!.first;
       final lowValue = range.low?.value?.valueDouble?.toStringAsFixed(2);
       final highValue = range.high?.value?.valueDouble?.toStringAsFixed(2);
-      final unit = range.low?.unit ?? range.high?.unit ?? '';
+      final unit = localizedUnit(
+        (range.low?.unit ?? range.high?.unit ?? '').toString(),
+        l10n,
+      );
 
       String? rangeDisplay;
       if (lowValue != null && highValue != null) {
@@ -421,6 +429,7 @@ abstract class Observation with _$Observation implements IFhirResource {
     final valueDisplay = FhirFieldExtractor.extractObservationValueForRegion(
       valueX,
       region,
+      l10n: l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -439,6 +448,7 @@ abstract class Observation with _$Observation implements IFhirResource {
             FhirFieldExtractor.extractObservationValueForRegion(
               comp.valueX,
               region,
+              l10n: l10n,
             );
 
         if (componentCode != null && componentValue != null) {
@@ -492,6 +502,8 @@ abstract class Observation with _$Observation implements IFhirResource {
         displayHigh = converted.value;
         displayUnit = converted.unit;
       }
+
+      displayUnit = localizedUnit(displayUnit, l10n);
 
       String? rangeDisplay;
       if (displayLow != null && displayHigh != null) {

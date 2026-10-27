@@ -1,6 +1,8 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_observation_extractor.dart';
 
@@ -201,6 +203,25 @@ void main() {
         expect(result.value, cm);
       });
     }
+  });
+
+  test('shows a spelled-out unit in the app language', () {
+    final ro = lookupAppLocalizations(const Locale('ro'));
+    final heartRate = _value({
+      'valueQuantity': quantity(72, unit: 'beats/min', code: '/min'),
+    });
+    expect(
+      FhirObservationExtractor.extractObservationValue(heartRate, l10n: ro),
+      '72.00 bătăi/min',
+    );
+    expect(
+      FhirObservationExtractor.extractObservationValueForRegion(
+        _value({'valueQuantity': quantity(200, unit: 'pounds')}),
+        RegionPreset.us,
+        l10n: ro,
+      ),
+      '200.00 livre',
+    );
   });
 
   group('extractObservationValueForRegion', () {
