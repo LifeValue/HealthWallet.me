@@ -51,17 +51,18 @@ class FieldCounts {
   }
 
   double get omissionRate => goldNonNull == 0 ? 0 : omitted / goldNonNull;
-  double get hallucinationRate => predNonNull == 0 ? 0 : hallucinated / predNonNull;
+  double get hallucinationRate =>
+      predNonNull == 0 ? 0 : hallucinated / predNonNull;
 
   Map<String, dynamic> toJson() => {
-        'tp': tp,
-        'fp': fp,
-        'fn': fn,
-        'omitted': omitted,
-        'hallucinated': hallucinated,
-        'goldNonNull': goldNonNull,
-        'predNonNull': predNonNull,
-      };
+    'tp': tp,
+    'fp': fp,
+    'fn': fn,
+    'omitted': omitted,
+    'hallucinated': hallucinated,
+    'goldNonNull': goldNonNull,
+    'predNonNull': predNonNull,
+  };
 }
 
 class DocScore {
@@ -81,7 +82,9 @@ Map<String, List<_Extracted>> _group(List<Map<String, dynamic>> resources) {
     final type = r['resourceType'];
     final specs = fieldSpecs[type];
     if (type is! String || specs == null) continue;
-    out.putIfAbsent(type, () => []).add(_Extracted([for (final s in specs) extractField(r, s)]));
+    out
+        .putIfAbsent(type, () => [])
+        .add(_Extracted([for (final s in specs) extractField(r, s)]));
   }
   return out;
 }
@@ -142,7 +145,11 @@ DocScore scoreResources(
       ];
       bool agrees(int i, int j) {
         for (var k = 0; k < specs.length; k++) {
-          if (gs[i].values[k] != null && ps[j].values[k] != null && scores[i][j][k] > 0) return true;
+          if (gs[i].values[k] != null &&
+              ps[j].values[k] != null &&
+              scores[i][j][k] > 0) {
+            return true;
+          }
         }
         return false;
       }
@@ -153,7 +160,9 @@ DocScore scoreResources(
         for (var i = 0; i < gs.length; i++)
           [
             for (var j = 0; j < ps.length; j++)
-              agrees(i, j) ? scores[i][j].fold<double>(0, (a, s) => a + (1 - s)) : _nonAgreeingCost,
+              agrees(i, j)
+                  ? scores[i][j].fold<double>(0, (a, s) => a + (1 - s))
+                  : _nonAgreeingCost,
           ],
       ];
       for (final (i, j) in hungarian(cost)) {

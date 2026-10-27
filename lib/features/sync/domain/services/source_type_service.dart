@@ -1,6 +1,6 @@
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
+import 'package:health_wallet/features/sync/domain/services/wallet_patient_service.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
@@ -69,11 +69,11 @@ class SourceTypeService {
       return existingWallet;
     }
 
-    final walletSource =
-        await _walletPatientService.createWalletSourceForPatient(
-      patientId,
-      patientName ?? 'Patient $patientId',
-    );
+    final walletSource = await _walletPatientService
+        .createWalletSourceForPatient(
+          patientId,
+          patientName ?? 'Patient $patientId',
+        );
 
     await _syncRepository.cacheSources([walletSource]);
 

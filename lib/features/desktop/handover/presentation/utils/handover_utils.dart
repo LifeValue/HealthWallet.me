@@ -1,17 +1,15 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
-import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_reconnect_dialog.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class HandoverUtils {
   static Future<void> initiateHandover(
@@ -90,7 +88,7 @@ class HandoverUtils {
     });
 
     final result = await completer.future;
-    sub.cancel();
+    unawaited(sub.cancel());
     timer.cancel();
     return result;
   }
@@ -106,8 +104,9 @@ class HandoverUtils {
         if (session.encounter.draft != null)
           'encounter': stagedEncounterToJson(session.encounter),
         if (session.diagnosticReport != null)
-          'diagnosticReport':
-              stagedDiagnosticReportToJson(session.diagnosticReport!),
+          'diagnosticReport': stagedDiagnosticReportToJson(
+            session.diagnosticReport!,
+          ),
       };
     }
 
@@ -116,7 +115,8 @@ class HandoverUtils {
       session.filePaths,
       sourceSessionId: session.id,
       phase1Data: phase1Data,
-      continueLabel: session.origin == ProcessingOrigin.import ||
+      continueLabel:
+          session.origin == ProcessingOrigin.import ||
               session.origin == ProcessingOrigin.handover
           ? context.l10n.desktopContinueImporting
           : null,

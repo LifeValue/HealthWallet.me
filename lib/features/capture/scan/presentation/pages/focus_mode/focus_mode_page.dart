@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -6,16 +7,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/features/capture/scan/presentation/pages/focus_mode/bloc/focus_mode_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
-import 'package:health_wallet/features/capture/scan/presentation/pages/focus_mode/bloc/focus_mode_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 @RoutePage()
 class FocusModePage extends StatelessWidget {
@@ -89,7 +90,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
           : const Duration(milliseconds: 200);
 
       Future.delayed(delay, () {
-        if (!mounted) {
+        if (!mounted || !context.mounted) {
           return;
         }
 
@@ -97,14 +98,14 @@ class _FocusModeViewState extends State<_FocusModeView> {
           final modalRoute = ModalRoute.of(context);
 
           if (modalRoute?.isCurrent == true || modalRoute?.isActive == true) {
-            if (mounted && context.router.canPop()) {
+            if (context.router.canPop()) {
               context.router.pop();
             } else if (Navigator.of(context, rootNavigator: false).canPop()) {
               Navigator.of(context, rootNavigator: false).pop();
             }
           }
         } catch (e) {
-          if (mounted && context.router.canPop()) {
+          if (context.mounted && context.router.canPop()) {
             context.router.pop();
           }
         }
@@ -147,11 +148,11 @@ class _FocusModeViewState extends State<_FocusModeView> {
               final notification = state.notification!;
 
               context.read<NotificationBloc>().add(
-                    NotificationAdded(notification: notification),
-                  );
-              context
-                  .read<ProcessingBloc>()
-                  .add(const NotificationAcknowledged());
+                NotificationAdded(notification: notification),
+              );
+              context.read<ProcessingBloc>().add(
+                const NotificationAcknowledged(),
+              );
 
               showProcessingDoneNotification(
                 context,
@@ -162,9 +163,9 @@ class _FocusModeViewState extends State<_FocusModeView> {
                     setState(() => _isHiding = true);
                     Timer(const Duration(milliseconds: 500), () {
                       if (mounted) {
-                        context
-                            .read<FocusModeBloc>()
-                            .add(const FocusModeEvent.notificationDisplayed());
+                        context.read<FocusModeBloc>().add(
+                          const FocusModeEvent.notificationDisplayed(),
+                        );
                       }
                     });
                   }
@@ -177,19 +178,22 @@ class _FocusModeViewState extends State<_FocusModeView> {
               return;
             }
 
-            final hasCompletedProcessing = state.sessions.any((session) =>
-                session.status == ProcessingStatus.draft ||
-                session.status == ProcessingStatus.patientExtracted);
+            final hasCompletedProcessing = state.sessions.any(
+              (session) =>
+                  session.status == ProcessingStatus.draft ||
+                  session.status == ProcessingStatus.patientExtracted,
+            );
 
-            final noSessionsProcessing =
-                state.sessions.every((session) => !session.isProcessing);
+            final noSessionsProcessing = state.sessions.every(
+              (session) => !session.isProcessing,
+            );
 
             if (hasCompletedProcessing &&
                 noSessionsProcessing &&
                 !focusModeState.waitingForNotification) {
-              context
-                  .read<FocusModeBloc>()
-                  .add(const FocusModeEvent.processingCompleted());
+              context.read<FocusModeBloc>().add(
+                const FocusModeEvent.processingCompleted(),
+              );
             }
           },
         ),
@@ -228,23 +232,23 @@ class _FocusModeViewState extends State<_FocusModeView> {
                     ),
                   )
                 : (state.isScreenDarkened
-                    ? GestureDetector(
-                        onTap: () => _restoreScreen(context),
-                        child: Container(
-                          color: Colors.black,
-                          width: double.infinity,
-                          height: double.infinity,
-                          child: Center(
-                            child: Text(
-                              context.l10n.tapToViewProgress,
-                              style: AppTextStyle.bodyMedium.copyWith(
-                                color: Colors.white.withOpacity(0.5),
+                      ? GestureDetector(
+                          onTap: () => _restoreScreen(context),
+                          child: Container(
+                            color: Colors.black,
+                            width: double.infinity,
+                            height: double.infinity,
+                            child: Center(
+                              child: Text(
+                                context.l10n.tapToViewProgress,
+                                style: AppTextStyle.bodyMedium.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      )
-                    : body),
+                        )
+                      : body),
           );
         },
       ),
@@ -366,12 +370,12 @@ class _FocusModeViewState extends State<_FocusModeView> {
               value: progress,
               minHeight: 8,
               borderRadius: BorderRadius.circular(4),
-              backgroundColor: Colors.white.withOpacity(0.1),
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation<Color>(
                 context.colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 16)
+            const SizedBox(height: 16),
           ],
         );
       },
@@ -435,7 +439,7 @@ class _FocusModeViewState extends State<_FocusModeView> {
     return Text(
       context.l10n.plugInChargerEllipsis,
       style: AppTextStyle.bodySmall.copyWith(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         fontWeight: FontWeight.w400,
       ),
       textAlign: TextAlign.center,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -8,7 +9,6 @@ import 'package:health_wallet/features/user/presentation/preferences_modal/secti
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/animated_reorderable_list.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/widgets/unified_patient_card.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class PatientSection extends StatefulWidget {
   const PatientSection({super.key});
@@ -30,19 +30,20 @@ class _PatientSectionState extends State<PatientSection> {
         final currentSelectedPatientId = patientBloc.state.selectedPatientId;
 
         context.read<PatientBloc>().add(
-              PatientPatientsLoaded(
-                preserveOrder: true,
-                preservePatientId: currentSelectedPatientId,
-              ),
-            );
+          PatientPatientsLoaded(
+            preserveOrder: true,
+            preservePatientId: currentSelectedPatientId,
+          ),
+        );
       });
     }
   }
 
   void _handlePatientTap(String patientId) {
     final currentState = context.read<PatientBloc>().state;
-    final isCurrentlyExpanded =
-        currentState.expandedPatientIds.contains(patientId);
+    final isCurrentlyExpanded = currentState.expandedPatientIds.contains(
+      patientId,
+    );
 
     if (isCurrentlyExpanded) {
       return;
@@ -54,7 +55,7 @@ class _PatientSectionState extends State<PatientSection> {
   @override
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
-    final iconColor = context.colorScheme.onSurface.withOpacity(0.6);
+    final iconColor = context.colorScheme.onSurface.withValues(alpha: 0.6);
     final textColor = context.colorScheme.onSurface;
 
     return BlocBuilder<PatientBloc, PatientState>(

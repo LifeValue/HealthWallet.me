@@ -24,9 +24,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.bottom,
     this.extraTopPadding = 0,
   }) : assert(
-          title != null || titleWidget != null,
-          'Either title or titleWidget must be provided',
-        );
+         title != null || titleWidget != null,
+         'Either title or titleWidget must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +46,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: leading != null
           ? 0
           : context.isTablet
-              ? context.screenHorizontalPadding
-              : NavigationToolbar.kMiddleSpacing,
-      title: titleWidget ??
+          ? context.screenHorizontalPadding
+          : NavigationToolbar.kMiddleSpacing,
+      title:
+          titleWidget ??
           (title != null
               ? Text(
                   title!,
@@ -62,9 +63,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        kToolbarHeight +
-            extraTopPadding +
-            (bottom != null ? bottom!.preferredSize.height : 0),
-      );
+    kToolbarHeight +
+        extraTopPadding +
+        (bottom != null ? bottom!.preferredSize.height : 0),
+  );
 }
-

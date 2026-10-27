@@ -27,7 +27,13 @@ const _oWronly = 1;
 /// [drain] returns what was written since the last call and passes it on to
 /// the original stderr, so the console still shows it.
 class NativeLogCapture {
-  NativeLogCapture._(this._file, this._savedFd, this._dup2, this._close, this._write);
+  NativeLogCapture._(
+    this._file,
+    this._savedFd,
+    this._dup2,
+    this._close,
+    this._write,
+  );
 
   final File _file;
   final int _savedFd;

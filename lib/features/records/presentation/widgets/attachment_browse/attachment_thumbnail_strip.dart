@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/pdf_thumbnail_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
-import 'package:health_wallet/core/utils/pdf_thumbnail_utils.dart';
 
 class AttachmentThumbnailStrip extends StatelessWidget {
   final List<AttachmentBrowseEntry> records;
@@ -37,7 +38,7 @@ class AttachmentThumbnailStrip extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: kThumbnailPadding),
       itemCount: records.length,
-      separatorBuilder: (_, __) => const SizedBox(width: kThumbnailGap),
+      separatorBuilder: (_, _) => const SizedBox(width: kThumbnailGap),
       itemBuilder: (context, index) {
         final entry = records[index];
         final isCurrent = index == selectedIndex;
@@ -153,7 +154,7 @@ class _ThumbnailContentState extends State<_ThumbnailContent> {
         fit: BoxFit.cover,
         width: 100,
         height: 100,
-        errorBuilder: (_, __, ___) {
+        errorBuilder: (_, _, _) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _onImageError());
           return _TitleFallback(title: widget.entry.record.title);
         },
@@ -188,10 +189,10 @@ class _ThumbnailFrame extends StatelessWidget {
     final fillColor = isChecked
         ? AppColors.primary.withValues(alpha: 0.15)
         : context.isDarkMode
-            ? context.colorScheme.surface
-            : hasFile
-                ? Colors.white
-                : Colors.grey.shade100;
+        ? context.colorScheme.surface
+        : hasFile
+        ? Colors.white
+        : Colors.grey.shade100;
 
     final child = SizedBox(
       width: kThumbnailItemWidth,
@@ -245,8 +246,8 @@ class _ThumbnailFrame extends StatelessWidget {
           color: isChecked
               ? AppColors.primary
               : isCurrent
-                  ? AppColors.primary
-                  : context.colorScheme.onSurface.withValues(alpha: 0.24),
+              ? AppColors.primary
+              : context.colorScheme.onSurface.withValues(alpha: 0.24),
           width: isChecked || isCurrent ? 3 : 1,
         ),
       ),
@@ -298,8 +299,7 @@ class _DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
-      color != oldDelegate.color ||
-      strokeWidth != oldDelegate.strokeWidth;
+      color != oldDelegate.color || strokeWidth != oldDelegate.strokeWidth;
 }
 
 class _TitleFallback extends StatelessWidget {

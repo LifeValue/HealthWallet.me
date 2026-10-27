@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 
 class InfoRow extends StatelessWidget {
@@ -28,8 +28,9 @@ class InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: AppTextStyle.labelSmall
-                  .copyWith(color: context.colorScheme.onSurface),
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
             ),
           ),
         ],

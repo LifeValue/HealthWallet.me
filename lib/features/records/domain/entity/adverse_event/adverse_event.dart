@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -93,16 +94,16 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'AdverseEvent',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'AdverseEvent',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -118,14 +119,16 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Actuality
     final actualityDisplay = actuality?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(actualityDisplay,
-          prefix: 'Actuality'),
+      ResourceFieldMapper.createStatusLine(
+        actualityDisplay,
+        prefix: 'Actuality',
+      ),
     );
 
     // Category
@@ -133,47 +136,61 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Seriousness
-    final seriousnessDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(seriousness);
+    final seriousnessDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      seriousness,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(seriousnessDisplay,
-          prefix: 'Seriousness'),
+      ResourceFieldMapper.createWarningLine(
+        seriousnessDisplay,
+        prefix: 'Seriousness',
+      ),
     );
 
     // Severity
-    final severityDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(severity);
+    final severityDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      severity,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(severityDisplay, prefix: 'Severity'),
+      ResourceFieldMapper.createWarningLine(
+        severityDisplay,
+        prefix: 'Severity',
+      ),
     );
 
     // Outcome
-    final outcomeDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(outcome);
+    final outcomeDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      outcome,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(outcomeDisplay, prefix: 'Outcome'),
     );
 
     // Location
-    final locationDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(location);
+    final locationDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      location,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(locationDisplay,
-          prefix: 'Location'),
+      ResourceFieldMapper.createLocationLine(
+        locationDisplay,
+        prefix: 'Location',
+      ),
     );
 
     // Recorder
-    final recorderDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(recorder);
+    final recorderDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      recorder,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
@@ -188,10 +205,12 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     return infoLines;
@@ -204,12 +223,15 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
       encounter?.reference?.valueString,
       location?.reference?.valueString,
       recorder?.reference?.valueString,
-      ...?resultingCondition
-          ?.map((reference) => reference.reference?.valueString),
-      ...?subjectMedicalHistory
-          ?.map((reference) => reference.reference?.valueString),
-      ...?referenceDocument
-          ?.map((reference) => reference.reference?.valueString),
+      ...?resultingCondition?.map(
+        (reference) => reference.reference?.valueString,
+      ),
+      ...?subjectMedicalHistory?.map(
+        (reference) => reference.reference?.valueString,
+      ),
+      ...?referenceDocument?.map(
+        (reference) => reference.reference?.valueString,
+      ),
       ...?study?.map((reference) => reference.reference?.valueString),
     }.where((reference) => reference != null).toList();
   }

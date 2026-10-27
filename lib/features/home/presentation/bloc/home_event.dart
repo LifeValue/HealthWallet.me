@@ -22,14 +22,16 @@ abstract class HomeSourceChanged extends HomeEvent with _$HomeSourceChanged {
 }
 
 @freezed
-abstract class HomeEditModeChanged extends HomeEvent with _$HomeEditModeChanged {
+abstract class HomeEditModeChanged extends HomeEvent
+    with _$HomeEditModeChanged {
   const HomeEditModeChanged._();
 
   const factory HomeEditModeChanged(bool editMode) = _HomeEditModeChanged;
 }
 
 @freezed
-abstract class HomeRecordsReordered extends HomeEvent with _$HomeRecordsReordered {
+abstract class HomeRecordsReordered extends HomeEvent
+    with _$HomeRecordsReordered {
   const HomeRecordsReordered._();
 
   const factory HomeRecordsReordered(int oldIndex, int newIndex) =
@@ -37,7 +39,8 @@ abstract class HomeRecordsReordered extends HomeEvent with _$HomeRecordsReordere
 }
 
 @freezed
-abstract class HomeVitalsReordered extends HomeEvent with _$HomeVitalsReordered {
+abstract class HomeVitalsReordered extends HomeEvent
+    with _$HomeVitalsReordered {
   const HomeVitalsReordered._();
 
   const factory HomeVitalsReordered(int oldIndex, int newIndex) =
@@ -80,7 +83,8 @@ abstract class HomeRefreshPreservingOrder extends HomeEvent
 }
 
 @freezed
-abstract class HomeSourceLabelUpdated extends HomeEvent with _$HomeSourceLabelUpdated {
+abstract class HomeSourceLabelUpdated extends HomeEvent
+    with _$HomeSourceLabelUpdated {
   const HomeSourceLabelUpdated._();
 
   const factory HomeSourceLabelUpdated(String sourceId, String newLabel) =

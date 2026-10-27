@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/home/presentation/widgets/reorderable_grid.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/home/presentation/widgets/shaking_card.dart';
 
 class MedicalRecordsSection extends StatelessWidget {
@@ -92,15 +92,18 @@ class MedicalRecordsSection extends StatelessWidget {
   }
 
   Widget _buildOverviewCard(
-      BuildContext context, OverviewCard card, double screenWidth,
-      {Key? key}) {
+    BuildContext context,
+    OverviewCard card,
+    double screenWidth, {
+    Key? key,
+  }) {
     final bool isSmall = screenWidth < _breakpoint;
     final bool isTabletLayout = screenWidth >= 600;
     final double iconSize = isSmall ? 22 : 26;
 
     final TextStyle categoryStyle = AppTextStyle.bodySmall.copyWith(
       fontSize: isSmall ? 10 : 14,
-      color: context.colorScheme.onSurface.withOpacity(0.6),
+      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
     );
 
     final TextStyle countStyle = AppTextStyle.bodyMedium.copyWith(

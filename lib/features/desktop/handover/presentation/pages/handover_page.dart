@@ -28,8 +28,7 @@ class HandoverPage extends StatelessWidget {
           return BlocBuilder<ProcessingBloc, ProcessingState>(
             builder: (context, processingState) {
               final transferSessions = handoverState.activeSessions.values
-                  .where((s) =>
-                      s.status == HandoverStatus.receiving)
+                  .where((s) => s.status == HandoverStatus.receiving)
                   .toList();
               final processingSessions = processingState.sessions
                   .where((s) => s.origin == ProcessingOrigin.handover)
@@ -40,57 +39,59 @@ class HandoverPage extends StatelessWidget {
               return Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: context.contentMaxWidth),
+                  constraints: BoxConstraints(
+                    maxWidth: context.contentMaxWidth,
+                  ),
                   child: Padding(
-                padding: const EdgeInsets.all(Insets.medium),
-                child: hasContent
-                    ? SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (transferSessions.isNotEmpty) ...[
-                              Text(
-                                'Transfer',
-                                style: AppTextStyle.labelSmall.copyWith(
-                                  color: context.colorScheme.onSurface
-                                      .withValues(alpha: 0.4),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(height: Insets.small),
-                              ...transferSessions.map(
-                                (s) => Padding(
-                                  padding: const EdgeInsets.only(
-                                      bottom: Insets.small),
-                                  child:
-                                      _HandoverTransferCard(session: s),
-                                ),
-                              ),
-                            ],
-                            if (processingSessions.isNotEmpty) ...[
-                              if (transferSessions.isNotEmpty)
-                                const SizedBox(height: Insets.normal),
-                              Text(
-                                'Processing',
-                                style: AppTextStyle.labelSmall.copyWith(
-                                  color: context.colorScheme.onSurface
-                                      .withValues(alpha: 0.4),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(height: Insets.small),
-                              SessionList(sessions: processingSessions),
-                            ],
-                          ],
-                        ),
-                      )
-                    : _HandoverEmptyState(),
-              ),
-              ),
+                    padding: const EdgeInsets.all(Insets.medium),
+                    child: hasContent
+                        ? SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (transferSessions.isNotEmpty) ...[
+                                  Text(
+                                    'Transfer',
+                                    style: AppTextStyle.labelSmall.copyWith(
+                                      color: context.colorScheme.onSurface
+                                          .withValues(alpha: 0.4),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: Insets.small),
+                                  ...transferSessions.map(
+                                    (s) => Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: Insets.small,
+                                      ),
+                                      child: _HandoverTransferCard(session: s),
+                                    ),
+                                  ),
+                                ],
+                                if (processingSessions.isNotEmpty) ...[
+                                  if (transferSessions.isNotEmpty)
+                                    const SizedBox(height: Insets.normal),
+                                  Text(
+                                    'Processing',
+                                    style: AppTextStyle.labelSmall.copyWith(
+                                      color: context.colorScheme.onSurface
+                                          .withValues(alpha: 0.4),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: Insets.small),
+                                  SessionList(sessions: processingSessions),
+                                ],
+                              ],
+                            ),
+                          )
+                        : _HandoverEmptyState(),
+                  ),
+                ),
               );
             },
           );
@@ -190,12 +191,17 @@ class _HandoverTransferCard extends StatelessWidget {
             const SizedBox(height: Insets.small),
             Row(
               children: [
-                Icon(Icons.check_circle, size: 16, color: AppColors.success),
+                const Icon(
+                  Icons.check_circle,
+                  size: 16,
+                  color: AppColors.success,
+                ),
                 const SizedBox(width: Insets.extraSmall),
                 Text(
                   'Transfer complete',
-                  style:
-                      AppTextStyle.labelSmall.copyWith(color: AppColors.success),
+                  style: AppTextStyle.labelSmall.copyWith(
+                    color: AppColors.success,
+                  ),
                 ),
               ],
             ),
@@ -241,11 +247,15 @@ class _StatusIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (status) {
       case HandoverStatus.complete:
-        return Icon(Icons.check_circle, size: 24, color: AppColors.success);
+        return const Icon(
+          Icons.check_circle,
+          size: 24,
+          color: AppColors.success,
+        );
       case HandoverStatus.error:
-        return Icon(Icons.error, size: 24, color: AppColors.error);
+        return const Icon(Icons.error, size: 24, color: AppColors.error);
       default:
-        return SizedBox(
+        return const SizedBox(
           width: 24,
           height: 24,
           child: CircularProgressIndicator(

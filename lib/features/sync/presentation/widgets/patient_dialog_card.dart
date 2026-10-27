@@ -51,8 +51,9 @@ class PatientDialogCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = context.theme.dividerColor;
-    final textColor =
-        context.isDarkMode ? const Color(0xFFE0E0E0) : const Color(0xFF212121);
+    final textColor = context.isDarkMode
+        ? const Color(0xFFE0E0E0)
+        : const Color(0xFF212121);
 
     return Container(
       width: width ?? context.contentMaxWidth,
@@ -87,4 +88,3 @@ class PatientDialogCard extends StatelessWidget {
     );
   }
 }
-

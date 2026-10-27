@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -79,16 +80,16 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'CareTeam',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'CareTeam',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -104,7 +105,7 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;
@@ -118,26 +119,35 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Managing Organization
     final organizationDisplay =
-        FhirFieldExtractor.extractMultipleReferenceDisplays(managingOrganization);
+        FhirFieldExtractor.extractMultipleReferenceDisplays(
+          managingOrganization,
+        );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(organizationDisplay,
-          prefix: 'Organization'),
+      ResourceFieldMapper.createOrganizationLine(
+        organizationDisplay,
+        prefix: 'Organization',
+      ),
     );
 
     // Participants/Members
-    final participantsDisplay =
-        FhirFieldExtractor.extractParticipants(participant);
+    final participantsDisplay = FhirFieldExtractor.extractParticipants(
+      participant,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createTeamLine(participantsDisplay,
-          prefix: 'Members'),
+      ResourceFieldMapper.createTeamLine(
+        participantsDisplay,
+        prefix: 'Members',
+      ),
     );
 
     // Period
@@ -148,8 +158,7 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
     );
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
@@ -157,10 +166,12 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes
@@ -179,8 +190,9 @@ abstract class CareTeam with _$CareTeam implements IFhirResource {
       subject?.reference?.valueString,
       encounter?.reference?.valueString,
       ...?reasonReference?.map((reference) => reference.reference?.valueString),
-      ...?managingOrganization
-          ?.map((reference) => reference.reference?.valueString),
+      ...?managingOrganization?.map(
+        (reference) => reference.reference?.valueString,
+      ),
     }.where((reference) => reference != null).toList();
   }
 

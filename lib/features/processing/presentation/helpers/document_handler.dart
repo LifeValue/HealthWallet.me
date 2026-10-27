@@ -1,20 +1,22 @@
+import 'dart:async';
+
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
-import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/dialog_helper.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:auto_route/auto_route.dart';
 
 mixin DocumentHandler<T extends StatefulWidget> on State<T> {
   Future<void> navigateToFhirMapper(
@@ -29,11 +31,11 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       if (!context.mounted) return;
 
       if (isModelLoaded) {
-        context.router.push(ProcessingRoute(sessionId: session.id));
+        unawaited(context.router.push(ProcessingRoute(sessionId: session.id)));
         return;
       }
 
-      navigateToLoadModel(context, session);
+      unawaited(navigateToLoadModel(context, session));
     } catch (e) {
       if (context.mounted) {
         DialogHelper.showErrorDialog(context, 'Failed to create encounter: $e');
@@ -45,12 +47,13 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     BuildContext context,
     ProcessingSession session,
   ) async {
-    final result = await context.router
-        .push<bool>(LoadModelRoute(canAttachToEncounter: true));
+    final result = await context.router.push<bool>(
+      LoadModelRoute(canAttachToEncounter: true),
+    );
     if (!context.mounted) return;
 
     if (result == true) {
-      context.router.push(ProcessingRoute(sessionId: session.id));
+      unawaited(context.router.push(ProcessingRoute(sessionId: session.id)));
     } else {
       if (result == false) {
         final result = await showDialog<AttachToEncounterResult>(
@@ -82,21 +85,20 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
           final patientName =
               patientForSource?.displayTitle ?? 'Unknown Patient';
 
-          final sourceTypeService =
-              getIt<SourceTypeService>();
-          final walletSource =
-              await sourceTypeService.getWritableSourceForPatient(
-            patientId: patientId,
-            patientName: patientName,
-            availableSources: homeState.sources,
-          );
+          final sourceTypeService = getIt<SourceTypeService>();
+          final walletSource = await sourceTypeService
+              .getWritableSourceForPatient(
+                patientId: patientId,
+                patientName: patientName,
+                availableSources: homeState.sources,
+              );
 
           finalEncounter = encounter.draft!.toFhirResource(
             sourceId: walletSource.id,
             subjectId: existingPatient.subjectId,
           ) as Encounter;
 
-          getIt<SyncRepository>().saveResources([finalEncounter]);
+          unawaited(getIt<SyncRepository>().saveResources([finalEncounter]));
         } else {
           finalEncounter = encounter.existing!;
         }
@@ -106,17 +108,22 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
         try {
           await attachToEncounter(context, session.filePaths, finalEncounter);
           if (context.mounted) {
-            context.read<ProcessingBloc>().add(SessionCleared(session: session));
+            context.read<ProcessingBloc>().add(
+              SessionCleared(session: session),
+            );
           }
         } catch (e) {
           if (context.mounted) {
-            context.read<ProcessingBloc>().add(SessionCleared(session: session));
+            context.read<ProcessingBloc>().add(
+              SessionCleared(session: session),
+            );
           }
           rethrow;
         }
       }
     }
   }
+
   Future<void> attachToEncounter(
     BuildContext context,
     List<String> filePaths,
@@ -125,6 +132,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
     try {
       final homeState = context.read<HomeBloc>().state;
       final patientState = context.read<PatientBloc>().state;
+      final attachedDocumentsTitle = context.l10n.attachedDocuments;
 
       final selectedPatient = patientState.patients.isNotEmpty
           ? patientState.patients.firstWhere(
@@ -146,19 +154,18 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
 
       if (context.mounted) {
         context.read<PatientBloc>().add(
-              const PatientPatientsLoaded(),
-            );
+          const PatientPatientsLoaded(),
+        );
       }
 
-      final documentReferenceService =
-          getIt<DocumentReferenceService>();
+      final documentReferenceService = getIt<DocumentReferenceService>();
 
       await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
         filePaths: filePaths,
         patientId: patientId,
         encounter: encounter,
         sourceId: walletSource.id,
-        title: context.l10n.attachedDocuments,
+        title: attachedDocumentsTitle,
       );
 
       if (context.mounted) {
@@ -166,7 +173,7 @@ mixin DocumentHandler<T extends StatefulWidget> on State<T> {
       }
 
       if (context.mounted) {
-        context.router.replaceAll([RecordsRoute()]);
+        unawaited(context.router.replaceAll([RecordsRoute()]));
       }
     } catch (e) {
       if (context.mounted) Navigator.of(context).pop();

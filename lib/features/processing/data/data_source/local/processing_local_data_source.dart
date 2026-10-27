@@ -1,5 +1,4 @@
 import 'package:health_wallet/core/data/local/app_database.dart';
-import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:injectable/injectable.dart';
 
 abstract class ProcessingLocalDataSource {
@@ -27,7 +26,7 @@ class ProcessingLocalDataSourceImpl implements ProcessingLocalDataSource {
 
   @override
   Future<List<ProcessingSessionDto>> getProcessingSessions() async {
-    return (appDatabase.select(appDatabase.processingSessions)).get();
+    return appDatabase.select(appDatabase.processingSessions).get();
   }
 
   @override
@@ -35,15 +34,15 @@ class ProcessingLocalDataSourceImpl implements ProcessingLocalDataSource {
     String id,
     ProcessingSessionsCompanion entity,
   ) async {
-    return (appDatabase.update(appDatabase.processingSessions)
-          ..where((t) => t.id.equals(id)))
-        .write(entity);
+    return (appDatabase.update(
+      appDatabase.processingSessions,
+    )..where((t) => t.id.equals(id))).write(entity);
   }
 
   @override
   Future<int> deleteProcessingSession(String id) async {
-    return (appDatabase.delete(appDatabase.processingSessions)
-          ..where((t) => t.id.equals(id)))
-        .go();
+    return (appDatabase.delete(
+      appDatabase.processingSessions,
+    )..where((t) => t.id.equals(id))).go();
   }
 }

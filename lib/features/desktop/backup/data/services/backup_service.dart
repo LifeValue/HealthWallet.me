@@ -2,16 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:injectable/injectable.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:pointycastle/export.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
-import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
+import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
+import 'package:pointycastle/export.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @lazySingleton
 class BackupService {
@@ -20,7 +17,8 @@ class BackupService {
   BackupService(this._database);
 
   Future<String> _defaultBackupPath() async {
-    final home = Platform.environment['HOME'] ??
+    final home =
+        Platform.environment['HOME'] ??
         Platform.environment['USERPROFILE'] ??
         '';
     return p.join(home, 'Documents', 'HealthWallet', 'Backups');
@@ -65,11 +63,13 @@ class BackupService {
     final safeName = (name != null && name.trim().isNotEmpty)
         ? name.trim().replaceAll(RegExp(r'[^\w\s\-.]'), '_')
         : '';
-    final prefix = safeName.isNotEmpty ? '${safeName}_' : 'healthwallet_backup_';
+    final prefix = safeName.isNotEmpty
+        ? '${safeName}_'
+        : 'healthwallet_backup_';
     final fileName = '$prefix$id.db';
     final snapshotPath = p.join(backupDir.path, fileName);
 
-    await _database.customStatement("VACUUM INTO ?", [snapshotPath]);
+    await _database.customStatement('VACUUM INTO ?', [snapshotPath]);
 
     final snapshotFile = File(snapshotPath);
     final sizeBytes = await snapshotFile.length();
@@ -111,9 +111,11 @@ class BackupService {
 
     await _database.customStatement('PRAGMA wal_checkpoint(TRUNCATE)');
 
-    final tables = await _database.customSelect(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
-    ).get();
+    final tables = await _database
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+        )
+        .get();
 
     for (final row in tables) {
       final name = row.data['name'] as String;
@@ -123,9 +125,11 @@ class BackupService {
     final escaped = backupPath.replaceAll("'", "''");
     await _database.customStatement("ATTACH DATABASE '$escaped' AS backup_db");
 
-    final backupTables = await _database.customSelect(
-      "SELECT name FROM backup_db.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
-    ).get();
+    final backupTables = await _database
+        .customSelect(
+          "SELECT name FROM backup_db.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+        )
+        .get();
 
     for (final row in backupTables) {
       final name = row.data['name'] as String;
@@ -172,10 +176,12 @@ class BackupService {
   }
 
   Future<int> _getRecordCount() async {
-    final result = await _database.customSelect(
-      'SELECT COUNT(*) as count FROM fhir_resource',
-      readsFrom: {_database.fhirResource},
-    ).getSingle();
+    final result = await _database
+        .customSelect(
+          'SELECT COUNT(*) as count FROM fhir_resource',
+          readsFrom: {_database.fhirResource},
+        )
+        .getSingle();
     return result.data['count'] as int;
   }
 
@@ -191,18 +197,6 @@ class BackupService {
 
     final metaFile = File(_metadataPathFor(target.filePath));
     if (await metaFile.exists()) await metaFile.delete();
-  }
-
-  Future<void> _deleteWithRetry(File file, {int attempts = 5}) async {
-    for (var i = 0; i < attempts; i++) {
-      try {
-        await file.delete();
-        return;
-      } on FileSystemException {
-        if (i == attempts - 1) rethrow;
-        await Future<void>.delayed(Duration(milliseconds: 200 * (i + 1)));
-      }
-    }
   }
 
   String _metadataPathFor(String dbPath) => '$dbPath.meta.json';

@@ -1,13 +1,11 @@
 import 'dart:io';
 
-import 'package:injectable/injectable.dart';
-
 import 'package:health_wallet/core/services/path_resolver.dart';
-import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/attachment_browse_service.dart';
+import 'package:injectable/injectable.dart';
 
 @Injectable(as: AttachmentBrowseService)
 class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
@@ -15,7 +13,11 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
   final PathResolver _pathResolver;
   final SpecialtyClassifier _specialtyClassifier;
 
-  RepositoryAttachmentBrowseService(this._repository, this._pathResolver, this._specialtyClassifier);
+  RepositoryAttachmentBrowseService(
+    this._repository,
+    this._pathResolver,
+    this._specialtyClassifier,
+  );
 
   @override
   Future<List<AttachmentBrowseEntry>> loadEntries({
@@ -88,14 +90,18 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
         final directDocs = docsByRelated[record.resourceId] ?? [];
         final encounterDocs = record.fhirType == FhirType.Encounter
             ? (docsByEncounter[record.resourceId] ?? [])
-                .where((d) => _hasNoRelatedRef(d) ||
-                    _relatedRefPointsTo(d, record.resourceId))
-                .toList()
+                  .where(
+                    (d) =>
+                        _hasNoRelatedRef(d) ||
+                        _relatedRefPointsTo(d, record.resourceId),
+                  )
+                  .toList()
             : <IFhirResource>[];
         final seen = <String>{};
-        docs = [...directDocs, ...encounterDocs]
-            .where((d) => seen.add(d.resourceId))
-            .toList();
+        docs = [
+          ...directDocs,
+          ...encounterDocs,
+        ].where((d) => seen.add(d.resourceId)).toList();
       }
       String? thumbnailPath;
 
@@ -114,7 +120,8 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
             final url = attachment['url'] as String?;
             if (url != null && url.isNotEmpty) {
               final rawPath = Uri.decodeComponent(
-                  url.startsWith('file://') ? url.substring(7) : url);
+                url.startsWith('file://') ? url.substring(7) : url,
+              );
               try {
                 final resolved = await _pathResolver.toAbsolute(rawPath);
                 if (await File(resolved).exists()) {
@@ -128,11 +135,13 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
         if (thumbnailPath != null) break;
       }
 
-      entries.add(AttachmentBrowseEntry(
-        record: record,
-        thumbnailPath: thumbnailPath,
-        attachmentCount: docs.length,
-      ));
+      entries.add(
+        AttachmentBrowseEntry(
+          record: record,
+          thumbnailPath: thumbnailPath,
+          attachmentCount: docs.length,
+        ),
+      );
     }
 
     return entries;
@@ -158,7 +167,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
     String? patientName;
     String? organizationName;
     String? practitionerName;
-    final String? specialtyName = _extractSpecialtyName(record.rawResource) ?? _classifySpecialtyName(record);
+    final String? specialtyName =
+        _extractSpecialtyName(record.rawResource) ??
+        _classifySpecialtyName(record);
     final attachments = <AttachmentBrowseFile>[];
 
     for (final resource in related) {
@@ -177,8 +188,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
             practitionerName = _extractPersonName(resource.rawResource);
           case FhirType.DocumentReference:
             if (_isDocDirectlyLinked(resource, record)) {
-              final docAttachments =
-                  await _resolveDocumentAttachments(resource);
+              final docAttachments = await _resolveDocumentAttachments(
+                resource,
+              );
               attachments.addAll(docAttachments);
             }
           default:
@@ -215,8 +227,7 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
             record.rawResource['subject']?['reference'] as String?;
         if (subjectRef != null) {
           try {
-            final resolved =
-                await _repository.resolveReference(subjectRef);
+            final resolved = await _repository.resolveReference(subjectRef);
             if (resolved != null) {
               patientName = _extractPersonName(resolved.rawResource);
             }
@@ -307,8 +318,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
       final givenList = nameObj['given'] as List<dynamic>?;
       final family = nameObj['family'] as String?;
 
-      final given =
-          (givenList != null && givenList.isNotEmpty) ? givenList[0] : null;
+      final given = (givenList != null && givenList.isNotEmpty)
+          ? givenList[0]
+          : null;
 
       if (given != null && family != null) return '$given $family';
       if (given != null) return given.toString();
@@ -376,7 +388,8 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
 
       if (url != null && url.isNotEmpty) {
         final rawPath = Uri.decodeComponent(
-            url.startsWith('file://') ? url.substring(7) : url);
+          url.startsWith('file://') ? url.substring(7) : url,
+        );
         try {
           final absolute = await _pathResolver.toAbsolute(rawPath);
           if (await File(absolute).exists()) {
@@ -385,13 +398,15 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
         } catch (_) {}
       }
 
-      result.add(AttachmentBrowseFile(
-        id: docRef.resourceId,
-        resource: docRef,
-        title: docRef.title,
-        filePath: resolvedPath,
-        contentType: contentType,
-      ));
+      result.add(
+        AttachmentBrowseFile(
+          id: docRef.resourceId,
+          resource: docRef,
+          title: docRef.title,
+          filePath: resolvedPath,
+          contentType: contentType,
+        ),
+      );
     }
 
     return result;

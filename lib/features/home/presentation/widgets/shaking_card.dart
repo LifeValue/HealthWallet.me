@@ -7,7 +7,7 @@ class ShakingCard extends StatefulWidget {
   const ShakingCard({super.key, required this.child, required this.isShaking});
 
   @override
-  _ShakingCardState createState() => _ShakingCardState();
+  State<ShakingCard> createState() => _ShakingCardState();
 }
 
 class _ShakingCardState extends State<ShakingCard>

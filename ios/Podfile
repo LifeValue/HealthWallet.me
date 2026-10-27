@@ -61,7 +61,7 @@ post_install do |installer|
         'PERMISSION_BLUETOOTH=1',
       ]
 
-      # Fix deployment target for all pods (min iOS 16.0)
+      # Fix deployment target for all pods (min iOS 16.4)
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.4'
 
       # Disable code signing for Pods (not needed, Runner handles signing)

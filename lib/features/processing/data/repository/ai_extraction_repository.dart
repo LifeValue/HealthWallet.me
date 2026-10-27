@@ -1,15 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+
 import 'package:collection/collection.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/processing/data/data_source/network/ai_inference_data_source.dart';
+import 'package:health_wallet/features/processing/data/model/grammar/gbnf_grammars.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/basic_info_vision_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/draft_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/nuextract_prompt.dart';
 import 'package:health_wallet/features/processing/data/model/prompt_template/remaining_resources_vision_prompt.dart';
+import 'package:health_wallet/features/processing/data/model/structured_output/extraction_schemas.dart';
 import 'package:health_wallet/features/processing/data/utils/image_preprocessor.dart';
 import 'package:health_wallet/features/processing/data/utils/observation_ocr_validator.dart';
 import 'package:health_wallet/features/processing/data/utils/ocr_pages.dart';
@@ -19,8 +22,6 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
-import 'package:health_wallet/features/processing/data/model/grammar/gbnf_grammars.dart';
-import 'package:health_wallet/features/processing/data/model/structured_output/extraction_schemas.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 
@@ -55,7 +56,14 @@ mixin AiExtractionRepository {
     caseSensitive: false,
   );
   static const _booleanValues = {
-    'true', 'false', 'yes', 'no', 'oui', 'non', 'vrai', 'faux',
+    'true',
+    'false',
+    'yes',
+    'no',
+    'oui',
+    'non',
+    'vrai',
+    'faux',
   };
 
   AiInferenceDataSource get networkDataSource;
@@ -73,14 +81,20 @@ mixin AiExtractionRepository {
   /// prompts also carry the draft.
   static int _textContextSize(int? contextSize, ExtractionOutputMode mode) {
     final minimum = mode == ExtractionOutputMode.schemaDraft ? 4096 : 2048;
-    return (contextSize == null || contextSize < minimum) ? minimum : contextSize;
+    return (contextSize == null || contextSize < minimum)
+        ? minimum
+        : contextSize;
   }
 
   /// OCR characters per phase-2 text chunk at [contextSize] tokens, minus the
   /// draft in schemaDraft mode; at least 800.
-  static int _remainingChunkChars(int contextSize, {bool drafting = false}) => math.max(
+  static int _remainingChunkChars(int contextSize, {bool drafting = false}) =>
+      math.max(
         800,
-        (contextSize - _remainingPromptTokens - _remainingAnswerTokens - (drafting ? DraftPrompt.maxTokens : 0)) *
+        (contextSize -
+                _remainingPromptTokens -
+                _remainingAnswerTokens -
+                (drafting ? DraftPrompt.maxTokens : 0)) *
             _ocrCharsPerToken,
       );
 
@@ -93,15 +107,32 @@ mixin AiExtractionRepository {
     int? threads,
     ExtractionOutputMode mode,
   ) async {
-    final ctx = math.max(_remainingTextContext, _textContextSize(contextSize, mode));
+    final ctx = math.max(
+      _remainingTextContext,
+      _textContextSize(contextSize, mode),
+    );
     try {
-      await networkDataSource.initModel(withVision: false, gpuLayers: gpuLayers, threads: threads, contextSize: ctx);
+      await networkDataSource.initModel(
+        withVision: false,
+        gpuLayers: gpuLayers,
+        threads: threads,
+        contextSize: ctx,
+      );
       return ctx;
     } catch (e) {
       final reduced = _textContextSize(contextSize, mode);
-      if (reduced >= ctx || !e.toString().contains('Not enough memory')) rethrow;
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text model at ctx=$ctx does not fit ($e), retrying at ctx=$reduced');
-      await networkDataSource.initModel(withVision: false, gpuLayers: gpuLayers, threads: threads, contextSize: reduced);
+      if (reduced >= ctx || !e.toString().contains('Not enough memory')) {
+        rethrow;
+      }
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] text model at ctx=$ctx does not fit ($e), retrying at ctx=$reduced',
+      );
+      await networkDataSource.initModel(
+        withVision: false,
+        gpuLayers: gpuLayers,
+        threads: threads,
+        contextSize: reduced,
+      );
       return reduced;
     }
   }
@@ -126,37 +157,68 @@ mixin AiExtractionRepository {
         grammar: GbnfGrammars.jsonArray,
       );
     }
-    final responseFormat = ExtractionSchemas.responseFormat(schema, name: schemaName);
-    final family = mode == ExtractionOutputMode.schema ? networkDataSource.promptFamily : PromptFamily.standard;
+    final responseFormat = ExtractionSchemas.responseFormat(
+      schema,
+      name: schemaName,
+    );
+    final family = mode == ExtractionOutputMode.schema
+        ? networkDataSource.promptFamily
+        : PromptFamily.standard;
     if (family == PromptFamily.standard) {
-      return networkDataSource.runTextPrompt(prompt: prompt, maxTokens: maxTokens, responseFormat: responseFormat);
+      return networkDataSource.runTextPrompt(
+        prompt: prompt,
+        maxTokens: maxTokens,
+        responseFormat: responseFormat,
+      );
     }
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] ${family.name} template prompt, document ${document.length} chars');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] ${family.name} template prompt, document ${document.length} chars',
+    );
     return networkDataSource.runTextPrompt(
       prompt: document,
       maxTokens: maxTokens,
       responseFormat: responseFormat,
-      chatTemplateKwargs: NuExtractPrompt.kwargs(family, schema, schemaName: schemaName, documentCategory: documentCategory),
+      chatTemplateKwargs: NuExtractPrompt.kwargs(
+        family,
+        schema,
+        schemaName: schemaName,
+        documentCategory: documentCategory,
+      ),
     );
   }
 
-  static String _head(String text, int maxLength) => text.length > maxLength ? text.substring(0, maxLength) : text;
+  static String _head(String text, int maxLength) =>
+      text.length > maxLength ? text.substring(0, maxLength) : text;
 
   /// The unconstrained draft call of schemaDraft mode; null when it fails or
   /// returns nothing, so the constrained call runs without a draft.
-  Future<String?> _runDraft(Future<String?> Function(int maxTokens) call, int? maxTokens) async {
-    final tokens = math.min(DraftPrompt.maxTokens, maxTokens ?? DraftPrompt.maxTokens);
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] draft pass (unconstrained, maxTokens=$tokens)...');
+  Future<String?> _runDraft(
+    Future<String?> Function(int maxTokens) call,
+    int? maxTokens,
+  ) async {
+    final tokens = math.min(
+      DraftPrompt.maxTokens,
+      maxTokens ?? DraftPrompt.maxTokens,
+    );
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] draft pass (unconstrained, maxTokens=$tokens)...',
+    );
     try {
       final draft = (await call(tokens))?.trim();
       if (draft == null || draft.isEmpty) {
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] draft empty, constrained pass without draft');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] draft empty, constrained pass without draft',
+        );
         return null;
       }
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] draft: ${draft.length} chars');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] draft: ${draft.length} chars',
+      );
       return draft;
     } catch (e) {
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] draft failed: $e, constrained pass without draft');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] draft failed: $e, constrained pass without draft',
+      );
       return null;
     }
   }
@@ -204,7 +266,9 @@ mixin AiExtractionRepository {
 
     if (lastCompleteObjectEnd > 0) {
       final repaired = '${trimmed.substring(0, lastCompleteObjectEnd + 1)}]';
-      ProcessingLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] repaired truncated JSON array (cut at char $lastCompleteObjectEnd of ${trimmed.length})');
+      ProcessingLogBuffer.instance.log(
+        '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] repaired truncated JSON array (cut at char $lastCompleteObjectEnd of ${trimmed.length})',
+      );
       return repaired;
     }
 
@@ -218,9 +282,7 @@ mixin AiExtractionRepository {
     final diagnosticReport = resources
         .whereType<MappingDiagnosticReport>()
         .firstOrNull;
-    final encounter = resources
-        .whereType<MappingEncounter>()
-        .firstOrNull;
+    final encounter = resources.whereType<MappingEncounter>().firstOrNull;
 
     if (documentCategory == 'lab_report' &&
         diagnosticReport != null &&
@@ -248,7 +310,9 @@ mixin AiExtractionRepository {
     if (mode.usesSchema) {
       final object = ExtractionSchemas.decodeObject(response);
       if (object == null) {
-        throw const FormatException('basic info: schema output is not a JSON object');
+        throw const FormatException(
+          'basic info: schema output is not a JSON object',
+        );
       }
       jsonList = ExtractionSchemas.basicInfoToLegacy(object);
     } else {
@@ -265,7 +329,7 @@ mixin AiExtractionRepository {
       }
     }
 
-    List<MappingResource> resources = [];
+    final List<MappingResource> resources = [];
     for (Map<String, dynamic> json in jsonList) {
       MappingResource resource = MappingResource.fromJson(json);
       if (inputTextForConfidence.isNotEmpty) {
@@ -282,23 +346,33 @@ mixin AiExtractionRepository {
     }
 
     final documentCategory = aiCategory ?? '';
-    final resourceTypes = resources.map((r) => r.runtimeType.toString().replaceAll(r'_$', '').replaceAll('Impl', '')).join(', ');
-    ProcessingLogBuffer.instance.log('[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] parsed ${jsonList.length} JSON objects -> ${resources.length} valid resources [$resourceTypes], category=${documentCategory.isEmpty ? '(empty)' : documentCategory}');
+    final resourceTypes = resources
+        .map(
+          (r) => r.runtimeType
+              .toString()
+              .replaceAll(r'_$', '')
+              .replaceAll('Impl', ''),
+        )
+        .join(', ');
+    ProcessingLogBuffer.instance.log(
+      '[${DateTime.now().toIso8601String().substring(11, 23)}][ScanAI] parsed ${jsonList.length} JSON objects -> ${resources.length} valid resources [$resourceTypes], category=${documentCategory.isEmpty ? '(empty)' : documentCategory}',
+    );
 
     final container = _selectContainer(
       resources: resources,
       documentCategory: documentCategory,
     );
 
-    MappingPatient patient =
+    final MappingPatient patient =
         resources.firstWhereOrNull((resource) => resource is MappingPatient)
-                as MappingPatient? ??
-            MappingPatient.empty();
+            as MappingPatient? ??
+        MappingPatient.empty();
 
     return (patient, container, documentCategory);
   }
 
-  Future<String> _runOcrOnImages(List<String> imagePaths) async => (await _runOcrPages(imagePaths)).join('\n');
+  Future<String> _runOcrOnImages(List<String> imagePaths) async =>
+      (await _runOcrPages(imagePaths)).join('\n');
 
   /// The OCR text of each image, in order.
   Future<List<String>> _runOcrPages(List<String> imagePaths) async {
@@ -310,7 +384,9 @@ mixin AiExtractionRepository {
     );
     for (var i = 0; i < preprocessed.length; i++) {
       if (preprocessed[i] != imagePaths[i]) {
-        try { await File(preprocessed[i]).delete(); } catch (_) {}
+        try {
+          await File(preprocessed[i]).delete();
+        } catch (_) {}
       }
     }
     return results;
@@ -330,42 +406,74 @@ mixin AiExtractionRepository {
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async {
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] === BASIC INFO EXTRACTION === (output=${outputMode.name})');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] === BASIC INFO EXTRACTION === (output=${outputMode.name})',
+    );
 
     final ocrSw = Stopwatch()..start();
     final ocrText = await _runOcrOnImages(imagePaths);
     ocrSw.stop();
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] OCR: ${ocrText.length} chars in ${(ocrSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] OCR: ${ocrText.length} chars in ${(ocrSw.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s',
+    );
 
     if (ocrText.trim().length >= _minOcrCharsForTextOnly) {
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] OCR has enough text, trying text-only (fast path)...');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] OCR has enough text, trying text-only (fast path)...',
+      );
       try {
-        final textResult = await _tryTextOnlyBasicInfo(ocrText, maxTokens, gpuLayers, threads, contextSize, outputMode);
+        final textResult = await _tryTextOnlyBasicInfo(
+          ocrText,
+          maxTokens,
+          gpuLayers,
+          threads,
+          contextSize,
+          outputMode,
+        );
         if (textResult != null) {
           final (patient, container, docCategory) = textResult;
           final postProcessed = PatientPostProcessor.postProcess(
             patient,
             ocrText,
             // The document's country, as the prompt's hints, not the phone's.
-            regionDefaultLabel: CountryIdentifier.forDocument(ocrText).identifierLabel,
+            regionDefaultLabel: CountryIdentifier.forDocument(ocrText)
+                .identifierLabel,
           );
           if (_isUsableResult(postProcessed)) {
-            final containerType = container is MappingDiagnosticReport ? 'DiagnosticReport' : 'Encounter';
-            ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text-only succeeded: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory');
+            final containerType = container is MappingDiagnosticReport
+                ? 'DiagnosticReport'
+                : 'Encounter';
+            ProcessingLogBuffer.instance.log(
+              '[$_ts][ScanAI] text-only succeeded: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory',
+            );
             return (postProcessed, container);
           }
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text-only result was empty, falling back to vision...');
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] text-only result was empty, falling back to vision...',
+          );
         }
       } catch (e) {
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text-only failed: $e, falling back to vision...');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] text-only failed: $e, falling back to vision...',
+        );
       } finally {
         await disposeModel();
       }
     } else {
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] OCR too short (${ocrText.trim().length} < $_minOcrCharsForTextOnly chars), using vision directly...');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] OCR too short (${ocrText.trim().length} < $_minOcrCharsForTextOnly chars), using vision directly...',
+      );
     }
 
-    return _visionBasicInfo(imagePaths, ocrText, maxTokens, gpuLayers, threads, contextSize, outputMode);
+    return _visionBasicInfo(
+      imagePaths,
+      ocrText,
+      maxTokens,
+      gpuLayers,
+      threads,
+      contextSize,
+      outputMode,
+    );
   }
 
   Future<MappingResource> mapContainerOnly(
@@ -376,7 +484,9 @@ mixin AiExtractionRepository {
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async {
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] === CONTAINER-ONLY EXTRACTION (pre-matched patient) === (output=${outputMode.name})');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] === CONTAINER-ONLY EXTRACTION (pre-matched patient) === (output=${outputMode.name})',
+    );
 
     final textCtx = _textContextSize(contextSize, outputMode);
     await networkDataSource.initModel(
@@ -386,10 +496,15 @@ mixin AiExtractionRepository {
       contextSize: textCtx,
     );
 
-    final truncated = ocrText.length > 1500 ? ocrText.substring(0, 1500) : ocrText;
+    final truncated = ocrText.length > 1500
+        ? ocrText.substring(0, 1500)
+        : ocrText;
     final draft = outputMode == ExtractionOutputMode.schemaDraft
         ? await _runDraft(
-            (tokens) => networkDataSource.runTextPrompt(prompt: DraftPrompt.basicInfo(ocrText), maxTokens: tokens),
+            (tokens) => networkDataSource.runTextPrompt(
+              prompt: DraftPrompt.basicInfo(ocrText),
+              maxTokens: tokens,
+            ),
             maxTokens,
           )
         : null;
@@ -423,7 +538,9 @@ Rules:
 - periodStart/issuedDate MUST be full date with year: YYYY-MM-DD (e.g. 2025-09-02). Never omit the year.
 - Empty string for missing fields.''';
 
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running container-only inference, prompt ${prompt.length} chars...');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] running container-only inference, prompt ${prompt.length} chars...',
+    );
 
     final response = await _runConstrainedText(
       prompt: prompt,
@@ -437,21 +554,31 @@ Rules:
     await disposeModel();
 
     if (response == null || response.isEmpty) {
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] container-only: empty response');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] container-only: empty response',
+      );
       return MappingEncounter.empty();
     }
 
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] container-only response: ${response.length > 200 ? response.substring(0, 200) : response}');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] container-only response: ${response.length > 200 ? response.substring(0, 200) : response}',
+    );
 
     try {
       final Map<String, dynamic> first;
       if (outputMode.usesSchema) {
         final object = ExtractionSchemas.decodeObject(response);
-        if (object == null) throw const FormatException('container: schema output is not a JSON object');
+        if (object == null) {
+          throw const FormatException(
+            'container: schema output is not a JSON object',
+          );
+        }
         first = ExtractionSchemas.containerToLegacy(object);
       } else {
         final cleaned = response.replaceAll(_markdownFenceRegex, '').trim();
-        final json = jsonDecode(cleaned.startsWith('[') ? cleaned : '[$cleaned]') as List;
+        final json = jsonDecode(
+          cleaned.startsWith('[') ? cleaned : '[$cleaned]',
+        ) as List;
         if (json.isEmpty) return MappingEncounter.empty();
         first = json.first as Map<String, dynamic>;
       }
@@ -460,7 +587,9 @@ Rules:
       }
       return MappingEncounter.fromJson(first);
     } catch (e) {
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] container-only parse failed: $e');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] container-only parse failed: $e',
+      );
       return MappingEncounter.empty();
     }
   }
@@ -474,7 +603,9 @@ Rules:
     ExtractionOutputMode outputMode,
   ) async {
     final textCtx = _textContextSize(contextSize, outputMode);
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] loading model (text-only, no vision projector)...');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] loading model (text-only, no vision projector)...',
+    );
     await networkDataSource.initModel(
       withVision: false,
       gpuLayers: gpuLayers,
@@ -484,12 +615,21 @@ Rules:
 
     final draft = outputMode == ExtractionOutputMode.schemaDraft
         ? await _runDraft(
-            (tokens) => networkDataSource.runTextPrompt(prompt: DraftPrompt.basicInfo(ocrText), maxTokens: tokens),
+            (tokens) => networkDataSource.runTextPrompt(
+              prompt: DraftPrompt.basicInfo(ocrText),
+              maxTokens: tokens,
+            ),
             maxTokens,
           )
         : null;
-    final prompt = BasicInfoPrompt().buildPrompt(ocrText, outputMode: outputMode, draft: draft);
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running text inference, prompt ${prompt.length} chars...');
+    final prompt = BasicInfoPrompt().buildPrompt(
+      ocrText,
+      outputMode: outputMode,
+      draft: draft,
+    );
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] running text inference, prompt ${prompt.length} chars...',
+    );
 
     final response = await _runConstrainedText(
       prompt: prompt,
@@ -500,7 +640,9 @@ Rules:
       schemaName: 'basic_info',
     );
 
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] parsing text-only response...');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] parsing text-only response...',
+    );
     return _parseBasicInfoResponse(response, ocrText, outputMode);
   }
 
@@ -514,7 +656,9 @@ Rules:
     ExtractionOutputMode outputMode,
   ) async {
     ProcessingLogBuffer.instance.log('[$_ts][ScanAI] --- VISION FALLBACK ---');
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] loading model + vision projector...');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] loading model + vision projector...',
+    );
     await networkDataSource.initModel(
       gpuLayers: gpuLayers,
       threads: threads,
@@ -541,8 +685,14 @@ Rules:
           threads: threads,
           contextSize: _textContextSize(contextSize, outputMode),
         );
-        final prompt = BasicInfoPrompt().buildPrompt(ocrText, outputMode: outputMode, draft: draft);
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running constrained text pass on the vision draft...');
+        final prompt = BasicInfoPrompt().buildPrompt(
+          ocrText,
+          outputMode: outputMode,
+          draft: draft,
+        );
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] running constrained text pass on the vision draft...',
+        );
         response = await _runConstrainedText(
           prompt: prompt,
           document: _head(ocrText, _basicInfoOcrMaxLength),
@@ -552,15 +702,23 @@ Rules:
           schemaName: 'basic_info',
         );
       } else {
-        final prompt = BasicInfoVisionPrompt(ocrText: ocrText, outputMode: outputMode).buildPrompt();
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running vision inference...');
+        final prompt = BasicInfoVisionPrompt(
+          ocrText: ocrText,
+          outputMode: outputMode,
+        ).buildPrompt();
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] running vision inference...',
+        );
 
         response = outputMode.usesSchema
             ? await networkDataSource.runVisionPrompt(
                 prompt: prompt,
                 imagePaths: imagePaths,
                 maxTokens: maxTokens,
-                responseFormat: ExtractionSchemas.responseFormat(ExtractionSchemas.basicInfoSchema(), name: 'basic_info'),
+                responseFormat: ExtractionSchemas.responseFormat(
+                  ExtractionSchemas.basicInfoSchema(),
+                  name: 'basic_info',
+                ),
               )
             : await networkDataSource.runVisionPrompt(
                 prompt: prompt,
@@ -570,18 +728,29 @@ Rules:
               );
       }
 
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] parsing vision response...');
-      final (patient, container, docCategory) = _parseBasicInfoResponse(response, ocrText, outputMode);
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] parsing vision response...',
+      );
+      final (patient, container, docCategory) = _parseBasicInfoResponse(
+        response,
+        ocrText,
+        outputMode,
+      );
 
       final postProcessed = PatientPostProcessor.postProcess(
         patient,
         ocrText,
         // The document's country, as the prompt's hints, not the phone's.
-        regionDefaultLabel: CountryIdentifier.forDocument(ocrText).identifierLabel,
+        regionDefaultLabel: CountryIdentifier.forDocument(ocrText)
+            .identifierLabel,
       );
 
-      final containerType = container is MappingDiagnosticReport ? 'DiagnosticReport' : 'Encounter';
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision result: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory');
+      final containerType = container is MappingDiagnosticReport
+          ? 'DiagnosticReport'
+          : 'Encounter';
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] vision result: ${postProcessed.givenName.value} ${postProcessed.familyName.value}, label=${postProcessed.identifierLabel}, container=$containerType, category=$docCategory',
+      );
 
       return (postProcessed, container);
     } finally {
@@ -604,14 +773,21 @@ Rules:
     final ocrText = ocrPages.join('\n');
     final rawLength = rawPages.join('\n').length;
 
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars${rawLength != ocrText.length ? ' ($rawLength before dropping lines repeated on every page)' : ''}, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$useVision, output=${outputMode.name}');
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===',
+    );
+    ProcessingLogBuffer.instance.log(
+      '[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars${rawLength != ocrText.length ? ' ($rawLength before dropping lines repeated on every page)' : ''}, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$useVision, output=${outputMode.name}',
+    );
 
     List<MappingResource> allResources = [];
     final confidenceText = ocrText.isNotEmpty ? ocrText : null;
     final drafting = outputMode == ExtractionOutputMode.schemaDraft;
     final remainingSchema = ExtractionSchemas.remainingSchema(documentCategory);
-    final remainingFormat = ExtractionSchemas.responseFormat(remainingSchema, name: 'remaining_resources');
+    final remainingFormat = ExtractionSchemas.responseFormat(
+      remainingSchema,
+      name: 'remaining_resources',
+    );
 
     var visionLoaded = false;
     if (useVision) {
@@ -624,7 +800,9 @@ Rules:
         visionLoaded = true;
       } catch (e) {
         // E.g. model + projector over the memory limit: text-only still fits.
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision model load failed: $e, switching to text fallback');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] vision model load failed: $e, switching to text fallback',
+        );
       }
     }
 
@@ -637,10 +815,15 @@ Rules:
       final batches = <(List<String>, String)>[];
       for (var i = 0; i < imagePaths.length; i += pagesPerBatch) {
         final end = math.min(i + pagesPerBatch, imagePaths.length);
-        batches.add((imagePaths.sublist(i, end), ocrPages.sublist(i, math.min(end, ocrPages.length)).join('\n')));
+        batches.add((
+          imagePaths.sublist(i, end),
+          ocrPages.sublist(i, math.min(end, ocrPages.length)).join('\n'),
+        ));
       }
 
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $pagesPerBatch images, each with its pages\' OCR trimmed to $_remainingOcrMaxLength chars, few-shot${drafting ? ', draft pass' : ''}');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $pagesPerBatch images, each with its pages\' OCR trimmed to $_remainingOcrMaxLength chars, few-shot${drafting ? ', draft pass' : ''}',
+      );
 
       final drafts = <String>[];
       for (var batchIdx = 0; batchIdx < batches.length; batchIdx++) {
@@ -651,17 +834,29 @@ Rules:
           contextSize: contextSize,
         );
         if (!health.canProceed) {
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] memory too low (${health.availableMB}MB < ${health.requiredMB}MB), switching to text fallback');
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] memory too low (${health.availableMB}MB < ${health.requiredMB}MB), switching to text fallback',
+          );
           break;
         }
 
         final (batch, batchOcr) = batches[batchIdx];
         final progress = (batchIdx + 1) / (batches.length + 1);
         if (drafting) {
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision draft batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
-          final draftPrompt = DraftPrompt.remaining(batchOcr, documentCategory: documentCategory, vision: true);
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] vision draft batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...',
+          );
+          final draftPrompt = DraftPrompt.remaining(
+            batchOcr,
+            documentCategory: documentCategory,
+            vision: true,
+          );
           final draft = await _runDraft(
-            (tokens) => networkDataSource.runVisionPrompt(prompt: draftPrompt, imagePaths: batch, maxTokens: tokens),
+            (tokens) => networkDataSource.runVisionPrompt(
+              prompt: draftPrompt,
+              imagePaths: batch,
+              maxTokens: tokens,
+            ),
             maxTokens,
           );
           if (draft != null) drafts.add(draft);
@@ -669,7 +864,9 @@ Rules:
           continue;
         }
         try {
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...',
+          );
           final prompt = (await RemainingResourcesVisionPrompt.create(
             documentCategory: documentCategory,
             ocrText: batchOcr,
@@ -692,24 +889,40 @@ Rules:
                   grammar: GbnfGrammars.jsonArray,
                 );
 
-          final parsed = _parseResourcesFromResponse(response, confidenceText, outputMode);
+          final parsed = _parseResourcesFromResponse(
+            response,
+            confidenceText,
+            outputMode,
+          );
           allResources.addAll(parsed);
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] batch ${batchIdx + 1}: ${parsed.length} resources');
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] batch ${batchIdx + 1}: ${parsed.length} resources',
+          );
 
           yield (allResources.toSet().toList(), progress);
         } catch (e) {
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1} failed: $e');
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] vision batch ${batchIdx + 1} failed: $e',
+          );
         }
       }
 
       if (drafting && !shouldCancelGeneration) {
         await disposeModel();
-        final ctx = await _loadRemainingTextModel(contextSize, gpuLayers, threads, outputMode);
+        final ctx = await _loadRemainingTextModel(
+          contextSize,
+          gpuLayers,
+          threads,
+          outputMode,
+        );
         textPassRan = true;
         try {
           final visionDraft = drafts.isEmpty ? null : drafts.join('\n');
           allResources = await _remainingTextPasses(
-            OcrPages.chunks(ocrPages, _remainingChunkChars(ctx, drafting: true)),
+            OcrPages.chunks(
+              ocrPages,
+              _remainingChunkChars(ctx, drafting: true),
+            ),
             documentCategory: documentCategory,
             mode: outputMode,
             schema: remainingSchema,
@@ -717,9 +930,13 @@ Rules:
             confidenceText: confidenceText,
             draftFor: (_) async => visionDraft,
           );
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] constrained pass on ${drafts.length} vision draft(s): ${allResources.length} resources');
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] constrained pass on ${drafts.length} vision draft(s): ${allResources.length} resources',
+          );
         } catch (e) {
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] constrained pass failed: $e');
+          ProcessingLogBuffer.instance.log(
+            '[$_ts][ScanAI] constrained pass failed: $e',
+          );
           final msg = e.toString().toLowerCase();
           if (msg.contains('tokenization') || msg.contains('prompt too long')) {
             rethrow;
@@ -727,17 +944,31 @@ Rules:
         }
       }
     } else if (!useVision) {
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision disabled, using text-only');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] vision disabled, using text-only',
+      );
     }
 
     if (allResources.isEmpty && ocrText.trim().isNotEmpty && !textPassRan) {
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---');
+      ProcessingLogBuffer.instance.log(
+        '[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---',
+      );
       await disposeModel();
 
       try {
-        final ctx = await _loadRemainingTextModel(contextSize, gpuLayers, threads, outputMode);
-        final chunks = OcrPages.chunks(ocrPages, _remainingChunkChars(ctx, drafting: drafting));
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text-only: ${chunks.length} chunk(s) of up to ${_remainingChunkChars(ctx, drafting: drafting)} OCR chars at ctx=$ctx');
+        final ctx = await _loadRemainingTextModel(
+          contextSize,
+          gpuLayers,
+          threads,
+          outputMode,
+        );
+        final chunks = OcrPages.chunks(
+          ocrPages,
+          _remainingChunkChars(ctx, drafting: drafting),
+        );
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] text-only: ${chunks.length} chunk(s) of up to ${_remainingChunkChars(ctx, drafting: drafting)} OCR chars at ctx=$ctx',
+        );
         allResources = await _remainingTextPasses(
           chunks,
           documentCategory: documentCategory,
@@ -747,17 +978,24 @@ Rules:
           confidenceText: confidenceText,
           draftFor: drafting
               ? (chunk) => _runDraft(
-                    (tokens) => networkDataSource.runTextPrompt(
-                      prompt: DraftPrompt.remaining(chunk, documentCategory: documentCategory),
-                      maxTokens: tokens,
+                  (tokens) => networkDataSource.runTextPrompt(
+                    prompt: DraftPrompt.remaining(
+                      chunk,
+                      documentCategory: documentCategory,
                     ),
-                    maxTokens,
-                  )
+                    maxTokens: tokens,
+                  ),
+                  maxTokens,
+                )
               : null,
         );
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text fallback: ${allResources.length} resources');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] text fallback: ${allResources.length} resources',
+        );
       } catch (e) {
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text fallback failed: $e');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] text fallback failed: $e',
+        );
         final msg = e.toString().toLowerCase();
         if (msg.contains('tokenization') || msg.contains('prompt too long')) {
           rethrow;
@@ -781,7 +1019,10 @@ Rules:
       final value = (json['value'] as String?)?.trim() ?? '';
       if (value.isEmpty) return false;
       if (_booleanValues.contains(value.toLowerCase())) return true;
-      if (!_numericValue.hasMatch(value) && value.split(RegExp(r'\s+')).length > 2) return true;
+      if (!_numericValue.hasMatch(value) &&
+          value.split(RegExp(r'\s+')).length > 2) {
+        return true;
+      }
     }
 
     if (type == 'Condition') {
@@ -793,16 +1034,23 @@ Rules:
     return false;
   }
 
-  static List<Map<String, dynamic>> _deduplicateResources(List<dynamic> jsonList) {
+  static List<Map<String, dynamic>> _deduplicateResources(
+    List<dynamic> jsonList,
+  ) {
     final seen = <String>{};
     final result = <Map<String, dynamic>>[];
     for (final item in jsonList) {
       if (item is! Map<String, dynamic>) continue;
       final type = item['resourceType'] as String? ?? '';
-      final nameKey = item['conditionName'] ?? item['observationName'] ??
-          item['medicationName'] ?? item['procedureName'] ??
-          item['practitionerName'] ?? item['organizationName'] ??
-          item['substance'] ?? '';
+      final nameKey =
+          item['conditionName'] ??
+          item['observationName'] ??
+          item['medicationName'] ??
+          item['procedureName'] ??
+          item['practitionerName'] ??
+          item['organizationName'] ??
+          item['substance'] ??
+          '';
       final key = '$type:${(nameKey as String).toLowerCase().trim()}';
       if (seen.contains(key)) continue;
       seen.add(key);
@@ -838,7 +1086,9 @@ Rules:
           outputMode: mode,
           draft: draft,
         )).buildPrompt();
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text chunk ${i + 1}/${chunks.length}: ${chunk.length} OCR chars, prompt ${prompt.length} chars...');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] text chunk ${i + 1}/${chunks.length}: ${chunk.length} OCR chars, prompt ${prompt.length} chars...',
+        );
         final response = await _runConstrainedText(
           prompt: prompt,
           maxTokens: maxTokens,
@@ -851,8 +1101,12 @@ Rules:
         jsonList.addAll(_decodeResources(response, mode));
       } catch (e) {
         final msg = e.toString().toLowerCase();
-        if (msg.contains('tokenization') || msg.contains('prompt too long')) rethrow;
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text chunk ${i + 1} failed: $e');
+        if (msg.contains('tokenization') || msg.contains('prompt too long')) {
+          rethrow;
+        }
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] text chunk ${i + 1} failed: $e',
+        );
       }
     }
     return _toResources(jsonList, confidenceText);
@@ -865,7 +1119,9 @@ Rules:
     if (mode.usesSchema) {
       final object = ExtractionSchemas.decodeObject(response);
       if (object == null) {
-        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] schema output unusable (${response?.length ?? 0} chars), no resources');
+        ProcessingLogBuffer.instance.log(
+          '[$_ts][ScanAI] schema output unusable (${response?.length ?? 0} chars), no resources',
+        );
         return [];
       }
       return ExtractionSchemas.remainingToLegacy(object);
@@ -880,16 +1136,20 @@ Rules:
     String? response,
     String? confidenceText, [
     ExtractionOutputMode mode = ExtractionOutputMode.grammar,
-  ]) =>
-      _toResources(_decodeResources(response, mode), confidenceText);
+  ]) => _toResources(_decodeResources(response, mode), confidenceText);
 
-  List<MappingResource> _toResources(List<dynamic> jsonList, String? confidenceText) {
+  List<MappingResource> _toResources(
+    List<dynamic> jsonList,
+    String? confidenceText,
+  ) {
     final deduplicated = _deduplicateResources(jsonList);
 
-    List<MappingResource> resources = [];
+    final List<MappingResource> resources = [];
     for (final json in deduplicated) {
       if (_shouldSkipResource(json)) {
-        ProcessingLogBuffer.instance.log('[ScanAI] skipped ${json['resourceType']}: ${json['conditionName'] ?? json['observationName'] ?? json['value'] ?? ''}');
+        ProcessingLogBuffer.instance.log(
+          '[ScanAI] skipped ${json['resourceType']}: ${json['conditionName'] ?? json['observationName'] ?? json['value'] ?? ''}',
+        );
         continue;
       }
 

@@ -11,7 +11,7 @@ class AppLogger {
         lineLength: 80,
         colors: false,
         printEmojis: false,
-        printTime: false,
+        dateTimeFormat: DateTimeFormat.none,
       ),
     ),
   );
@@ -29,21 +29,19 @@ class AppLogger {
     String objectName,
     int statusCode, [
     dynamic body,
-  ]) =>
-      logger.i(
-        'Fetched $objectName with status code:'
-        ' $statusCode and $objectName: ${body ?? 'no body'}',
-      );
+  ]) => logger.i(
+    'Fetched $objectName with status code:'
+    ' $statusCode and $objectName: ${body ?? 'no body'}',
+  );
 
   void postRequestResponse(
     String objectName,
     int statusCode, [
     dynamic body,
-  ]) =>
-      logger.i(
-        'Created $objectName with status code:'
-        ' $statusCode and $objectName: ${body ?? 'no body'}',
-      );
+  ]) => logger.i(
+    'Created $objectName with status code:'
+    ' $statusCode and $objectName: ${body ?? 'no body'}',
+  );
 
   void w(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
       logger.w(message, error: error, stackTrace: stackTrace);

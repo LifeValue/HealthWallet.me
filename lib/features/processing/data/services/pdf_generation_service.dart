@@ -1,9 +1,10 @@
 import 'dart:io';
+
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path/path.dart' as p;
-import 'package:health_wallet/core/services/path_resolver.dart';
 
 @injectable
 class PdfGenerationService {
@@ -94,10 +95,10 @@ class PdfGenerationService {
   }) async {
     final List<DocumentGroup> groups = [];
 
-    List<String> pdfPaths = [];
-    List<String> imagePaths = [];
+    final List<String> pdfPaths = [];
+    final List<String> imagePaths = [];
     for (final filePath in filePaths) {
-      if (p.extension(filePath) == ".pdf") {
+      if (p.extension(filePath) == '.pdf') {
         pdfPaths.add(filePath);
       } else {
         imagePaths.add(filePath);
@@ -114,13 +115,16 @@ class PdfGenerationService {
           title: defaultTitle,
         );
 
-        groups.add(DocumentGroup(
-          type: DocumentGroupType.scannedImages,
-          pdfPath: pdfPath,
-          title: scannedDocumentsPagesTitle?.call(imagePaths.length) ??
-              '$defaultTitle (${imagePaths.length} pages)',
-          originalCount: imagePaths.length,
-        ));
+        groups.add(
+          DocumentGroup(
+            type: DocumentGroupType.scannedImages,
+            pdfPath: pdfPath,
+            title:
+                scannedDocumentsPagesTitle?.call(imagePaths.length) ??
+                '$defaultTitle (${imagePaths.length} pages)',
+            originalCount: imagePaths.length,
+          ),
+        );
       }
 
       for (int i = 0; i < pdfPaths.length; i++) {
@@ -132,12 +136,14 @@ class PdfGenerationService {
           fileName: 'pdf_${_generateId()}_$fileName',
         );
 
-        groups.add(DocumentGroup(
-          type: DocumentGroupType.importedPdf,
-          pdfPath: pdfPath,
-          title: pdfFileTitle?.call(fileName) ?? 'PDF: $fileName',
-          originalCount: 1,
-        ));
+        groups.add(
+          DocumentGroup(
+            type: DocumentGroupType.importedPdf,
+            pdfPath: pdfPath,
+            title: pdfFileTitle?.call(fileName) ?? 'PDF: $fileName',
+            originalCount: 1,
+          ),
+        );
       }
 
       return groups;
@@ -152,7 +158,8 @@ class PdfGenerationService {
 
   Future<String> _generateScannedDocumentName() async {
     final now = DateTime.now();
-    final dateStr = '${now.day.toString().padLeft(2, '0')}'
+    final dateStr =
+        '${now.day.toString().padLeft(2, '0')}'
         '${now.month.toString().padLeft(2, '0')}'
         '${now.year}';
 
@@ -174,7 +181,9 @@ class PdfGenerationService {
           final fileName = p.basename(file.path);
           if (fileName.startsWith(pattern) && fileName.endsWith('.pdf')) {
             final numberPart = fileName.substring(
-                pattern.length, fileName.length - 4);
+              pattern.length,
+              fileName.length - 4,
+            );
             final number = int.tryParse(numberPart);
             if (number != null && number > maxNumber) {
               maxNumber = number;

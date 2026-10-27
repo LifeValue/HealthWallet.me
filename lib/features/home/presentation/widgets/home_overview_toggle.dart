@@ -17,17 +17,21 @@ class HomeOverviewToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final outerColor =
-        isDark ? const Color(0xFF060606) : const Color(0xFFF2F2F2);
-    final borderColor =
-        isDark ? const Color(0xFF3C3C3C) : const Color(0xFFE0E0E0);
+    final outerColor = isDark
+        ? const Color(0xFF060606)
+        : const Color(0xFFF2F2F2);
+    final borderColor = isDark
+        ? const Color(0xFF3C3C3C)
+        : const Color(0xFFE0E0E0);
     final inactiveTextColor = context.colorScheme.onSurface;
 
     final isSpecialties = mode == OverviewViewMode.specialties;
 
     return GestureDetector(
       onTap: () => onChanged(
-        isSpecialties ? OverviewViewMode.resources : OverviewViewMode.specialties,
+        isSpecialties
+            ? OverviewViewMode.resources
+            : OverviewViewMode.specialties,
       ),
       child: Container(
         padding: const EdgeInsets.all(2),

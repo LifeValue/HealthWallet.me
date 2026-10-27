@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -126,16 +127,16 @@ abstract class Patient with _$Patient implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Patient',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Patient',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -154,7 +155,7 @@ abstract class Patient with _$Patient implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // ============================================
     // BASIC INFORMATION SECTION
@@ -164,62 +165,77 @@ abstract class Patient with _$Patient implements IFhirResource {
     // Date of Birth
     final parsedBirthDate = FhirFieldExtractor.extractPatientBirthDate(this);
     if (parsedBirthDate != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: 'Date of Birth: ${DateFormat.yMMMd().format(parsedBirthDate)}',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: 'Date of Birth: ${DateFormat.yMMMd().format(parsedBirthDate)}',
+        ),
+      );
     }
 
     // Age (calculated from birth date)
     final age = FhirFieldExtractor.calculateAge(parsedBirthDate);
     if (age != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: 'Age: $age',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.information,
+          info: 'Age: $age',
+        ),
+      );
     }
 
     // Gender
     final genderDisplay = FhirFieldExtractor.extractPatientGender(this);
     if (genderDisplay != 'Unknown') {
-      infoLines.add(RecordInfoLine(
-        icon: genderDisplay.toLowerCase() == 'male'
-            ? Assets.icons.genderMale
-            : genderDisplay.toLowerCase() == 'female'
-                ? Assets.icons.genderFemale
-                : Assets.icons.user,
-        info: 'Gender: $genderDisplay',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: genderDisplay.toLowerCase() == 'male'
+              ? Assets.icons.genderMale
+              : genderDisplay.toLowerCase() == 'female'
+              ? Assets.icons.genderFemale
+              : Assets.icons.user,
+          info: 'Gender: $genderDisplay',
+        ),
+      );
     }
 
     // Birth Sex (from US Core extension)
-    final birthSex = FhirFieldExtractor.extractExtensionValue(rawResource,
-        'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex');
+    final birthSex = FhirFieldExtractor.extractExtensionValue(
+      rawResource,
+      'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex',
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(birthSex, prefix: 'Birth Sex'),
     );
 
     // Marital Status
-    final maritalStatusDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(maritalStatus);
+    final maritalStatusDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      maritalStatus,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(maritalStatusDisplay,
-          prefix: 'Marital Status'),
+      ResourceFieldMapper.createStatusLine(
+        maritalStatusDisplay,
+        prefix: 'Marital Status',
+      ),
     );
 
     // Race (from US Core extension)
-    final race = FhirFieldExtractor.extractRaceOrEthnicity(rawResource,
-        'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race');
+    final race = FhirFieldExtractor.extractRaceOrEthnicity(
+      rawResource,
+      'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race',
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(race, prefix: 'Race'),
     );
 
     // Ethnicity (from US Core extension)
-    final ethnicity = FhirFieldExtractor.extractRaceOrEthnicity(rawResource,
-        'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity');
+    final ethnicity = FhirFieldExtractor.extractRaceOrEthnicity(
+      rawResource,
+      'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity',
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(ethnicity, prefix: 'Ethnicity'),
@@ -228,26 +244,32 @@ abstract class Patient with _$Patient implements IFhirResource {
     // ============================================
     // CONTACT INFORMATION SECTION
     // ============================================
-    infoLines
-        .add(ResourceFieldMapper.createSectionHeader('Contact Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader('Contact Information'),
+    );
 
     // Full Address
-    final fullAddress =
-        FhirFieldExtractor.formatFullAddress(address?.firstOrNull);
+    final fullAddress = FhirFieldExtractor.formatFullAddress(
+      address?.firstOrNull,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createLocationLine(fullAddress, prefix: 'Address'),
     );
 
     // Phone numbers (with use type)
-    final phones =
-        FhirFieldExtractor.extractAllTelecomBySystem(telecom, 'phone');
+    final phones = FhirFieldExtractor.extractAllTelecomBySystem(
+      telecom,
+      'phone',
+    );
     for (final phone in phones) {
       final useLabel = phone['use']!.isNotEmpty ? ' (${phone['use']})' : '';
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.information,
-        info: 'Phone: ${phone['value']}$useLabel',
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.information,
+          info: 'Phone: ${phone['value']}$useLabel',
+        ),
+      );
     }
 
     // Email
@@ -258,8 +280,9 @@ abstract class Patient with _$Patient implements IFhirResource {
     );
 
     // Communication/Languages
-    final languages =
-        FhirFieldExtractor.extractCommunicationLanguages(communication);
+    final languages = FhirFieldExtractor.extractCommunicationLanguages(
+      communication,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(languages, prefix: 'Language'),
@@ -268,17 +291,21 @@ abstract class Patient with _$Patient implements IFhirResource {
     // ============================================
     // ADDITIONAL INFORMATION SECTION
     // ============================================
-    infoLines
-        .add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader('Additional Information'),
+    );
 
     // Mother's Maiden Name (from extension)
     final mothersMaidenName = FhirFieldExtractor.extractExtensionValue(
-        rawResource,
-        'http://hl7.org/fhir/StructureDefinition/patient-mothersMaidenName');
+      rawResource,
+      'http://hl7.org/fhir/StructureDefinition/patient-mothersMaidenName',
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(mothersMaidenName,
-          prefix: "Mother's Maiden Name"),
+      ResourceFieldMapper.createStatusLine(
+        mothersMaidenName,
+        prefix: "Mother's Maiden Name",
+      ),
     );
 
     // Birth Place (from extension)
@@ -289,12 +316,15 @@ abstract class Patient with _$Patient implements IFhirResource {
     );
 
     // Multiple Birth
-    final multipleBirthDisplay =
-        FhirFieldExtractor.extractMultipleBirth(multipleBirthX);
+    final multipleBirthDisplay = FhirFieldExtractor.extractMultipleBirth(
+      multipleBirthX,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(multipleBirthDisplay,
-          prefix: 'Multiple Birth'),
+      ResourceFieldMapper.createStatusLine(
+        multipleBirthDisplay,
+        prefix: 'Multiple Birth',
+      ),
     );
 
     // ============================================
@@ -306,11 +336,16 @@ abstract class Patient with _$Patient implements IFhirResource {
     final mrn = FhirFieldExtractor.extractIdentifierByType(identifier, 'MR');
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createIdentificationLine(mrn,
-          prefix: 'Medical Record Number'),
+      ResourceFieldMapper.createIdentificationLine(
+        mrn,
+        prefix: 'Medical Record Number',
+      ),
     );
 
-    final nationalId = FhirFieldExtractor.extractIdentifierByType(identifier, 'SS');
+    final nationalId = FhirFieldExtractor.extractIdentifierByType(
+      identifier,
+      'SS',
+    );
     if (nationalId != null) {
       final label = FhirFieldExtractor.extractPatientIdentifierLabel(this);
       ResourceFieldMapper.addIfNotNull(
@@ -320,21 +355,29 @@ abstract class Patient with _$Patient implements IFhirResource {
     }
 
     // Driver's License
-    final driversLicense =
-        FhirFieldExtractor.extractIdentifierByType(identifier, 'DL');
+    final driversLicense = FhirFieldExtractor.extractIdentifierByType(
+      identifier,
+      'DL',
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createIdentificationLine(driversLicense,
-          prefix: "Driver's License Number"),
+      ResourceFieldMapper.createIdentificationLine(
+        driversLicense,
+        prefix: "Driver's License Number",
+      ),
     );
 
     // Passport Number
-    final passport =
-        FhirFieldExtractor.extractIdentifierByType(identifier, 'PPN');
+    final passport = FhirFieldExtractor.extractIdentifierByType(
+      identifier,
+      'PPN',
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createIdentificationLine(passport,
-          prefix: 'Passport Number'),
+      ResourceFieldMapper.createIdentificationLine(
+        passport,
+        prefix: 'Passport Number',
+      ),
     );
 
     // Other Identifiers (show remaining ones)
@@ -343,15 +386,18 @@ abstract class Patient with _$Patient implements IFhirResource {
       for (final id in identifier!) {
         final typeCode = id.type?.coding?.firstOrNull?.code?.valueString;
         if (typeCode != null && !displayedTypes.contains(typeCode)) {
-          final typeDisplay = id.type?.text?.valueString ??
+          final typeDisplay =
+              id.type?.text?.valueString ??
               id.type?.coding?.firstOrNull?.display?.valueString ??
               typeCode;
           final value = id.value?.valueString;
           if (value != null) {
-            infoLines.add(RecordInfoLine(
-              icon: Assets.icons.identification,
-              info: '$typeDisplay: $value',
-            ));
+            infoLines.add(
+              RecordInfoLine(
+                icon: Assets.icons.identification,
+                info: '$typeDisplay: $value',
+              ),
+            );
           }
         }
       }
@@ -363,21 +409,27 @@ abstract class Patient with _$Patient implements IFhirResource {
     // General Practitioner
     if (generalPractitioner != null && generalPractitioner!.isNotEmpty) {
       final gpDisplay = FhirFieldExtractor.extractMultipleReferenceDisplays(
-          generalPractitioner);
+        generalPractitioner,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createUserLine(gpDisplay,
-            prefix: 'General Practitioner'),
+        ResourceFieldMapper.createUserLine(
+          gpDisplay,
+          prefix: 'General Practitioner',
+        ),
       );
     }
 
     // Managing Organization
-    final managingOrgDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(managingOrganization);
+    final managingOrgDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      managingOrganization,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createOrganizationLine(managingOrgDisplay,
-          prefix: 'Managing Organization'),
+      ResourceFieldMapper.createOrganizationLine(
+        managingOrgDisplay,
+        prefix: 'Managing Organization',
+      ),
     );
 
     return infoLines;
@@ -387,8 +439,9 @@ abstract class Patient with _$Patient implements IFhirResource {
   List<String?> get resourceReferences {
     return {
       managingOrganization?.reference?.valueString,
-      ...?generalPractitioner
-          ?.map((reference) => reference.reference?.valueString),
+      ...?generalPractitioner?.map(
+        (reference) => reference.reference?.valueString,
+      ),
     }.where((reference) => reference != null).toList();
   }
 

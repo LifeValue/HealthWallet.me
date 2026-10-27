@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:injectable/injectable.dart';
+
 import 'package:app_links/app_links.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/external_files_service.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
+import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 @lazySingleton
 class DeepLinkService {
@@ -17,7 +18,10 @@ class DeepLinkService {
   final PageViewNavigationController _navigationController;
 
   DeepLinkService(
-      this._router, this._externalFilesService, this._navigationController);
+    this._router,
+    this._externalFilesService,
+    this._navigationController,
+  );
 
   final _appLinks = AppLinks();
   StreamSubscription? _linkSubscription;
@@ -64,15 +68,17 @@ class DeepLinkService {
     }
 
     try {
-      final filePath =
-          await downloadFile(fileUrl, customFileName: documentName);
+      final filePath = await downloadFile(
+        fileUrl,
+        customFileName: documentName,
+      );
       _externalFilesService.addFilePaths([filePath]);
-      _router.replaceAll([const DashboardRoute()]);
+      unawaited(_router.replaceAll([const DashboardRoute()]));
 
       if (_navigationController.currentPage == 3) {
         _navigationController.jumpToPage(0);
       }
-      _navigationController.navigateToPage(3);
+      unawaited(_navigationController.navigateToPage(3));
     } catch (_) {}
   }
 
@@ -90,13 +96,15 @@ class DeepLinkService {
     }
 
     final appDocDir = await getApplicationDocumentsDirectory();
-    final downloadsDir =
-        Directory(path.join(appDocDir.path, 'provider_downloads'));
+    final downloadsDir = Directory(
+      path.join(appDocDir.path, 'provider_downloads'),
+    );
     if (!await downloadsDir.exists()) {
       await downloadsDir.create(recursive: true);
     }
 
-    final fileName = customFileName ??
+    final fileName =
+        customFileName ??
         'provider_doc_${DateTime.now().millisecondsSinceEpoch}${_getExtensionFromUrl(fileUrl)}';
     final filePath = path.join(downloadsDir.path, fileName);
 

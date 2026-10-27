@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
-import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
+import 'package:health_wallet/features/records/domain/entity/encounter/encounter.dart';
+import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 
 part 'processing_session.freezed.dart';
 
@@ -79,21 +79,24 @@ abstract class ProcessingSession
   }
 
   ProcessingSessionsCompanion toDbCompanion() => ProcessingSessionsCompanion(
-        id: drift.Value(id),
-        filePaths: drift.Value(jsonEncode(filePaths)),
-        status: drift.Value(status.toString()),
-        origin: drift.Value(origin.toString()),
-        isDocumentAttached: drift.Value(isDocumentAttached),
-        resources: drift.Value(jsonEncode(
-            resources.map((resource) => resource.toJson()).toList())),
-        createdAt: drift.Value(createdAt!),
-        patient: drift.Value(jsonEncode(stagedPatientToJson(patient))),
-        encounter: drift.Value(jsonEncode(
-          isDiagnosticReportContainer
-              ? stagedDiagnosticReportToJson(diagnosticReport!)
-              : stagedEncounterToJson(encounter),
-        )),
-      );
+    id: drift.Value(id),
+    filePaths: drift.Value(jsonEncode(filePaths)),
+    status: drift.Value(status.toString()),
+    origin: drift.Value(origin.toString()),
+    isDocumentAttached: drift.Value(isDocumentAttached),
+    resources: drift.Value(
+      jsonEncode(resources.map((resource) => resource.toJson()).toList()),
+    ),
+    createdAt: drift.Value(createdAt!),
+    patient: drift.Value(jsonEncode(stagedPatientToJson(patient))),
+    encounter: drift.Value(
+      jsonEncode(
+        isDiagnosticReportContainer
+            ? stagedDiagnosticReportToJson(diagnosticReport!)
+            : stagedEncounterToJson(encounter),
+      ),
+    ),
+  );
 
   @override
   int compareTo(ProcessingSession other) {
@@ -123,15 +126,15 @@ enum ProcessingStatus {
 
   factory ProcessingStatus.fromString(String string) {
     switch (string) {
-      case "Processing":
+      case 'Processing':
         return ProcessingStatus.processing;
-      case "Draft":
+      case 'Draft':
         return ProcessingStatus.draft;
-      case "Cancelled":
+      case 'Cancelled':
         return ProcessingStatus.cancelled;
-      case "Processing Patient":
+      case 'Processing Patient':
         return ProcessingStatus.processingPatient;
-      case "Patient Extracted":
+      case 'Patient Extracted':
         return ProcessingStatus.patientExtracted;
       default:
         return ProcessingStatus.pending;
@@ -142,17 +145,17 @@ enum ProcessingStatus {
   String toString() {
     switch (this) {
       case ProcessingStatus.pending:
-        return "Pending";
+        return 'Pending';
       case ProcessingStatus.processingPatient:
-        return "Processing Patient";
+        return 'Processing Patient';
       case ProcessingStatus.patientExtracted:
-        return "Patient Extracted";
+        return 'Patient Extracted';
       case ProcessingStatus.processing:
-        return "Processing";
+        return 'Processing';
       case ProcessingStatus.draft:
-        return "Draft";
+        return 'Draft';
       case ProcessingStatus.cancelled:
-        return "Cancelled";
+        return 'Cancelled';
     }
   }
 
@@ -178,9 +181,9 @@ enum ProcessingOrigin {
 
   factory ProcessingOrigin.fromString(String string) {
     switch (string) {
-      case "Import":
+      case 'Import':
         return ProcessingOrigin.import;
-      case "Handover":
+      case 'Handover':
         return ProcessingOrigin.handover;
       default:
         return ProcessingOrigin.scan;
@@ -191,11 +194,11 @@ enum ProcessingOrigin {
   String toString() {
     switch (this) {
       case ProcessingOrigin.scan:
-        return "Scan";
+        return 'Scan';
       case ProcessingOrigin.import:
-        return "Import";
+        return 'Import';
       case ProcessingOrigin.handover:
-        return "Handover";
+        return 'Handover';
     }
   }
 }

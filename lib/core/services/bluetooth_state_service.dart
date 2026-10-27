@@ -6,10 +6,12 @@ import 'package:injectable/injectable.dart';
 
 @lazySingleton
 class BluetoothStateService {
-  static const _methodChannel =
-      MethodChannel('com.techstackapps.healthwallet/bluetooth');
-  static const _eventChannel =
-      EventChannel('com.techstackapps.healthwallet/bluetooth_state');
+  static const _methodChannel = MethodChannel(
+    'com.techstackapps.healthwallet/bluetooth',
+  );
+  static const _eventChannel = EventChannel(
+    'com.techstackapps.healthwallet/bluetooth_state',
+  );
 
   StreamSubscription<dynamic>? _subscription;
   final _controller = StreamController<bool>.broadcast();
@@ -31,8 +33,9 @@ class BluetoothStateService {
   Future<bool> isEnabled() async {
     if (!Platform.isAndroid && !Platform.isIOS) return true;
     try {
-      final result =
-          await _methodChannel.invokeMethod<bool>('isBluetoothEnabled');
+      final result = await _methodChannel.invokeMethod<bool>(
+        'isBluetoothEnabled',
+      );
       return result ?? false;
     } catch (_) {
       return true;

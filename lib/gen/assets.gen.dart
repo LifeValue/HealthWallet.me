@@ -12,16 +12,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart' as _svg;
 import 'package:vector_graphics/vector_graphics.dart' as _vg;
 
-class $AssetsFavIconsGen {
-  const $AssetsFavIconsGen();
-
-  /// File path: assets/favIcons/epic.svg
-  SvgGenImage get epic => const SvgGenImage('assets/favIcons/epic.svg');
-
-  /// List of all assets
-  List<SvgGenImage> get values => [epic];
-}
-
 class $AssetsFontGen {
   const $AssetsFontGen();
 
@@ -184,8 +174,6 @@ class $AssetsIconsGen {
   SvgGenImage get plugCharger =>
       const SvgGenImage('assets/icons/plug-charger.svg');
 
-  /// File path: assets/icons/qr-code.svg
-  SvgGenImage get qrCode => const SvgGenImage('assets/icons/qr-code.svg');
 
   /// File path: assets/icons/renew-sync.svg
   SvgGenImage get renewSync => const SvgGenImage('assets/icons/renew-sync.svg');
@@ -194,8 +182,6 @@ class $AssetsIconsGen {
   SvgGenImage get rulerHeight =>
       const SvgGenImage('assets/icons/ruler-height.svg');
 
-  /// File path: assets/icons/scalpel.svg
-  SvgGenImage get scalpel => const SvgGenImage('assets/icons/scalpel.svg');
 
   /// File path: assets/icons/scan.svg
   SvgGenImage get scan => const SvgGenImage('assets/icons/scan.svg');
@@ -210,8 +196,6 @@ class $AssetsIconsGen {
   SvgGenImage get shareNearby =>
       const SvgGenImage('assets/icons/share-nearby.svg');
 
-  /// File path: assets/icons/share.svg
-  SvgGenImage get share => const SvgGenImage('assets/icons/share.svg');
 
   /// File path: assets/icons/shield.svg
   SvgGenImage get shield => const SvgGenImage('assets/icons/shield.svg');
@@ -294,15 +278,12 @@ class $AssetsIconsGen {
         moon,
         notificationBell,
         plugCharger,
-        qrCode,
         renewSync,
         rulerHeight,
-        scalpel,
         scan,
         search,
         settings,
         shareNearby,
-        share,
         shield,
         stethoscope,
         sun,
@@ -361,9 +342,6 @@ class $AssetsImagesGen {
   AssetGenImage get splashAndroidPadded =>
       const AssetGenImage('assets/images/splash-android-padded.png');
 
-  /// File path: assets/images/splash-android.png
-  AssetGenImage get splashAndroid =>
-      const AssetGenImage('assets/images/splash-android.png');
 
   /// File path: assets/images/splash.png
   AssetGenImage get splash => const AssetGenImage('assets/images/splash.png');
@@ -392,7 +370,6 @@ class $AssetsImagesGen {
         placeholderDark,
         placeholder,
         splashAndroidPadded,
-        splashAndroid,
         splash,
         syncIlustration,
         syncScanIlustration,
@@ -546,7 +523,6 @@ class Assets {
   const Assets._();
 
   static const String demoData = 'assets/demo_data.json';
-  static const $AssetsFavIconsGen favIcons = $AssetsFavIconsGen();
   static const $AssetsFontGen font = $AssetsFontGen();
   static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();

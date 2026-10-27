@@ -1,10 +1,10 @@
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:injectable/injectable.dart';
+
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/logger.dart';
+import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as path;
+import 'package:permission_handler/permission_handler.dart';
 
 @Injectable()
 class PdfStorageService {
@@ -27,7 +27,8 @@ class PdfStorageService {
         throw Exception('Source PDF file not found');
       }
 
-      final fileName = customFileName ??
+      final fileName =
+          customFileName ??
           'health_document_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       final docsPath = await _pathResolver.getDocumentsPath();
@@ -123,8 +124,9 @@ class PdfStorageService {
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }

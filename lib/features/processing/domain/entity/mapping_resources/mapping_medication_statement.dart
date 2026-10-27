@@ -1,3 +1,4 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
@@ -5,7 +6,6 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/medication_statement/medication_statement.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:uuid/uuid.dart';
 
 part 'mapping_medication_statement.freezed.dart';
@@ -25,7 +25,7 @@ abstract class MappingMedicationStatement
 
   factory MappingMedicationStatement.fromJson(Map<String, dynamic> json) {
     return MappingMedicationStatement(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       medicationName: MappedProperty.fromJson(json['medicationName']),
       dosage: MappedProperty.fromJson(json['dosage']),
       reason: MappedProperty.fromJson(json['reason']),
@@ -43,12 +43,12 @@ abstract class MappingMedicationStatement
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'MedicationStatement',
-        'medicationName': medicationName.toJson(),
-        'dosage': dosage.toJson(),
-        'reason': reason.toJson(),
-      };
+    'id': id,
+    'resourceType': 'MedicationStatement',
+    'medicationName': medicationName.toJson(),
+    'dosage': dosage.toJson(),
+    'reason': reason.toJson(),
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -57,23 +57,25 @@ abstract class MappingMedicationStatement
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.MedicationStatement medicationStatement =
+    final fhir_r4.MedicationStatement medicationStatement =
         fhir_r4.MedicationStatement(
-      meta: meta,
-      medicationX: fhir_r4.CodeableConcept(
-          text: fhir_r4.FhirString(medicationName.value)),
-      dosage: [
-        fhir_r4.Dosage(text: fhir_r4.FhirString(dosage.value)),
-      ],
-      reasonCode: [
-        fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reason.value)),
-      ],
-      subject: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Patient/$subjectId')),
-      status: fhir_r4.MedicationStatementStatusCodes.unknown,
-    );
+          meta: meta,
+          medicationX: fhir_r4.CodeableConcept(
+            text: fhir_r4.FhirString(medicationName.value),
+          ),
+          dosage: [
+            fhir_r4.Dosage(text: fhir_r4.FhirString(dosage.value)),
+          ],
+          reasonCode: [
+            fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reason.value)),
+          ],
+          subject: fhir_r4.Reference(
+            reference: fhir_r4.FhirString('Patient/$subjectId'),
+          ),
+          status: fhir_r4.MedicationStatementStatusCodes.unknown,
+        );
 
-    Map<String, dynamic> rawResource = medicationStatement.toJson();
+    final Map<String, dynamic> rawResource = medicationStatement.toJson();
 
     return MedicationStatement(
       id: id,
@@ -90,61 +92,60 @@ abstract class MappingMedicationStatement
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'medicationName': l10n.labelMedicationName,
-        'dosage': l10n.labelDosage,
-        'reason': l10n.labelReason,
-      };
+    'medicationName': l10n.labelMedicationName,
+    'dosage': l10n.labelDosage,
+    'reason': l10n.labelReason,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'medicationName': TextFieldDescriptor(
-          label: 'Medication Name',
-          value: medicationName.value,
-          confidenceLevel: medicationName.confidenceLevel,
-        ),
-        'dosage': TextFieldDescriptor(
-          label: 'Dosage',
-          value: dosage.value,
-          confidenceLevel: dosage.confidenceLevel,
-        ),
-        'reason': TextFieldDescriptor(
-          label: 'Reason',
-          value: reason.value,
-          confidenceLevel: reason.confidenceLevel,
-        ),
-      };
+    'medicationName': TextFieldDescriptor(
+      label: 'Medication Name',
+      value: medicationName.value,
+      confidenceLevel: medicationName.confidenceLevel,
+    ),
+    'dosage': TextFieldDescriptor(
+      label: 'Dosage',
+      value: dosage.value,
+      confidenceLevel: dosage.confidenceLevel,
+    ),
+    'reason': TextFieldDescriptor(
+      label: 'Reason',
+      value: reason.value,
+      confidenceLevel: reason.confidenceLevel,
+    ),
+  };
 
   @override
-  MappingResource copyWithMap(Map<String, dynamic> newValues) =>
-      MappingMedicationStatement(
-        id: id,
-        medicationName: MappedProperty(
-          value: newValues['medicationName'] ?? medicationName.value,
-          confidenceLevel: newValues['medicationName'] != null
-              ? 1
-              : medicationName.confidenceLevel,
-        ),
-        dosage: MappedProperty(
-          value: newValues['dosage'] ?? dosage.value,
-          confidenceLevel:
-              newValues['dosage'] != null ? 1 : dosage.confidenceLevel,
-        ),
-        reason: MappedProperty(
-          value: newValues['reason'] ?? reason.value,
-          confidenceLevel:
-              newValues['reason'] != null ? 1 : reason.confidenceLevel,
-        ),
-      );
+  MappingResource copyWithMap(
+    Map<String, dynamic> newValues,
+  ) => MappingMedicationStatement(
+    id: id,
+    medicationName: MappedProperty(
+      value: newValues['medicationName'] ?? medicationName.value,
+      confidenceLevel: newValues['medicationName'] != null
+          ? 1
+          : medicationName.confidenceLevel,
+    ),
+    dosage: MappedProperty(
+      value: newValues['dosage'] ?? dosage.value,
+      confidenceLevel: newValues['dosage'] != null ? 1 : dosage.confidenceLevel,
+    ),
+    reason: MappedProperty(
+      value: newValues['reason'] ?? reason.value,
+      confidenceLevel: newValues['reason'] != null ? 1 : reason.confidenceLevel,
+    ),
+  );
 
   @override
   String get label => 'Medication Statement';
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        medicationName: medicationName.calculateConfidence(inputText),
-        dosage: dosage.calculateConfidence(inputText),
-        reason: reason.calculateConfidence(inputText),
-      );
+    medicationName: medicationName.calculateConfidence(inputText),
+    dosage: dosage.calculateConfidence(inputText),
+    reason: reason.calculateConfidence(inputText),
+  );
 
   @override
   bool get isValid =>

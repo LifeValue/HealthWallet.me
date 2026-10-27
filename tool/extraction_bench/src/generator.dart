@@ -59,14 +59,14 @@ class DocMeta {
   });
 
   factory DocMeta.fromJson(Map<String, dynamic> json) => DocMeta(
-        docId: json['docId'] as String,
-        split: json['split'] as String? ?? 'unknown',
-        lang: json['lang'] as String? ?? 'unknown',
-        family: json['family'] as String? ?? 'unknown',
-        degradation: json['degradation'] as String? ?? 'clean',
-        seed: (json['seed'] as num?)?.toInt() ?? 0,
-        generatorVersion: json['generatorVersion'] as String? ?? '',
-      );
+    docId: json['docId'] as String,
+    split: json['split'] as String? ?? 'unknown',
+    lang: json['lang'] as String? ?? 'unknown',
+    family: json['family'] as String? ?? 'unknown',
+    degradation: json['degradation'] as String? ?? 'clean',
+    seed: (json['seed'] as num?)?.toInt() ?? 0,
+    generatorVersion: json['generatorVersion'] as String? ?? '',
+  );
 
   final String docId;
   final String split;
@@ -77,14 +77,14 @@ class DocMeta {
   final String generatorVersion;
 
   Map<String, dynamic> toJson() => {
-        'docId': docId,
-        'split': split,
-        'lang': lang,
-        'family': family,
-        'degradation': degradation,
-        'seed': seed,
-        'generatorVersion': generatorVersion,
-      };
+    'docId': docId,
+    'split': split,
+    'lang': lang,
+    'family': family,
+    'degradation': degradation,
+    'seed': seed,
+    'generatorVersion': generatorVersion,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -108,7 +108,12 @@ class HeadingBlock extends Block {
 
 /// Wrapped text.
 class ParagraphBlock extends Block {
-  const ParagraphBlock(this.text, {this.bold = false, this.size = 10, this.indent = 0});
+  const ParagraphBlock(
+    this.text, {
+    this.bold = false,
+    this.size = 10,
+    this.indent = 0,
+  });
   final String text;
   final bool bold;
   final double size;
@@ -119,7 +124,12 @@ class ParagraphBlock extends Block {
 
 /// One line of cells at fixed column offsets (fractions of the text width).
 class RowBlock extends Block {
-  const RowBlock(this.cells, this.columns, {this.bold = false, this.size = 9.5});
+  const RowBlock(
+    this.cells,
+    this.columns, {
+    this.bold = false,
+    this.size = 9.5,
+  });
   final List<String> cells;
   final List<double> columns;
   final bool bold;
@@ -142,7 +152,13 @@ class SpacerBlock extends Block {
 }
 
 class SyntheticDoc {
-  SyntheticDoc(this.meta, this.gold, this.blocks, this.footer, {this.pageHeader = const []});
+  SyntheticDoc(
+    this.meta,
+    this.gold,
+    this.blocks,
+    this.footer, {
+    this.pageHeader = const [],
+  });
 
   final DocMeta meta;
 
@@ -155,9 +171,9 @@ class SyntheticDoc {
   final List<Block> pageHeader;
 
   List<Map<String, dynamic>> get goldResources => [
-        for (final e in gold['entry'] as List)
-          (e as Map<String, dynamic>)['resource'] as Map<String, dynamic>,
-      ];
+    for (final e in gold['entry'] as List)
+      (e as Map<String, dynamic>)['resource'] as Map<String, dynamic>,
+  ];
 
   Iterable<String> get allTexts sync* {
     for (final b in [...pageHeader, ...blocks]) {
@@ -185,21 +201,24 @@ class MissingGlyphException implements Exception {
 
   @override
   String toString() {
-    final code = char.runes.first.toRadixString(16).toUpperCase().padLeft(4, '0');
+    final code = char.runes.first
+        .toRadixString(16)
+        .toUpperCase()
+        .padLeft(4, '0');
     return 'Font $fontName has no glyph for "$char" (U+$code), needed by $docId';
   }
 }
 
 class BenchFonts {
   BenchFonts(this.regular, this.bold)
-      : _regularParser = TtfParser(ByteData.sublistView(regular)),
-        _boldParser = TtfParser(ByteData.sublistView(bold));
+    : _regularParser = TtfParser(ByteData.sublistView(regular)),
+      _boldParser = TtfParser(ByteData.sublistView(bold));
 
   /// Loads `Matter-Regular.ttf` and `Matter-Bold.ttf` from [dir].
   factory BenchFonts.load(String dir) => BenchFonts(
-        File(p.join(dir, 'Matter-Regular.ttf')).readAsBytesSync(),
-        File(p.join(dir, 'Matter-Bold.ttf')).readAsBytesSync(),
-      );
+    File(p.join(dir, 'Matter-Regular.ttf')).readAsBytesSync(),
+    File(p.join(dir, 'Matter-Bold.ttf')).readAsBytesSync(),
+  );
 
   static const defaultDir = 'assets/font/matter-font';
 
@@ -215,7 +234,11 @@ class BenchFonts {
       if (rune == 0x20 || rune == 0x0A) continue;
       for (final parser in [_regularParser, _boldParser]) {
         if (!parser.charToGlyphIndexMap.containsKey(rune)) {
-          throw MissingGlyphException(String.fromCharCode(rune), docId, parser.fontName);
+          throw MissingGlyphException(
+            String.fromCharCode(rune),
+            docId,
+            parser.fontName,
+          );
         }
       }
     }
@@ -230,29 +253,34 @@ String _fhirDate(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 String _shortFamily(String family) => switch (family) {
-      'lab_report' => 'lab',
-      'discharge_letter' => 'dis',
-      'lab_report_long' => 'labl',
-      _ => family,
-    };
+  'lab_report' => 'lab',
+  'discharge_letter' => 'dis',
+  'lab_report_long' => 'labl',
+  _ => family,
+};
 
 /// All documents for [options], in a fixed order.
 List<SyntheticDoc> buildDocuments(GeneratorOptions options) {
   for (final lang in options.langs) {
     if (!benchLangs.contains(lang)) {
-      throw ArgumentError('Unknown language "$lang"; expected one of ${benchLangs.join(', ')}');
+      throw ArgumentError(
+        'Unknown language "$lang"; expected one of ${benchLangs.join(', ')}',
+      );
     }
   }
   for (final family in options.families) {
     if (!benchFamilies.contains(family)) {
-      throw ArgumentError('Unknown family "$family"; expected one of ${benchFamilies.join(', ')}');
+      throw ArgumentError(
+        'Unknown family "$family"; expected one of ${benchFamilies.join(', ')}',
+      );
     }
   }
   final docs = <SyntheticDoc>[];
   for (final lang in options.langs) {
     for (final family in options.families) {
       for (var i = 1; i <= options.perCell; i++) {
-        final docId = '$lang-${_shortFamily(family)}-${i.toString().padLeft(3, '0')}';
+        final docId =
+            '$lang-${_shortFamily(family)}-${i.toString().padLeft(3, '0')}';
         final docSeed = fnv1a32('${options.seed}/$docId');
         final rng = BenchRng(docSeed);
         final meta = DocMeta(
@@ -264,7 +292,8 @@ List<SyntheticDoc> buildDocuments(GeneratorOptions options) {
           seed: docSeed,
           generatorVersion: generatorVersion,
         );
-        final footer = '${options.footerNote ?? labels['footer']!.of(lang)} - $docId';
+        final footer =
+            '${options.footerNote ?? labels['footer']!.of(lang)} - $docId';
         final builder = _DocBuilder(meta, rng);
         docs.add(switch (family) {
           'lab_report' => builder.labReport(footer),
@@ -303,36 +332,55 @@ class _DocBuilder {
   }
 
   Map<String, dynamic> _bundle() => {
-        'resourceType': 'Bundle',
-        'id': rng.uuid(),
-        'type': 'collection',
-        'entry': _entries,
-      };
+    'resourceType': 'Bundle',
+    'id': rng.uuid(),
+    'type': 'collection',
+    'entry': _entries,
+  };
 
-  Map<String, dynamic> _concept(List<Code> codings, String text, {List<Code> alternatives = const []}) => {
-        if (alternatives.isNotEmpty)
-          'extension': [
-            for (final a in alternatives) {'url': alternativeCodingUrl, 'valueCoding': a.toJson()},
-          ],
-        if (codings.isNotEmpty) 'coding': [for (final c in codings) c.toJson()],
-        'text': text,
-      };
+  Map<String, dynamic> _concept(
+    List<Code> codings,
+    String text, {
+    List<Code> alternatives = const [],
+  }) => {
+    if (alternatives.isNotEmpty)
+      'extension': [
+        for (final a in alternatives)
+          {'url': alternativeCodingUrl, 'valueCoding': a.toJson()},
+      ],
+    if (codings.isNotEmpty) 'coding': [for (final c in codings) c.toJson()],
+    'text': text,
+  };
 
   _Person _person() {
     final pool = namePools[lang]!;
     final gender = rng.chance(0.5) ? 'male' : 'female';
     final givenPool = gender == 'male' ? pool.male : pool.female;
-    final given = rng.chance(0.25) ? rng.sample(givenPool, 2) : [rng.pick(givenPool)];
-    final family = pool.doubleSurname ? rng.sample(pool.family, 2).join(' ') : rng.pick(pool.family);
+    final given = rng.chance(0.25)
+        ? rng.sample(givenPool, 2)
+        : [rng.pick(givenPool)];
+    final family = pool.doubleSurname
+        ? rng.sample(pool.family, 2).join(' ')
+        : rng.pick(pool.family);
     return _Person(given, family, gender);
   }
 
-  DateTime _date(DateTime from, int maxDays) => from.add(Duration(days: rng.nextInt(maxDays + 1)));
+  DateTime _date(DateTime from, int maxDays) =>
+      from.add(Duration(days: rng.nextInt(maxDays + 1)));
 
   ({Map<String, dynamic> resource, List<Block> blocks}) _patient() {
     final person = _person();
-    final birth = DateTime.utc(rng.intBetween(1942, 2004), rng.intBetween(1, 12), rng.intBetween(1, 28));
-    final id = randomIdentifier(lang, rng, birthDate: birth, gender: person.gender);
+    final birth = DateTime.utc(
+      rng.intBetween(1942, 2004),
+      rng.intBetween(1, 12),
+      rng.intBetween(1, 28),
+    );
+    final id = randomIdentifier(
+      lang,
+      rng,
+      birthDate: birth,
+      gender: person.gender,
+    );
     final resource = _add({
       'resourceType': 'Patient',
       'id': rng.uuid(),
@@ -358,27 +406,49 @@ class _DocBuilder {
     return (
       resource: resource,
       blocks: [
-        RowBlock(['${l('patient')}: ${person.display}', '${l('sex')}: ${genderLabels[person.gender]!.of(lang)}'], cols, size: 10),
-        RowBlock(['${l('dob')}: ${formatDate(_fhirDate(birth), lang)}', '${id.label}: ${id.value}'], cols, size: 10),
+        RowBlock(
+          [
+            '${l('patient')}: ${person.display}',
+            '${l('sex')}: ${genderLabels[person.gender]!.of(lang)}',
+          ],
+          cols,
+          size: 10,
+        ),
+        RowBlock(
+          [
+            '${l('dob')}: ${formatDate(_fhirDate(birth), lang)}',
+            '${id.label}: ${id.value}',
+          ],
+          cols,
+          size: 10,
+        ),
       ],
     );
   }
 
-  Map<String, dynamic> _organization(String name, String address, String phone) => _add({
-        'resourceType': 'Organization',
-        'id': rng.uuid(),
-        'name': name,
-        'telecom': [
-          {'system': 'phone', 'value': phone},
-        ],
-        'address': [
-          {'text': address},
-        ],
-      });
+  Map<String, dynamic> _organization(
+    String name,
+    String address,
+    String phone,
+  ) => _add({
+    'resourceType': 'Organization',
+    'id': rng.uuid(),
+    'name': name,
+    'telecom': [
+      {'system': 'phone', 'value': phone},
+    ],
+    'address': [
+      {'text': address},
+    ],
+  });
 
-  ({Map<String, dynamic> resource, String line}) _practitioner(String qualification) {
+  ({Map<String, dynamic> resource, String line}) _practitioner(
+    String qualification,
+  ) {
     final person = _person();
-    final prefix = lang == 'es' && person.gender == 'female' ? 'Dra.' : practitionerPrefix.of(lang);
+    final prefix = lang == 'es' && person.gender == 'female'
+        ? 'Dra.'
+        : practitionerPrefix.of(lang);
     final text = '$prefix ${person.display}';
     final license = randomLicense(lang, rng);
     final resource = _add({
@@ -401,16 +471,25 @@ class _DocBuilder {
         },
       ],
     });
-    return (resource: resource, line: '${l('physician')}: $text | $qualification | ${l('license')} $license');
+    return (
+      resource: resource,
+      line:
+          '${l('physician')}: $text | $qualification | ${l('license')} $license',
+    );
   }
 
-  List<Block> _header(String orgName, String address, String phone, String title) => [
-        HeadingBlock(orgName, size: 14),
-        ParagraphBlock('$address | ${l('phone')} $phone', size: 9),
-        const SpacerBlock(10),
-        HeadingBlock(title),
-        const SpacerBlock(4),
-      ];
+  List<Block> _header(
+    String orgName,
+    String address,
+    String phone,
+    String title,
+  ) => [
+    HeadingBlock(orgName, size: 14),
+    ParagraphBlock('$address | ${l('phone')} $phone', size: 9),
+    const SpacerBlock(10),
+    HeadingBlock(title),
+    const SpacerBlock(4),
+  ];
 
   // ------------------------------------------------------------------ lab --
 
@@ -441,14 +520,20 @@ class _DocBuilder {
     final org = _organization(orgName, address, phone);
     final practitioner = _practitioner(labMedicine.of(lang));
 
-    final count = long ? rng.intBetween(16, labTests.length) : rng.intBetween(6, 12);
+    final count = long
+        ? rng.intBetween(16, labTests.length)
+        : rng.intBetween(6, 12);
     final tests = rng.sample(labTests, count);
     final observations = <Map<String, dynamic>>[];
     final rows = <Block>[];
     final elevated = <String>[];
     final decreased = <String>[];
     const cols = [0.0, 0.40, 0.54, 0.70, 0.93];
-    final tableHeader = RowBlock([l('test'), l('result'), l('unit'), l('range'), l('flag')], cols, bold: true);
+    final tableHeader = RowBlock(
+      [l('test'), l('result'), l('unit'), l('range'), l('flag')],
+      cols,
+      bold: true,
+    );
     if (!long) rows.add(tableHeader);
     for (final test in tests) {
       final roll = rng.nextDouble();
@@ -470,8 +555,14 @@ class _DocBuilder {
       if (flag == 'H') elevated.add(name);
       if (flag == 'L') decreased.add(name);
       final unit = test.printUnit.of(lang);
-      final range = '${formatDecimal(test.low, lang)} - ${formatDecimal(test.high, lang)}';
-      Map<String, dynamic> qty(num v) => {'value': v, 'unit': unit, 'system': ucumSystem, 'code': test.ucum};
+      final range =
+          '${formatDecimal(test.low, lang)} - ${formatDecimal(test.high, lang)}';
+      Map<String, dynamic> qty(num v) => {
+        'value': v,
+        'unit': unit,
+        'system': ucumSystem,
+        'code': test.ucum,
+      };
       observations.add({
         'resourceType': 'Observation',
         'id': rng.uuid(),
@@ -479,7 +570,10 @@ class _DocBuilder {
         'category': [
           {
             'coding': [
-              {'system': 'http://terminology.hl7.org/CodeSystem/observation-category', 'code': 'laboratory'},
+              {
+                'system': 'http://terminology.hl7.org/CodeSystem/observation-category',
+                'code': 'laboratory',
+              },
             ],
           },
         ],
@@ -491,7 +585,10 @@ class _DocBuilder {
           'interpretation': [
             {
               'coding': [
-                {'system': 'http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation', 'code': flag},
+                {
+                  'system': 'http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation',
+                  'code': flag,
+                },
               ],
             },
           ],
@@ -499,7 +596,15 @@ class _DocBuilder {
           {'low': qty(test.low), 'high': qty(test.high), 'text': range},
         ],
       });
-      rows.add(RowBlock([name, formatDecimal(value, lang), unit, range, flag ?? ''], cols));
+      rows.add(
+        RowBlock([
+          name,
+          formatDecimal(value, lang),
+          unit,
+          range,
+          flag ?? '',
+        ], cols),
+      );
       if (long) rows.addAll(_rangeBrackets(test, unit));
     }
 
@@ -545,7 +650,11 @@ class _DocBuilder {
         pageHeader: [
           ..._header(orgName, address, phone, title),
           ...patient.blocks,
-          RowBlock(['${l('reportDate')}: ${formatDate(reportDate, lang)}'], const [0.0], size: 10),
+          RowBlock(
+            ['${l('reportDate')}: ${formatDate(reportDate, lang)}'],
+            const [0.0],
+            size: 10,
+          ),
           const SpacerBlock(6),
           const RuleBlock(),
           tableHeader,
@@ -556,7 +665,11 @@ class _DocBuilder {
     final blocks = <Block>[
       ..._header(orgName, address, phone, title),
       ...patient.blocks,
-      RowBlock(['${l('reportDate')}: ${formatDate(reportDate, lang)}'], const [0.0], size: 10),
+      RowBlock(
+        ['${l('reportDate')}: ${formatDate(reportDate, lang)}'],
+        const [0.0],
+        size: 10,
+      ),
       ParagraphBlock(practitioner.line),
       const SpacerBlock(6),
       const RuleBlock(),
@@ -581,8 +694,8 @@ class _DocBuilder {
     final fhir = roll < 0.4
         ? full
         : roll < 0.7
-            ? full.substring(0, 7)
-            : full.substring(0, 4);
+        ? full.substring(0, 7)
+        : full.substring(0, 4);
     return (fhir: fhir, printed: formatDate(fhir, lang));
   }
 
@@ -631,12 +744,20 @@ class _DocBuilder {
 
     final blocks = <Block>[
       ..._header(orgName, address, phone, title),
-      RowBlock(['${l('department')}: ${specialty.name.of(lang)}'], const [0.0], size: 10),
+      RowBlock(
+        ['${l('department')}: ${specialty.name.of(lang)}'],
+        const [0.0],
+        size: 10,
+      ),
       ...patient.blocks,
-      RowBlock([
-        '${l('admission')}: ${formatDate(_fhirDate(admission), lang)}',
-        '${l('discharge')}: ${formatDate(_fhirDate(discharge), lang)}',
-      ], const [0.0, 0.62], size: 10),
+      RowBlock(
+        [
+          '${l('admission')}: ${formatDate(_fhirDate(admission), lang)}',
+          '${l('discharge')}: ${formatDate(_fhirDate(discharge), lang)}',
+        ],
+        const [0.0, 0.62],
+        size: 10,
+      ),
       const SpacerBlock(6),
       ParagraphBlock(l('diagnoses'), bold: true, size: 11),
     ];
@@ -650,22 +771,39 @@ class _DocBuilder {
         'id': rng.uuid(),
         'clinicalStatus': {
           'coding': [
-            {'system': 'http://terminology.hl7.org/CodeSystem/condition-clinical', 'code': 'active'},
+            {
+              'system':
+                  'http://terminology.hl7.org/CodeSystem/condition-clinical',
+              'code': 'active',
+            },
           ],
         },
         'category': [
           {
             'coding': [
-              {'system': 'http://terminology.hl7.org/CodeSystem/condition-category', 'code': 'encounter-diagnosis'},
+              {
+                'system':
+                    'http://terminology.hl7.org/CodeSystem/condition-category',
+                'code': 'encounter-diagnosis',
+              },
             ],
           },
         ],
-        'code': _concept([c.snomed, c.icd10], name, alternatives: c.alternatives),
+        'code': _concept(
+          [c.snomed, c.icd10],
+          name,
+          alternatives: c.alternatives,
+        ),
         'subject': subject(),
         'encounter': enc(),
         'onsetDateTime': onset.fhir,
       });
-      blocks.add(ParagraphBlock('$index. $name (ICD-10: ${c.icd10.code}) - ${l('since')} ${onset.printed}', indent: 10));
+      blocks.add(
+        ParagraphBlock(
+          '$index. $name (ICD-10: ${c.icd10.code}) - ${l('since')} ${onset.printed}',
+          indent: 10,
+        ),
+      );
       index++;
     }
 
@@ -683,7 +821,10 @@ class _DocBuilder {
         'category': [
           {
             'coding': [
-              {'system': 'http://terminology.hl7.org/CodeSystem/observation-category', 'code': 'vital-signs'},
+              {
+                'system': 'http://terminology.hl7.org/CodeSystem/observation-category',
+                'code': 'vital-signs',
+              },
             ],
           },
         ],
@@ -691,9 +832,19 @@ class _DocBuilder {
         'subject': subject(),
         'encounter': enc(),
         'effectiveDateTime': _fhirDate(admission),
-        'valueQuantity': {'value': value, 'unit': unit, 'system': ucumSystem, 'code': v.ucum},
+        'valueQuantity': {
+          'value': value,
+          'unit': unit,
+          'system': ucumSystem,
+          'code': v.ucum,
+        },
       });
-      blocks.add(ParagraphBlock('${v.name.of(lang)}: ${formatDecimal(value, lang)} $unit', indent: 10));
+      blocks.add(
+        ParagraphBlock(
+          '${v.name.of(lang)}: ${formatDecimal(value, lang)} $unit',
+          indent: 10,
+        ),
+      );
     }
 
     final meds = rng.sample(medications, rng.intBetween(2, 4));
@@ -702,13 +853,18 @@ class _DocBuilder {
       ..add(ParagraphBlock(l('medication'), bold: true, size: 11));
     for (final m in meds) {
       final strength = rng.pick(m.strengths);
-      final text = '${m.name.of(lang)} ${formatDecimal(strength.value, lang)} ${strength.unit}';
+      final text =
+          '${m.name.of(lang)} ${formatDecimal(strength.value, lang)} ${strength.unit}';
       final dosage = rng.pick(dosagePatterns[m.form]!).of(lang);
       _add({
         'resourceType': 'MedicationStatement',
         'id': rng.uuid(),
         'status': 'active',
-        'medicationCodeableConcept': _concept([m.atc, m.rxnorm], text, alternatives: m.alternatives),
+        'medicationCodeableConcept': _concept(
+          [m.atc, m.rxnorm],
+          text,
+          alternatives: m.alternatives,
+        ),
         'subject': subject(),
         'context': enc(),
         'dosage': [
@@ -732,7 +888,10 @@ class _DocBuilder {
         'id': rng.uuid(),
         'clinicalStatus': {
           'coding': [
-            {'system': 'http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical', 'code': 'active'},
+            {
+              'system': 'http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical',
+              'code': 'active',
+            },
           ],
         },
         'category': [a.category],
@@ -741,18 +900,25 @@ class _DocBuilder {
         'encounter': enc(),
         'reaction': [
           {
-            'manifestation': [_concept([mCode], mName.of(lang))],
+            'manifestation': [
+              _concept([mCode], mName.of(lang)),
+            ],
           },
         ],
       });
-      blocks.add(ParagraphBlock(
+      blocks.add(
+        ParagraphBlock(
           '- ${a.name.of(lang)} (${allergyCategoryLabels[a.category]!.of(lang)}): ${mName.of(lang)}',
-          indent: 10));
+          indent: 10,
+        ),
+      );
     }
 
     if (rng.chance(0.5)) {
       final (pCode, pName) = rng.pick(procedures);
-      final performed = _fhirDate(_date(admission, discharge.difference(admission).inDays));
+      final performed = _fhirDate(
+        _date(admission, discharge.difference(admission).inDays),
+      );
       _add({
         'resourceType': 'Procedure',
         'id': rng.uuid(),
@@ -765,7 +931,12 @@ class _DocBuilder {
       blocks
         ..add(const SpacerBlock(4))
         ..add(ParagraphBlock(l('procedures'), bold: true, size: 11))
-        ..add(ParagraphBlock('- ${pName.of(lang)} ${l('on')} ${formatDate(performed, lang)}', indent: 10));
+        ..add(
+          ParagraphBlock(
+            '- ${pName.of(lang)} ${l('on')} ${formatDate(performed, lang)}',
+            indent: 10,
+          ),
+        );
     }
 
     blocks
@@ -804,7 +975,8 @@ class _SeededPdfDocument extends PdfDocument {
 }
 
 class _Renderer {
-  _Renderer(this.doc, BenchFonts fonts) : pdf = _SeededPdfDocument(doc.meta.seed) {
+  _Renderer(this.doc, BenchFonts fonts)
+    : pdf = _SeededPdfDocument(doc.meta.seed) {
     regular = PdfTtfFont(pdf, ByteData.sublistView(fonts.regular));
     bold = PdfTtfFont(pdf, ByteData.sublistView(fonts.bold));
   }
@@ -871,14 +1043,25 @@ class _Renderer {
     switch (block) {
       case HeadingBlock(:final text, :final size):
         _line(bold, size, [(text, 0)]);
-      case ParagraphBlock(:final text, bold: final isBold, :final size, :final indent):
+      case ParagraphBlock(
+        :final text,
+        bold: final isBold,
+        :final size,
+        :final indent,
+      ):
         final font = isBold ? bold : regular;
         for (final part in _wrap(font, size, text, _width - indent)) {
           _line(font, size, [(part, indent)]);
         }
-      case RowBlock(:final cells, :final columns, bold: final isBold, :final size):
+      case RowBlock(
+        :final cells,
+        :final columns,
+        bold: final isBold,
+        :final size,
+      ):
         _line(isBold ? bold : regular, size, [
-          for (var i = 0; i < cells.length; i++) (cells[i], columns[i] * _width),
+          for (var i = 0; i < cells.length; i++)
+            (cells[i], columns[i] * _width),
         ]);
       case RuleBlock():
         _ensure(6);
@@ -918,7 +1101,9 @@ Future<List<SyntheticDoc>> generateDataset(
 ) async {
   final out = Directory(outDir);
   if (out.existsSync() && out.listSync().isNotEmpty) {
-    throw BenchInputException('Output directory $outDir is not empty; choose a new --out or delete it first');
+    throw BenchInputException(
+      'Output directory $outDir is not empty; choose a new --out or delete it first',
+    );
   }
   final docs = buildDocuments(options);
   for (final doc in docs) {
@@ -933,10 +1118,13 @@ Future<List<SyntheticDoc>> generateDataset(
 
   for (var i = 0; i < docs.length; i++) {
     final doc = docs[i];
-    final dir = Directory(p.join(outDir, 'synthetic', doc.meta.docId))..createSync(recursive: true);
+    final dir = Directory(p.join(outDir, 'synthetic', doc.meta.docId))
+      ..createSync(recursive: true);
     File(p.join(dir.path, 'document.pdf')).writeAsBytesSync(rendered[i].pdf);
-    File(p.join(dir.path, 'gold.json')).writeAsStringSync('${_json.convert(doc.gold)}\n');
-    File(p.join(dir.path, 'meta.json')).writeAsStringSync('${_json.convert(doc.meta.toJson())}\n');
+    File(p.join(dir.path, 'gold.json'))
+        .writeAsStringSync('${_json.convert(doc.gold)}\n');
+    File(p.join(dir.path, 'meta.json'))
+        .writeAsStringSync('${_json.convert(doc.meta.toJson())}\n');
   }
   final manifest = {
     'generatorVersion': generatorVersion,
@@ -949,6 +1137,7 @@ Future<List<SyntheticDoc>> generateDataset(
         {...d.meta.toJson(), 'path': 'synthetic/${d.meta.docId}'},
     ],
   };
-  File(p.join(outDir, 'manifest.json')).writeAsStringSync('${_json.convert(manifest)}\n');
+  File(p.join(outDir, 'manifest.json'))
+      .writeAsStringSync('${_json.convert(manifest)}\n');
   return docs;
 }

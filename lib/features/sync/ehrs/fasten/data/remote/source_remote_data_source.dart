@@ -33,7 +33,7 @@ class SourceRemoteDataSource {
       if (responseData['success'] == true && responseData['data'] != null) {
         final sourceDtos = (responseData['data'] as List)
             .whereType<Map<String, dynamic>>()
-            .map((json) => SourceDto.fromJson(json))
+            .map(SourceDto.fromJson)
             .toList();
 
         return _sourceMapper.mapToEntities(sourceDtos);

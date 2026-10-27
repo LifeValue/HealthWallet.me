@@ -10,30 +10,6 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get appTitle => 'HealthWallet.me';
-
-  @override
-  String get homeTitle => 'Startseite';
-
-  @override
-  String get profileTitle => 'Profil';
-
-  @override
-  String get settingsTitle => 'Einstellungen';
-
-  @override
-  String get welcomeMessage => 'Willkommen bei HealthWallet.me!';
-
-  @override
-  String get onboardingBack => 'Zurück';
-
-  @override
-  String get onboardingGetStarted => 'Los geht\'s';
-
-  @override
-  String get onboardingNext => 'Nächste';
-
-  @override
   String get onboardingWelcomeTitle => 'eine Gesundheits-Brieftasche für dich!';
 
   @override
@@ -81,42 +57,16 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wir glauben, dass deine sensiblen Gesundheitsinformationen niemals auf einem Firmenserver liegen sollten. Deine Daten sind verschlüsselt und ausschließlich auf deinem Gerät gespeichert, was bedeutet, dass nur du Zugang hast.';
 
   @override
-  String get onboardingBiometricText =>
-      'Für eine zusätzliche Schutzschicht kannst du deine HealthWallet mit biometrischer Sicherheit wie Face ID oder einem Fingerabdruck-Scan sperren.';
-
-  @override
   String get homeHi => 'Hallo, ';
-
-  @override
-  String get homeLastSynced => 'Zuletzt synchronisiert: ';
-
-  @override
-  String get homeNever => 'Nie';
 
   @override
   String get homeVitalSigns => 'Vitalzeichen';
 
   @override
-  String get homeOverview => 'Medizinische Aufzeichnungen';
-
-  @override
   String get homeSource => 'Quelle:';
 
   @override
-  String get homeAll => 'Alle';
-
-  @override
-  String get homeRecentRecords => 'Letzte Einträge';
-
-  @override
-  String get homeViewAll => 'Alle anzeigen';
-
-  @override
   String get homeNA => 'N/A';
-
-  @override
-  String get bluetoothRequired =>
-      'Bitte schalte Bluetooth ein, um die Nahbereichsfreigabe zu nutzen';
 
   @override
   String get dashboardTitle => 'Instrumententafel';
@@ -129,9 +79,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncTitle => 'Synchronisieren';
-
-  @override
-  String get scanFastenQr => 'Scan Fasten Health QR';
 
   @override
   String get syncSuccessful => 'Synchronisierung erfolgreich!';
@@ -154,37 +101,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get continueSync => 'Synchronisierung fortsetzen';
 
   @override
-  String get syncAgain => 'Erneut synchronisieren';
-
-  @override
-  String get syncFailed => 'Synchronisierung fehlgeschlagen: ';
-
-  @override
   String get tryAgain => 'Erneut versuchen';
 
   @override
-  String get syncedAt => 'Synchronisiert am: ';
-
-  @override
-  String get pasteSyncData => 'Synchronisierungsdaten einfügen';
-
-  @override
-  String get submit => 'Senden';
-
-  @override
-  String get hideManualEntry => 'Manuelle Eingabe ausblenden';
-
-  @override
-  String get enterDataManually => 'Daten manuell eingeben';
-
-  @override
-  String get medicalRecords => 'Krankenakten';
-
-  @override
   String get searchRecordsHint => 'Suche nach Aufzeichnungen, Ärzten, Orten...';
-
-  @override
-  String get detailsFor => 'Details für ';
 
   @override
   String get patientId => 'Patienten-ID: ';
@@ -199,40 +119,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get bloodType => 'Blutgruppe';
 
   @override
-  String get lastSyncedProfile => 'Zuletzt synchronisiert: vor 2 Stunden';
-
-  @override
-  String get syncLatestRecords =>
-      'Synchronisiere deine neuesten medizinischen Unterlagen von deinem Gesundheitsdienstleister.';
-
-  @override
-  String get scanToSync => 'Zum Synchronisieren scannen';
-
-  @override
   String get theme => 'Thema';
 
   @override
-  String get pleaseAuthenticate =>
-      'Bitte authentifiziere dich, um fortzufahren';
-
-  @override
   String get authenticate => 'Authentifizieren';
-
-  @override
-  String get bypass => 'Umgehen';
-
-  @override
-  String get onboardingAuthTitle => 'Biometrische Authentifizierung aktivieren';
-
-  @override
-  String get onboardingAuthDescription =>
-      'Füge eine zusätzliche Sicherheitsebene zu deinem Konto hinzu, indem du die biometrische Authentifizierung aktivierst.';
-
-  @override
-  String get onboardingAuthEnable => 'Jetzt aktivieren';
-
-  @override
-  String get onboardingAuthSkip => 'Vorerst überspringen';
 
   @override
   String get biometricAuthentication => 'Biometrische Authentifizierung';
@@ -283,45 +173,20 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ok => 'OK';
 
   @override
-  String get scanCode => 'Code scannen';
-
-  @override
   String get or => 'oder';
-
-  @override
-  String get manualSyncMessage => 'Roher QR-Code';
-
-  @override
-  String get pasteSyncDataHint => 'Füge den rohen QR-Code ein';
 
   @override
   String get connect => 'Verbinden';
 
   @override
-  String get scanNewQRCode => 'Neuen QR-Code scannen';
-
-  @override
   String get loadDemoData => 'Demo-Daten laden';
-
-  @override
-  String get syncData => 'Daten synchronisieren';
 
   @override
   String get noMedicalRecordsYet => 'Noch keine medizinischen Aufzeichnungen';
 
   @override
-  String noRecordTypeYet(Object recordType) {
-    return 'Noch keine $recordType';
-  }
-
-  @override
   String get loadDemoDataMessage =>
       'Lade Demo-Daten, um die App zu erkunden, oder synchronisiere deine echten medizinischen Aufzeichnungen';
-
-  @override
-  String syncDataMessage(Object recordType) {
-    return 'Synchronisiere oder aktualisiere deine Daten, um $recordType-Aufzeichnungen anzuzeigen';
-  }
 
   @override
   String get retry => 'Erneut versuchen';
@@ -347,23 +212,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get errorUpdatingSourceLabel =>
       'Fehler beim Aktualisieren der Quellenbezeichnung';
-
-  @override
-  String get noChangesDetected => 'Keine Änderungen erkannt';
-
-  @override
-  String get pleaseSelectBirthDate => 'Bitte wähle ein Geburtsdatum';
-
-  @override
-  String get errorSavingPatientData =>
-      'Fehler beim Speichern der Patientendaten';
-
-  @override
-  String get walletHolder => 'Wallet Holder';
-
-  @override
-  String get walletHolderDescription =>
-      'This patient is the primary owner of this health wallet';
 
   @override
   String get getStarted => 'Los geht\'s';
@@ -401,16 +249,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String confirmDeleteFile(Object filename) {
-    return 'Bist du sicher, dass du \"$filename\" löschen möchtest?';
-  }
-
-  @override
-  String selectAtLeastOne(Object type) {
-    return 'Wähle mindestens einen $type aus, um fortzufahren.';
-  }
-
-  @override
   String get editSourceLabel => 'Quellenbezeichnung bearbeiten';
 
   @override
@@ -445,51 +283,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recentRecords => 'Neueste Einträge';
 
   @override
-  String chooseToDisplay(Object type) {
-    return 'Wähle die $type, die du in deinem Dashboard sehen möchtest.';
-  }
-
-  @override
   String get displayName => 'Anzeigename';
 
   @override
-  String get bloodTypeAPositive => 'A positiv';
-
-  @override
-  String get bloodTypeANegative => 'A negativ';
-
-  @override
-  String get bloodTypeBPositive => 'B positiv';
-
-  @override
-  String get bloodTypeBNegative => 'B negativ';
-
-  @override
-  String get bloodTypeABPositive => 'AB positiv';
-
-  @override
-  String get bloodTypeABNegative => 'AB negativ';
-
-  @override
-  String get bloodTypeOPositive => 'O positiv';
-
-  @override
-  String get bloodTypeONegative => 'O negativ';
-
-  @override
-  String get serverError => 'Etwas ist auf dem Server schief gelaufen';
-
-  @override
-  String get serverTimeout => 'Server-Zeitüberschreitung';
-
-  @override
-  String get connectionError => 'Verbindungsfehler';
-
-  @override
   String get unknownSource => 'Unbekannte Quelle';
-
-  @override
-  String get synchronization => 'Synchronisierung';
 
   @override
   String get desktopSyncAndBackup => 'Desktop Sync & Backup';
@@ -500,9 +297,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processOnDesktop => 'Auf dem Desktop verarbeiten';
-
-  @override
-  String get sendToDesktop => 'An Desktop senden';
 
   @override
   String get continueImporting => 'Weiter importieren';
@@ -517,13 +311,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get syncMedicalRecords =>
       'Medizinische Aufzeichnungen synchronisieren';
-
-  @override
-  String get syncLatestMedicalRecords =>
-      'Synchronisiere deine neuesten medizinischen Aufzeichnungen von deinem Gesundheitsdienstleister mit einem sicheren JWT-Token.';
-
-  @override
-  String get neverSynced => 'Nie synchronisiert';
 
   @override
   String get lastSynced => 'Zuletzt synchronisiert';
@@ -580,9 +367,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get source => 'Quelle';
 
   @override
-  String get showAll => 'Alle anzeigen';
-
-  @override
   String get records => 'Aufzeichnungen';
 
   @override
@@ -607,17 +391,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tryDifferentKeywords => 'Versuche es mit anderen Suchbegriffen';
 
   @override
-  String get clearAllFilters => 'Alle löschen';
-
-  @override
   String get syncingData => 'Daten werden synchronisiert';
 
   @override
   String get syncingMessage => 'Das kann eine Weile dauern. Bitte warten.';
-
-  @override
-  String get scanQRMessage =>
-      'Scanne den QR-Code von deinem Fasten Health Server, um eine neue Synchronisierungsverbindung zu erstellen.';
 
   @override
   String get viewAll => 'Alle anzeigen';
@@ -653,10 +430,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get recordsSavedTitle => 'Erfolgreich gespeichert';
-
-  @override
-  String get recordsSavedMessage =>
-      'Deine Gesundheitsdaten wurden erfolgreich gespeichert.';
 
   @override
   String get whatNextQuestion => 'Was möchtest du als Nächstes tun?';
@@ -777,47 +550,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get setup => 'Einrichten';
 
   @override
-  String get patientSetupTitle => 'Profil einrichten';
-
-  @override
   String get patientSetupSubtitle =>
       'Personalisiere deine Gesundheits-Brieftasche mit deinen Informationen';
-
-  @override
-  String get onboardingSetupTitle => 'Meine Gesundheits-Brieftasche einrichten';
-
-  @override
-  String get onboardingSetupBody =>
-      'Erstelle dein persönliches Gesundheitsprofil, um mit HealthWallet zu beginnen';
-
-  @override
-  String get onboardingDemoTitle => 'Demo-Daten ausprobieren';
-
-  @override
-  String get onboardingDemoBody =>
-      'Erkunde die App mit Beispiel-Krankenakten, um zu sehen, wie sie funktioniert';
-
-  @override
-  String get onboardingSyncTitle2 => 'Deine Aufzeichnungen synchronisieren';
-
-  @override
-  String get onboardingSyncBody =>
-      'Verbinde dich mit deinen Gesundheitsdienstleistern, um deine echten medizinischen Aufzeichnungen zu importieren';
 
   @override
   String get givenName => 'Vorname';
 
   @override
   String get familyName => 'Nachname';
-
-  @override
-  String get skipForNow => 'Vorerst überspringen';
-
-  @override
-  String get setUpProfile => 'Einrichten';
-
-  @override
-  String get useDefaults => 'Standard';
 
   @override
   String get syncPlaceholderTutorialStep1 =>
@@ -1012,29 +752,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tokenPresetLow => 'Niedrig';
 
   @override
-  String get tokenPresetLowDescription =>
-      'Ideal für kleine Dateien und schnelle Aufgaben.\nVerbraucht die wenigsten Ressourcen und verarbeitet am schnellsten.';
-
-  @override
   String get tokenPresetMedium => 'Mittel';
-
-  @override
-  String get tokenPresetMediumDescription =>
-      'Gut für die meisten Anwendungsfälle.\nBalanciert Dateigröße, Verarbeitungszeit und Ressourcenverbrauch.';
 
   @override
   String get tokenPresetHigh => 'Hoch';
 
   @override
-  String get tokenPresetHighDescription =>
-      'Ideal für große Dateien und komplexe Verarbeitung.\nVerbraucht mehr Ressourcen und Akku, und dauert länger.';
-
-  @override
   String get tokenPresetCustom => 'Benutzerdefiniert';
-
-  @override
-  String get tokenPresetCustomDescription =>
-      'Lege eine benutzerdefinierte Anzahl von Tokens fest.';
 
   @override
   String get setTokens => 'Festlegen';
@@ -1083,12 +807,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get emergencyContact => 'Notfall-Telefonkontakt';
 
   @override
-  String get emergencyContactHint => 'Telefonnummer';
-
-  @override
-  String get searchCountry => 'Land suchen...';
-
-  @override
   String get rotatePage => 'Drehen';
 
   @override
@@ -1102,21 +820,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Seite wird aus dem Dokument entfernt.';
 
   @override
-  String get cannotDeleteLastPage =>
-      'Die letzte Seite kann nicht gelöscht werden';
-
-  @override
-  String get pageRotated => 'Seite gedreht';
-
-  @override
   String get regionAndUnits => 'Sprache & Einheiten';
 
   @override
   String get country => 'Land';
-
-  @override
-  String get patientModifiedNewWillBeCreated =>
-      'Geändert — ein neuer Patient wird erstellt';
 
   @override
   String patientModifiedUpdating(String name) {
@@ -1134,13 +841,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get dropModificationsMessage =>
       'Deine Änderungen an den Patientenfeldern werden verworfen.';
-
-  @override
-  String get modifyPatientTitle => 'Patient ändern?';
-
-  @override
-  String get modifyPatientMessage =>
-      'Die bestehenden Patientendaten werden mit deinen Änderungen aktualisiert.';
 
   @override
   String get scanIdCard => 'Ausweis oder Reisepass scannen';
@@ -1191,9 +891,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String deepScanDownloadMessage(int size) {
     return 'Tiefenscan erfordert einen zusätzlichen Download (~$size MB). Jetzt herunterladen?';
   }
-
-  @override
-  String get downloadingVisionModel => 'Visionsmodell wird heruntergeladen...';
 
   @override
   String get shareUnknownDevice => 'Unbekanntes Gerät';
@@ -1497,11 +1194,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String shareExtensionDurationRequested(String duration) {
-    return '$duration angefordert';
-  }
-
-  @override
   String get desktopSyncNotYet => 'Noch nicht';
 
   @override
@@ -1718,9 +1410,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get desktopBackup => 'Backup';
 
   @override
-  String get desktopBackupLocation => 'Backup Location';
-
-  @override
   String get desktopChange => 'Ändern';
 
   @override
@@ -1798,17 +1487,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get desktopContinueImporting => 'Weiter importieren';
-
-  @override
-  String get desktopConnectToDesktop => 'Mit Desktop verbinden';
-
-  @override
-  String get desktopCouldNotReconnect =>
-      'Verbindung konnte nicht wiederhergestellt werden. Scanne den QR-Code erneut, um zu koppeln.';
-
-  @override
-  String get desktopScanQrToPair =>
-      'Scanne den QR-Code auf deiner Desktop-App, um zu koppeln.';
 
   @override
   String get desktopHandoverToDesktop => 'An Desktop übergeben';

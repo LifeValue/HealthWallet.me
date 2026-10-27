@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -10,7 +11,6 @@ import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/preference_modal.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class HomeGreetingTitle extends StatelessWidget {
   final HomeState homeState;
@@ -48,8 +48,8 @@ class _GreetingLabel extends StatelessWidget {
             final displayName = userState.user.name.isNotEmpty
                 ? userState.user.name
                 : (syncState.syncQrData?.tokenMeta.fullName.isNotEmpty == true
-                    ? syncState.syncQrData!.tokenMeta.fullName
-                    : 'User');
+                      ? syncState.syncQrData!.tokenMeta.fullName
+                      : 'User');
             return RichText(
               text: TextSpan(
                 style: AppTextStyle.titleMedium.copyWith(
@@ -88,14 +88,14 @@ class _PatientLabelState extends State<_PatientLabel> {
     if (_isMenuOpen) return;
     final box = _tapKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final pos = box.localToGlobal(Offset.zero, ancestor: overlay);
 
     setState(() => _isMenuOpen = true);
 
     final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
-        widget.homeState.patient?.name?.first);
+      widget.homeState.patient?.name?.first,
+    );
 
     showShareOptionsMenu(
       context,
@@ -114,8 +114,10 @@ class _PatientLabelState extends State<_PatientLabel> {
 
   @override
   Widget build(BuildContext context) {
-    final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
-            widget.homeState.patient?.name?.first) ??
+    final patientName =
+        FhirFieldExtractor.extractHumanNameFamilyFirst(
+          widget.homeState.patient?.name?.first,
+        ) ??
         'Loading...';
 
     return GestureDetector(

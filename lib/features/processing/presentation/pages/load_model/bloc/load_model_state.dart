@@ -9,7 +9,8 @@ abstract class LoadModelState with _$LoadModelState {
     double? downloadProgress,
     String? errorMessage,
     @Default(false) bool isBackgroundDownload,
-    @Default(DeviceAiCapability.unsupported) DeviceAiCapability deviceCapability,
+    @Default(DeviceAiCapability.unsupported)
+    DeviceAiCapability deviceCapability,
     AiModelVariant? selectedVariant,
     AiModelVariant? downloadingVariant,
     @Default({}) Map<AiModelVariant, bool> downloadedVariants,
@@ -23,11 +24,9 @@ abstract class LoadModelState with _$LoadModelState {
   bool isVariantDownloading(AiModelVariant variant) =>
       downloadingVariants[variant] ?? false;
 
-  double? variantProgressOf(AiModelVariant variant) =>
-      variantProgress[variant];
+  double? variantProgressOf(AiModelVariant variant) => variantProgress[variant];
 
-  bool get isAnyDownloading =>
-      downloadingVariants.values.any((v) => v);
+  bool get isAnyDownloading => downloadingVariants.values.any((v) => v);
 }
 
 enum LoadModelStatus {

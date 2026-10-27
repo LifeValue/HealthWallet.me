@@ -11,9 +11,9 @@ Reference for work in `lib/features/processing/`, `lib/features/capture/` and `l
 
 ## Entry points
 
-| File | Platform | Sets up |
-|------|----------|---------|
-| `lib/main.dart` | iOS / Android | Clears `lww_offline_queue`, preserves the native splash, registers `AppPlatform.mobile`, `configureDependencies()`, `ShareIntentService`, `DeepLinkService`, `ProcessingBloc.add(ProcessingInitialised())`, removes the splash |
+| File                    | Platform        | Sets up                                                                                                                                                                                                                                                                                                            |
+| ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib/main.dart`         | iOS / Android   | Clears `lww_offline_queue`, preserves the native splash, registers `AppPlatform.mobile`, `configureDependencies()`, `ShareIntentService`, `DeepLinkService`, `ProcessingBloc.add(ProcessingInitialised())`, removes the splash                                                                                     |
 | `lib/main_desktop.dart` | macOS / Windows | Registers `AppPlatform.desktop`, `CommunicationBloc` and `TrayBloc` by hand (`BackupBloc`, `HandoverBloc`, `LwwSyncBloc`, `WindowLifecycleService` come from injectable), sends their init events and `ProcessingInitialised`, pipes `CommunicationBloc` and `LwwSyncBloc` state into `TrayBloc`. No native splash |
 
 `App` provides the BLoCs through `MultiBlocProvider` and, as a `WidgetsBindingObserver`, starts and stops P2P discovery on resume and pause.
@@ -51,19 +51,19 @@ Envied reads `.env`: `HUGGING_FACE_TOKEN` (model downloads), `GOOGLE_WALLET_ISSU
 
 ## Feature modules
 
-| Feature | What it does |
-|---------|--------------|
-| `capture/scan/` | Camera capture + `ScanBloc` (mobile only) |
-| `capture/import/` | File picker for PDFs and images + `ImportBloc` |
-| `capture/desktop_import/` | Desktop drag-and-drop / picker + `DesktopBloc` |
-| `processing/` | Document → FHIR pipeline, shared by mobile and desktop |
-| `desktop/` | Communication, handover, LWW sync, backup, tray (desktop builds; communication and sync also run on mobile) |
-| `sync/` | Fasten Health OnPrem pairing and FHIR sync (`sync/ehrs/fasten/`, shared `sync/data/`, `sync/domain/`) |
-| `home/` | Dashboard grid of health category cards |
-| `records/` | FHIR resource browsing, attachments, IPS PDF export (private `fhir_ips_export`) |
-| `share_records/` | P2P proximity sharing via the private `airdrop` package |
-| `wallet_pass/` | Apple / Google Wallet emergency card; its QR opens emergency.healthwallet.me (`docs/`) |
-| `user/`, `onboarding/`, `notifications/`, `dashboard/` | Profile and patient deduplication, first launch, in-app notifications, tab container |
+| Feature                                                | What it does                                                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `capture/scan/`                                        | Camera capture + `ScanBloc` (mobile only)                                                                   |
+| `capture/import/`                                      | File picker for PDFs and images + `ImportBloc`                                                              |
+| `capture/desktop_import/`                              | Desktop drag-and-drop / picker + `DesktopBloc`                                                              |
+| `processing/`                                          | Document → FHIR pipeline, shared by mobile and desktop                                                      |
+| `desktop/`                                             | Communication, handover, LWW sync, backup, tray (desktop builds; communication and sync also run on mobile) |
+| `sync/`                                                | Fasten Health OnPrem pairing and FHIR sync (`sync/ehrs/fasten/`, shared `sync/data/`, `sync/domain/`)       |
+| `home/`                                                | Dashboard grid of health category cards                                                                     |
+| `records/`                                             | FHIR resource browsing, attachments, IPS PDF export (private `fhir_ips_export`)                             |
+| `share_records/`                                       | P2P proximity sharing via the private `airdrop` package                                                     |
+| `wallet_pass/`                                         | Apple / Google Wallet emergency card; its QR opens emergency.healthwallet.me (`docs/`)                      |
+| `user/`, `onboarding/`, `notifications/`, `dashboard/` | Profile and patient deduplication, first launch, in-app notifications, tab container                        |
 
 Capture hands files to `ProcessingBloc` with a `DocumentImported` event.
 
@@ -81,11 +81,11 @@ Fasten sync flow: parse QR → create wallet source → create default patient �
 
 `ExtractionOutputMode` (`processing/domain/entity/extraction_output_mode.dart`), read from the `aiOutputMode` pref on every platform and passed by `ProcessingHandler` to `mapContainerOnly`, `mapBasicInfo` and `mapRemainingResources` like the other AI tuning prefs. Unset or unknown → `ExtractionOutputMode.defaultMode`, which is `schema` since the 2026-10-26 measurement (`tool/extraction_bench/README.md`, "Output-mode measurement").
 
-| Mode | Each generation |
-|------|-----------------|
-| `grammar` | `GbnfGrammars.jsonArray`: any JSON array of objects; prompts describe `resourceType`-tagged objects |
-| `schema` | A flat JSON schema per phase as llamadart `responseFormat` (no grammar): phase 1 one object (patient fields, `documentTitle`, `documentDate`, `conclusion`, `documentCategory` enum), container-only the document fields, phase 2 one object of arrays per category (`lab_report`: observations, practitioners, organizations; `visit`: conditions, medications, procedures, allergies, vitalSigns, practitioners, organizations; anything else the union). Enums for closed sets, dates as `^([0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?)?$` (llamadart's pattern subset has no `\d`), `maxItems` on every array, `additionalProperties: false` |
-| `schemaDraft` | An unconstrained draft call (≤ 384 tokens, same modality as the step), then the `schema` call text-only with the draft and the OCR text in the prompt (text context ≥ 4096). A failed draft leaves the constrained call without one |
+| Mode          | Each generation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grammar`     | `GbnfGrammars.jsonArray`: any JSON array of objects; prompts describe `resourceType`-tagged objects                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `schema`      | A flat JSON schema per phase as llamadart `responseFormat` (no grammar): phase 1 one object (patient fields, `documentTitle`, `documentDate`, `conclusion`, `documentCategory` enum), container-only the document fields, phase 2 one object of arrays per category (`lab_report`: observations, practitioners, organizations; `visit`: conditions, medications, procedures, allergies, vitalSigns, practitioners, organizations; anything else the union). Enums for closed sets, dates as `^([0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?)?$` (llamadart's pattern subset has no `\d`), `maxItems` on every array, `additionalProperties: false` |
+| `schemaDraft` | An unconstrained draft call (≤ 384 tokens, same modality as the step), then the `schema` call text-only with the draft and the OCR text in the prompt (text context ≥ 4096). A failed draft leaves the constrained call without one                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 `processing/data/model/structured_output/extraction_schemas.dart` holds the schemas, the shape text the prompts show (llama.cpp does not inject the schema into the prompt) and the mappers from the schema output back to the legacy `resourceType` maps, so `MappingResource.fromJson`, the dedupe and skip rules, the review UI, sync and the DB are the same in every mode. Output cut off mid-JSON is salvaged up to the last complete array item; unusable phase-2 output gives no resources, unusable phase-1 output takes the vision fallback as before. Every schema is checked with llamadart's `LlamaStructuredOutput.jsonValueSchema` in `test/features/processing/extraction_schemas_test.dart`.
 
@@ -93,23 +93,23 @@ Shared by all modes: the basic-info prompts and `PatientPostProcessor`'s default
 
 `fhir_r4_validation` (probe, 2026-10-26): not used. 0.14 needs `fhir_r4 ^0.14` (the app and `fhir_ips_export` are on 0.6), validates against an R4B (4.3.0) model, and ships no definitions: offline, with its default cache, every resource fails with "No StructureDefinition found". With the HL7 R4 or R4B `definitions.json` loaded into a cache it still needed two workarounds (complex types are looked up by bare name, and a binding to a terminology.hl7.org value set outside the core package throws and aborts the run), and then 32 of 40 `toFhirResource` samples (4 per type, from benchmark runs) failed on validator-internal errors on Reference, Period, Quantity and ContactPoint ("Element type or path is missing", "Context is null for <invariant>"), every type but Patient and Practitioner. 6 came out valid (2 Patients, 4 Practitioners); the other 2 Patients carry the one real defect it found, a model-written `gender` of `Female`, which the required administrative-gender binding rejects and the `schema` mode's gender enum rules out.
 
-| Type | Location |
-|------|----------|
-| `ProcessingBloc` | `processing/presentation/bloc/` |
+| Type                                                                                            | Location                                 |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `ProcessingBloc`                                                                                | `processing/presentation/bloc/`          |
 | `ProcessingHandler` mixin (`DocumentImported`, `SessionActivated`, `ProcessRemainingResources`) | `processing/presentation/bloc/handlers/` |
-| `SessionHandler` mixin (session lifecycle) | `processing/presentation/bloc/handlers/` |
-| `AiModelDownloadService` (model + mmproj from HuggingFace, progress) | `processing/domain/services/` |
-| `NativeTextRecognitionService` | `processing/data/services/` |
-| `ProcessingSession` (persisted in `ProcessingSessions`, not synced) | domain entity |
+| `SessionHandler` mixin (session lifecycle)                                                      | `processing/presentation/bloc/handlers/` |
+| `AiModelDownloadService` (model + mmproj from HuggingFace, progress)                            | `processing/domain/services/`            |
+| `NativeTextRecognitionService`                                                                  | `processing/data/services/`              |
+| `ProcessingSession` (persisted in `ProcessingSessions`, not synced)                             | domain entity                            |
 
 Models (`lib/core/config/constants/ai_model_config.dart`), downloaded on demand into the app documents directory:
 
-| Model | Model | mmproj | Notes |
-|-------|-------|--------|-------|
-| Qwen3-VL-2B-Instruct Q4_K_M | 1056 MB | 445 MB | Default vision model |
-| Qwen3.5-4B Q4_K_M | 2614 MB | 641 MB | Advanced (recommended on 6 GB+ phones and on desktops without the RAM for 8B); skips the device check, needs full capability in the picker |
-| Qwen3-VL-8B | 4560 MB | 815 MB | Desktop only; skips the device check |
-| MedGemma 4B-IT Q4_K_M | 2490 MB | 851 MB | Retired Advanced model (`retiredVariants`): no longer offered for download; listed as "Medical" and kept working only where its files are already on the device, until deleted |
+| Model                       | Model   | mmproj | Notes                                                                                                                                                                          |
+| --------------------------- | ------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Qwen3-VL-2B-Instruct Q4_K_M | 1056 MB | 445 MB | Default vision model                                                                                                                                                           |
+| Qwen3.5-4B Q4_K_M           | 2614 MB | 641 MB | Advanced (recommended on 6 GB+ phones and on desktops without the RAM for 8B); skips the device check, needs full capability in the picker                                     |
+| Qwen3-VL-8B                 | 4560 MB | 815 MB | Desktop only; skips the device check                                                                                                                                           |
+| MedGemma 4B-IT Q4_K_M       | 2490 MB | 851 MB | Retired Advanced model (`retiredVariants`): no longer offered for download; listed as "Medical" and kept working only where its files are already on the device, until deleted |
 
 Bench-only candidates (`AiModelVariant` values left out of `availableVariants`, so users can't pick them; `getActive` resolves any variant from the `aiSelectedModel` pref, so the benchmark runs the production path): Qwen3.5-2B, NuExtract 2.0-2B, NuExtract3 and MedGemma 1.5 4B (Qwen3.5-4B was one until it became Advanced). `AiModelConfig.promptFamily` (`standard`, `nuExtract2`, `nuExtract3`) picks the prompt: for the NuExtract families, schema-mode text calls send the OCR text as the only user message with no system prompt, and pass `NuExtractPrompt.kwargs` (the phase schema as a NuExtract template, plus `instructions` for NuExtract3) as llamadart `chatTemplateKwargs`. Without a template, NuExtract3's chat template falls into its document-to-Markdown mode. Grammar, schemaDraft and vision calls keep the standard prompts. Results are in `tool/extraction_bench/README.md` ("Model candidates", 2026-10-26, and the re-run on the multi-page phase-2 code, 2026-10-27: 48 synthetic documents plus 12 multi-page lab reports, simulator, text only). Lite: keep Qwen3-VL-2B (Qwen3.5-2B ties and truncates on multi-page reports, NuExtract 2.0 is worse). Advanced: Qwen3.5-4B replaced MedGemma 1 (ΔF1 +0.067 [0.046, 0.088] on 48 documents, +0.084 [0.024, 0.143] on multi-page reports, no truncation, Apache-2.0). NuExtract3 is no better than MedGemma (−0.009 [−0.049, 0.025]) and MedGemma 1.5 is worse (−0.087).
 
@@ -144,10 +144,10 @@ Desktop shows a QR with a `DevicePairing` JSON: `deviceId` (UUID v4), `deviceNam
 
 If all fail: `CommunicationConnectionFailed` ("Desktop not found"). When an established connection drops, mobile retries with exponential back-off (3 s base, doubling, 5 attempts), then clears the pairing and asks for a new QR scan. A failed first connection is not retried.
 
-| Mobile \ Desktop | macOS | Windows |
-|------------------|-------|---------|
-| iOS | MPC + TCP | TCP |
-| Android | TCP | TCP |
+| Mobile \ Desktop | macOS     | Windows |
+| ---------------- | --------- | ------- |
+| iOS              | MPC + TCP | TCP     |
+| Android          | TCP       | TCP     |
 
 `TcpService` holds one client. A second connection becomes a pending client, and the desktop shows an accept/reject dialog. The server binds to the machine's current local IP when it starts (port 49152, falling back to a random port, then to `anyIPv4`), on every platform; after a network change the saved IP is stale and the first reconnect falls through to mDNS/SSDP.
 
@@ -157,27 +157,27 @@ Key: the first 32 bytes of the base64url-decoded `pairingKey` (zero-padded if sh
 
 The decrypted payload starts with a `MessageType` byte:
 
-| Code | Type | Meaning |
-|------|------|---------|
+| Code | Type    | Meaning                                                                                                                             |
+| ---- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | 0x01 | `hello` | Handshake, JSON `{pairing_key_hash, device_name}` (hash: SHA-256 of the key, base64url). Receiver checks the hash and replies `ack` |
-| 0x02 | `ack` | Acknowledgement |
-| 0x03 | `ping` | Client keep-alive every 10 s; 5 s pong timeout |
-| 0x04 | `pong` | Reply to ping |
-| 0x05 | `data` | Application message, JSON `{type, payload}`, routed by `MessageRouter` |
-| 0xFF | `kill` | Graceful disconnect; receiver replies `ack` and closes |
+| 0x02 | `ack`   | Acknowledgement                                                                                                                     |
+| 0x03 | `ping`  | Client keep-alive every 10 s; 5 s pong timeout                                                                                      |
+| 0x04 | `pong`  | Reply to ping                                                                                                                       |
+| 0x05 | `data`  | Application message, JSON `{type, payload}`, routed by `MessageRouter`                                                              |
+| 0xFF | `kill`  | Graceful disconnect; receiver replies `ack` and closes                                                                              |
 
 ### Application messages
 
 **LWW sync** (`desktop/lww_sync/`):
 
-| Type | Direction | Meaning |
-|------|-----------|---------|
-| `sync.delta` | both | Rows of one table changed since a timestamp (`SyncDelta`: table, rows, deviceId, timestamp). Attachments travel inline as base64 and are written to files on receipt |
-| `sync.ack` | both | Acknowledges a delta |
-| `sync.status` | both | Row counts per table; differing counts start reconciliation |
-| `sync.verify` | both | Counts after reconciliation |
-| `sync.file_request` | receiver → sender | Missing attachment paths |
-| `sync.file_data` | sender → receiver | `path → base64` for those files |
+| Type                | Direction         | Meaning                                                                                                                                                              |
+| ------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sync.delta`        | both              | Rows of one table changed since a timestamp (`SyncDelta`: table, rows, deviceId, timestamp). Attachments travel inline as base64 and are written to files on receipt |
+| `sync.ack`          | both              | Acknowledges a delta                                                                                                                                                 |
+| `sync.status`       | both              | Row counts per table; differing counts start reconciliation                                                                                                          |
+| `sync.verify`       | both              | Counts after reconciliation                                                                                                                                          |
+| `sync.file_request` | receiver → sender | Missing attachment paths                                                                                                                                             |
+| `sync.file_data`    | sender → receiver | `path → base64` for those files                                                                                                                                      |
 
 Conflicts: the later `updated_at` wins; on a tie the larger device id wins. Only `fhir_resource` stores a local `device_id`, so on a tie in `sources` or `record_notes` the incoming row nearly always wins. A local `DocumentReference` with a broken attachment loses to the incoming row. The delta query is `WHERE updated_at >= ?`; counts skip rows with `deleted_at` set; `LwwSyncInitialised` hard-deletes rows whose `deleted_at` is older than 30 days.
 
@@ -187,27 +187,27 @@ Offline queue: `OfflineQueueService` keeps pending deltas in SharedPreferences (
 
 **Backup** (`desktop/backup/`): desktop snapshots with `VACUUM INTO` to `~/Documents/HealthWallet/Backups/` (`USERPROFILE` on Windows).
 
-| Type | Direction | Meaning |
-|------|-----------|---------|
-| `backup.request` | mobile → desktop | Take a snapshot |
-| `backup.status` | desktop → mobile | Readiness |
-| `backup.meta` | sender → receiver | Size, SHA-256 checksum, chunk count |
-| `backup.chunk` | sender → receiver | 64 KB chunk, base64 |
+| Type              | Direction         | Meaning                              |
+| ----------------- | ----------------- | ------------------------------------ |
+| `backup.request`  | mobile → desktop  | Take a snapshot                      |
+| `backup.status`   | desktop → mobile  | Readiness                            |
+| `backup.meta`     | sender → receiver | Size, SHA-256 checksum, chunk count  |
+| `backup.chunk`    | sender → receiver | 64 KB chunk, base64                  |
 | `backup.complete` | sender → receiver | Done; receiver verifies the checksum |
-| `backup.error` | either | Failure |
+| `backup.error`    | either            | Failure                              |
 
 `backup_bloc.dart` also sends `backup_start`, `backup_chunk` and `backup_complete`; nothing listens for them.
 
 **Handover** (`desktop/handover/`): mobile offloads AI processing to desktop. `HandoverSenderService` sends on mobile; `HandoverService` receives on desktop.
 
-| Type | Direction | Meaning |
-|------|-----------|---------|
-| `handover.offer` | mobile → desktop | session_id, file_count, optional phase1_data |
-| `handover.accept` | desktop → mobile | Accepted |
-| `handover.file` | mobile → desktop | One image, base64 |
-| `handover.progress` | desktop → mobile | Inference progress |
+| Type                      | Direction        | Meaning                                               |
+| ------------------------- | ---------------- | ----------------------------------------------------- |
+| `handover.offer`          | mobile → desktop | session_id, file_count, optional phase1_data          |
+| `handover.accept`         | desktop → mobile | Accepted                                              |
+| `handover.file`           | mobile → desktop | One image, base64                                     |
+| `handover.progress`       | desktop → mobile | Inference progress                                    |
 | `handover.step1_complete` | desktop → mobile | Patient extraction done (when phase1_data was absent) |
-| `handover.result` | desktop → mobile | Full FHIR resource list |
+| `handover.result`         | desktop → mobile | Full FHIR resource list                               |
 
 On `handover.step1_complete` and `handover.result` mobile clears its pending processing sessions and fires `LwwSyncBloc` `SyncTriggered`, so the records arrive through LWW sync.
 

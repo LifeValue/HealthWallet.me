@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -119,16 +120,16 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'ServiceRequest',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'ServiceRequest',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -144,7 +145,7 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;
@@ -172,13 +173,16 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Requester
-    final requesterDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(requester);
+    final requesterDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      requester,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(requesterDisplay, prefix: 'Requester'),
@@ -193,21 +197,27 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
     );
 
     // Performer Type
-    final performerTypeDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(performerType);
+    final performerTypeDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      performerType,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(performerTypeDisplay,
-          prefix: 'Performer Type'),
+      ResourceFieldMapper.createStatusLine(
+        performerTypeDisplay,
+        prefix: 'Performer Type',
+      ),
     );
 
     // Occurrence
-    final occurrenceDisplay =
-        FhirFieldExtractor.extractOccurrenceX(occurrenceX);
+    final occurrenceDisplay = FhirFieldExtractor.extractOccurrenceX(
+      occurrenceX,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(occurrenceDisplay,
-          prefix: 'Occurrence'),
+      ResourceFieldMapper.createDateLine(
+        occurrenceDisplay,
+        prefix: 'Occurrence',
+      ),
     );
 
     // Body Site
@@ -215,13 +225,14 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(bodySite);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
-          prefix: 'Body Site'),
+      ResourceFieldMapper.createBodySiteLine(
+        bodySiteDisplay,
+        prefix: 'Body Site',
+      ),
     );
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
@@ -231,16 +242,20 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
     final patientInstructionText = patientInstruction?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(patientInstructionText,
-          prefix: 'Instructions'),
+      ResourceFieldMapper.createNotesLine(
+        patientInstructionText,
+        prefix: 'Instructions',
+      ),
     );
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes
@@ -262,8 +277,9 @@ abstract class ServiceRequest with _$ServiceRequest implements IFhirResource {
       ...?basedOn?.map((reference) => reference.reference?.valueString),
       ...?replaces?.map((reference) => reference.reference?.valueString),
       ...?performer?.map((reference) => reference.reference?.valueString),
-      ...?locationReference
-          ?.map((reference) => reference.reference?.valueString),
+      ...?locationReference?.map(
+        (reference) => reference.reference?.valueString,
+      ),
       ...?reasonReference?.map((reference) => reference.reference?.valueString),
       ...?insurance?.map((reference) => reference.reference?.valueString),
       ...?supportingInfo?.map((reference) => reference.reference?.valueString),

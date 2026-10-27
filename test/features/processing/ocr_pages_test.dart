@@ -1,7 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/processing/data/utils/ocr_pages.dart';
 
-const _header = 'Laborator Exemplu SRL\nTelefon: 0700 123 456\nNume pacient: Popescu\nCNP: 1850101000000';
+const _header =
+    'Laborator Exemplu SRL\nTelefon: 0700 123 456\nNume pacient: Popescu\nCNP: 1850101000000';
 
 void main() {
   group('withoutRepeatedLines', () {
@@ -33,34 +34,52 @@ void main() {
       expect(pages[3], 'Prolactina\n11\nmUI/mL');
     });
 
-    test('tolerates one page where OCR misread the header, from 3 pages up', () {
-      final pages = OcrPages.withoutRepeatedLines([
-        'Laborator Exemplu SRL\nA',
-        'Laborator Exemplu SRL\nB',
-        'Laborator Exernplu SRL\nC',
-      ]);
+    test(
+      'tolerates one page where OCR misread the header, from 3 pages up',
+      () {
+        final pages = OcrPages.withoutRepeatedLines([
+          'Laborator Exemplu SRL\nA',
+          'Laborator Exemplu SRL\nB',
+          'Laborator Exernplu SRL\nC',
+        ]);
 
-      expect(pages, ['Laborator Exemplu SRL\nA', 'B', 'Laborator Exernplu SRL\nC']);
-    });
+        expect(pages, [
+          'Laborator Exemplu SRL\nA',
+          'B',
+          'Laborator Exernplu SRL\nC',
+        ]);
+      },
+    );
 
     test('a single page comes back unchanged', () {
-      expect(OcrPages.withoutRepeatedLines(['$_header\n$_header']), ['$_header\n$_header']);
+      expect(OcrPages.withoutRepeatedLines(['$_header\n$_header']), [
+        '$_header\n$_header',
+      ]);
     });
   });
 
   group('chunks', () {
     test('joins pages up to the limit, in order', () {
-      expect(OcrPages.chunks(['aaaa', 'bbbb', 'cccc'], 9), ['aaaa\nbbbb', 'cccc']);
+      expect(OcrPages.chunks(['aaaa', 'bbbb', 'cccc'], 9), [
+        'aaaa\nbbbb',
+        'cccc',
+      ]);
       expect(OcrPages.chunks(['aaaa', '', 'bbbb'], 100), ['aaaa\nbbbb']);
     });
 
-    test('splits a long page between lines and cuts a single overlong line', () {
-      expect(OcrPages.chunks(['l1\nl2\nl3\nl4'], 5), ['l1\nl2', 'l3\nl4']);
-      expect(OcrPages.chunks(['abcdefghij'], 4), ['abcd', 'efgh', 'ij']);
-    });
+    test(
+      'splits a long page between lines and cuts a single overlong line',
+      () {
+        expect(OcrPages.chunks(['l1\nl2\nl3\nl4'], 5), ['l1\nl2', 'l3\nl4']);
+        expect(OcrPages.chunks(['abcdefghij'], 4), ['abcd', 'efgh', 'ij']);
+      },
+    );
 
     test('no chunk is longer than the limit', () {
-      final page = List.generate(200, (i) => 'Line $i with a value ${i * 3}').join('\n');
+      final page = List.generate(
+        200,
+        (i) => 'Line $i with a value ${i * 3}',
+      ).join('\n');
       final chunks = OcrPages.chunks([page, page], 500);
       expect(chunks.every((c) => c.length <= 500), isTrue);
       expect(chunks.join('\n'), '$page\n$page');

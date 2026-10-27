@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 
 class ConnectionChip extends StatelessWidget {
@@ -13,20 +13,20 @@ class ConnectionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, label, icon) = switch (state.connectionStatus) {
       ConnectionStatus.connected => (
-          AppColors.success,
-          _connectedLabel(state),
-          Icons.link,
-        ),
+        AppColors.success,
+        _connectedLabel(state),
+        Icons.link,
+      ),
       ConnectionStatus.discovering => (
-          AppColors.warning,
-          'Discovering...',
-          Icons.search,
-        ),
+        AppColors.warning,
+        'Discovering...',
+        Icons.search,
+      ),
       ConnectionStatus.disconnected => (
-          AppColors.error,
-          'Disconnected',
-          Icons.link_off,
-        ),
+        AppColors.error,
+        'Disconnected',
+        Icons.link_off,
+      ),
     };
 
     return Container(

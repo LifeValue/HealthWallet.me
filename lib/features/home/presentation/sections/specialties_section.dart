@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/home/domain/entities/specialty_card.dart';
 import 'package:health_wallet/features/home/presentation/widgets/reorderable_grid.dart';
 import 'package:health_wallet/features/home/presentation/widgets/shaking_card.dart';
 
@@ -57,7 +57,9 @@ class SpecialtiesSection extends StatelessWidget {
       itemBuilder: (context, card, index) {
         final isFirstCard = index == 0 && !editMode;
         final cardContent = _buildSpecialtyCard(
-          context, card, screenWidth,
+          context,
+          card,
+          screenWidth,
           key: isFirstCard ? firstCardKey : null,
         );
 
@@ -90,7 +92,7 @@ class SpecialtiesSection extends StatelessWidget {
 
     final TextStyle nameStyle = AppTextStyle.bodySmall.copyWith(
       fontSize: isSmall ? 10 : 14,
-      color: context.colorScheme.onSurface.withOpacity(0.6),
+      color: context.colorScheme.onSurface.withValues(alpha: 0.6),
     );
 
     final TextStyle countStyle = AppTextStyle.bodyMedium.copyWith(

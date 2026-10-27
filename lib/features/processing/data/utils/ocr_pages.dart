@@ -6,7 +6,8 @@ class OcrPages {
 
   static final _whitespace = RegExp(r'\s+');
 
-  static String _key(String line) => line.trim().replaceAll(_whitespace, ' ').toLowerCase();
+  static String _key(String line) =>
+      line.trim().replaceAll(_whitespace, ' ').toLowerCase();
 
   /// A line long enough to be a header rather than a result cell that
   /// happens to repeat: OCR often gives table columns as separate lines, and
@@ -34,11 +35,14 @@ class OcrPages {
     final seen = <String>{};
     return [
       for (final page in pages)
-        page.split('\n').where((line) {
-          final key = _key(line);
-          if (!repeated.contains(key)) return true;
-          return seen.add(key);
-        }).join('\n'),
+        page
+            .split('\n')
+            .where((line) {
+              final key = _key(line);
+              if (!repeated.contains(key)) return true;
+              return seen.add(key);
+            })
+            .join('\n'),
     ];
   }
 
@@ -73,7 +77,8 @@ class OcrPages {
 
     final result = <String>[];
     for (final piece in pieces) {
-      if (result.isNotEmpty && result.last.length + 1 + piece.length <= maxChars) {
+      if (result.isNotEmpty &&
+          result.last.length + 1 + piece.length <= maxChars) {
         result.last = '${result.last}\n$piece';
       } else {
         result.add(piece);

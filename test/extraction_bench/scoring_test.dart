@@ -4,31 +4,43 @@ import '../../tool/extraction_bench/src/comparators.dart';
 import '../../tool/extraction_bench/src/hungarian.dart';
 import '../../tool/extraction_bench/src/scoring.dart';
 
-Map<String, dynamic> _patient({String? family, String? birthDate, String? gender}) => {
-      'resourceType': 'Patient',
-      'name': [
-        {if (family != null) 'family': family},
-      ],
-      if (birthDate != null) 'birthDate': birthDate,
-      if (gender != null) 'gender': gender,
-    };
+Map<String, dynamic> _patient({
+  String? family,
+  String? birthDate,
+  String? gender,
+}) => {
+  'resourceType': 'Patient',
+  'name': [
+    {'family': ?family},
+  ],
+  'birthDate': ?birthDate,
+  'gender': ?gender,
+};
 
-Map<String, dynamic> _obs(String text, num? value, String? unit, {String? code}) => {
-      'resourceType': 'Observation',
-      'code': {
-        if (code != null)
-          'coding': [
-            {'system': 'http://loinc.org', 'code': code},
-          ],
-        'text': text,
-      },
-      if (value != null) 'valueQuantity': {'value': value, if (unit != null) 'unit': unit},
-    };
+Map<String, dynamic> _obs(
+  String text,
+  num? value,
+  String? unit, {
+  String? code,
+}) => {
+  'resourceType': 'Observation',
+  'code': {
+    if (code != null)
+      'coding': [
+        {'system': 'http://loinc.org', 'code': code},
+      ],
+    'text': text,
+  },
+  if (value != null) 'valueQuantity': {'value': value, 'unit': ?unit},
+};
 
 void main() {
   group('I/O matrix', () {
     test('exact match is TP 1', () {
-      final s = scoreResources([_patient(family: 'Müller')], [_patient(family: 'Müller')]);
+      final s = scoreResources(
+        [_patient(family: 'Müller')],
+        [_patient(family: 'Müller')],
+      );
       // family TP 1; the four other Patient fields are null on both sides.
       expect(s.total.tp, 5);
       expect(s.total.fp, 0);
@@ -59,7 +71,10 @@ void main() {
     test('hallucinated record is FP per non-null predicted field', () {
       final s = scoreResources(
         [_obs('Hemoglobin', 13.5, 'g/dL', code: '718-7')],
-        [_obs('Hemoglobin', 13.5, 'g/dL', code: '718-7'), _obs('Ferritin', 50, 'ng/mL')],
+        [
+          _obs('Hemoglobin', 13.5, 'g/dL', code: '718-7'),
+          _obs('Ferritin', 50, 'ng/mL'),
+        ],
       );
       expect(s.total.tp, 2);
       expect(s.total.fp, 2);
@@ -90,10 +105,18 @@ void main() {
     test('partial score s adds TP s, FP 1-s, FN 1-s', () {
       final s = scoreResources(
         [
-          {'resourceType': 'Condition', 'code': {'text': 'Asthma'}, 'onsetDateTime': '2019-05-12'},
+          {
+            'resourceType': 'Condition',
+            'code': {'text': 'Asthma'},
+            'onsetDateTime': '2019-05-12',
+          },
         ],
         [
-          {'resourceType': 'Condition', 'code': {'text': 'Asthma'}, 'onsetDateTime': '2019'},
+          {
+            'resourceType': 'Condition',
+            'code': {'text': 'Asthma'},
+            'onsetDateTime': '2019',
+          },
         ],
       );
       expect(s.total.tp, 1.5);
@@ -113,12 +136,27 @@ void main() {
 
     test('unknown unit pair scores 1 only on equal value and unit text', () {
       final gold = toQuantity({'value': 5, 'unit': 'mmol/L'})!;
-      expect(compareQuantity(gold, toQuantity({'value': 90, 'unit': 'mg/dL'})!), 0);
-      expect(compareQuantity(gold, toQuantity({'value': 5, 'unit': 'mg/dL'})!), 0);
-      expect(compareQuantity(gold, toQuantity({'value': 5, 'unit': 'mmol/l'})!), 1);
+      expect(
+        compareQuantity(gold, toQuantity({'value': 90, 'unit': 'mg/dL'})!),
+        0,
+      );
+      expect(
+        compareQuantity(gold, toQuantity({'value': 5, 'unit': 'mg/dL'})!),
+        0,
+      );
+      expect(
+        compareQuantity(gold, toQuantity({'value': 5, 'unit': 'mmol/l'})!),
+        1,
+      );
       final unknown = toQuantity({'value': 3, 'unit': 'Stk'})!;
-      expect(compareQuantity(unknown, toQuantity({'value': 3, 'unit': 'stk'})!), 1);
-      expect(compareQuantity(unknown, toQuantity({'value': 3, 'unit': 'pcs'})!), 0);
+      expect(
+        compareQuantity(unknown, toQuantity({'value': 3, 'unit': 'stk'})!),
+        1,
+      );
+      expect(
+        compareQuantity(unknown, toQuantity({'value': 3, 'unit': 'pcs'})!),
+        0,
+      );
     });
 
     test('a proposed pair that agrees on nothing stays unmatched', () {
@@ -131,39 +169,48 @@ void main() {
       expect(s.total.fp, 2);
     });
 
-    test('a cheap pair that agrees on nothing does not strand an agreeing pair', () {
-      // P1–Q1 (cost 1, all-null fields free) plus P2–Q2 (cost 5) is the
-      // cheapest raw assignment, yet neither pair agrees on a field; P1–Q2
-      // agrees on the family name and must be the one matched.
-      final p1 = _patient(family: 'Müller');
-      final p2 = {
-        'resourceType': 'Patient',
-        'name': [
-          {'family': 'Weiß', 'given': ['Anna']},
-        ],
-        'birthDate': '1980-01-01',
-        'gender': 'female',
-        'identifier': [
-          {'value': 'X1'},
-        ],
-      };
-      final q1 = _patient(family: 'Schmidt');
-      final q2 = {
-        'resourceType': 'Patient',
-        'name': [
-          {'family': 'Müller', 'given': ['Hans']},
-        ],
-        'birthDate': '1970-05-05',
-        'gender': 'male',
-        'identifier': [
-          {'value': 'Z9'},
-        ],
-      };
-      final s = scoreResources([p1, p2], [q1, q2]);
-      expect(s.total.tp, 1, reason: 'Müller matched');
-      expect(s.total.hallucinated, 4 + 1);
-      expect(s.total.omitted, 5);
-    });
+    test(
+      'a cheap pair that agrees on nothing does not strand an agreeing pair',
+      () {
+        // P1–Q1 (cost 1, all-null fields free) plus P2–Q2 (cost 5) is the
+        // cheapest raw assignment, yet neither pair agrees on a field; P1–Q2
+        // agrees on the family name and must be the one matched.
+        final p1 = _patient(family: 'Müller');
+        final p2 = {
+          'resourceType': 'Patient',
+          'name': [
+            {
+              'family': 'Weiß',
+              'given': ['Anna'],
+            },
+          ],
+          'birthDate': '1980-01-01',
+          'gender': 'female',
+          'identifier': [
+            {'value': 'X1'},
+          ],
+        };
+        final q1 = _patient(family: 'Schmidt');
+        final q2 = {
+          'resourceType': 'Patient',
+          'name': [
+            {
+              'family': 'Müller',
+              'given': ['Hans'],
+            },
+          ],
+          'birthDate': '1970-05-05',
+          'gender': 'male',
+          'identifier': [
+            {'value': 'Z9'},
+          ],
+        };
+        final s = scoreResources([p1, p2], [q1, q2]);
+        expect(s.total.tp, 1, reason: 'Müller matched');
+        expect(s.total.hallucinated, 4 + 1);
+        expect(s.total.omitted, 5);
+      },
+    );
 
     test('empty predictions give F1 0 and full omission', () {
       final s = scoreResources([_obs('Glucose', 90, 'mg/dL')], const []);
@@ -178,8 +225,20 @@ void main() {
       expect(compareText('Diabet  zaharat tip 2', 'diabet zaharat tip 2'), 1);
       // Extra numbers in the prediction (an ICD code printed on the page) are
       // allowed; Jaccard 4/6.
-      expect(compareText('Type 2 diabetes mellitus', 'Type 2 diabetes mellitus (E11.9)'), closeTo(4 / 6, 1e-9));
-      expect(compareText('Type 2 diabetes mellitus (E11.9)', 'Type 2 diabetes mellitus'), 0);
+      expect(
+        compareText(
+          'Type 2 diabetes mellitus',
+          'Type 2 diabetes mellitus (E11.9)',
+        ),
+        closeTo(4 / 6, 1e-9),
+      );
+      expect(
+        compareText(
+          'Type 2 diabetes mellitus (E11.9)',
+          'Type 2 diabetes mellitus',
+        ),
+        0,
+      );
       expect(compareText('Atrial fibrillation', 'fibrillation atrial'), 1);
       expect(compareText('Asthma', 'Pneumonia'), 0);
     });
@@ -188,8 +247,14 @@ void main() {
       expect(compareText('1-0-0', '1-0-1'), 0);
       expect(compareText('1-0-1', '1-0-1'), 1);
       expect(compareText('20 IE zur Nacht', '14 IE zur Nacht'), 0);
-      expect(compareText('20 IE zur Nacht', '20 IE abends zur Nacht'), closeTo(4 / 5, 1e-9));
-      expect(compareText('1 tablet twice daily', '1 tablet 2 times daily'), 0.5);
+      expect(
+        compareText('20 IE zur Nacht', '20 IE abends zur Nacht'),
+        closeTo(4 / 5, 1e-9),
+      );
+      expect(
+        compareText('1 tablet twice daily', '1 tablet 2 times daily'),
+        0.5,
+      );
       expect(compareText('Bisoprolol 5 mg', 'Bisoprolol 10 mg'), 0);
       expect(compareText('1-0-0', '1-0'), 0);
     });
@@ -225,13 +290,38 @@ void main() {
           },
         ],
         'coding': [
-          {'system': 'http://loinc.org', 'code': '2345-7', 'display': 'Glucose [Mass/volume] in Serum or Plasma'},
+          {
+            'system': 'http://loinc.org',
+            'code': '2345-7',
+            'display': 'Glucose [Mass/volume] in Serum or Plasma',
+          },
         ],
         'text': 'Glukose',
       }, alternativeUrl: 'alt')!;
       ConceptValue pred(Map<String, dynamic> m) => toConcept(m)!;
-      expect(compareConcept(gold, pred({'coding': [{'system': 'http://loinc.org/', 'code': '2345-7'}]})), 1);
-      expect(compareConcept(gold, pred({'coding': [{'system': 'http://loinc.org', 'code': '2339-0'}], 'text': 'x'})), 0.75);
+      expect(
+        compareConcept(
+          gold,
+          pred({
+            'coding': [
+              {'system': 'http://loinc.org/', 'code': '2345-7'},
+            ],
+          }),
+        ),
+        1,
+      );
+      expect(
+        compareConcept(
+          gold,
+          pred({
+            'coding': [
+              {'system': 'http://loinc.org', 'code': '2339-0'},
+            ],
+            'text': 'x',
+          }),
+        ),
+        0.75,
+      );
       expect(compareConcept(gold, pred({'text': 'Glukose'})), 0.5);
       expect(compareConcept(gold, pred({'text': 'Kreatinin'})), 0);
       final textOnly = toConcept({'text': 'Entlassungsbrief'})!;
@@ -344,7 +434,10 @@ void main() {
       for (var t = 0; t < 30; t++) {
         final rows = 1 + t % 4;
         final cols = rows + t % 3;
-        final cost = [for (var i = 0; i < rows; i++) [for (var j = 0; j < cols; j++) next()]];
+        final cost = [
+          for (var i = 0; i < rows; i++)
+            [for (var j = 0; j < cols; j++) next()],
+        ];
         expect(total(cost, hungarian(cost)), closeTo(brute(cost), 1e-9));
       }
     });

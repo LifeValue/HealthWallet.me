@@ -19,11 +19,20 @@ class ImagePreprocessor {
       if (decoded == null) return imagePath;
 
       var processed = img.adjustColor(decoded, contrast: 1.3);
-      processed = img.convolution(processed, filter: [
-        0, -1, 0,
-        -1, 5, -1,
-        0, -1, 0,
-      ]);
+      processed = img.convolution(
+        processed,
+        filter: [
+          0,
+          -1,
+          0,
+          -1,
+          5,
+          -1,
+          0,
+          -1,
+          0,
+        ],
+      );
 
       final supportDir = await getApplicationSupportDirectory();
       if (supportDir.path.isEmpty) return imagePath;
@@ -31,9 +40,12 @@ class ImagePreprocessor {
       if (!await ocrTempDir.exists()) {
         await ocrTempDir.create(recursive: true);
       }
-      final outputPath =
-          path.join(ocrTempDir.path, 'preprocessed_${path.basename(imagePath)}');
-      await File(outputPath).writeAsBytes(img.encodeJpg(processed, quality: 95));
+      final outputPath = path.join(
+        ocrTempDir.path,
+        'preprocessed_${path.basename(imagePath)}',
+      );
+      await File(outputPath)
+          .writeAsBytes(img.encodeJpg(processed, quality: 95));
 
       return outputPath;
     } catch (_) {

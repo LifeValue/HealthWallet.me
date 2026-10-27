@@ -11,23 +11,21 @@ abstract class SourceMapper {
 class SourceMapperImpl implements SourceMapper {
   @override
   Source mapToEntity(SourceDto dto) {
-    String platformName = _generatePlatformName(dto.platformType ?? 'fasten');
-    String? labelSource = platformName;
-    String platformType = 'fasten';
+    final String platformName = _generatePlatformName(
+      dto.platformType ?? 'fasten',
+    );
+    final String labelSource = platformName;
+    final String platformType = 'fasten';
 
     DateTime? createdAt;
     DateTime? updatedAt;
 
     if (dto.createdAt != null) {
-      try {
-        createdAt = DateTime.parse(dto.createdAt!);
-      } catch (e) {}
+      createdAt = DateTime.tryParse(dto.createdAt!);
     }
 
     if (dto.updatedAt != null) {
-      try {
-        updatedAt = DateTime.parse(dto.updatedAt!);
-      } catch (e) {}
+      updatedAt = DateTime.tryParse(dto.updatedAt!);
     }
 
     return Source(

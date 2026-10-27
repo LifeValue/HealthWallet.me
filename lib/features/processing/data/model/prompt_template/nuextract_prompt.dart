@@ -15,12 +15,14 @@ class NuExtractPrompt {
     Map<String, dynamic> schema, {
     required String schemaName,
     String? documentCategory,
-  }) =>
-      {
-        'template': template(schema),
-        if (family == PromptFamily.nuExtract3)
-          'instructions': instructions(schemaName, documentCategory: documentCategory),
-      };
+  }) => {
+    'template': template(schema),
+    if (family == PromptFamily.nuExtract3)
+      'instructions': instructions(
+        schemaName,
+        documentCategory: documentCategory,
+      ),
+  };
 
   /// [schema] as a NuExtract template: an object maps to its properties, an
   /// array to a one-item list, an enum to its non-empty values, a partial
@@ -33,18 +35,25 @@ class NuExtractPrompt {
       case 'object':
         final properties = schema['properties'] as Map<String, dynamic>;
         return {
-          for (final e in properties.entries) e.key: _node(e.value as Map<String, dynamic>),
+          for (final e in properties.entries)
+            e.key: _node(e.value as Map<String, dynamic>),
         };
       case 'array':
         return [_node(schema['items'] as Map<String, dynamic>)];
     }
     final values = schema['enum'];
-    if (values is List) return [for (final v in values) if (v != '') v];
+    if (values is List) {
+      return [
+        for (final v in values)
+          if (v != '') v,
+      ];
+    }
     if (schema['pattern'] == ExtractionSchemas.datePattern) return 'date-time';
     return 'string';
   }
 
-  static const _common = '- Dates as YYYY-MM-DD, or YYYY-MM / YYYY when only that is printed.\n'
+  static const _common =
+      '- Dates as YYYY-MM-DD, or YYYY-MM / YYYY when only that is printed.\n'
       '- Empty string for a field the document does not contain.';
 
   static const _documentRules =
@@ -65,9 +74,9 @@ class NuExtractPrompt {
     }
     final sections = ExtractionSchemas.sectionsFor(documentCategory);
     return [
-      for (final s in sections) '- ${s.key}: ${s.description}, at most ${s.maxItems}.',
-      if (sections.any((s) => s.resourceType == 'Observation'))
-        '- Observation value: the number only (e.g. 98.5); the unit goes in unit.',
+      for (final s in sections)
+        '- ${s.key}: ${s.description}, at most ${s.maxItems}.',
+      if (sections.any((s) => s.resourceType == 'Observation')) '- Observation value: the number only (e.g. 98.5); the unit goes in unit.',
       _common,
     ].join('\n');
   }

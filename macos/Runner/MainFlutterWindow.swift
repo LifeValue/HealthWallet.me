@@ -2,18 +2,18 @@ import Cocoa
 import FlutterMacOS
 
 class MainFlutterWindow: NSWindow {
-  override func awakeFromNib() {
-    let flutterViewController = FlutterViewController()
-    let windowFrame = self.frame
-    self.contentViewController = flutterViewController
-    self.setFrame(windowFrame, display: true)
+    override func awakeFromNib() {
+        let flutterViewController = FlutterViewController()
+        let windowFrame = self.frame
+        self.contentViewController = flutterViewController
+        self.setFrame(windowFrame, display: true)
 
-    RegisterGeneratedPlugins(registry: flutterViewController)
+        RegisterGeneratedPlugins(registry: flutterViewController)
 
-    super.awakeFromNib()
+        super.awakeFromNib()
 
-    if let screen = self.screen ?? NSScreen.main {
-      self.setFrame(screen.visibleFrame, display: true)
+        if let screen = self.screen ?? NSScreen.main {
+            self.setFrame(screen.visibleFrame, display: true)
+        }
     }
-  }
 }

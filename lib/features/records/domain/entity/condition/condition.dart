@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -87,16 +88,16 @@ abstract class Condition with _$Condition implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Condition',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Condition',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -112,33 +113,42 @@ abstract class Condition with _$Condition implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Clinical Status
-    final statusDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(clinicalStatus);
+    final statusDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      clinicalStatus,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusDisplay,
-          prefix: 'Clinical Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusDisplay,
+        prefix: 'Clinical Status',
+      ),
     );
 
     // Verification Status
-    final verificationDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(verificationStatus);
+    final verificationDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      verificationStatus,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(verificationDisplay,
-          prefix: 'Verification'),
+      ResourceFieldMapper.createStatusLine(
+        verificationDisplay,
+        prefix: 'Verification',
+      ),
     );
 
     // Severity
-    final severityDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(severity);
+    final severityDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      severity,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(severityDisplay,
-          prefix: 'Severity'),
+      ResourceFieldMapper.createWarningLine(
+        severityDisplay,
+        prefix: 'Severity',
+      ),
     );
 
     // Category
@@ -146,8 +156,10 @@ abstract class Condition with _$Condition implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(categoryDisplay,
-          prefix: 'Category'),
+      ResourceFieldMapper.createCategoryLine(
+        categoryDisplay,
+        prefix: 'Category',
+      ),
     );
 
     // Body Site
@@ -155,8 +167,10 @@ abstract class Condition with _$Condition implements IFhirResource {
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(bodySite);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
-          prefix: 'Body Site'),
+      ResourceFieldMapper.createBodySiteLine(
+        bodySiteDisplay,
+        prefix: 'Body Site',
+      ),
     );
 
     // Onset Date
@@ -176,7 +190,8 @@ abstract class Condition with _$Condition implements IFhirResource {
     // Stage
     if (stage != null && stage!.isNotEmpty) {
       final stageDisplay = FhirFieldExtractor.extractCodeableConceptText(
-          stage!.first.summary);
+        stage!.first.summary,
+      );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createActivityLine(stageDisplay, prefix: 'Stage'),
@@ -184,16 +199,18 @@ abstract class Condition with _$Condition implements IFhirResource {
     }
 
     // Recorder
-    final recorderDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(recorder);
+    final recorderDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      recorder,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
     );
 
     // Asserter
-    final asserterDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(asserter);
+    final asserterDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      asserter,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(asserterDisplay, prefix: 'Asserter'),
@@ -201,10 +218,12 @@ abstract class Condition with _$Condition implements IFhirResource {
 
     // Recorded Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes

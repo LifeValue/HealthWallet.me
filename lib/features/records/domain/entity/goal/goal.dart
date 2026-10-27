@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -85,16 +86,16 @@ abstract class Goal with _$Goal implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Goal',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Goal',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -102,8 +103,9 @@ abstract class Goal with _$Goal implements IFhirResource {
       return title;
     }
 
-    final displayText =
-        FhirFieldExtractor.extractCodeableConceptText(description);
+    final displayText = FhirFieldExtractor.extractCodeableConceptText(
+      description,
+    );
     if (displayText != null) return displayText;
 
     return fhirType.display;
@@ -111,23 +113,28 @@ abstract class Goal with _$Goal implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader('Goal Details'));
 
     // Description (What is the goal - CRITICAL)
-    final descriptionDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(description);
+    final descriptionDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      description,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createActivityLine(descriptionDisplay,
-          prefix: 'Goal'),
+      ResourceFieldMapper.createActivityLine(
+        descriptionDisplay,
+        prefix: 'Goal',
+      ),
     );
 
     // Target Measures (Specific targets - CRITICAL)
     if (target != null && target!.isNotEmpty) {
       for (final tgt in target!) {
-        final measure = FhirFieldExtractor.extractCodeableConceptText(tgt.measure);
-        
+        final measure = FhirFieldExtractor.extractCodeableConceptText(
+          tgt.measure,
+        );
+
         // Extract target value
         String? targetValue;
         if (tgt.detailQuantity != null) {
@@ -148,7 +155,8 @@ abstract class Goal with _$Goal implements IFhirResource {
           }
         } else if (tgt.detailCodeableConcept != null) {
           targetValue = FhirFieldExtractor.extractCodeableConceptText(
-              tgt.detailCodeableConcept);
+            tgt.detailCodeableConcept,
+          );
         } else if (tgt.detailString != null) {
           targetValue = tgt.detailString!.valueString;
         } else if (tgt.detailBoolean != null) {
@@ -157,41 +165,48 @@ abstract class Goal with _$Goal implements IFhirResource {
           targetValue = tgt.detailInteger!.valueString;
         } else if (tgt.detailRatio != null) {
           final numerator = FhirFieldExtractor.extractQuantity(
-              tgt.detailRatio!.numerator);
+            tgt.detailRatio!.numerator,
+          );
           final denominator = FhirFieldExtractor.extractQuantity(
-              tgt.detailRatio!.denominator);
+            tgt.detailRatio!.denominator,
+          );
           if (numerator != null && denominator != null) {
             targetValue = '$numerator / $denominator';
           }
         }
 
         // Due date
-        final dueDate = tgt.dueX?.isAs<fhir_r4.FhirDate>()?.valueString ??
+        final dueDate =
+            tgt.dueX?.isAs<fhir_r4.FhirDate>()?.valueString ??
             tgt.dueX?.isAs<fhir_r4.FhirDuration>()?.value?.valueString;
 
         // Build target display
         final targetDisplay = [
-          if (measure != null) measure,
-          if (targetValue != null) targetValue,
+          ?measure,
+          ?targetValue,
           if (dueDate != null) 'by $dueDate',
         ].join(': ');
 
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createValueLine(
-              targetDisplay.isNotEmpty ? targetDisplay : null,
-              prefix: 'Target'),
+            targetDisplay.isNotEmpty ? targetDisplay : null,
+            prefix: 'Target',
+          ),
         );
       }
     }
 
     // Achievement Status (Progress - CRITICAL)
-    final achievementDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(achievementStatus);
+    final achievementDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      achievementStatus,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(achievementDisplay,
-          prefix: 'Achievement Status'),
+      ResourceFieldMapper.createStatusLine(
+        achievementDisplay,
+        prefix: 'Achievement Status',
+      ),
     );
 
     infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
@@ -200,129 +215,153 @@ abstract class Goal with _$Goal implements IFhirResource {
     final lifecycleDisplay = lifecycleStatus?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(lifecycleDisplay,
-          prefix: 'Lifecycle Status'),
+      ResourceFieldMapper.createStatusLine(
+        lifecycleDisplay,
+        prefix: 'Lifecycle Status',
+      ),
     );
 
     // Status Date (When status last changed)
     final statusDateDisplay = statusDate?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(statusDateDisplay,
-          prefix: 'Status Date'),
+      ResourceFieldMapper.createDateLine(
+        statusDateDisplay,
+        prefix: 'Status Date',
+      ),
     );
 
     // Category (Type of goal)
     if (category != null && category!.isNotEmpty) {
       final categoryDisplay = category!
-          .map((c) => FhirFieldExtractor.extractCodeableConceptText(c))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((c) => c != null && c.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createCategoryLine(
-            categoryDisplay.isNotEmpty ? categoryDisplay : null,
-            prefix: 'Category'),
+          categoryDisplay.isNotEmpty ? categoryDisplay : null,
+          prefix: 'Category',
+        ),
       );
     }
 
     // Priority
-    final priorityDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(priority);
+    final priorityDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      priority,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createWarningLine(priorityDisplay, prefix: 'Priority'),
+      ResourceFieldMapper.createWarningLine(
+        priorityDisplay,
+        prefix: 'Priority',
+      ),
     );
 
     // Start Date
-    final startDisplay = startX?.isAs<fhir_r4.FhirDate>()?.valueString ??
+    final startDisplay =
+        startX?.isAs<fhir_r4.FhirDate>()?.valueString ??
         FhirFieldExtractor.extractCodeableConceptText(
-            startX?.isAs<fhir_r4.CodeableConcept>());
+          startX?.isAs<fhir_r4.CodeableConcept>(),
+        );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(startDisplay, prefix: 'Start Date'),
     );
 
     // Set By / Expressed By
-    final expressedByDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(expressedBy);
+    final expressedByDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      expressedBy,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(expressedByDisplay,
-          prefix: 'Set By'),
+      ResourceFieldMapper.createUserLine(expressedByDisplay, prefix: 'Set By'),
     );
 
     // Addresses (What conditions/issues this goal addresses)
     if (addresses != null && addresses!.isNotEmpty) {
       final addressesDisplay = addresses!
-          .map((a) => FhirFieldExtractor.extractReferenceDisplay(a))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((a) => a != null && a.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createNotesLine(
-            addressesDisplay.isNotEmpty ? addressesDisplay : null,
-            prefix: 'Addresses'),
+          addressesDisplay.isNotEmpty ? addressesDisplay : null,
+          prefix: 'Addresses',
+        ),
       );
     }
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Additional Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader('Additional Information'),
+    );
 
     // Status Reason (Why goal is in this status)
     final statusReasonText = statusReason?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(statusReasonText,
-          prefix: 'Status Reason'),
+      ResourceFieldMapper.createNotesLine(
+        statusReasonText,
+        prefix: 'Status Reason',
+      ),
     );
 
     // Outcome Code (Results of pursuing this goal)
     if (outcomeCode != null && outcomeCode!.isNotEmpty) {
       final outcomeDisplay = outcomeCode!
-          .map((o) => FhirFieldExtractor.extractCodeableConceptText(o))
+          .map(FhirFieldExtractor.extractCodeableConceptText)
           .where((o) => o != null && o.isNotEmpty)
           .join(', ');
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-            outcomeDisplay.isNotEmpty ? outcomeDisplay : null,
-            prefix: 'Outcome'),
+          outcomeDisplay.isNotEmpty ? outcomeDisplay : null,
+          prefix: 'Outcome',
+        ),
       );
     }
 
     // Outcome Reference (Links to observation/results)
     if (outcomeReference != null && outcomeReference!.isNotEmpty) {
       final outcomeRefDisplay = outcomeReference!
-          .map((o) => FhirFieldExtractor.extractReferenceDisplay(o))
+          .map(FhirFieldExtractor.extractReferenceDisplay)
           .where((o) => o != null && o.isNotEmpty)
           .take(3)
           .join(', ');
-      
+
       if (outcomeRefDisplay.isNotEmpty) {
         final suffix = outcomeReference!.length > 3
             ? ' (${outcomeReference!.length - 3} more)'
             : '';
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createLabLine(outcomeRefDisplay + suffix,
-              prefix: 'Outcome Measurements'),
+          ResourceFieldMapper.createLabLine(
+            outcomeRefDisplay + suffix,
+            prefix: 'Outcome Measurements',
+          ),
         );
       }
     }
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes (Progress notes, action plan)
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Progress Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: 'Progress Notes',
+      ),
     );
 
     return infoLines;
@@ -334,8 +373,9 @@ abstract class Goal with _$Goal implements IFhirResource {
       subject?.reference?.valueString,
       expressedBy?.reference?.valueString,
       ...?addresses?.map((reference) => reference.reference?.valueString),
-      ...?outcomeReference
-          ?.map((reference) => reference.reference?.valueString),
+      ...?outcomeReference?.map(
+        (reference) => reference.reference?.valueString,
+      ),
     }.where((reference) => reference != null).toList();
   }
 

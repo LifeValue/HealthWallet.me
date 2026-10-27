@@ -18,7 +18,9 @@ subprojects {
                 namespace = project.group.toString().ifEmpty {
                     val manifest = project.file("src/main/AndroidManifest.xml")
                     if (manifest.exists()) {
-                        val pkg = Regex("package=\"([^\"]+)\"").find(manifest.readText())?.groupValues?.get(1)
+                        val pkg = Regex(
+                            "package=\"([^\"]+)\""
+                        ).find(manifest.readText())?.groupValues?.get(1)
                         pkg ?: "com.${project.name.replace("-", ".")}"
                     } else {
                         "com.${project.name.replace("-", ".")}"
@@ -34,7 +36,12 @@ subprojects {
             // latest release; bonsoir_android 5.x; desktop_drop 0.4.x; file_picker 8.x). compileSdk
             // only affects which APIs compile; it doesn't change runtime behaviour (that's
             // targetSdk), so raising it for them is safe.
-            if ((compileSdkVersion?.removePrefix("android-")?.substringBefore('.')?.toIntOrNull() ?: 0) < 36) {
+            if ((
+                    compileSdkVersion?.removePrefix("android-")?.substringBefore('.')?.toIntOrNull()
+                        ?: 0
+                    ) <
+                36
+            ) {
                 compileSdkVersion(37)
             }
         }

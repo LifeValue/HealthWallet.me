@@ -24,11 +24,17 @@ String formatDate(String fhirDate, String lang) {
       final m = _monthsEn[month - 1];
       return day == null ? '$m $year' : '$day $m $year';
     case 'es':
-      return day == null ? '${_two(month)}/$year' : '${_two(day)}/${_two(month)}/$year';
+      return day == null
+          ? '${_two(month)}/$year'
+          : '${_two(day)}/${_two(month)}/$year';
     case 'de':
-      return day == null ? '${_two(month)}/$year' : '${_two(day)}.${_two(month)}.$year';
+      return day == null
+          ? '${_two(month)}/$year'
+          : '${_two(day)}.${_two(month)}.$year';
     case 'ro':
-      return day == null ? '${_two(month)}.$year' : '${_two(day)}.${_two(month)}.$year';
+      return day == null
+          ? '${_two(month)}.$year'
+          : '${_two(day)}.${_two(month)}.$year';
   }
   throw ArgumentError.value(lang, 'lang');
 }

@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 @injectable
 class PdfPreviewService {
@@ -26,20 +27,24 @@ class PdfPreviewService {
   }
 
   Future<String?> _extractDocumentReferencePath(
-      Map<String, dynamic> rawResource) async {
+    Map<String, dynamic> rawResource,
+  ) async {
     final contentList = rawResource['content'] as List?;
     if (contentList == null || contentList.isEmpty) return null;
     final attachment = (contentList[0] as Map?)?['attachment'] as Map?;
     final url = attachment?['url'] as String?;
     if (url == null) return null;
     final rawPath = Uri.decodeComponent(
-        url.startsWith('file://') ? url.substring(7) : url);
+      url.startsWith('file://') ? url.substring(7) : url,
+    );
     final resolved = await _pathResolver.toAbsolute(rawPath);
     return resolved;
   }
 
   Future<String?> _extractMediaPath(
-      Map<String, dynamic> rawResource, String displayTitle) async {
+    Map<String, dynamic> rawResource,
+    String displayTitle,
+  ) async {
     final content = rawResource['content'];
     if (content == null) return null;
 
@@ -58,17 +63,21 @@ class PdfPreviewService {
   ) async {
     try {
       final result = await OpenFile.open(filePath);
+      if (!context.mounted) return;
 
       if (result.type != ResultType.done) {
         _showWarningSnackBar(context, 'Could not open PDF: ${result.message}');
       }
     } catch (e) {
+      if (!context.mounted) return;
       _showErrorSnackBar(context, 'Error opening PDF: $e');
     }
   }
 
   Future<String> _saveBase64ToTempFile(
-      String base64Data, String fileName) async {
+    String base64Data,
+    String fileName,
+  ) async {
     try {
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -114,21 +123,28 @@ class PdfPreviewService {
         filePath = await _extractMediaPath(rawResource, resource.displayTitle);
       }
 
+      if (!context.mounted) return;
       if (filePath == null) {
         _showErrorSnackBar(context, 'No file path found');
         return;
       }
 
-      if (!await File(filePath).exists()) {
+      final exists = await File(filePath).exists();
+      if (!context.mounted) return;
+      if (!exists) {
         _showErrorSnackBar(context, 'File not available on this device');
         return;
       }
 
-      if (!context.mounted) return;
-
       final extension = path.extension(filePath).toLowerCase();
-      final isImage = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
-          .contains(extension);
+      final isImage = {
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.gif',
+        '.bmp',
+        '.webp',
+      }.contains(extension);
 
       if (isImage) {
         Navigator.of(context).push(

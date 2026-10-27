@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -36,7 +36,7 @@ class DeviceSyncDialog {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(
+                      padding: const EdgeInsets.only(
                         left: Insets.medium,
                         right: Insets.medium,
                         top: Insets.normal,
@@ -56,8 +56,9 @@ class DeviceSyncDialog {
                             child: Icon(
                               Icons.close,
                               size: 20,
-                              color: context.colorScheme.onSurface
-                                  .withValues(alpha: 0.4),
+                              color: context.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
                         ],
@@ -81,12 +82,11 @@ class DeviceSyncDialog {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Padding(
-                                          padding:
-                                              const EdgeInsets.symmetric(
-                                                  horizontal: Insets.medium),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: Insets.medium,
+                                          ),
                                           child: Divider(
-                                            color: context
-                                                .colorScheme.onSurface
+                                            color: context.colorScheme.onSurface
                                                 .withValues(alpha: 0.06),
                                             height: 1,
                                           ),

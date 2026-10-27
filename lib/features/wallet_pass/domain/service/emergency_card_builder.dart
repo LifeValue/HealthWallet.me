@@ -1,8 +1,8 @@
-import 'package:injectable/injectable.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:injectable/injectable.dart';
 
 @injectable
 class EmergencyCardBuilder {
@@ -34,28 +34,32 @@ class EmergencyCardBuilder {
 
     final patientName =
         FhirFieldExtractor.extractHumanNameFamilyFirst(patient.name?.first) ??
-            '';
+        '';
 
     final dob = FhirFieldExtractor.extractPatientBirthDate(patient);
     final gender = FhirFieldExtractor.extractPatientGender(patient);
-    final phone =
-        FhirFieldExtractor.extractTelecomBySystem(patient.telecom, 'phone');
+    final phone = FhirFieldExtractor.extractTelecomBySystem(
+      patient.telecom,
+      'phone',
+    );
 
     String? emergencyContactName;
     String? emergencyContactPhone;
     final contact = patient.contact?.firstOrNull;
     if (contact != null) {
-      emergencyContactName =
-          FhirFieldExtractor.extractHumanName(contact.name);
-      emergencyContactPhone =
-          FhirFieldExtractor.extractTelecomBySystem(contact.telecom, 'phone');
+      emergencyContactName = FhirFieldExtractor.extractHumanName(contact.name);
+      emergencyContactPhone = FhirFieldExtractor.extractTelecomBySystem(
+        contact.telecom,
+        'phone',
+      );
     }
 
     final bloodTypeObs = await _recordsRepository.getBloodTypeObservations(
       patientId: patientId,
     );
-    final bloodType =
-        FhirFieldExtractor.extractBloodTypeFromObservations(bloodTypeObs);
+    final bloodType = FhirFieldExtractor.extractBloodTypeFromObservations(
+      bloodTypeObs,
+    );
 
     final allergyResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.AllergyIntolerance],

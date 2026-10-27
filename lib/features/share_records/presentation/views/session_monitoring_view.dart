@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -8,7 +8,6 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/session/session_bottom_bar.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SessionMonitoringView extends StatefulWidget {
   final ShareRecordsState state;
@@ -82,8 +81,9 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
                         Text(
                           context.l10n.shareSessionAutoExpire,
                           style: AppTextStyle.bodyMedium.copyWith(
-                            color: context.colorScheme.onSurface
-                                .withValues(alpha: 0.6),
+                            color: context.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -96,8 +96,7 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
             SessionBottomBar(
               state: widget.state,
               peerRole: 'receiver',
-              endSessionEvent:
-                  const ShareRecordsEvent.killSessionRequested(),
+              endSessionEvent: const ShareRecordsEvent.killSessionRequested(),
             ),
           ],
         ),
@@ -136,7 +135,9 @@ class _SessionMonitoringViewState extends State<SessionMonitoringView> {
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(Insets.small),
-                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.success.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [

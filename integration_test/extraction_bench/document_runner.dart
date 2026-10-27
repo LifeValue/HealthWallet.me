@@ -34,7 +34,8 @@ List<BenchDoc> loadBenchDocs(Directory dataset) {
     for (final dir in split.listSync().whereType<Directory>()) {
       final metaFile = File(p.join(dir.path, 'meta.json'));
       if (!metaFile.existsSync()) continue;
-      final meta = jsonDecode(metaFile.readAsStringSync()) as Map<String, dynamic>;
+      final meta =
+          jsonDecode(metaFile.readAsStringSync()) as Map<String, dynamic>;
       docs.add(BenchDoc(meta['docId'] as String, dir.path, meta));
     }
   }
@@ -87,7 +88,13 @@ Future<RunRecord> runBenchDocument({
     if (pageImages.isEmpty) throw StateError('No page images for ${doc.docId}');
     final degraded = <String>[
       for (final (i, page) in pageImages.indexed)
-        await degradePage(page, mode: doc.degradation, seed: doc.seed, pageIndex: i, outDir: workDir),
+        await degradePage(
+          page,
+          mode: doc.degradation,
+          seed: doc.seed,
+          pageIndex: i,
+          outDir: workDir,
+        ),
     ];
 
     recorder.phase = 'basic';
@@ -99,7 +106,9 @@ Future<RunRecord> runBenchDocument({
       contextSize: pref(SharedPrefsConstants.aiContextSize),
       outputMode: outputMode,
     );
-    final docCategory = container is MappingDiagnosticReport ? 'lab_report' : 'visit';
+    final docCategory = container is MappingDiagnosticReport
+        ? 'lab_report'
+        : 'visit';
 
     recorder.phase = 'remaining';
     // Each yield is a snapshot of every phase-2 resource so far; the last one
@@ -118,14 +127,24 @@ Future<RunRecord> runBenchDocument({
       remaining = resources;
     }
 
-    for (final resource in <MappingResource>[patient, container, ...remaining]) {
+    for (final resource in <MappingResource>[
+      patient,
+      container,
+      ...remaining,
+    ]) {
       try {
-        final raw = Map<String, dynamic>.of(resource
-            .toFhirResource(subjectId: benchSubjectId, encounterId: benchContainerId)
-            .rawResource);
+        final raw = Map<String, dynamic>.of(
+          resource
+              .toFhirResource(
+                subjectId: benchSubjectId,
+                encounterId: benchContainerId,
+              )
+              .rawResource,
+        );
         // toFhirResource fills a missing report date with DateTime.now(); an
         // omitted date must score as omitted, not as a wrong date.
-        if (resource is MappingDiagnosticReport && DateTime.tryParse(resource.issuedDate.value) == null) {
+        if (resource is MappingDiagnosticReport &&
+            DateTime.tryParse(resource.issuedDate.value) == null) {
           raw.remove('issued');
         }
         predicted.add(raw);

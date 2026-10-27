@@ -1,32 +1,31 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/core/services/screen_security_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
+import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
-import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
-import 'package:health_wallet/features/share_records/presentation/widgets/ephemeral_desktop_details_panel.dart';
 import 'package:health_wallet/features/records/presentation/widgets/fhir_cards/resource_card.dart';
+import 'package:health_wallet/features/records/presentation/widgets/record_type_header.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_filter_bottom_sheet.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
 import 'package:health_wallet/features/records/presentation/widgets/timeline_entry.dart';
 import 'package:health_wallet/features/share_records/data/service/ephemeral_attachment_browse_service.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/ephemeral_desktop_details_panel.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/session/session_bottom_bar.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class EphemeralViewerView extends StatefulWidget {
@@ -89,9 +88,9 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
     final senderFilters = receivedData.activeFilters;
     if (senderFilters.isNotEmpty) {
       final resolved = senderFilters
-          .map((name) => FhirType.values
-              .where((t) => t.name == name)
-              .firstOrNull)
+          .map(
+            (name) => FhirType.values.where((t) => t.name == name).firstOrNull,
+          )
           .whereType<FhirType>()
           .toList();
 
@@ -107,13 +106,21 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
 
   void _ensureAttachmentBrowseBloc(List<IFhirResource> records) {
     if (_attachmentBrowseBloc != null) return;
-    final service = EphemeralAttachmentBrowseService(records, getIt<SpecialtyClassifier>());
-    _attachmentBrowseBloc = AttachmentBrowseBloc(service, getIt<SpecialtyClassifier>());
-    _attachmentBrowseBloc!.add(AttachmentBrowseInitialised(
-      resourceTypes: _filterTypes,
-      readOnly: true,
-      sourceRecords: records,
-    ));
+    final service = EphemeralAttachmentBrowseService(
+      records,
+      getIt<SpecialtyClassifier>(),
+    );
+    _attachmentBrowseBloc = AttachmentBrowseBloc(
+      service,
+      getIt<SpecialtyClassifier>(),
+    );
+    _attachmentBrowseBloc!.add(
+      AttachmentBrowseInitialised(
+        resourceTypes: _filterTypes,
+        readOnly: true,
+        sourceRecords: records,
+      ),
+    );
   }
 
   void _onSearchFocusChanged() {
@@ -160,22 +167,21 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
       builder: (_) {
         final receivedData = widget.state.receivedData;
         final availableTypes = receivedData != null
-            ? receivedData.records
-                .map((r) => r.fhirType)
-                .toSet()
-                .toList()
+            ? receivedData.records.map((r) => r.fhirType).toSet().toList()
             : <FhirType>[];
         return RecordsFilterBottomSheet(
           activeFilters: _filterTypes,
           availableFilters: availableTypes,
-          onApply: (filters, _, __) {
+          onApply: (filters, _, _) {
             setState(() => _filterTypes = filters);
             if (_viewMode == RecordsViewMode.attachments) {
-              _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
-                resourceTypes: filters,
-                readOnly: true,
-                sourceRecords: _allRecords,
-              ));
+              _attachmentBrowseBloc?.add(
+                AttachmentBrowseInitialised(
+                  resourceTypes: filters,
+                  readOnly: true,
+                  sourceRecords: _allRecords,
+                ),
+              );
             }
           },
         );
@@ -184,23 +190,29 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   }
 
   void _removeFilter(FhirType filter) {
-    setState(() => _filterTypes = _filterTypes.where((f) => f != filter).toList());
+    setState(
+      () => _filterTypes = _filterTypes.where((f) => f != filter).toList(),
+    );
     if (_viewMode == RecordsViewMode.attachments) {
-      _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
-        resourceTypes: _filterTypes,
-        readOnly: true,
-        sourceRecords: _allRecords,
-      ));
+      _attachmentBrowseBloc?.add(
+        AttachmentBrowseInitialised(
+          resourceTypes: _filterTypes,
+          readOnly: true,
+          sourceRecords: _allRecords,
+        ),
+      );
     }
   }
 
   void _clearAllFilters() {
     setState(() => _filterTypes = []);
     if (_viewMode == RecordsViewMode.attachments) {
-      _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
-        readOnly: true,
-        sourceRecords: _allRecords,
-      ));
+      _attachmentBrowseBloc?.add(
+        AttachmentBrowseInitialised(
+          readOnly: true,
+          sourceRecords: _allRecords,
+        ),
+      );
     }
   }
 
@@ -223,7 +235,9 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
     var records = receivedData.records;
 
     if (_filterTypes.isNotEmpty) {
-      records = records.where((r) => _filterTypes.contains(r.fhirType)).toList();
+      records = records
+          .where((r) => _filterTypes.contains(r.fhirType))
+          .toList();
     }
 
     if (_searchQuery.isNotEmpty && _searchQuery.length >= 2) {
@@ -238,9 +252,9 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
             .toLowerCase();
 
         return title.contains(query) ||
-               displayTitle.contains(query) ||
-               statusDisplay.contains(query) ||
-               additionalInfoText.contains(query);
+            displayTitle.contains(query) ||
+            statusDisplay.contains(query) ||
+            additionalInfoText.contains(query);
       }).toList();
     }
 
@@ -256,7 +270,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
       return Center(child: Text(context.l10n.shareNoDataReceived));
     }
 
-    final isDesktopSplit = _viewMode == RecordsViewMode.attachments &&
+    final isDesktopSplit =
+        _viewMode == RecordsViewMode.attachments &&
         context.isTablet &&
         MediaQuery.of(context).orientation != Orientation.portrait;
 
@@ -273,8 +288,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
             ],
           )
         : (_viewMode == RecordsViewMode.attachments
-            ? _buildAttachmentsBody(context, receivedData.records)
-            : _buildListBody(context));
+              ? _buildAttachmentsBody(context, receivedData.records)
+              : _buildListBody(context));
 
     if (_searchFocusNode.hasFocus) return content;
 
@@ -303,7 +318,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   }
 
   Widget _buildStyledHeader(BuildContext context) {
-    final isSplit = context.isTablet &&
+    final isSplit =
+        context.isTablet &&
         MediaQuery.of(context).orientation != Orientation.portrait;
     return ValueListenableBuilder<bool>(
       valueListenable: _isScrolled,
@@ -490,11 +506,13 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
                         _isScrolled.value = false;
                         setState(() => _viewMode = mode);
                         if (mode == RecordsViewMode.attachments) {
-                          _attachmentBrowseBloc?.add(AttachmentBrowseInitialised(
-                            resourceTypes: _filterTypes,
-                            readOnly: true,
-                            sourceRecords: _allRecords,
-                          ));
+                          _attachmentBrowseBloc?.add(
+                            AttachmentBrowseInitialised(
+                              resourceTypes: _filterTypes,
+                              readOnly: true,
+                              sourceRecords: _allRecords,
+                            ),
+                          );
                         }
                       },
                     ),
@@ -613,11 +631,15 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
             child: Wrap(
               spacing: 6.0,
               runSpacing: 6,
-              children: _filterTypes.map((filter) => _buildFilterChip(
-                context,
-                label: filter.display,
-                onTap: () => _removeFilter(filter),
-              )).toList(),
+              children: _filterTypes
+                  .map(
+                    (filter) => _buildFilterChip(
+                      context,
+                      label: filter.display,
+                      onTap: () => _removeFilter(filter),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
           GestureDetector(
@@ -674,7 +696,10 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
     );
   }
 
-  Widget _buildAttachmentsBody(BuildContext context, List<IFhirResource> records) {
+  Widget _buildAttachmentsBody(
+    BuildContext context,
+    List<IFhirResource> records,
+  ) {
     _ensureAttachmentBrowseBloc(records);
 
     return NotificationListener<ScrollNotification>(
@@ -763,7 +788,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
               ResourceCard(
                 resource: resource,
                 readOnly: true,
-                ephemeralRecords: widget.state.receivedData?.records ?? const [],
+                ephemeralRecords:
+                    widget.state.receivedData?.records ?? const [],
               ),
             ],
           ),

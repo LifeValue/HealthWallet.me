@@ -1,14 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/services/pdf_storage_service.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -21,22 +19,21 @@ import 'package:health_wallet/features/processing/domain/services/document_refer
 import 'package:health_wallet/features/processing/domain/services/ocr_processing_service.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/processing_handler.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/handlers/session_handler.dart';
-import 'package:health_wallet/features/processing/presentation/helpers/processing_path_helper.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/domain/services/patient_deduplication_service.dart';
 import 'package:injectable/injectable.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-part 'processing_state.dart';
-part 'processing_event.dart';
 part 'processing_bloc.freezed.dart';
+part 'processing_event.dart';
+part 'processing_state.dart';
 
 @LazySingleton()
 class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     with SessionHandler, ProcessingHandler {
-  final PdfStorageService _pdfStorageService;
   final ProcessingRepository _repository;
   final OcrProcessingHelper _ocrProcessingHelper;
   final SyncRepository _syncRepository;
@@ -63,8 +60,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
       _documentReferenceService;
 
   @override
-  PatientDeduplicationService get deduplicationService =>
-      _deduplicationService;
+  PatientDeduplicationService get deduplicationService => _deduplicationService;
 
   @override
   SourceTypeService get sourceTypeService => _sourceTypeService;
@@ -73,7 +69,6 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   SharedPreferences get prefs => _prefs;
 
   ProcessingBloc(
-    this._pdfStorageService,
     this._repository,
     this._ocrProcessingHelper,
     this._syncRepository,
@@ -89,8 +84,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     on<SessionChangedProgress>(onSessionChangedProgress);
     on<SessionCleared>(onSessionCleared);
     on<SessionActivated>(onSessionActivated);
-    on<MappingInitiated>(onMappingInitiated,
-        transformer: restartable());
+    on<MappingInitiated>(onMappingInitiated, transformer: restartable());
     on<ResourceChanged>(onResourceChanged);
     on<PatientReverted>(onPatientReverted);
     on<ResourceRemoved>(onResourceRemoved);
@@ -163,9 +157,11 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     final newSessions = List<ProcessingSession>.from(state.sessions);
     newSessions[sessionIndex] = updatedSession;
 
-    emit(state.copyWith(
-      sessions: newSessions,
-    ));
+    emit(
+      state.copyWith(
+        sessions: newSessions,
+      ),
+    );
   }
 
   Future<void> onProcessingInitialised(
@@ -177,19 +173,21 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     try {
       final sessions = await _repository.getProcessingSessions();
 
-      final isDesktop = Platform.isMacOS || Platform.isLinux || Platform.isWindows;
+      final isDesktop =
+          Platform.isMacOS || Platform.isLinux || Platform.isWindows;
       final useVision =
           _prefs.getBool(SharedPrefsConstants.aiUseVision) ?? isDesktop;
-      emit(state.copyWith(
-        sessions: sessions,
-        status: const PipelineStatus.initial(),
-        useVision: useVision,
-      ));
+      emit(
+        state.copyWith(
+          sessions: sessions,
+          status: const PipelineStatus.initial(),
+          useVision: useVision,
+        ),
+      );
     } on Exception catch (e) {
       emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
     }
   }
-
 
   void onNotificationAcknowledged(
     NotificationAcknowledged event,
@@ -202,8 +200,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     TokenCapacityUpdated event,
     Emitter<ProcessingState> emit,
   ) async {
-    await _prefs.setInt(
-        SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
+    await _prefs.setInt(SharedPrefsConstants.aiMaxTokens, event.newMaxTokens);
     await _repository.disposeModel();
     add(MappingInitiated(sessionId: event.sessionId));
   }
@@ -215,7 +212,6 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     _prefs.setBool(SharedPrefsConstants.aiUseVision, event.useVision);
     emit(state.copyWith(useVision: event.useVision));
   }
-
 
   void _onContainerTypeSwitched(
     ContainerTypeSwitched event,
@@ -239,16 +235,18 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           confidenceLevel: dr.issuedDate.confidenceLevel,
         ),
       );
-      updateSession(emit,
+      updateSession(
+        emit,
         sessionId: event.sessionId,
         encounter: StagedEncounter(draft: encounter),
         diagnosticReport: const StagedDiagnosticReport(),
         updateDb: true,
       );
-    } else if (session.encounter?.draft != null ||
-        session.encounter?.existing != null) {
-      final enc = session.encounter!.draft ??
-          MappingEncounter.fromFhirResource(session.encounter!.existing!);
+    } else if (session.encounter.draft != null ||
+        session.encounter.existing != null) {
+      final enc =
+          session.encounter.draft ??
+          MappingEncounter.fromFhirResource(session.encounter.existing!);
       final report = MappingDiagnosticReport(
         id: enc.id,
         reportName: MappedProperty(
@@ -260,7 +258,8 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           confidenceLevel: enc.periodStart.confidenceLevel,
         ),
       );
-      updateSession(emit,
+      updateSession(
+        emit,
         sessionId: event.sessionId,
         encounter: const StagedEncounter(),
         diagnosticReport: StagedDiagnosticReport(draft: report),

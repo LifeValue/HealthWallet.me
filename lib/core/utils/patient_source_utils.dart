@@ -9,8 +9,8 @@ class PatientSourceUtils {
   static void reloadHomeWithPatientFilter(BuildContext context, String source) {
     final patientSourceIds = getPatientSourceIds(context);
     context.read<HomeBloc>().add(
-          HomeSourceChanged(source, patientSourceIds: patientSourceIds),
-        );
+      HomeSourceChanged(source, patientSourceIds: patientSourceIds),
+    );
   }
 
   /// Get the selected patient's source IDs from PatientBloc
@@ -41,7 +41,9 @@ class PatientSourceUtils {
 
   /// Validate that a source exists for the patient, fallback to "All" if not
   static String validateSourceForPatient(
-      String currentSource, List<String>? patientSourceIds) {
+    String currentSource,
+    List<String>? patientSourceIds,
+  ) {
     final source = currentSource.isEmpty ? 'All' : currentSource;
 
     // If source is "All" or patient has no sources, keep it
@@ -59,7 +61,9 @@ class PatientSourceUtils {
 
   /// Handle patient selection change with source validation
   static void handlePatientChange(
-      BuildContext context, PatientState patientState) {
+    BuildContext context,
+    PatientState patientState,
+  ) {
     final homeState = context.read<HomeBloc>().state;
     final currentSource = homeState.selectedSource;
 
@@ -67,12 +71,14 @@ class PatientSourceUtils {
     final patientSourceIds = getPatientSourceIdsFromState(patientState);
 
     // Validate that the current source exists for the new patient
-    final validSource =
-        validateSourceForPatient(currentSource, patientSourceIds);
+    final validSource = validateSourceForPatient(
+      currentSource,
+      patientSourceIds,
+    );
 
     // Reload home with validated source and new patient's sources
     context.read<HomeBloc>().add(
-          HomeSourceChanged(validSource, patientSourceIds: patientSourceIds),
-        );
+      HomeSourceChanged(validSource, patientSourceIds: patientSourceIds),
+    );
   }
 }

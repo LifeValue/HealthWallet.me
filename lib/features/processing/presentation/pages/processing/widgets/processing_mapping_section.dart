@@ -1,6 +1,9 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -10,9 +13,6 @@ import 'package:health_wallet/features/processing/domain/entity/processing_sessi
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/custom_progress_indicator.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:auto_route/auto_route.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class ProcessingMappingSection extends StatelessWidget {
   final ProcessingState state;
@@ -59,7 +59,8 @@ class ProcessingMappingSection extends StatelessWidget {
       content = const SizedBox.shrink();
     }
 
-    final showDesktopLink = !getIt<AppPlatform>().isDesktop &&
+    final showDesktopLink =
+        !getIt<AppPlatform>().isDesktop &&
         displayedSession.status != ProcessingStatus.draft &&
         displayedSession.status != ProcessingStatus.patientExtracted &&
         onProcessOnDesktop != null;
@@ -75,8 +76,11 @@ class ProcessingMappingSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.computer,
-                  size: 20, color: context.colorScheme.primary),
+              Icon(
+                Icons.computer,
+                size: 20,
+                color: context.colorScheme.primary,
+              ),
               const SizedBox(width: Insets.small),
               Text(
                 'Process on Desktop',
@@ -103,13 +107,14 @@ class ProcessingMappingSection extends StatelessWidget {
       return context.l10n.modelCorruptedError;
     }
     if (error.contains('Exception:')) {
-      return error.replaceAll(RegExp(r'Exception:\s*'), '').replaceAll(RegExp(r'/[\w/\-\.]+/'), '');
+      return error
+          .replaceAll(RegExp(r'Exception:\s*'), '')
+          .replaceAll(RegExp(r'/[\w/\-\.]+/'), '');
     }
     return error;
   }
 
-  bool _isModelNotFound(String error) =>
-      error.contains('Model file not found');
+  bool _isModelNotFound(String error) => error.contains('Model file not found');
 
   Widget _buildFailure(BuildContext context, String error) {
     final isNoModel = _isModelNotFound(error);
@@ -125,12 +130,12 @@ class ProcessingMappingSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: isNoModel
                 ? AppColors.warning.withValues(alpha: 0.08)
-                : context.colorScheme.errorContainer.withOpacity(0.3),
+                : context.colorScheme.errorContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isNoModel
                   ? AppColors.warning.withValues(alpha: 0.4)
-                  : context.colorScheme.error.withOpacity(0.5),
+                  : context.colorScheme.error.withValues(alpha: 0.5),
             ),
           ),
           child: Column(
@@ -139,7 +144,9 @@ class ProcessingMappingSection extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    isNoModel ? Icons.warning_amber_rounded : Icons.error_outline,
+                    isNoModel
+                        ? Icons.warning_amber_rounded
+                        : Icons.error_outline,
                     color: isNoModel
                         ? AppColors.warning
                         : context.colorScheme.error,
@@ -195,11 +202,13 @@ class ProcessingMappingSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(Insets.normal),
           decoration: BoxDecoration(
-            color:
-                context.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            color: context.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.5,
+            ),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-                color: context.colorScheme.outline.withOpacity(0.5)),
+              color: context.colorScheme.outline.withValues(alpha: 0.5),
+            ),
           ),
           child: Row(
             children: [
@@ -239,11 +248,11 @@ class ProcessingMappingSection extends StatelessWidget {
               : context.l10n.processingPages,
           secondaryText:
               displayedSession.status == ProcessingStatus.processingPatient
-                  ? context.l10n.extractingPatientInfo
-                  : context.l10n.pleaseWait,
+              ? context.l10n.extractingPatientInfo
+              : context.l10n.pleaseWait,
           showProgressBar:
               displayedSession.status == ProcessingStatus.processing &&
-                  state.useVision,
+              state.useVision,
         ),
         const SizedBox(height: Insets.normal),
         Row(
@@ -279,10 +288,11 @@ class ProcessingMappingSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(Insets.normal),
           decoration: BoxDecoration(
-            color: context.colorScheme.errorContainer.withOpacity(0.3),
+            color: context.colorScheme.errorContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(8),
-            border:
-                Border.all(color: context.colorScheme.error.withOpacity(0.5)),
+            border: Border.all(
+              color: context.colorScheme.error.withValues(alpha: 0.5),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +325,7 @@ class ProcessingMappingSection extends StatelessWidget {
               Text(
                 context.l10n.processingFailedCapacitySuggestion,
                 style: AppTextStyle.labelSmall.copyWith(
-                  color: context.colorScheme.onSurface.withOpacity(0.7),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -352,8 +362,11 @@ class _QueuedMessage extends StatelessWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.hourglass_empty,
-                color: context.colorScheme.primary, size: 20),
+            Icon(
+              Icons.hourglass_empty,
+              color: context.colorScheme.primary,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               asyncSnapshot.data!
@@ -362,7 +375,7 @@ class _QueuedMessage extends StatelessWidget {
               style: AppTextStyle.bodyMedium.copyWith(
                 color: context.colorScheme.primary,
               ),
-            )
+            ),
           ],
         );
       },

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -10,7 +10,6 @@ import 'package:health_wallet/features/share_records/presentation/bloc/share_rec
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/duration_wheel_picker.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SelectionBottomBar extends StatefulWidget {
   final ShareRecordsState shareState;
@@ -60,15 +59,17 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
             if (_isDurationPickerExpanded)
               Container(
                 height: 160,
-                padding: const EdgeInsets.symmetric(vertical: Insets.extraSmall),
+                padding: const EdgeInsets.symmetric(
+                  vertical: Insets.extraSmall,
+                ),
                 child: BlocBuilder<ShareRecordsBloc, ShareRecordsState>(
                   builder: (context, state) {
                     return DurationWheelPicker(
                       currentDuration: state.selectedViewingDuration,
                       onChanged: (duration) {
                         context.read<ShareRecordsBloc>().add(
-                              ShareRecordsEvent.viewingDurationChanged(duration),
-                            );
+                          ShareRecordsEvent.viewingDurationChanged(duration),
+                        );
                       },
                     );
                   },
@@ -93,7 +94,10 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
         String durationText;
         if (hours > 0) {
           if (minutes > 0) {
-            durationText = context.l10n.shareDurationHoursMinutes(hours, minutes);
+            durationText = context.l10n.shareDurationHoursMinutes(
+              hours,
+              minutes,
+            );
           } else {
             durationText = context.l10n.shareDurationHours(hours);
           }
@@ -103,7 +107,9 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
 
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => setState(() => _isDurationPickerExpanded = !_isDurationPickerExpanded),
+          onTap: () => setState(
+            () => _isDurationPickerExpanded = !_isDurationPickerExpanded,
+          ),
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: Insets.normal,
@@ -132,8 +138,8 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
                         ? null
                         : () {
                             context.read<ShareRecordsBloc>().add(
-                                  const ShareRecordsEvent.defaultViewingDurationSet(),
-                                );
+                              const ShareRecordsEvent.defaultViewingDurationSet(),
+                            );
                             setState(() {
                               _isDurationPickerExpanded = false;
                             });
@@ -168,7 +174,9 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
                         ),
                         const SizedBox(width: 4),
                         Icon(
-                          _isDurationPickerExpanded ? Icons.expand_more : Icons.expand_less,
+                          _isDurationPickerExpanded
+                              ? Icons.expand_more
+                              : Icons.expand_less,
                           size: 20,
                           color: context.colorScheme.onSurface,
                         ),
@@ -186,23 +194,30 @@ class _SelectionBottomBarState extends State<SelectionBottomBar> {
 
   Widget _buildShareButton(BuildContext context, bool canContinue) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Insets.normal, Insets.small, Insets.normal, Insets.normal),
+      padding: const EdgeInsets.fromLTRB(
+        Insets.normal,
+        Insets.small,
+        Insets.normal,
+        Insets.normal,
+      ),
       child: AppButton(
         onPressed: canContinue
             ? () {
                 if (widget.filterTypes.isNotEmpty) {
                   context.read<ShareRecordsBloc>().add(
-                        ShareRecordsEvent.filtersApplied(
-                          widget.filterTypes.toList(),
-                        ),
-                      );
+                    ShareRecordsEvent.filtersApplied(
+                      widget.filterTypes.toList(),
+                    ),
+                  );
                 }
                 context.read<ShareRecordsBloc>().add(
-                      const ShareRecordsEvent.selectionConfirmed(),
-                    );
+                  const ShareRecordsEvent.selectionConfirmed(),
+                );
               }
             : null,
-        label: canContinue ? context.l10n.shareRecordsButton : context.l10n.shareSelectRecordsToShare,
+        label: canContinue
+            ? context.l10n.shareRecordsButton
+            : context.l10n.shareSelectRecordsToShare,
       ),
     );
   }

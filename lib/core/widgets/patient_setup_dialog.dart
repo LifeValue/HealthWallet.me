@@ -2,22 +2,22 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/country_identifier.dart';
+import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
-import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:health_wallet/features/sync/presentation/widgets/patient_dialog_card.dart';
+import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
+import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/dialog_content.dart';
-import 'package:health_wallet/core/config/constants/country_identifier.dart';
-import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
-import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
-import 'package:health_wallet/features/user/domain/utils/gender_mapper.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/mixins/id_card_scan_mixin.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/utils/dialog_content.dart';
 
 class PatientSetupDialog extends StatefulWidget {
   final Patient patient;
@@ -115,15 +115,20 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
     }
     if (result.gender != null) {
       _selectedGender = GenderMapper.mapFhirGenderToDisplay(
-          result.gender!, context.l10n);
+        result.gender!,
+        context.l10n,
+      );
     }
   }
 
-  List<String> _getGenderOptions(AppLocalizations l10n) =>
-      [l10n.male, l10n.female, l10n.preferNotToSay];
+  List<String> _getGenderOptions(AppLocalizations l10n) => [
+    l10n.male,
+    l10n.female,
+    l10n.preferNotToSay,
+  ];
   final List<String> _bloodTypeOptions = [
     'N/A',
-    ...BloodTypes.getAllBloodTypes()
+    ...BloodTypes.getAllBloodTypes(),
   ];
 
   @override
@@ -134,8 +139,8 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
     _familyController = TextEditingController();
     _identifierController = TextEditingController();
     _selectedBloodType = 'N/A';
-    _selectedCountryCode = WidgetsBinding
-            .instance.platformDispatcher.locale.countryCode
+    _selectedCountryCode =
+        WidgetsBinding.instance.platformDispatcher.locale.countryCode
             ?.toUpperCase() ??
         'US';
 
@@ -196,7 +201,8 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
       final identifierChanged = currentIdentifierValue.isNotEmpty;
 
       if (mounted) {
-        final patientFieldsChanged = nameChanged ||
+        final patientFieldsChanged =
+            nameChanged ||
             birthDateChanged ||
             genderChanged ||
             identifierChanged ||
@@ -210,26 +216,30 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
               : null;
 
           context.read<PatientBloc>().add(
-                PatientEditSaved(
-                  patientId: _currentPatient!.id,
-                  sourceId: _currentPatient!.sourceId,
-                  given: givenList,
-                  family:
-                      currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
-                  birthDate: _selectedBirthDate,
-                  gender: _selectedGender,
-                  bloodType: _selectedBloodType,
-                  identifierValue: currentIdentifierValue.isNotEmpty ? currentIdentifierValue : null,
-                  contactPhone: _selectedContactPhone.isNotEmpty ? _selectedContactPhone : null,
-                  availableSources: homeState.sources,
-                ),
-              );
+            PatientEditSaved(
+              patientId: _currentPatient!.id,
+              sourceId: _currentPatient!.sourceId,
+              given: givenList,
+              family: currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
+              birthDate: _selectedBirthDate,
+              gender: _selectedGender,
+              bloodType: _selectedBloodType,
+              identifierValue: currentIdentifierValue.isNotEmpty
+                  ? currentIdentifierValue
+                  : null,
+              contactPhone: _selectedContactPhone.isNotEmpty
+                  ? _selectedContactPhone
+                  : null,
+              availableSources: homeState.sources,
+            ),
+          );
         }
 
         context.popDialog();
         widget.onDismiss?.call();
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('Saving the patient failed', e, s);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

@@ -19,7 +19,7 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.md)
 [![Flutter](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter)](https://flutter.dev)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E44D26)](https://hl7.org/fhir/R4/)
-[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey)]()
+[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey)](<>)
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lifevalue)
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@TechStackAppsCo)
 [![Facebook](https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/techstackapps/)
@@ -53,14 +53,14 @@ Scans paper documents with a local LLM — **your data never leaves your device.
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **AI Scan** | Photograph or import medical documents; the on-device LLM extracts patient info, encounters, medications, allergies, and lab results into structured FHIR records |
-| **Aggregate** | Sync records from 52,000+ hospitals, clinics, and labs through FHIR R4 APIs |
-| **Organize** | Browse all records — conditions, medications, immunizations, lab results, clinical notes — in one place |
-| **Share** | **Cross-platform** proximity sharing — transfer records between **iOS and Android** devices, no internet needed. Data is **view-only** on the receiver side — never stored, **screenshots blocked** |
-| **Export** | Generate an **International Patient Summary** PDF or add emergency info to **Apple/Google Wallet** |
-| **Secure** | Face ID / fingerprint lock, local SQLite storage, no mandatory cloud dependency |
+| Feature       | Description                                                                                                                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AI Scan**   | Photograph or import medical documents; the on-device LLM extracts patient info, encounters, medications, allergies, and lab results into structured FHIR records                                   |
+| **Aggregate** | Sync records from 52,000+ hospitals, clinics, and labs through FHIR R4 APIs                                                                                                                         |
+| **Organize**  | Browse all records — conditions, medications, immunizations, lab results, clinical notes — in one place                                                                                             |
+| **Share**     | **Cross-platform** proximity sharing — transfer records between **iOS and Android** devices, no internet needed. Data is **view-only** on the receiver side — never stored, **screenshots blocked** |
+| **Export**    | Generate an **International Patient Summary** PDF or add emergency info to **Apple/Google Wallet**                                                                                                  |
+| **Secure**    | Face ID / fingerprint lock, local SQLite storage, no mandatory cloud dependency                                                                                                                     |
 
 ---
 
@@ -109,10 +109,10 @@ HealthWallet runs a quantized LLM directly on your phone using [llama.cpp](https
 
 ### Available Models
 
-| Model | Size | Best For |
-|-------|------|----------|
-| **Standard** ([Qwen3-VL-2B](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF)) | ~1.1 GB | Fast, lightweight, works on most devices |
-| **Advanced** ([Qwen3.5-4B](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF)) | ~2.6 GB | Higher accuracy for complex medical documents |
+| Model                                                                               | Size    | Best For                                      |
+| ----------------------------------------------------------------------------------- | ------- | --------------------------------------------- |
+| **Standard** ([Qwen3-VL-2B](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF)) | ~1.1 GB | Fast, lightweight, works on most devices      |
+| **Advanced** ([Qwen3.5-4B](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF))         | ~2.6 GB | Higher accuracy for complex medical documents |
 
 **Deep Scan** (optional vision projector) lets the AI read directly from photos instead of OCR text. One-time download: ~445 MB (Standard) or ~641 MB (Advanced).
 
@@ -121,12 +121,12 @@ Advanced was MedGemma-4B until 2026-10; Qwen3.5-4B scored higher on the extracti
 <details>
 <summary><strong>Device Requirements</strong></summary>
 
-| Device | RAM | Capability |
-|--------|-----|------------|
-| **iPhone Pro/Pro Max** | 6 GB+ | Full scanning (both models) |
-| **iPhone 13/14/15** | 4-6 GB | Standard model only |
-| **Android** | 12 GB+ | Full scanning (both models) |
-| **Android** | 10-11 GB | Standard model only |
+| Device                 | RAM      | Capability                  |
+| ---------------------- | -------- | --------------------------- |
+| **iPhone Pro/Pro Max** | 6 GB+    | Full scanning (both models) |
+| **iPhone 13/14/15**    | 4-6 GB   | Standard model only         |
+| **Android**            | 12 GB+   | Full scanning (both models) |
+| **Android**            | 10-11 GB | Standard model only         |
 
 </details>
 
@@ -136,17 +136,17 @@ Advanced was MedGemma-4B until 2026-10; Qwen3.5-4B scored higher on the extracti
 
 Built with **Clean Architecture** and feature-based modules in **Flutter/Dart**.
 
-| Layer | Technology |
-|-------|-----------|
-| **State Management** | BLoC (flutter_bloc) |
-| **Dependency Injection** | GetIt + Injectable |
-| **Navigation** | AutoRoute (type-safe) |
-| **Local Database** | Drift (SQLite) |
-| **Networking** | Dio |
-| **Code Generation** | Freezed, JSON Serializable |
-| **Healthcare Standard** | FHIR R4 |
-| **On-Device AI** | llama.cpp via llamadart |
-| **Localization** | Flutter Intl (EN, ES, DE) |
+| Layer                    | Technology                 |
+| ------------------------ | -------------------------- |
+| **State Management**     | BLoC (flutter_bloc)        |
+| **Dependency Injection** | GetIt + Injectable         |
+| **Navigation**           | AutoRoute (type-safe)      |
+| **Local Database**       | Drift (SQLite)             |
+| **Networking**           | Dio                        |
+| **Code Generation**      | Freezed, JSON Serializable |
+| **Healthcare Standard**  | FHIR R4                    |
+| **On-Device AI**         | llama.cpp via llamadart    |
+| **Localization**         | Flutter Intl (EN, ES, DE)  |
 
 <details>
 <summary><strong>Project Structure</strong></summary>
@@ -183,14 +183,18 @@ lib/
 <details>
 <summary><strong>Branch Strategy</strong></summary>
 
-| Branch | Purpose | CI/CD |
-|--------|---------|-------|
-| `master` | Production | Deploy to App Store + Play Store |
-| `develop` | Staging | Deploy to internal tracks |
-| `feature/*` | New features | Analyze + test |
-| `fix/*` | Bug fixes | Analyze + test |
-| `release/*` | Release stabilization | Full test suite |
-| `hotfix/*` | Urgent fixes | Analyze + test |
+Gitflow. Every push runs the checks in parallel: `dart format`, `flutter analyze` and `flutter test`; the formatters and commitlint on the changed files; dependency (osv-scanner) and secret (gitleaks) scans. Any failure fails the pipeline, and deploys start only after every check passes.
+
+| Branch      | From      | Purpose               | Deploys                                                      |
+| ----------- | --------- | --------------------- | ------------------------------------------------------------ |
+| `master`    | —         | Production            | Manual: TestFlight / Play internal, Shorebird patch, Windows |
+| `develop`   | —         | Staging               | Manual beta to TestFlight and Play internal                  |
+| `release/*` | `develop` | Release stabilization | Manual beta for testers                                      |
+| `feature/*` | `develop` | New features          | None, checks only                                            |
+| `bugfix/*`  | `develop` | Fixes for develop     | None, checks only                                            |
+| `hotfix/*`  | `master`  | Urgent fixes          | None, checks only                                            |
+
+Production releases are promoted from a tested beta in App Store Connect and Play Console.
 
 </details>
 
@@ -208,11 +212,25 @@ dart run build_runner build --delete-conflicting-outputs
 flutter test
 ```
 
+### Code quality
+
+Every file type has a formatter, run by [pre-commit](https://pre-commit.com/) before each commit (`.pre-commit-config.yaml`): `dart format`, [Prettier](https://prettier.io/) for YAML/JSON/ARB/Markdown/HTML/XML, swift-format, ktlint, clang-format, gersemi, RuboCop (layout) and shfmt. Commit messages are checked against [Conventional Commits](https://www.conventionalcommits.org/) by commitlint. Dart is also checked with `flutter analyze` (rules in `analysis_options.yaml`).
+
+Needs Node (Prettier, commitlint), Java (ktlint), Ruby (RuboCop) and Xcode (swift-format).
+
+```bash
+brew install pre-commit   # once per machine
+npm install               # Prettier, commitlint and the git hooks (format staged files, check commit messages)
+scripts/check.sh          # formatters on the files your branch changed, then analyze and tests
+scripts/coverage.sh       # test coverage: total, per feature and for the critical areas
+```
+
 ---
 
 ## Roadmap
 
 ### Completed Features
+
 - Basic health record management
 - Authentication and security
 - Cross-platform support
@@ -222,9 +240,11 @@ flutter test
 - **Cross-platform** proximity sharing — works between **iOS and Android**, view-only on receiver, no data saved, screenshots blocked
 
 ### In Progress
+
 - Desktop app with backup sync and offloaded document processing
 
 ### Future Plans
+
 - Responsive UI
 - Wearable & health provider integration
 - AI health insights

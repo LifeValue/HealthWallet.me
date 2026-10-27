@@ -10,7 +10,8 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 
 /// The letterhead and patient block a lab prints on every page.
-const _header = 'Laborator Exemplu SRL\n'
+const _header =
+    'Laborator Exemplu SRL\n'
     'Str. Exemplului Nr. 12, et.1\n'
     'Telefon: 0700 123 456\n'
     'Nume pacient: Popescu\n'
@@ -19,7 +20,8 @@ const _header = 'Laborator Exemplu SRL\n'
 
 /// Page n: the header, then the result named TEST-n padded with a long
 /// reference range, so the 4 pages do not fit one chunk.
-String _page(int n) => '$_header\nTEST-$n\n${n * 1.5}\nmUI/mL\n${'Interval de referinta ${n}x ' * 40}';
+String _page(int n) =>
+    '$_header\nTEST-$n\n${n * 1.5}\nmUI/mL\n${'Interval de referinta ${n}x ' * 40}';
 
 class _PageOcr extends Fake implements TextRecognitionService {
   @override
@@ -48,9 +50,18 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
   GenerationStats? get lastGenerationStats => null;
 
   @override
-  Future<void> initModel({bool withVision = true, int? contextSize, int? gpuLayers, int? threads}) async {
-    if (!withVision && memoryLimitCtx != null && (contextSize ?? 0) > memoryLimitCtx!) {
-      throw Exception('Not enough memory to load the AI model. Available: 3000MB, required: ~3400MB.');
+  Future<void> initModel({
+    bool withVision = true,
+    int? contextSize,
+    int? gpuLayers,
+    int? threads,
+  }) async {
+    if (!withVision &&
+        memoryLimitCtx != null &&
+        (contextSize ?? 0) > memoryLimitCtx!) {
+      throw Exception(
+        'Not enough memory to load the AI model. Available: 3000MB, required: ~3400MB.',
+      );
     }
     loads.add((withVision: withVision, contextSize: contextSize));
   }
@@ -59,20 +70,27 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
   Future<void> disposeModel() async {}
 
   @override
-  Future<({int availableMB, int requiredMB, bool canProceed})> checkMemoryHealth({
+  Future<({int availableMB, int requiredMB, bool canProceed})>
+  checkMemoryHealth({
     bool withVision = true,
     int? contextSize,
-  }) async =>
-      (availableMB: -1, requiredMB: 0, canProceed: true);
+  }) async => (availableMB: -1, requiredMB: 0, canProceed: true);
 
   String _answer(String prompt) => jsonEncode({
-        'observations': [
-          for (final m in RegExp(r'TEST-(\d+)').allMatches(prompt).map((m) => m.group(0)!).toSet())
-            {'observationName': m, 'value': '1', 'unit': 'mUI/mL', 'referenceRange': ''},
-        ],
-        'practitioners': [],
-        'organizations': [],
-      });
+    'observations': [
+      for (final m in RegExp(
+        r'TEST-(\d+)',
+      ).allMatches(prompt).map((m) => m.group(0)!).toSet())
+        {
+          'observationName': m,
+          'value': '1',
+          'unit': 'mUI/mL',
+          'referenceRange': '',
+        },
+    ],
+    'practitioners': [],
+    'organizations': [],
+  });
 
   @override
   Future<String?> runVisionPrompt({
@@ -117,13 +135,24 @@ class _Repository with AiExtractionRepository {
 
 const _pages = ['page-1.png', 'page-2.png', 'page-3.png', 'page-4.png'];
 
-Future<List<String>> _observationNames(_FakeDataSource dataSource, {bool useVision = false}) async {
+Future<List<String>> _observationNames(
+  _FakeDataSource dataSource, {
+  bool useVision = false,
+}) async {
   final events = await _Repository(dataSource)
-      .processMapRemainingResources(_pages,
-          documentCategory: 'lab_report', useVision: useVision, outputMode: ExtractionOutputMode.schema)
+      .processMapRemainingResources(
+        _pages,
+        documentCategory: 'lab_report',
+        useVision: useVision,
+        outputMode: ExtractionOutputMode.schema,
+      )
       .toList();
   final (resources, _) = events.last;
-  return resources.whereType<MappingObservation>().map((o) => o.observationName.value).toList()..sort();
+  return resources
+      .whereType<MappingObservation>()
+      .map((o) => o.observationName.value)
+      .toList()
+    ..sort();
 }
 
 void main() {
@@ -157,22 +186,34 @@ void main() {
       ['page-1.png', 'page-2.png'],
       ['page-3.png', 'page-4.png'],
     ]);
-    expect(dataSource.visionCalls[0].prompt, allOf(contains('TEST-1'), isNot(contains('TEST-3'))));
-    expect(dataSource.visionCalls[1].prompt, allOf(contains('TEST-3'), isNot(contains('TEST-1'))));
+    expect(
+      dataSource.visionCalls[0].prompt,
+      allOf(contains('TEST-1'), isNot(contains('TEST-3'))),
+    );
+    expect(
+      dataSource.visionCalls[1].prompt,
+      allOf(contains('TEST-3'), isNot(contains('TEST-1'))),
+    );
     expect(names, ['TEST-1', 'TEST-2', 'TEST-3', 'TEST-4']);
   });
 
-  test('a model with one page per vision call gets one call per page', () async {
-    final dataSource = _FakeDataSource(visionPagesPerBatch: 1);
-    final names = await _observationNames(dataSource, useVision: true);
+  test(
+    'a model with one page per vision call gets one call per page',
+    () async {
+      final dataSource = _FakeDataSource(visionPagesPerBatch: 1);
+      final names = await _observationNames(dataSource, useVision: true);
 
-    expect(dataSource.visionCalls.map((c) => c.images), [
-      ['page-1.png'],
-      ['page-2.png'],
-      ['page-3.png'],
-      ['page-4.png'],
-    ]);
-    expect(dataSource.visionCalls[1].prompt, allOf(contains('TEST-2'), isNot(contains('TEST-1'))));
-    expect(names, ['TEST-1', 'TEST-2', 'TEST-3', 'TEST-4']);
-  });
+      expect(dataSource.visionCalls.map((c) => c.images), [
+        ['page-1.png'],
+        ['page-2.png'],
+        ['page-3.png'],
+        ['page-4.png'],
+      ]);
+      expect(
+        dataSource.visionCalls[1].prompt,
+        allOf(contains('TEST-2'), isNot(contains('TEST-1'))),
+      );
+      expect(names, ['TEST-1', 'TEST-2', 'TEST-3', 'TEST-4']);
+    },
+  );
 }

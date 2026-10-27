@@ -165,18 +165,67 @@ class CountryIdentifier {
   /// [_weakMarker]. Matched case- and diacritic-insensitively on word
   /// boundaries.
   static const _documentMarkers = <String, (List<String>, List<String>)>{
-    'RO': (['CNP', 'Cod Numeric Personal'], ['Data nasterii', 'Data internarii', 'Data externarii', 'Bilet de iesire', 'Buletin de analize', 'Judetul']),
-    'DE': (['KVNR', 'Krankenversichertennummer', 'Versichertennummer', 'Versicherten-Nr', 'Krankenkasse'], ['Geburtsdatum', 'Aufnahmedatum', 'Entlassungsbrief', 'Laborbefund', 'Befunddatum']),
+    'RO': (
+      ['CNP', 'Cod Numeric Personal'],
+      [
+        'Data nasterii',
+        'Data internarii',
+        'Data externarii',
+        'Bilet de iesire',
+        'Buletin de analize',
+        'Judetul',
+      ],
+    ),
+    'DE': (
+      [
+        'KVNR',
+        'Krankenversichertennummer',
+        'Versichertennummer',
+        'Versicherten-Nr',
+        'Krankenkasse',
+      ],
+      [
+        'Geburtsdatum',
+        'Aufnahmedatum',
+        'Entlassungsbrief',
+        'Laborbefund',
+        'Befunddatum',
+      ],
+    ),
     'AT': (['SVNr', 'SV-Nr', 'Sozialversicherungsnummer', 'Österreich'], []),
-    'CH': (['AHV', 'AHV-Nr', 'AHV-Nummer', 'Schweiz', 'Suisse', 'Svizzera'], []),
-    'ES': (['DNI', 'CIP', 'Tarjeta sanitaria'], ['Fecha de nacimiento', 'Fecha de ingreso', 'Fecha de alta', 'Informe de alta', 'Informe de laboratorio']),
-    'FR': (['NIR', 'Securite sociale', 'Carte Vitale'], ['Date de naissance', "Date d'admission", 'Compte rendu']),
-    'IT': (['Codice Fiscale', 'Tessera sanitaria'], ['Data di nascita', 'Data di ricovero', 'Lettera di dimissione']),
-    'NL': (['BSN', 'Burgerservicenummer'], ['Geboortedatum', 'Opnamedatum', 'Ontslagbrief']),
+    'CH': (
+      ['AHV', 'AHV-Nr', 'AHV-Nummer', 'Schweiz', 'Suisse', 'Svizzera'],
+      [],
+    ),
+    'ES': (
+      ['DNI', 'CIP', 'Tarjeta sanitaria'],
+      [
+        'Fecha de nacimiento',
+        'Fecha de ingreso',
+        'Fecha de alta',
+        'Informe de alta',
+        'Informe de laboratorio',
+      ],
+    ),
+    'FR': (
+      ['NIR', 'Securite sociale', 'Carte Vitale'],
+      ['Date de naissance', "Date d'admission", 'Compte rendu'],
+    ),
+    'IT': (
+      ['Codice Fiscale', 'Tessera sanitaria'],
+      ['Data di nascita', 'Data di ricovero', 'Lettera di dimissione'],
+    ),
+    'NL': (
+      ['BSN', 'Burgerservicenummer'],
+      ['Geboortedatum', 'Opnamedatum', 'Ontslagbrief'],
+    ),
     'PL': (['PESEL'], ['Data urodzenia', 'Data przyjecia', 'Wypis']),
     'SE': (['Personnummer'], ['Fodelsedatum', 'Inskrivningsdatum', 'Epikris']),
     'GB': (['NHS', 'NHS Number', 'GMC'], []),
-    'US': (['MRN', 'SSN', 'Medical Record Number'], ['Date of Birth', 'DOB', 'Admission Date', 'Discharge Date']),
+    'US': (
+      ['MRN', 'SSN', 'Medical Record Number'],
+      ['Date of Birth', 'DOB', 'Admission Date', 'Discharge Date'],
+    ),
   };
 
   static const _strongMarker = 3;
@@ -189,7 +238,14 @@ class CountryIdentifier {
     'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e', 'ę': 'e',
     'ó': 'o', 'ò': 'o', 'ô': 'o', 'ö': 'o', 'ø': 'o',
     'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
-    'ñ': 'n', 'ń': 'n', 'ç': 'c', 'ć': 'c', 'ł': 'l', 'ż': 'z', 'ź': 'z', 'ß': 'ss',
+    'ñ': 'n',
+    'ń': 'n',
+    'ç': 'c',
+    'ć': 'c',
+    'ł': 'l',
+    'ż': 'z',
+    'ź': 'z',
+    'ß': 'ss',
   };
 
   static String _fold(String text) {
@@ -203,7 +259,8 @@ class CountryIdentifier {
   }
 
   static final Map<String, List<(RegExp, int)>> _markerPatterns = {
-    for (final MapEntry(key: country, value: (strong, weak)) in _documentMarkers.entries)
+    for (final MapEntry(key: country, value: (strong, weak))
+        in _documentMarkers.entries)
       country: [
         for (final m in strong) (_markerPattern(m), _strongMarker),
         for (final m in weak) (_markerPattern(m), _weakMarker),
@@ -221,7 +278,8 @@ class CountryIdentifier {
     String? best;
     var bestScore = 0;
     var tie = false;
-    for (final MapEntry(key: country, value: patterns) in _markerPatterns.entries) {
+    for (final MapEntry(key: country, value: patterns)
+        in _markerPatterns.entries) {
       var score = 0;
       for (final (pattern, weight) in patterns) {
         if (pattern.hasMatch(folded)) score += weight;

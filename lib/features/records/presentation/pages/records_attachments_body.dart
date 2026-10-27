@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
+import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_active_filters_bar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_toolbar.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
-import 'package:health_wallet/features/records/presentation/widgets/attachment_browse/attachment_browse_view.dart';
 
 class RecordsAttachmentsBody extends StatefulWidget {
   final RecordsState appBarState;
@@ -62,12 +62,11 @@ class _RecordsAttachmentsBodyState extends State<RecordsAttachmentsBody> {
             child: AttachmentBrowseView(
               isSelectionMode: widget.appBarState.isSelectionMode,
               selectedResourceIds: widget.appBarState.selectedResourceIds,
-              onSelectionToggle: (id) => context
-                  .read<RecordsBloc>()
-                  .add(RecordsSelectionToggled(id)),
-              onSelectionModeToggled: () => context
-                  .read<RecordsBloc>()
-                  .add(const RecordsSelectionModeToggled()),
+              onSelectionToggle: (id) =>
+                  context.read<RecordsBloc>().add(RecordsSelectionToggled(id)),
+              onSelectionModeToggled: () => context.read<RecordsBloc>().add(
+                const RecordsSelectionModeToggled(),
+              ),
             ),
           ),
           Positioned(
@@ -173,7 +172,9 @@ class _HeaderWidget extends StatelessWidget {
                     previous.dateFilter != current.dateFilter ||
                     previous.activeSpecialties != current.activeSpecialties,
                 builder: (context, recordsState) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) => onLayout());
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) => onLayout(),
+                  );
                   return RecordsActiveFiltersBar(
                     activeFilters: recordsState.activeFilters,
                     dateFilter: recordsState.dateFilter,

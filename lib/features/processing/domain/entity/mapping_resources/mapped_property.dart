@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -23,8 +22,8 @@ abstract class MappedProperty with _$MappedProperty {
     }
 
     return MappedProperty(
-      value: json["value"] ?? '',
-      confidenceLevel: json["confidenceLevel"] ?? 0.0,
+      value: json['value'] ?? '',
+      confidenceLevel: json['confidenceLevel'] ?? 0.0,
     );
   }
 
@@ -33,9 +32,9 @@ abstract class MappedProperty with _$MappedProperty {
   }
 
   Map<String, dynamic> toJson() => {
-        'value': value,
-        'confidenceLevel': confidenceLevel,
-      };
+    'value': value,
+    'confidenceLevel': confidenceLevel,
+  };
 
   List<String> _createOverlappingChunks(String text, int chunkLength) {
     if (text.length <= chunkLength) {
@@ -63,8 +62,7 @@ abstract class MappedProperty with _$MappedProperty {
 
     final valueTokens = _extractTokens(normalizedValue);
     if (valueTokens.isNotEmpty) {
-      final matchedTokens =
-          valueTokens.where((t) => normalizedInput.contains(t)).length;
+      final matchedTokens = valueTokens.where(normalizedInput.contains).length;
       final tokenRatio = matchedTokens / valueTokens.length;
       if (tokenRatio >= 0.8) {
         return copyWith(confidenceLevel: 0.9);
@@ -76,16 +74,21 @@ abstract class MappedProperty with _$MappedProperty {
 
     final chunkLength = (normalizedValue.length * 1.5).ceil();
     if (normalizedInput.length < chunkLength) {
-      final bestMatch =
-          StringSimilarity.findBestMatch(normalizedValue, [normalizedInput]);
+      final bestMatch = StringSimilarity.findBestMatch(normalizedValue, [
+        normalizedInput,
+      ]);
       return copyWith(confidenceLevel: bestMatch.bestMatch.rating ?? 0.0);
     }
 
-    final List<String> textChunks =
-        _createOverlappingChunks(normalizedInput, chunkLength);
+    final List<String> textChunks = _createOverlappingChunks(
+      normalizedInput,
+      chunkLength,
+    );
 
-    final bestMatch =
-        StringSimilarity.findBestMatch(normalizedValue, textChunks);
+    final bestMatch = StringSimilarity.findBestMatch(
+      normalizedValue,
+      textChunks,
+    );
     final rating = bestMatch.bestMatch.rating ?? 0.0;
 
     return copyWith(confidenceLevel: rating);
@@ -100,10 +103,7 @@ abstract class MappedProperty with _$MappedProperty {
   }
 
   static List<String> _extractTokens(String normalizedText) {
-    return normalizedText
-        .split(' ')
-        .where((t) => t.length >= 2)
-        .toList();
+    return normalizedText.split(' ').where((t) => t.length >= 2).toList();
   }
 
   MappedProperty calculateGenderConfidence(String inputText) {
@@ -113,8 +113,26 @@ abstract class MappedProperty with _$MappedProperty {
     final normalizedValue = value.toLowerCase();
 
     const genderMap = {
-      'male': ['male', 'masculin', 'masc', 'mann', 'männlich', 'hombre', 'masculino', 'm'],
-      'female': ['female', 'feminin', 'fem', 'frau', 'weiblich', 'mujer', 'femenino', 'f'],
+      'male': [
+        'male',
+        'masculin',
+        'masc',
+        'mann',
+        'männlich',
+        'hombre',
+        'masculino',
+        'm',
+      ],
+      'female': [
+        'female',
+        'feminin',
+        'fem',
+        'frau',
+        'weiblich',
+        'mujer',
+        'femenino',
+        'f',
+      ],
     };
 
     final synonyms = genderMap[normalizedValue];
@@ -132,7 +150,10 @@ abstract class MappedProperty with _$MappedProperty {
   MappedProperty calculateDateConfidence(String inputText) {
     if (value.isEmpty) return copyWith(confidenceLevel: 0.0);
 
-    final digits = RegExp(r'\d+').allMatches(value).map((m) => m.group(0)!).toList();
+    final digits = RegExp(r'\d+')
+        .allMatches(value)
+        .map((m) => m.group(0)!)
+        .toList();
     if (digits.isEmpty) return calculateConfidence(inputText);
 
     final year = digits.firstWhere((d) => d.length == 4, orElse: () => '');
@@ -159,26 +180,26 @@ enum ConfidenceLevel {
   low;
 
   factory ConfidenceLevel.fromDouble(double value) => switch (value) {
-        < 0.6 => ConfidenceLevel.low,
-        >= 0.6 && < 0.8 => ConfidenceLevel.medium,
-        _ => ConfidenceLevel.high
-      };
+    < 0.6 => ConfidenceLevel.low,
+    >= 0.6 && < 0.8 => ConfidenceLevel.medium,
+    _ => ConfidenceLevel.high,
+  };
 
   Color getColor(BuildContext context) => switch (this) {
-        ConfidenceLevel.high => context.borderColor,
-        ConfidenceLevel.medium => AppColors.warningDraft,
-        ConfidenceLevel.low => AppColors.error
-      };
+    ConfidenceLevel.high => context.borderColor,
+    ConfidenceLevel.medium => AppColors.warningDraft,
+    ConfidenceLevel.low => AppColors.error,
+  };
 
   String getString() => switch (this) {
-        ConfidenceLevel.high => "",
-        ConfidenceLevel.medium => "Medium confidence",
-        ConfidenceLevel.low => "Low confidence",
-      };
+    ConfidenceLevel.high => '',
+    ConfidenceLevel.medium => 'Medium confidence',
+    ConfidenceLevel.low => 'Low confidence',
+  };
 
   SvgGenImage? getIcon() => switch (this) {
-        ConfidenceLevel.high => null,
-        ConfidenceLevel.medium => Assets.icons.warningTriangle,
-        ConfidenceLevel.low => Assets.icons.warning,
-      };
+    ConfidenceLevel.high => null,
+    ConfidenceLevel.medium => Assets.icons.warningTriangle,
+    ConfidenceLevel.low => Assets.icons.warning,
+  };
 }

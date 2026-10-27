@@ -9,8 +9,8 @@
 /// scorer agrees with itself.
 library;
 
-import 'comparators.dart';
 import 'codes.dart' show alternativeCodingUrl;
+import 'comparators.dart';
 
 enum FieldKind { text, exact, identifier, date, quantity, set, concept }
 
@@ -38,12 +38,20 @@ const fieldSpecs = <String, List<FieldSpec>>{
   ],
   'DiagnosticReport': [
     FieldSpec('code', FieldKind.concept, ['code']),
-    FieldSpec('date', FieldKind.date, ['effectiveDateTime', 'effectivePeriod.start', 'issued']),
+    FieldSpec('date', FieldKind.date, [
+      'effectiveDateTime',
+      'effectivePeriod.start',
+      'issued',
+    ]),
     FieldSpec('conclusion', FieldKind.text, ['conclusion']),
   ],
   'Observation': [
     FieldSpec('code', FieldKind.concept, ['code']),
-    FieldSpec('value', FieldKind.quantity, ['valueQuantity', 'valueString', 'valueInteger']),
+    FieldSpec('value', FieldKind.quantity, [
+      'valueQuantity',
+      'valueString',
+      'valueInteger',
+    ]),
   ],
   'Condition': [
     FieldSpec('code', FieldKind.concept, ['code']),
@@ -56,11 +64,16 @@ const fieldSpecs = <String, List<FieldSpec>>{
   'AllergyIntolerance': [
     FieldSpec('substance', FieldKind.concept, ['code']),
     FieldSpec('category', FieldKind.exact, ['category[0]']),
-    FieldSpec('manifestation', FieldKind.concept, ['reaction[0].manifestation[0]']),
+    FieldSpec('manifestation', FieldKind.concept, [
+      'reaction[0].manifestation[0]',
+    ]),
   ],
   'Procedure': [
     FieldSpec('code', FieldKind.concept, ['code']),
-    FieldSpec('performed', FieldKind.date, ['performedDateTime', 'performedPeriod.start']),
+    FieldSpec('performed', FieldKind.date, [
+      'performedDateTime',
+      'performedPeriod.start',
+    ]),
   ],
   'Practitioner': [
     FieldSpec('name', FieldKind.text, ['name[0].text']),
@@ -102,19 +115,26 @@ String? _asString(Object? v) {
 }
 
 /// The normalized value of [spec] in [resource], or null when it is absent
-/// or empty. Text kinds give a String, `set` a List<String>, `quantity` a
+/// or empty. Text kinds give a String, `set` a `List<String>`, `quantity` a
 /// [QuantityValue], `concept` a [ConceptValue].
 Object? extractField(Map<String, dynamic> resource, FieldSpec spec) {
   for (final path in spec.paths) {
     final raw = readPath(resource, path);
     final value = switch (spec.kind) {
-      FieldKind.text || FieldKind.exact || FieldKind.identifier || FieldKind.date => _asString(raw),
+      FieldKind.text ||
+      FieldKind.exact ||
+      FieldKind.identifier ||
+      FieldKind.date => _asString(raw),
       FieldKind.set => switch (raw) {
-          List l when l.whereType<String>().any((s) => s.trim().isNotEmpty) =>
-            [for (final s in l.whereType<String>()) if (s.trim().isNotEmpty) s.trim()],
-          String s when s.trim().isNotEmpty => [s.trim()],
-          _ => null,
-        },
+        final List l
+            when l.whereType<String>().any((s) => s.trim().isNotEmpty) =>
+          [
+            for (final s in l.whereType<String>())
+              if (s.trim().isNotEmpty) s.trim(),
+          ],
+        final String s when s.trim().isNotEmpty => [s.trim()],
+        _ => null,
+      },
       FieldKind.quantity => toQuantity(raw),
       FieldKind.concept => toConcept(raw, alternativeUrl: alternativeCodingUrl),
     };
@@ -125,11 +145,17 @@ Object? extractField(Map<String, dynamic> resource, FieldSpec spec) {
 
 /// Score in [0, 1] for two non-null values of [kind].
 double compareField(FieldKind kind, Object gold, Object pred) => switch (kind) {
-      FieldKind.text => compareText(gold as String, pred as String),
-      FieldKind.exact => compareExact(gold as String, pred as String),
-      FieldKind.identifier => compareIdentifier(gold as String, pred as String),
-      FieldKind.date => compareDate(gold as String, pred as String),
-      FieldKind.quantity => compareQuantity(gold as QuantityValue, pred as QuantityValue),
-      FieldKind.set => compareSet(gold as List<String>, pred as List<String>),
-      FieldKind.concept => compareConcept(gold as ConceptValue, pred as ConceptValue),
-    };
+  FieldKind.text => compareText(gold as String, pred as String),
+  FieldKind.exact => compareExact(gold as String, pred as String),
+  FieldKind.identifier => compareIdentifier(gold as String, pred as String),
+  FieldKind.date => compareDate(gold as String, pred as String),
+  FieldKind.quantity => compareQuantity(
+    gold as QuantityValue,
+    pred as QuantityValue,
+  ),
+  FieldKind.set => compareSet(gold as List<String>, pred as List<String>),
+  FieldKind.concept => compareConcept(
+    gold as ConceptValue,
+    pred as ConceptValue,
+  ),
+};

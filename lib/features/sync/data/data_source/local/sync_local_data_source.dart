@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart' as db;
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart'
     as domain;
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,10 +42,12 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
         title: Value(e.title),
         date: Value(e.date),
         resourceRaw: jsonEncode(e.resourceRaw),
-        encounterId:
-            e.encounterId != null ? Value(e.encounterId) : const Value.absent(),
-        subjectId:
-            e.subjectId != null ? Value(e.subjectId) : const Value.absent(),
+        encounterId: e.encounterId != null
+            ? Value(e.encounterId)
+            : const Value.absent(),
+        subjectId: e.subjectId != null
+            ? Value(e.subjectId)
+            : const Value.absent(),
       );
     }).toList();
     await _appDatabase.batch((batch) {
@@ -127,21 +129,22 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
     // Get source labels from Sources table
     final sourceLabelMap = {
-      for (final source in allSources) source.id: source.labelSource
+      for (final source in allSources) source.id: source.labelSource,
     };
 
     final sources = combinedSourceIds.map(
       (sourceId) {
         final dbSource = allSources.cast<db.Source?>().firstWhere(
-              (s) => s?.id == sourceId,
-              orElse: () => null,
-            );
+          (s) => s?.id == sourceId,
+          orElse: () => null,
+        );
 
         return domain.Source(
           id: sourceId,
           platformName: _getSourcePlatformName(sourceId),
           logo: null,
-          labelSource: sourceLabelMap[sourceId] ??
+          labelSource:
+              sourceLabelMap[sourceId] ??
               (sourceId == 'demo_data' ? 'Demo' : null),
           platformType: _getSourcePlatformType(sourceId, dbSource),
           createdAt: dbSource?.createdAt,
@@ -193,7 +196,9 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   @override
   Future<void> updateSourceLabel(String sourceId, String newLabel) async {
     try {
-      await _appDatabase.into(_appDatabase.sources).insertOnConflictUpdate(
+      await _appDatabase
+          .into(_appDatabase.sources)
+          .insertOnConflictUpdate(
             db.SourcesCompanion(
               id: Value(sourceId),
               labelSource: Value(newLabel.isEmpty ? null : newLabel),
@@ -210,9 +215,9 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   Future<void> createWalletSource() async {
     try {
       // Check if wallet source already exists
-      final existingWallet = await (_appDatabase.select(_appDatabase.sources)
-            ..where((s) => s.id.equals('wallet')))
-          .getSingleOrNull();
+      final existingWallet = await (_appDatabase.select(
+        _appDatabase.sources,
+      )..where((s) => s.id.equals('wallet'))).getSingleOrNull();
 
       if (existingWallet != null) {
         // Wallet source already exists, no need to create
@@ -221,11 +226,13 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
       final now = DateTime.now();
       // Create Wallet source in sources table
-      await _appDatabase.into(_appDatabase.sources).insert(
+      await _appDatabase
+          .into(_appDatabase.sources)
+          .insert(
             db.SourcesCompanion.insert(
               id: 'wallet',
-              platformName: Value('wallet'),
-              labelSource: Value('Wallet'),
+              platformName: const Value('wallet'),
+              labelSource: const Value('Wallet'),
               platformType: const Value('wallet'),
               createdAt: Value(now),
               updatedAt: Value(now),
@@ -239,15 +246,18 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   }
 
   /// Create demo_data source in the database with proper name and label
+  @override
   Future<void> createDemoDataSource() async {
     try {
       final now = DateTime.now();
       // Create demo_data source in sources table with correct name for display logic
-      await _appDatabase.into(_appDatabase.sources).insert(
+      await _appDatabase
+          .into(_appDatabase.sources)
+          .insert(
             db.SourcesCompanion.insert(
               id: 'demo_data',
-              platformName: Value('wallet-manual'), // Platform name
-              labelSource: Value('Demo Data'), // Custom display label
+              platformName: const Value('wallet-manual'), // Platform name
+              labelSource: const Value('Demo Data'), // Custom display label
               platformType: const Value('wallet'),
               createdAt: Value(now),
               updatedAt: Value(now),
@@ -262,15 +272,14 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
   @override
   Future<void> deleteSource(String sourceId) async {
-
     // Delete from sources table
-    await (_appDatabase.delete(_appDatabase.sources)
-          ..where((tbl) => tbl.id.equals(sourceId)))
-        .go();
+    await (_appDatabase.delete(
+      _appDatabase.sources,
+    )..where((tbl) => tbl.id.equals(sourceId))).go();
 
     // Delete all FHIR resources associated with this source
-    await (_appDatabase.delete(_appDatabase.fhirResource)
-          ..where((tbl) => tbl.sourceId.equals(sourceId)))
-        .go();
+    await (_appDatabase.delete(
+      _appDatabase.fhirResource,
+    )..where((tbl) => tbl.sourceId.equals(sourceId))).go();
   }
 }

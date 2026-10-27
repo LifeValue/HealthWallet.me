@@ -1,7 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -10,9 +11,7 @@ import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SessionEndedView extends StatelessWidget {
   final ShareRecordsState state;
@@ -22,8 +21,9 @@ class SessionEndedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusMessage = state.statusMessage?.toLowerCase() ?? '';
-    final isRejected = statusMessage.contains('declined') ||
-                       statusMessage.contains('rejected');
+    final isRejected =
+        statusMessage.contains('declined') ||
+        statusMessage.contains('rejected');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Insets.large),
@@ -39,7 +39,9 @@ class SessionEndedView extends StatelessWidget {
               : Assets.images.completeCheck.svg(width: 64, height: 64),
           const SizedBox(height: Insets.large),
           Text(
-            isRejected ? context.l10n.shareInvitationDeclined : context.l10n.shareSessionComplete,
+            isRejected
+                ? context.l10n.shareInvitationDeclined
+                : context.l10n.shareSessionComplete,
             style: AppTextStyle.titleMedium.copyWith(
               color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w600,
@@ -110,8 +112,8 @@ class ErrorView extends StatelessWidget {
               fullWidth: true,
               onPressed: () {
                 context.read<ShareRecordsBloc>().add(
-                      const ShareRecordsEvent.connectionRetried(),
-                    );
+                  const ShareRecordsEvent.connectionRetried(),
+                );
               },
             ),
             const SizedBox(height: Insets.small),
@@ -121,10 +123,10 @@ class ErrorView extends StatelessWidget {
               fullWidth: true,
               onPressed: () {
                 context.read<ShareRecordsBloc>().add(
-                      state.mode == ShareMode.sending
-                          ? const ShareRecordsEvent.sendModeSelected()
-                          : const ShareRecordsEvent.modeCleared(),
-                    );
+                  state.mode == ShareMode.sending
+                      ? const ShareRecordsEvent.sendModeSelected()
+                      : const ShareRecordsEvent.modeCleared(),
+                );
               },
             ),
           ],

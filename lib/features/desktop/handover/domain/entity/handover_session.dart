@@ -10,7 +10,7 @@ enum HandoverStatus {
   complete,
   error,
   sending,
-  waitingForResults;
+  waitingForResults,
 }
 
 @freezed

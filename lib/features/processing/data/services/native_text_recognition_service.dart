@@ -26,7 +26,9 @@ class NativeTextRecognitionService
         index++;
       }
 
-      return pageTexts.isNotEmpty ? pageTexts.join('\n') : 'No readable text found.';
+      return pageTexts.isNotEmpty
+          ? pageTexts.join('\n')
+          : 'No readable text found.';
     } catch (e) {
       return 'Error processing PDF: ${e.toString()}';
     }

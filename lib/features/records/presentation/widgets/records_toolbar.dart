@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -8,7 +9,6 @@ import 'package:health_wallet/features/records/presentation/bloc/attachment_brow
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/records_view_toggle.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class RecordsToolbar extends StatefulWidget {
   final RecordsViewMode viewMode;
@@ -83,7 +83,8 @@ class _RecordsToolbarState extends State<RecordsToolbar>
       context.read<RecordsBloc>().add(const RecordsSearch(''));
       if (widget.viewMode == RecordsViewMode.attachments) {
         context.read<AttachmentBrowseBloc>().add(
-            const AttachmentBrowseSearchChanged(''));
+          const AttachmentBrowseSearchChanged(''),
+        );
       }
       _searchFocusNode.requestFocus();
     } else {
@@ -165,7 +166,8 @@ class _RecordsToolbarState extends State<RecordsToolbar>
               context.read<RecordsBloc>().add(RecordsSearch(query));
               if (widget.viewMode == RecordsViewMode.attachments) {
                 context.read<AttachmentBrowseBloc>().add(
-                    AttachmentBrowseSearchChanged(query));
+                  AttachmentBrowseSearchChanged(query),
+                );
               }
             },
             onSubmitted: (_) => _searchFocusNode.unfocus(),

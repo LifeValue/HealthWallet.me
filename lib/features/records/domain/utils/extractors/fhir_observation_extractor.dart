@@ -1,21 +1,22 @@
-import 'package:health_wallet/core/config/constants/region_preset.dart';
-import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
-import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
+import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
+import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
 
 class FhirObservationExtractor {
   static String? extractObservationValue(dynamic valueX) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
-      return "${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${valueQuantity.unit}";
+      return '${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${valueQuantity.unit}';
     }
 
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
     if (valueCodeableConcept != null) {
       return FhirCommonExtractor.extractCodeableConceptText(
-          valueCodeableConcept);
+        valueCodeableConcept,
+      );
     }
 
     final valueString = valueX?.isAs<fhir_r4.FhirString>();
@@ -35,12 +36,12 @@ class FhirObservationExtractor {
 
     final valueRange = valueX?.isAs<fhir_r4.Range>();
     if (valueRange != null) {
-      return "${valueRange.low?.value?.valueDouble?.toStringAsFixed(2)} - ${valueRange.high?.value?.valueDouble?.toStringAsFixed(2)}";
+      return '${valueRange.low?.value?.valueDouble?.toStringAsFixed(2)} - ${valueRange.high?.value?.valueDouble?.toStringAsFixed(2)}';
     }
 
     final valueRatio = valueX?.isAs<fhir_r4.Ratio>();
     if (valueRatio != null) {
-      return "${valueRatio.numerator?.value?.valueDouble?.toStringAsFixed(2)} / ${valueRatio.denominator?.value?.valueDouble?.toStringAsFixed(2)}";
+      return '${valueRatio.numerator?.value?.valueDouble?.toStringAsFixed(2)} / ${valueRatio.denominator?.value?.valueDouble?.toStringAsFixed(2)}';
     }
 
     final valueTime = valueX?.isAs<fhir_r4.FhirTime>();
@@ -55,7 +56,7 @@ class FhirObservationExtractor {
 
     final valuePeriod = valueX?.isAs<fhir_r4.Period>();
     if (valuePeriod != null) {
-      return "${valuePeriod.start} - ${valuePeriod.end}";
+      return '${valuePeriod.start} - ${valuePeriod.end}';
     }
 
     return null;
@@ -71,15 +72,14 @@ class FhirObservationExtractor {
       final rawUnit = valueQuantity.unit?.toString() ?? '';
       if (rawValue != null) {
         final u = rawUnit.trim().toLowerCase();
-        if ((u == 'cm' || u == 'centimeters') &&
-            region.heightUnit == 'ft/in') {
+        if ((u == 'cm' || u == 'centimeters') && region.heightUnit == 'ft/in') {
           final converted = convertQuantityForRegion(rawValue, rawUnit, region);
           return converted.unit;
         }
         final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-        return "${converted.value.toStringAsFixed(2)} ${converted.unit}";
+        return '${converted.value.toStringAsFixed(2)} ${converted.unit}';
       }
-      return "${rawValue?.toStringAsFixed(2)} $rawUnit";
+      return '${rawValue?.toStringAsFixed(2)} $rawUnit';
     }
 
     return extractObservationValue(valueX);
@@ -245,8 +245,8 @@ class FhirObservationExtractor {
     final sortedObservations =
         observations.where((obs) => obs.code?.coding != null).toList()
           ..sort((a, b) {
-            DateTime aDate = a.date ?? DateTime.now();
-            DateTime bDate = b.date ?? DateTime.now();
+            final DateTime aDate = a.date ?? DateTime.now();
+            final DateTime bDate = b.date ?? DateTime.now();
             return bDate.compareTo(aDate);
           });
 
@@ -382,7 +382,9 @@ class FhirObservationExtractor {
   }
 
   static String _formatQuantityValueByCode(
-      String? code, fhir_r4.Quantity quantity) {
+    String? code,
+    fhir_r4.Quantity quantity,
+  ) {
     final String? raw = quantity.value?.toString();
     if (raw == null) return 'N/A';
     final double? num = double.tryParse(raw);

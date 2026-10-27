@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/services.dart';
 import 'package:health_wallet/features/processing/data/model/structured_output/extraction_schemas.dart';
 
@@ -37,10 +38,18 @@ class CorrectionTemplateLoader {
     String? documentCategory,
     String? ocrText,
   }) async {
-    final template = await _bestTemplate(documentCategory: documentCategory, ocrText: ocrText);
+    final template = await _bestTemplate(
+      documentCategory: documentCategory,
+      ocrText: ocrText,
+    );
     if (template == null) return null;
     // Lab-report prompts offer no Condition, so neither does their example.
-    return _formatExample(template, exclude: documentCategory == 'lab_report' ? const {'Condition'} : const {});
+    return _formatExample(
+      template,
+      exclude: documentCategory == 'lab_report'
+          ? const {'Condition'}
+          : const {},
+    );
   }
 
   /// The best template as the phase-2 schema object of [documentCategory]:
@@ -49,15 +58,23 @@ class CorrectionTemplateLoader {
     String? documentCategory,
     String? ocrText,
   }) async {
-    final template = await _bestTemplate(documentCategory: documentCategory, ocrText: ocrText);
+    final template = await _bestTemplate(
+      documentCategory: documentCategory,
+      ocrText: ocrText,
+    );
     if (template == null) return null;
-    final types = {for (final s in ExtractionSchemas.sectionsFor(documentCategory)) s.resourceType};
+    final types = {
+      for (final s in ExtractionSchemas.sectionsFor(documentCategory))
+        s.resourceType,
+    };
     final resources = [
       for (final r in template['extraction'] as List<dynamic>)
         if (r is Map<String, dynamic> && types.contains(r['resourceType'])) r,
     ].take(8).toList();
     if (resources.isEmpty) return null;
-    return jsonEncode(ExtractionSchemas.legacyToRemaining(resources, documentCategory));
+    return jsonEncode(
+      ExtractionSchemas.legacyToRemaining(resources, documentCategory),
+    );
   }
 
   Future<Map<String, dynamic>?> _bestTemplate({
@@ -75,8 +92,8 @@ class CorrectionTemplateLoader {
 
     for (final template in candidates) {
       int score = 0;
-      final templateOcr =
-          (template['ocrExcerpt'] as String? ?? '').toLowerCase();
+      final templateOcr = (template['ocrExcerpt'] as String? ?? '')
+          .toLowerCase();
 
       if (ocrText != null && ocrText.isNotEmpty) {
         final ocrLower = ocrText.toLowerCase();
@@ -154,16 +171,23 @@ class CorrectionTemplateLoader {
     return null;
   }
 
-  String _formatExample(Map<String, dynamic> template, {Set<String> exclude = const {}}) {
-    final extraction = (template['extraction'] as List<dynamic>)
-        .where((r) => !exclude.contains((r as Map<String, dynamic>)['resourceType']));
+  String _formatExample(
+    Map<String, dynamic> template, {
+    Set<String> exclude = const {},
+  }) {
+    final extraction = (template['extraction'] as List<dynamic>).where(
+      (r) => !exclude.contains((r as Map<String, dynamic>)['resourceType']),
+    );
 
-    final condensed = extraction.take(8).map((resource) {
-      final r = resource as Map<String, dynamic>;
-      final copy = Map<String, dynamic>.from(r);
-      copy.remove('confidenceLevel');
-      return jsonEncode(copy);
-    }).join(',\n');
+    final condensed = extraction
+        .take(8)
+        .map((resource) {
+          final r = resource as Map<String, dynamic>;
+          final copy = Map<String, dynamic>.from(r);
+          copy.remove('confidenceLevel');
+          return jsonEncode(copy);
+        })
+        .join(',\n');
 
     return '[\n$condensed\n]';
   }

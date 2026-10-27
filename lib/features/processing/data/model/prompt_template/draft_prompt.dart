@@ -9,11 +9,14 @@ class DraftPrompt {
 
   static String _ocrSection(String ocrText, int maxLength) {
     if (ocrText.trim().isEmpty) return '';
-    final truncated = ocrText.length > maxLength ? ocrText.substring(0, maxLength) : ocrText;
+    final truncated = ocrText.length > maxLength
+        ? ocrText.substring(0, maxLength)
+        : ocrText;
     return '\nOCR text from this document:\n---\n$truncated\n---\n';
   }
 
-  static String _source(bool vision) => vision ? 'this medical document image' : 'this medical document';
+  static String _source(bool vision) =>
+      vision ? 'this medical document image' : 'this medical document';
 
   /// Phase 1 and container-only: the patient and the document.
   static String basicInfo(String ocrText, {bool vision = false}) =>
@@ -22,7 +25,11 @@ Note: the patient's surname and first name, birth date, gender, the patient ID n
 Write plain text lines, no JSON.''';
 
   /// Phase 2: the medical facts of a [documentCategory] document.
-  static String remaining(String ocrText, {String? documentCategory, bool vision = false}) {
+  static String remaining(
+    String ocrText, {
+    String? documentCategory,
+    bool vision = false,
+  }) {
     final what = switch (documentCategory) {
       'lab_report' => 'every lab test with its value, unit and reference range on one line each (keep each value on the row of its own test), then the doctors and the laboratory or hospital with address and phone',
       'visit' => 'the diagnoses with their dates, medications with dosage, procedures with dates, allergies, vital signs with values and units, then the doctors and the hospital or clinic with address and phone',
@@ -42,7 +49,9 @@ Leave out the patient's personal details. Write plain text lines, no JSON.''';
   static String section(String? draft) {
     final text = draft?.trim() ?? '';
     if (text.isEmpty) return '';
-    final capped = text.length > maxSectionLength ? text.substring(0, maxSectionLength) : text;
+    final capped = text.length > maxSectionLength
+        ? text.substring(0, maxSectionLength)
+        : text;
     return '\nNotes from a first reading of this document (check every value against the OCR text):\n---\n$capped\n---\n';
   }
 }

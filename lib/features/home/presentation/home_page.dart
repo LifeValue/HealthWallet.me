@@ -4,41 +4,38 @@ import 'dart:ui';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/core/utils/patient_source_utils.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
+import 'package:health_wallet/core/widgets/custom_app_bar.dart';
+import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/backup_card.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/sync_dialog.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/backup_card.dart';
-import 'package:health_wallet/features/notifications/notification_widget.dart';
-import 'package:health_wallet/features/user/presentation/preferences_modal/preference_modal.dart';
-import 'package:health_wallet/features/home/presentation/widgets/share_options_sheet.dart';
-import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
-import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/utils/patient_source_utils.dart';
-import 'package:health_wallet/core/widgets/custom_app_bar.dart';
-import 'package:health_wallet/core/widgets/overlay_annotations/overlay_annotations.dart';
 import 'package:health_wallet/features/home/core/constants/home_constants.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_dashboard_sections.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_greeting_title.dart';
 import 'package:health_wallet/features/home/presentation/widgets/home_patient_bar.dart';
+import 'package:health_wallet/features/home/presentation/widgets/share_options_sheet.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
-import 'package:health_wallet/core/config/app_platform.dart';
-import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @RoutePage()
@@ -62,10 +59,12 @@ class HomePage extends StatelessWidget {
                 final previousPatient = previous.patients
                     .where((p) => p.id == selectedId)
                     .firstOrNull;
-                final currentPatient =
-                    current.patients.where((p) => p.id == selectedId).firstOrNull;
+                final currentPatient = current.patients
+                    .where((p) => p.id == selectedId)
+                    .firstOrNull;
                 final dataChanged =
-                    previousPatient?.displayTitle != currentPatient?.displayTitle;
+                    previousPatient?.displayTitle !=
+                    currentPatient?.displayTitle;
 
                 return selectionChanged || dataChanged;
               }
@@ -83,7 +82,9 @@ class HomePage extends StatelessWidget {
                 (previous.hasSyncedData != current.hasSyncedData),
             listener: (context, state) {
               if (state.hasDemoData || state.hasSyncedData) {
-                context.read<HomeBloc>().add(const HomeRefreshPreservingOrder());
+                context.read<HomeBloc>().add(
+                  const HomeRefreshPreservingOrder(),
+                );
               }
             },
           ),
@@ -289,9 +290,15 @@ class HomeViewState extends State<HomeView> {
                       children: [
                         const _ConnectionMiniCard(),
                         const SizedBox(width: 8),
-                        _PeriodicBuilder(builder: (_, tick) => _SyncMiniCard(key: ValueKey('sync_$tick'))),
+                        _PeriodicBuilder(
+                          builder: (_, tick) =>
+                              _SyncMiniCard(key: ValueKey('sync_$tick')),
+                        ),
                         const SizedBox(width: 8),
-                        _PeriodicBuilder(builder: (_, tick) => _BackupMiniCard(key: ValueKey('backup_$tick'))),
+                        _PeriodicBuilder(
+                          builder: (_, tick) =>
+                              _BackupMiniCard(key: ValueKey('backup_$tick')),
+                        ),
                       ],
                     ),
                   ),
@@ -319,6 +326,16 @@ class HomeViewState extends State<HomeView> {
         horizontal: context.screenHorizontalPadding,
         vertical: 12,
       ),
+      body: CustomScrollView(
+        slivers: [
+          HomeDashboardSections(
+            state: state,
+            editMode: state.editMode,
+            highlightController: _highlightController,
+            pageController: widget.pageController,
+          ),
+        ],
+      ),
       children: [
         Stack(
           children: [
@@ -332,16 +349,16 @@ class HomeViewState extends State<HomeView> {
                 ],
               ],
             ),
-            Positioned.fill(
+            const Positioned.fill(
               child: Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const _ConnectionMiniCard(),
-                    const SizedBox(width: 8),
-                    const _SyncMiniCard(),
-                    const SizedBox(width: 8),
-                    const _BackupMiniCard(),
+                    _ConnectionMiniCard(),
+                    SizedBox(width: 8),
+                    _SyncMiniCard(),
+                    SizedBox(width: 8),
+                    _BackupMiniCard(),
                   ],
                 ),
               ),
@@ -349,16 +366,6 @@ class HomeViewState extends State<HomeView> {
           ],
         ),
       ],
-      body: CustomScrollView(
-        slivers: [
-          HomeDashboardSections(
-            state: state,
-            editMode: state.editMode,
-            highlightController: _highlightController,
-            pageController: widget.pageController,
-          ),
-        ],
-      ),
     );
   }
 
@@ -368,7 +375,8 @@ class HomeViewState extends State<HomeView> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (state.hasDataLoaded && getIt<AppPlatform>() != AppPlatform.desktop)
+            if (state.hasDataLoaded &&
+                getIt<AppPlatform>() != AppPlatform.desktop)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOut,
@@ -431,14 +439,14 @@ class _PatientRowState extends State<_PatientRow> {
     if (_isMenuOpen) return;
     final box = _tapKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final pos = box.localToGlobal(Offset.zero, ancestor: overlay);
 
     setState(() => _isMenuOpen = true);
 
     final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
-        widget.homeState.patient?.name?.first);
+      widget.homeState.patient?.name?.first,
+    );
 
     showShareOptionsMenu(
       context,
@@ -457,8 +465,10 @@ class _PatientRowState extends State<_PatientRow> {
 
   @override
   Widget build(BuildContext context) {
-    final patientName = FhirFieldExtractor.extractHumanNameFamilyFirst(
-            widget.homeState.patient?.name?.first) ??
+    final patientName =
+        FhirFieldExtractor.extractHumanNameFamilyFirst(
+          widget.homeState.patient?.name?.first,
+        ) ??
         context.l10n.loading;
 
     return GestureDetector(
@@ -540,7 +550,9 @@ class _ConnectionMiniCard extends StatelessWidget {
 
             if (isConnected) {
               color = AppColors.success;
-              subtitle = commState.connectedDeviceName ?? context.l10n.connectionStatusConnected;
+              subtitle =
+                  commState.connectedDeviceName ??
+                  context.l10n.connectionStatusConnected;
             } else if (isDiscovering) {
               color = AppColors.warning;
               subtitle = context.l10n.connectionStatusConnecting;
@@ -589,16 +601,16 @@ class _SyncMiniCard extends StatelessWidget {
           final color = isSyncing
               ? AppColors.primary
               : syncState.isSynced
-                  ? AppColors.success
-                  : syncState.pendingChangeCount > 0
-                      ? AppColors.warning
-                      : AppColors.error;
+              ? AppColors.success
+              : syncState.pendingChangeCount > 0
+              ? AppColors.warning
+              : AppColors.error;
 
           final subtitle = isSyncing
               ? context.l10n.syncStatusSyncing
               : syncState.lastSyncTime != null
-                  ? DateFormatUtils.getSincePretty(syncState.lastSyncTime!)
-                  : context.l10n.syncStatusNotSynced;
+              ? DateFormatUtils.getSincePretty(syncState.lastSyncTime!)
+              : context.l10n.syncStatusNotSynced;
 
           return _MiniStatusCard(
             icon: Icons.sync,
@@ -629,16 +641,20 @@ class _BackupMiniCard extends StatelessWidget {
           final color = backupState.isBackingUp
               ? AppColors.primary
               : hasAnyBackup
-                  ? AppColors.success
-                  : AppColors.warning;
+              ? AppColors.success
+              : AppColors.warning;
 
           String subtitle;
           if (backupState.isBackingUp) {
             subtitle = context.l10n.backupStatusWorking;
           } else if (hasBackup) {
-            subtitle = DateFormatUtils.getSincePretty(backupState.backupHistory.first.timestamp);
+            subtitle = DateFormatUtils.getSincePretty(
+              backupState.backupHistory.first.timestamp,
+            );
           } else if (hasRemoteBackup) {
-            subtitle = DateFormatUtils.getSincePretty(backupState.desktopLastBackupTime!);
+            subtitle = DateFormatUtils.getSincePretty(
+              backupState.desktopLastBackupTime!,
+            );
           } else {
             subtitle = context.l10n.backupStatusNoBackup;
           }
@@ -669,72 +685,72 @@ void _showBackupDialog(BuildContext context) {
       child: Dialog(
         backgroundColor: Colors.transparent,
         child: SizedBox(
-        width: 500,
-        height: 600,
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: getIt<CommunicationBloc>()),
-            BlocProvider.value(value: getIt<BackupBloc>()),
-            BlocProvider.value(value: getIt<LwwSyncBloc>()),
-          ],
-          child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
-            builder: (context, commState) {
-              return BlocBuilder<BackupBloc, BackupState>(
-                builder: (context, backupState) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: Insets.medium,
-                            vertical: Insets.smallNormal,
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                context.l10n.backupLabel,
-                                style: AppTextStyle.bodyMedium.copyWith(
-                                  color: context.colorScheme.onSurface,
-                                  fontWeight: FontWeight.w600,
+          width: 500,
+          height: 600,
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: getIt<CommunicationBloc>()),
+              BlocProvider.value(value: getIt<BackupBloc>()),
+              BlocProvider.value(value: getIt<LwwSyncBloc>()),
+            ],
+            child: BlocBuilder<CommunicationBloc, DesktopSyncState>(
+              builder: (context, commState) {
+                return BlocBuilder<BackupBloc, BackupState>(
+                  builder: (context, backupState) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Insets.medium,
+                              vertical: Insets.smallNormal,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  context.l10n.backupLabel,
+                                  style: AppTextStyle.bodyMedium.copyWith(
+                                    color: context.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              const Spacer(),
-                              GestureDetector(
-                                onTap: () => Navigator.of(context).pop(),
-                                child: Icon(
-                                  Icons.close,
-                                  size: 20,
-                                  color: context.colorScheme.onSurface
-                                      .withValues(alpha: 0.4),
+                                const Spacer(),
+                                GestureDetector(
+                                  onTap: () => Navigator.of(context).pop(),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 20,
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.4),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        Divider(
-                          height: 1,
-                          color: context.theme.dividerColor,
-                        ),
-                        Expanded(
-                          child: BackupCard(
-                            syncState: commState,
-                            backupState: backupState,
+                          Divider(
+                            height: 1,
+                            color: context.theme.dividerColor,
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
+                          Expanded(
+                            child: BackupCard(
+                              syncState: commState,
+                              backupState: backupState,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
-      ),
       ),
     ),
   );
@@ -761,9 +777,7 @@ class _MiniStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final bgAlpha = isDark ? 0.24 : 0.08;
-    final subtitleColor = isDark
-        ? Colors.white
-        : context.colorScheme.onSurface;
+    final subtitleColor = isDark ? Colors.white : context.colorScheme.onSurface;
 
     return GestureDetector(
       onTap: onTap,

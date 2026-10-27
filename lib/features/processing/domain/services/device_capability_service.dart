@@ -106,7 +106,8 @@ class DeviceCapabilityService {
     int threads,
     int threadsBatch,
     int contextSize,
-  }) computeModelConfig({
+  })
+  computeModelConfig({
     required bool withVision,
     required DeviceProfile profile,
   }) {

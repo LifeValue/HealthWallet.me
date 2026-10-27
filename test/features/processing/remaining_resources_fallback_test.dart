@@ -29,10 +29,17 @@ class _FakeDataSource extends Fake implements AiInferenceDataSource {
   GenerationStats? get lastGenerationStats => null;
 
   @override
-  Future<void> initModel({bool withVision = true, int? contextSize, int? gpuLayers, int? threads}) async {
+  Future<void> initModel({
+    bool withVision = true,
+    int? contextSize,
+    int? gpuLayers,
+    int? threads,
+  }) async {
     loads.add(withVision);
     if (withVision) {
-      throw Exception('Not enough memory to load the AI model. Available: 3989MB, required: ~4721MB.');
+      throw Exception(
+        'Not enough memory to load the AI model. Available: 3989MB, required: ~4721MB.',
+      );
     }
   }
 
@@ -84,8 +91,12 @@ void main() {
   test('a vision model that fails to load falls back to text-only instead of throwing', () async {
     final dataSource = _FakeDataSource();
     final events = await _Repository(dataSource)
-        .processMapRemainingResources(const ['page-1.png'],
-            documentCategory: 'visit', useVision: true, outputMode: ExtractionOutputMode.grammar)
+        .processMapRemainingResources(
+          const ['page-1.png'],
+          documentCategory: 'visit',
+          useVision: true,
+          outputMode: ExtractionOutputMode.grammar,
+        )
         .toList();
 
     expect(dataSource.loads, [true, false]);

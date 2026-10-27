@@ -14,7 +14,8 @@ List<(int, int)> hungarian(List<List<double>> cost) {
   }
   if (rows > cols) {
     final transposed = [
-      for (var j = 0; j < cols; j++) [for (var i = 0; i < rows; i++) cost[i][j]],
+      for (var j = 0; j < cols; j++)
+        [for (var i = 0; i < rows; i++) cost[i][j]],
     ];
     return [for (final (c, r) in hungarian(transposed)) (r, c)]
       ..sort((a, b) => a.$1.compareTo(b.$1));

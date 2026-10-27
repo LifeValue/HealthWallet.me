@@ -4,13 +4,13 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/resource_info_content.dart';
@@ -74,10 +74,12 @@ class _ResourceCardState extends State<ResourceCard> {
     return ResourceInfoContent(
       resource: widget.resource,
       onTap: widget.readOnly && widget.ephemeralRecords.isNotEmpty
-          ? () => context.router.push(RecordDetailsRoute(
+          ? () => context.router.push(
+              RecordDetailsRoute(
                 resource: widget.resource,
                 ephemeralRecords: widget.ephemeralRecords,
-              ))
+              ),
+            )
           : null,
     );
   }
@@ -159,7 +161,7 @@ class _ResourceCardState extends State<ResourceCard> {
     return BlocBuilder<RecordsBloc, RecordsState>(
       builder: (context, state) {
         final isLoadingRelated =
-            state.recordDetailStatus == RecordDetailStatus.loading();
+            state.recordDetailStatus == const RecordDetailStatus.loading();
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -202,7 +204,8 @@ class _ResourceCardState extends State<ResourceCard> {
                   onTap: () {
                     _closeRelatedIfOpen();
                     showRecordActionDialog(
-                        RecordNotesWidget(resource: widget.resource));
+                      RecordNotesWidget(resource: widget.resource),
+                    );
                   },
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
@@ -221,7 +224,8 @@ class _ResourceCardState extends State<ResourceCard> {
                   onTap: () {
                     _closeRelatedIfOpen();
                     showRecordActionDialog(
-                        RecordAttachmentsWidget(resource: widget.resource));
+                      RecordAttachmentsWidget(resource: widget.resource),
+                    );
                   },
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
@@ -328,8 +332,9 @@ class _ResourceCardState extends State<ResourceCard> {
     final related = _ephemeralRelated ?? [];
 
     return ConstrainedBox(
-      constraints:
-          BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height / 2.5),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height / 2.5,
+      ),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
         width: MediaQuery.sizeOf(context).width,
@@ -343,7 +348,7 @@ class _ResourceCardState extends State<ResourceCard> {
           boxShadow: [
             BoxShadow(
               offset: const Offset(0, 1),
-              color: context.colorScheme.onSurface.withOpacity(0.3),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.3),
               blurRadius: 5,
             ),
           ],
@@ -359,7 +364,7 @@ class _ResourceCardState extends State<ResourceCard> {
                       width: 32,
                       height: 32,
                       colorFilter: ColorFilter.mode(
-                        context.colorScheme.onSurface.withOpacity(0.5),
+                        context.colorScheme.onSurface.withValues(alpha: 0.5),
                         BlendMode.srcIn,
                       ),
                     ),
@@ -367,7 +372,9 @@ class _ResourceCardState extends State<ResourceCard> {
                     Text(
                       'No related resources found',
                       style: AppTextStyle.labelLarge.copyWith(
-                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -383,15 +390,17 @@ class _ResourceCardState extends State<ResourceCard> {
                         (resource) => InkWell(
                           onTap: () {
                             _toggleRelated();
-                            context.router.push(RecordDetailsRoute(
-                              resource: resource,
-                              ephemeralRecords: widget.ephemeralRecords,
-                            ));
+                            context.router.push(
+                              RecordDetailsRoute(
+                                resource: resource,
+                                ephemeralRecords: widget.ephemeralRecords,
+                              ),
+                            );
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Text(
-                              "${resource.fhirType.display}: ${resource.title}",
+                              '${resource.fhirType.display}: ${resource.title}',
                               style: AppTextStyle.bodySmall.copyWith(
                                 color: context.colorScheme.onSurface,
                               ),
@@ -408,28 +417,31 @@ class _ResourceCardState extends State<ResourceCard> {
 
   Widget _buildRelatedResourcesSection(BuildContext context) {
     return ConstrainedBox(
-      constraints:
-          BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height / 2.5),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height / 2.5,
+      ),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
         width: MediaQuery.sizeOf(context).width,
         decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            border: Border.all(
-              color: context.theme.dividerColor,
-              width: 1,
+          color: context.colorScheme.surface,
+          border: Border.all(
+            color: context.theme.dividerColor,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              offset: const Offset(0, 1),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+              blurRadius: 5,
             ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                offset: const Offset(0, 1),
-                color: context.colorScheme.onSurface.withOpacity(0.3),
-                blurRadius: 5,
-              ),
-            ]),
+          ],
+        ),
         child: BlocBuilder<RecordsBloc, RecordsState>(
           builder: (context, state) {
-            if (state.recordDetailStatus == RecordDetailStatus.loading()) {
+            if (state.recordDetailStatus ==
+                const RecordDetailStatus.loading()) {
               return Padding(
                 padding: const EdgeInsets.all(Insets.normal),
                 child: Center(
@@ -462,7 +474,7 @@ class _ResourceCardState extends State<ResourceCard> {
                       width: 32,
                       height: 32,
                       colorFilter: ColorFilter.mode(
-                        context.colorScheme.onSurface.withOpacity(0.5),
+                        context.colorScheme.onSurface.withValues(alpha: 0.5),
                         BlendMode.srcIn,
                       ),
                     ),
@@ -470,7 +482,9 @@ class _ResourceCardState extends State<ResourceCard> {
                     Text(
                       'No related resources found for this encounter',
                       style: AppTextStyle.labelLarge.copyWith(
-                        color: context.colorScheme.onSurface.withOpacity(0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -488,13 +502,14 @@ class _ResourceCardState extends State<ResourceCard> {
                       (resource) => InkWell(
                         onTap: () {
                           _toggleRelated();
-                          context.router
-                              .push(RecordDetailsRoute(resource: resource));
+                          context.router.push(
+                            RecordDetailsRoute(resource: resource),
+                          );
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: Text(
-                            "${resource.fhirType.display}: ${resource.title}",
+                            '${resource.fhirType.display}: ${resource.title}',
                             style: AppTextStyle.bodySmall.copyWith(
                               color: context.colorScheme.onSurface,
                             ),
@@ -512,19 +527,19 @@ class _ResourceCardState extends State<ResourceCard> {
   }
 
   void showRecordActionDialog(Widget child) => showDialog(
-        context: context,
-        builder: (context) => BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SizedBox(
-              width: context.wideDialogWidth,
-              child: child,
-            ),
-          ),
+    context: context,
+    builder: (context) => BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+      child: Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-      );
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        child: SizedBox(
+          width: context.wideDialogWidth,
+          child: child,
+        ),
+      ),
+    ),
+  );
 }

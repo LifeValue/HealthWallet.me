@@ -12,7 +12,8 @@ class Ci {
   Map<String, dynamic> toJson() => {'mean': mean, 'lo': lo, 'hi': hi};
 }
 
-double _mean(List<double> v) => v.isEmpty ? 0 : v.fold<double>(0, (a, b) => a + b) / v.length;
+double _mean(List<double> v) =>
+    v.isEmpty ? 0 : v.fold<double>(0, (a, b) => a + b) / v.length;
 
 (double, double) _percentiles(List<double> sorted) {
   final b = sorted.length;
@@ -76,12 +77,12 @@ class PairedDiff {
   final double pDiffLeq0;
 
   Map<String, dynamic> toJson() => {
-        'docs': n,
-        'meanA': meanA,
-        'meanB': meanB,
-        'diff': diff.toJson(),
-        'pDiffLeq0': pDiffLeq0,
-      };
+    'docs': n,
+    'meanA': meanA,
+    'meanB': meanB,
+    'diff': diff.toJson(),
+    'pDiffLeq0': pDiffLeq0,
+  };
 }
 
 /// Paired bootstrap of `b[i] − a[i]` over documents.
@@ -92,7 +93,9 @@ PairedDiff pairedBootstrap(
   required int seed,
   required String label,
 }) {
-  if (a.length != b.length) throw ArgumentError('paired lists differ in length');
+  if (a.length != b.length) {
+    throw ArgumentError('paired lists differ in length');
+  }
   final n = a.length;
   if (n == 0) return const PairedDiff(0, 0, 0, Ci(0, 0, 0), 1);
   final d = [for (var i = 0; i < n; i++) b[i] - a[i]];
@@ -109,5 +112,11 @@ PairedDiff pairedBootstrap(
   }
   means.sort();
   final (lo, hi) = _percentiles(means);
-  return PairedDiff(n, _mean(a), _mean(b), Ci(_mean(d), lo, hi), leq0 / samples);
+  return PairedDiff(
+    n,
+    _mean(a),
+    _mean(b),
+    Ci(_mean(d), lo, hi),
+    leq0 / samples,
+  );
 }

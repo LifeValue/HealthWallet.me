@@ -1,6 +1,6 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 
 class FhirPatientExtractor {
@@ -161,30 +161,49 @@ class FhirPatientExtractor {
                 coding.first.display?.toString().toUpperCase() ?? '';
             final combined = '$displayText $codingDisplay';
             if (combined.contains('CNP') ||
-                combined.contains('COD NUMERIC PERSONAL')) return 'CNP';
+                combined.contains('COD NUMERIC PERSONAL')) {
+              return 'CNP';
+            }
             if (combined.contains('SVNR') ||
-                combined.contains('SOZIALVERSICHERUNGSNUMMER')) return 'SVNr';
+                combined.contains('SOZIALVERSICHERUNGSNUMMER')) {
+              return 'SVNr';
+            }
             if (combined.contains('KVNR') ||
-                combined.contains('KRANKENVERSICHERTENNUMMER')) return 'KVNR';
+                combined.contains('KRANKENVERSICHERTENNUMMER')) {
+              return 'KVNR';
+            }
             if (combined.contains('NHS')) return 'NHS';
             if (combined.contains('CIP') ||
-                combined.contains('CÓDIGO DE IDENTIFICACIÓN PERSONAL')) return 'CIP';
+                combined.contains('CÓDIGO DE IDENTIFICACIÓN PERSONAL')) {
+              return 'CIP';
+            }
             if (combined.contains('NIR') ||
-                combined.contains('SÉCURITÉ SOCIALE')) return 'NIR';
+                combined.contains('SÉCURITÉ SOCIALE')) {
+              return 'NIR';
+            }
             if (combined.contains('CODICE FISCALE') ||
-                combined.contains(' CF')) return 'CF';
+                combined.contains(' CF')) {
+              return 'CF';
+            }
             if (combined.contains('BSN') ||
-                combined.contains('BURGERSERVICENUMMER')) return 'BSN';
+                combined.contains('BURGERSERVICENUMMER')) {
+              return 'BSN';
+            }
             if (combined.contains('PESEL')) return 'PESEL';
-            if (combined.contains('PERSONNUMMER') ||
-                combined.contains('PNR')) return 'PNR';
+            if (combined.contains('PERSONNUMMER') || combined.contains('PNR')) {
+              return 'PNR';
+            }
             if (combined.contains('AHV') ||
-                combined.contains('HINTERLASSENENVERSICHERUNG')) return 'AHV';
+                combined.contains('HINTERLASSENENVERSICHERUNG')) {
+              return 'AHV';
+            }
             final system = id.system?.toString() ?? '';
             final systemLabel = CountryIdentifier.labelFromSystem(system);
             if (systemLabel != null) return systemLabel;
             final profile = CountryIdentifier.forCurrentLocale();
-            if (profile.identifierFhirCode == 'SS') return profile.identifierLabel;
+            if (profile.identifierFhirCode == 'SS') {
+              return profile.identifierLabel;
+            }
             return 'ID';
           case 'NI':
             final displayText = id.type?.text?.toString().toUpperCase() ?? '';
@@ -303,7 +322,8 @@ class FhirPatientExtractor {
   }
 
   static String? extractCommunicationLanguages(
-      List<fhir_r4.PatientCommunication>? communication) {
+    List<fhir_r4.PatientCommunication>? communication,
+  ) {
     if (communication == null || communication.isEmpty) return null;
 
     final languages = communication
@@ -327,7 +347,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractIdentifierByType(
-      List<fhir_r4.Identifier>? identifiers, String typeCode) {
+    List<fhir_r4.Identifier>? identifiers,
+    String typeCode,
+  ) {
     if (identifiers == null) return null;
 
     for (final id in identifiers) {
@@ -340,8 +362,10 @@ class FhirPatientExtractor {
   }
 
   static String? extractTelecomBySystem(
-      List<fhir_r4.ContactPoint>? telecom, String system,
-      {String? use}) {
+    List<fhir_r4.ContactPoint>? telecom,
+    String system, {
+    String? use,
+  }) {
     if (telecom == null) return null;
 
     for (final contact in telecom) {
@@ -355,7 +379,9 @@ class FhirPatientExtractor {
   }
 
   static List<Map<String, String>> extractAllTelecomBySystem(
-      List<fhir_r4.ContactPoint>? telecom, String system) {
+    List<fhir_r4.ContactPoint>? telecom,
+    String system,
+  ) {
     if (telecom == null) return [];
 
     final results = <Map<String, String>>[];
@@ -430,7 +456,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractRaceOrEthnicity(
-      Map<String, dynamic> rawResource, String extensionUrl) {
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) {
     final extensions = rawResource['extension'] as List<dynamic>?;
     if (extensions == null) return null;
 
@@ -456,7 +484,9 @@ class FhirPatientExtractor {
   }
 
   static String? extractExtensionValue(
-      Map<String, dynamic> rawResource, String extensionUrl) {
+    Map<String, dynamic> rawResource,
+    String extensionUrl,
+  ) {
     final extensions = rawResource['extension'] as List<dynamic>?;
     if (extensions == null) return null;
 

@@ -1,21 +1,21 @@
+import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:bloc/bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_google_wallet/flutter_google_wallet_plugin.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:injectable/injectable.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart'
     show ApplePassLabels;
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
 import 'package:health_wallet/features/wallet_pass/domain/service/emergency_card_builder.dart';
+import 'package:injectable/injectable.dart';
+import 'package:path_provider/path_provider.dart';
 
+part 'wallet_pass_bloc.freezed.dart';
 part 'wallet_pass_event.dart';
 part 'wallet_pass_state.dart';
-part 'wallet_pass_bloc.freezed.dart';
 
 @injectable
 class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
@@ -23,7 +23,7 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
   final WalletPassRepository _repository;
 
   WalletPassBloc(this._cardBuilder, this._repository)
-      : super(const WalletPassState()) {
+    : super(const WalletPassState()) {
     on<WalletPassRequested>(_onRequested);
   }
 
@@ -35,22 +35,31 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
 
     try {
       final cardData = await _cardBuilder.build(patientId: event.patientId);
-      emit(state.copyWith(
-        status: WalletPassStatus.dataReady,
-        cardData: cardData,
-      ));
+      emit(
+        state.copyWith(
+          status: WalletPassStatus.dataReady,
+          cardData: cardData,
+        ),
+      );
 
       switch (event.type) {
         case WalletPassType.apple:
-          await _handleApplePass(cardData, event.patientId, emit, event.applePassLabels);
+          await _handleApplePass(
+            cardData,
+            event.patientId,
+            emit,
+            event.applePassLabels,
+          );
         case WalletPassType.google:
           await _handleGooglePass(cardData, event.patientId, emit);
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: WalletPassStatus.failure,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: WalletPassStatus.failure,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -60,32 +69,38 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
     Emitter<WalletPassState> emit,
     ApplePassLabels? labels,
   ) async {
-    final effectiveLabels = labels ?? const ApplePassLabels(
-      patient: 'Patient',
-      bloodType: 'Blood Type',
-      allergies: 'Allergies',
-      gender: 'Gender',
-      dateOfBirth: 'Date of Birth',
-      emergencyPhone: 'Emergency Phone',
-      conditions: 'Conditions',
-      medications: 'Medications',
-    );
+    final effectiveLabels =
+        labels ??
+        const ApplePassLabels(
+          patient: 'Patient',
+          bloodType: 'Blood Type',
+          allergies: 'Allergies',
+          gender: 'Gender',
+          dateOfBirth: 'Date of Birth',
+          emergencyPhone: 'Emergency Phone',
+          conditions: 'Conditions',
+          medications: 'Medications',
+        );
     final passBytes = await _repository.generateApplePass(
       cardData: cardData,
       patientId: patientId,
       labels: effectiveLabels,
     );
-    emit(state.copyWith(
-      status: WalletPassStatus.passGenerated,
-      passBytes: passBytes,
-    ));
+    emit(
+      state.copyWith(
+        status: WalletPassStatus.passGenerated,
+        passBytes: passBytes,
+      ),
+    );
 
     final tempDir = await getTemporaryDirectory();
     final filePath = '${tempDir.path}/HealthWallet_Emergency.pkpass';
     final file = File(filePath);
     await file.writeAsBytes(passBytes);
 
-    const channel = MethodChannel('com.techstackapps.healthwallet/apple_wallet');
+    const channel = MethodChannel(
+      'com.techstackapps.healthwallet/apple_wallet',
+    );
     await channel.invokeMethod('addPass', {'filePath': filePath});
 
     emit(state.copyWith(status: WalletPassStatus.passAddedToWallet));
@@ -100,17 +115,21 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
       cardData: cardData,
       patientId: patientId,
     );
-    emit(state.copyWith(
-      status: WalletPassStatus.passGenerated,
-      googlePassJson: passJson,
-    ));
+    emit(
+      state.copyWith(
+        status: WalletPassStatus.passGenerated,
+        googlePassJson: passJson,
+      ),
+    );
 
     final plugin = FlutterGoogleWalletPlugin();
-    plugin.initWalletClient();
+    unawaited(plugin.initWalletClient());
 
-    plugin.savePassesJwt(
-      jsonPass: passJson,
-      addToGoogleWalletRequestCode: 1,
+    unawaited(
+      plugin.savePassesJwt(
+        jsonPass: passJson,
+        addToGoogleWalletRequestCode: 1,
+      ),
     );
 
     emit(state.copyWith(status: WalletPassStatus.passAddedToWallet));

@@ -15,7 +15,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// switches to document-to-Markdown.
 enum PromptFamily { standard, nuExtract2, nuExtract3 }
 
-enum AiModelVariant { medGemma, qwen, qwen7b, qwen35x2b, nuExtract2, qwen35x4b, nuExtract3, medGemma15 }
+enum AiModelVariant {
+  medGemma,
+  qwen,
+  qwen7b,
+  qwen35x2b,
+  nuExtract2,
+  qwen35x4b,
+  nuExtract3,
+  medGemma15,
+}
 
 class AiModelConfig {
   final AiModelVariant variant;
@@ -54,11 +63,9 @@ class AiModelConfig {
     variant: AiModelVariant.medGemma,
     displayName: 'Medical',
     description: 'Previous Advanced model (~2.5 GB)',
-    modelUrl:
-        'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf',
+    modelUrl: 'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/medgemma-4b-it_Q4_K_M.gguf',
     modelId: 'medgemma-4b-it_Q4_K_M.gguf',
-    mmprojUrl:
-        'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/mmproj-medgemma-4b-it-F16.gguf',
+    mmprojUrl: 'https://huggingface.co/SandLogicTechnologies/MedGemma-4B-IT-GGUF/resolve/main/mmproj-medgemma-4b-it-F16.gguf',
     mmprojId: 'mmproj-medgemma-4b-it-F16.gguf',
     modelSizeMB: 2490,
     mmprojSizeMB: 851,
@@ -69,11 +76,9 @@ class AiModelConfig {
     variant: AiModelVariant.qwen,
     displayName: 'Lite',
     description: 'Fast and lightweight (~1.1 GB)',
-    modelUrl:
-        'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf',
+    modelUrl: 'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf',
     modelId: 'Qwen3VL-2B-Instruct-Q4_K_M.gguf',
-    mmprojUrl:
-        'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-F16.gguf',
+    mmprojUrl: 'https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-F16.gguf',
     mmprojId: 'mmproj-Qwen3VL-2B-Instruct-F16.gguf',
     modelSizeMB: 1056,
     mmprojSizeMB: 445,
@@ -84,11 +89,9 @@ class AiModelConfig {
     variant: AiModelVariant.qwen7b,
     displayName: 'Ultra',
     description: 'Best accuracy for desktop (~5 GB)',
-    modelUrl:
-        'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q4_K_M.gguf',
+    modelUrl: 'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q4_K_M.gguf',
     modelId: 'Qwen3VL-8B-Instruct-Q4_K_M.gguf',
-    mmprojUrl:
-        'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-F16.gguf',
+    mmprojUrl: 'https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-F16.gguf',
     mmprojId: 'mmproj-Qwen3VL-8B-Instruct-F16.gguf',
     modelSizeMB: 4560,
     mmprojSizeMB: 815,
@@ -177,19 +180,25 @@ class AiModelConfig {
 
   /// [availableVariants], then each retired variant whose files
   /// [isDownloaded].
-  static List<AiModelConfig> listedVariants(bool Function(AiModelVariant) isDownloaded) => [
-        ...availableVariants,
-        ...retiredVariants.where((c) => isDownloaded(c.variant)),
-      ];
+  static List<AiModelConfig> listedVariants(
+    bool Function(AiModelVariant) isDownloaded,
+  ) => [
+    ...availableVariants,
+    ...retiredVariants.where((c) => isDownloaded(c.variant)),
+  ];
 
-  static AiModelConfig getActive(SharedPreferences prefs,
-      {DeviceProfile? profile}) {
+  static AiModelConfig getActive(
+    SharedPreferences prefs, {
+    DeviceProfile? profile,
+  }) {
     final name = prefs.getString(SharedPrefsConstants.aiSelectedModel);
     for (final variant in AiModelVariant.values) {
       if (variant.name == name) return fromVariant(variant);
     }
     if (profile != null) return fromVariant(recommendedVariant(profile));
-    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) return qwen7b;
+    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+      return qwen7b;
+    }
     return qwen;
   }
 

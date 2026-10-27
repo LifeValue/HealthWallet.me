@@ -5,30 +5,29 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
-import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
-import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
-import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
-import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
+import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
+import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
-import 'package:health_wallet/features/notifications/domain/entities/notification.dart'
-    as notification_entity;
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/pages/handover_page.dart';
 import 'package:health_wallet/features/home/presentation/home_page.dart';
+import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
+import 'package:health_wallet/features/notifications/domain/entities/notification.dart'
+    as notification_entity;
+import 'package:health_wallet/features/notifications/utils/notification_utils.dart';
+import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
+import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/records/presentation/pages/records_page.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 
 @RoutePage()
 class DashboardPage extends StatefulWidget {
@@ -64,7 +63,8 @@ class _DashboardPageState extends State<DashboardPage> {
         var lastCompletedCount = 0;
         handoverBloc.stream.listen((state) {
           final completedCount = state.activeSessions.values
-              .where((s) => s.status == HandoverStatus.complete).length;
+              .where((s) => s.status == HandoverStatus.complete)
+              .length;
           if (completedCount > lastCompletedCount && mounted) {
             lastCompletedCount = completedCount;
             _showHandoverNotification('Handover patient matched');
@@ -90,7 +90,9 @@ class _DashboardPageState extends State<DashboardPage> {
       time: DateTime.now(),
     );
 
-    getIt<NotificationBloc>().add(NotificationAdded(notification: notification));
+    getIt<NotificationBloc>().add(
+      NotificationAdded(notification: notification),
+    );
     showProcessingDoneNotification(context, notification);
   }
 
@@ -101,22 +103,25 @@ class _DashboardPageState extends State<DashboardPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateHandoverVisibility(
         handoverBloc.state.activeSessions.isNotEmpty,
-        processingBloc.state.sessions
-            .any((s) => s.origin == ProcessingOrigin.handover),
+        processingBloc.state.sessions.any(
+          (s) => s.origin == ProcessingOrigin.handover,
+        ),
       );
     });
 
     _handoverSub = handoverBloc.stream.listen((state) {
       _updateHandoverVisibility(
         state.activeSessions.isNotEmpty,
-        processingBloc.state.sessions
-            .any((s) => s.origin == ProcessingOrigin.handover),
+        processingBloc.state.sessions.any(
+          (s) => s.origin == ProcessingOrigin.handover,
+        ),
       );
     });
 
     processingBloc.stream.listen((state) {
-      final hasHandoverSessions =
-          state.sessions.any((s) => s.origin == ProcessingOrigin.handover);
+      final hasHandoverSessions = state.sessions.any(
+        (s) => s.origin == ProcessingOrigin.handover,
+      );
       _updateHandoverVisibility(
         handoverBloc.state.activeSessions.isNotEmpty,
         hasHandoverSessions,
@@ -172,7 +177,7 @@ class _DashboardPageState extends State<DashboardPage> {
           },
           listener: (context, syncState) async {
             if (syncState.shouldShowTutorial) {
-              _navigationController.navigateToPage(0);
+              unawaited(_navigationController.navigateToPage(0));
             }
           },
         ),
@@ -188,15 +193,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 context.router.current.name == notification.route.routeName;
 
             context.read<NotificationBloc>().add(
-                  NotificationAdded(
-                      notification: notification.copyWith(read: isMapperRoute)),
-                );
+              NotificationAdded(
+                notification: notification.copyWith(read: isMapperRoute),
+              ),
+            );
 
             if (!isMapperRoute) {
               showProcessingDoneNotification(context, notification);
             }
 
-            context.read<ProcessingBloc>().add(const NotificationAcknowledged());
+            context.read<ProcessingBloc>().add(
+              const NotificationAcknowledged(),
+            );
           },
         ),
       ],
@@ -207,51 +215,53 @@ class _DashboardPageState extends State<DashboardPage> {
               valueListenable: _navigationController.swipeEnabledNotifier,
               builder: (context, swipeEnabled, _) {
                 return PageView.builder(
-              controller: _navigationController.pageController,
-              physics: swipeEnabled
-                  ? null
-                  : const NeverScrollableScrollPhysics(),
-              onPageChanged: (index) {
-                FocusScope.of(context).unfocus();
-              },
-              itemCount: _isDesktop ? (_hasHandover ? 4 : 3) : 4,
-              itemBuilder: (context, index) {
-                if (_isDesktop) {
-                  switch (index) {
-                    case 0:
-                      return HomePage(
-                        pageController: _navigationController.pageController,
-                      );
-                    case 1:
-                      return RecordsPage(
-                        pageController: _navigationController.pageController,
-                      );
-                    case 2:
-                      return const ImportPage();
-                    case 3:
-                      return const HandoverPage();
-                    default:
-                      return const SizedBox.shrink();
-                  }
-                }
-                switch (index) {
-                  case 0:
-                    return HomePage(
-                      pageController: _navigationController.pageController,
-                    );
-                  case 1:
-                    return RecordsPage(
-                      pageController: _navigationController.pageController,
-                    );
-                  case 2:
-                    return const ScanPage();
-                  case 3:
-                    return const ImportPage();
-                  default:
-                    return const SizedBox.shrink();
-                }
-              },
-            );
+                  controller: _navigationController.pageController,
+                  physics: swipeEnabled
+                      ? null
+                      : const NeverScrollableScrollPhysics(),
+                  onPageChanged: (index) {
+                    FocusScope.of(context).unfocus();
+                  },
+                  itemCount: _isDesktop ? (_hasHandover ? 4 : 3) : 4,
+                  itemBuilder: (context, index) {
+                    if (_isDesktop) {
+                      switch (index) {
+                        case 0:
+                          return HomePage(
+                            pageController:
+                                _navigationController.pageController,
+                          );
+                        case 1:
+                          return RecordsPage(
+                            pageController:
+                                _navigationController.pageController,
+                          );
+                        case 2:
+                          return const ImportPage();
+                        case 3:
+                          return const HandoverPage();
+                        default:
+                          return const SizedBox.shrink();
+                      }
+                    }
+                    switch (index) {
+                      case 0:
+                        return HomePage(
+                          pageController: _navigationController.pageController,
+                        );
+                      case 1:
+                        return RecordsPage(
+                          pageController: _navigationController.pageController,
+                        );
+                      case 2:
+                        return const ScanPage();
+                      case 3:
+                        return const ImportPage();
+                      default:
+                        return const SizedBox.shrink();
+                    }
+                  },
+                );
               },
             ),
             BlocBuilder<SyncBloc, SyncState>(
@@ -272,221 +282,304 @@ class _DashboardPageState extends State<DashboardPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: SizedBox(
                             height: 60,
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(100),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                    colors: context.isDarkMode
-                                        ? [
-                                            Colors.white.withValues(alpha: 0.08),
-                                            Colors.white.withValues(alpha: 0.04),
-                                          ]
-                                        : [
-                                            Colors.grey.withValues(alpha: 0.08),
-                                            Colors.grey.withValues(alpha: 0.03),
-                                          ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(Insets.extraSmall),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            child: Stack(
                               children: [
-                                if (_isDesktop) ...[
-                                  Expanded(
-                                    child: _buildNavItem(
-                                      context: context,
-                                      icon: Assets.icons.dashboard.svg(
-                                        width: 24,
-                                        height: 24,
-                                        colorFilter: ColorFilter.mode(
-                                          _navigationController.currentPage == 0
-                                              ? (context.isDarkMode
-                                                  ? Colors.white
-                                                  : context.colorScheme.surface)
-                                              : context.colorScheme.onSurface,
-                                          BlendMode.srcIn,
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(100),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 2,
+                                      sigmaY: 2,
+                                    ),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.topCenter,
+                                          colors: context.isDarkMode
+                                              ? [
+                                                  Colors.white.withValues(
+                                                    alpha: 0.08,
+                                                  ),
+                                                  Colors.white.withValues(
+                                                    alpha: 0.04,
+                                                  ),
+                                                ]
+                                              : [
+                                                  Colors.grey.withValues(
+                                                    alpha: 0.08,
+                                                  ),
+                                                  Colors.grey.withValues(
+                                                    alpha: 0.03,
+                                                  ),
+                                                ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          100,
                                         ),
                                       ),
-                                      label: context.l10n.dashboardTitle,
-                                      isSelected:
-                                          _navigationController.currentPage == 0,
-                                      pageIndex: 0,
                                     ),
                                   ),
-                                  Expanded(
-                                    child: _buildNavItem(
-                                      context: context,
-                                      icon: Assets.icons.timeline.svg(
-                                        width: 24,
-                                        height: 24,
-                                        colorFilter: ColorFilter.mode(
-                                          _navigationController.currentPage == 1
-                                              ? (context.isDarkMode
-                                                  ? Colors.white
-                                                  : context.colorScheme.surface)
-                                              : context.colorScheme.onSurface,
-                                          BlendMode.srcIn,
-                                        ),
-                                      ),
-                                      label: context.l10n.recordsTitle,
-                                      isSelected:
-                                          _navigationController.currentPage == 1,
-                                      pageIndex: 1,
-                                    ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(
+                                    Insets.extraSmall,
                                   ),
-                                  Expanded(
-                                    child: _buildNavItem(
-                                      context: context,
-                                      icon: Assets.icons.cloudDownload.svg(
-                                        width: 24,
-                                        height: 24,
-                                        colorFilter: ColorFilter.mode(
-                                          _navigationController.currentPage == 2
-                                              ? (context.isDarkMode
-                                                  ? Colors.white
-                                                  : context.colorScheme.surface)
-                                              : context.colorScheme.onSurface,
-                                          BlendMode.srcIn,
-                                        ),
-                                      ),
-                                      label: context.l10n.importTitle,
-                                      isSelected:
-                                          _navigationController.currentPage == 2,
-                                      pageIndex: 2,
-                                    ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(24),
                                   ),
-                                  if (_hasHandover)
-                                    Expanded(
-                                      child: _buildNavItem(
-                                        context: context,
-                                        icon: Assets.icons.fromPhone.svg(
-                                          width: 24,
-                                          height: 24,
-                                          colorFilter: ColorFilter.mode(
-                                            _navigationController.currentPage == 3
-                                                ? (context.isDarkMode
-                                                    ? Colors.white
-                                                    : context.colorScheme.surface)
-                                                : context.colorScheme.onSurface,
-                                            BlendMode.srcIn,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      if (_isDesktop) ...[
+                                        Expanded(
+                                          child: _buildNavItem(
+                                            context: context,
+                                            icon: Assets.icons.dashboard.svg(
+                                              width: 24,
+                                              height: 24,
+                                              colorFilter: ColorFilter.mode(
+                                                _navigationController
+                                                            .currentPage ==
+                                                        0
+                                                    ? (context.isDarkMode
+                                                          ? Colors.white
+                                                          : context
+                                                                .colorScheme
+                                                                .surface)
+                                                    : context
+                                                          .colorScheme
+                                                          .onSurface,
+                                                BlendMode.srcIn,
+                                              ),
+                                            ),
+                                            label: context.l10n.dashboardTitle,
+                                            isSelected:
+                                                _navigationController
+                                                    .currentPage ==
+                                                0,
+                                            pageIndex: 0,
                                           ),
                                         ),
-                                        label: context.l10n.fromPhoneTab,
-                                        isSelected:
-                                            _navigationController.currentPage == 3,
-                                        pageIndex: 3,
-                                      ),
-                                    ),
-                                ] else ...[
-                                  Expanded(
-                                    child: _buildNavItem(
-                                      context: context,
-                                      icon: Assets.icons.dashboard.svg(
-                                        width: 24,
-                                        height: 24,
-                                        colorFilter: ColorFilter.mode(
-                                          _navigationController.currentPage == 0
-                                              ? (context.isDarkMode
-                                                  ? Colors.white
-                                                  : context.colorScheme.surface)
-                                              : context.colorScheme.onSurface,
-                                          BlendMode.srcIn,
+                                        Expanded(
+                                          child: _buildNavItem(
+                                            context: context,
+                                            icon: Assets.icons.timeline.svg(
+                                              width: 24,
+                                              height: 24,
+                                              colorFilter: ColorFilter.mode(
+                                                _navigationController
+                                                            .currentPage ==
+                                                        1
+                                                    ? (context.isDarkMode
+                                                          ? Colors.white
+                                                          : context
+                                                                .colorScheme
+                                                                .surface)
+                                                    : context
+                                                          .colorScheme
+                                                          .onSurface,
+                                                BlendMode.srcIn,
+                                              ),
+                                            ),
+                                            label: context.l10n.recordsTitle,
+                                            isSelected:
+                                                _navigationController
+                                                    .currentPage ==
+                                                1,
+                                            pageIndex: 1,
+                                          ),
                                         ),
-                                      ),
-                                      label: context.l10n.dashboardTitle,
-                                      isSelected:
-                                          _navigationController.currentPage == 0,
-                                      pageIndex: 0,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: _buildNavItem(
-                                      context: context,
-                                      icon: Assets.icons.timeline.svg(
-                                        width: 24,
-                                        height: 24,
-                                        colorFilter: ColorFilter.mode(
-                                          _navigationController.currentPage == 1
-                                              ? (context.isDarkMode
-                                                  ? Colors.white
-                                                  : context.colorScheme.surface)
-                                              : context.colorScheme.onSurface,
-                                          BlendMode.srcIn,
+                                        Expanded(
+                                          child: _buildNavItem(
+                                            context: context,
+                                            icon: Assets.icons.cloudDownload
+                                                .svg(
+                                                  width: 24,
+                                                  height: 24,
+                                                  colorFilter: ColorFilter.mode(
+                                                    _navigationController
+                                                                .currentPage ==
+                                                            2
+                                                        ? (context.isDarkMode
+                                                              ? Colors.white
+                                                              : context
+                                                                    .colorScheme
+                                                                    .surface)
+                                                        : context
+                                                              .colorScheme
+                                                              .onSurface,
+                                                    BlendMode.srcIn,
+                                                  ),
+                                                ),
+                                            label: context.l10n.importTitle,
+                                            isSelected:
+                                                _navigationController
+                                                    .currentPage ==
+                                                2,
+                                            pageIndex: 2,
+                                          ),
                                         ),
-                                      ),
-                                      label: context.l10n.recordsTitle,
-                                      isSelected:
-                                          _navigationController.currentPage == 1,
-                                      pageIndex: 1,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: _buildNavItem(
-                                      context: context,
-                                      icon: Assets.icons.scan.svg(
-                                        width: 24,
-                                        height: 24,
-                                        colorFilter: ColorFilter.mode(
-                                          _navigationController.currentPage == 2
-                                              ? (context.isDarkMode
-                                                  ? Colors.white
-                                                  : context.colorScheme.surface)
-                                              : context.colorScheme.onSurface,
-                                          BlendMode.srcIn,
+                                        if (_hasHandover)
+                                          Expanded(
+                                            child: _buildNavItem(
+                                              context: context,
+                                              icon: Assets.icons.fromPhone.svg(
+                                                width: 24,
+                                                height: 24,
+                                                colorFilter: ColorFilter.mode(
+                                                  _navigationController
+                                                              .currentPage ==
+                                                          3
+                                                      ? (context.isDarkMode
+                                                            ? Colors.white
+                                                            : context
+                                                                  .colorScheme
+                                                                  .surface)
+                                                      : context
+                                                            .colorScheme
+                                                            .onSurface,
+                                                  BlendMode.srcIn,
+                                                ),
+                                              ),
+                                              label: context.l10n.fromPhoneTab,
+                                              isSelected:
+                                                  _navigationController
+                                                      .currentPage ==
+                                                  3,
+                                              pageIndex: 3,
+                                            ),
+                                          ),
+                                      ] else ...[
+                                        Expanded(
+                                          child: _buildNavItem(
+                                            context: context,
+                                            icon: Assets.icons.dashboard.svg(
+                                              width: 24,
+                                              height: 24,
+                                              colorFilter: ColorFilter.mode(
+                                                _navigationController
+                                                            .currentPage ==
+                                                        0
+                                                    ? (context.isDarkMode
+                                                          ? Colors.white
+                                                          : context
+                                                                .colorScheme
+                                                                .surface)
+                                                    : context
+                                                          .colorScheme
+                                                          .onSurface,
+                                                BlendMode.srcIn,
+                                              ),
+                                            ),
+                                            label: context.l10n.dashboardTitle,
+                                            isSelected:
+                                                _navigationController
+                                                    .currentPage ==
+                                                0,
+                                            pageIndex: 0,
+                                          ),
                                         ),
-                                      ),
-                                      label: context.l10n.documentScanTitle,
-                                      isSelected:
-                                          _navigationController.currentPage == 2,
-                                      pageIndex: 2,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: _buildNavItem(
-                                      context: context,
-                                      icon: Assets.icons.cloudDownload.svg(
-                                        width: 24,
-                                        height: 24,
-                                        colorFilter: ColorFilter.mode(
-                                          _navigationController.currentPage == 3
-                                              ? (context.isDarkMode
-                                                  ? Colors.white
-                                                  : context.colorScheme.surface)
-                                              : context.colorScheme.onSurface,
-                                          BlendMode.srcIn,
+                                        Expanded(
+                                          child: _buildNavItem(
+                                            context: context,
+                                            icon: Assets.icons.timeline.svg(
+                                              width: 24,
+                                              height: 24,
+                                              colorFilter: ColorFilter.mode(
+                                                _navigationController
+                                                            .currentPage ==
+                                                        1
+                                                    ? (context.isDarkMode
+                                                          ? Colors.white
+                                                          : context
+                                                                .colorScheme
+                                                                .surface)
+                                                    : context
+                                                          .colorScheme
+                                                          .onSurface,
+                                                BlendMode.srcIn,
+                                              ),
+                                            ),
+                                            label: context.l10n.recordsTitle,
+                                            isSelected:
+                                                _navigationController
+                                                    .currentPage ==
+                                                1,
+                                            pageIndex: 1,
+                                          ),
                                         ),
-                                      ),
-                                      label: context.l10n.importTitle,
-                                      isSelected:
-                                          _navigationController.currentPage == 3,
-                                      pageIndex: 3,
-                                    ),
+                                        Expanded(
+                                          child: _buildNavItem(
+                                            context: context,
+                                            icon: Assets.icons.scan.svg(
+                                              width: 24,
+                                              height: 24,
+                                              colorFilter: ColorFilter.mode(
+                                                _navigationController
+                                                            .currentPage ==
+                                                        2
+                                                    ? (context.isDarkMode
+                                                          ? Colors.white
+                                                          : context
+                                                                .colorScheme
+                                                                .surface)
+                                                    : context
+                                                          .colorScheme
+                                                          .onSurface,
+                                                BlendMode.srcIn,
+                                              ),
+                                            ),
+                                            label:
+                                                context.l10n.documentScanTitle,
+                                            isSelected:
+                                                _navigationController
+                                                    .currentPage ==
+                                                2,
+                                            pageIndex: 2,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _buildNavItem(
+                                            context: context,
+                                            icon: Assets.icons.cloudDownload
+                                                .svg(
+                                                  width: 24,
+                                                  height: 24,
+                                                  colorFilter: ColorFilter.mode(
+                                                    _navigationController
+                                                                .currentPage ==
+                                                            3
+                                                        ? (context.isDarkMode
+                                                              ? Colors.white
+                                                              : context
+                                                                    .colorScheme
+                                                                    .surface)
+                                                        : context
+                                                              .colorScheme
+                                                              .onSurface,
+                                                    BlendMode.srcIn,
+                                                  ),
+                                                ),
+                                            label: context.l10n.importTitle,
+                                            isSelected:
+                                                _navigationController
+                                                    .currentPage ==
+                                                3,
+                                            pageIndex: 3,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
-                                ],
+                                ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                          ),
                         ),
                       ),
+                    ),
                   );
                 }
                 return const SizedBox.shrink();
@@ -527,8 +620,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: AppTextStyle.labelSmall.copyWith(
                   color: isSelected
                       ? (context.isDarkMode
-                          ? Colors.white
-                          : context.colorScheme.surface)
+                            ? Colors.white
+                            : context.colorScheme.surface)
                       : context.colorScheme.onSurface,
                 ),
               ),

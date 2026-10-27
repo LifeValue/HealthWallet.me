@@ -19,18 +19,20 @@
 #include <thread>
 
 namespace wrt {
-  using namespace winrt::Windows::Foundation;
-  using namespace winrt::Windows::Graphics::Imaging;
-  using namespace winrt::Windows::Media::Ocr;
-  using namespace winrt::Windows::Storage;
-  using namespace winrt::Windows::Storage::Streams;
-}
+using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Graphics::Imaging;
+using namespace winrt::Windows::Media::Ocr;
+using namespace winrt::Windows::Storage;
+using namespace winrt::Windows::Storage::Streams;
+}  // namespace wrt
 
 static std::wstring Utf8ToWide(const std::string& utf8) {
   if (utf8.empty()) return {};
-  int size = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), (int)utf8.size(), nullptr, 0);
+  int size = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), (int)utf8.size(),
+                                 nullptr, 0);
   std::wstring wide(size, 0);
-  MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), (int)utf8.size(), wide.data(), size);
+  MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), (int)utf8.size(), wide.data(),
+                      size);
   return wide;
 }
 
@@ -74,22 +76,25 @@ static std::string PerformOcr(const std::string& image_path) {
 }
 
 void RegisterOcrChannel(flutter::FlutterEngine* engine) {
-  auto channel = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-      engine->messenger(), "dev.lifevalue.healthwallet/ocr",
-      &flutter::StandardMethodCodec::GetInstance());
+  auto channel =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          engine->messenger(), "dev.lifevalue.healthwallet/ocr",
+          &flutter::StandardMethodCodec::GetInstance());
 
   channel->SetMethodCallHandler(
       [](const flutter::MethodCall<flutter::EncodableValue>& call,
-         std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-
+         std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+             result) {
         if (call.method_name() == "recognizeText") {
-          const auto* args = std::get_if<flutter::EncodableMap>(call.arguments());
+          const auto* args =
+              std::get_if<flutter::EncodableMap>(call.arguments());
           if (!args) {
             result->Success(flutter::EncodableValue(std::string("")));
             return;
           }
 
-          auto it = args->find(flutter::EncodableValue(std::string("imagePath")));
+          auto it =
+              args->find(flutter::EncodableValue(std::string("imagePath")));
           if (it == args->end()) {
             result->Success(flutter::EncodableValue(std::string("")));
             return;
@@ -102,8 +107,9 @@ void RegisterOcrChannel(flutter::FlutterEngine* engine) {
           }
 
           std::string image_path = *path;
-          auto shared_result = std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>>(
-              std::move(result));
+          auto shared_result =
+              std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>>(
+                  std::move(result));
 
           std::thread([image_path, shared_result]() {
             auto text = PerformOcr(image_path);

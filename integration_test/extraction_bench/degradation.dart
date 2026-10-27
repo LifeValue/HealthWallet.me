@@ -30,10 +30,21 @@ Future<String> degradePage(
 
   final maxAngle = mode == 'scan' ? 2.0 : 4.0;
   final angle = rng.doubleBetween(-maxAngle, maxAngle);
-  final rotated = img.copyRotate(image, angle: angle, interpolation: img.Interpolation.linear);
+  final rotated = img.copyRotate(
+    image,
+    angle: angle,
+    interpolation: img.Interpolation.linear,
+  );
   final background = mode == 'scan' ? 255 : 196;
-  final canvas = img.Image(width: rotated.width, height: rotated.height, numChannels: 4);
-  img.fill(canvas, color: img.ColorRgba8(background, background, background, 255));
+  final canvas = img.Image(
+    width: rotated.width,
+    height: rotated.height,
+    numChannels: 4,
+  );
+  img.fill(
+    canvas,
+    color: img.ColorRgba8(background, background, background, 255),
+  );
   image = img.compositeImage(canvas, rotated);
 
   if (mode == 'photo') {
@@ -45,7 +56,8 @@ Future<String> degradePage(
     final w = image.width.toDouble();
     final h = image.height.toDouble();
     for (final px in image) {
-      final t = ((px.x / w - 0.5) * dx + (px.y / h - 0.5) * dy) / math.sqrt2 + 0.5;
+      final t =
+          ((px.x / w - 0.5) * dx + (px.y / h - 0.5) * dy) / math.sqrt2 + 0.5;
       final f = dark + (1.02 - dark) * t.clamp(0.0, 1.0);
       px
         ..r = (px.r * f).clamp(0, 255)
@@ -61,7 +73,10 @@ Future<String> degradePage(
 
   final out = p.join(outDir, 'page-${pageIndex + 1}-$mode.jpg');
   await File(out).writeAsBytes(
-    img.encodeJpg(image.convert(numChannels: 3), quality: mode == 'scan' ? 60 : 70),
+    img.encodeJpg(
+      image.convert(numChannels: 3),
+      quality: mode == 'scan' ? 60 : 70,
+    ),
   );
   return out;
 }

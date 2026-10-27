@@ -1,29 +1,28 @@
 import 'dart:io';
-import 'dart:ui';
 import 'dart:typed_data';
+import 'dart:ui';
+
+import 'package:auto_route/auto_route.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:health_wallet/core/utils/pdf_thumbnail_utils.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
-import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:auto_route/auto_route.dart';
-import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
+import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
-import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
+import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/record_attachments_widget.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_notes/record_notes_widget.dart';
-import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 double _panelHPad(double width) {
   if (width >= 1024) return 48.0;
@@ -47,12 +46,10 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
   String _currentFileName = '';
   int _currentPage = 0;
   bool _startFromEnd = false;
-  String _lastRecordId = '';
 
   @override
   void initState() {
     super.initState();
-    _lastRecordId = widget.detail.record.id;
     _currentFileName = widget.detail.attachments.isNotEmpty
         ? widget.detail.attachments.first.title
         : '';
@@ -66,7 +63,6 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
         oldWidget.detail.attachments.length != widget.detail.attachments.length;
     if (idChanged) {
       _startFromEnd = false;
-      _lastRecordId = widget.detail.record.id;
     }
     if (idChanged || attachmentsChanged) {
       _currentFileName = widget.detail.attachments.isNotEmpty
@@ -86,12 +82,28 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final hPad = _panelHPad(constraints.maxWidth);
-        return _buildContent(context, detail, readOnly, bloc, selectedIndex, totalRecords, hPad);
+        return _buildContent(
+          context,
+          detail,
+          readOnly,
+          bloc,
+          selectedIndex,
+          totalRecords,
+          hPad,
+        );
       },
     );
   }
 
-  Widget _buildContent(BuildContext context, AttachmentBrowseDetail detail, bool readOnly, AttachmentBrowseBloc bloc, int selectedIndex, int totalRecords, double hPad) {
+  Widget _buildContent(
+    BuildContext context,
+    AttachmentBrowseDetail detail,
+    bool readOnly,
+    AttachmentBrowseBloc bloc,
+    int selectedIndex,
+    int totalRecords,
+    double hPad,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -115,49 +127,51 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: hPad),
           child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (context.isDesktopWidth) ...[
-              _NavPillButton(
-                icon: Icons.chevron_left,
-                enabled: selectedIndex > 0,
-                onTap: () => bloc.add(AttachmentBrowseSelected(selectedIndex - 1)),
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (context.isDesktopWidth) ...[
+                _NavPillButton(
+                  icon: Icons.chevron_left,
+                  enabled: selectedIndex > 0,
+                  onTap: () =>
+                      bloc.add(AttachmentBrowseSelected(selectedIndex - 1)),
+                ),
+                const SizedBox(width: Insets.medium),
+              ],
+              Expanded(
+                child: _AttachmentPreview(
+                  detail: detail,
+                  startFromEnd: _startFromEnd,
+                  readOnly: readOnly,
+                  onFileNameChanged: (name) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) setState(() => _currentFileName = name);
+                    });
+                  },
+                  onPageChanged: (page) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) setState(() => _currentPage = page);
+                    });
+                  },
+                  onSwipeNextRecord: () {
+                    bloc.add(AttachmentBrowseSelected(selectedIndex + 1));
+                  },
+                  onSwipePrevRecord: () {
+                    bloc.add(AttachmentBrowseSelected(selectedIndex - 1));
+                  },
+                ),
               ),
-              const SizedBox(width: Insets.medium),
+              if (context.isDesktopWidth) ...[
+                const SizedBox(width: Insets.medium),
+                _NavPillButton(
+                  icon: Icons.chevron_right,
+                  enabled: selectedIndex < totalRecords - 1,
+                  onTap: () =>
+                      bloc.add(AttachmentBrowseSelected(selectedIndex + 1)),
+                ),
+              ],
             ],
-            Expanded(
-              child: _AttachmentPreview(
-                detail: detail,
-                startFromEnd: _startFromEnd,
-                readOnly: readOnly,
-                onFileNameChanged: (name) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) setState(() => _currentFileName = name);
-                  });
-                },
-                onPageChanged: (page) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) setState(() => _currentPage = page);
-                  });
-                },
-                onSwipeNextRecord: () {
-                  bloc.add(AttachmentBrowseSelected(selectedIndex + 1));
-                },
-                onSwipePrevRecord: () {
-                  bloc.add(AttachmentBrowseSelected(selectedIndex - 1));
-                },
-              ),
-            ),
-            if (context.isDesktopWidth) ...[
-              const SizedBox(width: Insets.medium),
-              _NavPillButton(
-                icon: Icons.chevron_right,
-                enabled: selectedIndex < totalRecords - 1,
-                onTap: () => bloc.add(AttachmentBrowseSelected(selectedIndex + 1)),
-              ),
-            ],
-          ],
-        ),
+          ),
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: hPad),
@@ -184,9 +198,7 @@ class _AttachmentDetailPanelState extends State<AttachmentDetailPanel> {
                 _ShowDetailsButton(
                   detail: detail,
                   readOnly: readOnly,
-                  ephemeralRecords: readOnly
-                      ? bloc.state.sourceRecords
-                      : null,
+                  ephemeralRecords: readOnly ? bloc.state.sourceRecords : null,
                 ),
               ],
               const SizedBox(height: Insets.normal),
@@ -270,7 +282,9 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {});
-          if (_pageController.hasClients) _pageController.jumpToPage(_currentPage);
+          if (_pageController.hasClients) {
+            _pageController.jumpToPage(_currentPage);
+          }
           _notifyFileName();
         }
       });
@@ -305,7 +319,8 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       if (attachment.filePath == null) continue;
       final path = attachment.filePath!;
       final ct = attachment.contentType?.toLowerCase() ?? '';
-      final isPdf = ct == 'application/pdf' || path.toLowerCase().endsWith('.pdf');
+      final isPdf =
+          ct == 'application/pdf' || path.toLowerCase().endsWith('.pdf');
 
       if (isPdf) {
         try {
@@ -320,25 +335,29 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
             );
             await page.close();
             if (img != null) {
-              pages.add(_PreviewPage(
-                bytes: img.bytes,
-                title: attachment.title,
-                resource: attachment.resource,
-                pageInDoc: i,
-                totalPagesInDoc: pageCount,
-              ));
+              pages.add(
+                _PreviewPage(
+                  bytes: img.bytes,
+                  title: attachment.title,
+                  resource: attachment.resource,
+                  pageInDoc: i,
+                  totalPagesInDoc: pageCount,
+                ),
+              );
             }
           }
           await doc.close();
         } catch (_) {}
       } else {
-        pages.add(_PreviewPage(
-          filePath: path,
-          title: attachment.title,
-          resource: attachment.resource,
-          pageInDoc: 1,
-          totalPagesInDoc: 1,
-        ));
+        pages.add(
+          _PreviewPage(
+            filePath: path,
+            title: attachment.title,
+            resource: attachment.resource,
+            pageInDoc: 1,
+            totalPagesInDoc: 1,
+          ),
+        );
       }
     }
 
@@ -366,7 +385,6 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   void _notifyFileName() {
     if (_pages.isNotEmpty) {
       widget.onFileNameChanged?.call(_pages[_currentPage].title);
-      final currentResourceId = _pages[_currentPage].resource.resourceId;
       int fileIndex = 0;
       String? lastResourceId;
       for (int i = 0; i <= _currentPage && i < _pages.length; i++) {
@@ -384,7 +402,8 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
     final hasPages = _pages.isNotEmpty;
 
     final screenHeight = MediaQuery.of(context).size.height;
-    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final isPortrait =
+        MediaQuery.of(context).orientation == Orientation.portrait;
     final isMobile = !context.isTablet;
     final double previewHeight;
     if (isPortrait) {
@@ -416,11 +435,11 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
               ),
             )
           : hasPages
-              ? _buildPageView(context)
-              : _EmptyAttachmentContent(
-                  record: widget.detail.record,
-                  readOnly: widget.readOnly,
-                ),
+          ? _buildPageView(context)
+          : _EmptyAttachmentContent(
+              record: widget.detail.record,
+              readOnly: widget.readOnly,
+            ),
     );
   }
 
@@ -473,40 +492,42 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
               return false;
             },
             child: PageView.builder(
-            controller: _pageController,
-            itemCount: _pages.length,
-            onPageChanged: (index) {
-              setState(() => _currentPage = index);
-              _notifyFileName();
-            },
-            itemBuilder: (context, index) {
-              final page = _pages[index];
-              if (page.bytes != null) {
-                return Image.memory(
-                  page.bytes!,
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                  height: double.infinity,
-                );
-              }
-              if (page.filePath != null) {
-                return Image.file(
-                  File(page.filePath!),
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => Center(
-                    child: Icon(
-                      Icons.broken_image,
-                      size: 48,
-                      color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+              controller: _pageController,
+              itemCount: _pages.length,
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+                _notifyFileName();
+              },
+              itemBuilder: (context, index) {
+                final page = _pages[index];
+                if (page.bytes != null) {
+                  return Image.memory(
+                    page.bytes!,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
+                  );
+                }
+                if (page.filePath != null) {
+                  return Image.file(
+                    File(page.filePath!),
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, _, _) => Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        size: 48,
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.3,
+                        ),
+                      ),
                     ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ),
           if (_pages.isNotEmpty)
             Positioned(
@@ -573,7 +594,8 @@ class _EmptyAttachmentContent extends StatefulWidget {
   });
 
   @override
-  State<_EmptyAttachmentContent> createState() => _EmptyAttachmentContentState();
+  State<_EmptyAttachmentContent> createState() =>
+      _EmptyAttachmentContentState();
 }
 
 class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
@@ -637,7 +659,9 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                 height: 36,
                 child: ElevatedButton(
                   onPressed: () async {
-                    debugPrint('[ATTACH] Add Attachment button pressed for record: ${record.id} (${record.fhirType})');
+                    debugPrint(
+                      '[ATTACH] Add Attachment button pressed for record: ${record.id} (${record.fhirType})',
+                    );
 
                     final browseBloc = context.read<AttachmentBrowseBloc>();
                     final recordsState = context.read<RecordsBloc>().state;
@@ -653,7 +677,9 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                     setState(() => _isAttaching = true);
 
                     final attachBloc = getIt.get<RecordAttachmentsBloc>();
-                    attachBloc.add(RecordAttachmentsInitialised(resource: record));
+                    attachBloc.add(
+                      RecordAttachmentsInitialised(resource: record),
+                    );
                     await attachBloc.stream.firstWhere(
                       (s) => s.status.when(
                         loading: () => false,
@@ -672,14 +698,16 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                     );
 
                     debugPrint('[ATTACH] File saved, refreshing browse list');
-                    browseBloc.add(AttachmentBrowseInitialised(
-                      sourceId: recordsState.sourceId,
-                      sourceIds: recordsState.sourceIds,
-                      resourceTypes: recordsState.activeFilters,
-                      specialty: recordsState.activeSpecialties.isNotEmpty
-                          ? recordsState.activeSpecialties.first
-                          : null,
-                    ));
+                    browseBloc.add(
+                      AttachmentBrowseInitialised(
+                        sourceId: recordsState.sourceId,
+                        sourceIds: recordsState.sourceIds,
+                        resourceTypes: recordsState.activeFilters,
+                        specialty: recordsState.activeSpecialties.isNotEmpty
+                            ? recordsState.activeSpecialties.first
+                            : null,
+                      ),
+                    );
 
                     if (mounted) {
                       setState(() => _isAttaching = false);
@@ -737,9 +765,7 @@ class _FileInfoRow extends StatelessWidget {
               Text(
                 hasFile ? currentFileName : 'No file name',
                 style: AppTextStyle.labelLarge.copyWith(
-                  color: hasFile
-                      ? context.colorScheme.onSurface
-                      : subtleColor,
+                  color: hasFile ? context.colorScheme.onSurface : subtleColor,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -786,7 +812,9 @@ class _FileInfoRow extends StatelessWidget {
             if (context.mounted && !readOnly) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (context.mounted) {
-                  context.read<AttachmentBrowseBloc>().add(AttachmentBrowseDetailRefreshed());
+                  context.read<AttachmentBrowseBloc>().add(
+                    AttachmentBrowseDetailRefreshed(),
+                  );
                 }
               });
             }
@@ -833,137 +861,146 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor =
-        context.colorScheme.onSurface.withValues(alpha: 0.12);
+    final dividerColor = context.colorScheme.onSurface.withValues(alpha: 0.12);
 
     final rows = <Widget>[];
 
     if (detail.patientName != null) {
-      rows.add(_DetailRow(
-        icon: Assets.icons.user,
-        label: 'Patient',
-        value: detail.patientName!,
-      ));
+      rows.add(
+        _DetailRow(
+          icon: Assets.icons.user,
+          label: 'Patient',
+          value: detail.patientName!,
+        ),
+      );
     }
     if (detail.organizationName != null) {
       if (rows.isNotEmpty) rows.add(Divider(height: 1, color: dividerColor));
-      rows.add(_DetailRow(
-        icon: Assets.icons.hospital,
-        label: 'Organisation',
-        value: detail.organizationName!,
-      ));
+      rows.add(
+        _DetailRow(
+          icon: Assets.icons.hospital,
+          label: 'Organisation',
+          value: detail.organizationName!,
+        ),
+      );
     }
     if (detail.practitionerName != null) {
       if (rows.isNotEmpty) rows.add(Divider(height: 1, color: dividerColor));
-      rows.add(_DetailRow(
-        icon: Assets.icons.stethoscope,
-        label: 'Practitioner',
-        value: detail.practitionerName!,
-      ));
+      rows.add(
+        _DetailRow(
+          icon: Assets.icons.stethoscope,
+          label: 'Practitioner',
+          value: detail.practitionerName!,
+        ),
+      );
     }
     final specialty = detail.specialtyName != null
-        ? MedicalSpecialty.values.where((s) => s.displayName == detail.specialtyName).firstOrNull
+        ? MedicalSpecialty.values
+              .where((s) => s.displayName == detail.specialtyName)
+              .firstOrNull
         : null;
 
     if (rows.isNotEmpty) rows.add(Divider(height: 1, color: dividerColor));
     final subtleColor = context.colorScheme.onSurface.withValues(alpha: 0.45);
-    rows.add(Padding(
-      padding: const EdgeInsets.symmetric(vertical: Insets.small),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: Center(
-                    child: (specialty?.icon ?? Assets.icons.activity).svg(
-                      width: 16,
-                      height: 16,
-                      colorFilter: ColorFilter.mode(
-                        context.colorScheme.onSurface,
-                        BlendMode.srcIn,
+    rows.add(
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: Insets.small),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: Center(
+                      child: (specialty?.icon ?? Assets.icons.activity).svg(
+                        width: 16,
+                        height: 16,
+                        colorFilter: ColorFilter.mode(
+                          context.colorScheme.onSurface,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Specialty',
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: subtleColor,
-                        fontSize: 10,
+                  const SizedBox(width: 6),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Specialty',
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: subtleColor,
+                          fontSize: 10,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      detail.specialtyName ?? 'General Care',
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: context.colorScheme.onSurface,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 2),
+                      Text(
+                        detail.specialtyName ?? 'General Care',
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: context.colorScheme.onSurface,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: Center(
-                    child: detail.record.fhirType.icon.svg(
-                      width: 16,
-                      height: 16,
-                      colorFilter: ColorFilter.mode(
-                        context.colorScheme.onSurface,
-                        BlendMode.srcIn,
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: Center(
+                      child: detail.record.fhirType.icon.svg(
+                        width: 16,
+                        height: 16,
+                        colorFilter: ColorFilter.mode(
+                          context.colorScheme.onSurface,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Record Type',
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: subtleColor,
-                        fontSize: 10,
+                  const SizedBox(width: 6),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Record Type',
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: subtleColor,
+                          fontSize: 10,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      detail.record.fhirType.display,
-                      style: AppTextStyle.labelSmall.copyWith(
-                        color: context.colorScheme.onSurface,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 2),
+                      Text(
+                        detail.record.fhirType.display,
+                        style: AppTextStyle.labelSmall.copyWith(
+                          color: context.colorScheme.onSurface,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ));
+    );
 
     return GestureDetector(
       onTap: () {
@@ -1006,8 +1043,7 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelColor =
-        context.colorScheme.onSurface.withValues(alpha: 0.7);
+    final labelColor = context.colorScheme.onSurface.withValues(alpha: 0.7);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Insets.small),
@@ -1072,7 +1108,9 @@ class _ShowDetailsButton extends StatelessWidget {
           context.router.push(
             RecordDetailsRoute(
               resource: detail.record,
-              ephemeralRecords: readOnly ? (ephemeralRecords ?? const []) : const [],
+              ephemeralRecords: readOnly
+                  ? (ephemeralRecords ?? const [])
+                  : const [],
             ),
           );
         },

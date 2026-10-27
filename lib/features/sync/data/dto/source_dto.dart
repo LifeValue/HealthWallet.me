@@ -25,11 +25,13 @@ class SourceDto {
       id: json['id'] ?? '',
       platformName: json['name'] ?? json['display'] ?? json['platform_name'],
       logo: json['logo'],
-      labelSource: json['display'] ??
+      labelSource:
+          json['display'] ??
           json['name'] ??
           json['labelSource'] ??
           json['label'],
-      platformType: json['platform_type'] ??
+      platformType:
+          json['platform_type'] ??
           'fasten', // Default to fasten for API sources
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],

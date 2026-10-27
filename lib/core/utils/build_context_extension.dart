@@ -17,7 +17,6 @@ extension BuildContextExtension on BuildContext {
 
   bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
 
-
   void closeKeyboard() {
     FocusManager.instance.primaryFocus?.unfocus();
   }
@@ -28,8 +27,7 @@ extension BuildContextExtension on BuildContext {
   Color get secondaryTextColor =>
       isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary;
 
-  Color get borderColor =>
-      isDarkMode ? AppColors.borderDark : AppColors.border;
+  Color get borderColor => isDarkMode ? AppColors.borderDark : AppColors.border;
 
   Color get surfaceColor =>
       isDarkMode ? AppColors.surfaceDark : AppColors.surface;

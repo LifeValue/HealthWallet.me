@@ -56,22 +56,25 @@ class RunRecord {
   final String? error;
 
   Map<String, dynamic> toJson() => {
-        'docId': docId,
-        'runId': runId,
-        'model': model,
-        'platform': platform,
-        'useVision': useVision,
-        'outputMode': outputMode,
-        if (gpuLayers != null) 'gpuLayers': gpuLayers,
-        'predictedResources': predictedResources,
-        'generations': [for (final g in generations) g.toJson()],
-        'peakRssBytes': peakRssBytes,
-        'wallMs': wallMs,
-        if (pipelineLog.isNotEmpty) 'pipelineLog': pipelineLog,
-        if (mappingErrors.isNotEmpty) 'mappingErrors': mappingErrors,
-        if (error != null) 'error': error,
-      };
+    'docId': docId,
+    'runId': runId,
+    'model': model,
+    'platform': platform,
+    'useVision': useVision,
+    'outputMode': outputMode,
+    if (gpuLayers != null) 'gpuLayers': gpuLayers,
+    'predictedResources': predictedResources,
+    'generations': [for (final g in generations) g.toJson()],
+    'peakRssBytes': peakRssBytes,
+    'wallMs': wallMs,
+    if (pipelineLog.isNotEmpty) 'pipelineLog': pipelineLog,
+    if (mappingErrors.isNotEmpty) 'mappingErrors': mappingErrors,
+    if (error != null) 'error': error,
+  };
 
-  Future<void> appendTo(File file) =>
-      file.writeAsString('${jsonEncode(toJson())}\n', mode: FileMode.append, flush: true);
+  Future<void> appendTo(File file) => file.writeAsString(
+    '${jsonEncode(toJson())}\n',
+    mode: FileMode.append,
+    flush: true,
+  );
 }

@@ -30,7 +30,7 @@ class TextFieldDescriptor {
       return null;
     }
     for (var validator in validators!) {
-      String? message = validator(value);
+      final String? message = validator(value);
 
       if (message != null) {
         return message;

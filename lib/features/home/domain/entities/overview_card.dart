@@ -13,11 +13,11 @@ class OverviewCard {
 
 enum HomeRecordsCategory {
   allergies(
-    display: "Allergies",
+    display: 'Allergies',
     resourceTypes: [FhirType.AllergyIntolerance, FhirType.AdverseEvent],
   ),
   careTeam(
-    display: "Care Team",
+    display: 'Care Team',
     resourceTypes: [
       FhirType.CareTeam,
       FhirType.Practitioner,
@@ -27,35 +27,35 @@ enum HomeRecordsCategory {
     ],
   ),
   clinicalNotes(
-    display: "Clinical Notes",
+    display: 'Clinical Notes',
     resourceTypes: [FhirType.DocumentReference, FhirType.DiagnosticReport],
   ),
   files(
-    display: "Files",
+    display: 'Files',
     resourceTypes: [FhirType.Binary, FhirType.DocumentReference],
   ),
   labResults(
-    display: "Lab Results",
+    display: 'Lab Results',
     resourceTypes: [FhirType.Observation, FhirType.Specimen],
   ),
   healthIssues(
-    display: "Health Issues",
+    display: 'Health Issues',
     resourceTypes: [FhirType.Condition, FhirType.Encounter],
   ),
   facilities(
-    display: "Facilities",
+    display: 'Facilities',
     resourceTypes: [FhirType.Organization, FhirType.Location],
   ),
   healthGoals(
-    display: "Health Goals",
+    display: 'Health Goals',
     resourceTypes: [FhirType.Goal],
   ),
   immunizations(
-    display: "Immunizations",
+    display: 'Immunizations',
     resourceTypes: [FhirType.Immunization],
   ),
   medications(
-    display: "Medications",
+    display: 'Medications',
     resourceTypes: [
       FhirType.Medication,
       FhirType.MedicationRequest,
@@ -65,24 +65,26 @@ enum HomeRecordsCategory {
     ],
   ),
   demographics(
-    display: "Demographics",
+    display: 'Demographics',
     resourceTypes: [FhirType.Patient],
   ),
   procedures(
-    display: "Procedures",
+    display: 'Procedures',
     resourceTypes: [FhirType.Procedure, FhirType.ServiceRequest],
   ),
   healthInsurance(
-    display: "Health Insurance",
+    display: 'Health Insurance',
     resourceTypes: [
       FhirType.Claim,
       FhirType.ExplanationOfBenefit,
-      FhirType.Coverage
+      FhirType.Coverage,
     ],
   );
 
-  const HomeRecordsCategory(
-      {required this.display, required this.resourceTypes});
+  const HomeRecordsCategory({
+    required this.display,
+    required this.resourceTypes,
+  });
 
   final String display;
   final List<FhirType> resourceTypes;

@@ -164,7 +164,10 @@ class UnitConverter {
   }
 
   static double? normalizeToBaseUnit(
-      double value, String unit, PatientVitalType type) {
+    double value,
+    String unit,
+    PatientVitalType type,
+  ) {
     final normalized = _normalizeUnit(unit);
     switch (type) {
       case PatientVitalType.temperature:

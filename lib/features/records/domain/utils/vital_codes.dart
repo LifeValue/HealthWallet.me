@@ -1,5 +1,3 @@
-import 'package:health_wallet/core/constants/blood_types.dart';
-
 const String kLoincHeartRate = '8867-4';
 const String kLoincBloodPressurePanel = '85354-9';
 const String kLoincBloodPressurePanelAlt = '55284-4';
@@ -12,8 +10,6 @@ const String kLoincSystolic = '8480-6';
 const String kLoincDiastolic = '8462-4';
 const String kLoincRespiratoryRate = '9279-1';
 const String kLoincBloodGlucose = '2339-0';
-const String kLoincAboBloodGroup = '883-9';
-const String kLoincRhBloodGroup = '10331-7';
 
 const Set<String> kVitalLoincCodes = {
   kLoincHeartRate,
@@ -30,17 +26,4 @@ const Set<String> kVitalLoincCodes = {
   kLoincBloodGlucose,
 };
 
-final Set<String> kBloodTypeLoincCodes = {
-  kLoincAboBloodGroup,
-  kLoincRhBloodGroup,
-  BloodTypes.combinedLoincCode,
-};
-
-const Set<String> kBpPanelCodes = {
-  kLoincBloodPressurePanel,
-  kLoincBloodPressurePanelAlt,
-};
-
 bool isVitalLoinc(String code) => kVitalLoincCodes.contains(code);
-bool isBpPanelCode(String code) => kBpPanelCodes.contains(code);
-bool isBloodTypeLoinc(String code) => kBloodTypeLoincCodes.contains(code);

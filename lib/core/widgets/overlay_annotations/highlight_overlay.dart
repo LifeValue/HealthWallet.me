@@ -98,12 +98,14 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
         final size = renderBox.size;
 
         if (size.width > 0 && size.height > 0 && position.dy >= 0) {
-          rects.add(Rect.fromLTWH(
-            position.dx - widget.highlightPadding,
-            position.dy - widget.highlightPadding,
-            size.width + widget.highlightPadding * 2,
-            size.height + widget.highlightPadding * 2,
-          ));
+          rects.add(
+            Rect.fromLTWH(
+              position.dx - widget.highlightPadding,
+              position.dy - widget.highlightPadding,
+              size.width + widget.highlightPadding * 2,
+              size.height + widget.highlightPadding * 2,
+            ),
+          );
         }
       } catch (e) {
         continue;
@@ -140,7 +142,7 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
                   painter: _HighlightPainter(
                     rects: _highlightRects,
                     borderRadius: widget.highlightBorderRadius,
-                    overlayColor: Colors.black.withOpacity(0.9),
+                    overlayColor: Colors.black.withValues(alpha: 0.9),
                   ),
                 ),
               ),
@@ -204,7 +206,7 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -227,7 +229,7 @@ class _MultiHighlightOverlayState extends State<MultiHighlightOverlay>
                 child: Text(
                   widget.subtitle!,
                   style: AppTextStyle.bodySmall.copyWith(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ),
@@ -266,10 +268,12 @@ class _HighlightPainter extends CustomPainter {
 
     for (final rect in rects) {
       final holePath = Path()
-        ..addRRect(RRect.fromRectAndRadius(
-          rect,
-          Radius.circular(borderRadius),
-        ));
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            rect,
+            Radius.circular(borderRadius),
+          ),
+        );
 
       finalPath = Path.combine(
         PathOperation.difference,

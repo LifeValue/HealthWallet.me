@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
-import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -97,16 +98,16 @@ abstract class Media with _$Media implements IFhirResource {
 
   @override
   FhirResourceDto toDto() => FhirResourceDto(
-        id: id,
-        sourceId: sourceId,
-        resourceType: 'Media',
-        resourceId: resourceId,
-        title: title,
-        date: date,
-        resourceRaw: rawResource,
-        encounterId: encounterId,
-        subjectId: subjectId,
-      );
+    id: id,
+    sourceId: sourceId,
+    resourceType: 'Media',
+    resourceId: resourceId,
+    title: title,
+    date: date,
+    resourceRaw: rawResource,
+    encounterId: encounterId,
+    subjectId: subjectId,
+  );
 
   @override
   String get displayTitle {
@@ -122,7 +123,7 @@ abstract class Media with _$Media implements IFhirResource {
 
   @override
   List<RecordInfoLine> get additionalInfo {
-    List<RecordInfoLine> infoLines = [];
+    final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;
@@ -139,8 +140,9 @@ abstract class Media with _$Media implements IFhirResource {
     );
 
     // Modality
-    final modalityDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(modality);
+    final modalityDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      modality,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(modalityDisplay, prefix: 'Modality'),
@@ -161,20 +163,24 @@ abstract class Media with _$Media implements IFhirResource {
     );
 
     // Operator
-    final operatorDisplay =
-        FhirFieldExtractor.extractReferenceDisplay(operator_);
+    final operatorDisplay = FhirFieldExtractor.extractReferenceDisplay(
+      operator_,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createUserLine(operatorDisplay, prefix: 'Operator'),
     );
 
     // Body Site
-    final bodySiteDisplay =
-        FhirFieldExtractor.extractCodeableConceptText(bodySite);
+    final bodySiteDisplay = FhirFieldExtractor.extractCodeableConceptText(
+      bodySite,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createBodySiteLine(bodySiteDisplay,
-          prefix: 'Body Site'),
+      ResourceFieldMapper.createBodySiteLine(
+        bodySiteDisplay,
+        prefix: 'Body Site',
+      ),
     );
 
     // Dimensions
@@ -182,8 +188,9 @@ abstract class Media with _$Media implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createImageLine(
-            '${width?.valueString} x ${height?.valueString}',
-            prefix: 'Dimensions'),
+          '${width?.valueString} x ${height?.valueString}',
+          prefix: 'Dimensions',
+        ),
       );
     }
 
@@ -191,8 +198,10 @@ abstract class Media with _$Media implements IFhirResource {
     if (duration != null) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createTimeLine('${duration?.valueString} seconds',
-            prefix: 'Duration'),
+        ResourceFieldMapper.createTimeLine(
+          '${duration?.valueString} seconds',
+          prefix: 'Duration',
+        ),
       );
     }
 
@@ -200,14 +209,15 @@ abstract class Media with _$Media implements IFhirResource {
     if (content?.contentType != null) {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createAttachmentLine(content!.contentType.toString(),
-            prefix: 'Content Type'),
+        ResourceFieldMapper.createAttachmentLine(
+          content!.contentType.toString(),
+          prefix: 'Content Type',
+        ),
       );
     }
 
     // Reason Code
-    final reasonCodeDisplay =
-        FhirFieldExtractor.extractReasonCodes(reasonCode);
+    final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
@@ -215,10 +225,12 @@ abstract class Media with _$Media implements IFhirResource {
 
     // Date
     if (date != null) {
-      infoLines.add(RecordInfoLine(
-        icon: Assets.icons.calendar,
-        info: DateFormat.yMMMMd().format(date!),
-      ));
+      infoLines.add(
+        RecordInfoLine(
+          icon: Assets.icons.calendar,
+          info: DateFormat.yMMMMd().format(date!),
+        ),
+      );
     }
 
     // Notes

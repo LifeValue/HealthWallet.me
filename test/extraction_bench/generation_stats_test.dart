@@ -9,7 +9,8 @@ class _FakeEngine extends Fake implements LlamaEngine {
   final responseFormats = <Map<String, dynamic>?>[];
   final grammars = <String?>[];
 
-  LlamaCompletionChunk _chunk({String? content, String? finishReason}) => LlamaCompletionChunk(
+  LlamaCompletionChunk _chunk({String? content, String? finishReason}) =>
+      LlamaCompletionChunk(
         id: 'c',
         object: 'chat.completion.chunk',
         created: 0,
@@ -75,18 +76,26 @@ void main() {
   });
 
   test('buildGenerationStats keeps the finish reason', () async {
-    final stats = await _Handler().buildGenerationStats(GenerationMode.text, null, finishReason: 'length');
+    final stats = await _Handler().buildGenerationStats(
+      GenerationMode.text,
+      null,
+      finishReason: 'length',
+    );
     expect(stats.finishReason, 'length');
     expect(GenerationStats.fromJson(stats.toJson()).finishReason, 'length');
   });
 
   test('buildGenerationStats without usage leaves every value null', () async {
-    final stats = await _Handler().buildGenerationStats(GenerationMode.text, null);
+    final stats = await _Handler().buildGenerationStats(
+      GenerationMode.text,
+      null,
+    );
     expect(stats, const GenerationStats(mode: GenerationMode.text));
   });
 
   test('lastGenerationStats is reset when a call starts', () async {
-    final handler = _Handler()..lastGenerationStats = const GenerationStats(mode: GenerationMode.text);
+    final handler = _Handler()
+      ..lastGenerationStats = const GenerationStats(mode: GenerationMode.text);
     await expectLater(handler.runTextPromptImpl(prompt: 'p'), throwsException);
     expect(handler.lastGenerationStats, isNull);
   });
@@ -96,14 +105,26 @@ void main() {
     final handler = _Handler()..engine = engine;
     const format = {
       'type': 'json_schema',
-      'json_schema': {'schema': {'type': 'object'}},
+      'json_schema': {
+        'schema': {'type': 'object'},
+      },
     };
 
-    expect(await handler.runTextPromptImpl(prompt: 'p', responseFormat: format), '{"a":');
+    expect(
+      await handler.runTextPromptImpl(prompt: 'p', responseFormat: format),
+      '{"a":',
+    );
     expect(handler.lastGenerationStats!.finishReason, 'length');
     expect(handler.lastGenerationStats!.mode, GenerationMode.text);
 
-    expect(await handler.runVisionPromptImpl(prompt: 'p', imagePaths: const [], responseFormat: format), '{"a":');
+    expect(
+      await handler.runVisionPromptImpl(
+        prompt: 'p',
+        imagePaths: const [],
+        responseFormat: format,
+      ),
+      '{"a":',
+    );
     expect(handler.lastGenerationStats!.finishReason, 'length');
     expect(handler.lastGenerationStats!.mode, GenerationMode.vision);
 

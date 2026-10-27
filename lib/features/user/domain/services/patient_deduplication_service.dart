@@ -1,11 +1,11 @@
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
+import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart'
     as entity;
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
-import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:health_wallet/core/utils/logger.dart';
-import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
-import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
+import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
@@ -16,7 +16,8 @@ class PatientDeduplicationService {
   PatientDeduplicationService(this._recordsRepository, this._syncRepository);
 
   Map<String, PatientGroup> deduplicatePatients(
-      List<entity.Patient> allPatients) {
+    List<entity.Patient> allPatients,
+  ) {
     final Map<String, List<entity.Patient>> identifierGroups = {};
     final Map<String, String> patientToGroupKey = {};
 
@@ -38,8 +39,9 @@ class PatientDeduplicationService {
       final patients = entry.value;
       if (patients.isEmpty) continue;
 
-      final walletPatient =
-          patients.where((p) => p.sourceId.startsWith('wallet')).firstOrNull;
+      final walletPatient = patients
+          .where((p) => p.sourceId.startsWith('wallet'))
+          .firstOrNull;
 
       final representative = walletPatient ?? patients.first;
       final sourceIds = patients
@@ -64,7 +66,9 @@ class PatientDeduplicationService {
   }
 
   List<String> getSourcesForPatient(
-      String patientId, List<entity.Patient> allPatients) {
+    String patientId,
+    List<entity.Patient> allPatients,
+  ) {
     final groups = deduplicatePatients(allPatients);
     final group = groups[patientId];
     if (group != null) {
@@ -90,13 +94,19 @@ class PatientDeduplicationService {
       return null;
     }
 
-    final identifierKeys = patient.identifier!
-        .where((id) =>
-            id.system?.valueString != null && id.value?.valueString != null)
-        .map((id) =>
-            '${_normalizeSystem(id.system!.valueString!)}:${_normalizeValue(id.value!.valueString!)}')
-        .toList()
-      ..sort();
+    final identifierKeys =
+        patient.identifier!
+            .where(
+              (id) =>
+                  id.system?.valueString != null &&
+                  id.value?.valueString != null,
+            )
+            .map(
+              (id) =>
+                  '${_normalizeSystem(id.system!.valueString!)}:${_normalizeValue(id.value!.valueString!)}',
+            )
+            .toList()
+          ..sort();
 
     return identifierKeys.isEmpty ? null : identifierKeys.join('|');
   }
@@ -107,23 +117,47 @@ class PatientDeduplicationService {
 
   String _normalizeValue(String value) {
     return _removeDiacritics(
-        value.trim().toLowerCase().replaceAll(RegExp(r'[-\s]'), ''));
+      value.trim().toLowerCase().replaceAll(RegExp(r'[-\s]'), ''),
+    );
   }
 
   static final _diacriticsMap = {
-    'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', 'ă': 'a',
+    'à': 'a',
+    'á': 'a',
+    'â': 'a',
+    'ã': 'a',
+    'ä': 'a',
+    'å': 'a',
+    'ă': 'a',
     'æ': 'ae',
     'ç': 'c',
-    'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e',
-    'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i',
+    'è': 'e',
+    'é': 'e',
+    'ê': 'e',
+    'ë': 'e',
+    'ì': 'i',
+    'í': 'i',
+    'î': 'i',
+    'ï': 'i',
     'đ': 'd',
     'ñ': 'n',
-    'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o', 'ø': 'o',
-    'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u',
-    'ý': 'y', 'ÿ': 'y',
+    'ò': 'o',
+    'ó': 'o',
+    'ô': 'o',
+    'õ': 'o',
+    'ö': 'o',
+    'ø': 'o',
+    'ù': 'u',
+    'ú': 'u',
+    'û': 'u',
+    'ü': 'u',
+    'ý': 'y',
+    'ÿ': 'y',
     'þ': 'th',
-    'ș': 's', 'ş': 's',
-    'ț': 't', 'ţ': 't',
+    'ș': 's',
+    'ş': 's',
+    'ț': 't',
+    'ţ': 't',
   };
 
   static String _removeDiacritics(String text) {
@@ -147,13 +181,15 @@ class PatientDeduplicationService {
 
         final allSourceIds = {
           ...sourcesForPatient,
-          if (patient.sourceId.isNotEmpty) patient.sourceId
+          if (patient.sourceId.isNotEmpty) patient.sourceId,
         }.toList();
 
         final existingGroup = enhancedGroups[patient.id];
         if (existingGroup != null) {
-          final combinedSourceIds =
-              {...existingGroup.sourceIds, ...allSourceIds}.toList();
+          final combinedSourceIds = {
+            ...existingGroup.sourceIds,
+            ...allSourceIds,
+          }.toList();
           enhancedGroups[patient.id] = PatientGroup(
             representativePatient: existingGroup.representativePatient,
             sourceIds: combinedSourceIds,
@@ -228,8 +264,9 @@ class PatientDeduplicationService {
   ) {
     for (final group in groups.values) {
       if (group.representativePatient.id == patientId ||
-          group.allPatientInstances
-              .any((p) => p.id == patientId || p.resourceId == patientId)) {
+          group.allPatientInstances.any(
+            (p) => p.id == patientId || p.resourceId == patientId,
+          )) {
         return group;
       }
     }
@@ -246,7 +283,9 @@ class PatientDeduplicationService {
     if (allPatients.isEmpty) return null;
 
     if (draftPatient.patientIdentifier.value.isNotEmpty) {
-      final normalizedDraftMRN = _normalizeValue(draftPatient.patientIdentifier.value);
+      final normalizedDraftMRN = _normalizeValue(
+        draftPatient.patientIdentifier.value,
+      );
 
       final identifierMatches = allPatients.where((patient) {
         if (patient.identifier == null || patient.identifier!.isEmpty) {
@@ -271,15 +310,15 @@ class PatientDeduplicationService {
     if (draftPatient.familyName.value.isNotEmpty &&
         draftPatient.givenName.value.isNotEmpty &&
         draftPatient.dateOfBirth.value.isNotEmpty) {
-      final normalizedDraftFamily =
-          _normalizeValue(draftPatient.familyName.value);
-      final normalizedDraftGiven =
-          _normalizeValue(draftPatient.givenName.value);
+      final normalizedDraftFamily = _normalizeValue(
+        draftPatient.familyName.value,
+      );
+      final normalizedDraftGiven = _normalizeValue(
+        draftPatient.givenName.value,
+      );
 
       DateTime? draftDOB;
-      try {
-        draftDOB = DateTime.parse(draftPatient.dateOfBirth.value);
-      } catch (e) {}
+      draftDOB = DateTime.tryParse(draftPatient.dateOfBirth.value);
 
       final nameMatches = allPatients.where((patient) {
         final patientFamily = FhirFieldExtractor.extractPatientFamily(patient);
@@ -290,15 +329,17 @@ class PatientDeduplicationService {
         final normalizedPatientFamily = _normalizeValue(patientFamily);
         final normalizedPatientGiven = _normalizeValue(patientGiven);
 
-        final nameMatch = normalizedPatientFamily == normalizedDraftFamily &&
+        final nameMatch =
+            normalizedPatientFamily == normalizedDraftFamily &&
             normalizedPatientGiven == normalizedDraftGiven;
 
         if (!nameMatch) return false;
 
         if (draftDOB != null) {
           try {
-            final patientDOB =
-                FhirFieldExtractor.extractPatientBirthDate(patient);
+            final patientDOB = FhirFieldExtractor.extractPatientBirthDate(
+              patient,
+            );
             if (patientDOB != null) {
               return patientDOB.year == draftDOB.year &&
                   patientDOB.month == draftDOB.month &&

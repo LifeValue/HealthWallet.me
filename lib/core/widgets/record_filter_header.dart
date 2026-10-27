@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -7,7 +7,6 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class RecordFilterHeader extends StatefulWidget {
   final List<IFhirResource> records;
@@ -45,7 +44,8 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
     if (widget.initialFilters.isNotEmpty) {
       _filterTypes.addAll(widget.initialFilters);
     }
-    _initialized = widget.initialFilters.isNotEmpty || widget.records.isNotEmpty;
+    _initialized =
+        widget.initialFilters.isNotEmpty || widget.records.isNotEmpty;
   }
 
   @override
@@ -203,7 +203,9 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
                       size: 18,
                       color: activeFilterCount > 0
                           ? AppColors.primary
-                          : context.colorScheme.onSurface.withValues(alpha: 0.6),
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
@@ -211,7 +213,9 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
                       size: 18,
                       color: activeFilterCount > 0
                           ? AppColors.primary
-                          : context.colorScheme.onSurface.withValues(alpha: 0.6),
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                     ),
                   ],
                 ),
@@ -236,11 +240,14 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
             children: [
               GestureDetector(
                 onTap: () {
-                  setState(() => _filterTypes.clear());
+                  setState(_filterTypes.clear);
                   widget.onFilterChanged({});
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: _filterTypes.isEmpty
                         ? AppColors.primary.withValues(alpha: 0.12)
@@ -259,8 +266,9 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
               ),
               ...sortedTypes.map((type) {
                 final isActive = _filterTypes.contains(type);
-                final count =
-                    widget.records.where((r) => r.fhirType == type).length;
+                final count = widget.records
+                    .where((r) => r.fhirType == type)
+                    .length;
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -273,12 +281,16 @@ class RecordFilterHeaderState extends State<RecordFilterHeader> {
                     widget.onFilterChanged(Set.of(_filterTypes));
                   },
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: isActive
                           ? AppColors.primary.withValues(alpha: 0.12)
-                          : context.colorScheme.onSurface.withValues(alpha: 0.08),
+                          : context.colorScheme.onSurface.withValues(
+                              alpha: 0.08,
+                            ),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(

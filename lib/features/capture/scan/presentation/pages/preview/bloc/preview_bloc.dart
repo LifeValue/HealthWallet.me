@@ -30,10 +30,12 @@ class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
     PreviewInitialized event,
     Emitter<PreviewState> emit,
   ) {
-    emit(state.copyWith(
-      currentPageIndex: event.initialPageIndex,
-      images: List.of(event.images),
-    ));
+    emit(
+      state.copyWith(
+        currentPageIndex: event.initialPageIndex,
+        images: List.of(event.images),
+      ),
+    );
   }
 
   Future<void> _onPageRotated(
@@ -65,11 +67,13 @@ class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
         ? updatedImages.length - 1
         : event.pageIndex;
 
-    emit(state.copyWith(
-      images: updatedImages,
-      currentPageIndex: newIndex,
-      hasChanges: true,
-    ));
+    emit(
+      state.copyWith(
+        images: updatedImages,
+        currentPageIndex: newIndex,
+        hasChanges: true,
+      ),
+    );
   }
 
   void _onPagesReordered(
@@ -80,19 +84,23 @@ class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
     final item = updatedImages.removeAt(event.oldIndex);
     updatedImages.insert(event.newIndex, item);
 
-    emit(state.copyWith(
-      images: updatedImages,
-      hasChanges: true,
-    ));
+    emit(
+      state.copyWith(
+        images: updatedImages,
+        hasChanges: true,
+      ),
+    );
   }
 
   void _onReorderModeToggled(
     PreviewReorderModeToggled event,
     Emitter<PreviewState> emit,
   ) {
-    emit(state.copyWith(
-      isReordering: event.enabled,
-      currentPageIndex: event.enabled ? state.currentPageIndex : 0,
-    ));
+    emit(
+      state.copyWith(
+        isReordering: event.enabled,
+        currentPageIndex: event.enabled ? state.currentPageIndex : 0,
+      ),
+    );
   }
 }

@@ -29,21 +29,21 @@ class GenerationLog {
   String? error;
 
   Map<String, dynamic> toJson() => {
-        'phase': phase,
-        'mode': mode.name,
-        'strictJsonValid': strictJsonValid,
-        'promptTokens': stats?.promptTokens,
-        'completionTokens': stats?.completionTokens,
-        'timeToFirstTokenMs': stats?.timeToFirstTokenMs,
-        'promptEvalMs': stats?.promptEvalMs,
-        'durationMs': stats?.durationMs,
-        'finishReason': stats?.finishReason,
-        'constraint': constraint,
-        'imageEncodeMs': imageEncodeMs,
-        'imageDecodeMs': imageDecodeMs,
-        'rawOutput': rawOutput,
-        if (error != null) 'error': error,
-      };
+    'phase': phase,
+    'mode': mode.name,
+    'strictJsonValid': strictJsonValid,
+    'promptTokens': stats?.promptTokens,
+    'completionTokens': stats?.completionTokens,
+    'timeToFirstTokenMs': stats?.timeToFirstTokenMs,
+    'promptEvalMs': stats?.promptEvalMs,
+    'durationMs': stats?.durationMs,
+    'finishReason': stats?.finishReason,
+    'constraint': constraint,
+    'imageEncodeMs': imageEncodeMs,
+    'imageDecodeMs': imageDecodeMs,
+    'rawOutput': rawOutput,
+    if (error != null) 'error': error,
+  };
 }
 
 /// Wraps the production [AiInferenceDataSource] and records every generation:
@@ -52,7 +52,11 @@ class GenerationLog {
 /// (read through [drainNativeLog] after each call). Behaviour is otherwise
 /// passed through unchanged.
 class RecordingAiInferenceDataSource implements AiInferenceDataSource {
-  RecordingAiInferenceDataSource(this._inner, {this.gpuLayersOverride, this.drainNativeLog});
+  RecordingAiInferenceDataSource(
+    this._inner, {
+    this.gpuLayersOverride,
+    this.drainNativeLog,
+  });
 
   final AiInferenceDataSource _inner;
 
@@ -69,8 +73,12 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   final List<GenerationLog> generations = [];
   GenerationLog? _current;
 
-  static final _sliceEncoded = RegExp(r'image slice encoded in (\d+(?:\.\d+)?) ms');
-  static final _imageDecoded = RegExp(r'image decoded \(batch \d+/\d+\) in (\d+(?:\.\d+)?) ms');
+  static final _sliceEncoded = RegExp(
+    r'image slice encoded in (\d+(?:\.\d+)?) ms',
+  );
+  static final _imageDecoded = RegExp(
+    r'image decoded \(batch \d+/\d+\) in (\d+(?:\.\d+)?) ms',
+  );
 
   /// Starts a new document: clears the recorded generations and discards the
   /// native log written before it.
@@ -92,11 +100,13 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
     for (final line in text.split('\n')) {
       final enc = _sliceEncoded.firstMatch(line);
       if (enc != null) {
-        log.imageEncodeMs = (log.imageEncodeMs ?? 0) + double.parse(enc.group(1)!);
+        log.imageEncodeMs =
+            (log.imageEncodeMs ?? 0) + double.parse(enc.group(1)!);
       }
       final dec = _imageDecoded.firstMatch(line);
       if (dec != null) {
-        log.imageDecodeMs = (log.imageDecodeMs ?? 0) + double.parse(dec.group(1)!);
+        log.imageDecodeMs =
+            (log.imageDecodeMs ?? 0) + double.parse(dec.group(1)!);
       }
     }
   }
@@ -123,8 +133,8 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
       ..constraint = responseFormat != null
           ? 'schema'
           : grammar != null
-              ? 'grammar'
-              : 'none';
+          ? 'grammar'
+          : 'none';
     generations.add(log);
     _current = log;
     try {
@@ -152,19 +162,18 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
     int? maxTokens,
     String? grammar,
     Map<String, dynamic>? responseFormat,
-  }) =>
-      _record(
-        GenerationMode.vision,
-        () => _inner.runVisionPrompt(
-          prompt: prompt,
-          imagePaths: imagePaths,
-          maxTokens: maxTokens,
-          grammar: grammar,
-          responseFormat: responseFormat,
-        ),
-        grammar: grammar,
-        responseFormat: responseFormat,
-      );
+  }) => _record(
+    GenerationMode.vision,
+    () => _inner.runVisionPrompt(
+      prompt: prompt,
+      imagePaths: imagePaths,
+      maxTokens: maxTokens,
+      grammar: grammar,
+      responseFormat: responseFormat,
+    ),
+    grammar: grammar,
+    responseFormat: responseFormat,
+  );
 
   @override
   Future<String?> runTextPrompt({
@@ -173,19 +182,18 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
     String? grammar,
     Map<String, dynamic>? responseFormat,
     Map<String, dynamic>? chatTemplateKwargs,
-  }) =>
-      _record(
-        GenerationMode.text,
-        () => _inner.runTextPrompt(
-          prompt: prompt,
-          maxTokens: maxTokens,
-          grammar: grammar,
-          responseFormat: responseFormat,
-          chatTemplateKwargs: chatTemplateKwargs,
-        ),
-        grammar: grammar,
-        responseFormat: responseFormat,
-      );
+  }) => _record(
+    GenerationMode.text,
+    () => _inner.runTextPrompt(
+      prompt: prompt,
+      maxTokens: maxTokens,
+      grammar: grammar,
+      responseFormat: responseFormat,
+      chatTemplateKwargs: chatTemplateKwargs,
+    ),
+    grammar: grammar,
+    responseFormat: responseFormat,
+  );
 
   @override
   GenerationStats? get lastGenerationStats => _inner.lastGenerationStats;
@@ -197,23 +205,30 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   int get visionPagesPerBatch => _inner.visionPagesPerBatch;
 
   @override
-  Future<void> initModel({bool withVision = true, int? contextSize, int? gpuLayers, int? threads}) =>
-      _inner.initModel(
-        withVision: withVision,
-        contextSize: contextSize,
-        gpuLayers: gpuLayersOverride ?? gpuLayers,
-        threads: threads,
-      );
+  Future<void> initModel({
+    bool withVision = true,
+    int? contextSize,
+    int? gpuLayers,
+    int? threads,
+  }) => _inner.initModel(
+    withVision: withVision,
+    contextSize: contextSize,
+    gpuLayers: gpuLayersOverride ?? gpuLayers,
+    threads: threads,
+  );
 
   @override
   Future<void> disposeModel() => _inner.disposeModel();
 
   @override
-  Future<({int availableMB, int requiredMB, bool canProceed})> checkMemoryHealth({
+  Future<({int availableMB, int requiredMB, bool canProceed})>
+  checkMemoryHealth({
     bool withVision = true,
     int? contextSize,
-  }) =>
-      _inner.checkMemoryHealth(withVision: withVision, contextSize: contextSize);
+  }) => _inner.checkMemoryHealth(
+    withVision: withVision,
+    contextSize: contextSize,
+  );
 
   @override
   bool isVisionModelAvailable() => _inner.isVisionModelAvailable();
@@ -225,13 +240,16 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
   Future<bool> checkMmprojExistence() => _inner.checkMmprojExistence();
 
   @override
-  Future<bool> checkModelExistenceForVariant(AiModelVariant variant) => _inner.checkModelExistenceForVariant(variant);
+  Future<bool> checkModelExistenceForVariant(AiModelVariant variant) =>
+      _inner.checkModelExistenceForVariant(variant);
 
   @override
-  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant) => _inner.checkMmprojExistenceForVariant(variant);
+  Future<bool> checkMmprojExistenceForVariant(AiModelVariant variant) =>
+      _inner.checkMmprojExistenceForVariant(variant);
 
   @override
-  Future<void> deleteModelForVariant(AiModelVariant variant) => _inner.deleteModelForVariant(variant);
+  Future<void> deleteModelForVariant(AiModelVariant variant) =>
+      _inner.deleteModelForVariant(variant);
 
   @override
   Future<void> downloadModel({required void Function(int) onProgress}) =>
@@ -242,10 +260,14 @@ class RecordingAiInferenceDataSource implements AiInferenceDataSource {
       _inner.downloadMmproj(onProgress: onProgress);
 
   @override
-  Future<void> downloadModelForVariant(AiModelVariant variant, {required void Function(int) onProgress}) =>
-      _inner.downloadModelForVariant(variant, onProgress: onProgress);
+  Future<void> downloadModelForVariant(
+    AiModelVariant variant, {
+    required void Function(int) onProgress,
+  }) => _inner.downloadModelForVariant(variant, onProgress: onProgress);
 
   @override
-  Future<void> downloadMmprojForVariant(AiModelVariant variant, {required void Function(int) onProgress}) =>
-      _inner.downloadMmprojForVariant(variant, onProgress: onProgress);
+  Future<void> downloadMmprojForVariant(
+    AiModelVariant variant, {
+    required void Function(int) onProgress,
+  }) => _inner.downloadMmprojForVariant(variant, onProgress: onProgress);
 }

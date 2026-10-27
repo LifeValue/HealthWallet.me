@@ -9,18 +9,57 @@ import 'dart:math' as math;
 // ---------------------------------------------------------------------------
 
 const _diacritics = {
-  'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', 'ă': 'a', 'ā': 'a',
-  'ç': 'c', 'ć': 'c', 'č': 'c',
-  'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e', 'ě': 'e', 'ē': 'e',
-  'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i', 'ī': 'i',
-  'ñ': 'n', 'ń': 'n',
-  'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o', 'ø': 'o', 'ō': 'o',
-  'ș': 's', 'ş': 's', 'š': 's', 'ś': 's',
-  'ț': 't', 'ţ': 't',
-  'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u', 'ū': 'u',
-  'ý': 'y', 'ÿ': 'y',
-  'ž': 'z', 'ź': 'z', 'ż': 'z',
-  'ł': 'l', 'ß': 'ss', 'µ': 'u', 'μ': 'u',
+  'à': 'a',
+  'á': 'a',
+  'â': 'a',
+  'ã': 'a',
+  'ä': 'a',
+  'å': 'a',
+  'ă': 'a',
+  'ā': 'a',
+  'ç': 'c',
+  'ć': 'c',
+  'č': 'c',
+  'è': 'e',
+  'é': 'e',
+  'ê': 'e',
+  'ë': 'e',
+  'ě': 'e',
+  'ē': 'e',
+  'ì': 'i',
+  'í': 'i',
+  'î': 'i',
+  'ï': 'i',
+  'ī': 'i',
+  'ñ': 'n',
+  'ń': 'n',
+  'ò': 'o',
+  'ó': 'o',
+  'ô': 'o',
+  'õ': 'o',
+  'ö': 'o',
+  'ø': 'o',
+  'ō': 'o',
+  'ș': 's',
+  'ş': 's',
+  'š': 's',
+  'ś': 's',
+  'ț': 't',
+  'ţ': 't',
+  'ù': 'u',
+  'ú': 'u',
+  'û': 'u',
+  'ü': 'u',
+  'ū': 'u',
+  'ý': 'y',
+  'ÿ': 'y',
+  'ž': 'z',
+  'ź': 'z',
+  'ż': 'z',
+  'ł': 'l',
+  'ß': 'ss',
+  'µ': 'u',
+  'μ': 'u',
 };
 
 final _whitespace = RegExp(r'\s+');
@@ -58,8 +97,10 @@ double compareText(String gold, String pred) {
   final g = foldText(gold);
   final p = foldText(pred);
   if (g == p) return 1;
-  List<String> numbers(String t) =>
-      [for (final m in _digits.allMatches(t)) m[0]!.replaceFirst(_leadingZeros, '')];
+  List<String> numbers(String t) => [
+    for (final m in _digits.allMatches(t))
+      m[0]!.replaceFirst(_leadingZeros, ''),
+  ];
   final gn = numbers(g);
   final pn = numbers(p);
   var next = 0;
@@ -83,16 +124,16 @@ final _identifierNoise = RegExp(r'[\s\-/().]+');
 /// ignoring case.
 double compareIdentifier(String gold, String pred) =>
     gold.replaceAll(_identifierNoise, '').toUpperCase() ==
-            pred.replaceAll(_identifierNoise, '').toUpperCase()
-        ? 1
-        : 0;
+        pred.replaceAll(_identifierNoise, '').toUpperCase()
+    ? 1
+    : 0;
 
 /// Jaccard of the folded elements' tokens (`["Ana Maria"]` equals
 /// `["Ana", "Maria"]`).
 double compareSet(List<String> gold, List<String> pred) => jaccard(
-      {for (final g in gold) ...textTokens(g)},
-      {for (final p in pred) ...textTokens(p)},
-    );
+  {for (final g in gold) ...textTokens(g)},
+  {for (final p in pred) ...textTokens(p)},
+);
 
 // ---------------------------------------------------------------------------
 // Dates
@@ -175,7 +216,9 @@ QuantityValue? toQuantity(Object? v) {
     if (m == null) return QuantityValue(raw: v);
     final rest = m.group(2)!.trim();
     return QuantityValue(
-      value: parseLocalizedNumber(m.group(1)!.replaceFirst(RegExp(r'[.,]$'), '')),
+      value: parseLocalizedNumber(
+        m.group(1)!.replaceFirst(RegExp(r'[.,]$'), ''),
+      ),
       unit: rest.isEmpty ? null : rest,
       raw: v,
     );
@@ -185,21 +228,42 @@ QuantityValue? toQuantity(Object? v) {
     final value = raw is num
         ? raw.toDouble()
         : raw is String
-            ? parseLocalizedNumber(raw)
-            : null;
+        ? parseLocalizedNumber(raw)
+        : null;
     if (value == null && raw == null) return null;
-    String? str(Object? o) => o is String && o.trim().isNotEmpty ? o.trim() : null;
-    return QuantityValue(value: value, unit: str(v['unit']), code: str(v['code']), raw: '$raw');
+    String? str(Object? o) =>
+        o is String && o.trim().isNotEmpty ? o.trim() : null;
+    return QuantityValue(
+      value: value,
+      unit: str(v['unit']),
+      code: str(v['code']),
+      raw: '$raw',
+    );
   }
   return null;
 }
 
 const _unitAliases = {
-  '°c': 'Cel', 'ºc': 'Cel', 'cel': 'Cel', 'degc': 'Cel', '℃': 'Cel',
-  '°f': '[degF]', 'ºf': '[degF]', '[degf]': '[degF]', 'degf': '[degF]',
-  'mmhg': 'mm[Hg]', 'mm[hg]': 'mm[Hg]',
-  'bpm': '/min', 'lpm': '/min', 'rpm': '/min', '/min': '/min', '1/min': '/min',
-  'min-1': '/min', '/minute': '/min', 'beats/min': '/min', 'breaths/min': '/min',
+  '°c': 'Cel',
+  'ºc': 'Cel',
+  'cel': 'Cel',
+  'degc': 'Cel',
+  '℃': 'Cel',
+  '°f': '[degF]',
+  'ºf': '[degF]',
+  '[degf]': '[degF]',
+  'degf': '[degF]',
+  'mmhg': 'mm[Hg]',
+  'mm[hg]': 'mm[Hg]',
+  'bpm': '/min',
+  'lpm': '/min',
+  'rpm': '/min',
+  '/min': '/min',
+  '1/min': '/min',
+  'min-1': '/min',
+  '/minute': '/min',
+  'beats/min': '/min',
+  'breaths/min': '/min',
   'x/min': '/min',
 };
 
@@ -210,10 +274,16 @@ String normalizeUnitText(String unit) {
   s = s.replaceAll('µ', 'u').replaceAll('μ', 'u').replaceAll('×', 'x');
   final alias = _unitAliases[s.toLowerCase()];
   if (alias != null) return alias;
-  s = s.replaceAllMapped(RegExp(r'^x?10(?:\^|\*|E|e)(\d+)'), (m) => '10*${m[1]}');
+  s = s.replaceAllMapped(
+    RegExp(r'^x?10(?:\^|\*|E|e)(\d+)'),
+    (m) => '10*${m[1]}',
+  );
   s = s.replaceAll(RegExp(r'\[?(IU|UI)\]?'), '[IU]');
   // Liters: a lone or prefixed `l` atom.
-  s = s.replaceAllMapped(RegExp(r'(^|[/.])([kdcmunpf]?)l(?=$|[/.\d])'), (m) => '${m[1]}${m[2]}L');
+  s = s.replaceAllMapped(
+    RegExp(r'(^|[/.])([kdcmunpf]?)l(?=$|[/.\d])'),
+    (m) => '${m[1]}${m[2]}L',
+  );
   return s;
 }
 
@@ -225,9 +295,18 @@ class _Unit {
 }
 
 const _prefixes = {
-  'T': 1e12, 'G': 1e9, 'M': 1e6,
-  'k': 1e3, 'h': 1e2, 'd': 1e-1, 'c': 1e-2, 'm': 1e-3,
-  'u': 1e-6, 'n': 1e-9, 'p': 1e-12, 'f': 1e-15,
+  'T': 1e12,
+  'G': 1e9,
+  'M': 1e6,
+  'k': 1e3,
+  'h': 1e2,
+  'd': 1e-1,
+  'c': 1e-2,
+  'm': 1e-3,
+  'u': 1e-6,
+  'n': 1e-9,
+  'p': 1e-12,
+  'f': 1e-15,
 };
 
 /// Base atoms with their dimension and factor relative to the base.
@@ -261,7 +340,9 @@ _Unit? _parseTerm(String term) {
     }
     var exponent = 1;
     final expMatch = RegExp(r'^(.*?)(-?\d+)$').firstMatch(token);
-    if (expMatch != null && expMatch.group(1)!.isNotEmpty && !_atoms.containsKey(token)) {
+    if (expMatch != null &&
+        expMatch.group(1)!.isNotEmpty &&
+        !_atoms.containsKey(token)) {
       token = expMatch.group(1)!;
       exponent = int.parse(expMatch.group(2)!);
     }
@@ -315,7 +396,9 @@ double? convertUnit(double value, String from, String to) {
   if (f.special != null || t.special != null) {
     if (f.special == t.special) return value;
     if (f.special == 'Cel' && t.special == '[degF]') return value * 9 / 5 + 32;
-    if (f.special == '[degF]' && t.special == 'Cel') return (value - 32) * 5 / 9;
+    if (f.special == '[degF]' && t.special == 'Cel') {
+      return (value - 32) * 5 / 9;
+    }
     return null;
   }
   if (!_sameDims(f.dims, t.dims)) return null;
@@ -347,7 +430,9 @@ double compareQuantity(QuantityValue gold, QuantityValue pred) {
 
   // Unit text is compared case-insensitively after normalization.
   final predText = normalizeUnitText(predUnit).toLowerCase();
-  final predAlt = pred.unit == null ? null : normalizeUnitText(pred.unit!).toLowerCase();
+  final predAlt = pred.unit == null
+      ? null
+      : normalizeUnitText(pred.unit!).toLowerCase();
   for (final g in goldUnits) {
     final gt = normalizeUnitText(g).toLowerCase();
     if (gt == predText || gt == predAlt) return numbersMatch(gv, pv) ? 1 : 0;
@@ -384,13 +469,20 @@ class ConceptValue {
   bool get isEmpty => codes.isEmpty && texts.isEmpty;
 }
 
-String _normSystem(String s) => s.trim().replaceFirst(RegExp(r'/$'), '').toLowerCase();
+String _normSystem(String s) =>
+    s.trim().replaceFirst(RegExp(r'/$'), '').toLowerCase();
 
 /// A [ConceptValue] from a CodeableConcept map or a plain string.
 ConceptValue? toConcept(Object? v, {String? alternativeUrl}) {
   if (v == null) return null;
   if (v is String) {
-    return v.trim().isEmpty ? null : ConceptValue(codes: const {}, alternatives: const {}, texts: [v.trim()]);
+    return v.trim().isEmpty
+        ? null
+        : ConceptValue(
+            codes: const {},
+            alternatives: const {},
+            texts: [v.trim()],
+          );
   }
   if (v is! Map) return null;
   final codes = <String>{};
@@ -404,17 +496,27 @@ ConceptValue? toConcept(Object? v, {String? alternativeUrl}) {
       codes.add('${_normSystem('${c['system'] ?? ''}')}|${code.trim()}');
     }
     final display = c['display'];
-    if (display is String && display.trim().isNotEmpty) texts.add(display.trim());
+    if (display is String && display.trim().isNotEmpty) {
+      texts.add(display.trim());
+    }
   }
   final alternatives = <String>{};
   for (final e in (v['extension'] as List?) ?? const []) {
-    if (e is! Map || (alternativeUrl != null && e['url'] != alternativeUrl)) continue;
+    if (e is! Map || (alternativeUrl != null && e['url'] != alternativeUrl)) {
+      continue;
+    }
     final c = e['valueCoding'];
     if (c is Map && c['code'] is String) {
-      alternatives.add('${_normSystem('${c['system'] ?? ''}')}|${(c['code'] as String).trim()}');
+      alternatives.add(
+        '${_normSystem('${c['system'] ?? ''}')}|${(c['code'] as String).trim()}',
+      );
     }
   }
-  final concept = ConceptValue(codes: codes, alternatives: alternatives, texts: texts);
+  final concept = ConceptValue(
+    codes: codes,
+    alternatives: alternatives,
+    texts: texts,
+  );
   return concept.isEmpty ? null : concept;
 }
 

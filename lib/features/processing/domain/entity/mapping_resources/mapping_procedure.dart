@@ -1,18 +1,19 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
-import 'package:health_wallet/core/utils/validator.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/entity/procedure/procedure.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:uuid/uuid.dart';
 
 part 'mapping_procedure.freezed.dart';
 
 @freezed
-abstract class MappingProcedure with _$MappingProcedure implements MappingResource {
+abstract class MappingProcedure
+    with _$MappingProcedure
+    implements MappingResource {
   const MappingProcedure._();
 
   const factory MappingProcedure({
@@ -25,7 +26,7 @@ abstract class MappingProcedure with _$MappingProcedure implements MappingResour
   factory MappingProcedure.fromJson(Map<String, dynamic> json) {
     final rawPerformed = MappedProperty.fromJson(json['performedDateTime']);
     return MappingProcedure(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       procedureName: MappedProperty.fromJson(json['procedureName']),
       performedDateTime: rawPerformed.copyWith(
         value: MappingResource.normalizeDateValue(rawPerformed.value),
@@ -45,12 +46,12 @@ abstract class MappingProcedure with _$MappingProcedure implements MappingResour
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'Procedure',
-        'procedureName': procedureName.toJson(),
-        'performedDateTime': performedDateTime.toJson(),
-        'reason': reason.toJson(),
-      };
+    'id': id,
+    'resourceType': 'Procedure',
+    'procedureName': procedureName.toJson(),
+    'performedDateTime': performedDateTime.toJson(),
+    'reason': reason.toJson(),
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -59,24 +60,27 @@ abstract class MappingProcedure with _$MappingProcedure implements MappingResour
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.Procedure procedure = fhir_r4.Procedure(
+    final fhir_r4.Procedure procedure = fhir_r4.Procedure(
       meta: meta,
       code: fhir_r4.CodeableConcept(
-          text: fhir_r4.FhirString(procedureName.value)),
+        text: fhir_r4.FhirString(procedureName.value),
+      ),
       performedX: performedDateTime.value.isNotEmpty
           ? fhir_r4.FhirDateTime.fromString(performedDateTime.value)
           : null,
       reasonCode: [
-        fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reason.value))
+        fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reason.value)),
       ],
       subject: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Patient/$subjectId')),
+        reference: fhir_r4.FhirString('Patient/$subjectId'),
+      ),
       status: fhir_r4.EventStatus.unknown,
       encounter: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Encounter/$encounterId')),
+        reference: fhir_r4.FhirString('Encounter/$encounterId'),
+      ),
     );
 
-    Map<String, dynamic> rawResource = procedure.toJson();
+    final Map<String, dynamic> rawResource = procedure.toJson();
 
     return Procedure(
       id: id,
@@ -94,30 +98,30 @@ abstract class MappingProcedure with _$MappingProcedure implements MappingResour
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'procedureName': l10n.labelProcedureName,
-        'performedDateTime': l10n.labelPerformedDate,
-        'reason': l10n.labelReason,
-      };
+    'procedureName': l10n.labelProcedureName,
+    'performedDateTime': l10n.labelPerformedDate,
+    'reason': l10n.labelReason,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'procedureName': TextFieldDescriptor(
-          label: 'Procedure Name',
-          value: procedureName.value,
-          confidenceLevel: procedureName.confidenceLevel,
-        ),
-        'performedDateTime': TextFieldDescriptor(
-          label: 'Performed Date',
-          value: performedDateTime.value,
-          confidenceLevel: performedDateTime.confidenceLevel,
-          fieldType: FieldType.date,
-        ),
-        'reason': TextFieldDescriptor(
-          label: 'Reason',
-          value: reason.value,
-          confidenceLevel: reason.confidenceLevel,
-        ),
-      };
+    'procedureName': TextFieldDescriptor(
+      label: 'Procedure Name',
+      value: procedureName.value,
+      confidenceLevel: procedureName.confidenceLevel,
+    ),
+    'performedDateTime': TextFieldDescriptor(
+      label: 'Performed Date',
+      value: performedDateTime.value,
+      confidenceLevel: performedDateTime.confidenceLevel,
+      fieldType: FieldType.date,
+    ),
+    'reason': TextFieldDescriptor(
+      label: 'Reason',
+      value: reason.value,
+      confidenceLevel: reason.confidenceLevel,
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -137,8 +141,9 @@ abstract class MappingProcedure with _$MappingProcedure implements MappingResour
         ),
         reason: MappedProperty(
           value: newValues['reason'] ?? reason.value,
-          confidenceLevel:
-              newValues['reason'] != null ? 1 : reason.confidenceLevel,
+          confidenceLevel: newValues['reason'] != null
+              ? 1
+              : reason.confidenceLevel,
         ),
       );
 
@@ -147,10 +152,10 @@ abstract class MappingProcedure with _$MappingProcedure implements MappingResour
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        procedureName: procedureName.calculateConfidence(inputText),
-        performedDateTime: performedDateTime.calculateDateConfidence(inputText),
-        reason: reason.calculateConfidence(inputText),
-      );
+    procedureName: procedureName.calculateConfidence(inputText),
+    performedDateTime: performedDateTime.calculateDateConfidence(inputText),
+    reason: reason.calculateConfidence(inputText),
+  );
 
   @override
   bool get isValid =>

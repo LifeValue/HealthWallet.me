@@ -1,3 +1,4 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/validator.dart';
@@ -5,7 +6,6 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:uuid/uuid.dart';
 
 part 'mapping_diagnostic_report.freezed.dart';
@@ -26,7 +26,7 @@ abstract class MappingDiagnosticReport
   factory MappingDiagnosticReport.fromJson(Map<String, dynamic> json) {
     final rawIssuedDate = MappedProperty.fromJson(json['issuedDate']);
     return MappingDiagnosticReport(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       reportName: MappedProperty.fromJson(json['reportName']),
       conclusion: MappedProperty.fromJson(json['conclusion']),
       issuedDate: rawIssuedDate.copyWith(
@@ -46,12 +46,12 @@ abstract class MappingDiagnosticReport
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'DiagnosticReport',
-        'reportName': reportName.toJson(),
-        'conclusion': conclusion.toJson(),
-        'issuedDate': issuedDate.toJson(),
-      };
+    'id': id,
+    'resourceType': 'DiagnosticReport',
+    'reportName': reportName.toJson(),
+    'conclusion': conclusion.toJson(),
+    'issuedDate': issuedDate.toJson(),
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -60,20 +60,23 @@ abstract class MappingDiagnosticReport
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.DiagnosticReport diagnosticReport = fhir_r4.DiagnosticReport(
+    final fhir_r4.DiagnosticReport diagnosticReport = fhir_r4.DiagnosticReport(
       meta: meta,
       code: fhir_r4.CodeableConcept(text: fhir_r4.FhirString(reportName.value)),
       conclusion: fhir_r4.FhirString(conclusion.value),
       issued: fhir_r4.FhirInstant.fromDateTime(
-          DateTime.tryParse(issuedDate.value) ?? DateTime.now()),
+        DateTime.tryParse(issuedDate.value) ?? DateTime.now(),
+      ),
       status: fhir_r4.DiagnosticReportStatus.unknown,
       subject: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Patient/$subjectId')),
+        reference: fhir_r4.FhirString('Patient/$subjectId'),
+      ),
       encounter: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Encounter/$encounterId')),
+        reference: fhir_r4.FhirString('Encounter/$encounterId'),
+      ),
     );
 
-    Map<String, dynamic> rawResource = diagnosticReport.toJson();
+    final Map<String, dynamic> rawResource = diagnosticReport.toJson();
 
     return DiagnosticReport(
       id: id,
@@ -91,30 +94,30 @@ abstract class MappingDiagnosticReport
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'reportName': l10n.labelReportName,
-        'conclusion': l10n.labelConclusion,
-        'issuedDate': l10n.labelIssuedDate,
-      };
+    'reportName': l10n.labelReportName,
+    'conclusion': l10n.labelConclusion,
+    'issuedDate': l10n.labelIssuedDate,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'reportName': TextFieldDescriptor(
-          label: 'Report Name',
-          value: reportName.value,
-          confidenceLevel: reportName.confidenceLevel,
-        ),
-        'conclusion': TextFieldDescriptor(
-          label: 'Conclusion',
-          value: conclusion.value,
-          confidenceLevel: conclusion.confidenceLevel,
-        ),
-        'issuedDate': TextFieldDescriptor(
-          label: 'Issued Date',
-          value: issuedDate.value,
-          confidenceLevel: issuedDate.confidenceLevel,
-          validators: [nonEmptyValidator, dateValidator],
-        ),
-      };
+    'reportName': TextFieldDescriptor(
+      label: 'Report Name',
+      value: reportName.value,
+      confidenceLevel: reportName.confidenceLevel,
+    ),
+    'conclusion': TextFieldDescriptor(
+      label: 'Conclusion',
+      value: conclusion.value,
+      confidenceLevel: conclusion.confidenceLevel,
+    ),
+    'issuedDate': TextFieldDescriptor(
+      label: 'Issued Date',
+      value: issuedDate.value,
+      confidenceLevel: issuedDate.confidenceLevel,
+      validators: [nonEmptyValidator, dateValidator],
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -122,18 +125,21 @@ abstract class MappingDiagnosticReport
         id: id,
         reportName: MappedProperty(
           value: newValues['reportName'] ?? reportName.value,
-          confidenceLevel:
-              newValues['reportName'] != null ? 1 : reportName.confidenceLevel,
+          confidenceLevel: newValues['reportName'] != null
+              ? 1
+              : reportName.confidenceLevel,
         ),
         conclusion: MappedProperty(
           value: newValues['conclusion'] ?? conclusion.value,
-          confidenceLevel:
-              newValues['conclusion'] != null ? 1 : conclusion.confidenceLevel,
+          confidenceLevel: newValues['conclusion'] != null
+              ? 1
+              : conclusion.confidenceLevel,
         ),
         issuedDate: MappedProperty(
           value: newValues['issuedDate'] ?? issuedDate.value,
-          confidenceLevel:
-              newValues['issuedDate'] != null ? 1 : issuedDate.confidenceLevel,
+          confidenceLevel: newValues['issuedDate'] != null
+              ? 1
+              : issuedDate.confidenceLevel,
         ),
       );
 
@@ -142,10 +148,10 @@ abstract class MappingDiagnosticReport
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        reportName: reportName.calculateConfidence(inputText),
-        conclusion: conclusion.calculateConfidence(inputText),
-        issuedDate: issuedDate.calculateDateConfidence(inputText),
-      );
+    reportName: reportName.calculateConfidence(inputText),
+    conclusion: conclusion.calculateConfidence(inputText),
+    issuedDate: issuedDate.calculateDateConfidence(inputText),
+  );
 
   @override
   bool get isValid =>

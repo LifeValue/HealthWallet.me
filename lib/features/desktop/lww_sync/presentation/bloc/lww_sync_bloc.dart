@@ -45,10 +45,12 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     Emitter<LwwSyncState> emit,
   ) async {
     final lastSync = await _syncService.getLastSyncTimestamp();
-    emit(state.copyWith(
-      lastSyncTime: lastSync,
-      pendingChangeCount: _offlineQueue.pendingCount,
-    ));
+    emit(
+      state.copyWith(
+        lastSyncTime: lastSync,
+        pendingChangeCount: _offlineQueue.pendingCount,
+      ),
+    );
 
     _connectionSub = _tcpService.connectionState.listen((tcpState) {
       final connected = tcpState == ConnectionState.connected;
@@ -59,7 +61,8 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       if (message.type != MessageType.data) return;
 
       try {
-        final decoded = jsonDecode(message.payloadString) as Map<String, dynamic>;
+        final decoded =
+            jsonDecode(message.payloadString) as Map<String, dynamic>;
         final type = decoded['type'] as String?;
 
         if (type == 'sync.delta') {
@@ -114,26 +117,31 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
   ) async {
     if (state.syncStatus == LwwSyncStatus.syncing) return;
 
-    emit(state.copyWith(
-      syncStatus: LwwSyncStatus.syncing,
-      error: null,
-      isSynced: false,
-      sentRows: 0,
-      receivedRows: 0,
-      completedTables: 0,
-      totalTables: LwwSyncService.syncedTables.length,
-    ));
+    emit(
+      state.copyWith(
+        syncStatus: LwwSyncStatus.syncing,
+        error: null,
+        isSynced: false,
+        sentRows: 0,
+        receivedRows: 0,
+        completedTables: 0,
+        totalTables: LwwSyncService.syncedTables.length,
+      ),
+    );
 
     try {
-      final since = state.lastSyncTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final since =
+          state.lastSyncTime ?? DateTime.fromMillisecondsSinceEpoch(0);
       var totalSent = 0;
 
       for (var i = 0; i < LwwSyncService.syncedTables.length; i++) {
         final table = LwwSyncService.syncedTables[i];
-        emit(state.copyWith(
-          currentTable: table,
-          completedTables: i,
-        ));
+        emit(
+          state.copyWith(
+            currentTable: table,
+            completedTables: i,
+          ),
+        );
 
         final delta = await _syncService.computeDelta(table, since);
         if (delta.rows.isNotEmpty) {
@@ -150,14 +158,16 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       final now = DateTime.now();
       await _syncService.setLastSyncTimestamp(now);
 
-      emit(state.copyWith(
-        syncStatus: LwwSyncStatus.idle,
-        lastSyncTime: now,
-        isSynced: totalSent == 0,
-        pendingChangeCount: _offlineQueue.pendingCount,
-        currentTable: null,
-        completedTables: LwwSyncService.syncedTables.length,
-      ));
+      emit(
+        state.copyWith(
+          syncStatus: LwwSyncStatus.idle,
+          lastSyncTime: now,
+          isSynced: totalSent == 0,
+          pendingChangeCount: _offlineQueue.pendingCount,
+          currentTable: null,
+          completedTables: LwwSyncService.syncedTables.length,
+        ),
+      );
 
       if (_tcpService.isConnected) {
         final counts = await _syncService.getTableRowCounts();
@@ -168,11 +178,13 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         } catch (_) {}
       }
     } catch (e) {
-      emit(state.copyWith(
-        syncStatus: LwwSyncStatus.error,
-        error: e.toString(),
-        currentTable: null,
-      ));
+      emit(
+        state.copyWith(
+          syncStatus: LwwSyncStatus.error,
+          error: e.toString(),
+          currentTable: null,
+        ),
+      );
     }
   }
 
@@ -180,19 +192,23 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     DeltaReceived event,
     Emitter<LwwSyncState> emit,
   ) async {
-    emit(state.copyWith(
-      syncStatus: LwwSyncStatus.syncing,
-      error: null,
-      isSynced: false,
-      currentTable: event.delta.tableName,
-    ));
+    emit(
+      state.copyWith(
+        syncStatus: LwwSyncStatus.syncing,
+        error: null,
+        isSynced: false,
+        currentTable: event.delta.tableName,
+      ),
+    );
 
     try {
       final applied = await _syncService.applyDelta(event.delta);
 
-      emit(state.copyWith(
-        receivedRows: state.receivedRows + applied,
-      ));
+      emit(
+        state.copyWith(
+          receivedRows: state.receivedRows + applied,
+        ),
+      );
 
       if (event.delta.tableName == 'fhir_resource') {
         await _syncService.fixBrokenAttachmentUrls();
@@ -208,17 +224,21 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       final now = DateTime.now();
       await _syncService.setLastSyncTimestamp(now);
 
-      emit(state.copyWith(
-        syncStatus: LwwSyncStatus.idle,
-        lastSyncTime: now,
-        currentTable: null,
-      ));
+      emit(
+        state.copyWith(
+          syncStatus: LwwSyncStatus.idle,
+          lastSyncTime: now,
+          currentTable: null,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        syncStatus: LwwSyncStatus.error,
-        error: e.toString(),
-        currentTable: null,
-      ));
+      emit(
+        state.copyWith(
+          syncStatus: LwwSyncStatus.error,
+          error: e.toString(),
+          currentTable: null,
+        ),
+      );
     }
   }
 
@@ -227,11 +247,13 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     Emitter<LwwSyncState> emit,
   ) async {
     if (event.isConnected) {
-      emit(state.copyWith(
-        isSynced: false,
-        sentRows: 0,
-        receivedRows: 0,
-      ));
+      emit(
+        state.copyWith(
+          isSynced: false,
+          sentRows: 0,
+          receivedRows: 0,
+        ),
+      );
 
       await Future<void>.delayed(const Duration(milliseconds: 200));
 
@@ -248,9 +270,11 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       emit(state.copyWith(isSynced: false));
     }
 
-    emit(state.copyWith(
-      pendingChangeCount: _offlineQueue.pendingCount,
-    ));
+    emit(
+      state.copyWith(
+        pendingChangeCount: _offlineQueue.pendingCount,
+      ),
+    );
   }
 
   Future<void> _onTableStatusReceived(
@@ -265,10 +289,12 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       final remoteCount = event.remoteCounts[table] ?? 0;
 
       if (localCount > 0 && localCount != remoteCount) {
-        emit(state.copyWith(
-          syncStatus: LwwSyncStatus.syncing,
-          currentTable: table,
-        ));
+        emit(
+          state.copyWith(
+            syncStatus: LwwSyncStatus.syncing,
+            currentTable: table,
+          ),
+        );
 
         final delta = await _syncService.computeDelta(
           table,
@@ -276,9 +302,11 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         );
         if (delta.rows.isNotEmpty && _tcpService.isConnected) {
           await _tcpService.sendData('sync.delta', delta.toJson());
-          emit(state.copyWith(
-            sentRows: state.sentRows + delta.rows.length,
-          ));
+          emit(
+            state.copyWith(
+              sentRows: state.sentRows + delta.rows.length,
+            ),
+          );
           sentAny = true;
         }
       }
@@ -288,10 +316,12 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
       await _syncService.setLastSyncTimestamp(DateTime.now());
     }
 
-    emit(state.copyWith(
-      syncStatus: LwwSyncStatus.idle,
-      currentTable: null,
-    ));
+    emit(
+      state.copyWith(
+        syncStatus: LwwSyncStatus.idle,
+        currentTable: null,
+      ),
+    );
 
     await Future<void>.delayed(const Duration(seconds: 1));
     if (_tcpService.isConnected) {

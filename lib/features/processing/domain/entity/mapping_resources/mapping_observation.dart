@@ -1,16 +1,18 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:uuid/uuid.dart';
 
 part 'mapping_observation.freezed.dart';
 
 @freezed
-abstract class MappingObservation with _$MappingObservation implements MappingResource {
+abstract class MappingObservation
+    with _$MappingObservation
+    implements MappingResource {
   const MappingObservation._();
 
   const factory MappingObservation({
@@ -23,7 +25,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
 
   factory MappingObservation.fromJson(Map<String, dynamic> json) {
     return MappingObservation(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       observationName: MappedProperty.fromJson(json['observationName']),
       value: MappedProperty.fromJson(json['value']),
       unit: MappedProperty.fromJson(json['unit']),
@@ -47,7 +49,8 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
 
     final rangeStr = referenceRange.value.trim();
 
-    final dashMatch = RegExp(r'([\d.]+)\s*[-–]\s*([\d.]+)').firstMatch(rangeStr);
+    final dashMatch = RegExp(r'([\d.]+)\s*[-–]\s*([\d.]+)')
+        .firstMatch(rangeStr);
     if (dashMatch != null) {
       final low = double.tryParse(dashMatch.group(1)!);
       final high = double.tryParse(dashMatch.group(2)!);
@@ -81,37 +84,60 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'Observation',
-        'observationName': observationName.toJson(),
-        'value': value.toJson(),
-        'unit': unit.toJson(),
-        'referenceRange': referenceRange.toJson(),
-      };
+    'id': id,
+    'resourceType': 'Observation',
+    'observationName': observationName.toJson(),
+    'value': value.toJson(),
+    'unit': unit.toJson(),
+    'referenceRange': referenceRange.toJson(),
+  };
 
   static final _bpCombinedPattern = RegExp(r'^(\d+)\s*/\s*(\d+)$');
 
   static final _vitalLoincMap = <RegExp, (String, String)>{
-    RegExp(r'heart\s*rate|pulse|^AV$|frecventa\s*cardiaca', caseSensitive: false):
-        ('8867-4', 'Heart Rate'),
-    RegExp(r'systolic|sistolica', caseSensitive: false):
-        ('8480-6', 'Systolic Blood Pressure'),
-    RegExp(r'diastolic|diastolica', caseSensitive: false):
-        ('8462-4', 'Diastolic Blood Pressure'),
-    RegExp(r'temperature|temperatura', caseSensitive: false):
-        ('8310-5', 'Temperature'),
-    RegExp(r'spo2|oxygen\s*saturation|^SO2$|saturatie', caseSensitive: false):
-        ('2708-6', 'Blood Oxygen'),
-    RegExp(r'weight|greutate', caseSensitive: false):
-        ('29463-7', 'Weight'),
-    RegExp(r'height|inaltime|talie', caseSensitive: false):
-        ('8302-2', 'Height'),
-    RegExp(r'\bbmi\b|body\s*mass\s*index', caseSensitive: false):
-        ('39156-5', 'BMI'),
-    RegExp(r'respiratory\s*rate|^FR$|frecventa\s*respiratorie', caseSensitive: false):
-        ('9279-1', 'Respiratory Rate'),
-    RegExp(r'blood\s*glucose|glicemie|^glucose$', caseSensitive: false):
-        ('2339-0', 'Blood Glucose'),
+    RegExp(
+      r'heart\s*rate|pulse|^AV$|frecventa\s*cardiaca',
+      caseSensitive: false,
+    ): (
+      '8867-4',
+      'Heart Rate',
+    ),
+    RegExp(r'systolic|sistolica', caseSensitive: false): (
+      '8480-6',
+      'Systolic Blood Pressure',
+    ),
+    RegExp(r'diastolic|diastolica', caseSensitive: false): (
+      '8462-4',
+      'Diastolic Blood Pressure',
+    ),
+    RegExp(r'temperature|temperatura', caseSensitive: false): (
+      '8310-5',
+      'Temperature',
+    ),
+    RegExp(r'spo2|oxygen\s*saturation|^SO2$|saturatie', caseSensitive: false): (
+      '2708-6',
+      'Blood Oxygen',
+    ),
+    RegExp(r'weight|greutate', caseSensitive: false): ('29463-7', 'Weight'),
+    RegExp(r'height|inaltime|talie', caseSensitive: false): (
+      '8302-2',
+      'Height',
+    ),
+    RegExp(r'\bbmi\b|body\s*mass\s*index', caseSensitive: false): (
+      '39156-5',
+      'BMI',
+    ),
+    RegExp(
+      r'respiratory\s*rate|^FR$|frecventa\s*respiratorie',
+      caseSensitive: false,
+    ): (
+      '9279-1',
+      'Respiratory Rate',
+    ),
+    RegExp(r'blood\s*glucose|glicemie|^glucose$', caseSensitive: false): (
+      '2339-0',
+      'Blood Glucose',
+    ),
   };
 
   static final _bpNamePattern = RegExp(
@@ -126,8 +152,14 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
     return null;
   }
 
-  static final _kgPattern = RegExp(r'\((\d+(?:\.\d+)?)\s*kg\)', caseSensitive: false);
-  static final _cmPattern = RegExp(r'\((\d+(?:\.\d+)?)\s*cm\)', caseSensitive: false);
+  static final _kgPattern = RegExp(
+    r'\((\d+(?:\.\d+)?)\s*kg\)',
+    caseSensitive: false,
+  );
+  static final _cmPattern = RegExp(
+    r'\((\d+(?:\.\d+)?)\s*cm\)',
+    caseSensitive: false,
+  );
   static final _lbOzPattern = RegExp(
     r'(\d+(?:\.\d+)?)\s*(?:lb|lbs|Ib)\s*(?:(\d+(?:\.\d+)?)\s*oz)?',
     caseSensitive: false,
@@ -136,7 +168,11 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
     r'''(\d+)['′]\s*(\d+(?:\.\d+)?)["″]?''',
   );
 
-  static (double, String)? _cleanVitalValue(String raw, String unitField, String? loincCode) {
+  static (double, String)? _cleanVitalValue(
+    String raw,
+    String unitField,
+    String? loincCode,
+  ) {
     if (raw.isEmpty) return null;
 
     final direct = double.tryParse(raw);
@@ -164,7 +200,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
       if (lbMatch != null) {
         final lb = double.tryParse(lbMatch.group(1)!) ?? 0;
         final oz = double.tryParse(lbMatch.group(2) ?? '0') ?? 0;
-        final kg = (lb * 0.453592 + oz * 0.0283495);
+        final kg = lb * 0.453592 + oz * 0.0283495;
         return (double.parse(kg.toStringAsFixed(1)), 'kg');
       }
     }
@@ -179,7 +215,7 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
       if (ftMatch != null) {
         final ft = double.tryParse(ftMatch.group(1)!) ?? 0;
         final inches = double.tryParse(ftMatch.group(2) ?? '0') ?? 0;
-        final cm = (ft * 30.48 + inches * 2.54);
+        final cm = ft * 30.48 + inches * 2.54;
         return (double.parse(cm.toStringAsFixed(1)), 'cm');
       }
     }
@@ -251,7 +287,8 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
           coding: [
             fhir_r4.Coding(
               system: fhir_r4.FhirUri(
-                  'http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation'),
+                'http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation',
+              ),
               code: fhir_r4.FhirCode(code),
               display: fhir_r4.FhirString(display),
             ),
@@ -262,7 +299,11 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
     }
 
     final loincMatch = _matchVitalLoinc(name);
-    final cleaned = _cleanVitalValue(value.value.trim(), unit.value.trim(), loincMatch?.$1);
+    final cleaned = _cleanVitalValue(
+      value.value.trim(),
+      unit.value.trim(),
+      loincMatch?.$1,
+    );
     final fhir_r4.ValueXObservation? valueX;
     if (cleaned != null) {
       valueX = fhir_r4.Quantity(
@@ -292,20 +333,22 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
       );
     }
 
-    fhir_r4.Observation observation = fhir_r4.Observation(
+    final fhir_r4.Observation observation = fhir_r4.Observation(
       meta: meta,
       code: codeableConcept,
       valueX: valueX,
       status: fhir_r4.ObservationStatus.unknown,
       subject: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Patient/$subjectId')),
+        reference: fhir_r4.FhirString('Patient/$subjectId'),
+      ),
       encounter: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Encounter/$encounterId')),
+        reference: fhir_r4.FhirString('Encounter/$encounterId'),
+      ),
       referenceRange: fhirReferenceRange,
       interpretation: fhirInterpretation,
     );
 
-    Map<String, dynamic> rawResource = observation.toJson();
+    final Map<String, dynamic> rawResource = observation.toJson();
 
     return Observation(
       id: id,
@@ -340,9 +383,11 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
       ),
       status: fhir_r4.ObservationStatus.unknown,
       subject: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Patient/$subjectId')),
+        reference: fhir_r4.FhirString('Patient/$subjectId'),
+      ),
       encounter: fhir_r4.Reference(
-          reference: fhir_r4.FhirString('Encounter/$encounterId')),
+        reference: fhir_r4.FhirString('Encounter/$encounterId'),
+      ),
       component: [
         fhir_r4.ObservationComponent(
           code: fhir_r4.CodeableConcept(
@@ -391,35 +436,35 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'observationName': l10n.labelObservationName,
-        'value': l10n.labelValue,
-        'unit': l10n.labelUnit,
-        'referenceRange': l10n.labelReferenceRange,
-      };
+    'observationName': l10n.labelObservationName,
+    'value': l10n.labelValue,
+    'unit': l10n.labelUnit,
+    'referenceRange': l10n.labelReferenceRange,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'observationName': TextFieldDescriptor(
-          label: 'Observation name',
-          value: observationName.value,
-          confidenceLevel: observationName.confidenceLevel,
-        ),
-        'value': TextFieldDescriptor(
-          label: 'Value',
-          value: value.value,
-          confidenceLevel: value.confidenceLevel,
-        ),
-        'unit': TextFieldDescriptor(
-          label: 'Unit',
-          value: unit.value,
-          confidenceLevel: unit.confidenceLevel,
-        ),
-        'referenceRange': TextFieldDescriptor(
-          label: 'Reference Range',
-          value: referenceRange.value,
-          confidenceLevel: referenceRange.confidenceLevel,
-        ),
-      };
+    'observationName': TextFieldDescriptor(
+      label: 'Observation name',
+      value: observationName.value,
+      confidenceLevel: observationName.confidenceLevel,
+    ),
+    'value': TextFieldDescriptor(
+      label: 'Value',
+      value: value.value,
+      confidenceLevel: value.confidenceLevel,
+    ),
+    'unit': TextFieldDescriptor(
+      label: 'Unit',
+      value: unit.value,
+      confidenceLevel: unit.confidenceLevel,
+    ),
+    'referenceRange': TextFieldDescriptor(
+      label: 'Reference Range',
+      value: referenceRange.value,
+      confidenceLevel: referenceRange.confidenceLevel,
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -433,8 +478,9 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
         ),
         value: MappedProperty(
           value: newValues['value'] ?? value.value,
-          confidenceLevel:
-              newValues['value'] != null ? 1 : value.confidenceLevel,
+          confidenceLevel: newValues['value'] != null
+              ? 1
+              : value.confidenceLevel,
         ),
         unit: MappedProperty(
           value: newValues['unit'] ?? unit.value,
@@ -453,11 +499,11 @@ abstract class MappingObservation with _$MappingObservation implements MappingRe
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        observationName: observationName.calculateConfidence(inputText),
-        value: value.calculateConfidence(inputText),
-        unit: unit.calculateConfidence(inputText),
-        referenceRange: referenceRange.calculateConfidence(inputText),
-      );
+    observationName: observationName.calculateConfidence(inputText),
+    value: value.calculateConfidence(inputText),
+    unit: unit.calculateConfidence(inputText),
+    referenceRange: referenceRange.calculateConfidence(inputText),
+  );
 
   @override
   bool get isValid =>

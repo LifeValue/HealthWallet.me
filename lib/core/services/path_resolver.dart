@@ -8,8 +8,9 @@ import 'package:path_provider/path_provider.dart';
 class PathResolver {
   String? _documentsPath;
 
-  static final _containerPattern =
-      RegExp(r'/Containers/Data/Application/[^/]+/Documents/');
+  static final _containerPattern = RegExp(
+    r'/Containers/Data/Application/[^/]+/Documents/',
+  );
 
   Future<String> getDocumentsPath() async {
     if (_documentsPath != null) return _documentsPath!;
@@ -28,7 +29,9 @@ class PathResolver {
     if (path.startsWith('/')) return true;
     if (path.length >= 3 &&
         path[1] == ':' &&
-        (path[2] == '\\' || path[2] == '/')) return true;
+        (path[2] == '\\' || path[2] == '/')) {
+      return true;
+    }
     return false;
   }
 

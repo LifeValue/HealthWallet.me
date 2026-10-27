@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/features/sync/domain/entities/source.dart';
-import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
-import 'package:health_wallet/features/home/presentation/widgets/source/source_list_dialog.dart';
 import 'package:health_wallet/features/home/presentation/widgets/source/source_label_edit_dialog.dart';
+import 'package:health_wallet/features/home/presentation/widgets/source/source_list_dialog.dart';
+import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
+import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class SourceSelectorWidget extends StatelessWidget {
   final List<Source> sources;
@@ -171,14 +171,14 @@ class SourceSelectorWidget extends StatelessWidget {
       if (filteredSources.length > 1) {
         final allSources = List<Source>.from(filteredSources);
         allSources.insert(
-            0,
-            Source(
-              id: 'All',
-              platformName: 'All Sources',
-              labelSource: 'All Sources',
-              platformType:
-                  'all', // Special type to indicate this is a filter option, not a real source
-            ));
+          0,
+          const Source(
+            id: 'All',
+            platformName: 'All Sources',
+            labelSource: 'All Sources',
+            platformType: 'all', // Special type to indicate this is a filter option, not a real source
+          ),
+        );
         return allSources;
       }
 
@@ -264,8 +264,9 @@ class SourceSelectorWidget extends StatelessWidget {
       // If selected source is not found in patient sources,
       // try to find it in all sources
       try {
-        final allSources =
-            sources.where((source) => source.id != 'All').toList();
+        final allSources = sources
+            .where((source) => source.id != 'All')
+            .toList();
         final currentSource = allSources.firstWhere(
           (source) => source.id == selectedSource,
         );

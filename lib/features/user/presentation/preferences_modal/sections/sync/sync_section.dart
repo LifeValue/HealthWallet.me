@@ -6,19 +6,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
-import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
-import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/connection_dialog.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart' show Assets;
 
@@ -46,11 +46,13 @@ class SyncSection extends StatelessWidget {
                     builder: (context, backupState) {
                       final hasEhrSync = ehrSyncState.hasSyncedData;
                       final hasDesktopPairing = commState.pairedDevice != null;
-                      final showSetup = !isDesktop && !hasDesktopPairing && !hasEhrSync;
+                      final showSetup =
+                          !isDesktop && !hasDesktopPairing && !hasEhrSync;
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: Insets.normal),
+                          horizontal: Insets.normal,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -61,7 +63,9 @@ class SyncSection extends StatelessWidget {
                             const SizedBox(height: Insets.small),
                             if (hasEhrSync) ...[
                               Container(
-                                padding: const EdgeInsets.all(Insets.smallNormal),
+                                padding: const EdgeInsets.all(
+                                  Insets.smallNormal,
+                                ),
                                 decoration: BoxDecoration(
                                   border: Border.all(color: borderColor),
                                   borderRadius: BorderRadius.circular(8),
@@ -78,14 +82,22 @@ class SyncSection extends StatelessWidget {
                                     if (ehrSyncState.lastSyncTime != null) ...[
                                       const SizedBox(height: Insets.extraSmall),
                                       Padding(
-                                        padding: const EdgeInsets.only(left: 28),
+                                        padding: const EdgeInsets.only(
+                                          left: 28,
+                                        ),
                                         child: Text(
                                           DateFormatUtils.humanReadable(
-                                            DateTime.tryParse(ehrSyncState.lastSyncTime!),
+                                            DateTime.tryParse(
+                                              ehrSyncState.lastSyncTime!,
+                                            ),
                                           ),
-                                          style: AppTextStyle.labelSmall.copyWith(
-                                            color: context.colorScheme.onSurface.withValues(alpha: 0.5),
-                                          ),
+                                          style: AppTextStyle.labelSmall
+                                              .copyWith(
+                                                color: context
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.5),
+                                              ),
                                         ),
                                       ),
                                     ],
@@ -93,23 +105,30 @@ class SyncSection extends StatelessWidget {
                                     SizedBox(
                                       width: double.infinity,
                                       child: OutlinedButton.icon(
-                                        onPressed: () => ConnectionDialog.openQRScanner(context),
+                                        onPressed: () =>
+                                            ConnectionDialog.openQRScanner(
+                                              context,
+                                            ),
                                         icon: const Icon(Icons.sync, size: 16),
                                         label: Text(
                                           context.l10n.syncTitle,
                                           style: AppTextStyle.buttonSmall,
                                         ),
                                         style: OutlinedButton.styleFrom(
-                                          foregroundColor: context.colorScheme.primary,
+                                          foregroundColor:
+                                              context.colorScheme.primary,
                                           side: BorderSide(
-                                            color: context.colorScheme.primary.withValues(alpha: 0.3),
+                                            color: context.colorScheme.primary
+                                                .withValues(alpha: 0.3),
                                           ),
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: Insets.small,
                                             vertical: Insets.small,
                                           ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -120,246 +139,321 @@ class SyncSection extends StatelessWidget {
                               const SizedBox(height: Insets.small),
                             ],
                             if (showSetup) ...[
-                          Container(
-                            padding: const EdgeInsets.all(Insets.smallNormal),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: borderColor),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              children: [
-                                Assets.images.syncScanIlustration.svg(
-                                  width: 140,
-                                  height: 140,
+                              Container(
+                                padding: const EdgeInsets.all(
+                                  Insets.smallNormal,
                                 ),
-                                const SizedBox(height: Insets.small),
-                                Text(
-                                  context.l10n.desktopSyncDescription,
-                                  textAlign: TextAlign.center,
-                                  style: AppTextStyle.labelLarge,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: borderColor),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                const SizedBox(height: Insets.normal),
-                                AppButton(
-                                  label: context.l10n.syncTitle,
-                                  icon: const Icon(Icons.sync),
-                                  variant: AppButtonVariant.primary,
-                                  onPressed: () => ConnectionDialog.openQRScanner(context),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ] else ...[
-                        Container(
-                          padding: const EdgeInsets.all(Insets.smallNormal),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: borderColor),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _StatusRow(
-                                icon: commState.connectionStatus == ConnectionStatus.connected
-                                    ? Icons.link
-                                    : Icons.link_off,
-                                label: context.l10n.connectionLabel,
-                                status: _getConnectionStatus(commState, context.l10n),
-                                statusColor: _getConnectionColor(commState),
-                              ),
-                              const SizedBox(height: Insets.small),
-                              _StatusRow(
-                                icon: Icons.sync,
-                                label: context.l10n.deviceSyncLabel,
-                                status: _getSyncStatus(commState, lwwState, context.l10n),
-                                statusColor: _getSyncColor(commState, lwwState),
-                              ),
-                              const SizedBox(height: Insets.small),
-                              _StatusRow(
-                                icon: Icons.shield_outlined,
-                                label: context.l10n.backupLabel,
-                                status: _getBackupStatus(commState, backupState, context.l10n),
-                                statusColor: _getBackupColor(commState, backupState),
-                              ),
-                              const SizedBox(height: Insets.normal),
-                              if (isDesktop)
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => DeviceSyncDialog.show(context),
-                                    icon: Assets.icons.renewSync.svg(
-                                      width: 16,
-                                      height: 16,
-                                      colorFilter: const ColorFilter.mode(
-                                        Colors.white,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                    label: Text(
-                                      context.l10n.syncMedicalRecords,
-                                      style: AppTextStyle.buttonSmall,
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: Insets.small,
-                                        vertical: Insets.small,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              if (!isDesktop &&
-                                  commState.connectionStatus == ConnectionStatus.connected) ...[
-                                Row(
+                                child: Column(
                                   children: [
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        onPressed: () => DeviceSyncDialog.show(context),
-                                        icon: Assets.icons.renewSync.svg(
-                                          width: 16,
-                                          height: 16,
-                                          colorFilter: const ColorFilter.mode(
-                                            Colors.white,
-                                            BlendMode.srcIn,
-                                          ),
-                                        ),
-                                        label: Text(
-                                          context.l10n.syncLabel,
-                                          style: AppTextStyle.buttonSmall,
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: Insets.small,
-                                            vertical: Insets.small,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                        ),
-                                      ),
+                                    Assets.images.syncScanIlustration.svg(
+                                      width: 140,
+                                      height: 140,
                                     ),
-                                    const SizedBox(width: Insets.small),
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        onPressed: _canBackup(commState, backupState)
-                                            ? () => _requestRemoteBackup(context, commState)
-                                            : null,
-                                        icon: Icon(
-                                          Icons.shield_outlined,
-                                          size: 16,
-                                          color: _canBackup(commState, backupState)
-                                              ? Colors.white
-                                              : null,
-                                        ),
-                                        label: Text(
-                                          backupState.isBackingUp
-                                              ? context.l10n.backupStatusBackingUp
-                                              : context.l10n.backupLabel,
-                                          style: AppTextStyle.buttonSmall,
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                          foregroundColor: Colors.white,
-                                          disabledBackgroundColor:
-                                              context.colorScheme.onSurface.withValues(alpha: 0.06),
-                                          disabledForegroundColor:
-                                              context.colorScheme.onSurface.withValues(alpha: 0.3),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: Insets.small,
-                                            vertical: Insets.small,
+                                    const SizedBox(height: Insets.small),
+                                    Text(
+                                      context.l10n.desktopSyncDescription,
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyle.labelLarge,
+                                    ),
+                                    const SizedBox(height: Insets.normal),
+                                    AppButton(
+                                      label: context.l10n.syncTitle,
+                                      icon: const Icon(Icons.sync),
+                                      variant: AppButtonVariant.primary,
+                                      onPressed: () =>
+                                          ConnectionDialog.openQRScanner(
+                                            context,
                                           ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                        ),
-                                      ),
                                     ),
                                   ],
                                 ),
-                                if (commState.connectionStatus == ConnectionStatus.connected)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: Insets.small),
-                                    child: SizedBox(
-                                      width: double.infinity,
-                                      child: TextButton(
-                                        onPressed: () {
-                                          try {
-                                            context.read<CommunicationBloc>()
-                                                .add(const CommunicationManualDisconnect());
-                                          } catch (_) {
-                                            getIt<CommunicationBloc>()
-                                                .add(const CommunicationManualDisconnect());
-                                          }
-                                        },
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: AppColors.error,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: Insets.small,
+                              ),
+                            ] else ...[
+                              Container(
+                                padding: const EdgeInsets.all(
+                                  Insets.smallNormal,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: borderColor),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _StatusRow(
+                                      icon:
+                                          commState.connectionStatus ==
+                                              ConnectionStatus.connected
+                                          ? Icons.link
+                                          : Icons.link_off,
+                                      label: context.l10n.connectionLabel,
+                                      status: _getConnectionStatus(
+                                        commState,
+                                        context.l10n,
+                                      ),
+                                      statusColor: _getConnectionColor(
+                                        commState,
+                                      ),
+                                    ),
+                                    const SizedBox(height: Insets.small),
+                                    _StatusRow(
+                                      icon: Icons.sync,
+                                      label: context.l10n.deviceSyncLabel,
+                                      status: _getSyncStatus(
+                                        commState,
+                                        lwwState,
+                                        context.l10n,
+                                      ),
+                                      statusColor: _getSyncColor(
+                                        commState,
+                                        lwwState,
+                                      ),
+                                    ),
+                                    const SizedBox(height: Insets.small),
+                                    _StatusRow(
+                                      icon: Icons.shield_outlined,
+                                      label: context.l10n.backupLabel,
+                                      status: _getBackupStatus(
+                                        commState,
+                                        backupState,
+                                        context.l10n,
+                                      ),
+                                      statusColor: _getBackupColor(
+                                        commState,
+                                        backupState,
+                                      ),
+                                    ),
+                                    const SizedBox(height: Insets.normal),
+                                    if (isDesktop)
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () =>
+                                              DeviceSyncDialog.show(context),
+                                          icon: Assets.icons.renewSync.svg(
+                                            width: 16,
+                                            height: 16,
+                                            colorFilter: const ColorFilter.mode(
+                                              Colors.white,
+                                              BlendMode.srcIn,
+                                            ),
+                                          ),
+                                          label: Text(
+                                            context.l10n.syncMedicalRecords,
+                                            style: AppTextStyle.buttonSmall,
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.primary,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: Insets.small,
+                                              vertical: Insets.small,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
                                           ),
                                         ),
-                                        child: Text(
-                                          context.l10n.disconnectLabel,
-                                          style: AppTextStyle.buttonSmall.copyWith(
-                                            color: AppColors.error,
+                                      ),
+                                    if (!isDesktop &&
+                                        commState.connectionStatus ==
+                                            ConnectionStatus.connected) ...[
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: ElevatedButton.icon(
+                                              onPressed: () =>
+                                                  DeviceSyncDialog.show(
+                                                    context,
+                                                  ),
+                                              icon: Assets.icons.renewSync.svg(
+                                                width: 16,
+                                                height: 16,
+                                                colorFilter:
+                                                    const ColorFilter.mode(
+                                                      Colors.white,
+                                                      BlendMode.srcIn,
+                                                    ),
+                                              ),
+                                              label: Text(
+                                                context.l10n.syncLabel,
+                                                style: AppTextStyle.buttonSmall,
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    AppColors.primary,
+                                                foregroundColor: Colors.white,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: Insets.small,
+                                                      vertical: Insets.small,
+                                                    ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: Insets.small),
+                                          Expanded(
+                                            child: ElevatedButton.icon(
+                                              onPressed:
+                                                  _canBackup(
+                                                    commState,
+                                                    backupState,
+                                                  )
+                                                  ? () => _requestRemoteBackup(
+                                                      context,
+                                                      commState,
+                                                    )
+                                                  : null,
+                                              icon: Icon(
+                                                Icons.shield_outlined,
+                                                size: 16,
+                                                color:
+                                                    _canBackup(
+                                                      commState,
+                                                      backupState,
+                                                    )
+                                                    ? Colors.white
+                                                    : null,
+                                              ),
+                                              label: Text(
+                                                backupState.isBackingUp
+                                                    ? context
+                                                          .l10n
+                                                          .backupStatusBackingUp
+                                                    : context.l10n.backupLabel,
+                                                style: AppTextStyle.buttonSmall,
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    AppColors.primary,
+                                                foregroundColor: Colors.white,
+                                                disabledBackgroundColor: context
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.06),
+                                                disabledForegroundColor: context
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.3),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: Insets.small,
+                                                      vertical: Insets.small,
+                                                    ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (commState.connectionStatus ==
+                                          ConnectionStatus.connected)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: Insets.small,
+                                          ),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: TextButton(
+                                              onPressed: () {
+                                                try {
+                                                  context
+                                                      .read<CommunicationBloc>()
+                                                      .add(
+                                                        const CommunicationManualDisconnect(),
+                                                      );
+                                                } catch (_) {
+                                                  getIt<CommunicationBloc>().add(
+                                                    const CommunicationManualDisconnect(),
+                                                  );
+                                                }
+                                              },
+                                              style: TextButton.styleFrom(
+                                                foregroundColor:
+                                                    AppColors.error,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: Insets.small,
+                                                    ),
+                                              ),
+                                              child: Text(
+                                                context.l10n.disconnectLabel,
+                                                style: AppTextStyle.buttonSmall
+                                                    .copyWith(
+                                                      color: AppColors.error,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                    if (!isDesktop &&
+                                        commState.connectionStatus !=
+                                            ConnectionStatus.connected) ...[
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () =>
+                                              DeviceSyncDialog.show(context),
+                                          icon: const Icon(
+                                            Icons.link,
+                                            size: 16,
+                                          ),
+                                          label: Text(
+                                            context.l10n.connect,
+                                            style: AppTextStyle.buttonSmall,
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.primary,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: Insets.small,
+                                              vertical: Insets.small,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                              ],
-                              if (!isDesktop &&
-                                  commState.connectionStatus != ConnectionStatus.connected) ...[
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => DeviceSyncDialog.show(context),
-                                    icon: const Icon(Icons.link, size: 16),
-                                    label: Text(
-                                      context.l10n.connect,
-                                      style: AppTextStyle.buttonSmall,
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: Insets.small,
-                                        vertical: Insets.small,
+                                    ],
+                                    if (isDesktop) ...[
+                                      const SizedBox(height: Insets.normal),
+                                      Divider(height: 1, color: borderColor),
+                                      const SizedBox(height: Insets.normal),
+                                      _BackupLocationRow(
+                                        path: backupState.backupPath,
+                                        isWorking:
+                                            backupState.isBackingUp ||
+                                            backupState.isRestoring,
                                       ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                    ),
-                                  ),
+                                    ],
+                                  ],
                                 ),
-                              ],
-                              if (isDesktop) ...[
-                                const SizedBox(height: Insets.normal),
-                                Divider(height: 1, color: borderColor),
-                                const SizedBox(height: Insets.normal),
-                                _BackupLocationRow(
-                                  path: backupState.backupPath,
-                                  isWorking: backupState.isBackingUp ||
-                                      backupState.isRestoring,
-                                ),
-                              ],
+                              ),
                             ],
-                          ),
+                          ],
                         ),
-                        ],
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               );
             },
           );
-        },
-      );
         },
       ),
     );
@@ -387,13 +481,18 @@ class SyncSection extends StatelessWidget {
     return AppColors.textSecondary;
   }
 
-  String _getSyncStatus(DesktopSyncState comm, LwwSyncState lww, AppLocalizations l10n) {
-    final isConnected =
-        comm.connectionStatus == ConnectionStatus.connected;
+  String _getSyncStatus(
+    DesktopSyncState comm,
+    LwwSyncState lww,
+    AppLocalizations l10n,
+  ) {
+    final isConnected = comm.connectionStatus == ConnectionStatus.connected;
     if (lww.syncStatus == LwwSyncStatus.syncing) return l10n.syncStatusSyncing;
     if (lww.isSynced && isConnected) return l10n.syncStatusInSync;
     if (isConnected) return l10n.connectionStatusConnected;
-    if (lww.pendingChangeCount > 0) return l10n.syncStatusPending(lww.pendingChangeCount);
+    if (lww.pendingChangeCount > 0) {
+      return l10n.syncStatusPending(lww.pendingChangeCount);
+    }
     if (lww.lastSyncTime != null) {
       return DateFormatUtils.getSincePretty(lww.lastSyncTime!);
     }
@@ -410,11 +509,17 @@ class SyncSection extends StatelessWidget {
     return AppColors.textSecondary;
   }
 
-  String _getBackupStatus(DesktopSyncState comm, BackupState state, AppLocalizations l10n) {
+  String _getBackupStatus(
+    DesktopSyncState comm,
+    BackupState state,
+    AppLocalizations l10n,
+  ) {
     if (state.isBackingUp) return l10n.backupStatusBackingUp;
     if (state.isRestoring) return l10n.backupStatusRestoring;
     if (state.backupHistory.isNotEmpty) {
-      return DateFormatUtils.getSincePretty(state.backupHistory.first.timestamp);
+      return DateFormatUtils.getSincePretty(
+        state.backupHistory.first.timestamp,
+      );
     }
     if (state.desktopLastBackupTime != null) {
       return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!);
@@ -429,7 +534,9 @@ class SyncSection extends StatelessWidget {
     if (state.isBackingUp || state.isRestoring) return AppColors.primary;
     if (state.backupHistory.isNotEmpty) return AppColors.success;
     if (state.desktopLastBackupTime != null) return AppColors.success;
-    if (comm.connectionStatus == ConnectionStatus.connected) return AppColors.textSecondary;
+    if (comm.connectionStatus == ConnectionStatus.connected) {
+      return AppColors.textSecondary;
+    }
     return AppColors.textSecondary;
   }
 
@@ -469,7 +576,11 @@ class _StatusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: context.colorScheme.onSurface.withValues(alpha: 0.4)),
+        Icon(
+          icon,
+          size: 16,
+          color: context.colorScheme.onSurface.withValues(alpha: 0.4),
+        ),
         const SizedBox(width: Insets.small),
         Text(
           label,
@@ -516,9 +627,12 @@ class _BackupLocationRow extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(Icons.folder_outlined, size: 14,
-            color: context.colorScheme.onSurface.withValues(alpha: 0.4)),
-        SizedBox(width: Insets.extraSmall),
+        Icon(
+          Icons.folder_outlined,
+          size: 14,
+          color: context.colorScheme.onSurface.withValues(alpha: 0.4),
+        ),
+        const SizedBox(width: Insets.extraSmall),
         Expanded(
           child: Tooltip(
             message: displayPath,
@@ -532,7 +646,7 @@ class _BackupLocationRow extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: Insets.extraSmall),
+        const SizedBox(width: Insets.extraSmall),
         InkWell(
           onTap: isWorking ? null : () => _pickDirectory(context),
           borderRadius: BorderRadius.circular(4),
@@ -561,7 +675,7 @@ class _BackupLocationRow extends StatelessWidget {
     String? result;
     if (Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
-        if (initialPath != null) 'initialDirectory': initialPath,
+        'initialDirectory': ?initialPath,
         'title': 'Choose Backup Location',
       });
     } else {

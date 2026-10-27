@@ -4,11 +4,11 @@ Measures how accurately the on-device pipeline (native OCR → llamadart phase 1
 
 Three parts:
 
-| Part | Where | Runs on |
-|---|---|---|
-| Generator, scorer, comparison (`generate`, `oracle`, `score`, `compare`) | `tool/extraction_bench/bench.dart`, `src/` | Host, pure Dart: `fvm dart run` |
-| Runner: the production pipeline over a dataset | `integration_test/extraction_bench_test.dart`, `integration_test/extraction_bench/` | The app on a desktop or device: `fvm flutter test` |
-| Unit tests | `test/extraction_bench/` | `fvm flutter test test/extraction_bench` |
+| Part                                                                     | Where                                                                               | Runs on                                            |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Generator, scorer, comparison (`generate`, `oracle`, `score`, `compare`) | `tool/extraction_bench/bench.dart`, `src/`                                          | Host, pure Dart: `fvm dart run`                    |
+| Runner: the production pipeline over a dataset                           | `integration_test/extraction_bench_test.dart`, `integration_test/extraction_bench/` | The app on a desktop or device: `fvm flutter test` |
+| Unit tests                                                               | `test/extraction_bench/`                                                            | `fvm flutter test test/extraction_bench`           |
 
 Datasets, results, models and real documents are never committed. Keep them under the gitignored `build/` or outside the repository.
 
@@ -44,16 +44,16 @@ fvm dart run tool/extraction_bench/bench.dart compare --dataset build/extraction
 
 `--dart-define`s:
 
-| Define | Default | Meaning |
-|---|---|---|
-| `BENCH_MODEL` | required | `AiModelVariant` name: `qwen`, `medGemma`, `qwen7b` |
-| `BENCH_VISION` | `true` | `useVision` for phase 2 (phase 1 always falls back to vision as in production). The app defaults to vision on desktop and text-only on phones (AI settings → vision off), so pass `false` for a phone run that matches what users get |
-| `BENCH_RUN_ID` | `<model>-<os>-<UTC timestamp>` | Results folder; re-using an id appends, and `score` keeps the last record per document |
-| `BENCH_LIMIT` | all | Process only the first N documents (sorted by docId) |
-| `BENCH_DOCS` | all | Process only these comma-separated docIds (e.g. to re-run the documents that errored; merge the records by docId before scoring) |
-| `BENCH_COOLDOWN_S` | `0` | Pause between documents, to keep phones out of thermal throttling |
-| `BENCH_OUTPUT` | the app's pref (unset: `schema`) | `ExtractionOutputMode` for every phase: `grammar` (the generic JSON-array grammar), `schema` (a flat per-phase JSON schema as llamadart `responseFormat`) or `schemaDraft` (an unconstrained draft call, then the schema call with the draft in its prompt). Sets the `aiOutputMode` pref for the run and restores it afterwards, so the runner reads the mode the way `ProcessingHandler` does. Recorded as `outputMode` in each record |
-| `BENCH_GPU_LAYERS` | the app's config | GPU layers for every model load, text and vision (`0` = CPU only, `99` = all). Without it the app's `DeviceCapabilityService.computeModelConfig` decides, and its text paths never take the AI-settings value; on iOS that is 0 layers for text and at most 4 for vision. Recorded as `gpuLayers` in each record |
+| Define             | Default                          | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BENCH_MODEL`      | required                         | `AiModelVariant` name: `qwen`, `medGemma`, `qwen7b`                                                                                                                                                                                                                                                                                                                                                                                      |
+| `BENCH_VISION`     | `true`                           | `useVision` for phase 2 (phase 1 always falls back to vision as in production). The app defaults to vision on desktop and text-only on phones (AI settings → vision off), so pass `false` for a phone run that matches what users get                                                                                                                                                                                                    |
+| `BENCH_RUN_ID`     | `<model>-<os>-<UTC timestamp>`   | Results folder; re-using an id appends, and `score` keeps the last record per document                                                                                                                                                                                                                                                                                                                                                   |
+| `BENCH_LIMIT`      | all                              | Process only the first N documents (sorted by docId)                                                                                                                                                                                                                                                                                                                                                                                     |
+| `BENCH_DOCS`       | all                              | Process only these comma-separated docIds (e.g. to re-run the documents that errored; merge the records by docId before scoring)                                                                                                                                                                                                                                                                                                         |
+| `BENCH_COOLDOWN_S` | `0`                              | Pause between documents, to keep phones out of thermal throttling                                                                                                                                                                                                                                                                                                                                                                        |
+| `BENCH_OUTPUT`     | the app's pref (unset: `schema`) | `ExtractionOutputMode` for every phase: `grammar` (the generic JSON-array grammar), `schema` (a flat per-phase JSON schema as llamadart `responseFormat`) or `schemaDraft` (an unconstrained draft call, then the schema call with the draft in its prompt). Sets the `aiOutputMode` pref for the run and restores it afterwards, so the runner reads the mode the way `ProcessingHandler` does. Recorded as `outputMode` in each record |
+| `BENCH_GPU_LAYERS` | the app's config                 | GPU layers for every model load, text and vision (`0` = CPU only, `99` = all). Without it the app's `DeviceCapabilityService.computeModelConfig` decides, and its text paths never take the AI-settings value; on iOS that is 0 layers for text and at most 4 for vision. Recorded as `gpuLayers` in each record                                                                                                                         |
 
 The runner fails before the first document when the model or mmproj file of `BENCH_MODEL` is missing from `<documents>/ai_models/`, naming the expected paths. Download the model in the app once (Settings → AI model) or copy the files there.
 
@@ -135,7 +135,7 @@ xcrun devicectl device copy from --device <udid> --domain-type appDataContainer 
 
 **Simulators and emulators** give valid extractions for accuracy and regression checks, but not phone speed or memory: llamadart runs on the CPU in the iOS simulator (its Metal backend returns wrong output there, llamadart issue #950), and the app runs llama.cpp on the CPU on every Android device, so both run at the Mac's CPU speed. Platform OCR differs (Vision on iOS, ML Kit on Android), so compare runs within one platform.
 
-*iOS simulator*: install once (the first run fails fast without a model), then copy into the data container. Its path changes on every reinstall, so look it up each time; `cp -c` clones the model without using disk.
+_iOS simulator_: install once (the first run fails fast without a model), then copy into the data container. Its path changes on every reinstall, so look it up each time; `cp -c` clones the model without using disk.
 
 ```bash
 SIM=<simulator udid>; xcrun simctl boot $SIM
@@ -147,7 +147,7 @@ fvm flutter test integration_test/extraction_bench_test.dart -d $SIM --no-uninst
 cp "$C/Documents/extraction_bench/results/qwen-sim-1/predictions.jsonl" build/extraction_bench/results/qwen-sim-1.jsonl
 ```
 
-*Android emulator*: an arm64 image with at least 6 GB RAM and enough free data space for the model (about 2 GB, plus as much again while it is staged in `/data/local/tmp`). The default AVD's 2 GB RAM and 6 GB data partition are too small, and `-partition-size` does not grow an existing one, so create a dedicated AVD:
+_Android emulator_: an arm64 image with at least 6 GB RAM and enough free data space for the model (about 2 GB, plus as much again while it is staged in `/data/local/tmp`). The default AVD's 2 GB RAM and 6 GB data partition are too small, and `-partition-size` does not grow an existing one, so create a dedicated AVD:
 
 ```bash
 echo no | avdmanager create avd -n bench_pixel -k "system-images;android-35;google_apis_playstore_ps16k;arm64-v8a" -d pixel_8a
@@ -161,14 +161,14 @@ Then follow the Android steps above with `-d emulator-5554`, pushing `build/extr
 
 Dataset `generate --seed 7 --per-cell 3` (24 documents), Qwen3-VL-2B, iPhone 17 Pro simulator (CPU), one run per mode with `BENCH_OUTPUT` and `BENCH_VISION`; `compare` with `--seed 1234`. Run ids `qwen-sim-<text|vision>-<mode>`.
 
-| Run | F1 [95% CI] | Recall | Omission | Strict JSON | Truncated | Median wall / doc |
-|---|---|---|---:|---:|---:|---:|
-| text, grammar | 0.564 [0.524, 0.603] | 0.587 | 14.2% | 95.8% | 4.2% | 47 s |
-| text, schema | 0.602 [0.573, 0.631] | 0.645 | 6.0% | 100.0% | 0.0% | 42 s |
-| text, schemaDraft | 0.606 [0.581, 0.633] | 0.649 | 6.1% | 100.0% | 0.0% | 59 s |
-| vision, grammar | 0.558 [0.516, 0.599] | 0.572 | 16.0% | 93.8% | 6.3% | 49 s |
-| vision, schema | 0.599 [0.570, 0.629] | 0.641 | 6.4% | 97.9% | 2.1% | 44 s |
-| vision, schemaDraft | 0.597 [0.571, 0.622] | 0.640 | 6.1% | 100.0% | 0.0% | 51 s |
+| Run                 | F1 [95% CI]          | Recall | Omission | Strict JSON | Truncated | Median wall / doc |
+| ------------------- | -------------------- | ------ | -------: | ----------: | --------: | ----------------: |
+| text, grammar       | 0.564 [0.524, 0.603] | 0.587  |    14.2% |       95.8% |      4.2% |              47 s |
+| text, schema        | 0.602 [0.573, 0.631] | 0.645  |     6.0% |      100.0% |      0.0% |              42 s |
+| text, schemaDraft   | 0.606 [0.581, 0.633] | 0.649  |     6.1% |      100.0% |      0.0% |              59 s |
+| vision, grammar     | 0.558 [0.516, 0.599] | 0.572  |    16.0% |       93.8% |      6.3% |              49 s |
+| vision, schema      | 0.599 [0.570, 0.629] | 0.641  |     6.4% |       97.9% |      2.1% |              44 s |
+| vision, schemaDraft | 0.597 [0.571, 0.622] | 0.640  |     6.1% |      100.0% |      0.0% |              51 s |
 
 ΔF1 schema − grammar (text): +0.038 [0.006, 0.072], P(≤ 0) = 0.011; largest on ro (+0.111) and es (+0.070), de and en within ±0.014. ΔF1 schemaDraft − schema (text): +0.004 [−0.012, 0.020], P(≤ 0) = 0.303. Vision runs: schema − grammar +0.041 [0.006, 0.077], schemaDraft − schema −0.003 [−0.016, 0.011]. By the rule fixed before measuring (text run decides: schema if ΔF1 ≥ 0 and strict JSON not lower; schemaDraft only if its lower CI bound over schema is > 0), `ExtractionOutputMode.defaultMode` is `schema`.
 
@@ -180,15 +180,15 @@ Measured on the code before the phase-2 multi-page fix; "Phase-2 multi-page fix 
 
 Research recommendation 4 (D1a). Dataset `generate --seed 7 --per-cell 6` (48 documents, `build/extraction_bench/dataset-48`), text only (`BENCH_VISION=false`), `BENCH_OUTPUT=schema`, iPhone 17 Pro and 17 Pro Max simulators (CPU), two runs in parallel; `compare` against the tier's current model with `--seed 1234`. Run ids `<variant>-sim-text-48`. The candidates are bench-only `AiModelVariant`s (not in `availableVariants`); NuExtract 2.0 and NuExtract3 get their chat template's `template` kwarg (built from the phase schema by `NuExtractPrompt`) and, for NuExtract3, `instructions`; the others use the production prompts. Every candidate loaded and ran in llamadart 0.15.6 (`qwen35` architecture and BF16 mmproj included). Rule fixed before measuring: recommend a candidate only if the lower bound of its ΔF1 95% CI is above 0 and strict JSON and truncation are no worse. Simulator times and RAM are not phone numbers; download is model + mmproj.
 
-| Tier | Model | F1 [95% CI] | ΔF1 vs tier model [95% CI] | Omission | Hallucination | Strict JSON | Truncated | Median wall / doc | Download | Licence |
-|---|---|---|---|---:|---:|---:|---:|---:|---:|---|
-| Lite | Qwen3-VL-2B (shipped) | 0.604 [0.585, 0.623] | | 5.8% | 16.5% | 99.0% | 1.0% | 48 s | 1.93 GB | Apache-2.0 |
-| Lite | Qwen3.5-2B | 0.594 | −0.010 [−0.030, 0.009] | 11.6% | 16.2% | 97.9% | 2.1% | 55 s | 1.95 GB | Apache-2.0 |
-| Lite | NuExtract 2.0-2B | 0.510 | −0.094 [−0.119, −0.069] | 35.3% | 21.6% | 100.0% | 0.0% | 29 s | 2.32 GB | MIT |
-| Advanced | MedGemma 1 4B (shipped) | 0.635 [0.611, 0.660] | | 9.7% | 18.2% | 100.0% | 0.0% | 85 s | 3.34 GB | HAI-DEF |
-| Advanced | Qwen3.5-4B | 0.696 [0.675, 0.718] | **+0.061 [0.041, 0.082]** | 3.8% | 14.7% | 97.9% | 2.1% | 99 s | 3.41 GB | Apache-2.0 |
-| Advanced | NuExtract3 (4B) | 0.650 [0.632, 0.670] | +0.015 [−0.005, 0.036] | 6.5% | 17.5% | 100.0% | 0.0% | 85 s | 3.46 GB | Apache-2.0 |
-| Advanced | MedGemma 1.5 4B | 0.548 [0.527, 0.570] | −0.087 [−0.114, −0.061] | 22.4% | 16.2% | 100.0% | 0.0% | 76 s | 3.34 GB | HAI-DEF |
+| Tier     | Model                   | F1 [95% CI]          | ΔF1 vs tier model [95% CI] | Omission | Hallucination | Strict JSON | Truncated | Median wall / doc | Download | Licence    |
+| -------- | ----------------------- | -------------------- | -------------------------- | -------: | ------------: | ----------: | --------: | ----------------: | -------: | ---------- |
+| Lite     | Qwen3-VL-2B (shipped)   | 0.604 [0.585, 0.623] |                            |     5.8% |         16.5% |       99.0% |      1.0% |              48 s |  1.93 GB | Apache-2.0 |
+| Lite     | Qwen3.5-2B              | 0.594                | −0.010 [−0.030, 0.009]     |    11.6% |         16.2% |       97.9% |      2.1% |              55 s |  1.95 GB | Apache-2.0 |
+| Lite     | NuExtract 2.0-2B        | 0.510                | −0.094 [−0.119, −0.069]    |    35.3% |         21.6% |      100.0% |      0.0% |              29 s |  2.32 GB | MIT        |
+| Advanced | MedGemma 1 4B (shipped) | 0.635 [0.611, 0.660] |                            |     9.7% |         18.2% |      100.0% |      0.0% |              85 s |  3.34 GB | HAI-DEF    |
+| Advanced | Qwen3.5-4B              | 0.696 [0.675, 0.718] | **+0.061 [0.041, 0.082]**  |     3.8% |         14.7% |       97.9% |      2.1% |              99 s |  3.41 GB | Apache-2.0 |
+| Advanced | NuExtract3 (4B)         | 0.650 [0.632, 0.670] | +0.015 [−0.005, 0.036]     |     6.5% |         17.5% |      100.0% |      0.0% |              85 s |  3.46 GB | Apache-2.0 |
+| Advanced | MedGemma 1.5 4B         | 0.548 [0.527, 0.570] | −0.087 [−0.114, −0.061]    |    22.4% |         16.2% |      100.0% |      0.0% |              76 s |  3.34 GB | HAI-DEF    |
 
 Every run classified all 48 documents correctly as lab report or visit except NuExtract 2.0 (31/48; it has no instructions slot, so it never sees the lab-report-vs-visit rule).
 
@@ -205,27 +205,27 @@ The missing-patient-ID path of the schema change is not measured by these runs: 
 
 A real 4-page Romanian lab report (7 results, hand-written gold, under the gitignored `build/`; never committed) scored 0.16–0.38 on an iPhone 17 with every model. Phase 2 saw only the first 2000 OCR characters, mostly the letterhead and patient block, so the answer stopped after the second test; `ObservationOcrValidator` then added phone numbers, addresses, page footers and reference-range rows as observations. The fix (`OcrPages`, 4096-context chunked text calls, per-batch vision OCR, a stricter validator; see `doc/architecture.md`, Output modes) took the real report on the iPhone 17 (`BENCH_DOCS=ro-lab-real-001`, schema, vision on; every 4B model's vision load fails the memory check on the 8 GB phone and phase 2 runs text-only) to:
 
-| Model | F1 before | F1 after | Wall after |
-|---|---:|---:|---:|
-| Qwen3-VL-2B (Lite) | 0.215 | 0.431 | 42 s |
-| Qwen3.5-2B | 0.247 | 0.521 | 48 s |
-| NuExtract 2.0-2B | 0.380 | 0.365 | 39 s |
-| MedGemma 1 4B (Advanced) | 0.157 | 0.352 | 145 s |
-| Qwen3.5-4B | 0.277 | 0.596 | 94 s |
-| NuExtract3 | 0.244 | 0.425 | 139 s |
-| MedGemma 1.5 4B | 0.231 | 0.373 | 59 s |
+| Model                    | F1 before | F1 after | Wall after |
+| ------------------------ | --------: | -------: | ---------: |
+| Qwen3-VL-2B (Lite)       |     0.215 |    0.431 |       42 s |
+| Qwen3.5-2B               |     0.247 |    0.521 |       48 s |
+| NuExtract 2.0-2B         |     0.380 |    0.365 |       39 s |
+| MedGemma 1 4B (Advanced) |     0.157 |    0.352 |      145 s |
+| Qwen3.5-4B               |     0.277 |    0.596 |       94 s |
+| NuExtract3               |     0.244 |    0.425 |      139 s |
+| MedGemma 1.5 4B          |     0.231 |    0.373 |       59 s |
 
 What is left on that report: a value taken from the next row, OCR unit misreads (`Ul/mL`) and an OCR prefix kept in a test name.
 
 Two simulator sets, text only, schema, run ids `<variant>-sim-long-fix` and `<variant>-sim-text-48-fix`: `dataset-long` (`generate --seed 7 --per-cell 3 --families lab_report_long`, 12 documents of 2–3 pages) and the 48-document set above. Qwen3-VL-2B old → new code: long 0.091 → 0.561 (+0.470 [0.413, 0.523]; the old code hallucinated 90.9% of its fields and truncated half its generations), 48 documents 0.604 → 0.652 (+0.048 [0.038, 0.059], hallucination 16.5% → 4.1%). MedGemma 48 documents 0.635 → 0.684 (+0.049 [0.039, 0.061]). Every earlier candidate comparison carried the validator's junk, so the candidates were re-run on the new code; NuExtract 2.0 and MedGemma 1.5 were left out (clearly worse above).
 
-| Tier | Model | F1, 48 docs | ΔF1 vs tier model, 48 [95% CI] | Halluc. 48 | F1, long | ΔF1, long [95% CI] | Strict JSON / truncated, long | Median wall / doc, 48 / long |
-|---|---|---:|---|---:|---:|---|---|---:|
-| Lite | Qwen3-VL-2B (shipped) | 0.652 | | 4.1% | 0.561 | | 100% / 0% | 49 / 102 s |
-| Lite | Qwen3.5-2B | 0.641 | −0.011 [−0.032, 0.010] | 3.8% | 0.522 | −0.038 [−0.117, 0.043] | 86.2% / 13.8% | 58 / 145 s |
-| Advanced | MedGemma 1 4B (shipped) | 0.684 | | 5.8% | 0.575 | | 93.1% / 6.9% | 94 / 216 s |
-| Advanced | Qwen3.5-4B | 0.751 | **+0.067 [0.046, 0.088]** | 1.9% | 0.659 | **+0.084 [0.024, 0.143]** | 100% / 0% | 104 / 193 s |
-| Advanced | NuExtract3 (4B) | 0.676 | −0.009 [−0.049, 0.025] | 5.5% | 0.580 | +0.005 [−0.074, 0.075] | 100% / 0% | 91 / 207 s |
+| Tier     | Model                   | F1, 48 docs | ΔF1 vs tier model, 48 [95% CI] | Halluc. 48 | F1, long | ΔF1, long [95% CI]        | Strict JSON / truncated, long | Median wall / doc, 48 / long |
+| -------- | ----------------------- | ----------: | ------------------------------ | ---------: | -------: | ------------------------- | ----------------------------- | ---------------------------: |
+| Lite     | Qwen3-VL-2B (shipped)   |       0.652 |                                |       4.1% |    0.561 |                           | 100% / 0%                     |                   49 / 102 s |
+| Lite     | Qwen3.5-2B              |       0.641 | −0.011 [−0.032, 0.010]         |       3.8% |    0.522 | −0.038 [−0.117, 0.043]    | 86.2% / 13.8%                 |                   58 / 145 s |
+| Advanced | MedGemma 1 4B (shipped) |       0.684 |                                |       5.8% |    0.575 |                           | 93.1% / 6.9%                  |                   94 / 216 s |
+| Advanced | Qwen3.5-4B              |       0.751 | **+0.067 [0.046, 0.088]**      |       1.9% |    0.659 | **+0.084 [0.024, 0.143]** | 100% / 0%                     |                  104 / 193 s |
+| Advanced | NuExtract3 (4B)         |       0.676 | −0.009 [−0.049, 0.025]         |       5.5% |    0.580 | +0.005 [−0.074, 0.075]    | 100% / 0%                     |                   91 / 207 s |
 
 All 48-document runs have 100% strict JSON and no truncation. One NuExtract3 document (en-lab-003) failed the simulator's memory check twice (the simulator reports the Mac's free RAM) and counts as an error; its other memory-check failure was re-run and merged (`nuExtract3-sim-text-48-fix-merged`).
 
@@ -272,31 +272,31 @@ De-identification rule: a real document enters the hold-out only after every dir
 
 Per document, within each resource type, predicted and gold resources are paired by the Hungarian algorithm (rectangular Kuhn–Munkres, cost Σ(1 − field score)). A pair that agrees on no field (no field present on both sides with a score above 0) gets a prohibitive cost, so it never displaces an agreeing pair, and stays unmatched if the assignment still proposes it.
 
-| Case | Counts |
-|---|---|
-| Both null on a matched pair | TP 1 (correct-null credit) |
-| Gold null, predicted value | FP 1 (hallucinated) |
-| Gold value, predicted null | FN 1 (omitted) |
-| Both present, score s | TP s, FP 1 − s, FN 1 − s |
-| Unmatched gold record | FN per non-null gold field (omitted) |
-| Unmatched predicted record | FP per non-null predicted field (hallucinated) |
+| Case                        | Counts                                         |
+| --------------------------- | ---------------------------------------------- |
+| Both null on a matched pair | TP 1 (correct-null credit)                     |
+| Gold null, predicted value  | FP 1 (hallucinated)                            |
+| Gold value, predicted null  | FN 1 (omitted)                                 |
+| Both present, score s       | TP s, FP 1 − s, FN 1 − s                       |
+| Unmatched gold record       | FN per non-null gold field (omitted)           |
+| Unmatched predicted record  | FP per non-null predicted field (hallucinated) |
 
 Empty strings count as null. Per document: micro precision, recall and F1 (`2TP / (2TP + FP + FN)`; with nothing predicted, precision is 1 only if nothing was missed), omission rate (omitted FN / gold non-null fields) and hallucination rate (hallucinated FP / predicted non-null fields). Reports give the mean of each (F1, P, R, omission and hallucination rates) over documents with 95% percentile bootstrap CIs over documents (10,000 resamples, `--seed`). A document missing from the predictions, or whose record has an `error`, is scored with no predictions and counted under `missing` / `errors`.
 
 Scored fields are only those `toFhirResource` can fill. The gold is fixed FHIR truth, coded concepts included, so the scale is absolute rather than relative to what the app can emit: the app codes only the patient identifier type, the encounter specialty and vital-sign observations, so a text-only prediction earns at most 0.5 on a coded concept and a flawless extraction still scores below 1.0. The oracle's 1.0 only checks that the scorer is consistent with itself.
 
-| Type | Fields |
-|---|---|
-| Patient | family (text), given (set), birthDate (date), gender (exact), identifier value (identifier) |
-| Encounter | type (concept), serviceType (concept), period.start (date) |
-| DiagnosticReport | code (concept), effectiveDateTime / issued (date), conclusion (text) |
-| Observation | code (concept), valueQuantity / valueString (quantity) |
-| Condition | code (concept), onsetDateTime (date) |
-| MedicationStatement | medicationCodeableConcept (concept), dosage text (text) |
-| AllergyIntolerance | code (concept), category (exact), first reaction manifestation (concept) |
-| Procedure | code (concept), performedDateTime (date) |
-| Practitioner | name text (text), qualification (concept), identifier value (identifier) |
-| Organization | name (text), address text (text), phone (identifier) |
+| Type                | Fields                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Patient             | family (text), given (set), birthDate (date), gender (exact), identifier value (identifier) |
+| Encounter           | type (concept), serviceType (concept), period.start (date)                                  |
+| DiagnosticReport    | code (concept), effectiveDateTime / issued (date), conclusion (text)                        |
+| Observation         | code (concept), valueQuantity / valueString (quantity)                                      |
+| Condition           | code (concept), onsetDateTime (date)                                                        |
+| MedicationStatement | medicationCodeableConcept (concept), dosage text (text)                                     |
+| AllergyIntolerance  | code (concept), category (exact), first reaction manifestation (concept)                    |
+| Procedure           | code (concept), performedDateTime (date)                                                    |
+| Practitioner        | name text (text), qualification (concept), identifier value (identifier)                    |
+| Organization        | name (text), address text (text), phone (identifier)                                        |
 
 Comparators:
 

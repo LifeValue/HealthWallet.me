@@ -112,25 +112,32 @@ class ResourceFieldMapper {
   }
 
   /// Creates an organization info line
-  static RecordInfoLine? createOrganizationLine(String? organization,
-      {String? prefix}) {
+  static RecordInfoLine? createOrganizationLine(
+    String? organization, {
+    String? prefix,
+  }) {
     if (organization == null || organization.isEmpty) return null;
-    final displayText =
-        prefix != null ? '$prefix: $organization' : organization;
+    final displayText = prefix != null
+        ? '$prefix: $organization'
+        : organization;
     return RecordInfoLine(icon: organizationIcon, info: displayText);
   }
 
   /// Creates a location info line
-  static RecordInfoLine? createLocationLine(String? location,
-      {String? prefix}) {
+  static RecordInfoLine? createLocationLine(
+    String? location, {
+    String? prefix,
+  }) {
     if (location == null || location.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $location' : location;
     return RecordInfoLine(icon: locationIcon, info: displayText);
   }
 
   /// Creates a medication info line
-  static RecordInfoLine? createMedicationLine(String? medication,
-      {String? prefix}) {
+  static RecordInfoLine? createMedicationLine(
+    String? medication, {
+    String? prefix,
+  }) {
     if (medication == null || medication.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $medication' : medication;
     return RecordInfoLine(icon: medicationIcon, info: displayText);
@@ -144,8 +151,10 @@ class ResourceFieldMapper {
   }
 
   /// Creates a procedure info line
-  static RecordInfoLine? createProcedureLine(String? procedure,
-      {String? prefix}) {
+  static RecordInfoLine? createProcedureLine(
+    String? procedure, {
+    String? prefix,
+  }) {
     if (procedure == null || procedure.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $procedure' : procedure;
     return RecordInfoLine(icon: procedureIcon, info: displayText);
@@ -166,8 +175,10 @@ class ResourceFieldMapper {
   }
 
   /// Creates a category info line
-  static RecordInfoLine? createCategoryLine(String? category,
-      {String? prefix}) {
+  static RecordInfoLine? createCategoryLine(
+    String? category, {
+    String? prefix,
+  }) {
     if (category == null || category.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $category' : category;
     return RecordInfoLine(icon: categoryIcon, info: displayText);
@@ -181,8 +192,10 @@ class ResourceFieldMapper {
   }
 
   /// Creates a body site info line
-  static RecordInfoLine? createBodySiteLine(String? bodySite,
-      {String? prefix}) {
+  static RecordInfoLine? createBodySiteLine(
+    String? bodySite, {
+    String? prefix,
+  }) {
     if (bodySite == null || bodySite.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $bodySite' : bodySite;
     return RecordInfoLine(icon: bodySiteIcon, info: displayText);
@@ -196,42 +209,54 @@ class ResourceFieldMapper {
   }
 
   /// Creates an immunization info line
-  static RecordInfoLine? createImmunizationLine(String? immunization,
-      {String? prefix}) {
+  static RecordInfoLine? createImmunizationLine(
+    String? immunization, {
+    String? prefix,
+  }) {
     if (immunization == null || immunization.isEmpty) return null;
-    final displayText =
-        prefix != null ? '$prefix: $immunization' : immunization;
+    final displayText = prefix != null
+        ? '$prefix: $immunization'
+        : immunization;
     return RecordInfoLine(icon: immunizationIcon, info: displayText);
   }
 
   /// Creates a document info line
-  static RecordInfoLine? createDocumentLine(String? document,
-      {String? prefix}) {
+  static RecordInfoLine? createDocumentLine(
+    String? document, {
+    String? prefix,
+  }) {
     if (document == null || document.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $document' : document;
     return RecordInfoLine(icon: documentIcon, info: displayText);
   }
 
   /// Creates an identification info line
-  static RecordInfoLine? createIdentificationLine(String? identification,
-      {String? prefix}) {
+  static RecordInfoLine? createIdentificationLine(
+    String? identification, {
+    String? prefix,
+  }) {
     if (identification == null || identification.isEmpty) return null;
-    final displayText =
-        prefix != null ? '$prefix: $identification' : identification;
+    final displayText = prefix != null
+        ? '$prefix: $identification'
+        : identification;
     return RecordInfoLine(icon: identificationIcon, info: displayText);
   }
 
   /// Creates a timeline/period info line
-  static RecordInfoLine? createTimelineLine(String? timeline,
-      {String? prefix}) {
+  static RecordInfoLine? createTimelineLine(
+    String? timeline, {
+    String? prefix,
+  }) {
     if (timeline == null || timeline.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $timeline' : timeline;
     return RecordInfoLine(icon: timelineIcon, info: displayText);
   }
 
   /// Creates an activity info line
-  static RecordInfoLine? createActivityLine(String? activity,
-      {String? prefix}) {
+  static RecordInfoLine? createActivityLine(
+    String? activity, {
+    String? prefix,
+  }) {
     if (activity == null || activity.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $activity' : activity;
     return RecordInfoLine(icon: activityIcon, info: displayText);
@@ -245,8 +270,10 @@ class ResourceFieldMapper {
   }
 
   /// Creates an attachment info line
-  static RecordInfoLine? createAttachmentLine(String? attachment,
-      {String? prefix}) {
+  static RecordInfoLine? createAttachmentLine(
+    String? attachment, {
+    String? prefix,
+  }) {
     if (attachment == null || attachment.isEmpty) return null;
     final displayText = prefix != null ? '$prefix: $attachment' : attachment;
     return RecordInfoLine(icon: attachmentIcon, info: displayText);

@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+
 import 'package:pdfx/pdfx.dart' as pdfx;
 
 Future<Uint8List?> renderPdfFirstPage(

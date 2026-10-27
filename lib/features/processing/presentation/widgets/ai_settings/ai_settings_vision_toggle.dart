@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/l10n/l10n.dart';
 
 class AiVisionToggleSection extends StatelessWidget {
   final bool useVision;
@@ -117,9 +117,7 @@ class AiVisionToggleSection extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 decoration: BoxDecoration(
-                  color: !useVision
-                      ? colorScheme.primary
-                      : Colors.transparent,
+                  color: !useVision ? colorScheme.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
@@ -128,8 +126,8 @@ class AiVisionToggleSection extends StatelessWidget {
                     style: context.textTheme.bodySmall?.copyWith(
                       color: !useVision
                           ? (context.isDarkMode
-                              ? Colors.white
-                              : colorScheme.onPrimary)
+                                ? Colors.white
+                                : colorScheme.onPrimary)
                           : colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
@@ -141,9 +139,7 @@ class AiVisionToggleSection extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 decoration: BoxDecoration(
-                  color: useVision
-                      ? colorScheme.primary
-                      : Colors.transparent,
+                  color: useVision ? colorScheme.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
@@ -152,8 +148,8 @@ class AiVisionToggleSection extends StatelessWidget {
                     style: context.textTheme.bodySmall?.copyWith(
                       color: useVision
                           ? (context.isDarkMode
-                              ? Colors.white
-                              : colorScheme.onPrimary)
+                                ? Colors.white
+                                : colorScheme.onPrimary)
                           : colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
@@ -189,8 +185,9 @@ class AiVisionToggleSection extends StatelessWidget {
               value: mmprojProgress / 100,
               minHeight: 4,
               backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
             ),
           ),
         ],

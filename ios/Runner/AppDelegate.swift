@@ -1,7 +1,7 @@
-import Flutter
-import UIKit
-import PassKit
 import CoreBluetooth
+import Flutter
+import PassKit
+import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -32,8 +32,11 @@ import CoreBluetooth
         walletChannel.setMethodCallHandler { [weak self] (call, result) in
             if call.method == "addPass" {
                 guard let args = call.arguments as? [String: Any],
-                      let filePath = args["filePath"] as? String else {
-                    result(FlutterError(code: "INVALID_ARGS", message: "filePath required", details: nil))
+                    let filePath = args["filePath"] as? String
+                else {
+                    result(
+                        FlutterError(
+                            code: "INVALID_ARGS", message: "filePath required", details: nil))
                     return
                 }
                 self?.addPassToWallet(filePath: filePath, result: result)
@@ -79,14 +82,20 @@ import CoreBluetooth
 
     private func addPassToWallet(filePath: String, result: @escaping FlutterResult) {
         guard let passData = FileManager.default.contents(atPath: filePath) else {
-            result(FlutterError(code: "FILE_NOT_FOUND", message: "Pass file not found at \(filePath)", details: nil))
+            result(
+                FlutterError(
+                    code: "FILE_NOT_FOUND", message: "Pass file not found at \(filePath)",
+                    details: nil))
             return
         }
 
         do {
             let pass = try PKPass(data: passData)
             guard let addPassVC = PKAddPassesViewController(pass: pass) else {
-                result(FlutterError(code: "PASS_ERROR", message: "Could not create add pass controller", details: nil))
+                result(
+                    FlutterError(
+                        code: "PASS_ERROR", message: "Could not create add pass controller",
+                        details: nil))
                 return
             }
 
@@ -100,7 +109,9 @@ import CoreBluetooth
                 result(true)
             }
         } catch {
-            result(FlutterError(code: "PASS_INVALID", message: error.localizedDescription, details: nil))
+            result(
+                FlutterError(
+                    code: "PASS_INVALID", message: error.localizedDescription, details: nil))
         }
     }
 }
@@ -112,9 +123,11 @@ class BluetoothStateDelegate: NSObject, FlutterStreamHandler, CBCentralManagerDe
 
     override init() {
         super.init()
-        centralManager = CBCentralManager(delegate: self, queue: nil, options: [
-            CBCentralManagerOptionShowPowerAlertKey: false
-        ])
+        centralManager = CBCentralManager(
+            delegate: self, queue: nil,
+            options: [
+                CBCentralManagerOptionShowPowerAlertKey: false
+            ])
     }
 
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
@@ -122,7 +135,9 @@ class BluetoothStateDelegate: NSObject, FlutterStreamHandler, CBCentralManagerDe
         eventSink?(isBluetoothOn)
     }
 
-    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink)
+        -> FlutterError?
+    {
         eventSink = events
         return nil
     }

@@ -93,7 +93,9 @@ class DateRangeDropdownService {
       ...List.generate(
         daysInMonth,
         (index) => DateDropdownItem(
-            value: index + 1, displayText: (index + 1).toString()),
+          value: index + 1,
+          displayText: (index + 1).toString(),
+        ),
       ),
     ];
   }

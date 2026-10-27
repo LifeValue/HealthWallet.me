@@ -9,9 +9,9 @@ class PageViewNavigationController {
   int? _targetPage;
 
   PageViewNavigationController()
-      : _pageController = PageController(initialPage: 0),
-        _currentPageNotifier = ValueNotifier<int>(0),
-        swipeEnabledNotifier = ValueNotifier<bool>(true) {
+    : _pageController = PageController(initialPage: 0),
+      _currentPageNotifier = ValueNotifier<int>(0),
+      swipeEnabledNotifier = ValueNotifier<bool>(true) {
     _pageController.addListener(_onPageChanged);
   }
 

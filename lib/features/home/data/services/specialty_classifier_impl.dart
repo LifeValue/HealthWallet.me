@@ -1,8 +1,8 @@
-import 'package:injectable/injectable.dart';
+import 'package:health_wallet/features/home/data/services/specialty_code_registry.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
-import 'package:health_wallet/features/home/data/services/specialty_code_registry.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
+import 'package:injectable/injectable.dart';
 
 @LazySingleton(as: SpecialtyClassifier)
 class SpecialtyClassifierImpl implements SpecialtyClassifier {
@@ -11,8 +11,9 @@ class SpecialtyClassifierImpl implements SpecialtyClassifier {
   @override
   void buildEncounterIndex(List<IFhirResource> allResources) {
     _encounterSpecialties.clear();
-    final encounters = allResources
-        .where((r) => r.fhirType == FhirType.Encounter);
+    final encounters = allResources.where(
+      (r) => r.fhirType == FhirType.Encounter,
+    );
     for (final encounter in encounters) {
       final specialties = _classifyInternal(encounter);
       if (specialties.isNotEmpty) {

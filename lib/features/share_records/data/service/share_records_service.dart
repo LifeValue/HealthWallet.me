@@ -4,13 +4,12 @@ import 'dart:io';
 
 import 'package:airdrop/airdrop.dart';
 import 'package:flutter/foundation.dart';
-import 'package:injectable/injectable.dart';
-import 'package:path_provider/path_provider.dart';
-
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
-import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 import 'package:health_wallet/features/share_records/data/mapper/fhir_bundle_mapper.dart';
+import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
+import 'package:injectable/injectable.dart';
+import 'package:path_provider/path_provider.dart';
 
 @lazySingleton
 class ShareRecordsService {
@@ -118,7 +117,9 @@ class ShareRecordsService {
     return sessionDir.path;
   }
 
-  Future<EphemeralRecordsContainer?> parseReceivedData(ReceivedData receivedData) {
+  Future<EphemeralRecordsContainer?> parseReceivedData(
+    ReceivedData receivedData,
+  ) {
     return _parsePayloadBytes(receivedData.data);
   }
 
@@ -128,7 +129,7 @@ class ShareRecordsService {
       final bytes = await file.readAsBytes();
       await file.delete();
       debugPrint('[TRANSFER] Deleted temp file: $filePath');
-      return _parsePayloadBytes(bytes);
+      return await _parsePayloadBytes(bytes);
     } catch (e) {
       debugPrint('[TRANSFER] Error parsing received file: $e');
       try {
@@ -202,17 +203,23 @@ class ShareRecordsService {
 
   Stream<void> get sessionEndedStream => _airdropService.sessionEndedStream;
 
-  Stream<int> get sessionExtendRequestStream => _airdropService.sessionExtendRequestStream;
+  Stream<int> get sessionExtendRequestStream =>
+      _airdropService.sessionExtendRequestStream;
 
-  Stream<int> get sessionExtendAcceptedStream => _airdropService.sessionExtendAcceptedStream;
+  Stream<int> get sessionExtendAcceptedStream =>
+      _airdropService.sessionExtendAcceptedStream;
 
-  Stream<void> get sessionExtendRejectedStream => _airdropService.sessionExtendRejectedStream;
+  Stream<void> get sessionExtendRejectedStream =>
+      _airdropService.sessionExtendRejectedStream;
 
   Stream<void> get viewingStartedStream => _airdropService.viewingStartedStream;
 
-  Stream<void> get invitationRejectedStream => _airdropService.invitationRejectedStream;
+  Stream<void> get invitationRejectedStream =>
+      _airdropService.invitationRejectedStream;
 
-  Stream<void> get wifiToggleNeededStream => _airdropService.wifiToggleNeededStream;
+  Stream<void> get wifiToggleNeededStream =>
+      _airdropService.wifiToggleNeededStream;
 
-  Stream<Map<String, dynamic>> get connectionHealthStream => _airdropService.connectionHealthStream;
+  Stream<Map<String, dynamic>> get connectionHealthStream =>
+      _airdropService.connectionHealthStream;
 }

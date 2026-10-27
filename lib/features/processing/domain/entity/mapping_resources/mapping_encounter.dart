@@ -1,3 +1,4 @@
+import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
@@ -7,13 +8,14 @@ import 'package:health_wallet/features/processing/domain/entity/mapping_resource
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
 import 'package:health_wallet/features/processing/domain/entity/text_field_descriptor.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:uuid/uuid.dart';
 
 part 'mapping_encounter.freezed.dart';
 
 @freezed
-abstract class MappingEncounter with _$MappingEncounter implements MappingResource {
+abstract class MappingEncounter
+    with _$MappingEncounter
+    implements MappingResource {
   const MappingEncounter._();
 
   const factory MappingEncounter({
@@ -26,7 +28,7 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
   factory MappingEncounter.fromJson(Map<String, dynamic> json) {
     final rawPeriodStart = MappedProperty.fromJson(json['periodStart']);
     return MappingEncounter(
-      id: json["id"] ?? const Uuid().v4(),
+      id: json['id'] ?? const Uuid().v4(),
       encounterType: MappedProperty.fromJson(json['encounterType']),
       periodStart: rawPeriodStart.copyWith(
         value: MappingResource.normalizeDateValue(rawPeriodStart.value),
@@ -62,12 +64,12 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'resourceType': 'Encounter',
-        'encounterType': encounterType.toJson(),
-        'periodStart': periodStart.toJson(),
-        'specialty': specialty.toJson(),
-      };
+    'id': id,
+    'resourceType': 'Encounter',
+    'encounterType': encounterType.toJson(),
+    'periodStart': periodStart.toJson(),
+    'specialty': specialty.toJson(),
+  };
 
   @override
   IFhirResource toFhirResource({
@@ -76,45 +78,54 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
     String? subjectId,
     fhir_r4.FhirMeta? meta,
   }) {
-    fhir_r4.Encounter encounter = fhir_r4.Encounter(
-        type: [
-          fhir_r4.CodeableConcept(text: fhir_r4.FhirString(encounterType.value))
-        ],
-        serviceType: specialty.value.isNotEmpty
-            ? fhir_r4.CodeableConcept(
-                coding: [
-                  fhir_r4.Coding(
-                    system: fhir_r4.FhirUri('http://snomed.info/sct'),
-                    code: fhir_r4.FhirCode(_getSnomedCodeForSpecialty(specialty.value)),
-                    display: fhir_r4.FhirString(specialty.value),
+    final fhir_r4.Encounter encounter = fhir_r4.Encounter(
+      type: [
+        fhir_r4.CodeableConcept(text: fhir_r4.FhirString(encounterType.value)),
+      ],
+      serviceType: specialty.value.isNotEmpty
+          ? fhir_r4.CodeableConcept(
+              coding: [
+                fhir_r4.Coding(
+                  system: fhir_r4.FhirUri('http://snomed.info/sct'),
+                  code: fhir_r4.FhirCode(
+                    _getSnomedCodeForSpecialty(specialty.value),
                   ),
-                ],
-                text: fhir_r4.FhirString(specialty.value),
-              )
-            : null,
-        meta: meta ??
-            (specialty.value.isNotEmpty
-                ? fhir_r4.FhirMeta(
-                    tag: [
-                      fhir_r4.Coding(
-                        system: fhir_r4.FhirUri('http://healthwallet.me/specialty'),
-                        code: fhir_r4.FhirCode(_getSpecialtyEnumName(specialty.value)),
-                        display: fhir_r4.FhirString(specialty.value),
+                  display: fhir_r4.FhirString(specialty.value),
+                ),
+              ],
+              text: fhir_r4.FhirString(specialty.value),
+            )
+          : null,
+      meta:
+          meta ??
+          (specialty.value.isNotEmpty
+              ? fhir_r4.FhirMeta(
+                  tag: [
+                    fhir_r4.Coding(
+                      system: fhir_r4.FhirUri(
+                        'http://healthwallet.me/specialty',
                       ),
-                    ],
-                  )
-                : null),
-        period: periodStart.value.isNotEmpty
-            ? fhir_r4.Period(
-                start: fhir_r4.FhirDateTime.fromString(periodStart.value),
-              )
-            : null,
-        status: fhir_r4.EncounterStatus.unknown,
-        class_: fhir_r4.Coding(code: fhir_r4.FhirCode("AMB")),
-        subject: fhir_r4.Reference(
-            reference: fhir_r4.FhirString('Patient/$subjectId')));
+                      code: fhir_r4.FhirCode(
+                        _getSpecialtyEnumName(specialty.value),
+                      ),
+                      display: fhir_r4.FhirString(specialty.value),
+                    ),
+                  ],
+                )
+              : null),
+      period: periodStart.value.isNotEmpty
+          ? fhir_r4.Period(
+              start: fhir_r4.FhirDateTime.fromString(periodStart.value),
+            )
+          : null,
+      status: fhir_r4.EncounterStatus.unknown,
+      class_: fhir_r4.Coding(code: fhir_r4.FhirCode('AMB')),
+      subject: fhir_r4.Reference(
+        reference: fhir_r4.FhirString('Patient/$subjectId'),
+      ),
+    );
 
-    Map<String, dynamic> rawResource = encounter.toJson();
+    final Map<String, dynamic> rawResource = encounter.toJson();
 
     return Encounter(
       id: id,
@@ -131,33 +142,33 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
   }
 
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
-        'encounterType': l10n.labelEncounterName,
-        'periodStart': l10n.labelStartDate,
-        'specialty': l10n.labelSpecialty,
-      };
+    'encounterType': l10n.labelEncounterName,
+    'periodStart': l10n.labelStartDate,
+    'specialty': l10n.labelSpecialty,
+  };
 
   @override
   Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-        'encounterType': TextFieldDescriptor(
-          label: 'Encounter Name',
-          value: encounterType.value,
-          confidenceLevel: encounterType.confidenceLevel,
-          validators: [nonEmptyValidator],
-        ),
-        'periodStart': TextFieldDescriptor(
-          label: 'Start Date',
-          value: periodStart.value,
-          confidenceLevel: periodStart.confidenceLevel,
-          fieldType: FieldType.date,
-          validators: [nonEmptyValidator, dateValidator],
-        ),
-        'specialty': TextFieldDescriptor(
-          label: 'Specialty',
-          value: specialty.value,
-          confidenceLevel: specialty.confidenceLevel,
-          fieldType: FieldType.dropdown,
-        ),
-      };
+    'encounterType': TextFieldDescriptor(
+      label: 'Encounter Name',
+      value: encounterType.value,
+      confidenceLevel: encounterType.confidenceLevel,
+      validators: [nonEmptyValidator],
+    ),
+    'periodStart': TextFieldDescriptor(
+      label: 'Start Date',
+      value: periodStart.value,
+      confidenceLevel: periodStart.confidenceLevel,
+      fieldType: FieldType.date,
+      validators: [nonEmptyValidator, dateValidator],
+    ),
+    'specialty': TextFieldDescriptor(
+      label: 'Specialty',
+      value: specialty.value,
+      confidenceLevel: specialty.confidenceLevel,
+      fieldType: FieldType.dropdown,
+    ),
+  };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -188,10 +199,10 @@ abstract class MappingEncounter with _$MappingEncounter implements MappingResour
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(
-        encounterType: encounterType.calculateConfidence(inputText),
-        periodStart: periodStart.calculateDateConfidence(inputText),
-        specialty: specialty.calculateConfidence(inputText),
-      );
+    encounterType: encounterType.calculateConfidence(inputText),
+    periodStart: periodStart.calculateDateConfidence(inputText),
+    specialty: specialty.calculateConfidence(inputText),
+  );
 
   @override
   bool get isValid => encounterType.isValid || periodStart.isValid;

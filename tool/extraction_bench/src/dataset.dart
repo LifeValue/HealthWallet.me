@@ -38,7 +38,9 @@ Object? _readJson(File f) {
 /// docId.
 List<DatasetDoc> loadDataset(String dir) {
   final root = Directory(dir);
-  if (!root.existsSync()) throw BenchInputException('Dataset directory not found: $dir');
+  if (!root.existsSync()) {
+    throw BenchInputException('Dataset directory not found: $dir');
+  }
   final docs = <DatasetDoc>[];
   final seen = <String>{};
   for (final split in root.listSync().whereType<Directory>()) {
@@ -47,7 +49,9 @@ List<DatasetDoc> loadDataset(String dir) {
       final goldFile = File(p.join(docDir.path, 'gold.json'));
       if (!metaFile.existsSync()) continue;
       if (!goldFile.existsSync()) {
-        throw BenchInputException('${docDir.path} has meta.json but no gold.json');
+        throw BenchInputException(
+          '${docDir.path} has meta.json but no gold.json',
+        );
       }
       final metaJson = _readJson(metaFile);
       final gold = _readJson(goldFile);
@@ -58,15 +62,20 @@ List<DatasetDoc> loadDataset(String dir) {
         throw BenchInputException('${goldFile.path} is not a FHIR Bundle');
       }
       final meta = DocMeta.fromJson(metaJson);
-      if (!seen.add(meta.docId)) throw BenchInputException('Duplicate docId ${meta.docId} in $dir');
+      if (!seen.add(meta.docId)) {
+        throw BenchInputException('Duplicate docId ${meta.docId} in $dir');
+      }
       final resources = <Map<String, dynamic>>[
         for (final e in (gold['entry'] as List?) ?? const [])
-          if (e is Map && e['resource'] is Map<String, dynamic>) e['resource'] as Map<String, dynamic>,
+          if (e is Map && e['resource'] is Map<String, dynamic>)
+            e['resource'] as Map<String, dynamic>,
       ];
       docs.add(DatasetDoc(meta, resources, docDir.path));
     }
   }
-  if (docs.isEmpty) throw BenchInputException('No documents (*/<docId>/meta.json) under $dir');
+  if (docs.isEmpty) {
+    throw BenchInputException('No documents (*/<docId>/meta.json) under $dir');
+  }
   docs.sort((a, b) => a.docId.compareTo(b.docId));
   return docs;
 }
@@ -114,7 +123,8 @@ class PredictionRecord {
     this.error,
   });
 
-  factory PredictionRecord.fromJson(Map<String, dynamic> json) => PredictionRecord(
+  factory PredictionRecord.fromJson(Map<String, dynamic> json) =>
+      PredictionRecord(
         docId: json['docId'] as String,
         runId: json['runId'] as String? ?? '',
         model: json['model'] as String? ?? '',
@@ -152,24 +162,26 @@ class PredictionRecord {
   final String? error;
 
   Map<String, dynamic> toJson() => {
-        'docId': docId,
-        'runId': runId,
-        'model': model,
-        'platform': platform,
-        if (outputMode != null) 'outputMode': outputMode,
-        'predictedResources': predictedResources,
-        'generations': [for (final g in generations) g.json],
-        'peakRssBytes': peakRssBytes,
-        'wallMs': wallMs,
-        if (error != null) 'error': error,
-      };
+    'docId': docId,
+    'runId': runId,
+    'model': model,
+    'platform': platform,
+    if (outputMode != null) 'outputMode': outputMode,
+    'predictedResources': predictedResources,
+    'generations': [for (final g in generations) g.json],
+    'peakRssBytes': peakRssBytes,
+    'wallMs': wallMs,
+    if (error != null) 'error': error,
+  };
 }
 
 /// Records of a `predictions.jsonl`, keyed by docId. A later line for the
 /// same docId replaces an earlier one (a resumed run).
 Map<String, PredictionRecord> loadPredictions(String path) {
   final file = File(path);
-  if (!file.existsSync()) throw BenchInputException('Predictions file not found: $path');
+  if (!file.existsSync()) {
+    throw BenchInputException('Predictions file not found: $path');
+  }
   final out = <String, PredictionRecord>{};
   var lineNo = 0;
   for (final line in file.readAsLinesSync()) {
@@ -179,7 +191,9 @@ Map<String, PredictionRecord> loadPredictions(String path) {
     try {
       json = jsonDecode(line);
     } on FormatException catch (e) {
-      throw BenchInputException('$path:$lineNo is not valid JSON: ${e.message}');
+      throw BenchInputException(
+        '$path:$lineNo is not valid JSON: ${e.message}',
+      );
     }
     if (json is! Map<String, dynamic> || json['docId'] is! String) {
       throw BenchInputException('$path:$lineNo has no docId');

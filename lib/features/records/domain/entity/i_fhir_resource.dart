@@ -1,3 +1,6 @@
+// FhirType names are the FHIR resourceType strings (stored via `.name`), so they keep FHIR's casing.
+// ignore_for_file: constant_identifier_names
+
 import 'dart:convert';
 
 import 'package:health_wallet/core/data/local/app_database.dart';
@@ -101,36 +104,36 @@ abstract class IFhirResource {
 }
 
 enum FhirType {
-  AdverseEvent("Adverse Event"),
-  AllergyIntolerance("Allergy"),
-  Binary("Binary"),
-  CareTeam("Care Team"),
-  Claim("Claim"),
-  Condition("Condition"),
-  Coverage("Coverage"),
-  DiagnosticReport("Diagnostic Report"),
-  DocumentReference("Document"),
-  Encounter("Encounter"),
-  ExplanationOfBenefit("Explanation of Benefit"),
-  Goal("Goal"),
-  Immunization("Immunization"),
-  Location("Location"),
-  Media("Media"),
-  Medication("Medication"),
-  MedicationAdministration("Medication Administration"),
-  MedicationDispense("Medication Dispense"),
-  MedicationRequest("Medication Request"),
-  MedicationStatement("MedicationStatement"),
-  Observation("Observation"),
-  Organization("Organization"),
-  Patient("Patient"),
-  Practitioner("Practitioner"),
-  PractitionerRole("Practitioner Role"),
-  Procedure("Procedure"),
-  RelatedPerson("Related Person"),
-  ServiceRequest("Service Request"),
-  Specimen("Specimen"),
-  GeneralResource("Resource");
+  AdverseEvent('Adverse Event'),
+  AllergyIntolerance('Allergy'),
+  Binary('Binary'),
+  CareTeam('Care Team'),
+  Claim('Claim'),
+  Condition('Condition'),
+  Coverage('Coverage'),
+  DiagnosticReport('Diagnostic Report'),
+  DocumentReference('Document'),
+  Encounter('Encounter'),
+  ExplanationOfBenefit('Explanation of Benefit'),
+  Goal('Goal'),
+  Immunization('Immunization'),
+  Location('Location'),
+  Media('Media'),
+  Medication('Medication'),
+  MedicationAdministration('Medication Administration'),
+  MedicationDispense('Medication Dispense'),
+  MedicationRequest('Medication Request'),
+  MedicationStatement('MedicationStatement'),
+  Observation('Observation'),
+  Organization('Organization'),
+  Patient('Patient'),
+  Practitioner('Practitioner'),
+  PractitionerRole('Practitioner Role'),
+  Procedure('Procedure'),
+  RelatedPerson('Related Person'),
+  ServiceRequest('Service Request'),
+  Specimen('Specimen'),
+  GeneralResource('Resource');
 
   const FhirType(this.display);
 
