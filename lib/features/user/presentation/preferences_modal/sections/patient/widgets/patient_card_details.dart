@@ -72,7 +72,7 @@ class PatientCardDetails extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient)}: ${FhirFieldExtractor.extractPatientIdentifierValue(displayPatient)}',
+            '${FhirFieldExtractor.extractPatientIdentifierLabel(displayPatient, l10n: context.l10n)}: ${FhirFieldExtractor.extractPatientIdentifierValue(displayPatient)}',
           ),
           _buildPatientInfoRow(
             context,
@@ -84,7 +84,7 @@ class PatientCardDetails extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            '${context.l10n.age}: ${FhirFieldExtractor.extractPatientAge(displayPatient)} (${_formatBirthDate(context, displayPatient)})',
+            '${context.l10n.age}: ${FhirFieldExtractor.extractPatientAge(displayPatient, l10n: context.l10n)} (${_formatBirthDate(context, displayPatient)})',
           ),
         ],
       ),

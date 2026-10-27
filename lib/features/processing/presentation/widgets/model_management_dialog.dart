@@ -253,7 +253,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
                   child: Row(
                     children: [
                       Text(
-                        config.displayName,
+                        config.localizedName(context.l10n),
                         style: AppTextStyle.labelLarge.copyWith(
                           color: textColor,
                           fontWeight: FontWeight.w600,
@@ -308,7 +308,7 @@ class _ModelManagementDialogState extends State<ModelManagementDialog> {
             ),
             const SizedBox(height: 2),
             Text(
-              config.description,
+              config.localizedDescription(context.l10n),
               style: AppTextStyle.labelSmall.copyWith(
                 color: textColor.withValues(alpha: 0.6),
               ),

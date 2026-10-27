@@ -236,7 +236,8 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       ),
     );
 
-    final modelName = AiModelConfig.fromVariant(variant).displayName;
+    final modelName = AiModelConfig.fromVariant(variant)
+        .localizedName(_strings.l10n);
 
     final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
     _notificationBloc.add(
@@ -340,7 +341,8 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         );
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
-          final modelName = AiModelConfig.fromVariant(variant).displayName;
+          final modelName = AiModelConfig.fromVariant(variant)
+              .localizedName(_strings.l10n);
           _notificationBloc.add(
             NotificationTypeUpdated(
               id: notifId,

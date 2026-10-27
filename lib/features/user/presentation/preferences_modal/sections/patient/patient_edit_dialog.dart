@@ -529,6 +529,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
                 ? CountryIdentifier.forCountry(_countryCode).identifierLabel
                 : FhirFieldExtractor.extractPatientIdentifierLabel(
                     _currentPatient!,
+                    l10n: context.l10n,
                   ),
             selectedCountryCode: _countryCode,
             onCountryChanged: (code) {

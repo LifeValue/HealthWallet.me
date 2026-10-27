@@ -25,6 +25,7 @@ import 'package:health_wallet/features/user/domain/repository/user_repository.da
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
+import 'package:intl/intl.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -194,6 +195,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               supportedLocales: AppLocalizations.supportedLocales,
               builder: (context, child) {
                 getIt<AppStringsProvider>().update(context.l10n);
+                Intl.defaultLocale = context.l10n.localeName;
                 return child!;
               },
             );
