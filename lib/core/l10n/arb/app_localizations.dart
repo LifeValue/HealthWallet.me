@@ -6964,6 +6964,378 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not Available'**
   String get bloodTypeNotAvailable;
+
+  /// No description provided for @settingsStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get settingsStorage;
+
+  /// No description provided for @settingsStorageDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all records, preferences and cached data'**
+  String get settingsStorageDescription;
+
+  /// No description provided for @settingsReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get settingsReset;
+
+  /// No description provided for @resetDataWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete all your data including synced records, notes, attachments, and preferences.'**
+  String get resetDataWarning;
+
+  /// No description provided for @resetTypeToConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {word} to confirm:'**
+  String resetTypeToConfirm(String word);
+
+  /// No description provided for @deleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting...'**
+  String get deleting;
+
+  /// No description provided for @aiModelDownloadContinuesInBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Download continues in background'**
+  String get aiModelDownloadContinuesInBackground;
+
+  /// No description provided for @aiModelAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get aiModelAdvanced;
+
+  /// No description provided for @aiModelMedical.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical'**
+  String get aiModelMedical;
+
+  /// No description provided for @aiModelDescriptionLite.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast and lightweight (~{sizeGb} GB)'**
+  String aiModelDescriptionLite(double sizeGb);
+
+  /// No description provided for @aiModelDescriptionAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher accuracy (~{sizeGb} GB)'**
+  String aiModelDescriptionAdvanced(double sizeGb);
+
+  /// No description provided for @aiModelDescriptionUltra.
+  ///
+  /// In en, this message translates to:
+  /// **'Best accuracy for desktop (~{sizeGb} GB)'**
+  String aiModelDescriptionUltra(double sizeGb);
+
+  /// No description provided for @aiModelDescriptionPreviousAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Advanced model (~{sizeGb} GB)'**
+  String aiModelDescriptionPreviousAdvanced(double sizeGb);
+
+  /// No description provided for @settingsEhrSync.
+  ///
+  /// In en, this message translates to:
+  /// **'EHR Sync'**
+  String get settingsEhrSync;
+
+  /// No description provided for @shareProximityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Proximity'**
+  String get shareProximityTitle;
+
+  /// No description provided for @shareProximityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Advertise to nearby devices'**
+  String get shareProximityDescription;
+
+  /// No description provided for @allow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get allow;
+
+  /// No description provided for @settingsSendFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send us your feedback'**
+  String get settingsSendFeedback;
+
+  /// No description provided for @toggleOn.
+  ///
+  /// In en, this message translates to:
+  /// **'ON'**
+  String get toggleOn;
+
+  /// No description provided for @toggleOff.
+  ///
+  /// In en, this message translates to:
+  /// **'OFF'**
+  String get toggleOff;
+
+  /// No description provided for @idScanVerifyDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify the details are correct. Retry scanning if needed.'**
+  String get idScanVerifyDetails;
+
+  /// No description provided for @idScanPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Some fields could not be read. Try a clearer photo.'**
+  String get idScanPartial;
+
+  /// No description provided for @idScanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the document. Retake with better lighting.'**
+  String get idScanFailed;
+
+  /// No description provided for @genderOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get genderOther;
+
+  /// No description provided for @genderUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get genderUnknown;
+
+  /// No description provided for @walletPassAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Age {age}'**
+  String walletPassAge(int age);
+
+  /// No description provided for @privacyEffectiveDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective Date: {date}'**
+  String privacyEffectiveDate(DateTime date);
+
+  /// No description provided for @privacyCorePrincipleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The most important thing to know is that we, the developers of **HealthWallet.me**, do not collect, store, or have access to any of your personal or health information. Our app operates entirely on your device.'**
+  String get privacyCorePrincipleBody;
+
+  /// No description provided for @privacyNoCloudProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ No Cloud Processing: All calculations, data organization, and other functions happen locally on your phone or tablet.'**
+  String get privacyNoCloudProcessing;
+
+  /// No description provided for @privacyNoDeveloperAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ No Developer Access: We cannot see, access, or export your data. It is never sent to our servers.'**
+  String get privacyNoDeveloperAccess;
+
+  /// No description provided for @privacyYouAreInControl.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ You Are in Control: Your information is stored securely within the app\'s private storage on your device, which only you can access.'**
+  String get privacyYouAreInControl;
+
+  /// No description provided for @privacyDoNotCollectIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'To be perfectly clear, our app is intentionally built to avoid accessing your personal data. We **do not** collect, store, link, or process any information that can be tied to you.'**
+  String get privacyDoNotCollectIntro;
+
+  /// No description provided for @privacyPersonalIdentifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Identifiers: We do not access or store your name, email address, phone number, contacts, or any other personal account information from your device.'**
+  String get privacyPersonalIdentifiers;
+
+  /// No description provided for @privacyHealthInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Information: Any health records, medical conditions, medications, or other data you import remain yours alone. We cannot access them.'**
+  String get privacyHealthInformation;
+
+  /// No description provided for @privacyNoCrossReferencing.
+  ///
+  /// In en, this message translates to:
+  /// **'No Cross-Referencing: The app operates in isolation. It **does not** scan, index, or cross-reference your health data with any other personal information on your phone (like your contacts list, name, or phone number). Its only job is to organize the records you provide to it.'**
+  String get privacyNoCrossReferencing;
+
+  /// No description provided for @privacyUsageAnalytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage Analytics: We do not track how you use the app, which buttons you tap, or how long you spend on certain screens.'**
+  String get privacyUsageAnalytics;
+
+  /// No description provided for @privacyYouManageIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'The only data processed by the app is the health information **you choose to import** into it. This can be done in the following ways:'**
+  String get privacyYouManageIntro;
+
+  /// No description provided for @privacyImportingIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add health documents (such as PDFs of lab results or clinic summaries) directly into the app using standard mobile operating system features:'**
+  String get privacyImportingIntro;
+
+  /// No description provided for @privacyScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning: Using your device\'s camera to scan a physical document from within the app.'**
+  String get privacyScanning;
+
+  /// No description provided for @privacyShareActionSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Action Sheet: Selecting a file from another app (like your email, photos, or file manager) and \"sharing\" it directly to **HealthWallet.me**.'**
+  String get privacyShareActionSheet;
+
+  /// No description provided for @privacyLocalProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a document is imported, the app processes it locally on your device in the background. It structures the information according to the **HL7 FHIR (Fast Healthcare Interoperability Resources)** standard to make it useful and organized. This entire process happens on your device; the document and the structured data never leave it.'**
+  String get privacyLocalProcessing;
+
+  /// No description provided for @privacyFastenIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Our app allows you to consolidate your health records by connecting to **FastenHealth OnPrem**, a transparent, open-source platform.'**
+  String get privacyFastenIntro;
+
+  /// No description provided for @privacyFastenOpenSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-Source and On-Premises: FastenHealth OnPrem is open-source software that you or a trusted entity controls. This provides an exceptional level of privacy.'**
+  String get privacyFastenOpenSource;
+
+  /// No description provided for @privacyFastenDirectDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct-to-Device Download: When you authorize the connection, your health records are downloaded **directly from your FastenHealth OnPrem instance to your device**. Our app is only a conduit; your data never passes through our servers.'**
+  String get privacyFastenDirectDownload;
+
+  /// No description provided for @privacyUsageIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Since all your data resides on your device, it is only \"used\" by the app to help you organize and view your records. This includes:'**
+  String get privacyUsageIntro;
+
+  /// No description provided for @privacyUsageProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing and structuring imported or scanned documents.'**
+  String get privacyUsageProcessing;
+
+  /// No description provided for @privacyUsageDisplaying.
+  ///
+  /// In en, this message translates to:
+  /// **'Displaying your health records, lab results, and medication history to you.'**
+  String get privacyUsageDisplaying;
+
+  /// No description provided for @privacyNoOtherUse.
+  ///
+  /// In en, this message translates to:
+  /// **'We do not use your information for advertising, research, or any other purpose.'**
+  String get privacyNoOtherUse;
+
+  /// No description provided for @privacyStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage: All your data is stored in the app\'s secure, sandboxed storage on your device. It is as secure as your device itself. We strongly recommend you protect your device with a passcode, Face ID, or other biometric security.'**
+  String get privacyStorage;
+
+  /// No description provided for @privacySharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing: We do not and cannot share your data with anyone because we don\'t have it. If you choose to export or share your data from the app, you are in complete control of where it goes.'**
+  String get privacySharing;
+
+  /// No description provided for @privacyDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion: You can delete your information at any time from within the app. Deleting the app from your device will also permanently delete all data it has stored.'**
+  String get privacyDeletion;
+
+  /// No description provided for @privacyChildrenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Our service is not directed to individuals under the age of 16, in accordance with the General Data Protection Regulation (GDPR) as applicable in Romania and across the EU. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us.'**
+  String get privacyChildrenBody;
+
+  /// No description provided for @privacyChangesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We may update this policy from time to time. If we make any material changes, we will notify you through the app or by other means so you can review the changes before they take effect.'**
+  String get privacyChangesBody;
+
+  /// No description provided for @privacyContactBody.
+  ///
+  /// In en, this message translates to:
+  /// **'If you have any questions or concerns about this Privacy Policy, please contact us at:'**
+  String get privacyContactBody;
+
+  /// No description provided for @syncQrScanInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a QR code from your **HealthWallet.me** desktop app or **Fasten Health** to sync your data.'**
+  String get syncQrScanInstructions;
+
+  /// No description provided for @syncSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Data was successfully synced!'**
+  String get syncSuccessMessage;
+
+  /// No description provided for @syncErrorConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed. Please check your network and try again.'**
+  String get syncErrorConnection;
+
+  /// No description provided for @syncErrorEndpointNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync endpoint not found. Please check server configuration.'**
+  String get syncErrorEndpointNotFound;
+
+  /// No description provided for @syncErrorAuthentication.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed. Please check your token.'**
+  String get syncErrorAuthentication;
+
+  /// No description provided for @syncErrorInvalidFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid sync data format'**
+  String get syncErrorInvalidFormat;
+
+  /// No description provided for @syncErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Data sync failed: {error}'**
+  String syncErrorGeneric(String error);
+
+  /// No description provided for @syncPlaceholderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync or update your data to view {recordType} records'**
+  String syncPlaceholderSubtitle(String recordType);
 }
 
 class _AppLocalizationsDelegate

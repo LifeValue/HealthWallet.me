@@ -5,8 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
-import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart'
-    show ApplePassLabels;
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -110,16 +109,7 @@ Future<void> showShareOptionsMenu(
         WalletPassRequested(
           type: WalletPassType.apple,
           patientId: patientId ?? '',
-          applePassLabels: ApplePassLabels(
-            patient: context.l10n.patient,
-            bloodType: context.l10n.bloodType,
-            allergies: context.l10n.allergiesLabel,
-            gender: context.l10n.gender,
-            dateOfBirth: context.l10n.dateOfBirthLabel,
-            emergencyPhone: context.l10n.emergencyPhoneLabel,
-            conditions: context.l10n.conditionsLabel,
-            medications: context.l10n.medicationsLabel,
-          ),
+          labels: WalletPassLabels.fromL10n(context.l10n),
         ),
       );
     case 'google_wallet':
@@ -127,6 +117,7 @@ Future<void> showShareOptionsMenu(
         WalletPassRequested(
           type: WalletPassType.google,
           patientId: patientId ?? '',
+          labels: WalletPassLabels.fromL10n(context.l10n),
         ),
       );
   }

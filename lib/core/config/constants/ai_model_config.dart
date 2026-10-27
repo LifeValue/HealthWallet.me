@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/processing/domain/services/device_capability_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -165,6 +166,24 @@ class AiModelConfig {
     mmprojSizeMB: 851,
     skipDeviceCheck: true,
   );
+
+  /// [displayName] in the app language. Model names (Qwen, NuExtract,
+  /// MedGemma) and the Lite and Ultra tiers are not translated.
+  String localizedName(AppLocalizations l10n) => switch (variant) {
+    AiModelVariant.qwen35x4b => l10n.aiModelAdvanced,
+    AiModelVariant.medGemma => l10n.aiModelMedical,
+    _ => displayName,
+  };
+
+  /// [description] in the app language. The benchmark candidates, which
+  /// only the extraction benchmark selects, keep the English text.
+  String localizedDescription(AppLocalizations l10n) => switch (variant) {
+    AiModelVariant.qwen => l10n.aiModelDescriptionLite(1.1),
+    AiModelVariant.qwen35x4b => l10n.aiModelDescriptionAdvanced(2.6),
+    AiModelVariant.qwen7b => l10n.aiModelDescriptionUltra(5),
+    AiModelVariant.medGemma => l10n.aiModelDescriptionPreviousAdvanced(2.5),
+    _ => description,
+  };
 
   static List<AiModelConfig> get availableVariants {
     if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {

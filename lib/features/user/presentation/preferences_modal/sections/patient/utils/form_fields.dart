@@ -85,8 +85,8 @@ class FormFields {
     required VoidCallback onCancel,
     required VoidCallback? onSave,
     required bool isLoading,
-    String cancelLabel = 'Cancel',
-    String saveLabel = 'Save details',
+    required String cancelLabel,
+    required String saveLabel,
   }) {
     return Row(
       children: [

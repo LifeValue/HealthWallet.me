@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -179,12 +180,12 @@ class _ShareProximityRowState extends State<ShareProximityRow>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Share Proximity',
+                  Text(
+                    context.l10n.shareProximityTitle,
                     style: AppTextStyle.bodySmall,
                   ),
                   Text(
-                    'Advertise to nearby devices',
+                    context.l10n.shareProximityDescription,
                     style: AppTextStyle.labelSmall.copyWith(
                       color: context.colorScheme.onSurface.withValues(
                         alpha: 0.6,
@@ -198,7 +199,7 @@ class _ShareProximityRowState extends State<ShareProximityRow>
               const ReceiveModeToggleButton()
             else
               AppButton(
-                label: 'Allow',
+                label: context.l10n.allow,
                 onPressed: _requestPermissions,
                 fullWidth: false,
                 height: 40,

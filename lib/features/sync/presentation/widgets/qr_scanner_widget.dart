@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/bold_markup.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -50,25 +51,13 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
             style: AppTextStyle.labelLarge.copyWith(
               color: context.colorScheme.onSurface,
             ),
-            children: [
-              const TextSpan(text: 'Scan a QR code from your '),
-              TextSpan(
-                text: 'HealthWallet.me',
-                style: AppTextStyle.labelLarge.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: context.colorScheme.onSurface,
-                ),
+            children: boldMarkupSpans(
+              context.l10n.syncQrScanInstructions,
+              boldStyle: AppTextStyle.labelLarge.copyWith(
+                fontWeight: FontWeight.w700,
+                color: context.colorScheme.onSurface,
               ),
-              const TextSpan(text: ' desktop app or '),
-              TextSpan(
-                text: 'Fasten Health',
-                style: AppTextStyle.labelLarge.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-              const TextSpan(text: ' to sync your data.'),
-            ],
+            ),
           ),
           textAlign: TextAlign.center,
         ),

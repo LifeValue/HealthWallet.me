@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/sync/domain/repository/sync_repository.dart';
@@ -20,11 +21,13 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   final SyncRepository _syncRepository;
   final RecordsRepository _recordsRepository;
   final DefaultPatientService _defaultPatientService;
+  final AppStringsProvider _strings;
 
   SyncBloc(
     this._syncRepository,
     this._recordsRepository,
     this._defaultPatientService,
+    this._strings,
   ) : super(const SyncState()) {
     on<SyncInitialised>(_onSyncInitialised);
     on<SyncData>(_onSyncData);
@@ -139,7 +142,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
           hasSyncedData: true,
           syncDialogShown: true,
           errorMessage: null,
-          successMessage: 'Data was succesfully synced!',
+          successMessage: _strings.l10n.syncSuccessMessage,
         ),
       );
 
@@ -155,21 +158,20 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         '[SYNC] Stack: ${stackTrace.toString().split('\n').take(5).join('\n')}',
       );
 
+      final l10n = _strings.l10n;
       String errorMessage;
       if (e.toString().contains('HandshakeException') ||
           e.toString().contains('Connection refused') ||
           e.toString().contains('timeout')) {
-        errorMessage =
-            'Connection failed. Please check your network and try again.';
+        errorMessage = l10n.syncErrorConnection;
       } else if (e.toString().contains('404')) {
-        errorMessage =
-            'Sync endpoint not found. Please check server configuration.';
+        errorMessage = l10n.syncErrorEndpointNotFound;
       } else if (e.toString().contains('401') || e.toString().contains('403')) {
-        errorMessage = 'Authentication failed. Please check your token.';
+        errorMessage = l10n.syncErrorAuthentication;
       } else if (e.toString().contains('FormatException')) {
-        errorMessage = 'Invalid sync data format';
+        errorMessage = l10n.syncErrorInvalidFormat;
       } else {
-        errorMessage = 'Data sync failed: $e';
+        errorMessage = l10n.syncErrorGeneric(e.toString());
       }
 
       debugPrint('[SYNC] Emitting error: $errorMessage');

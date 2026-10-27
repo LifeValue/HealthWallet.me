@@ -79,7 +79,6 @@ class _SyncPageState extends State<SyncPage> {
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: QRScannerWidget(
-              cancelButtonText: 'Cancel',
               onQRCodeDetected: (qrData) {
                 _handleQRCodeDetected(context, qrData);
               },
@@ -97,7 +96,6 @@ class _SyncPageState extends State<SyncPage> {
               onCancel: () {
                 context.read<SyncBloc>().add(const SyncCancel());
               },
-              cancelButtonText: 'Cancel',
             ),
           );
         }

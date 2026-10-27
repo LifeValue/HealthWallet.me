@@ -1,5 +1,15 @@
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 
+import 'country_names_cldr.dart';
+
+/// The name of [iso] in [languageCode] (the app locale's language): the CLDR
+/// names in `country_names_cldr.dart` for es, de and ro, otherwise
+/// [countryNames] (English), and the ISO code when neither has it.
+String countryName(IsoCode iso, String languageCode) =>
+    cldrCountryNames[languageCode]?[iso] ?? countryNames[iso] ?? iso.name;
+
+/// English country names, written by hand. The other languages are generated
+/// from CLDR by `tool/generate_country_names.dart`, for these same keys.
 const Map<IsoCode, String> countryNames = {
   IsoCode.AC: 'Ascension Island',
   IsoCode.AD: 'Andorra',

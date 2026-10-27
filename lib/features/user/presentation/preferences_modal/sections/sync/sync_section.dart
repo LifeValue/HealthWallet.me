@@ -75,7 +75,7 @@ class SyncSection extends StatelessWidget {
                                   children: [
                                     _StatusRow(
                                       icon: Icons.check_circle_outline,
-                                      label: 'EHR Sync',
+                                      label: context.l10n.settingsEhrSync,
                                       status: context.l10n.syncSuccessful,
                                       statusColor: AppColors.success,
                                     ),
@@ -669,6 +669,7 @@ class _BackupLocationRow extends StatelessWidget {
   }
 
   Future<void> _pickDirectory(BuildContext context) async {
+    final title = context.l10n.desktopChooseBackupLocation;
     final initialPath = path != null && await Directory(path!).exists()
         ? path!
         : null;
@@ -677,11 +678,11 @@ class _BackupLocationRow extends StatelessWidget {
     if (Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
         'initialDirectory': ?initialPath,
-        'title': 'Choose Backup Location',
+        'title': title,
       });
     } else {
       result = await FilePicker.getDirectoryPath(
-        dialogTitle: 'Choose Backup Location',
+        dialogTitle: title,
         initialDirectory: initialPath,
       );
     }

@@ -1,11 +1,15 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/env/env.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/google_pass_builder.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
 import 'signing_test_material.dart';
@@ -26,9 +30,10 @@ void main() {
   late SigningTestMaterial signing;
   late String originalIssuerId;
 
-  setUpAll(() {
+  setUpAll(() async {
     signing = SigningTestMaterial.generate();
     originalIssuerId = Env.googleWalletIssuerId;
+    await initializeDateFormatting();
   });
 
   setUp(() {
@@ -49,11 +54,24 @@ void main() {
     Env.googleWalletIssuerId = originalIssuerId;
   });
 
-  Future<String> build(EmergencyCardData card, {String id = 'p-1'}) =>
-      GooglePassBuilder().build(card, patientId: id);
+  WalletPassLabels labelsFor(String locale) =>
+      WalletPassLabels.fromL10n(lookupAppLocalizations(Locale(locale)));
 
-  Future<Map<String, dynamic>> genericObjectOf(EmergencyCardData card) async {
-    final jwt = await build(card);
+  Future<String> build(
+    EmergencyCardData card, {
+    String id = 'p-1',
+    String locale = 'en',
+  }) => GooglePassBuilder().build(
+    card,
+    patientId: id,
+    labels: labelsFor(locale),
+  );
+
+  Future<Map<String, dynamic>> genericObjectOf(
+    EmergencyCardData card, {
+    String locale = 'en',
+  }) async {
+    final jwt = await build(card, locale: locale);
     final claims = _decodeSegment(jwt.split('.')[1]);
     final payload = claims['payload'] as Map<String, dynamic>;
     return (payload['genericObjects'] as List).single as Map<String, dynamic>;
@@ -249,6 +267,61 @@ void main() {
           'body': 'call reception',
         },
       ]);
+    });
+  });
+
+  group('GooglePassBuilder.build — German labels', () {
+    final dob = DateTime(1985, 3, 14);
+    final card = EmergencyCardData(
+      patientName: 'Jana',
+      bloodType: 'AB-',
+      dateOfBirth: dob,
+      gender: 'female',
+      allergies: const ['Penicillin'],
+      conditions: const ['Asthma'],
+      medications: const ['Insulin'],
+      emergencyContactPhone: '+40712345678',
+    );
+
+    test('labels every text module in German', () async {
+      final object = await genericObjectOf(card, locale: 'de');
+      final headers = (object['textModulesData'] as List)
+          .map((m) => (m as Map)['header'])
+          .toList();
+      expect(headers, [
+        'Geburtsdatum',
+        'Geschlecht',
+        'Allergien',
+        'Notfalltelefon',
+        'Erkrankungen',
+        'Medikamente',
+      ]);
+    });
+
+    test('titles the card, dates and genders in German', () async {
+      final object = await genericObjectOf(card, locale: 'de');
+      expect(localized(object, 'cardTitle'), 'Medizinischer Notfallausweis');
+      expect(
+        ((object['cardTitle'] as Map)['defaultValue'] as Map)['language'],
+        'de',
+      );
+      final modules = {
+        for (final m in object['textModulesData'] as List)
+          (m as Map)['id']: m['body'],
+      };
+      expect(modules['dob'], DateFormat.yMMMd('de').format(dob));
+      expect(modules['gender'], 'Weiblich');
+      final age = DateTime.now().difference(dob).inDays ~/ 365;
+      expect(
+        localized(object, 'subheader'),
+        'Weiblich  •  AB-  •  $age Jahre  •  Allergien: Penicillin',
+      );
+    });
+
+    test('keeps the QR payload independent of the language', () async {
+      final de = await genericObjectOf(card, locale: 'de');
+      final en = await genericObjectOf(card);
+      expect(de['barcode'], en['barcode']);
     });
   });
 }

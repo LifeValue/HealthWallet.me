@@ -3881,4 +3881,271 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get bloodTypeNotAvailable => 'No disponible';
+
+  @override
+  String get settingsStorage => 'Almacenamiento';
+
+  @override
+  String get settingsStorageDescription =>
+      'Borra todos los registros, preferencias y datos en caché';
+
+  @override
+  String get settingsReset => 'Restablecer';
+
+  @override
+  String get resetDataWarning =>
+      'Esto eliminará de forma permanente todos tus datos, incluidos los registros sincronizados, las notas, los archivos adjuntos y las preferencias.';
+
+  @override
+  String resetTypeToConfirm(String word) {
+    return 'Escribe $word para confirmar:';
+  }
+
+  @override
+  String get deleting => 'Eliminando...';
+
+  @override
+  String get aiModelDownloadContinuesInBackground =>
+      'La descarga continúa en segundo plano';
+
+  @override
+  String get aiModelAdvanced => 'Avanzado';
+
+  @override
+  String get aiModelMedical => 'Médico';
+
+  @override
+  String aiModelDescriptionLite(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Rápido y ligero (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionAdvanced(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Mayor precisión (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionUltra(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'La mejor precisión para escritorio (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionPreviousAdvanced(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Modelo Avanzado anterior (~$sizeGbString GB)';
+  }
+
+  @override
+  String get settingsEhrSync => 'Sincronización de HCE';
+
+  @override
+  String get shareProximityTitle => 'Compartir por proximidad';
+
+  @override
+  String get shareProximityDescription => 'Visible para dispositivos cercanos';
+
+  @override
+  String get allow => 'Permitir';
+
+  @override
+  String get settingsSendFeedback => 'Envíanos tus comentarios';
+
+  @override
+  String get toggleOn => 'SÍ';
+
+  @override
+  String get toggleOff => 'NO';
+
+  @override
+  String get idScanVerifyDetails =>
+      'Comprueba que los datos sean correctos. Vuelve a escanear si es necesario.';
+
+  @override
+  String get idScanPartial =>
+      'No se pudieron leer algunos campos. Prueba con una foto más nítida.';
+
+  @override
+  String get idScanFailed =>
+      'No se pudo leer el documento. Vuelve a hacer la foto con mejor iluminación.';
+
+  @override
+  String get genderOther => 'Otro';
+
+  @override
+  String get genderUnknown => 'Desconocido';
+
+  @override
+  String walletPassAge(int age) {
+    String _temp0 = intl.Intl.pluralLogic(
+      age,
+      locale: localeName,
+      other: '$age años',
+      one: '$age año',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyEffectiveDate(DateTime date) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
+    final String dateString = dateDateFormat.format(date);
+
+    return 'Fecha de entrada en vigor: $dateString';
+  }
+
+  @override
+  String get privacyCorePrincipleBody =>
+      'Lo más importante que debes saber es que nosotros, los desarrolladores de **HealthWallet.me**, no recopilamos ni almacenamos ninguno de tus datos personales o de salud, ni tenemos acceso a ellos. Nuestra aplicación funciona completamente en tu dispositivo.';
+
+  @override
+  String get privacyNoCloudProcessing =>
+      '✅ Sin procesamiento en la nube: todos los cálculos, la organización de datos y demás funciones se realizan localmente en tu teléfono o tableta.';
+
+  @override
+  String get privacyNoDeveloperAccess =>
+      '✅ Sin acceso de los desarrolladores: no podemos ver, acceder ni exportar tus datos. Nunca se envían a nuestros servidores.';
+
+  @override
+  String get privacyYouAreInControl =>
+      '✅ Tú tienes el control: tu información se guarda de forma segura en el almacenamiento privado de la aplicación en tu dispositivo, al que solo tú puedes acceder.';
+
+  @override
+  String get privacyDoNotCollectIntro =>
+      'Para que quede totalmente claro: nuestra aplicación está diseñada a propósito para no acceder a tus datos personales. **No** recopilamos, almacenamos, vinculamos ni procesamos ninguna información que pueda asociarse contigo.';
+
+  @override
+  String get privacyPersonalIdentifiers =>
+      'Identificadores personales: no accedemos ni almacenamos tu nombre, dirección de correo electrónico, número de teléfono, contactos ni ninguna otra información personal de cuentas de tu dispositivo.';
+
+  @override
+  String get privacyHealthInformation =>
+      'Información de salud: los registros de salud, afecciones médicas, medicamentos u otros datos que importes siguen siendo solo tuyos. No podemos acceder a ellos.';
+
+  @override
+  String get privacyNoCrossReferencing =>
+      'Sin referencias cruzadas: la aplicación funciona de forma aislada. **No** escanea, indexa ni cruza tus datos de salud con ninguna otra información personal de tu teléfono (como tu lista de contactos, tu nombre o tu número de teléfono). Su única función es organizar los registros que le proporcionas.';
+
+  @override
+  String get privacyUsageAnalytics =>
+      'Análisis de uso: no rastreamos cómo usas la aplicación, qué botones pulsas ni cuánto tiempo pasas en cada pantalla.';
+
+  @override
+  String get privacyYouManageIntro =>
+      'Los únicos datos que procesa la aplicación son la información de salud que **tú decides importar** en ella. Puedes hacerlo de las siguientes maneras:';
+
+  @override
+  String get privacyImportingIntro =>
+      'Puedes añadir documentos de salud (como PDF de resultados de laboratorio o informes clínicos) directamente en la aplicación mediante funciones estándar del sistema operativo móvil:';
+
+  @override
+  String get privacyScanning =>
+      'Escaneo: usar la cámara de tu dispositivo para escanear un documento físico desde la aplicación.';
+
+  @override
+  String get privacyShareActionSheet =>
+      'Menú Compartir: seleccionar un archivo de otra aplicación (como tu correo electrónico, tus fotos o tu gestor de archivos) y «compartirlo» directamente con **HealthWallet.me**.';
+
+  @override
+  String get privacyLocalProcessing =>
+      'Una vez importado un documento, la aplicación lo procesa localmente en tu dispositivo en segundo plano. Estructura la información según el estándar **HL7 FHIR (Fast Healthcare Interoperability Resources)** para que sea útil y esté organizada. Todo este proceso ocurre en tu dispositivo; ni el documento ni los datos estructurados salen nunca de él.';
+
+  @override
+  String get privacyFastenIntro =>
+      'Nuestra aplicación te permite reunir tus registros de salud conectándote a **FastenHealth OnPrem**, una plataforma transparente y de código abierto.';
+
+  @override
+  String get privacyFastenOpenSource =>
+      'Código abierto y local: FastenHealth OnPrem es software de código abierto que controlas tú o una entidad de confianza. Esto ofrece un nivel de privacidad excepcional.';
+
+  @override
+  String get privacyFastenDirectDownload =>
+      'Descarga directa al dispositivo: cuando autorizas la conexión, tus registros de salud se descargan **directamente desde tu instancia de FastenHealth OnPrem a tu dispositivo**. Nuestra aplicación es solo un canal; tus datos nunca pasan por nuestros servidores.';
+
+  @override
+  String get privacyUsageIntro =>
+      'Como todos tus datos residen en tu dispositivo, la aplicación solo los «usa» para ayudarte a organizar y ver tus registros. Esto incluye:';
+
+  @override
+  String get privacyUsageProcessing =>
+      'Procesar y estructurar los documentos importados o escaneados.';
+
+  @override
+  String get privacyUsageDisplaying =>
+      'Mostrarte tus registros de salud, resultados de laboratorio e historial de medicación.';
+
+  @override
+  String get privacyNoOtherUse =>
+      'No usamos tu información para publicidad, investigación ni ningún otro fin.';
+
+  @override
+  String get privacyStorage =>
+      'Almacenamiento: todos tus datos se guardan en el almacenamiento seguro y aislado de la aplicación en tu dispositivo. Están tan seguros como tu propio dispositivo. Te recomendamos encarecidamente proteger tu dispositivo con un código de acceso, Face ID u otra seguridad biométrica.';
+
+  @override
+  String get privacySharing =>
+      'Compartir: no compartimos ni podemos compartir tus datos con nadie porque no los tenemos. Si decides exportar o compartir tus datos desde la aplicación, tú controlas por completo adónde van.';
+
+  @override
+  String get privacyDeletion =>
+      'Eliminación: puedes eliminar tu información en cualquier momento desde la aplicación. Si eliminas la aplicación de tu dispositivo, también se borrarán de forma permanente todos los datos que haya almacenado.';
+
+  @override
+  String get privacyChildrenBody =>
+      'Nuestro servicio no está dirigido a personas menores de 16 años, de conformidad con el Reglamento General de Protección de Datos (RGPD) aplicable en Rumanía y en toda la UE. No recopilamos a sabiendas información personal de menores. Si sabes que un menor nos ha proporcionado información personal, ponte en contacto con nosotros.';
+
+  @override
+  String get privacyChangesBody =>
+      'Podemos actualizar esta política ocasionalmente. Si realizamos cambios importantes, te lo notificaremos a través de la aplicación o por otros medios para que puedas revisarlos antes de que entren en vigor.';
+
+  @override
+  String get privacyContactBody =>
+      'Si tienes alguna pregunta o inquietud sobre esta Política de privacidad, contáctanos en:';
+
+  @override
+  String get syncQrScanInstructions =>
+      'Escanea un código QR de tu aplicación de escritorio **HealthWallet.me** o de **Fasten Health** para sincronizar tus datos.';
+
+  @override
+  String get syncSuccessMessage => '¡Los datos se sincronizaron correctamente!';
+
+  @override
+  String get syncErrorConnection =>
+      'Error de conexión. Comprueba tu red e inténtalo de nuevo.';
+
+  @override
+  String get syncErrorEndpointNotFound =>
+      'No se encontró el punto de sincronización. Comprueba la configuración del servidor.';
+
+  @override
+  String get syncErrorAuthentication =>
+      'Error de autenticación. Comprueba tu token.';
+
+  @override
+  String get syncErrorInvalidFormat =>
+      'Formato de datos de sincronización no válido';
+
+  @override
+  String syncErrorGeneric(String error) {
+    return 'Error al sincronizar los datos: $error';
+  }
+
+  @override
+  String syncPlaceholderSubtitle(String recordType) {
+    return 'Sincroniza o actualiza tus datos para ver los registros de $recordType';
+  }
 }

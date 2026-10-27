@@ -22,6 +22,9 @@ const _scannedDirs = [
   'lib/features/onboarding',
   'lib/features/notifications',
   'lib/features/records/domain',
+  'lib/features/user',
+  'lib/features/sync',
+  'lib/features/wallet_pass',
 ];
 
 /// Paths that are not part of the mobile UI or are generated.

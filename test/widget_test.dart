@@ -256,6 +256,7 @@ void main() {
         FakeSyncLocalDataSource(),
         walletPatientService,
       ),
+      AppStringsProvider(),
     );
     final recordsBloc = RecordsBloc(fakeRecordsRepo, SpecialtyClassifierImpl());
     final prefs = await SharedPreferences.getInstance();

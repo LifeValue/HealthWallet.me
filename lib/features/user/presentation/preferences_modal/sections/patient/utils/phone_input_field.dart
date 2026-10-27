@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -26,7 +27,9 @@ class CountryEntry {
   });
 }
 
-List<CountryEntry> buildCountryList() {
+/// Every country with a dial code, named in [languageCode] and sorted by
+/// name, ignoring case and diacritics so "Österreich" sorts under O.
+List<CountryEntry> buildCountryList(String languageCode) {
   final entries = <CountryEntry>[];
   for (final iso in IsoCode.values) {
     final meta = metadataByIsoCode[iso];
@@ -36,13 +39,63 @@ List<CountryEntry> buildCountryList() {
         isoCode: iso,
         dialCode: meta.countryCode,
         flag: _isoToFlag(iso.name),
-        name: countryNames[iso] ?? iso.name,
+        name: countryName(iso, languageCode),
       ),
     );
   }
-  entries.sort((a, b) => a.name.compareTo(b.name));
+  if (languageCode == 'en') {
+    // The English names have no diacritics that change the order.
+    entries.sort((a, b) => a.name.compareTo(b.name));
+  } else {
+    entries.sort((a, b) {
+      final byKey = _sortKey(a.name).compareTo(_sortKey(b.name));
+      return byKey != 0 ? byKey : a.name.compareTo(b.name);
+    });
+  }
   return entries;
 }
+
+const _foldedLetters = {
+  'á': 'a',
+  'à': 'a',
+  'â': 'a',
+  'ä': 'a',
+  'ã': 'a',
+  'å': 'a',
+  'ă': 'a',
+  'ç': 'c',
+  'č': 'c',
+  'é': 'e',
+  'è': 'e',
+  'ê': 'e',
+  'ë': 'e',
+  'í': 'i',
+  'ì': 'i',
+  'î': 'i',
+  'ï': 'i',
+  'ñ': 'n',
+  'ó': 'o',
+  'ò': 'o',
+  'ô': 'o',
+  'ö': 'o',
+  'õ': 'o',
+  'ø': 'o',
+  'ú': 'u',
+  'ù': 'u',
+  'û': 'u',
+  'ü': 'u',
+  'ý': 'y',
+  'ș': 's',
+  'ş': 's',
+  'š': 's',
+  'ț': 't',
+  'ţ': 't',
+  'ž': 'z',
+  'ß': 'ss',
+};
+
+String _sortKey(String name) =>
+    name.toLowerCase().split('').map((c) => _foldedLetters[c] ?? c).join();
 
 String _isoToFlag(String code) {
   return code
@@ -98,7 +151,10 @@ class PhoneInputField extends StatefulWidget {
 }
 
 class _PhoneInputFieldState extends State<PhoneInputField> {
-  static final List<CountryEntry> _countries = buildCountryList();
+  /// English names; only the iso code, flag and dial code of these are
+  /// used. The picker lists the names in the app language.
+  static final List<CountryEntry> _countries = buildCountryList('en');
+  static final _localizedCountries = <String, List<CountryEntry>>{};
   late CountryEntry _selectedCountry;
   late TextEditingController _numberCtrl;
   bool _formatting = false;
@@ -239,7 +295,10 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
     final result = await showDialog<CountryEntry>(
       context: context,
       builder: (_) => CountryPickerDialog(
-        countries: _countries,
+        countries: _localizedCountries.putIfAbsent(
+          context.l10n.localeName,
+          () => buildCountryList(context.l10n.localeName),
+        ),
         selected: _selectedCountry,
       ),
     );

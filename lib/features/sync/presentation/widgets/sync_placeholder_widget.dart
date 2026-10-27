@@ -344,7 +344,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   String _getSubtitle(BuildContext context, bool hasAnyMeaningfulData) {
     if (hasAnyMeaningfulData && widget.recordTypeName != null) {
-      return 'Sync or update your data to view ${widget.recordTypeName} records';
+      return context.l10n.syncPlaceholderSubtitle(widget.recordTypeName!);
     }
     return context.l10n.loadDemoDataMessage;
   }
@@ -719,7 +719,7 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
           elevation: 0,
         ),
         child: Text(
-          'OK',
+          context.l10n.ok,
           style: AppTextStyle.buttonSmall.copyWith(color: Colors.white),
         ),
       ),

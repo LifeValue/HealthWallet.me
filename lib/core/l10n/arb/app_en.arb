@@ -1932,5 +1932,135 @@
     }
   },
   "justNow": "Just now",
-  "bloodTypeNotAvailable": "Not Available"
+  "bloodTypeNotAvailable": "Not Available",
+  "settingsStorage": "Storage",
+  "settingsStorageDescription": "Clear all records, preferences and cached data",
+  "settingsReset": "Reset",
+  "resetDataWarning": "This will permanently delete all your data including synced records, notes, attachments, and preferences.",
+  "resetTypeToConfirm": "Type {word} to confirm:",
+  "@resetTypeToConfirm": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "deleting": "Deleting...",
+  "aiModelDownloadContinuesInBackground": "Download continues in background",
+  "aiModelAdvanced": "Advanced",
+  "aiModelMedical": "Medical",
+  "aiModelDescriptionLite": "Fast and lightweight (~{sizeGb} GB)",
+  "@aiModelDescriptionLite": {
+    "placeholders": {
+      "sizeGb": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "aiModelDescriptionAdvanced": "Higher accuracy (~{sizeGb} GB)",
+  "@aiModelDescriptionAdvanced": {
+    "placeholders": {
+      "sizeGb": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "aiModelDescriptionUltra": "Best accuracy for desktop (~{sizeGb} GB)",
+  "@aiModelDescriptionUltra": {
+    "placeholders": {
+      "sizeGb": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "aiModelDescriptionPreviousAdvanced": "Previous Advanced model (~{sizeGb} GB)",
+  "@aiModelDescriptionPreviousAdvanced": {
+    "placeholders": {
+      "sizeGb": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "settingsEhrSync": "EHR Sync",
+  "shareProximityTitle": "Share Proximity",
+  "shareProximityDescription": "Advertise to nearby devices",
+  "allow": "Allow",
+  "settingsSendFeedback": "Send us your feedback",
+  "toggleOn": "ON",
+  "toggleOff": "OFF",
+  "idScanVerifyDetails": "Verify the details are correct. Retry scanning if needed.",
+  "idScanPartial": "Some fields could not be read. Try a clearer photo.",
+  "idScanFailed": "Could not read the document. Retake with better lighting.",
+  "genderOther": "Other",
+  "genderUnknown": "Unknown",
+  "walletPassAge": "Age {age}",
+  "@walletPassAge": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyEffectiveDate": "Effective Date: {date}",
+  "@privacyEffectiveDate": {
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd"
+      }
+    }
+  },
+  "privacyCorePrincipleBody": "The most important thing to know is that we, the developers of **HealthWallet.me**, do not collect, store, or have access to any of your personal or health information. Our app operates entirely on your device.",
+  "privacyNoCloudProcessing": "✅ No Cloud Processing: All calculations, data organization, and other functions happen locally on your phone or tablet.",
+  "privacyNoDeveloperAccess": "✅ No Developer Access: We cannot see, access, or export your data. It is never sent to our servers.",
+  "privacyYouAreInControl": "✅ You Are in Control: Your information is stored securely within the app's private storage on your device, which only you can access.",
+  "privacyDoNotCollectIntro": "To be perfectly clear, our app is intentionally built to avoid accessing your personal data. We **do not** collect, store, link, or process any information that can be tied to you.",
+  "privacyPersonalIdentifiers": "Personal Identifiers: We do not access or store your name, email address, phone number, contacts, or any other personal account information from your device.",
+  "privacyHealthInformation": "Health Information: Any health records, medical conditions, medications, or other data you import remain yours alone. We cannot access them.",
+  "privacyNoCrossReferencing": "No Cross-Referencing: The app operates in isolation. It **does not** scan, index, or cross-reference your health data with any other personal information on your phone (like your contacts list, name, or phone number). Its only job is to organize the records you provide to it.",
+  "privacyUsageAnalytics": "Usage Analytics: We do not track how you use the app, which buttons you tap, or how long you spend on certain screens.",
+  "privacyYouManageIntro": "The only data processed by the app is the health information **you choose to import** into it. This can be done in the following ways:",
+  "privacyImportingIntro": "You can add health documents (such as PDFs of lab results or clinic summaries) directly into the app using standard mobile operating system features:",
+  "privacyScanning": "Scanning: Using your device's camera to scan a physical document from within the app.",
+  "privacyShareActionSheet": "Share Action Sheet: Selecting a file from another app (like your email, photos, or file manager) and \"sharing\" it directly to **HealthWallet.me**.",
+  "privacyLocalProcessing": "Once a document is imported, the app processes it locally on your device in the background. It structures the information according to the **HL7 FHIR (Fast Healthcare Interoperability Resources)** standard to make it useful and organized. This entire process happens on your device; the document and the structured data never leave it.",
+  "privacyFastenIntro": "Our app allows you to consolidate your health records by connecting to **FastenHealth OnPrem**, a transparent, open-source platform.",
+  "privacyFastenOpenSource": "Open-Source and On-Premises: FastenHealth OnPrem is open-source software that you or a trusted entity controls. This provides an exceptional level of privacy.",
+  "privacyFastenDirectDownload": "Direct-to-Device Download: When you authorize the connection, your health records are downloaded **directly from your FastenHealth OnPrem instance to your device**. Our app is only a conduit; your data never passes through our servers.",
+  "privacyUsageIntro": "Since all your data resides on your device, it is only \"used\" by the app to help you organize and view your records. This includes:",
+  "privacyUsageProcessing": "Processing and structuring imported or scanned documents.",
+  "privacyUsageDisplaying": "Displaying your health records, lab results, and medication history to you.",
+  "privacyNoOtherUse": "We do not use your information for advertising, research, or any other purpose.",
+  "privacyStorage": "Storage: All your data is stored in the app's secure, sandboxed storage on your device. It is as secure as your device itself. We strongly recommend you protect your device with a passcode, Face ID, or other biometric security.",
+  "privacySharing": "Sharing: We do not and cannot share your data with anyone because we don't have it. If you choose to export or share your data from the app, you are in complete control of where it goes.",
+  "privacyDeletion": "Deletion: You can delete your information at any time from within the app. Deleting the app from your device will also permanently delete all data it has stored.",
+  "privacyChildrenBody": "Our service is not directed to individuals under the age of 16, in accordance with the General Data Protection Regulation (GDPR) as applicable in Romania and across the EU. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us.",
+  "privacyChangesBody": "We may update this policy from time to time. If we make any material changes, we will notify you through the app or by other means so you can review the changes before they take effect.",
+  "privacyContactBody": "If you have any questions or concerns about this Privacy Policy, please contact us at:",
+  "syncQrScanInstructions": "Scan a QR code from your **HealthWallet.me** desktop app or **Fasten Health** to sync your data.",
+  "syncSuccessMessage": "Data was successfully synced!",
+  "syncErrorConnection": "Connection failed. Please check your network and try again.",
+  "syncErrorEndpointNotFound": "Sync endpoint not found. Please check server configuration.",
+  "syncErrorAuthentication": "Authentication failed. Please check your token.",
+  "syncErrorInvalidFormat": "Invalid sync data format",
+  "syncErrorGeneric": "Data sync failed: {error}",
+  "@syncErrorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPlaceholderSubtitle": "Sync or update your data to view {recordType} records",
+  "@syncPlaceholderSubtitle": {
+    "placeholders": {
+      "recordType": {
+        "type": "String"
+      }
+    }
+  }
 }

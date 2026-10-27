@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:health_wallet/features/processing/presentation/helpers/processing_path_helper.dart';
 import 'package:health_wallet/features/user/domain/services/id_card_extractor.dart';
@@ -130,8 +131,7 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
         showScanQualityMessage(true);
       } else {
         setState(() {
-          scanMessage =
-              'Verify the details are correct. Retry scanning if needed.';
+          scanMessage = context.l10n.idScanVerifyDetails;
         });
       }
     } else {
@@ -146,8 +146,8 @@ mixin IdCardScanMixin<T extends StatefulWidget> on State<T> {
     if (!mounted) return;
     setState(() {
       scanMessage = partial
-          ? 'Some fields could not be read. Try a clearer photo.'
-          : 'Could not read the document. Retake with better lighting.';
+          ? context.l10n.idScanPartial
+          : context.l10n.idScanFailed;
       scanCompleted = true;
     });
   }
