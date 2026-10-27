@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document-to-FHIR Recon</title>
+<style>
+:root { --bg:#fbfaf8; --fg:#1d1f23; --muted:#5d6470; --card:#ffffff; --line:#e3e1dc; --accent:#2f5d8a;
+  --ok-bg:#e6f2ea; --ok-fg:#1f5d36; --med-bg:#fff4dc; --med-fg:#7a5200; --low-bg:#fde8e4; --low-fg:#8a2a17;
+  --unv-bg:#fff0c2; --unv-fg:#6b4a00; --dis-bg:#fbd9d3; --dis-fg:#7d1c0c; --lite:#7d9cc0; --adv:#2f5d8a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#14161a; --fg:#e7e5e1; --muted:#a2a8b3;
+  --card:#1c1f24; --line:#30343b; --accent:#8db4dc; --ok-bg:#183323; --ok-fg:#9fd8b2; --med-bg:#3a2e12; --med-fg:#f2cf86;
+  --low-bg:#3d1d17; --low-fg:#f3a898; --unv-bg:#433513; --unv-fg:#f7d77c; --dis-bg:#4a1e17; --dis-fg:#ffb3a5;
+  --lite:#5f7ea3; --adv:#8db4dc; } }
+:root[data-theme="dark"] { --bg:#14161a; --fg:#e7e5e1; --muted:#a2a8b3; --card:#1c1f24; --line:#30343b; --accent:#8db4dc;
+  --ok-bg:#183323; --ok-fg:#9fd8b2; --med-bg:#3a2e12; --med-fg:#f2cf86; --low-bg:#3d1d17; --low-fg:#f3a898;
+  --unv-bg:#433513; --unv-fg:#f7d77c; --dis-bg:#4a1e17; --dis-fg:#ffb3a5; --lite:#5f7ea3; --adv:#8db4dc; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+.wrap { max-width:1180px; margin:0 auto; padding:24px 16px 80px; display:grid; grid-template-columns:230px minmax(0,1fr); gap:32px; }
+header.top { grid-column:1/-1; }
+h1 { font-size:1.7rem; line-height:1.25; margin:0 0 8px; }
+.decision { color:var(--muted); margin:0 0 16px; }
+.meta { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px 20px; margin:0; padding:14px 16px; background:var(--card); border:1px solid var(--line); border-radius:10px; font-size:.9rem; }
+.meta dt { color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+.meta dd { margin:0; }
+nav.toc { position:sticky; top:16px; align-self:start; font-size:.9rem; }
+nav.toc ol { list-style:none; padding:0; margin:0; border-left:2px solid var(--line); }
+nav.toc a { display:block; padding:4px 12px; color:var(--muted); text-decoration:none; }
+nav.toc a:hover { color:var(--accent); }
+main { min-width:0; }
+h2 { font-size:1.3rem; margin:40px 0 12px; padding-top:8px; border-top:1px solid var(--line); scroll-margin-top:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 22px 14px; }
+.card.exec { border-left:4px solid var(--accent); }
+.card.exec h2 { border-top:0; margin-top:14px; }
+a { color:var(--accent); }
+a.cite { font-size:.78em; vertical-align:super; text-decoration:none; padding:0 1px; }
+code { font:.88em ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--line); padding:1px 4px; border-radius:4px; }
+table { border-collapse:collapse; width:100%; font-size:.86rem; margin:12px 0; }
+.tscroll { overflow-x:auto; }
+th,td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+th { background:var(--card); }
+.badge { display:inline-block; font-size:.74em; font-weight:600; padding:0 7px; border-radius:999px; line-height:1.6; white-space:nowrap; }
+.b-verified { background:var(--ok-bg); color:var(--ok-fg); }
+.b-medium { background:var(--med-bg); color:var(--med-fg); }
+.b-low { background:var(--low-bg); color:var(--low-fg); }
+.b-unverified { background:var(--unv-bg); color:var(--unv-fg); border:1px solid currentColor; }
+.b-disputed { background:var(--dis-bg); color:var(--dis-fg); border:1px solid currentColor; }
+details { margin-top:8px; }
+summary { cursor:pointer; color:var(--accent); font-weight:600; }
+table.sources td:first-child { white-space:nowrap; }
+tr:target { outline:2px solid var(--accent); }
+.chart { margin:18px 0; }
+.chart svg { width:100%; max-width:620px; height:auto; }
+.chart .lbl,.chart .val,.chart .tick { fill:var(--fg); font-size:12px; }
+.chart .tick { fill:var(--muted); font-size:11px; }
+.chart .axis { stroke:var(--line); }
+.bar-lite { fill:var(--lite); } .bar-adv { fill:var(--adv); }
+figcaption { color:var(--muted); font-size:.82rem; }
+.key { display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; }
+.key-lite { background:var(--lite); } .key-adv { background:var(--adv); }
+@media (max-width:860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; } }
+</style></head>
+<body><div class="wrap">
+<header class="top"><h1>Technical research: on-device document-to-FHIR R4 extraction, what changed since May 2026</h1>
+<p class="decision"><strong>Decision:</strong> Swap or add an on-device VLM (and possibly the runtime); invest in LoRA on own scan-to-FHIR pairs; harden structured JSON output; build a mapping-accuracy benchmark</p><dl class="meta"><div><dt>Type</dt><dd>technical</dd></div><div><dt>Shape</dt><dd>select (model + runtime) / explore (LoRA, structured output, benchmark)</dd></div><div><dt>Date</dt><dd>2026-10-22</dd></div><div><dt>Depth</dt><dd>deep · native run (deep preset: 3 rounds, 13 research assistants + 1 verifier)</dd></div><div><dt>Validation</dt><dd>normal · claims: <span class="badge b-verified">13 verified</span> <span class="badge b-unverified">15 unverified</span> <span class="badge b-disputed">1 disputed</span></dd></div><div><dt>Refresh before</dt><dd>2027-04-22</dd></div></dl></header>
+<nav class="toc" aria-label="Contents"><ol><li><a href="#executive-summary">Executive summary</a></li><li><a href="#d1a-model-candidates-swap-or-add">D1a. Model candidates: swap or add?</a></li><li><a href="#d1b-on-device-runtime-is-llama-cpp-llamadart-still-the-way">D1b. On-device runtime: is llama.cpp/llamadart still the way?</a></li><li><a href="#d2-fine-tuning-and-lora-on-our-own-document-fhir-pairs">D2. Fine-tuning and LoRA on our own document → FHIR pairs</a></li><li><a href="#d3-structured-grammar-constrained-json-output">D3. Structured, grammar-constrained JSON output</a></li><li><a href="#d4-benchmarking-mapping-accuracy">D4. Benchmarking mapping accuracy</a></li><li><a href="#cross-dimension-insights">Cross-dimension insights</a></li><li><a href="#recommendations">Recommendations</a></li><li><a href="#open-questions">Open questions</a></li><li><a href="#decisions-since-publication">Decisions since publication</a></li><li><a href="#source-appendix">Source appendix</a></li><li><a href="#staleness-map">Staleness map</a></li></ol></nav>
+<main><p><strong>Decision this research serves:</strong> whether to swap or add an on-device vision-language model, and possibly the runtime; whether to invest in LoRA on our own scan→FHIR pairs; how to harden structured JSON output; and how to benchmark mapping accuracy.</p>
+<p><strong>Requirements frame (from the codebase, not from research):</strong>
+- <em>Hard gates:</em>
+    - Fully on-device and offline.
+    - Usable from Flutter on iOS, Android, macOS and Windows.
+    - Commercial licence.
+    - About 4B parameters or fewer.
+    - Fits the Lite tier (about 1.5 GB total, phones with &lt;6 GB RAM) or the advanced tier (about 3.3 GB, ≥6 GB RAM).
+- <em>Weighted preferences:</em>
+    - Document extraction accuracy.
+    - Medical coding knowledge.
+    - JSON compliance.
+    - EN/ES/DE/RO coverage.
+    - Size and latency.
+    - Runtime readiness, that is, credit for not migrating.
+    - Licence burden.
+- <em>Baseline:</em> <code>llamadart</code> 0.6.8 (llama.cpp) with Qwen3-VL-2B and MedGemma 4B, using a generic JSON-array GBNF grammar.</p>
+<p><strong>Conventions:</strong> confidence is per claim and marked where below high. "Vendor" means the model's publisher measured it.</p>
+<section class="card exec"><h2 id="executive-summary">Executive summary</h2>
+<p><strong>What to do:</strong>
+1. Upgrade the runtime we already use, not switch it.
+2. Make the JSON output schema-specific.
+3. Build our own benchmark <em>before</em> changing models or training a LoRA.
+4. Benchmark NuExtract3 against MedGemma for the advanced tier. Keep Qwen3-VL-2B on the Lite tier and benchmark Qwen3.5-2B and NuExtract 2.0-2B against it.
+5. Defer LoRA until the benchmark exists, and prove a LoRA works alongside the vision projector first.</p>
+<p><strong>The findings that drive this:</strong></p>
+<ol>
+<li><strong>The runtime moved under us, inside the same package.</strong> <code>llamadart</code> went from our 0.6.8 to 0.15.6 <a class="cite" href="#src-1">[1]</a>. It now drives llama.cpp and Google's LiteRT-LM behind one Dart API, with JSON-schema output that raises an error on unsupported schemas instead of silently ignoring them, and runtime LoRA loading <a class="cite" href="#src-2">[2]</a><a class="cite" href="#src-3">[3]</a>.<ul>
+<li>LiteRT-LM <em>may</em> be faster on phone GPUs: 61 vs 39 tok/s in one independent text-only test, which our verifier could not corroborate (<span class="badge b-medium">single source</span>, <span class="badge b-unverified">unverified</span>) <a class="cite" href="#src-4">[4]</a>.</li>
+<li>No official Qwen or MedGemma vision builds were found for it (<span class="badge b-medium">medium confidence</span>), and it has no constrained JSON through <code>llamadart</code> yet <a class="cite" href="#src-5">[5]</a>.</li>
+<li>Apple's and Android's built-in models cover only some platforms. The Android one is also beta and capped at 4,000 tokens <a class="cite" href="#src-6">[6]</a>.</li>
+<li><strong>Upgrade <code>llamadart</code>, keep llama.cpp as the default backend, and evaluate LiteRT-LM as a second one.</strong></li>
+</ul>
+</li>
+<li><strong>Small models fail mostly on format, and the cheap fixes come first.</strong><ul>
+<li>Below 4B, VAREX found models returning the schema instead of values. Inlining <code>$defs</code> alone lifted Qwen3-VL-2B from 27% to 92% on affected documents <a class="cite" href="#src-7">[7]</a>.</li>
+<li>Hard schema constraints at ≤3B guarantee validity but can cost accuracy; "reason free, constrain late" (let the model reason in free text, then constrain only the final answer) recovers most of the lost accuracy <a class="cite" href="#src-8">[8]</a>. An independent benchmark confirms the cost <a class="cite" href="#src-9">[9]</a>, and a second independent study agrees on the fix (D3).</li>
+<li><strong>Use a flat intermediate schema with required fields first, constrain the final pass, then validate FHIR on the device</strong> <a class="cite" href="#src-10">[10]</a>.</li>
+</ul>
+</li>
+<li><strong>Gains from model upgrades are smaller than vendor cards suggest.</strong><ul>
+<li>Qwen3.5-2B's claimed ~15-point document lead over our Qwen3-VL-2B shrinks to a tie on an independent benchmark <a class="cite" href="#src-11">[11]</a>.</li>
+<li>MedGemma 1.5's extraction gains are on internal PDF sets; on the public image set it equals MedGemma 1 <a class="cite" href="#src-12">[12]</a>.</li>
+<li>The one candidate with an extraction-specific edge is <strong>NuExtract3</strong>, a Qwen3.5-4B fine-tune under Apache-2.0. It produces about one-eighth of its base model's failed outputs (27 vs 229), though only on its vendor's own benchmark <a class="cite" href="#src-13">[13]</a>.</li>
+<li><strong>Benchmark NuExtract3 on the advanced tier, and don't swap the Lite model yet.</strong></li>
+</ul>
+</li>
+<li><strong>LoRA is cheap to train and risky to ship.</strong><ul>
+<li>Measured gains are large: 2B reading accuracy went from 62% to 88% on 176 forms <a class="cite" href="#src-14">[14]</a>. Compute is tens of GPU-hours at most <a class="cite" href="#src-15">[15]</a>.</li>
+<li>Models trained on templated synthetic data collapse on unseen layouts: F1 fell from 0.98 to 0.59 <a class="cite" href="#src-15">[15]</a>.</li>
+<li>Three targeted searches found no report of a LoRA working alongside a vision projector in llama.cpp; llama.cpp's <code>llama-mtmd-cli</code> merely accepts both flags <a class="cite" href="#src-16">[16]</a>.</li>
+<li>Apple's adapter path is obsolete on iOS and macOS 27 <a class="cite" href="#src-17">[17]</a>.</li>
+<li><strong>Defer LoRA until the benchmark exists, and run the LoRA + projector experiment first.</strong></li>
+</ul>
+</li>
+</ol>
+<p><strong>Biggest caveat:</strong> no public benchmark pairs medical document images with FHIR, in any language <a class="cite" href="#src-18">[18]</a>. Almost every model number here is <span class="badge b-medium">vendor-reported</span>. So the first deliverable is our own EN/ES/DE/RO benchmark (D4). Every other decision in this report is provisional until it exists. 7 of 23 load-bearing claims are already past their freshness bar (see the Staleness map).</p>
+</section><h2 id="d1a-model-candidates-swap-or-add">D1a. Model candidates: swap or add?</h2>
+<p><strong>Bottom line.</strong>
+- <strong>Advanced tier (≥6 GB RAM):</strong> there is a real candidate to benchmark against MedGemma. <strong>NuExtract3</strong> is NuMind's document-extraction fine-tune of Qwen3.5-4B, released May 2026 under Apache-2.0. It is the same size class as MedGemma 4B, uses an architecture llama.cpp already supports, and carries no obligations under Google's Health AI Developer Foundations (HAI-DEF) terms.
+- <strong>Lite tier:</strong> the evidence does <strong>not</strong> justify swapping Qwen3-VL-2B yet. Its successor, Qwen3.5-2B, ties with it on the only independent document benchmark and is about 0.45 GB larger.
+- <strong>Every document score below is <span class="badge b-medium">vendor-reported</span> unless marked otherwise.</strong> The matrix is a prior for D4's benchmark, not a substitute for it.</p>
+<p><strong>What changed since May 2026.</strong>
+- <strong>Qwen:</strong> nothing ≤4B. The current small line is still Qwen3.5 0.8B–9B from March 2026 <a class="cite" href="#src-19">[19]</a>.
+- <strong>Google:</strong> MedGemma 1.5 4B (January 2026) is the latest MedGemma, and no Gemma 4-based MedGemma exists <a class="cite" href="#src-12">[12]</a>. Gemma 4 E2B/E4B arrived in April under Apache-2.0 <a class="cite" href="#src-20">[20]</a>.
+- <strong>Released inside the window:</strong>
+    - NuExtract3 (about May 2026) <a class="cite" href="#src-13">[13]</a>.
+    - MiniCPM-V 4.6 (about 1B, 2026-05-11) <a class="cite" href="#src-21">[21]</a>.
+    - PaddleOCR-VL-1.6 (0.9B, 2026-05-28), a page parser that turns images into text and tables rather than extracting fields <a class="cite" href="#src-22">[22]</a>.
+    - A wave of OCR-only models supported in llama.cpp <a class="cite" href="#src-23">[23]</a>. These would need a second pass to produce FHIR.</p>
+<p><strong>What the evidence says about each.</strong>
+- <strong>Qwen3.5-2B/4B.</strong> Qwen's own card shows big gains over Qwen3-VL-2B: OmniDocBench 80.9 vs 65.9 <a class="cite" href="#src-24">[24]</a>. The 4B scores 86.2 <a class="cite" href="#src-25">[25]</a>.
+    - The independent PureDocBench (Sept 2026) finds the two 2B models <strong>essentially tied</strong>: 62.46 vs 62.09. Qwen3.5-2B is ahead only on real-world photos, 55.92 vs 54.09 <a class="cite" href="#src-11">[11]</a>. <strong>The vendor gap is <span class="badge b-disputed">disputed</span>.</strong>
+    - llama.cpp has supported Qwen3.5 vision since 2026-02-10 <a class="cite" href="#src-26">[26]</a>.
+    - Q4_K_M + mmproj (the vision projector file) is about 1.95 GB for the 2B <a class="cite" href="#src-27">[27]</a> and about 3.4 GB for the 4B <a class="cite" href="#src-28">[28]</a>.
+    - A report of gibberish output from Qwen3.5-2B on an Adreno Vulkan GPU was closed stale without a fix <a class="cite" href="#src-29">[29]</a>. <code>llamadart</code> defaults Android to CPU, so it matters less there (D1b).
+    - Its JSON compliance on images is untested. Its predecessor Qwen3-VL-2B was non-compliant on 56% of image inputs in VAREX (D2) <a class="cite" href="#src-7">[7]</a>, so its JSON-compliance score of 2 in the matrix below is a family prior, not a measurement.
+- <strong>NuExtract3 (4B).</strong>
+    - On NuMind's own extraction benchmark it scores 0.651 against 0.417 for its base Qwen3.5-4B, with 27 against 229 failed outputs. Gemma 4 E4B scores 0.538 <a class="cite" href="#src-13">[13]</a>.
+    - These are vendor numbers on the vendor's own set. They match the independent finding that small models fail mainly on format, which extraction training fixes <a class="cite" href="#src-30">[30]</a>.
+    - No official GGUF exists. A community Q4_K_M is 2.71 GB plus a 676 MB mmproj <a class="cite" href="#src-31">[31]</a>.
+    - Its languages are listed only as "multilingual".
+    - Its predecessor NuExtract 2.0 has an MIT 2B build on Qwen2-VL-2B <a class="cite" href="#src-32">[32]</a>, a possible Lite-tier wildcard (GGUF not checked).
+- <strong>MedGemma 1.5 4B.</strong> I re-checked the card. Compared with MedGemma 1, lab-report extraction rose from 25 to 64 macro F1 on an internal dataset ("EHR 4"), and from 78 to 91 on another. On the one <strong>public image→JSON</strong> set (Mendeley lab-report PNGs), MedGemma 1 and 1.5 both score <strong>85</strong>, and plain Gemma 3 4B scores 83. Plain Gemma 3 4B also <em>beats</em> MedGemma 1 on all three internal PDF sets: 84/61/41 vs 78/50/25 <a class="cite" href="#src-12">[12]</a>.
+    - The gains are on PDFs and internal data, not clearly on photos. No independent evaluation was found.
+    - It stays under HAI-DEF terms (D2) <a class="cite" href="#src-33">[33]</a>.
+    - It is a probable drop-in for MedGemma 1, since both use the Gemma 3 architecture.
+    - One <span class="badge b-unverified">unverified</span> forum report says its Q8_0 quantised build fails to produce valid JSON on dense pages <a class="cite" href="#src-34">[34]</a>.
+- <strong>Gemma 4 E2B.</strong> 2.3B effective but 5.1B total parameters, so the GGUF is 3.11 GB before the mmproj <a class="cite" href="#src-20">[20]</a>. Through LiteRT-LM it is 2.58 GB with about 1.45 GB of memory (text) <a class="cite" href="#src-35">[35]</a>.
+    - Its only document score is an edit distance (lower is better) that can't be compared with Qwen's <a class="cite" href="#src-20">[20]</a>.
+    - In practice it is a LiteRT-LM-only option, and that path has no JSON constraints through <code>llamadart</code> yet (D3).
+- <strong>Screened out or watch list.</strong>
+    - MiniCPM-V 4.6: claims Qwen3.5-2B-level OCR with no numbers <a class="cite" href="#src-21">[21]</a>.
+    - InternVL3.5-2B <code>.litertlm</code>: 1.61 GB, Apache-2.0 <a class="cite" href="#src-36">[36]</a>, but LiteRT-only and no document scores.
+    - LFM2.5-VL-1.6B: custom licence, no Romanian <a class="cite" href="#src-37">[37]</a>.
+    - PaddleOCR-VL-1.6: a parser front-end, not an extractor <a class="cite" href="#src-22">[22]</a>.
+    - Cut on the ≤4B gate: Qwen3.6/3.8 (27B+) and Phi-4-reasoning-vision (15B).</p>
+<p><strong>Scoring matrix.</strong> Scores are 1–5 and weights sum to 100. Each total is the weighted sum, scaled to 100. The scores are my judgement from the evidence above; re-weight freely. "Runtime readiness" is the switching-cost credit for running under <code>llamadart</code> 0.15's llama.cpp backend.</p>
+<table>
+<thead>
+<tr>
+<th>Criterion (weight)</th>
+<th>Qwen3-VL-2B <em>(Lite, now)</em></th>
+<th>Qwen3.5-2B</th>
+<th>MiniCPM-V 4.6</th>
+<th>InternVL3.5-2B (LiteRT)</th>
+<th>MedGemma 1 4B <em>(Adv., now)</em></th>
+<th>MedGemma 1.5 4B</th>
+<th>Qwen3.5-4B</th>
+<th><strong>NuExtract3 4B</strong></th>
+<th>Gemma 4 E2B (LiteRT)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doc extraction accuracy (30)</td>
+<td>3</td>
+<td>3.5</td>
+<td>2.5</td>
+<td>2.5</td>
+<td>3</td>
+<td>3.5</td>
+<td>4</td>
+<td>4.5</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Medical knowledge/coding (15)</td>
+<td>2</td>
+<td>3</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
+<td>4.5</td>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+</tr>
+<tr>
+<td>JSON/schema compliance (15)</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>1</td>
+<td>2.5</td>
+<td>3</td>
+<td>2.5</td>
+<td>4.5</td>
+<td>1.5</td>
+</tr>
+<tr>
+<td>EN/ES/DE/RO (10)</td>
+<td>3</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
+<td>3.5</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Size/latency fit for its tier (15)</td>
+<td>5</td>
+<td>3</td>
+<td>5</td>
+<td>5</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Runtime readiness (10)</td>
+<td>4</td>
+<td>4</td>
+<td>3</td>
+<td>2</td>
+<td>5</td>
+<td>4</td>
+<td>4</td>
+<td>3</td>
+<td>2.5</td>
+</tr>
+<tr>
+<td>Licence burden (5)</td>
+<td>5</td>
+<td>5</td>
+<td>5</td>
+<td>5</td>
+<td>2</td>
+<td>2</td>
+<td>5</td>
+<td>5</td>
+<td>5</td>
+</tr>
+<tr>
+<td><strong>Weighted total /100</strong></td>
+<td><strong>64</strong></td>
+<td><strong>66</strong></td>
+<td><strong>57</strong></td>
+<td><strong>52</strong></td>
+<td><strong>65.5</strong></td>
+<td><strong>69.5</strong></td>
+<td><strong>73.5</strong></td>
+<td><strong>79.5</strong></td>
+<td><strong>61.5</strong></td>
+</tr>
+</tbody>
+</table>
+<figure class="chart"><svg viewBox="0 0 550 310" role="img" aria-label="Weighted totals out of 100 per candidate"><text x="182" y="19" text-anchor="end" class="lbl">Qwen3-VL-2B (Lite, now)</text><rect x="190" y="4" width="192.0" height="22" rx="3" class="bar-lite"/><text x="388.0" y="19" class="val">64</text><text x="182" y="49" text-anchor="end" class="lbl">Qwen3.5-2B</text><rect x="190" y="34" width="198.0" height="22" rx="3" class="bar-lite"/><text x="394.0" y="49" class="val">66</text><text x="182" y="79" text-anchor="end" class="lbl">MiniCPM-V 4.6</text><rect x="190" y="64" width="171.0" height="22" rx="3" class="bar-lite"/><text x="367.0" y="79" class="val">57</text><text x="182" y="109" text-anchor="end" class="lbl">InternVL3.5-2B (LiteRT)</text><rect x="190" y="94" width="156.0" height="22" rx="3" class="bar-lite"/><text x="352.0" y="109" class="val">52</text><text x="182" y="139" text-anchor="end" class="lbl">MedGemma 1 4B (Adv., now)</text><rect x="190" y="124" width="196.5" height="22" rx="3" class="bar-adv"/><text x="392.5" y="139" class="val">65.5</text><text x="182" y="169" text-anchor="end" class="lbl">MedGemma 1.5 4B</text><rect x="190" y="154" width="208.5" height="22" rx="3" class="bar-adv"/><text x="404.5" y="169" class="val">69.5</text><text x="182" y="199" text-anchor="end" class="lbl">Qwen3.5-4B</text><rect x="190" y="184" width="220.5" height="22" rx="3" class="bar-adv"/><text x="416.5" y="199" class="val">73.5</text><text x="182" y="229" text-anchor="end" class="lbl">NuExtract3 4B</text><rect x="190" y="214" width="238.5" height="22" rx="3" class="bar-adv"/><text x="434.5" y="229" class="val">79.5</text><text x="182" y="259" text-anchor="end" class="lbl">Gemma 4 E2B (LiteRT)</text><rect x="190" y="244" width="184.5" height="22" rx="3" class="bar-adv"/><text x="380.5" y="259" class="val">61.5</text><line x1="190" y1="280" x2="490" y2="280" class="axis"/><text x="190.0" y="294" text-anchor="middle" class="tick">0</text><text x="265.0" y="294" text-anchor="middle" class="tick">25</text><text x="340.0" y="294" text-anchor="middle" class="tick">50</text><text x="415.0" y="294" text-anchor="middle" class="tick">75</text><text x="490.0" y="294" text-anchor="middle" class="tick">100</text></svg><figcaption>Weighted total out of 100 (judgement scores from vendor-heavy evidence; a prior for the D4 benchmark, not a result). <span class="key key-lite"></span> Lite tier · <span class="key key-adv"></span> Advanced tier</figcaption></figure><p><strong>Verdict.</strong>
+- <strong>Advanced tier.</strong>
+    - <strong>Pick to benchmark: NuExtract3.</strong>
+    - <strong>Runner-up: Qwen3.5-4B</strong>, NuExtract3's base model and so the fair control. It wins if NuExtract3's community GGUF quantises badly, or if the extraction fine-tune hurts medical coding.
+    - <strong>Keep MedGemma 1.5 4B</strong> as the drop-in upgrade for the current MedGemma 1. Its edge is medical terminology. It wins if D4 shows that coding accuracy matters more than field accuracy, at the price of HAI-DEF obligations.
+    - <strong>Strongest argument against the pick:</strong>
+        - Its lead rests entirely on NuMind's own benchmark.
+        - It depends on a single community GGUF.
+        - It comes from a small vendor with an unstated language list.
+    - <strong>Cheapest hedge:</strong> NuExtract3 and Qwen3.5-4B share an architecture, so one runtime path serves both. Swapping is a new <code>AiModelConfig</code> entry, not new code.
+- <strong>Lite tier.</strong> Beyond the no-swap call above, test NuExtract 2.0-2B (MIT) as a wildcard. Re-screen when an extraction-tuned Qwen3.5-2B or a Gemma 4-based MedGemma ships.</p>
+<h2 id="d1b-on-device-runtime-is-llama-cpp-llamadart-still-the-way">D1b. On-device runtime: is llama.cpp/llamadart still the way?</h2>
+<p><strong>Bottom line:</strong> yes, for now, but not the version we ship. The landscape did shift. Google's LiteRT-LM is now a credible cross-platform runtime with vision, and it may be faster than llama.cpp on phone GPUs (one independent text benchmark, not corroborated). Apple added image input to its on-device model.</p>
+<p>None of the alternatives beats llama.cpp on the combination we need:
+- vision for <em>our</em> models (Qwen, MedGemma);
+- grammar-constrained JSON;
+- runtime LoRA;
+- Windows support;
+- a production Flutter path.</p>
+<p>And <code>llamadart</code> itself now wraps LiteRT-LM. <strong>Upgrade <code>llamadart</code> from 0.6.8 to 0.15.x, and evaluate LiteRT-LM as a second backend in the same package</strong>, rather than switching runtimes.</p>
+<p><strong>At a glance.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Runtime</th>
+<th>iOS</th>
+<th>Android</th>
+<th>macOS</th>
+<th>Windows</th>
+<th>Our VLMs</th>
+<th>Constrained JSON</th>
+<th>Runtime LoRA</th>
+<th>Fit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>llama.cpp through llamadart 0.15</td>
+<td>Metal</td>
+<td>CPU (Vulkan experimental)</td>
+<td>Metal</td>
+<td>Vulkan/CUDA</td>
+<td>Qwen3.5, Gemma 3/4 named; Qwen3-VL/MedGemma untested</td>
+<td>Yes (fails loudly)</td>
+<td>Yes</td>
+<td><strong>Baseline: upgrade</strong></td>
+</tr>
+<tr>
+<td>LiteRT-LM (through llamadart or native)</td>
+<td>Yes</td>
+<td>GPU/NPU</td>
+<td>arm64</td>
+<td>x86_64</td>
+<td>Gemma 4 only (official)</td>
+<td>Upstream yes; not through llamadart yet</td>
+<td>One adapter; buggy</td>
+<td><strong>Evaluate as second backend</strong></td>
+</tr>
+<tr>
+<td>Apple Foundation Models / Core AI</td>
+<td>iOS 27</td>
+<td>No</td>
+<td>macOS 27</td>
+<td>No</td>
+<td>Apple model or Core AI export</td>
+<td><code>@Generable</code></td>
+<td>Toolkit discontinued</td>
+<td>Partial; watch</td>
+</tr>
+<tr>
+<td>ML Kit Prompt API</td>
+<td>No</td>
+<td>Gemini Nano devices</td>
+<td>No</td>
+<td>No</td>
+<td>Gemini Nano</td>
+<td>Alpha</td>
+<td>No</td>
+<td>Reject (beta, 4K-token cap)</td>
+</tr>
+<tr>
+<td>Cactus, ONNX Runtime GenAI, ExecuTorch</td>
+<td>partial</td>
+<td>partial</td>
+<td>partial</td>
+<td>partial/none</td>
+<td>limited</td>
+<td>limited</td>
+<td>varies</td>
+<td>Reject for now</td>
+</tr>
+</tbody>
+</table>
+<p><strong>llamadart moved a long way.</strong>
+- <strong>Current release.</strong> 0.15.6 (about 2026-10-21, MIT) drives both llama.cpp (GGUF + mmproj) and LiteRT-LM (<code>.litertlm</code>) behind one Dart API, with LoRA, grammar and JSON-schema <code>responseFormat</code>, and tool calling <a class="cite" href="#src-1">[1]</a>.
+- <strong>What our pin bundles.</strong> 0.6.8 shipped llama.cpp b8480 <a class="cite" href="#src-38">[38]</a>.
+- <strong>Upgrade cost.</strong> Several breaking releases lie in between <a class="cite" href="#src-38">[38]</a>:
+    - 0.7.1 raises the minimum to iOS 16.4 / macOS 14.
+    - 0.11 is the largest API break.
+    - 0.14 is an ABI break, and unsupported schemas now throw.
+- <strong>Model coverage.</strong> The changelog names Qwen3.5, Gemma 3/4 and GLM-OCR multimodal work, but <strong>never names Qwen3-VL or MedGemma</strong> <a class="cite" href="#src-38">[38]</a>. Our current models probably keep working through generic mmproj support, but that is <span class="badge b-unverified">unverified</span>: test before upgrading.
+- <strong>GPU support.</strong> Metal on Apple and Vulkan or CUDA on Windows. Android Vulkan is still experimental, the default is CPU, and there is no OpenCL/Adreno backend <a class="cite" href="#src-1">[1]</a>. That CPU default makes a reported 2.7x slowdown in CPU-only Android vision encoding relevant to us: an upstream regression reported in August 2026 that we haven't verified <a class="cite" href="#src-39">[39]</a>.
+- <strong>Bus factor.</strong> It looks like one maintainer: 78 stars and 124 open issues, but releases nearly every day <a class="cite" href="#src-40">[40]</a>.</p>
+<p><strong>LiteRT-LM is the one credible alternative.</strong>
+- <strong>Coverage.</strong> Google-backed and Apache-2.0. Releases v0.16–v0.18.1 landed between August and October 2026 <a class="cite" href="#src-41">[41]</a>. It runs on all four targets with GPU/NPU and vision input, but its Flutter support is "community" only <a class="cite" href="#src-42">[42]</a>.
+- <strong>Speed.</strong> Gemma 4 E2B as <code>.litertlm</code> is 2.58 GB and decodes at 56.5 tok/s on an iPhone 17 Pro GPU using about 1.45 GB of memory. Those are text-only numbers <a class="cite" href="#src-35">[35]</a>.
+- <strong>The one independent comparison</strong> used Gemma 4 E2B text on an iPhone 17 Pro <a class="cite" href="#src-4">[4]</a>:</p>
+<pre><code>| | LiteRT-LM | llama.cpp (Q4_K_M) |
+|---|---|---|
+| Decode | 61.1 tok/s | 38.8 tok/s |
+| GSM8K | 86% | 76% |
+
+Over 10 minutes of sustained load, LiteRT-LM and the other runtimes tested lost speed: LiteRT-LM and MLX half or more, Core ML a third; llama.cpp was not measured. The author warns that speed ratios from different test sessions can't be compared, and our verifier found no second phone comparison. **No one has published a cross-runtime benchmark of image encoding**, which dominates our workload [4].
+</code></pre>
+<ul>
+<li><strong>Gaps for us.</strong><ul>
+<li>No official Qwen3-VL, Qwen3.5-vision or MedGemma <code>.litertlm</code> builds were found (snippet search of litert-community; <span class="badge b-medium">medium confidence</span>). Vision coverage is Gemma 4 plus community InternVL <a class="cite" href="#src-36">[36]</a>, Qwen2-VL and Ovis builds.</li>
+<li><code>llamadart</code>'s LiteRT-LM backend allows one LoRA at scale 1.0, has no grammar constraints on iOS <a class="cite" href="#src-38">[38]</a>, and has no JSON constraints at all yet <a class="cite" href="#src-5">[5]</a>.</li>
+<li>LoRA on LiteRT-LM has an open no-op bug <a class="cite" href="#src-43">[43]</a>.</li>
+</ul>
+</li>
+</ul>
+<p><strong>OS-provided models cover only some platforms and are not general enough.</strong>
+- <strong>Apple.</strong> At WWDC 2026 (2026-06-08), Apple added image input to Foundation Models and announced a new Core AI framework <a class="cite" href="#src-44">[44]</a>, which an independent benchmark author describes as Core ML's successor <a class="cite" href="#src-4">[4]</a>. Core AI needs iOS/macOS 27+ <a class="cite" href="#src-45">[45]</a>. Apple's own adapter path is closing (see D2) <a class="cite" href="#src-46">[46]</a>. No Android or Windows.
+- <strong>Android.</strong> The ML Kit Prompt API (Gemini Nano) takes image and text with alpha structured output, but it is beta <a class="cite" href="#src-47">[47]</a>, Gemini Nano devices only, and limited to under 4,000 tokens <a class="cite" href="#src-6">[6]</a>. An "English and Korean only" validation note appeared only in a search snippet (<span class="badge b-unverified">unverified</span>). Even if that note is wrong, a 4K-token cap and beta status rule it out for multi-page documents.</p>
+<p><strong>Others.</strong>
+- <strong>flutter_edge_ai</strong> (formerly flutter_gemma) wraps LiteRT-LM, ONNX Runtime, llama.cpp through <code>llamadart</code>, and the OS models. It documents no JSON constraints and can't run LiteRT-LM and llama.cpp together on macOS <a class="cite" href="#src-48">[48]</a>.
+- <strong>Cactus's</strong> licence ends free use above USD 2M in revenue or funding, and it has no Windows build <a class="cite" href="#src-49">[49]</a>.
+- <strong>ONNX Runtime GenAI</strong> runs Qwen3-VL only through a workaround <a class="cite" href="#src-50">[50]</a>.
+- <strong>ExecuTorch and MLC LLM:</strong> no Flutter path or 2026 VLM evidence found.</p>
+<h2 id="d2-fine-tuning-and-lora-on-our-own-document-fhir-pairs">D2. Fine-tuning and LoRA on our own document → FHIR pairs</h2>
+<p><strong>Bottom line:</strong> fine-tuning a 2–4B VLM for document extraction is cheap, well-tooled and gives large measured gains. Two risks dominate:
+- <strong>Layout overfitting:</strong> models fine-tuned on templated synthetic data collapse on differently rendered documents.
+- <strong>Shipping:</strong> nobody has shown a LoRA adapter working with a vision projector in llama.cpp, so the low-risk path is to freeze the vision layers, or merge the adapter into the model and re-export it.</p>
+<p>Free wins from schema design (see D3) come first and are much cheaper.</p>
+<p><strong>Measured gains, and the catch.</strong>
+- <strong>A Sept 2026 study</strong> fine-tuned Qwen2.5-VL-3B and 7B with LoRA (r16/α32, attention + MLP) on about 3K synthetic bank checks <a class="cite" href="#src-15">[15]</a>.
+    - In-distribution F1 rose to about 0.98: 3B went 0.847→0.983, beating GPT-5 zero-shot at 0.928.
+    - On a differently rendered check set, the fine-tuned 3B fell to 0.593 <a class="cite" href="#src-15">[15]</a>.
+- <strong>RAPTOR+ (June 2026)</strong> fine-tuned Qwen3-VL-2B, 4B and 8B on just 176 synthetic clinical forms <a class="cite" href="#src-14">[14]</a>.
+    - 2B reading accuracy rose from 62.3% to 88.3%.
+    - Strict per-document safety reached only 21% at 2B and 26% at 4B, against 61% at 8B <a class="cite" href="#src-14">[14]</a>. Fine-tuning narrows the size gap but does not close it.
+- <strong>A synthetic-to-real gap appears again</strong> in a care-transition study: about 97% on synthetic documents, about 85% on real scans <a class="cite" href="#src-51">[51]</a> (<span class="badge b-medium">medium confidence</span>).
+- <strong>Implication:</strong> training data must mix real or realistically degraded scans across document families and the four languages, not just one rendered template.</p>
+<p><strong>A cheaper first step.</strong> Fix the prompt and schema first (see D3, where the VAREX evidence sits); extraction training adds on top <a class="cite" href="#src-30">[30]</a>.</p>
+<p><strong>Data.</strong>
+- <strong>No public dataset pairs medical document images with FHIR.</strong> Synthea is the only licence-clean source of FHIR ground truth: Apache-2.0, FHIR R4, covers all target resource types <a class="cite" href="#src-52">[52]</a>.
+    - Its demographics are US-only <a class="cite" href="#src-52">[52]</a>.
+    - There is no maintained European fork. A German study found only 7 of 16 Synthea resource types matched German core profiles without conversion <a class="cite" href="#src-53">[53]</a>.
+- <strong>A realistic pipeline</strong> therefore looks like this: Synthea or our own FHIR → localised ES/DE/RO document templates → rendered and degraded images, plus a de-identified real set. That is our inference.
+- <strong>Reward functions for RL fine-tuning (GRPO)</strong> that score schema validity exist only as code patterns, with no published small-VLM results <a class="cite" href="#src-54">[54]</a>.</p>
+<p><strong>Tooling and cost (as of 2026-10-22).</strong>
+- TRL v1.16.0 does VLM supervised fine-tuning with PEFT LoRA <a class="cite" href="#src-55">[55]</a>.
+- Unsloth covers Qwen3.5 0.8B–122B vision fine-tuning. It needs about 5 GB VRAM for bf16 LoRA at 2B and about 10 GB at 4B, and advises against 4-bit QLoRA for Qwen3.5 <a class="cite" href="#src-56">[56]</a>.
+- LLaMA-Factory lists Qwen3-VL 2B/4B, Qwen3.5, Gemma 3/3n and MiniCPM-V 4.6 <a class="cite" href="#src-57">[57]</a>.
+- MLX-VLM does LoRA and GRPO on Apple Silicon <a class="cite" href="#src-58">[58]</a>.
+- Google ships official MedGemma LoRA and RL notebooks <a class="cite" href="#src-59">[59]</a>.
+- Measured cost: 6–14 A100-80GB GPU-hours for 3B/7B on about 3K samples <a class="cite" href="#src-15">[15]</a>. That is tens of dollars per run on rented GPUs, which is our arithmetic; no published price exists. The real cost is building the dataset, not compute.</p>
+<p><strong>Shipping the adapter, per runtime.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Runtime</th>
+<th>Runtime LoRA</th>
+<th>With vision</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>llama.cpp</td>
+<td>Yes: multi-adapter, scaled, per-request hot-swap <a class="cite" href="#src-60">[60]</a></td>
+<td><code>llama-mtmd-cli</code> accepts <code>--lora</code> and <code>--mmproj</code> <a class="cite" href="#src-16">[16]</a>, but no end-to-end report found either way</td>
+<td>Merging a LoRA and re-converting the mmproj gave "@" output in a 2025 Qwen2.5-VL report, closed stale <a class="cite" href="#src-61">[61]</a></td>
+</tr>
+<tr>
+<td>llamadart 0.15.x</td>
+<td><code>setLoraSource</code>, <code>removeLoraSource</code>, <code>clearLoras</code>; adapters from URL or <code>hf://</code> with resumable download <a class="cite" href="#src-3">[3]</a></td>
+<td>Undocumented: test it</td>
+<td>LiteRT-LM backend: one text LoRA at load only <a class="cite" href="#src-3">[3]</a></td>
+</tr>
+<tr>
+<td>LiteRT-LM</td>
+<td>Architecturally yes</td>
+<td>Open bug: a LoRA on Gemma 4 E2B GPU loads but changes nothing <a class="cite" href="#src-43">[43]</a></td>
+<td>Not production-ready for our use</td>
+</tr>
+<tr>
+<td>Apple Foundation Models</td>
+<td>Toolkit 26.0.0 is the <strong>last release</strong> and does not work on OS 27+ <a class="cite" href="#src-46">[46]</a></td>
+<td>Adapter docs are text-only</td>
+<td>Needs an entitlement and is about 160 MB per OS-model version. A dead end for now</td>
+</tr>
+</tbody>
+</table>
+<p>Unsloth trains the vision layers by default and documents no mmproj export <a class="cite" href="#src-62">[62]</a><a class="cite" href="#src-56">[56]</a>. A downloadable runtime adapter therefore means training with <code>finetune_vision_layers=False</code>. Otherwise, merge the adapter and re-export both the model GGUF and the mmproj, at the cost of users re-downloading the whole model.</p>
+<p><strong>Licences.</strong>
+- Qwen3.5 is Apache-2.0 <a class="cite" href="#src-24">[24]</a>, and so is Gemma 4 per its model card <a class="cite" href="#src-20">[20]</a>. Google's blog post announcing Gemma's move to Apache-2.0 was seen only in search results <a class="cite" href="#src-63">[63]</a>.
+- A MedGemma LoRA or merge is a HAI-DEF Model Derivative. Shipping it means <a class="cite" href="#src-33">[33]</a>:
+    - Flowing the use restrictions down into the app's terms.
+    - Giving users a copy of the Agreement and shipping a Notice file.
+    - Seeking health-regulator authorisation where applicable.
+    - Never using it in a way that makes Google a medical-device "manufacturer".</p>
+<pre><code>That is a real cost a Qwen or Gemma 4 base avoids.
+</code></pre>
+<ul>
+<li>MedGemma's outputs are not themselves Model Derivatives, but under the HAI-DEF terms a model trained on them to perform like MedGemma is one <a class="cite" href="#src-33">[33]</a>. Distilling MedGemma labels into a Qwen model can therefore inherit HAI-DEF terms.</li>
+</ul>
+<h2 id="d3-structured-grammar-constrained-json-output">D3. Structured, grammar-constrained JSON output</h2>
+<p><strong>Bottom line:</strong> keep the intermediate-schema-then-map design, and make the grammar schema-specific instead of a generic "JSON array of objects". Do this through <code>llamadart</code> 0.15's <code>responseFormat</code>, with:
+- a flat schema: no <code>$defs</code>, required fields first, enums for closed value sets;
+- a "reason free, constrain late" step for the small model;
+- FHIR validation on the device after mapping.</p>
+<p>Strict constraints guarantee <em>form</em>. They can cost <em>accuracy</em> at ≤3B, which is exactly our size class.</p>
+<p><strong>Why the schema matters most at our size.</strong> VAREX found that small VLMs fail mostly on format. Non-compliance jumps from 2–3% on flat schemas to 68–69% when the schema uses <code>$defs</code>. Just inlining <code>$defs</code> lifted Qwen3-VL-2B from 27.4% to 91.8% on that subset. Qwen3-VL-2B was non-compliant on 56% of image inputs, against 17% of text inputs <a class="cite" href="#src-7">[7]</a>. Fix the prompt and schema before training; extraction training adds on top (D2).</p>
+<p><strong>What llama.cpp does today.</strong>
+- <strong>The built-in schema converter.</strong> It still handles only a subset of JSON Schema and <strong>silently skips</strong> what it can't handle: nested <code>$ref</code>, <code>anyOf</code> mixed with properties, number bounds, <code>prefixItems</code>. The schema also isn't injected into the prompt, so the prompt must still describe the structure <a class="cite" href="#src-64">[64]</a>.
+- <strong>2026 issue status (checked 2026-10-22):</strong>
+    - <strong>Closed:</strong> large <code>$ref</code>/<code>$defs</code> schemas silently dropping the constraint (closed as completed, but no fix commit was identified, so re-test) <a class="cite" href="#src-65">[65]</a>, and the grammar not applying when the model's thinking mode is on <a class="cite" href="#src-66">[66]</a>.
+    - <strong>Not fixed:</strong> the deep-nesting crash (CVE-2026-52130), closed as "not planned" with its nesting-cap PR still open, and a <code>minItems</code> OOM, still open <a class="cite" href="#src-67">[67]</a>.
+    - <strong>New and still open:</strong> an optional property listed <em>before</em> a required one is silently dropped. The output is still valid JSON <a class="cite" href="#src-68">[68]</a>.
+- <strong>llguidance is the stronger engine</strong> <a class="cite" href="#src-69">[69]</a>. It errors on unsupported schemas instead of dropping them, keeps property order, and costs about 50 µs per token. It needs a Rust build flag.</p>
+<p><strong>What llamadart 0.15.6 changes for us.</strong>
+- <strong>Its own converter.</strong> It ships its own Dart port of the schema-to-grammar converter, so the upstream server crash bugs don't apply directly <a class="cite" href="#src-2">[2]</a>.
+- <strong>Fails loudly.</strong> Schemas it can't represent (untyped properties, non-local <code>$ref</code>, too-deep nesting, cycles) <strong>throw</strong> instead of degrading silently, and grammars over the repetition limit are rejected before generation <a class="cite" href="#src-2">[2]</a>.
+- <strong>Inherits the ordering rule.</strong> Its object rule uses the same required-first split, so the optional-before-required field-order bug above (llama.cpp #30321) probably applies. That is an inference from the code: test it, and put required fields first.
+- <strong>No llguidance</strong> <a class="cite" href="#src-2">[2]</a>.
+- <strong>No constraints on the LiteRT-LM backend yet</strong> (open, P2), although upstream LiteRT-LM now exposes them <a class="cite" href="#src-5">[5]</a>.</p>
+<p><strong>Accuracy: constraints help form, can hurt content.</strong>
+- <strong>Small models gain.</strong> On 0.6–4B models, constraints took validity to 100% and lifted content accuracy, for example Llama-3.2-3B from 0.777 to 0.991. They fix type errors but not semantic ones <a class="cite" href="#src-70">[70]</a>. At 8B, constrained decoding was neutral to slightly positive on accuracy <a class="cite" href="#src-71">[71]</a>.
+- <strong>The "constraint tax."</strong> A May 2026 study found that at ≤3B, a hard answer-only schema gave 100% validity but cost 8.7 points of accuracy on average, up to 20 points for individual models and 43.5 on a tool-call task. Its fix is to <strong>"reason free, constrain late"</strong>: delayed constraints reached 40.7% against 26.8% for answer-only <a class="cite" href="#src-8">[8]</a>.
+- <strong>Independent confirmation.</strong> StructureBench (IJCAI 2026) tested 11 on-device models of 0.5–8B. It found constraints enforce structure but "may even degrade performance for smaller models" <a class="cite" href="#src-9">[9]</a>. A separate "format tax" study puts most of the loss on format <em>instructions</em> rather than the decoding mask, and also recovers accuracy by separating reasoning from formatting <a class="cite" href="#src-72">[72]</a>. So the direction is verified by independent groups; the exact sizes are not.
+- <strong>Draft-then-constrain.</strong> Draft freely, then decode constrained with the draft in context. It gains up to 24 points at 1–1.5B <a class="cite" href="#src-73">[73]</a>.
+- <strong>Caveat.</strong> The constraint-tax and draft-then-constrain studies both use reasoning tasks, not document extraction, so the transfer is a hypothesis to test in D4's harness.
+- <strong>Already partly built.</strong> Our pipeline already has a free-text OCR path, which is a natural "draft" for the constrained pass. That is our inference.</p>
+<p><strong>FHIR-specific evidence.</strong>
+- <strong>CFG4FHIR (MIE 2026)</strong> builds grammars from FHIR R5 schemas with relaxed key order <a class="cite" href="#src-74">[74]</a>.
+    - It reaches 76.5% valid resources, against 41.2% with JSON-schema guidance and 17.6% unguided.
+    - That is on only 17 cases with a <strong>70B</strong> model.
+    - Its repo has no licence, and enums can come out "valid but wrong" <a class="cite" href="#src-75">[75]</a>.
+- <strong>Infherno</strong> rejected a full FHIR grammar as too costly <a class="cite" href="#src-76">[76]</a>.
+- <strong>Taken together</strong>, this supports our current design: a small intermediate schema constrained by grammar, then a deterministic FHIR mapping. Not a full FHIR grammar on a 2B model.
+- <strong>On-device validation after mapping.</strong> <code>fhir_r4_validation</code> 0.14.0 (2026-10-16) checks structure, cardinality, bindings and FHIRPath invariants in Dart. Its models are R4B, not R4, so its fit for our R4 resources needs checking <a class="cite" href="#src-10">[10]</a>.</p>
+<p><strong>Other runtimes.</strong>
+- <strong>Apple Foundation Models</strong> now combines on-device image understanding with <code>@Generable</code> guided generation, and accepts Core AI-exported custom models <a class="cite" href="#src-77">[77]</a>. Apple platforms only.
+- <strong>LiteRT-LM</strong> offers llguidance constraints (JSON Schema, Lark, regex) in C++ <a class="cite" href="#src-78">[78]</a>. Reported bugs, status <span class="badge b-unverified">unverified</span>: end-of-output allowed inside JSON strings, and no spaces from SentencePiece models <a class="cite" href="#src-79">[79]</a>.</p>
+<h2 id="d4-benchmarking-mapping-accuracy">D4. Benchmarking mapping accuracy</h2>
+<p><strong>Bottom line:</strong> no public benchmark exists for turning document photos or scans into FHIR, in any language. The 2026 extraction benchmarks have, however, converged on a scoring design that can be reused almost as-is. So this is a build-our-own job on well-trodden methodology; Recommendation 3 assembles the harness specification.</p>
+<p><strong>Metrics that have converged in 2026.</strong>
+- <strong>Matching and F1.</strong> LlamaIndex's ExtractBench pairs predicted records to gold records one-to-one using the Hungarian algorithm (an optimal one-to-one assignment). Its matching cost is the number of mismatched subfields. It flattens the output to one cell per scalar and scores micro-F1 per document, then averages across documents <a class="cite" href="#src-80">[80]</a>.
+    - A missing key counts the same as an explicit null. Every scalar in the schema counts toward both precision and recall, so a correct null earns credit and an invented value costs precision <a class="cite" href="#src-80">[80]</a>.
+    - The evaluator is Apache-2.0 and actively maintained <a class="cite" href="#src-81">[81]</a>.
+- <strong>Per-field comparators.</strong> Contextual AI's ExtractBench, a different benchmark with the same name, declares a comparator for each field in the schema: exact, case-insensitive, fuzzy, numeric tolerance, and an LLM judge only for free text <a class="cite" href="#src-82">[82]</a>.
+- <strong>Omissions and hallucinations.</strong> The same benchmark gives every value one of three states, present, null or MISSING, which yields clean omission and hallucination rates <a class="cite" href="#src-82">[82]</a>.
+- <strong>Invalid output.</strong> Invalid JSON stays in the denominator. In that benchmark it dominated failures: validity was 37–51% <a class="cite" href="#src-82">[82]</a>.
+- <strong>FHIR validity rate.</strong> A FHIR-specific paper scores validity as the share of bundles the HL7 validator passes with no errors, and scores coding by exact code match. Its headline numbers are partly placeholders by the authors' own note, so only its method is usable <a class="cite" href="#src-83">[83]</a>.
+- <strong>No FHIR-specific matching metric.</strong> No FHIR paper retrieved defines resource-level matching plus field-level F1. That part has to be designed in-house.</p>
+<p><strong>Adapting the metrics to FHIR.</strong> LlamaIndex ExtractBench's strict typing ("1,000" ≠ 1000) and its order-sensitive scalar lists would mis-score FHIR data. Three things need custom comparators:
+- <code>valueQuantity</code> needs a numeric comparison after unit conversion. NLM's ucum-lhc provides UCUM validation and conversion, but its custom licence needs review <a class="cite" href="#src-84">[84]</a>.
+- Lists like <code>coding[]</code> and <code>given[]</code> need set semantics instead of order-sensitive comparison.
+- FHIR partial dates (YYYY or YYYY-MM) need a comparison that respects their precision.</p>
+<p>Partial credit for codes based on the code hierarchy is published only for ICD <a class="cite" href="#src-85">[85]</a>. Tiered credit for SNOMED, LOINC and RxNorm would be our own design. For example: exact code = 1, matching display text but no code = partial, same RxNorm ingredient = partial.</p>
+<p><strong>Datasets and harness tooling.</strong>
+- <strong>Closest template: IBM's VAREX</strong> (CVPRW 2026).
+    - It generates 1,777 synthetic documents by filling templates, so ground truth is exact. Each document is offered as plain text, layout text, image, and layout text plus image <a class="cite" href="#src-30">[30]</a>.
+    - Its headline finding, that models below 4B return the schema instead of values ("schema echo", costing 45–65 points), drives D2 and D3 <a class="cite" href="#src-30">[30]</a>.
+    - VAREX's code is Apache-2.0. Its dataset licence is stated only as "permissive" <a class="cite" href="#src-86">[86]</a>.
+- <strong>Text→FHIR work exists but doesn't transfer.</strong>
+    - FHIR Workbench reports Note2FHIR F1 of only 0.04–0.36 <a class="cite" href="#src-87">[87]</a>.
+    - CIRCA uses a deterministic FHIR mapper but needs credentialed MIMIC access <a class="cite" href="#src-88">[88]</a>.
+    - flexpa/llm-fhir-eval shows a promptfoo harness with FHIRPath and validator assertions. It has no licence file, so reuse is not permitted by default, and it is barely maintained: copy the idea, not the code <a class="cite" href="#src-89">[89]</a>.
+    - Infherno is text-only and also unlicensed <a class="cite" href="#src-90">[90]</a>.</p>
+<p><strong>LLM-as-judge.</strong> A 2026 scoping review of 49 healthcare studies found 73.5% did no risk-of-bias testing and 26.5% used no expert validators. It warns that a judge which shares blind spots with the system it grades can make errors look like agreement <a class="cite" href="#src-91">[91]</a>. Use deterministic scoring for every coded or factual field, and a human-validated judge only for free text (dosage text, notes).</p>
+<p><strong>Statistics.</strong>
+- Resample whole documents in a paired bootstrap. VAREX could not separate models within about 0.5 points even with 1,777 documents <a class="cite" href="#src-30">[30]</a>. A clustered or hierarchical bootstrap handles fields nested in documents <a class="cite" href="#src-92">[92]</a>.
+- No published "N documents to detect a 3–5 point F1 gap" exists for extraction. Card et al. recommend simulation-based power analysis <a class="cite" href="#src-93">[93]</a>. The practical route is a pilot of 30–50 documents to estimate variance, then simulate the needed N. That is our inference, not a sourced figure.</p>
+<p><strong>Measuring on devices.</strong>
+- llama.cpp's <code>llama-bench</code> measures only text throughput: no image-encode time, time-to-first-token or RAM <a class="cite" href="#src-94">[94]</a>. Those need custom instrumentation.
+- Thermal state must be controlled, because a few consecutive runs trigger CPU down-clocking <a class="cite" href="#src-95">[95]</a>.
+- A 2026 Galaxy S25 Ultra study found only models up to about 3B gave usable interactivity under llama.cpp (<span class="badge b-medium">medium confidence</span>) <a class="cite" href="#src-96">[96]</a>.</p>
+<h2 id="cross-dimension-insights">Cross-dimension insights</h2>
+<ul>
+<li><strong>The runtime upgrade unlocks every other recommendation.</strong> Schema-specific JSON (D3) needs <code>llamadart</code>'s <code>responseFormat</code> with its loud failures. A downloadable LoRA (D2) needs its <code>setLoraSource</code> API. Qwen3.5 and NuExtract3 (D1a) are validated on the Qwen3.5 code path, which 0.6.8 predates. So the 0.6.8 → 0.15.x migration comes first. Its breaking changes and the untested Qwen3-VL/MedGemma support (D1b) are the first risks to retire.</li>
+<li><strong>Format failure ties model choice, grammar and fine-tuning together.</strong><ul>
+<li>Small models lose most points on format <a class="cite" href="#src-30">[30]</a>.</li>
+<li>Grammars fix form but can tax accuracy at ≤3B <a class="cite" href="#src-8">[8]</a>.</li>
+<li>Extraction fine-tunes (NuExtract3, RAPTOR+) mostly fix format and localisation <a class="cite" href="#src-13">[13]</a><a class="cite" href="#src-14">[14]</a>.</li>
+<li>So the order is: schema design (free), then constrained decoding with a free-reasoning step, then an extraction-tuned base model, then our own LoRA. Measure each step on the D4 harness before moving to the next.</li>
+</ul>
+</li>
+<li><strong>LiteRT-LM may be the answer on speed, but it opens the structured-output gap.</strong> It may be faster on phone GPUs (one <span class="badge b-unverified">unverified</span> test, D1b), but it loses constrained JSON and multi-LoRA through <code>llamadart</code> (D2, D3). Re-evaluate it once <code>llamadart</code> issue #174 (LiteRT-LM constraints) lands, or if Gemma 4 or InternVL3.5 win on D4.</li>
+<li><strong>Licence shapes the tier strategy.</strong> MedGemma derivatives carry HAI-DEF obligations, including any model trained on MedGemma's outputs to perform like it <a class="cite" href="#src-33">[33]</a>. An Apache-2.0 Qwen3.5 or NuExtract3 base avoids that for both shipping and LoRA.</li>
+<li><strong>The benchmark and the training data are the same asset.</strong> A VAREX-style synthetic pipeline (Synthea → localised templates → rendered and degraded images) gives exact ground truth for both D4 and D2 <a class="cite" href="#src-30">[30]</a><a class="cite" href="#src-52">[52]</a>. Hold out real de-identified scans for testing, so the 0.98 → 0.59 synthetic-to-real collapse can't hide <a class="cite" href="#src-15">[15]</a>.</li>
+</ul>
+<h2 id="recommendations">Recommendations</h2>
+<p>In order of execution. Recommendations 1 and 3 can run in parallel; the schema change in 2 is measured on the harness from 3 before it ships.</p>
+<ol>
+<li><strong>Upgrade <code>llamadart</code> from 0.6.8 to 0.15.x in a spike branch.</strong><ul>
+<li>Retire these risks first: the breaking APIs from 0.11 and 0.14, the iOS 16.4 / macOS 14 minimum, and whether Qwen3-VL-2B and MedGemma 4B still load with their mmproj on all four targets.</li>
+<li><em>Feeds:</em> architecture spine (runtime decision), roadmap risk.</li>
+<li><em>Confidence:</em> high on the package facts <a class="cite" href="#src-38">[38]</a>. Model compatibility is <span class="badge b-unverified">unverified</span>.</li>
+</ul>
+</li>
+<li><strong>Replace the generic <code>jsonArray</code> GBNF with a schema-specific <code>responseFormat</code>.</strong><ul>
+<li>Use one flat intermediate schema per pipeline phase: no <code>$defs</code>, required fields first, enums for closed sets.</li>
+<li>Keep a free-text step before the constrained pass, either through the OCR text or a draft.</li>
+<li>Then add a <code>fhir_r4_validation</code> pass after mapping, checking R4B vs R4 first.</li>
+<li><em>Feeds:</em> architecture spine (processing pipeline).</li>
+<li><em>Confidence:</em> high on mechanism <a class="cite" href="#src-7">[7]</a><a class="cite" href="#src-2">[2]</a>; medium on accuracy transfer, since the tax studies use reasoning tasks <a class="cite" href="#src-8">[8]</a>.</li>
+</ul>
+</li>
+<li><strong>Build the D4 benchmark before any model swap or training.</strong><ul>
+<li>Synthetic EN/ES/DE/RO documents with exact ground truth, plus a de-identified real hold-out.</li>
+<li>Scoring: ExtractBench-style Hungarian matching and per-document F1, using its Apache-2.0 evaluator plus FHIR comparators (UCUM, code sets, partial dates).</li>
+<li>Also report validity rate, omissions and hallucinations, and a document-clustered bootstrap.</li>
+<li>Measure image-encode time, time-to-first-token and peak RAM on a device matrix.</li>
+<li><em>Feeds:</em> brief (feasibility), roadmap estimates.</li>
+<li><em>Confidence:</em> high on method <a class="cite" href="#src-80">[80]</a><a class="cite" href="#src-30">[30]</a>.</li>
+</ul>
+</li>
+<li><strong>Benchmark the model candidates on the D4 harness.</strong><ul>
+<li>Advanced tier: NuExtract3 vs Qwen3.5-4B vs MedGemma 1.5 vs MedGemma 1 (current).</li>
+<li>Lite tier: Qwen3.5-2B and NuExtract 2.0-2B against Qwen3-VL-2B (current).</li>
+<li><em>Feeds:</em> the AI model configuration.</li>
+<li><em>Confidence:</em> medium. The ranking rests on vendor numbers, and one was <span class="badge b-disputed">disputed</span> <a class="cite" href="#src-11">[11]</a>.</li>
+</ul>
+</li>
+<li><strong>Treat LoRA as a later phase, gated on the benchmark.</strong><ul>
+<li>If pursued: train an Apache-2.0 base with vision layers frozen, so the adapter is a small text-side GGUF loadable through <code>setLoraSource</code>.</li>
+<li>Prove LoRA + mmproj end to end in a half-day experiment first.</li>
+<li>Mix real scans with synthetic ones.</li>
+<li><em>Feeds:</em> roadmap risk.</li>
+<li><em>Confidence:</em> medium on gains <a class="cite" href="#src-14">[14]</a><a class="cite" href="#src-15">[15]</a>; low on shipping, since there is no end-to-end evidence <a class="cite" href="#src-16">[16]</a>.</li>
+</ul>
+</li>
+<li><strong>Do not adopt the Apple Foundation Models, ML Kit Prompt API or Cactus paths for extraction.</strong> Each fails a hard gate:<ul>
+<li>Apple is Apple-only, and its custom adapters are obsolete <a class="cite" href="#src-17">[17]</a>.</li>
+<li>ML Kit is Android-only, beta and capped at 4K tokens <a class="cite" href="#src-6">[6]</a>.</li>
+<li>Cactus has no Windows build, and its licence caps free use <a class="cite" href="#src-49">[49]</a>.</li>
+<li><em>Feeds:</em> architecture spine (runtime decision).</li>
+<li><em>Confidence:</em> high for Apple and Cactus, medium for ML Kit.</li>
+</ul>
+</li>
+</ol>
+<h2 id="open-questions">Open questions</h2>
+<ul>
+<li><strong>Do Qwen3-VL-2B and MedGemma 4B work on <code>llamadart</code> 0.15.x on all four targets?</strong> The changelog never names them. <em>To answer:</em> a spike build plus one document per platform. (Rec 1)</li>
+<li><strong>Does a text-only LoRA work alongside an mmproj in llama.cpp, and through <code>llamadart</code>?</strong> <em>To answer:</em> a half-day experiment, freezing the vision layers and converting with <code>convert_lora_to_gguf.py</code>. (Rec 5)</li>
+<li><strong>Does the "constraint tax" apply to document extraction, and does draft-then-constrain recover it at 2B?</strong> <em>To answer:</em> an A/B on the D4 harness. (Rec 2)</li>
+<li><strong>How do NuExtract3, Qwen3.5 and Gemma 4 handle Romanian and German medical documents?</strong> No card lists languages for extraction, and no Romanian OCR benchmark exists. <em>To answer:</em> the D4 language strata. (Rec 4)</li>
+<li><strong>How fast is image encoding per runtime on phones</strong> (llama.cpp mtmd vs LiteRT-LM), and is the Android CPU encode regression (#27649, closed unfixed) inside <code>llamadart</code> 0.15's pinned build? <em>To answer:</em> device benchmarks, and a map from the <code>llamadart-native</code> v0.7.0 pin to a llama.cpp commit. (Rec 1)</li>
+<li><strong>Is <code>fhir_r4_validation</code> (R4B models) usable for R4 resources from Fasten, and do its binding checks work offline?</strong> <em>To answer:</em> a package test. (Rec 2)</li>
+<li><s><strong>Is there any partial-credit scoring for SNOMED/LOINC/RxNorm codes, and what gold-set size do we need?</strong></s> <strong>Resolved 2026-10-22</strong>; see <a href="#decisions-since-publication">Decisions since publication</a>. (Rec 3)</li>
+</ul>
+<h2 id="decisions-since-publication">Decisions since publication</h2>
+<p>These were recorded on 2026-10-22 in <code>_bmad-output/specs/spec-on-device-document-to-fhir-extraction/</code>, which is now the contract for this work. The findings above are unchanged and remain dated evidence.</p>
+<ul>
+<li><strong>Gold-set size and code scoring (open question 7).</strong><ul>
+<li>Start with a 40-document synthetic pilot (10 per language) to estimate variance; a simulation then sets N. Plan for about 100 synthetic documents per language until then.</li>
+<li>Score codes by exact match, and report display-text match as a secondary metric. Partial credit is deferred.</li></ul></li>
+<li><strong>The other six open questions</strong> are experiments, and the spec assigns each to a capability:<ul>
+<li>1 and 5 to CAP-1 (runtime upgrade);</li>
+<li>2 to CAP-7 (LoRA + mmproj);</li>
+<li>3 to CAP-2 (schema-constrained output);</li>
+<li>4 to CAP-6 (model selection);</li>
+<li>6 to CAP-3 (FHIR validation).</li></ul></li>
+<li><strong>Minimum OS.</strong> iOS 16.4 and macOS 14 are accepted for the <code>llamadart</code> upgrade. The current minimums are 16.0 and 12.0.</li>
+<li><strong>Real hold-out.</strong><ul>
+<li>Only documents whose owner consents; today that is the developer's own.</li>
+<li>Stored outside the repo, never sent to any service, never used for training.</li>
+<li>Gold FHIR is labelled by hand.</li>
+<li>Reported as its own stratum, never pooled with synthetic scores.</li></ul></li>
+<li><strong>Synthetic set.</strong> The generator must emit the gold FHIR with each document. Documents made earlier by agents count only if their FHIR ground truth exists.</li>
+<li><strong>Ship rule for a model swap or LoRA.</strong> All four must hold on the harness:<ul>
+<li>the 95% paired bootstrap CI of the field-F1 gain excludes zero;</li>
+<li>the gain is at least 3 points;</li>
+<li>no language stratum drops by more than its CI;</li>
+<li>it meets the performance budget.</li></ul></li>
+<li><strong>Performance budget.</strong> Measure the current tier model on each device first. A candidate may be at most 25% slower per page, and must finish without running out of memory on the tier's lowest-RAM device.</li>
+<li><strong>Licences.</strong> The VAREX dataset is not used; we generate our own. ucum-lhc is used only in the harness and is never shipped in the app.</li>
+<li><strong>Still open:</strong><ul>
+<li>EU MDR status, for regulatory review before the app makes any public claim about extraction accuracy.</li>
+<li>Consent and de-identification, to define before training on real scans or adding anyone else's documents.</li></ul></li>
+</ul>
+<h2 id="source-appendix">Source appendix</h2>
+<details><summary>Show all sources</summary><div class="tscroll">
+<table class="sources"><thead><tr><th>[n]</th><th>Claim / finding it supports</th><th>Publisher</th><th>Pub date</th><th>Accessed</th><th>Confidence</th></tr></thead><tbody><tr id="src-1"><td>[1]</td><td>llamadart 0.15.6 (~2026-10-21, MIT): llama.cpp GGUF + LiteRT-LM .litertlm backends, multimodal projectors, LoRA, grammar, responseFormat JSON schema, tool calling; Metal / Vulkan (Android experimental) / CUDA, no OpenCL</td><td><a href="https://pub.dev/packages/llamadart" target="_blank" rel="noopener">pub.dev llamadart</a></td><td>2026-10-21</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-2"><td>[2]</td><td>llamadart 0.15.6 (2026-10-21): own Dart port of json_schema_to_grammar; unrepresentable or cyclic schemas throw instead of degrading; repetition-threshold check before generation; no llguidance</td><td><a href="https://github.com/leehack/llamadart/blob/HEAD/CHANGELOG.md" target="_blank" rel="noopener">GitHub leehack/llamadart CHANGELOG</a></td><td>2026-10-21</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-3"><td>[3]</td><td>llamadart LoRA API: setLoraSource/removeLoraSource/clearLoras, load-time loras, URL/hf:// sources with resumable download; llama.cpp backend stacks adapters, LiteRT-LM backend one text LoRA at load; mmproj interaction undocumented</td><td><a href="https://llamadart.leehack.com/docs/guides/lora-adapters" target="_blank" rel="noopener">llamadart docs (leehack)</a></td><td>2026 (0.15.x)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-4"><td>[4]</td><td>Independent iPhone 17 Pro Gemma 4 E2B test: decode LiteRT-LM 61.1, Cactus 50.0, MLX-Swift 49.1, Core AI 47.1, llama.cpp 38.8 tok/s; GSM8K 86% LiteRT-LM vs 76% llama.cpp Q4_K_M; sustained 10-min decode halves; no VLM image numbers yet</td><td><a href="https://github.com/john-rocky/apple-silicon-llm-bench" target="_blank" rel="noopener">GitHub john-rocky/apple-silicon-llm-bench (independent)</a></td><td>2026-09</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-5"><td>[5]</td><td>llamadart LiteRT-LM backend: supportsGrammarConstraints false, strict output unsupported (open, P2); upstream LiteRT-LM C API v0.16/0.17 exports constraint setters</td><td><a href="https://github.com/leehack/llamadart/issues/174" target="_blank" rel="noopener">GitHub leehack/llamadart #174</a></td><td>2026-05-28 (comments to 2026-09-21)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-6"><td>[6]</td><td>Prompt API input limited to under 4000 tokens (an EN/KO-only validation note was seen only in a search snippet; unverified)</td><td><a href="https://developers.google.com/ml-kit/genai/prompt/android/get-started" target="_blank" rel="noopener">Google for Developers (get started)</a></td><td>2026</td><td>2026-10-22</td><td><span class="badge b-medium">medium (token limit) / unverified (languages)</span></td></tr><tr id="src-7"><td>[7]</td><td>VAREX: small-VLM non-compliance rises from 2–3% (flat schema) to 68–69% with $defs; inlining $defs lifts Qwen3-VL-2B 27.4→91.8% on that subset; 2B non-compliant on 56% of image inputs vs 17% text (same paper as the VAREX benchmark-design row)</td><td><a href="https://arxiv.org/html/2603.15118" target="_blank" rel="noopener">arXiv 2603.15118 (IBM Research)</a></td><td>2026-04-09 (v2)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-8"><td>[8]</td><td>Constraint tax at ≤3B: answer-only hard schema 100% valid but accuracy −8.7 pts (up to −20 per model, −43.5 on a tool call); &#x27;reason free, constrain late&#x27; recovers most</td><td><a href="https://arxiv.org/html/2605.26128" target="_blank" rel="noopener">arXiv 2605.26128</a></td><td>2026-05-20</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-9"><td>[9]</td><td>StructureBench (11 on-device models 0.5–8B; Outlines, XGrammar, Guidance): constrained decoding enforces structure but does not reliably improve semantic accuracy and may degrade small models</td><td><a href="https://www.ijcai.org/proceedings/2026/267" target="_blank" rel="noopener">IJCAI 2026 proceedings</a></td><td>2026</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-10"><td>[10]</td><td>fhir_r4_validation 0.14.0 (2026-10-16): Dart validation of structure, cardinality, value-set bindings, FHIRPath invariants; models are R4B</td><td><a href="https://pub.dev/packages/fhir_r4_validation" target="_blank" rel="noopener">pub.dev fhir_r4_validation</a></td><td>2026-10-16</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-11"><td>[11]</td><td>Independent PureDocBench: Qwen3.5-2B 62.46 vs Qwen3-VL-2B 62.09 average (clean 66.24 vs 66.37; real photos 55.92 vs 54.09) — near tie, disputing vendor&#x27;s ~15-pt OmniDocBench gap</td><td><a href="https://arxiv.org/html/2605.07492v2" target="_blank" rel="noopener">arXiv 2605.07492 (PureDocBench)</a></td><td>2026-09-27 (v2)</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-12"><td>[12]</td><td>MedGemma 1.5 4B card (vendor, mostly internal sets): EHR Dataset 4 macro F1 25→64 vs MedGemma 1; EHR2 78→91; EHR3 50→71; public Mendeley PNG→JSON 85→85; Gemma 3 4B base 83–84 on EHR2/Mendeley; HAI-DEF terms</td><td><a href="https://huggingface.co/google/medgemma-1.5-4b-it" target="_blank" rel="noopener">Hugging Face google/medgemma-1.5-4b-it</a></td><td>2026-01-13</td><td>2026-10-22</td><td><span class="badge b-verified">high (vendor-reported)</span></td></tr><tr id="src-13"><td>[13]</td><td>NuExtract3: Qwen3.5-4B fine-tune for document extraction, Apache-2.0; vendor benchmark 0.651 vs Qwen3.5-4B 0.417 (27 vs 229 failed outputs), Gemma 4 E4B 0.538; ExtractBench 82.35; languages &#x27;multilingual&#x27; only</td><td><a href="https://huggingface.co/numind/NuExtract3" target="_blank" rel="noopener">Hugging Face numind/NuExtract3</a></td><td>2026-05</td><td>2026-10-22</td><td><span class="badge b-medium">medium (vendor-reported)</span></td></tr><tr id="src-14"><td>[14]</td><td>RAPTOR+: Qwen3-VL 2B/4B/8B fine-tuned on 176 synthetic clinical forms; 2B reading accuracy 62.3→88.3%, strict safety 0→21%; 8B 96.1% / 60.6%</td><td><a href="https://arxiv.org/html/2605.25956" target="_blank" rel="noopener">arXiv 2605.25956</a></td><td>2026-06-03 (v2)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-15"><td>[15]</td><td>LoRA r16/α32 on Qwen2.5-VL-3B/7B, ~3K synthetic checks, 6–14 A100-80GB GPU-hours; in-distribution F1 0.98, out-of-distribution 3B falls to 0.593</td><td><a href="https://arxiv.org/html/2609.15706" target="_blank" rel="noopener">arXiv 2609.15706</a></td><td>2026-09-19 (v2)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-16"><td>[16]</td><td>llama-mtmd-cli accepts both --lora and --mmproj flags (no proof they work together)</td><td><a href="https://manpages.debian.org/unstable/llama.cpp-tools-extra/llama-mtmd-cli.1.en.html" target="_blank" rel="noopener">Debian manpages (llama.cpp-tools-extra)</a></td><td>rolling</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-17"><td>[17]</td><td>macOS 27.0 SDK marks SystemLanguageModel.Adapter deprecated 26.4, obsoleted 27.0; custom adapters closed as not planned</td><td><a href="https://github.com/Arthur-Ficial/apfel/issues/362" target="_blank" rel="noopener">GitHub Arthur-Ficial/apfel #362 (independent)</a></td><td>2026-10-05</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-18"><td>[18]</td><td>MedRepBench: structured-field extraction from photographed/scanned medical reports with its own schema, not FHIR — closest public benchmark</td><td><a href="https://arxiv.org/pdf/2508.16674" target="_blank" rel="noopener">arXiv 2508.16674</a></td><td>2025-08</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-19"><td>[19]</td><td>Qwen3.5 small dense (0.8B/2B/4B/9B) released 2026-03-02; no Qwen model ≤4B since May 2026 (Qwen3.6/3.8 are 27B+)</td><td><a href="https://github.com/QwenLM/Qwen3.8" target="_blank" rel="noopener">GitHub QwenLM</a></td><td>2026-08</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-20"><td>[20]</td><td>Gemma 4 E2B: 2.3B effective / 5.1B total params, Apache-2.0; GGUF Q4_K_M 3.11 GB before mmproj; vendor OmniDocBench edit distance 0.290 (E4B 0.181)</td><td><a href="https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF" target="_blank" rel="noopener">Hugging Face unsloth/gemma-4-E2B-it-GGUF (Google card)</a></td><td>2026-04</td><td>2026-10-22</td><td><span class="badge b-medium">high (sizes) / medium (scores)</span></td></tr><tr id="src-21"><td>[21]</td><td>MiniCPM-V 4.6: ~1B (SigLIP2 + Qwen3.5-0.8B), Apache-2.0, 2026-05-11, official GGUF; claims Qwen3.5-2B-level OCRBench with no numeric values</td><td><a href="https://huggingface.co/openbmb/MiniCPM-V-4.6" target="_blank" rel="noopener">Hugging Face openbmb/MiniCPM-V-4.6</a></td><td>2026-05</td><td>2026-10-22</td><td><span class="badge b-low">high (facts) / low (perf)</span></td></tr><tr id="src-22"><td>[22]</td><td>PaddleOCR-VL-1.6 (0.9B, Apache-2.0, 2026-05-28): OmniDocBench v1.6 96.33, Real5 93.19 (vendor); parser, not extractor</td><td><a href="https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6" target="_blank" rel="noopener">Hugging Face PaddlePaddle/PaddleOCR-VL-1.6</a></td><td>2026-05-28</td><td>2026-10-22</td><td><span class="badge b-verified">high (vendor-reported)</span></td></tr><tr id="src-23"><td>[23]</td><td>llama.cpp OCR support (2026-04-10): DeepSeek-OCR, dots.ocr, GLM-OCR, LightOnOCR, HunyuanOCR, PaddleOCR-VL; Gemma 4 E2B/E4B and Qwen3-VL-2B listed as general OCR-capable</td><td><a href="https://huggingface.co/blog/ggml-org/using-ocr-models-with-llama-cpp" target="_blank" rel="noopener">Hugging Face blog (ggml-org)</a></td><td>2026-04-10</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-24"><td>[24]</td><td>Qwen3.5-2B: Apache-2.0, image-text-to-text, released Feb 2026, vendor OCRBench/OmniDocBench scores</td><td><a href="https://huggingface.co/Qwen/Qwen3.5-2B" target="_blank" rel="noopener">Hugging Face Qwen/Qwen3.5-2B</a></td><td>2026-02</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-25"><td>[25]</td><td>Qwen3.5-4B: Apache-2.0, hybrid Gated DeltaNet, 201 languages; vendor OCRBench 85.0, OmniDocBench1.5 86.2, CC-OCR 76.7</td><td><a href="https://huggingface.co/Qwen/Qwen3.5-4B" target="_blank" rel="noopener">Hugging Face Qwen/Qwen3.5-4B</a></td><td>2026-02</td><td>2026-10-22</td><td><span class="badge b-medium">medium (vendor-reported)</span></td></tr><tr id="src-26"><td>[26]</td><td>llama.cpp PR #19468 merged 2026-02-10: Qwen3.5 series support including vision (mmproj)</td><td><a href="https://github.com/ggml-org/llama.cpp/pull/19468" target="_blank" rel="noopener">GitHub ggml-org/llama.cpp #19468</a></td><td>2026-02-10</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-27"><td>[27]</td><td>Unsloth Qwen3.5-2B GGUF: Q4_K_M 1.28 GB + mmproj-F16 668 MB (~1.95 GB total)</td><td><a href="https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/tree/main" target="_blank" rel="noopener">Hugging Face unsloth/Qwen3.5-2B-GGUF</a></td><td>2026-03</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-28"><td>[28]</td><td>Unsloth Qwen3.5-4B GGUF: Q4_K_M 2.74 GB + mmproj-F16 672 MB (~3.4 GB total)</td><td><a href="https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/tree/main" target="_blank" rel="noopener">Hugging Face unsloth/Qwen3.5-4B-GGUF</a></td><td>2026-03</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-29"><td>[29]</td><td>Qwen3.5-2B on Android Adreno 740 Vulkan produced gibberish / slower than CPU; closed stale 2026-04-30 without fix</td><td><a href="https://github.com/ggml-org/llama.cpp/issues/20603" target="_blank" rel="noopener">GitHub ggml-org/llama.cpp #20603</a></td><td>2026-03-15</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-30"><td>[30]</td><td>VAREX: 1,777 synthetic template documents, four modalities, Hungarian array matching, doc-level bootstrap CIs; &lt;4B models lose 45–65 pp to schema echo, 2B fine-tune +81 pp (same paper as the $defs row; cited separately for benchmark design)</td><td><a href="https://arxiv.org/html/2603.15118" target="_blank" rel="noopener">arXiv 2603.15118 (IBM Research, CVPRW 2026)</a></td><td>2026-04-09 (v2)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-31"><td>[31]</td><td>Community NuExtract3 GGUF: Q4_K_M 2.71 GB + mmproj BF16 676 MB; no official GGUF</td><td><a href="https://huggingface.co/prithivMLmods/NuExtract3-GGUF/tree/main" target="_blank" rel="noopener">Hugging Face prithivMLmods/NuExtract3-GGUF</a></td><td>2026-08</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-32"><td>[32]</td><td>NuExtract 2.0: 2B on Qwen2-VL-2B (MIT), 4B on Qwen2.5-VL-3B (non-commercial), 8B (MIT); multimodal; superseded by NuExtract3</td><td><a href="https://huggingface.co/numind/NuExtract-2.0-2B" target="_blank" rel="noopener">Hugging Face numind/NuExtract-2.0-2B</a></td><td>2026-03 (approx.)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-33"><td>[33]</td><td>HAI-DEF terms: LoRA/merge/distillation = Model Derivative; distribution requires flow-down of use restrictions, Agreement copy, Notice file, health regulatory authorisation when applicable; bans uses making Google a device manufacturer</td><td><a href="https://developers.google.com/health-ai-developer-foundations/terms" target="_blank" rel="noopener">Google HAI-DEF Terms</a></td><td>2024-11-15 (last modified)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-34"><td>[34]</td><td>Anecdote: MedGemma 1.5 Q8_0 quant fails to produce valid JSON on dense pages while BF16 works</td><td><a href="https://discuss.ai.google.dev/t/177891" target="_blank" rel="noopener">Google AI Developers Forum</a></td><td>2026</td><td>2026-10-22</td><td><span class="badge b-low">low</span></td></tr><tr id="src-35"><td>[35]</td><td>Gemma 4 E2B .litertlm 2,583 MB; iPhone 17 Pro GPU prefill 2,878 tok/s, decode 56.5 tok/s, 1,450 MB; S26 Ultra GPU 3,808 / 52.1 tok/s; vision loaded on demand; text-only benchmarks</td><td><a href="https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm" target="_blank" rel="noopener">Hugging Face litert-community (Google)</a></td><td>2026-07</td><td>2026-10-22</td><td><span class="badge b-verified">high (text) / vision perf not given</span></td></tr><tr id="src-36"><td>[36]</td><td>InternVL3.5-2B .litertlm ~1.61 GB, Apache-2.0, on-device vision (256 tokens/448px image); Android, iOS (Swift runtime), macOS, Linux/Windows; Metal second-image truncation bug</td><td><a href="https://huggingface.co/litert-community/InternVL3_5-2B" target="_blank" rel="noopener">Hugging Face litert-community/InternVL3_5-2B</a></td><td>2026-08-31</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-37"><td>[37]</td><td>LFM2.5-VL-1.6B: lfm1.0 licence, languages exclude Romanian, OCRBench v2 41.44 (vendor)</td><td><a href="https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B" target="_blank" rel="noopener">Hugging Face LiquidAI/LFM2.5-VL-1.6B</a></td><td>2026</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-38"><td>[38]</td><td>llamadart changelog: 0.6.8 bundled llama.cpp b8480; breaking releases 0.7.1 (iOS 16.4/macOS 14), 0.10, 0.11, 0.14 (ABI); Qwen3.5 and Gemma 4 mmproj work; LiteRT-LM image input since 0.8.1; LiteRT-LM limits (one LoRA, no FST constraints on iOS, macOS arm64 only); Qwen3-VL and MedGemma never named</td><td><a href="https://pub.dev/packages/llamadart/changelog" target="_blank" rel="noopener">pub.dev llamadart changelog</a></td><td>2026-10</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-39"><td>[39]</td><td>Reported regression: llama.cpp mtmd vision encode ~2.7x slower on CPU-only Android (~30 s → ~81 s), Aug 2026</td><td><a href="https://github.com/ggml-org/llama.cpp/issues/27649" target="_blank" rel="noopener">GitHub ggml-org/llama.cpp #27649</a></td><td>2026-08</td><td>2026-10-22</td><td><span class="badge b-low">low-medium</span></td></tr><tr id="src-40"><td>[40]</td><td>llamadart repo: 78 stars, 1,235 commits, 124 open issues, single-maintainer style tracker; ~daily releases; recent Qwen3.5 vision bugs closed Oct 2026, LiteRT-LM Qwen3.5 GPU bug #672 open</td><td><a href="https://github.com/leehack/llamadart" target="_blank" rel="noopener">GitHub leehack/llamadart</a></td><td>2026-10-21 (snapshot)</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-41"><td>[41]</td><td>LiteRT-LM releases v0.16.0 Aug 11, v0.17.0 Sep 9, v0.18.0 Oct 6, v0.18.1 Oct 20 (2026); v0.15.0 adds an Apple Foundation framework adapter for Gemma 4</td><td><a href="https://github.com/google-ai-edge/LiteRT-LM/releases" target="_blank" rel="noopener">GitHub google-ai-edge/LiteRT-LM releases</a></td><td>2026-10-20</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-42"><td>[42]</td><td>LiteRT-LM v0.18.x (Apache-2.0, Google): Android, iOS, web, macOS, Windows, Linux; GPU/NPU; vision and audio input; Flutter support &#x27;Community&#x27;</td><td><a href="https://github.com/google-ai-edge/LiteRT-LM" target="_blank" rel="noopener">GitHub google-ai-edge/LiteRT-LM</a></td><td>2026-10</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-43"><td>[43]</td><td>LiteRT-LM: rank-16 LoRA loads on Gemma 4 E2B GPU bundle without error but leaves output unchanged (open, no maintainer reply)</td><td><a href="https://github.com/google-ai-edge/LiteRT-LM/issues/3173" target="_blank" rel="noopener">GitHub google-ai-edge/LiteRT-LM #3173</a></td><td>2026-08-07</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-44"><td>[44]</td><td>WWDC 2026 (2026-06-08): Foundation Models gains image input; Core AI framework announced</td><td><a href="https://www.macrumors.com/2026/06/08/apple-unveils-xcode-and-models-improvements/" target="_blank" rel="noopener">MacRumors</a></td><td>2026-06-08</td><td>2026-10-22</td><td><span class="badge b-verified">high (announcement)</span></td></tr><tr id="src-45"><td>[45]</td><td>apple/coreai-models requires macOS and iOS 27.0+ and Xcode 27</td><td><a href="https://github.com/apple/coreai-models" target="_blank" rel="noopener">GitHub apple/coreai-models</a></td><td>2026 (snapshot)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-46"><td>[46]</td><td>Apple Foundation Models adapter toolkit 26.0.0 is the last release and does not work with OS 27+; adapters ~160 MB, one per system-model version, entitlement required, text-only data</td><td><a href="https://developer.apple.com/apple-intelligence/foundation-models-adapter/" target="_blank" rel="noopener">Apple Developer</a></td><td>2026-10 (page current)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-47"><td>[47]</td><td>ML Kit GenAI Prompt API (Gemini Nano): image+text input, alpha structured output, beta, no SLA</td><td><a href="https://developers.google.com/ml-kit/genai/prompt/android" target="_blank" rel="noopener">Google for Developers</a></td><td>2026-07-15</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-48"><td>[48]</td><td>flutter_edge_ai 2.5.1 (former flutter_gemma, MIT): LiteRT-LM, MediaPipe (maintenance-only), ONNX Runtime, llama.cpp via llamadart, OS models; no JSON constraint documented; LiteRT-LM and llama.cpp not qualified together on macOS</td><td><a href="https://pub.dev/packages/flutter_edge_ai" target="_blank" rel="noopener">pub.dev flutter_edge_ai</a></td><td>2026-10-22</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-49"><td>[49]</td><td>Cactus licence: free only below USD 2M revenue and funding (or non-commercial); otherwise commercial licence required; no Windows listed</td><td><a href="https://github.com/cactus-compute/cactus/blob/main/LICENSE" target="_blank" rel="noopener">GitHub cactus-compute/cactus LICENSE</a></td><td>2025</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-50"><td>[50]</td><td>ONNX Runtime GenAI: Phi vision models supported; Qwen3-VL only via qwen2_5_vl workaround (open request)</td><td><a href="https://github.com/microsoft/onnxruntime-genai/issues/1989" target="_blank" rel="noopener">GitHub microsoft/onnxruntime-genai #1989</a></td><td>2026</td><td>2026-10-22</td><td><span class="badge b-low">low</span></td></tr><tr id="src-51"><td>[51]</td><td>10,000 synthetic scanned care-transition records: ~97% accuracy on synthetic vs ~85% on real documents</td><td><a href="https://journals.sagepub.com/doi/10.3233/SHTI251392" target="_blank" rel="noopener">Stud Health Technol Inform (IOS Press)</a></td><td>2025</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-52"><td>[52]</td><td>Synthea: Apache-2.0, exports FHIR R4 covering conditions, allergies, medications, immunizations, observations, labs, encounters; US (Massachusetts) demographics by default</td><td><a href="https://github.com/synthetichealth/synthea" target="_blank" rel="noopener">GitHub synthetichealth/synthea (MITRE)</a></td><td>2025</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-53"><td>[53]</td><td>Only 7 of 16 Synthea FHIR resource types matched German MII core-dataset profiles; conversion needed</td><td><a href="https://www.egms.de/static/en/meetings/gmds2024/24gmds150.shtml" target="_blank" rel="noopener">GMDS 2024 (GMS)</a></td><td>2024</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-54"><td>[54]</td><td>Staged JSON-schema validity + grounding rewards proposed for GRPO (open, unmerged PR)</td><td><a href="https://github.com/huggingface/open-r1/pull/722" target="_blank" rel="noopener">GitHub huggingface/open-r1 #722</a></td><td>2025</td><td>2026-10-22</td><td><span class="badge b-low">low</span></td></tr><tr id="src-55"><td>[55]</td><td>TRL v1.16.0 SFTTrainer supports VLM training with PEFT LoRA/QLoRA; set max_length=None to avoid truncating image tokens</td><td><a href="https://huggingface.co/docs/trl/sft_trainer" target="_blank" rel="noopener">Hugging Face TRL docs</a></td><td>2026 (v1.16.0)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-56"><td>[56]</td><td>Unsloth Qwen3.5: vision fine-tuning 0.8B–122B; bf16 LoRA ~5 GB VRAM at 2B, ~10 GB at 4B; advises against 4-bit QLoRA; GGUF export via save_pretrained_gguf, no mmproj mention</td><td><a href="https://unsloth.ai/docs/models/qwen3.5/fine-tune" target="_blank" rel="noopener">Unsloth docs</a></td><td>undated (assets 2026-04)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-57"><td>[57]</td><td>LLaMA-Factory lists Qwen3-VL 2B/4B, Qwen3.5, Gemma 3/3n, MiniCPM-V 4.5/4.6; VRAM table for LoRA/QLoRA</td><td><a href="https://github.com/hiyouga/LLaMA-Factory" target="_blank" rel="noopener">GitHub hiyouga/LLaMA-Factory</a></td><td>README (2026-10)</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-58"><td>[58]</td><td>MLX-VLM supports LoRA/QLoRA/DoRA and GRPO for VLMs on Apple Silicon</td><td><a href="https://github.com/Blaizzy/mlx-vlm" target="_blank" rel="noopener">GitHub Blaizzy/mlx-vlm</a></td><td>README (2026-10)</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-59"><td>[59]</td><td>MedGemma 1.5 4B (updated 2026-01-13): document understanding incl. lab-report structured extraction; official LoRA and RL notebooks; decoder-only or decoder+encoder tuning</td><td><a href="https://developers.google.com/health-ai-developer-foundations/medgemma" target="_blank" rel="noopener">Google Health AI Developer Foundations</a></td><td>2026-01-13</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-60"><td>[60]</td><td>llama-server: multiple --lora adapters, scaling, global and per-request hot-swap; README silent on LoRA with --mmproj</td><td><a href="https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md" target="_blank" rel="noopener">ggml-org/llama.cpp tools/server README</a></td><td>master @ 2026-10</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-61"><td>[61]</td><td>Merged LoRA + re-converted Qwen2.5-VL-32B with --mmproj produced only &#x27;@&#x27; tokens; closed stale without root cause</td><td><a href="https://github.com/ggml-org/llama.cpp/issues/15870" target="_blank" rel="noopener">GitHub ggml-org/llama.cpp #15870</a></td><td>2025-09-08 (older)</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-62"><td>[62]</td><td>Unsloth FastVisionModel trains vision, language, attention and MLP layers by default (toggles to freeze vision); no mmproj export documented</td><td><a href="https://unsloth.ai/docs/basics/vision-fine-tuning" target="_blank" rel="noopener">Unsloth docs</a></td><td>undated (current 2026-10)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-63"><td>[63]</td><td>Gemma 4 released under Apache 2.0, replacing the Gemma Terms of Use</td><td><a href="https://opensource.googleblog.com/2026/03/gemma-4-expanding-the-gemmaverse-with-apache-20.html" target="_blank" rel="noopener">Google Open Source Blog</a></td><td>2026-03</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-64"><td>[64]</td><td>llama.cpp JSON-Schema→GBNF converter is a subset that skips unsupported features silently (nested $ref, anyOf+properties, number bounds, prefixItems); schema not injected into prompt; x? x? repetition slow</td><td><a href="https://github.com/ggml-org/llama.cpp/blob/master/grammars/README.md" target="_blank" rel="noopener">ggml-org/llama.cpp grammars/README.md</a></td><td>master @ 2026-10</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-65"><td>[65]</td><td>Large $ref/$defs schemas exceeded repetition threshold and the constraint was dropped silently; closed as completed 2026-04-11 (fix commit unidentified)</td><td><a href="https://github.com/ggml-org/llama.cpp/issues/21228" target="_blank" rel="noopener">GitHub ggml-org/llama.cpp #21228</a></td><td>2026-03-31</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-66"><td>[66]</td><td>Grammar not enforced with enable_thinking + response_format; closed 2026-03-10; maintainers recommend response_format over raw grammar with reasoning</td><td><a href="https://github.com/ggml-org/llama.cpp/issues/20345" target="_blank" rel="noopener">GitHub ggml-org/llama.cpp #20345 / #22537</a></td><td>2026-03-10</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-67"><td>[67]</td><td>Unbounded schema nesting crash (CVE-2026-52130) closed not_planned 2026-09-30; nesting-cap PR #30242 still open; minItems OOM #29462 open</td><td><a href="https://github.com/ggml-org/llama.cpp/issues/29690" target="_blank" rel="noopener">GitHub ggml-org/llama.cpp #29690</a></td><td>2026-09-30</td><td>2026-10-22</td><td><span class="badge b-verified">high (status)</span></td></tr><tr id="src-68"><td>[68]</td><td>Open: optional property before a required one is silently dropped because the object rule enforces required-first order</td><td><a href="https://github.com/ggml-org/llama.cpp/issues/30321" target="_blank" rel="noopener">GitHub ggml-org/llama.cpp #30321</a></td><td>2026-10-11</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-69"><td>[69]</td><td>llama.cpp optional llguidance backend (LLAMA_LLGUIDANCE=ON, Rust), errors on unsupported keywords, ~50 µs/token mask, keeps property order</td><td><a href="https://github.com/ggml-org/llama.cpp/blob/master/docs/llguidance.md" target="_blank" rel="noopener">ggml-org/llama.cpp docs/llguidance.md</a></td><td>master @ 2026-10</td><td>2026-10-22</td><td><span class="badge b-medium">high (behaviour) / medium (timing)</span></td></tr><tr id="src-70"><td>[70]</td><td>0.6–4B models: constrained decoding raised validity to 100% and content accuracy (Llama-3.2-3B 0.777→0.991); fixes form, not semantics</td><td><a href="https://arxiv.org/html/2609.23742v1" target="_blank" rel="noopener">arXiv 2609.23742</a></td><td>2026-09-20</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-71"><td>[71]</td><td>JSONSchemaBench: constrained decoding slightly raised accuracy on Llama-3.1-8B (GSM8K 80.1→82.4% llama.cpp, 83.8% Guidance); llama.cpp grammar ~2x per-token time; coverage gaps</td><td><a href="https://arxiv.org/html/2501.10868v2" target="_blank" rel="noopener">arXiv 2501.10868 (ICML 2025)</a></td><td>2025-02 (older)</td><td>2026-10-22</td><td><span class="badge b-verified">high (for those versions)</span></td></tr><tr id="src-72"><td>[72]</td><td>Format Tax: most loss comes from format-requesting instructions rather than the decoder mask; separating reasoning from formatting recovers accuracy</td><td><a href="https://arxiv.org/abs/2604.03616" target="_blank" rel="noopener">arXiv 2604.03616</a></td><td>2026-04</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-73"><td>[73]</td><td>Draft-Conditioned Constrained Decoding: free draft then constrained pass, up to +24 pts at 1–1.5B on reasoning tasks; two decoding passes</td><td><a href="https://arxiv.org/html/2603.03305" target="_blank" rel="noopener">arXiv 2603.03305</a></td><td>2026-06-27 (v2)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-74"><td>[74]</td><td>CFG from FHIR R5 JSON Schemas with relaxed key order: 76.5% valid vs 41.2% JSON-schema-guided vs 17.6% unguided on 17 cases, Llama 3.3 70B; paper CC BY-NC 4.0</td><td><a href="https://ebooks.iospress.nl/doi/10.3233/SHTI260725" target="_blank" rel="noopener">MIE 2026, Stud Health Technol Inform 336 (IOS Press)</a></td><td>2026</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-75"><td>[75]</td><td>CFG4FHIR repo: no licence file; valid-but-wrong enums and repetition loops observed even with CFG</td><td><a href="https://github.com/j-frei/CFG4FHIR" target="_blank" rel="noopener">GitHub j-frei/CFG4FHIR</a></td><td>2026-08-21</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-76"><td>[76]</td><td>Infherno rejected a full FHIR grammar as too costly, generating via fhir.resources instead</td><td><a href="https://arxiv.org/pdf/2507.12261" target="_blank" rel="noopener">arXiv 2507.12261</a></td><td>2025-07</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-77"><td>[77]</td><td>Apple Foundation Models (2026): on-device text+image understanding, @Generable guided generation, custom LanguageModel provider for Core AI-exported models</td><td><a href="https://developer.apple.com/documentation/foundationmodels" target="_blank" rel="noopener">Apple Developer documentation</a></td><td>2026 (WWDC26)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-78"><td>[78]</td><td>LiteRT-LM C++ constrained decoding via LLGuidance provider (regex, JSON Schema, Lark)</td><td><a href="https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/cpp/constrained-decoding.md" target="_blank" rel="noopener">google-ai-edge/LiteRT-LM docs</a></td><td>2026</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-79"><td>[79]</td><td>LiteRT-LM open bugs: EOS legal inside JSON strings (#3721); no spaces in constrained output with SentencePiece (#3510)</td><td><a href="https://github.com/google-ai-edge/LiteRT-LM/issues/3721" target="_blank" rel="noopener">GitHub google-ai-edge/LiteRT-LM #3721</a></td><td>2026</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-80"><td>[80]</td><td>LlamaIndex ExtractBench: Hungarian record alignment, cell-bag micro-F1 per document, absent key = null, exact comparators, no LLM judge; VLM long-list truncation</td><td><a href="https://arxiv.org/html/2607.29677" target="_blank" rel="noopener">arXiv 2607.29677 (LlamaIndex)</a></td><td>2026-08 (v2)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-81"><td>[81]</td><td>ExtractBench evaluator code Apache-2.0, active (last push 2026-10-21)</td><td><a href="https://github.com/run-llama/ExtractBench" target="_blank" rel="noopener">GitHub run-llama/ExtractBench</a></td><td>2026-10-21</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-82"><td>[82]</td><td>Contextual AI ExtractBench: per-field evaluation_config comparators, present/null/MISSING states, invalid JSON kept in denominator (validity 37–51%), MIT licence</td><td><a href="https://arxiv.org/html/2602.12247" target="_blank" rel="noopener">arXiv 2602.12247 (Contextual AI)</a></td><td>2026-02</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-83"><td>[83]</td><td>FHIR Validity Rate via HL7 validator (errors only), Terminology Grounding Accuracy; headline numbers partly placeholders per authors</td><td><a href="https://arxiv.org/html/2601.05847v2" target="_blank" rel="noopener">arXiv 2601.05847v2</a></td><td>2026-05-22</td><td>2026-10-22</td><td><span class="badge b-low">high (method) / low (numbers)</span></td></tr><tr id="src-84"><td>[84]</td><td>ucum-lhc: UCUM validation/conversion/commensurability API, active; custom licence unreviewed</td><td><a href="https://github.com/lhncbc/ucum-lhc" target="_blank" rel="noopener">GitHub lhncbc/ucum-lhc (NLM)</a></td><td>2026-10-19</td><td>2026-10-22</td><td><span class="badge b-low">high (API) / low (licence)</span></td></tr><tr id="src-85"><td>[85]</td><td>Hierarchy-aware partial credit (prefix-n, ancestry overlap) published for ICD coding only</td><td><a href="https://arxiv.org/html/2510.07629" target="_blank" rel="noopener">arXiv 2510.07629 (EMNLP 2025 Industry)</a></td><td>2025-10</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-86"><td>[86]</td><td>VAREX code Apache-2.0; dataset licence only stated as &#x27;permissive&#x27;</td><td><a href="https://github.com/udibarzi/varex-bench" target="_blank" rel="noopener">GitHub udibarzi/varex-bench</a></td><td>2026-05-04</td><td>2026-10-22</td><td><span class="badge b-low">high (code) / low (data licence)</span></td></tr><tr id="src-87"><td>[87]</td><td>FHIR Workbench Note2FHIR F1 0.038–0.363 across models (F1 definition not retrieved)</td><td><a href="https://www.jmir.org/2025/1/e73540" target="_blank" rel="noopener">JMIR 2025 e73540</a></td><td>2025</td><td>2026-10-22</td><td><span class="badge b-low">low</span></td></tr><tr id="src-88"><td>[88]</td><td>CIRCA: deterministic FHIR R4 mapper for 10,011 intents; models 18–35% on all closed fields; MIMIC layers need credentialed access</td><td><a href="https://arxiv.org/abs/2609.29479" target="_blank" rel="noopener">arXiv 2609.29479</a></td><td>2026-08-24</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-89"><td>[89]</td><td>flexpa/llm-fhir-eval: promptfoo with FHIRPath/validator assertions; no LICENSE file, last push 2026-02-04</td><td><a href="https://github.com/flexpa/llm-fhir-eval" target="_blank" rel="noopener">GitHub flexpa/llm-fhir-eval</a></td><td>2026-02-04</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-90"><td>[90]</td><td>Infherno: text-only notes→FHIR agent, no LICENSE file, no metric in README</td><td><a href="https://github.com/j-frei/Infherno" target="_blank" rel="noopener">GitHub j-frei/Infherno (EACL 2026 demo)</a></td><td>2026-04-02</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-91"><td>[91]</td><td>Healthcare LLM-as-judge scoping review (49 studies): 73.5% no risk-of-bias testing, 26.5% no expert validators; shared-blind-spot risk</td><td><a href="https://arxiv.org/abs/2604.25933" target="_blank" rel="noopener">arXiv 2604.25933</a></td><td>2026-04-03</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-92"><td>[92]</td><td>Clustered vs hierarchical bootstrap for nested text data</td><td><a href="https://arxiv.org/pdf/2606.26422" target="_blank" rel="noopener">arXiv 2606.26422</a></td><td>2026-06</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-93"><td>[93]</td><td>Underpowered NLP comparisons are common; simulation-based power analysis, no closed-form test-set size</td><td><a href="https://arxiv.org/abs/2010.06595" target="_blank" rel="noopener">arXiv 2010.06595 (EMNLP 2020)</a></td><td>2020-10 (older)</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-94"><td>[94]</td><td>llama-bench measures text pp/tg throughput only; no image encode, TTFT or RAM</td><td><a href="https://github.com/ggml-org/llama.cpp/blob/master/tools/llama-bench/README.md" target="_blank" rel="noopener">ggml-org/llama.cpp tools/llama-bench README</a></td><td>master @ 2026-10-22</td><td>2026-10-22</td><td><span class="badge b-verified">high</span></td></tr><tr id="src-95"><td>[95]</td><td>Mobile inference thermal methodology: consecutive runs trigger down-clocking; control starting temperature</td><td><a href="https://arxiv.org/pdf/2410.03613" target="_blank" rel="noopener">arXiv 2410.03613</a></td><td>2024-10 (older)</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr><tr id="src-96"><td>[96]</td><td>Galaxy S25 Ultra llama.cpp study: 0.5–9B ran, only ≤~3B gave usable interactivity</td><td><a href="https://arxiv.org/abs/2603.26603" target="_blank" rel="noopener">arXiv 2603.26603</a></td><td>2026-03</td><td>2026-10-22</td><td><span class="badge b-medium">medium</span></td></tr></tbody></table></div></details>
+<h2 id="staleness-map">Staleness map</h2>
+<p>Computed with <code>recon_kit.py staleness</code> using the technical pack's freshness bars, in months: version/compatibility and failure 1, performance and capability 3 (AI-adjacent), licence 6, dataset 12, pattern 24. Claims about current status (an issue being open, what a licence says, which files exist) are dated by when I observed them, 2026-10-22, not by when the page was first posted.</p>
+<p><strong>7 of 23 load-bearing claims are already past their freshness bar.</strong> All of them are vendor or paper performance numbers from January–July 2026 that nobody has re-measured since. That is the thin-evidence problem the executive summary names: the D4 benchmark replaces them. The earliest re-check date is <strong>2026-04-01</strong> (MedGemma 1.5's vendor scores, already overdue). The fast-moving version and status claims (<code>llamadart</code>, llama.cpp issues, LiteRT-LM) are due by <strong>2026-11-22</strong>. As a selection report, the whole document should be refreshed before anyone acts on it after <strong>2027-04-22</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Re-check by</th>
+<th>Stale today</th>
+<th>Class</th>
+<th>Claim</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026-04-01</td>
+<td><span class="badge b-disputed">stale</span></td>
+<td>performance</td>
+<td><a class="cite" href="#src-12">[12]</a> MedGemma 1.5 4B lab-report PDF→JSON macro F1 25→64 (internal); public Mendeley PNG 85=85 (vendor only)</td>
+</tr>
+<tr>
+<td>2026-05-01</td>
+<td><span class="badge b-disputed">stale</span></td>
+<td>failure</td>
+<td><a class="cite" href="#src-7">[7]</a> Small VLM schema non-compliance 2–3% flat vs 68–69% with $defs; inlining lifts Qwen3-VL-2B 27.4→91.8%</td>
+</tr>
+<tr>
+<td>2026-06-01</td>
+<td><span class="badge b-disputed">stale</span></td>
+<td>performance</td>
+<td><a class="cite" href="#src-24">[24]</a> Qwen3.5-2B vendor doc lead (OmniDocBench 80.9 vs 65.9) over Qwen3-VL-2B; independent PureDocBench shows near tie</td>
+</tr>
+<tr>
+<td>2026-08-01</td>
+<td><span class="badge b-disputed">stale</span></td>
+<td>performance</td>
+<td><a class="cite" href="#src-13">[13]</a> NuExtract3 0.651 vs Qwen3.5-4B 0.417 on NuMind extraction benchmark (vendor)</td>
+</tr>
+<tr>
+<td>2026-08-01</td>
+<td><span class="badge b-disputed">stale</span></td>
+<td>performance</td>
+<td><a class="cite" href="#src-8">[8]</a> Hard schema decoding at ≤3B: 100% valid, accuracy loss; reason-free-constrain-late recovers (direction confirmed by StructureBench IJCAI 2026)</td>
+</tr>
+<tr>
+<td>2026-09-01</td>
+<td><span class="badge b-disputed">stale</span></td>
+<td>performance</td>
+<td><a class="cite" href="#src-14">[14]</a> RAPTOR+ Qwen3-VL-2B fine-tune 62.3→88.3% reading accuracy on 176 forms</td>
+</tr>
+<tr>
+<td>2026-10-01</td>
+<td><span class="badge b-disputed">stale</span></td>
+<td>performance</td>
+<td><a class="cite" href="#src-35">[35]</a> Gemma 4 E2B .litertlm 2.58 GB, iPhone 17 Pro GPU decode 56.5 tok/s (consistent with independent 61.1)</td>
+</tr>
+<tr>
+<td>2026-11-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>version/compatibility</td>
+<td><a class="cite" href="#src-46">[46]</a> Apple FM adapter toolkit 26.0.0 last release; SDK obsoletes Adapter at 27.0 (apfel #362)</td>
+</tr>
+<tr>
+<td>2026-11-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>version/compatibility</td>
+<td><a class="cite" href="#src-2">[2]</a> llamadart uses own Dart schema→GBNF port; unsupported schemas throw; no llguidance</td>
+</tr>
+<tr>
+<td>2026-11-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>failure</td>
+<td><a class="cite" href="#src-68">[68]</a> llama.cpp: optional-before-required property silently dropped (open)</td>
+</tr>
+<tr>
+<td>2026-11-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>version/compatibility</td>
+<td><a class="cite" href="#src-10">[10]</a> fhir_r4_validation 0.14.0 validates on-device in Dart; models are R4B</td>
+</tr>
+<tr>
+<td>2026-11-22</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>version/compatibility</td>
+<td><a class="cite" href="#src-31">[31]</a> Community NuExtract3 Q4_K_M 2.71 GB + 676 MB mmproj, no official GGUF (status observed 2026-10-22)</td>
+</tr>
+<tr>
+<td>2026-11-22</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>version/compatibility</td>
+<td><a class="cite" href="#src-26">[26]</a> Qwen3.5 vision in mainline llama.cpp since 2026-02-10; llamadart changelog wires Qwen3.5 mmproj (status observed 2026-10-22)</td>
+</tr>
+<tr>
+<td>2026-11-22</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>version/compatibility</td>
+<td><a class="cite" href="#src-5">[5]</a> llamadart LiteRT-LM backend has no grammar/JSON constraints (open) (status observed 2026-10-22)</td>
+</tr>
+<tr>
+<td>2026-11-22</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>failure</td>
+<td><a class="cite" href="#src-43">[43]</a> LiteRT-LM LoRA on Gemma 4 E2B GPU is a silent no-op (open) (status observed 2026-10-22)</td>
+</tr>
+<tr>
+<td>2026-11-22</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>version/compatibility</td>
+<td><a class="cite" href="#src-27">[27]</a> Qwen3.5-2B Q4_K_M + mmproj ≈ 1.95 GB vs ~1.5 GB Lite budget (status observed 2026-10-22)</td>
+</tr>
+<tr>
+<td>2026-11-22</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>failure</td>
+<td><a class="cite" href="#src-29">[29]</a> Qwen3.5-2B gibberish on Adreno Vulkan, closed stale unfixed (status observed 2026-10-22)</td>
+</tr>
+<tr>
+<td>2026-12-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>performance</td>
+<td><a class="cite" href="#src-11">[11]</a> Independent: Qwen3.5-2B 62.46 vs Qwen3-VL-2B 62.09 on PureDocBench</td>
+</tr>
+<tr>
+<td>2026-12-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>performance</td>
+<td><a class="cite" href="#src-15">[15]</a> Templated synthetic LoRA: in-distribution F1 0.98, OOD 0.59 (synthetic-to-real gap corroborated by SHTI care-transition study)</td>
+</tr>
+<tr>
+<td>2027-01-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>capability</td>
+<td><a class="cite" href="#src-16">[16]</a> No end-to-end evidence of text LoRA + mmproj working in llama.cpp</td>
+</tr>
+<tr>
+<td>2027-04-22</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>licence</td>
+<td><a class="cite" href="#src-33">[33]</a> MedGemma LoRA/merge is a Model Derivative; a model trained on MedGemma outputs to perform like it is too (status observed 2026-10-22)</td>
+</tr>
+<tr>
+<td>2027-10-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>dataset</td>
+<td><a class="cite" href="#src-18">[18]</a> No public dataset pairs medical document images with FHIR R4 (absence confirmed by two researchers + verifier)</td>
+</tr>
+<tr>
+<td>2028-08-01</td>
+<td><span class="badge b-verified">fresh</span></td>
+<td>pattern</td>
+<td><a class="cite" href="#src-80">[80]</a> Hungarian record matching + per-document micro-F1 is the 2026 extraction scoring pattern (also VAREX)</td>
+</tr>
+</tbody>
+</table>
+</main></div>
+<script>
+document.querySelectorAll("main table").forEach(function (t) {
+  if (t.parentElement.classList.contains("tscroll")) return;
+  var d = document.createElement("div"); d.className = "tscroll"; t.parentNode.insertBefore(d, t); d.appendChild(t);
+});
+document.querySelectorAll("a.cite").forEach(function (a) {
+  a.addEventListener("click", function () { var d = document.querySelector("details"); if (d) d.open = true; });
+});
+</script>
+</body></html>

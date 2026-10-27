@@ -41,7 +41,9 @@ class PatientPostProcessor {
     return result;
   }
 
-  static final _knownLabels = {
+  /// Patient identifier labels the post-processor recognises; also the
+  /// `identifierLabel` enum of the phase-1 schema.
+  static const knownLabels = {
     'CNP',
     'MRN',
     'SSN',
@@ -66,7 +68,7 @@ class PatientPostProcessor {
 
     final labelLooksNumeric = _numericPattern.hasMatch(label);
     final mrnLooksLikeLabel =
-        _knownLabels.contains(mrn) ||
+        knownLabels.contains(mrn) ||
         (mrn.isNotEmpty && RegExp(r'^[A-Za-z]+$').hasMatch(mrn));
 
     if (labelLooksNumeric && (mrn.isEmpty || mrnLooksLikeLabel)) {
@@ -78,7 +80,7 @@ class PatientPostProcessor {
           value: label,
           confidenceLevel: patient.patientIdentifier.confidenceLevel,
         ),
-        identifierLabel: mrn.isNotEmpty && _knownLabels.contains(mrn)
+        identifierLabel: mrn.isNotEmpty && knownLabels.contains(mrn)
             ? mrn
             : 'Identifier',
       );

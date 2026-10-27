@@ -39,6 +39,26 @@ class ObservationOcrValidator {
     r'\s*$',
   );
 
+  /// A lab unit: `%`, or an optional `x10^n` / SI prefix and a base unit,
+  /// with optional `/denominator`s (`mUI/mL`, `µUI/mL`, `x10^9/L`, `/µL`,
+  /// `mm/h`, `mL/min/1.73m²`). Rejects what the line pattern takes for a unit
+  /// in phone numbers, addresses and page footers (`654 321`, `Cluj`,
+  /// `din 4`).
+  static final _labUnit = RegExp(
+    r'^(%|‰|'
+    r'(x?10\^?\*?\d+\s*)?([pnµμumcdkKMGT]?(g|mol|l|L|IU|UI|U|Eq|eq|Osm|osm|kat|m|mmHg|fl|fL|sec|s|min|h|ratio|cells|celule|G|T))?'
+    r'(/(1[.,]73\s*m[²2]|x?10\^?\*?\d+|[pnµμumcdkK]?(g|mol|l|L|kg|h|min|s|mm3|mm³|m|HPF|hpf|camp|cmp)))*)$',
+  );
+
+  /// The line's "value" is the upper end of a range
+  /// (`Trimestrul 1: 189 - 4051 µUI/mL`).
+  static final _nameEndsInRange = RegExp(r'[-–]\s*$');
+
+  static bool _isLabUnit(String unit) =>
+      unit.isNotEmpty &&
+      unit.contains(RegExp(r'[A-Za-z%‰µμ]')) &&
+      _labUnit.hasMatch(unit);
+
   static List<MappingResource> validate(
     List<MappingResource> resources,
     String ocrText,
@@ -168,7 +188,7 @@ class ObservationOcrValidator {
       final match = _linePattern.firstMatch(trimmed);
       if (match != null) {
         final name = _cleanName(match.group(1)!);
-        if (name.isEmpty || _isExcludedName(name)) continue;
+        if (!_isPlausibleResult(name, match.group(3)!)) continue;
 
         observations.add(
           _OcrObservation(
@@ -184,7 +204,7 @@ class ObservationOcrValidator {
       final matchNoRange = _linePatternNoRange.firstMatch(trimmed);
       if (matchNoRange != null) {
         final name = _cleanName(matchNoRange.group(1)!);
-        if (name.isEmpty || _isExcludedName(name)) continue;
+        if (!_isPlausibleResult(name, matchNoRange.group(3)!)) continue;
 
         observations.add(
           _OcrObservation(
@@ -198,6 +218,14 @@ class ObservationOcrValidator {
 
     return observations;
   }
+
+  /// A test name with a lab unit; not a range row or a name on the
+  /// exclusion list.
+  static bool _isPlausibleResult(String name, String unit) =>
+      name.isNotEmpty &&
+      !_isExcludedName(name) &&
+      !_nameEndsInRange.hasMatch(name) &&
+      _isLabUnit(unit.trim());
 
   static String _cleanName(String raw) {
     return raw
@@ -218,7 +246,7 @@ class ObservationOcrValidator {
         lower.contains('printed at') ||
         lower.contains('mrn:') ||
         lower.contains('mrn :') ||
-        RegExp(r'^page\s+\d').hasMatch(lower);
+        RegExp(r'^(page|pagina|pag\.)\s+\d').hasMatch(lower);
   }
 
   static bool _isExcludedName(String name) {
@@ -240,7 +268,10 @@ class ObservationOcrValidator {
         lower.startsWith('eliberat') ||
         lower.startsWith('pacient') ||
         lower.startsWith('sectia') ||
-        lower.startsWith('pat ');
+        lower.startsWith('pat ') ||
+        RegExp(
+          r'^(tel(efon)?|fax|mobil|adres[aă]|str\.?|strada|bd\.?|bulevardul|ale|aleea|cod|cnp|nr|pagina|page|tiparit|printed)\b',
+        ).hasMatch(lower);
   }
 
   static int? _findBestOcrMatch(

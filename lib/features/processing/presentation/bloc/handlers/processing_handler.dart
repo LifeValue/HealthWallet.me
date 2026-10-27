@@ -8,6 +8,7 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
+import 'package:health_wallet/features/processing/domain/entity/extraction_output_mode.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
@@ -122,12 +123,18 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           maxTokens: isDesktop
               ? null
               : prefs.getInt(SharedPrefsConstants.aiMaxTokens),
+          gpuLayers: isDesktop
+              ? null
+              : prefs.getInt(SharedPrefsConstants.aiGpuLayers),
           threads: isDesktop
               ? null
               : prefs.getInt(SharedPrefsConstants.aiThreads),
           contextSize: isDesktop
               ? null
               : prefs.getInt(SharedPrefsConstants.aiContextSize),
+          outputMode: ExtractionOutputMode.fromPref(
+            prefs.getString(SharedPrefsConstants.aiOutputMode),
+          ),
         );
         final finalSession = state.sessions.firstWhereOrNull(
           (s) => s.id == event.sessionId,
@@ -180,6 +187,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         contextSize: isDesktop
             ? null
             : prefs.getInt(SharedPrefsConstants.aiContextSize),
+        outputMode: ExtractionOutputMode.fromPref(
+          prefs.getString(SharedPrefsConstants.aiOutputMode),
+        ),
       );
       final stagedPatient = await _matchOrCreatePatient(patient);
       final finalSession = state.sessions.firstWhereOrNull(
@@ -362,8 +372,18 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
             gpuLayers: savedGpuLayers,
             threads: savedThreads,
             contextSize: savedContextSize,
+            outputMode: ExtractionOutputMode.fromPref(
+              prefs.getString(SharedPrefsConstants.aiOutputMode),
+            ),
           );
 
+      // Each yield is every phase-2 resource so far, not a delta: it replaces
+      // the previous yield on top of the resources the session started with.
+      final baseResources =
+          state.sessions
+              .firstWhereOrNull((s) => s.id == event.sessionId)
+              ?.resources ??
+          const <MappingResource>[];
       await for (final (resources, progress) in stream) {
         final currentSession = state.sessions.firstWhereOrNull(
           (s) => s.id == event.sessionId,
@@ -375,7 +395,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         updateSession(
           emit,
           sessionId: event.sessionId,
-          resources: [...currentSession!.resources, ...resources],
+          resources: [...baseResources, ...resources],
           progress: progress,
           updateDb: true,
         );
