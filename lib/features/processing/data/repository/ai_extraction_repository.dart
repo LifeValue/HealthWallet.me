@@ -12,6 +12,7 @@ import 'package:health_wallet/features/processing/data/model/prompt_template/nue
 import 'package:health_wallet/features/processing/data/model/prompt_template/remaining_resources_vision_prompt.dart';
 import 'package:health_wallet/features/processing/data/utils/image_preprocessor.dart';
 import 'package:health_wallet/features/processing/data/utils/observation_ocr_validator.dart';
+import 'package:health_wallet/features/processing/data/utils/ocr_pages.dart';
 import 'package:health_wallet/features/processing/data/utils/patient_post_processor.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
@@ -29,8 +30,21 @@ mixin AiExtractionRepository {
   static const int _minOcrCharsForTextOnly = 200;
   static const int _visionBatchSize = 2;
 
-  /// OCR characters in a phase-2 prompt, vision and text alike.
+  /// OCR characters in a phase-2 vision prompt (the OCR of the batch's pages).
   static const int _remainingOcrMaxLength = 2000;
+
+  /// Phase-2 text context: the 2048 of the other text calls left ~300 tokens
+  /// for the answer after ~920 prompt tokens and 2000 OCR characters.
+  static const int _remainingTextContext = 4096;
+
+  /// Phase-2 prompt tokens besides the OCR text (instructions, format,
+  /// few-shot example; ~920 measured), and tokens kept for the answer.
+  static const int _remainingPromptTokens = 1000;
+  static const int _remainingAnswerTokens = 1500;
+
+  /// OCR characters per token, low for digit-heavy lab text (Qwen and Gemma
+  /// tokenise digits one by one).
+  static const int _ocrCharsPerToken = 2;
 
   /// The OCR text [BasicInfoPrompt] includes.
   static const int _basicInfoOcrMaxLength = 1500;
@@ -61,6 +75,36 @@ mixin AiExtractionRepository {
   static int _textContextSize(int? contextSize, ExtractionOutputMode mode) {
     final minimum = mode == ExtractionOutputMode.schemaDraft ? 4096 : 2048;
     return (contextSize == null || contextSize < minimum) ? minimum : contextSize;
+  }
+
+  /// OCR characters per phase-2 text chunk at [contextSize] tokens, minus the
+  /// draft in schemaDraft mode; at least 800.
+  static int _remainingChunkChars(int contextSize, {bool drafting = false}) => math.max(
+        800,
+        (contextSize - _remainingPromptTokens - _remainingAnswerTokens - (drafting ? DraftPrompt.maxTokens : 0)) *
+            _ocrCharsPerToken,
+      );
+
+  /// Loads the text-only model for phase 2 at [_remainingTextContext] (or the
+  /// larger [contextSize]), or at the smaller text context when that does not
+  /// fit in memory; returns the context it loaded.
+  Future<int> _loadRemainingTextModel(
+    int? contextSize,
+    int? gpuLayers,
+    int? threads,
+    ExtractionOutputMode mode,
+  ) async {
+    final ctx = math.max(_remainingTextContext, _textContextSize(contextSize, mode));
+    try {
+      await networkDataSource.initModel(withVision: false, gpuLayers: gpuLayers, threads: threads, contextSize: ctx);
+      return ctx;
+    } catch (e) {
+      final reduced = _textContextSize(contextSize, mode);
+      if (reduced >= ctx || !e.toString().contains('Not enough memory')) rethrow;
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text model at ctx=$ctx does not fit ($e), retrying at ctx=$reduced');
+      await networkDataSource.initModel(withVision: false, gpuLayers: gpuLayers, threads: threads, contextSize: reduced);
+      return reduced;
+    }
   }
 
   /// One constrained text generation: the legacy grammar, or [schema] as the
@@ -255,7 +299,10 @@ mixin AiExtractionRepository {
     return (patient, container, documentCategory);
   }
 
-  Future<String> _runOcrOnImages(List<String> imagePaths) async {
+  Future<String> _runOcrOnImages(List<String> imagePaths) async => (await _runOcrPages(imagePaths)).join('\n');
+
+  /// The OCR text of each image, in order.
+  Future<List<String>> _runOcrPages(List<String> imagePaths) async {
     final preprocessed = await Future.wait(
       imagePaths.map(ImagePreprocessor.preprocessForOcr),
     );
@@ -267,7 +314,7 @@ mixin AiExtractionRepository {
         try { await File(preprocessed[i]).delete(); } catch (_) {}
       }
     }
-    return results.join('\n');
+    return results;
   }
 
   bool _isUsableResult(MappingPatient patient) {
@@ -553,40 +600,19 @@ Rules:
     int? contextSize,
     ExtractionOutputMode outputMode = ExtractionOutputMode.defaultMode,
   }) async* {
-    final ocrText = await _runOcrOnImages(imagePaths);
+    final rawPages = await _runOcrPages(imagePaths);
+    final ocrPages = OcrPages.withoutRepeatedLines(rawPages);
+    final ocrText = ocrPages.join('\n');
+    final rawLength = rawPages.join('\n').length;
 
     ProcessingLogBuffer.instance.log('[$_ts][ScanAI] === REMAINING RESOURCES EXTRACTION ===');
-    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$useVision, output=${outputMode.name}');
+    ProcessingLogBuffer.instance.log('[$_ts][ScanAI] category=$documentCategory, OCR ${ocrText.length} chars${rawLength != ocrText.length ? ' ($rawLength before dropping lines repeated on every page)' : ''}, pages=${imagePaths.length}, maxTokens=${maxTokens ?? 'default'}, useVision=$useVision, output=${outputMode.name}');
 
     List<MappingResource> allResources = [];
     final confidenceText = ocrText.isNotEmpty ? ocrText : null;
     final drafting = outputMode == ExtractionOutputMode.schemaDraft;
     final remainingSchema = ExtractionSchemas.remainingSchema(documentCategory);
     final remainingFormat = ExtractionSchemas.responseFormat(remainingSchema, name: 'remaining_resources');
-
-    // schemaDraft: the constrained text pass on the drafts and the OCR text.
-    Future<List<MappingResource>> constrainedTextPass(String? draft) async {
-      final promptBuilder = await RemainingResourcesVisionPrompt.create(
-        documentCategory: documentCategory,
-        ocrText: ocrText,
-        maxOcrLength: _remainingOcrMaxLength,
-        includeFewShot: true,
-        outputMode: outputMode,
-        draft: draft,
-      );
-      final prompt = promptBuilder.buildPrompt();
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running constrained text pass, prompt ${prompt.length} chars...');
-      final response = await _runConstrainedText(
-        prompt: prompt,
-        maxTokens: maxTokens,
-        mode: outputMode,
-        schema: remainingSchema,
-        schemaName: 'remaining_resources',
-        document: _head(ocrText, _remainingOcrMaxLength),
-        documentCategory: documentCategory,
-      );
-      return _parseResourcesFromResponse(response, confidenceText, outputMode);
-    }
 
     var visionLoaded = false;
     if (useVision) {
@@ -608,29 +634,13 @@ Rules:
     var textPassRan = false;
 
     if (visionLoaded) {
-      final prompt = drafting
-          ? DraftPrompt.remaining(ocrText, documentCategory: documentCategory, vision: true)
-          : (await RemainingResourcesVisionPrompt.create(
-              documentCategory: documentCategory,
-              ocrText: ocrText,
-              maxOcrLength: _remainingOcrMaxLength,
-              includeFewShot: true,
-              outputMode: outputMode,
-            )).buildPrompt();
-
-      final batches = <List<String>>[];
+      final batches = <(List<String>, String)>[];
       for (var i = 0; i < imagePaths.length; i += _visionBatchSize) {
-        batches.add(
-          imagePaths.sublist(
-            i,
-            i + _visionBatchSize > imagePaths.length
-                ? imagePaths.length
-                : i + _visionBatchSize,
-          ),
-        );
+        final end = math.min(i + _visionBatchSize, imagePaths.length);
+        batches.add((imagePaths.sublist(i, end), ocrPages.sublist(i, math.min(end, ocrPages.length)).join('\n')));
       }
 
-      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $_visionBatchSize images, OCR trimmed to $_remainingOcrMaxLength chars, few-shot${drafting ? ', draft pass' : ''}');
+      ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision: ${batches.length} batch(es) of up to $_visionBatchSize images, each with its pages\' OCR trimmed to $_remainingOcrMaxLength chars, few-shot${drafting ? ', draft pass' : ''}');
 
       final drafts = <String>[];
       for (var batchIdx = 0; batchIdx < batches.length; batchIdx++) {
@@ -645,12 +655,13 @@ Rules:
           break;
         }
 
-        final batch = batches[batchIdx];
+        final (batch, batchOcr) = batches[batchIdx];
         final progress = (batchIdx + 1) / (batches.length + 1);
         if (drafting) {
           ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision draft batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
+          final draftPrompt = DraftPrompt.remaining(batchOcr, documentCategory: documentCategory, vision: true);
           final draft = await _runDraft(
-            (tokens) => networkDataSource.runVisionPrompt(prompt: prompt, imagePaths: batch, maxTokens: tokens),
+            (tokens) => networkDataSource.runVisionPrompt(prompt: draftPrompt, imagePaths: batch, maxTokens: tokens),
             maxTokens,
           );
           if (draft != null) drafts.add(draft);
@@ -659,6 +670,13 @@ Rules:
         }
         try {
           ProcessingLogBuffer.instance.log('[$_ts][ScanAI] vision batch ${batchIdx + 1}/${batches.length} (${batch.length} images)...');
+          final prompt = (await RemainingResourcesVisionPrompt.create(
+            documentCategory: documentCategory,
+            ocrText: batchOcr,
+            maxOcrLength: _remainingOcrMaxLength,
+            includeFewShot: true,
+            outputMode: outputMode,
+          )).buildPrompt();
 
           final response = outputMode.usesSchema
               ? await networkDataSource.runVisionPrompt(
@@ -686,15 +704,19 @@ Rules:
 
       if (drafting && !shouldCancelGeneration) {
         await disposeModel();
-        await networkDataSource.initModel(
-          withVision: false,
-          gpuLayers: gpuLayers,
-          threads: threads,
-          contextSize: _textContextSize(contextSize, outputMode),
-        );
+        final ctx = await _loadRemainingTextModel(contextSize, gpuLayers, threads, outputMode);
         textPassRan = true;
         try {
-          allResources = await constrainedTextPass(drafts.isEmpty ? null : drafts.join('\n'));
+          final visionDraft = drafts.isEmpty ? null : drafts.join('\n');
+          allResources = await _remainingTextPasses(
+            OcrPages.chunks(ocrPages, _remainingChunkChars(ctx, drafting: true)),
+            documentCategory: documentCategory,
+            mode: outputMode,
+            schema: remainingSchema,
+            maxTokens: maxTokens,
+            confidenceText: confidenceText,
+            draftFor: (_) async => visionDraft,
+          );
           ProcessingLogBuffer.instance.log('[$_ts][ScanAI] constrained pass on ${drafts.length} vision draft(s): ${allResources.length} resources');
         } catch (e) {
           ProcessingLogBuffer.instance.log('[$_ts][ScanAI] constrained pass failed: $e');
@@ -712,46 +734,27 @@ Rules:
       ProcessingLogBuffer.instance.log('[$_ts][ScanAI] --- TEXT-ONLY FALLBACK ---');
       await disposeModel();
 
-      final fallbackPrompt = drafting
-          ? null
-          : (await RemainingResourcesVisionPrompt.create(
-              documentCategory: documentCategory,
-              ocrText: ocrText,
-              maxOcrLength: _remainingOcrMaxLength,
-              includeFewShot: true,
-              outputMode: outputMode,
-            )).buildPrompt();
-
-      await networkDataSource.initModel(
-        withVision: false,
-        gpuLayers: gpuLayers,
-        threads: threads,
-        contextSize: _textContextSize(contextSize, outputMode),
-      );
-
       try {
-        if (fallbackPrompt == null) {
-          final draft = await _runDraft(
-            (tokens) => networkDataSource.runTextPrompt(
-              prompt: DraftPrompt.remaining(ocrText, documentCategory: documentCategory),
-              maxTokens: tokens,
-            ),
-            maxTokens,
-          );
-          allResources = await constrainedTextPass(draft);
-        } else {
-          ProcessingLogBuffer.instance.log('[$_ts][ScanAI] running text-only inference, prompt ${fallbackPrompt.length} chars...');
-          final response = await _runConstrainedText(
-            prompt: fallbackPrompt,
-            maxTokens: maxTokens,
-            mode: outputMode,
-            schema: remainingSchema,
-            schemaName: 'remaining_resources',
-            document: _head(ocrText, _remainingOcrMaxLength),
-            documentCategory: documentCategory,
-          );
-          allResources = _parseResourcesFromResponse(response, confidenceText, outputMode);
-        }
+        final ctx = await _loadRemainingTextModel(contextSize, gpuLayers, threads, outputMode);
+        final chunks = OcrPages.chunks(ocrPages, _remainingChunkChars(ctx, drafting: drafting));
+        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text-only: ${chunks.length} chunk(s) of up to ${_remainingChunkChars(ctx, drafting: drafting)} OCR chars at ctx=$ctx');
+        allResources = await _remainingTextPasses(
+          chunks,
+          documentCategory: documentCategory,
+          mode: outputMode,
+          schema: remainingSchema,
+          maxTokens: maxTokens,
+          confidenceText: confidenceText,
+          draftFor: drafting
+              ? (chunk) => _runDraft(
+                    (tokens) => networkDataSource.runTextPrompt(
+                      prompt: DraftPrompt.remaining(chunk, documentCategory: documentCategory),
+                      maxTokens: tokens,
+                    ),
+                    maxTokens,
+                  )
+              : null,
+        );
         ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text fallback: ${allResources.length} resources');
       } catch (e) {
         ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text fallback failed: $e');
@@ -808,27 +811,79 @@ Rules:
     return result;
   }
 
+  /// Phase 2 on the OCR text, one constrained text call per chunk (with
+  /// [draftFor]'s draft in schemaDraft mode); the chunks' outputs are merged
+  /// and deduplicated as one response. A failed chunk is logged and skipped,
+  /// except a tokenization / prompt-too-long error, which is rethrown.
+  Future<List<MappingResource>> _remainingTextPasses(
+    List<String> chunks, {
+    required String? documentCategory,
+    required ExtractionOutputMode mode,
+    required Map<String, dynamic> schema,
+    required int? maxTokens,
+    required String? confidenceText,
+    Future<String?> Function(String chunk)? draftFor,
+  }) async {
+    final jsonList = <dynamic>[];
+    for (var i = 0; i < chunks.length; i++) {
+      if (shouldCancelGeneration) break;
+      final chunk = chunks[i];
+      try {
+        final draft = await draftFor?.call(chunk);
+        final prompt = (await RemainingResourcesVisionPrompt.create(
+          documentCategory: documentCategory,
+          ocrText: chunk,
+          maxOcrLength: chunk.length,
+          includeFewShot: true,
+          outputMode: mode,
+          draft: draft,
+        )).buildPrompt();
+        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text chunk ${i + 1}/${chunks.length}: ${chunk.length} OCR chars, prompt ${prompt.length} chars...');
+        final response = await _runConstrainedText(
+          prompt: prompt,
+          maxTokens: maxTokens,
+          mode: mode,
+          schema: schema,
+          schemaName: 'remaining_resources',
+          document: chunk,
+          documentCategory: documentCategory,
+        );
+        jsonList.addAll(_decodeResources(response, mode));
+      } catch (e) {
+        final msg = e.toString().toLowerCase();
+        if (msg.contains('tokenization') || msg.contains('prompt too long')) rethrow;
+        ProcessingLogBuffer.instance.log('[$_ts][ScanAI] text chunk ${i + 1} failed: $e');
+      }
+    }
+    return _toResources(jsonList, confidenceText);
+  }
+
   /// Legacy array output, or (schema modes) the schema object mapped to the
-  /// same `resourceType`-tagged maps, then dedupe, skip rules, confidence and
-  /// validity. Unusable schema output gives an empty list, not an error.
-  List<MappingResource> _parseResourcesFromResponse(
-    String? response,
-    String? confidenceText, [
-    ExtractionOutputMode mode = ExtractionOutputMode.grammar,
-  ]) {
-    final List<dynamic> jsonList;
+  /// same `resourceType`-tagged maps. Unusable schema output gives an empty
+  /// list, not an error.
+  List<dynamic> _decodeResources(String? response, ExtractionOutputMode mode) {
     if (mode.usesSchema) {
       final object = ExtractionSchemas.decodeObject(response);
       if (object == null) {
         ProcessingLogBuffer.instance.log('[$_ts][ScanAI] schema output unusable (${response?.length ?? 0} chars), no resources');
         return [];
       }
-      jsonList = ExtractionSchemas.remainingToLegacy(object);
-    } else {
-      final cleaned = _stripMarkdownFences(response ?? '');
-      final repaired = _repairTruncatedJsonArray(cleaned);
-      jsonList = jsonDecode(repaired);
+      return ExtractionSchemas.remainingToLegacy(object);
     }
+    final cleaned = _stripMarkdownFences(response ?? '');
+    final repaired = _repairTruncatedJsonArray(cleaned);
+    return jsonDecode(repaired) as List<dynamic>;
+  }
+
+  /// [_decodeResources], then dedupe, skip rules, confidence and validity.
+  List<MappingResource> _parseResourcesFromResponse(
+    String? response,
+    String? confidenceText, [
+    ExtractionOutputMode mode = ExtractionOutputMode.grammar,
+  ]) =>
+      _toResources(_decodeResources(response, mode), confidenceText);
+
+  List<MappingResource> _toResources(List<dynamic> jsonList, String? confidenceText) {
     final deduplicated = _deduplicateResources(jsonList);
 
     List<MappingResource> resources = [];
