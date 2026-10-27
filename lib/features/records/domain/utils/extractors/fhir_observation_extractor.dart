@@ -3,6 +3,7 @@ import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/utils/unit_converter.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
@@ -79,8 +80,8 @@ class FhirObservationExtractor {
       final rawValue = valueQuantity.value?.valueDouble;
       final rawUnit = valueQuantity.unit?.toString() ?? '';
       if (rawValue != null) {
-        final u = rawUnit.trim().toLowerCase();
-        if ((u == 'cm' || u == 'centimeters') && region.heightUnit == 'ft/in') {
+        if (UnitConverter.heightInCm(rawValue, rawUnit) != null &&
+            region.heightUnit == 'ft/in') {
           final converted = convertQuantityForRegion(rawValue, rawUnit, region);
           return converted.unit;
         }
@@ -106,7 +107,7 @@ class FhirObservationExtractor {
     if ((u == 'kg' || u == 'kilograms') && region.weightUnit == 'lbs') {
       return (value: value * 2.20462, unit: region.weightUnit);
     }
-    if ((u == 'lbs' || u == 'lb' || u == '[lb_av]') &&
+    if ((u == 'lbs' || u == 'lb' || u == 'pounds' || u == '[lb_av]') &&
         region.weightUnit == 'kg') {
       return (value: value / 2.20462, unit: region.weightUnit);
     }
@@ -126,12 +127,15 @@ class FhirObservationExtractor {
       return (value: value * 18.0182, unit: region.glucoseUnit);
     }
 
-    if ((u == 'cm' || u == 'centimeters') && region.heightUnit == 'ft/in') {
-      final totalInches = value / 2.54;
-      final feet = totalInches ~/ 12;
-      final inches = (totalInches % 12).round();
-      final display = inches == 12 ? "${feet + 1}'0\"" : "$feet'$inches\"";
-      return (value: value, unit: display);
+    final heightCm = UnitConverter.heightInCm(value, unit);
+    if (heightCm != null && region.heightUnit == 'ft/in') {
+      return (
+        value: value,
+        unit: UnitConverter.cmToFeetInchesString(heightCm),
+      );
+    }
+    if (heightCm != null && region.heightUnit == 'cm') {
+      return (value: heightCm, unit: region.heightUnit);
     }
 
     return (value: value, unit: unit);

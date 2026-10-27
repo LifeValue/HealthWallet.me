@@ -262,7 +262,7 @@ void main() {
           _value({'valueQuantity': quantity(175, unit: 'centimeters')}),
           RegionPreset.europe,
         ),
-        '175.00 centimeters',
+        '175.00 cm',
       );
     });
 
@@ -280,6 +280,30 @@ void main() {
           RegionPreset.europe,
         ),
         '7.00 ',
+      );
+    });
+
+    test('converts pounds and inches for the Europe region', () {
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(200, unit: 'pounds')}),
+          RegionPreset.europe,
+        ),
+        '90.72 kg',
+      );
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(70, unit: 'inches')}),
+          RegionPreset.europe,
+        ),
+        '177.80 cm',
+      );
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(70, unit: 'inches')}),
+          RegionPreset.us,
+        ),
+        '5\'10"',
       );
     });
 
