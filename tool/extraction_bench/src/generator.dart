@@ -18,7 +18,13 @@ import 'formats.dart';
 import 'rng.dart';
 
 const generatorVersion = '1.0.0';
-const benchFamilies = ['lab_report', 'discharge_letter'];
+const benchFamilies = ['lab_report', 'discharge_letter', 'lab_report_long'];
+
+/// The families `generate` writes unless `--families` says otherwise.
+/// `lab_report_long` (opt-in) is a lab report of 16+ tests with age and sex
+/// reference brackets over several pages, the letterhead and patient block
+/// printed on every page.
+const defaultFamilies = ['lab_report', 'discharge_letter'];
 const benchDegradations = ['clean', 'scan', 'photo'];
 
 class GeneratorOptions {
@@ -26,7 +32,7 @@ class GeneratorOptions {
     required this.seed,
     this.perCell = 10,
     this.langs = benchLangs,
-    this.families = benchFamilies,
+    this.families = defaultFamilies,
     this.footerNote,
   });
 
@@ -136,7 +142,7 @@ class SpacerBlock extends Block {
 }
 
 class SyntheticDoc {
-  SyntheticDoc(this.meta, this.gold, this.blocks, this.footer);
+  SyntheticDoc(this.meta, this.gold, this.blocks, this.footer, {this.pageHeader = const []});
 
   final DocMeta meta;
 
@@ -145,13 +151,16 @@ class SyntheticDoc {
   final List<Block> blocks;
   final String footer;
 
+  /// Printed at the top of every page, before [blocks] continue.
+  final List<Block> pageHeader;
+
   List<Map<String, dynamic>> get goldResources => [
         for (final e in gold['entry'] as List)
           (e as Map<String, dynamic>)['resource'] as Map<String, dynamic>,
       ];
 
   Iterable<String> get allTexts sync* {
-    for (final b in blocks) {
+    for (final b in [...pageHeader, ...blocks]) {
       yield* b.texts;
     }
     yield footer;
@@ -223,6 +232,7 @@ String _fhirDate(DateTime d) =>
 String _shortFamily(String family) => switch (family) {
       'lab_report' => 'lab',
       'discharge_letter' => 'dis',
+      'lab_report_long' => 'labl',
       _ => family,
     };
 
@@ -256,9 +266,11 @@ List<SyntheticDoc> buildDocuments(GeneratorOptions options) {
         );
         final footer = '${options.footerNote ?? labels['footer']!.of(lang)} - $docId';
         final builder = _DocBuilder(meta, rng);
-        docs.add(family == 'lab_report'
-            ? builder.labReport(footer)
-            : builder.dischargeLetter(footer));
+        docs.add(switch (family) {
+          'lab_report' => builder.labReport(footer),
+          'lab_report_long' => builder.labReport(footer, long: true),
+          _ => builder.dischargeLetter(footer),
+        });
       }
     }
   }
@@ -402,7 +414,23 @@ class _DocBuilder {
 
   // ------------------------------------------------------------------ lab --
 
-  SyntheticDoc labReport(String footer) {
+  /// Age and sex reference brackets around [test]'s range, printed under its
+  /// row in a long report, as many labs do.
+  List<Block> _rangeBrackets(LabTest test, String unit) {
+    String r(double f1, double f2) =>
+        '${formatDecimal(roundTo(test.low * f1, test.decimals), lang)} - ${formatDecimal(roundTo(test.high * f2, test.decimals), lang)} $unit';
+    return [
+      for (final line in [
+        '${l('men')}: ${r(rng.doubleBetween(0.95, 1.1), rng.doubleBetween(0.95, 1.1))}',
+        '${l('women')}: ${r(rng.doubleBetween(0.8, 0.95), rng.doubleBetween(0.8, 0.95))}',
+        '${l('children')} 1-5 ${l('years')}: ${r(rng.doubleBetween(0.5, 0.8), rng.doubleBetween(0.6, 0.9))}',
+        '${l('children')} 6-12 ${l('years')}: ${r(rng.doubleBetween(0.6, 0.9), rng.doubleBetween(0.7, 0.95))}',
+      ])
+        ParagraphBlock(line, size: 8, indent: 0.70 * _Renderer._width),
+    ];
+  }
+
+  SyntheticDoc labReport(String footer, {bool long = false}) {
     final orgName = rng.pick(organizationNames[lang]!.$2);
     final address = randomAddress(lang, rng);
     final phone = randomPhone(lang, rng);
@@ -413,14 +441,15 @@ class _DocBuilder {
     final org = _organization(orgName, address, phone);
     final practitioner = _practitioner(labMedicine.of(lang));
 
-    final count = rng.intBetween(6, 12);
+    final count = long ? rng.intBetween(16, labTests.length) : rng.intBetween(6, 12);
     final tests = rng.sample(labTests, count);
     final observations = <Map<String, dynamic>>[];
     final rows = <Block>[];
     final elevated = <String>[];
     final decreased = <String>[];
     const cols = [0.0, 0.40, 0.54, 0.70, 0.93];
-    rows.add(RowBlock([l('test'), l('result'), l('unit'), l('range'), l('flag')], cols, bold: true));
+    final tableHeader = RowBlock([l('test'), l('result'), l('unit'), l('range'), l('flag')], cols, bold: true);
+    if (!long) rows.add(tableHeader);
     for (final test in tests) {
       final roll = rng.nextDouble();
       double value;
@@ -471,6 +500,7 @@ class _DocBuilder {
         ],
       });
       rows.add(RowBlock([name, formatDecimal(value, lang), unit, range, flag ?? ''], cols));
+      if (long) rows.addAll(_rangeBrackets(test, unit));
     }
 
     final conclusion = [
@@ -499,6 +529,29 @@ class _DocBuilder {
     };
     _add(report);
     observations.forEach(_add);
+
+    if (long) {
+      return SyntheticDoc(
+        meta,
+        _bundle(),
+        [
+          ...rows,
+          const RuleBlock(),
+          const SpacerBlock(6),
+          ParagraphBlock('${l('conclusion')}: $conclusion'),
+          ParagraphBlock(practitioner.line),
+        ],
+        footer,
+        pageHeader: [
+          ..._header(orgName, address, phone, title),
+          ...patient.blocks,
+          RowBlock(['${l('reportDate')}: ${formatDate(reportDate, lang)}'], const [0.0], size: 10),
+          const SpacerBlock(6),
+          const RuleBlock(),
+          tableHeader,
+        ],
+      );
+    }
 
     final blocks = <Block>[
       ..._header(orgName, address, phone, title),
@@ -777,6 +830,7 @@ class _Renderer {
     _g.drawString(regular, 7, doc.footer, _margin, 28);
     _g.setFillColor(PdfColors.black);
     lines.add(doc.footer);
+    doc.pageHeader.forEach(_draw);
   }
 
   void _ensure(double height) {
@@ -813,32 +867,34 @@ class _Renderer {
     lines.add(runs.map((r) => r.$1).where((t) => t.isNotEmpty).join('  '));
   }
 
+  void _draw(Block block) {
+    switch (block) {
+      case HeadingBlock(:final text, :final size):
+        _line(bold, size, [(text, 0)]);
+      case ParagraphBlock(:final text, bold: final isBold, :final size, :final indent):
+        final font = isBold ? bold : regular;
+        for (final part in _wrap(font, size, text, _width - indent)) {
+          _line(font, size, [(part, indent)]);
+        }
+      case RowBlock(:final cells, :final columns, bold: final isBold, :final size):
+        _line(isBold ? bold : regular, size, [
+          for (var i = 0; i < cells.length; i++) (cells[i], columns[i] * _width),
+        ]);
+      case RuleBlock():
+        _ensure(6);
+        _y -= 4;
+        _g
+          ..setLineWidth(0.5)
+          ..drawLine(_margin, _y, _margin + _width, _y)
+          ..strokePath();
+      case SpacerBlock(:final height):
+        _y -= height;
+    }
+  }
+
   Future<RenderedDoc> render() async {
     _newPage();
-    for (final block in doc.blocks) {
-      switch (block) {
-        case HeadingBlock(:final text, :final size):
-          _line(bold, size, [(text, 0)]);
-        case ParagraphBlock(:final text, bold: final isBold, :final size, :final indent):
-          final font = isBold ? bold : regular;
-          for (final part in _wrap(font, size, text, _width - indent)) {
-            _line(font, size, [(part, indent)]);
-          }
-        case RowBlock(:final cells, :final columns, bold: final isBold, :final size):
-          _line(isBold ? bold : regular, size, [
-            for (var i = 0; i < cells.length; i++) (cells[i], columns[i] * _width),
-          ]);
-        case RuleBlock():
-          _ensure(6);
-          _y -= 4;
-          _g
-            ..setLineWidth(0.5)
-            ..drawLine(_margin, _y, _margin + _width, _y)
-            ..strokePath();
-        case SpacerBlock(:final height):
-          _y -= height;
-      }
-    }
+    doc.blocks.forEach(_draw);
     final os = PdfStream();
     await pdf.write(os);
     return RenderedDoc(lines, os.output());

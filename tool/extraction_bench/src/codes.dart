@@ -727,6 +727,10 @@ const labels = <String, L4>{
   'elevated': L4('Elevated', 'Valores elevados', 'Erhöht', 'Valori crescute'),
   'decreased': L4('Decreased', 'Valores disminuidos', 'Erniedrigt', 'Valori scăzute'),
   'footer': L4.all('SYNTHETIC TEST DOCUMENT - extraction_bench'),
+  'men': L4('Men', 'Hombres', 'Männer', 'Bărbați'),
+  'women': L4('Women', 'Mujeres', 'Frauen', 'Femei'),
+  'children': L4('Children', 'Niños', 'Kinder', 'Copii'),
+  'years': L4('years', 'años', 'Jahre', 'ani'),
 };
 
 const genderLabels = <String, L4>{

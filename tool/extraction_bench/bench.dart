@@ -1,7 +1,7 @@
 /// On-device document→FHIR extraction benchmark.
 ///
 ///   fvm dart run tool/extraction_bench/bench.dart generate --out <dir> [--seed 1234] [--per-cell 10]
-///       [--langs en,es,de,ro] [--families lab_report,discharge_letter]
+///       [--langs en,es,de,ro] [--families lab_report,discharge_letter[,lab_report_long]]
 ///   fvm dart run tool/extraction_bench/bench.dart oracle --dataset <dir> --out <dir>
 ///   fvm dart run tool/extraction_bench/bench.dart score --dataset <dir> --predictions <jsonl> --out <dir> [--seed 1234]
 ///   fvm dart run tool/extraction_bench/bench.dart compare --dataset <dir> --a <jsonl> --b <jsonl> --out <dir> [--seed 1234]
@@ -30,7 +30,7 @@ ArgParser _parser() {
       ..addOption('seed', defaultsTo: '$_defaultSeed')
       ..addOption('per-cell', defaultsTo: '10', help: 'Documents per (language, family).')
       ..addOption('langs', defaultsTo: benchLangs.join(','))
-      ..addOption('families', defaultsTo: benchFamilies.join(','))
+      ..addOption('families', defaultsTo: defaultFamilies.join(','))
       ..addOption('font-dir', defaultsTo: BenchFonts.defaultDir),
   );
   parser.addCommand(

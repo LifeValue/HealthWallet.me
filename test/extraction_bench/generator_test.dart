@@ -66,7 +66,7 @@ void main() {
           (f) => jsonDecode(f.readAsStringSync()) as Map<String, dynamic>,
         );
     expect({for (final m in metas) m['lang']}, benchLangs.toSet());
-    expect({for (final m in metas) m['family']}, benchFamilies.toSet());
+    expect({for (final m in metas) m['family']}, defaultFamilies.toSet());
   });
 
   test('a different seed gives different documents', () {
@@ -97,6 +97,31 @@ void main() {
       }
     }
     expect(checked, greaterThan(500));
+  });
+
+  test('lab_report_long spans pages, repeats its letterhead per page and prints every scored value', () async {
+    final docs = buildDocuments(const GeneratorOptions(seed: 7, perCell: 2, families: ['lab_report_long']));
+    expect(docs.map((d) => d.meta.docId), contains('ro-labl-001'));
+    for (final doc in docs) {
+      final rendered = await renderDocument(doc, fonts);
+      // The renderer prints the footer once per page.
+      final pages = rendered.lines.where((l) => l == doc.footer).length;
+      final orgName = (doc.pageHeader.first as HeadingBlock).text;
+      expect(pages, greaterThanOrEqualTo(2), reason: doc.meta.docId);
+      expect(rendered.lines.where((l) => l == orgName).length, pages, reason: doc.meta.docId);
+      expect(doc.goldResources.where((r) => r['resourceType'] == 'Observation').length, greaterThanOrEqualTo(16));
+
+      final text = _collapse(rendered.text);
+      for (final resource in doc.goldResources) {
+        for (final spec in fieldSpecs[resource['resourceType']] ?? const <FieldSpec>[]) {
+          final value = extractField(resource, spec);
+          if (value == null) continue;
+          for (final form in _printedForms(spec, value, doc.meta.lang)) {
+            expect(text, contains(_collapse(form)), reason: '${doc.meta.docId} ${resource['resourceType']}.${spec.key}');
+          }
+        }
+      }
+    }
   });
 
   test('a missing glyph fails before anything is written', () async {

@@ -38,7 +38,7 @@ fvm dart run tool/extraction_bench/bench.dart compare --dataset build/extraction
   --b build/extraction_bench/results/<runB>/predictions.jsonl --out build/extraction_bench/compare/<runA>-vs-<runB>
 ```
 
-`generate` options: `--seed` (default 1234), `--per-cell` documents per language × family (default 10), `--langs en,es,de,ro`, `--families lab_report,discharge_letter`, `--font-dir` (default `assets/font/matter-font`; run from the repository root). `score` and `compare` take `--seed` (default 1234) for the bootstrap. `score --only-predicted` scores only the documents that have a record, for a `BENCH_LIMIT` run; without it the rest of the dataset counts as missing and pulls the means down. `generate` refuses a non-empty `--out`, and empty or repeated `--langs` / `--families`. Every command exits non-zero with a message on bad input.
+`generate` options: `--seed` (default 1234), `--per-cell` documents per language × family (default 10), `--langs en,es,de,ro`, `--families lab_report,discharge_letter` (add `lab_report_long` for multi-page lab reports; it is not in the default, so default datasets stay byte-identical), `--font-dir` (default `assets/font/matter-font`; run from the repository root). `score` and `compare` take `--seed` (default 1234) for the bootstrap. `score --only-predicted` scores only the documents that have a record, for a `BENCH_LIMIT` run; without it the rest of the dataset counts as missing and pulls the means down. `generate` refuses a non-empty `--out`, and empty or repeated `--langs` / `--families`. Every command exits non-zero with a message on bad input.
 
 ## Runner
 
@@ -176,6 +176,8 @@ The two grammar truncations (ro-dis-003, ro-lab-003, phase 2) are gone under the
 
 ## Model candidates (2026-10-26)
 
+Measured on the code before the phase-2 multi-page fix; "Phase-2 multi-page fix and candidates re-run (2026-10-27)" below supersedes the recommendation.
+
 Research recommendation 4 (D1a). Dataset `generate --seed 7 --per-cell 6` (48 documents, `build/extraction_bench/dataset-48`), text only (`BENCH_VISION=false`), `BENCH_OUTPUT=schema`, iPhone 17 Pro and 17 Pro Max simulators (CPU), two runs in parallel; `compare` against the tier's current model with `--seed 1234`. Run ids `<variant>-sim-text-48`. The candidates are bench-only `AiModelVariant`s (not in `availableVariants`); NuExtract 2.0 and NuExtract3 get their chat template's `template` kwarg (built from the phase schema by `NuExtractPrompt`) and, for NuExtract3, `instructions`; the others use the production prompts. Every candidate loaded and ran in llamadart 0.15.6 (`qwen35` architecture and BF16 mmproj included). Rule fixed before measuring: recommend a candidate only if the lower bound of its ΔF1 95% CI is above 0 and strict JSON and truncation are no worse. Simulator times and RAM are not phone numbers; download is model + mmproj.
 
 | Tier | Model | F1 [95% CI] | ΔF1 vs tier model [95% CI] | Omission | Hallucination | Strict JSON | Truncated | Median wall / doc | Download | Licence |
@@ -199,6 +201,38 @@ Every run classified all 48 documents correctly as lab report or visit except Nu
 
 The missing-patient-ID path of the schema change is not measured by these runs: every generated document prints a patient identifier.
 
+## Phase-2 multi-page fix and candidates re-run (2026-10-27)
+
+A real 4-page Romanian lab report (7 results, hand-written gold, under the gitignored `build/`; never committed) scored 0.16–0.38 on an iPhone 17 with every model. Phase 2 saw only the first 2000 OCR characters, mostly the letterhead and patient block, so the answer stopped after the second test; `ObservationOcrValidator` then added phone numbers, addresses, page footers and reference-range rows as observations. The fix (`OcrPages`, 4096-context chunked text calls, per-batch vision OCR, a stricter validator; see `doc/architecture.md`, Output modes) took the real report on the iPhone 17 (`BENCH_DOCS=ro-lab-real-001`, schema, vision on; every 4B model's vision load fails the memory check on the 8 GB phone and phase 2 runs text-only) to:
+
+| Model | F1 before | F1 after | Wall after |
+|---|---:|---:|---:|
+| Qwen3-VL-2B (Lite) | 0.215 | 0.431 | 42 s |
+| Qwen3.5-2B | 0.247 | 0.521 | 48 s |
+| NuExtract 2.0-2B | 0.380 | 0.365 | 39 s |
+| MedGemma 1 4B (Advanced) | 0.157 | 0.352 | 145 s |
+| Qwen3.5-4B | 0.277 | 0.596 | 94 s |
+| NuExtract3 | 0.244 | 0.425 | 139 s |
+| MedGemma 1.5 4B | 0.231 | 0.373 | 59 s |
+
+What is left on that report: a value taken from the next row, OCR unit misreads (`Ul/mL`) and an OCR prefix kept in a test name.
+
+Two simulator sets, text only, schema, run ids `<variant>-sim-long-fix` and `<variant>-sim-text-48-fix`: `dataset-long` (`generate --seed 7 --per-cell 3 --families lab_report_long`, 12 documents of 2–3 pages) and the 48-document set above. Qwen3-VL-2B old → new code: long 0.091 → 0.561 (+0.470 [0.413, 0.523]; the old code hallucinated 90.9% of its fields and truncated half its generations), 48 documents 0.604 → 0.652 (+0.048 [0.038, 0.059], hallucination 16.5% → 4.1%). MedGemma 48 documents 0.635 → 0.684 (+0.049 [0.039, 0.061]). Every earlier candidate comparison carried the validator's junk, so the candidates were re-run on the new code; NuExtract 2.0 and MedGemma 1.5 were left out (clearly worse above).
+
+| Tier | Model | F1, 48 docs | ΔF1 vs tier model, 48 [95% CI] | Halluc. 48 | F1, long | ΔF1, long [95% CI] | Strict JSON / truncated, long | Median wall / doc, 48 / long |
+|---|---|---:|---|---:|---:|---|---|---:|
+| Lite | Qwen3-VL-2B (shipped) | 0.652 | | 4.1% | 0.561 | | 100% / 0% | 49 / 102 s |
+| Lite | Qwen3.5-2B | 0.641 | −0.011 [−0.032, 0.010] | 3.8% | 0.522 | −0.038 [−0.117, 0.043] | 86.2% / 13.8% | 58 / 145 s |
+| Advanced | MedGemma 1 4B (shipped) | 0.684 | | 5.8% | 0.575 | | 93.1% / 6.9% | 94 / 216 s |
+| Advanced | Qwen3.5-4B | 0.751 | **+0.067 [0.046, 0.088]** | 1.9% | 0.659 | **+0.084 [0.024, 0.143]** | 100% / 0% | 104 / 193 s |
+| Advanced | NuExtract3 (4B) | 0.676 | −0.009 [−0.049, 0.025] | 5.5% | 0.580 | +0.005 [−0.074, 0.075] | 100% / 0% | 91 / 207 s |
+
+All 48-document runs have 100% strict JSON and no truncation. One NuExtract3 document (en-lab-003) failed the simulator's memory check twice (the simulator reports the Mac's free RAM) and counts as an error; its other memory-check failure was re-run and merged (`nuExtract3-sim-text-48-fix-merged`).
+
+- **Lite: keep Qwen3-VL-2B.** Qwen3.5-2B ties on the 48 documents and on multi-page reports truncates 13.8% of its generations; its lead on the one real report does not outweigh that.
+- **Advanced: Qwen3.5-4B is recommended** (the rule above: CI lower bound above 0, strict JSON and truncation no worse, on both sets). On the 48 documents it is ahead in every language (de +0.103, ro +0.074, en +0.046, es +0.043 [0.005, 0.076]), family (lab reports +0.068, discharge letters +0.065) and degradation; Organization 0.99 vs 0.68, MedicationStatement 0.34 vs 0.14. On the long set it is behind only in Romanian (−0.051 [−0.091, −0.027], 3 documents). Licence Apache-2.0 instead of HAI-DEF, download 3.41 GB vs 3.34 GB. On the 8 GB iPhone 17 neither 4B model fits with vision, so the switch loses nothing there. Still open on a phone: vision on a device with more RAM, and peak RAM.
+- NuExtract3 is no better than MedGemma and below its base model (NuExtract3 − Qwen3.5-4B = −0.075 [−0.117, −0.041]).
+
 ## Datasets
 
 ```
@@ -219,6 +253,7 @@ The missing-patient-ID path of the schema change is not measured by these runs: 
 The generator draws everything from the seed, builds the gold Bundle, and prints the same values on an A4 page with the Matter font. Families:
 
 - `lab_report`: Patient, DiagnosticReport, 6–12 laboratory Observations (LOINC, UCUM), Practitioner, Organization.
+- `lab_report_long` (docId `<lang>-labl-<n>`, opt-in): a lab report of 16–21 Observations, each with four age and sex reference brackets printed under its row, over 2–3 pages, with the letterhead, patient block, report date and table header repeated on every page, as many labs print them. It exercises what single-page documents never do: phase-2 OCR across pages and the repeated header lines.
 - `discharge_letter`: Patient, Encounter (department as serviceType), 1–3 Conditions (SNOMED + ICD-10; full, year-month or year onset), 2–4 MedicationStatements (ATC + RxNorm ingredient), 0–2 AllergyIntolerances, 0–1 Procedure, 2–4 vital-sign Observations, Practitioner, Organization.
 
 Every scored gold value is printed in the document's language and formatting: decimal comma for es/de/ro, `14 Mar 2025` / `14/03/2025` / `14.03.2025`, localized labels, German lower-case litre units (`mg/dl`). Gold concepts carry the codes; a broader code that earns partial credit is listed in the extension `https://healthwallet.me/fhir/extraction-bench/alternative-coding`. Codes are in `src/codes.dart`. Names, addresses, organisations and identifiers are invented (CNPs, DNIs and German insurance numbers have valid check digits). UK and German phone numbers come from the ranges reserved for drama; Spanish and Romanian ones are random digits and may belong to someone. Each page carries a "SYNTHETIC TEST DOCUMENT" footer. A character the font lacks stops the generator before it writes anything.
