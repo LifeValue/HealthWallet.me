@@ -48,4 +48,50 @@ void main() {
     expect(messages[HandoverFailure.modelNotFound], ro.noAiModelOnDesktop);
     expect(messages.values.toSet(), hasLength(HandoverFailure.values.length));
   });
+
+  test('every handover status has its own desktop label', () {
+    final labels = {
+      for (final status in HandoverStatus.values) status.localizedLabel(ro),
+    };
+
+    expect(labels, hasLength(HandoverStatus.values.length));
+    expect(
+      HandoverStatus.receiving.localizedLabel(ro),
+      ro.desktopHandoverReceivingFiles,
+    );
+  });
+
+  group('the phone handover status', () {
+    HandoverSession session(HandoverStatus status, [HandoverFailure? f]) =>
+        HandoverSession(sessionId: 's', status: status, failure: f);
+
+    test('follows the session', () {
+      expect(phoneHandoverStatusText(null, ro), ro.desktopHandoverPreparing);
+      expect(
+        phoneHandoverStatusText(session(HandoverStatus.sending), ro),
+        ro.desktopHandoverSendingFiles,
+      );
+      expect(
+        phoneHandoverStatusText(session(HandoverStatus.waitingForResults), ro),
+        ro.desktopHandoverProcessingOnDesktop,
+      );
+      expect(
+        phoneHandoverStatusText(session(HandoverStatus.complete), ro),
+        ro.desktopHandoverComplete,
+      );
+    });
+
+    test('shows the failure, never the technical error text', () {
+      final failed = session(
+        HandoverStatus.error,
+        HandoverFailure.modelNotFound,
+      ).copyWith(error: 'Exception: Model file not found at /x');
+
+      expect(phoneHandoverStatusText(failed, ro), ro.noAiModelOnDesktop);
+      expect(
+        phoneHandoverStatusText(session(HandoverStatus.error), ro),
+        ro.desktopHandoverError,
+      );
+    });
+  });
 }

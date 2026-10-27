@@ -182,3 +182,31 @@ extension HandoverFailureL10n on HandoverFailure {
     HandoverFailure.failed => l10n.desktopHandoverFailed,
   };
 }
+
+/// Label the desktop shows for a handover it is receiving.
+extension HandoverStatusL10n on HandoverStatus {
+  String localizedLabel(AppLocalizations l10n) => switch (this) {
+    HandoverStatus.receiving => l10n.desktopHandoverReceivingFiles,
+    HandoverStatus.processing => l10n.desktopHandoverProcessingStatus,
+    HandoverStatus.sendingResults => l10n.desktopHandoverSendingResults,
+    HandoverStatus.complete => l10n.desktopHandoverDone,
+    HandoverStatus.error => l10n.desktopHandoverStatusError,
+    HandoverStatus.sending => l10n.desktopHandoverSending,
+    HandoverStatus.waitingForResults => l10n.desktopHandoverWaitingForResults,
+  };
+}
+
+/// Status line the phone shows while it sends [session] to the desktop;
+/// null while the handover is being prepared.
+String phoneHandoverStatusText(
+  HandoverSession? session,
+  AppLocalizations l10n,
+) => switch (session?.status) {
+  null => l10n.desktopHandoverPreparing,
+  HandoverStatus.sending => l10n.desktopHandoverSendingFiles,
+  HandoverStatus.waitingForResults => l10n.desktopHandoverProcessingOnDesktop,
+  HandoverStatus.complete => l10n.desktopHandoverComplete,
+  HandoverStatus.error =>
+    session!.failure?.localizedMessage(l10n) ?? l10n.desktopHandoverError,
+  _ => l10n.desktopHandoverSending,
+};

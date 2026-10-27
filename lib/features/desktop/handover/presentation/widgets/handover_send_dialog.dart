@@ -149,24 +149,6 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
       _session?.status == HandoverStatus.complete ||
       _session?.status == HandoverStatus.waitingForResults;
 
-  String _statusText(BuildContext context) {
-    if (_session == null) return context.l10n.desktopHandoverPreparing;
-
-    switch (_session!.status) {
-      case HandoverStatus.sending:
-        return context.l10n.desktopHandoverSendingFiles;
-      case HandoverStatus.waitingForResults:
-        return context.l10n.desktopHandoverProcessingOnDesktop;
-      case HandoverStatus.complete:
-        return context.l10n.desktopHandoverComplete;
-      case HandoverStatus.error:
-        return _session!.failure?.localizedMessage(context.l10n) ??
-            context.l10n.desktopHandoverError;
-      default:
-        return context.l10n.desktopHandoverSending;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
@@ -236,7 +218,7 @@ class _HandoverSendDialogState extends State<HandoverSendDialog> {
             const SizedBox(height: Insets.small),
             if (_session?.status != HandoverStatus.complete)
               Text(
-                _statusText(context),
+                phoneHandoverStatusText(_session, context.l10n),
                 style: AppTextStyle.labelSmall.copyWith(
                   color: _session?.status == HandoverStatus.error
                       ? AppColors.error

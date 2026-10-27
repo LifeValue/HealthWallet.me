@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -156,7 +157,7 @@ class _HandoverTransferCard extends StatelessWidget {
               const SizedBox(width: Insets.smallNormal),
               Expanded(
                 child: Text(
-                  _statusLabel(context.l10n, session.status),
+                  session.status.localizedLabel(context.l10n),
                   style: AppTextStyle.bodyMedium.copyWith(
                     color: context.primaryTextColor,
                     fontWeight: FontWeight.w500,
@@ -222,18 +223,6 @@ class _HandoverTransferCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _statusLabel(AppLocalizations l10n, HandoverStatus status) {
-    return switch (status) {
-      HandoverStatus.receiving => l10n.desktopHandoverReceivingFiles,
-      HandoverStatus.processing => l10n.desktopHandoverProcessingStatus,
-      HandoverStatus.sendingResults => l10n.desktopHandoverSendingResults,
-      HandoverStatus.complete => l10n.desktopHandoverDone,
-      HandoverStatus.error => l10n.desktopHandoverStatusError,
-      HandoverStatus.sending => l10n.desktopHandoverSending,
-      HandoverStatus.waitingForResults => l10n.desktopHandoverWaitingForResults,
-    };
   }
 }
 
