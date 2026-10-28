@@ -2,7 +2,7 @@
 title: 'Correct record values, surface silent errors, and keep deletes deleted'
 type: 'bugfix'
 created: '2026-10-28'
-status: 'in-progress'
+status: 'done'
 baseline_commit: 'f41a7bdbef11e5d3e2b676d06c927a7d48601330'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -127,10 +127,44 @@ context:
 - **Tests:** 2,133 pass and 17 are skipped (baseline 1,707 / 23; 10 un-skipped, 4 new pins). Total coverage went from 30.0% to 37.0%.
 - **Touched files left at low coverage:** `records_page`, `attachment_detail_panel`, `record_detail_page`, `dashboard_page`, `image_preview_page`, `processing_page`, `sync_page`, `ai_settings_dialog`, `source_selector_widget` and `ai_inference_data_source`. Most are large widgets that read several BLoCs from getIt; their changed lines are logs, comments or a snackbar. Listed in `deferred-work.md`.
 - **Flaky test:** `ssdp_service_test` "stopAdvertising releases the socket" failed once during the parallel runs (port 1900 shared by the agents) and passed on every rerun.
+- **After review pass 1:** 12 findings patched in 14 commits, including sync errors moved to the app shell (the sync page is never opened), open ranges shown as `≥`/`≤` (the `…Formatted` variants too), reference ranges with source decimals, and `droppable()` on the export and wallet handlers. Final: 2,154 pass and 18 skipped (one new `BUG:` pin for the region conversion of reference ranges); analyze clean; total coverage 37.1% (baseline 30.0%).
 
 ## Spec Change Log
 
 ## Review Triage Log
+
+Review pass 1: three layers (blind, edge case, verification gap). 28 findings: 12 patched, 4 deferred, 11 rejected; one was split, with its docs part patched and its code part rejected.
+
+| # | Finding | Verdict | Evidence | Route |
+|---|---------|---------|----------|-------|
+| 1 | Sync errors are never shown: `SyncErrorListener` wraps only `SyncPage` (verification gap, edge case, blind) | high | Nothing pushes `SyncRoute`; Fasten sync starts from `ConnectionDialog` (`connection_dialog.dart:72,496`) and demo data from `SyncPlaceholderWidget`. A repeated demo-data failure never re-fires because `errorMessage` is not cleared. | patch |
+| 2 | The app-level IPS, wallet and capture listeners can be removed without any test failing (verification gap) | medium | `widget_test.dart` pumps `App` but never emits a failure; each listener test mounts its own `MaterialApp`. | patch |
+| 3 | Reference ranges still use `toStringAsFixed(2)` while the value keeps its decimals (verification gap) | medium | `observation.dart:184-185,511-515`; 0.004 against `< 0.01` reads as out of range. | patch |
+| 4 | An open value range or ratio shows a bare number (blind, edge case) | medium | `fhir_observation_extractor.dart:52-66` (`joinNullable`) and `fhir_temporal_extractor.dart:45-50` drop the direction: high-only 5 shows `5.00`. | patch |
+| 5 | Age onset/abatement and `doseQuantity` print `null` (edge case) | medium | `fhir_temporal_extractor.dart:124,150` and `fhir_common_extractor.dart:200` interpolate `.value` unguarded; breaks the "no null" acceptance criterion. | patch |
+| 6 | `RecordsSharePressed` and `WalletPassRequested` have no `transformer:` although they now await (blind, edge case) | medium | `records_bloc.dart:47`, `wallet_pass_bloc.dart:29`. A double tap runs two exports, and the second deletes the PDF the first is sharing. | patch |
+| 7 | The backup record count includes tombstones (blind, edge case) | low | `backup_service.dart:224` has no `deleted_at IS NULL`; contract point 3. | patch |
+| 8 | `clearDemoData` tombstones in two transactions (blind) | low | `records_repository_impl.dart:499-504` calls `deleteResourcesBySourceId`, then `deleteSource`, which does both in one transaction; a failure between them leaves a live empty source. | patch |
+| 9 | After a multi-file attach fails partway, the saved files are missing from the list (edge case) | medium | `record_attachments_bloc.dart` emits an error without reloading; a retry duplicates the files saved earlier. | patch |
+| 10 | The attachment panel caches pages when some PDFs failed, so reopening hides the failure (edge case) | low | `attachment_detail_panel.dart:371-373` caches whenever `pages.isNotEmpty`; the new snackbar then shows only the first time. | patch |
+| 11 | The `fallback` parameter of `PipelineFailureReason.of` is unused (blind) | low | No caller passes it. | patch |
+| 12 | A re-created source or re-saved row gets a whole-second stamp and can lose to a same-second tombstone; the docs say "millisecond stamp" (blind, edge case, verification gap) | low | The trigger stamps `strftime('%s')*1000`. Only a re-add within the same second as its delete loses (tests shift by 2 s), which is unlikely in use, and a code fix would add a second statement to five save paths. The misleading comment in `sync_local_data_source.dart` and `architecture.md` point 4 are corrected. | patch (docs only) |
+| 13 | The deferred entry claims the deleting device removes the files (blind) | low | Only the single-attachment delete removes a file; bulk deletes and the 30-day purge leave files behind (as hard deletes did before). The entry is corrected. | patch (docs) |
+| 14 | A Fasten sync re-inserts deleted records and sources (blind, edge case) | medium | `cacheFhirResources`/`cacheSources` use `insertOrReplace`. This existed before, since hard-deleted rows also came back from Fasten, and Fasten is excluded by the intent. | defer |
+| 15 | Tombstones keep the deleted health data (`resource_raw`, note text) for 30 days, in deltas and backups (blind) | medium | Real, and caused by tombstones. Stripping content changes what an old peer shows (it does not filter tombstones), so it is a product decision; raised to the user. | defer |
+| 16 | `Quantity.comparator` is dropped (`< 0.5` shows as `0.50`) (blind) | medium | The code before this branch dropped it too; not among the section 4 bugs. | defer |
+| 17 | Google Wallet reports success when the plugin has no activity or Wallet is unavailable (edge case) | maybe-false (medium if true) | Settle it by running on a device without Google Wallet and checking `getWalletApiAvailabilityStatus()`. | defer |
+| 18 | A record brought back by a later edit stays without its notes (blind) | low | Real, but needs a concurrent offline edit against a delete; a fix would revive notes on resurrection, which adds logic. | reject |
+| 19 | The out-of-memory message is new code pinned as a bug (blind) | false | The old `_sanitizeError` mapped "Not enough memory" to `processingFailedCapacity` too; the behaviour is kept and deferred. | reject |
+| 20 | The `'corrupted'` match is too broad (blind) | false | The old `_sanitizeError` matched the same substring on every failure; typed exceptions are already deferred. | reject |
+| 21 | `ShareResultStatus.unavailable` is ignored (blind) | false | On Android `unavailable` is the normal result after sharing, so treating it as a failure would report successful exports as failed; failures to open throw. | reject |
+| 22 | Snackbar code is repeated instead of shared (blind) | low | The codebase already shows snackbars inline in about 30 places, and no UI kit helper exists; a helper adds new public surface. | reject |
+| 23 | The spec does not log its own deviations (blind) | low | Fixing it means editing this build's spec. | reject |
+| 24 | Values below 5e-7 show as `0.000000` (edge case) | low | The cap of 6 is the frozen decision; lab values that small are not reported in such units. | reject |
+| 25 | `SyncPage` cannot be reached (verification gap, other) | low | Covered by finding 1: the listener moves to the app shell. | reject (duplicate) |
+| 26 | Re-adding a row in the same second as its delete is not pinned by a test (verification gap, other) | low | Covered by finding 12. | reject (duplicate) |
+| 27 | Desktop backup count / `_getRecordCount` (edge case claim) | low | Same defect as finding 7. | reject (duplicate) |
+| 28 | `cacheSources` re-caches deleted backend sources (edge case claim) | medium | Same root cause as finding 14. | reject (duplicate) |
 
 ## Design Notes
 

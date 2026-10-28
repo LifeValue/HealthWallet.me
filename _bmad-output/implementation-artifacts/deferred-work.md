@@ -77,8 +77,8 @@
   summary: Give record notes ids that are unique across devices (for example a UUID column used as the sync key), so a note created on the phone and one created on the desktop no longer share an id.
   evidence: `record_notes.id` is an autoincrement integer; LWW matches on it, so two notes with the same id overwrite each other and a note tombstone deletes the other device's note. Pinned as a skipped `BUG:` test in `delete_sync_round_trip_test.dart`. Changing the key changes the synced row shape, so both ends must ship together.
 - source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
-  summary: Delete the attachment files of DocumentReferences that arrive as tombstones from the paired device, and sweep orphaned files.
-  evidence: The deleting device removes the file; the receiving device keeps the row's file on disk because nothing reacts to an incoming tombstone.
+  summary: Delete the attachment files of tombstoned DocumentReferences (local bulk deletes, incoming tombstones, the 30-day purge) and sweep orphaned files.
+  evidence: Only the single-attachment delete in `RecordAttachmentsBloc` removes its file. `deleteResourceWithRelated`, `deleteResourcesByIds`, `softDeleteSource`, `clearDemoData`, the re-processing replacement and incoming tombstones keep the files, and `cleanupTombstones` drops the rows after 30 days without touching them. Hard deletes left the same files behind before this change.
 - source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
   summary: Fix the existing bugs pinned during this work. `DocumentReferenceService` ids collide within one millisecond. Attaching to a record without a subject writes `Patient/`. The out-of-memory scan message tells the user to raise the context size.
   evidence: Each is a skipped `BUG:` test (`document_reference_service_test.dart`, `record_attachments_bloc_test.dart`, `processing_failures_test.dart`); none was in scope.
@@ -97,3 +97,21 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
   summary: Ship the desktop build together with this mobile change, or note in the release that a desktop build without it keeps showing records deleted on the phone.
   evidence: A peer without the delete contract stores tombstones as ordinary rows and does not filter its reads; its own deletes stay hard and come back from the updated phone (`architecture.md`, LWW section, point 6).
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Stop a Fasten sync from re-inserting records and sources the user deleted (`cacheFhirResources` and `cacheSources` use `insertOrReplace`, which clears `deleted_at`).
+  evidence: Review finding 14. Every Fasten sync downloads everything, so a deleted Fasten record comes back and then travels to the desktop; this happened with hard deletes before too, and Fasten work was out of scope.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Decide whether a user delete should strip the health content from the tombstone (`resource_raw`, note text) instead of keeping it for 30 days, in deltas and in desktop backups.
+  evidence: Review finding 15. LWW needs only the id, `updated_at` and `deleted_at`. Stripping changes what a desktop build without the delete contract shows, because it does not filter tombstones, so it needs a product decision.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Show `Quantity.comparator` with the value (`< 0.5 mg/L`) in `extractQuantity` and `extractObservationValue`.
+  evidence: Review finding 16. The comparator is dropped, so `< 0.5` shows as `0.50`; it was dropped before this branch too.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Check `getWalletApiAvailabilityStatus()` before saving a Google Wallet pass, and report a failure when Wallet is unavailable or the plugin has no activity.
+  evidence: Review finding 17, unverified (if true, medium). Settle it by adding a pass on a device without Google Wallet and checking whether anything opens.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Stop `extractDosage` rounding doses to whole numbers (0.5 mg shows as "1 mg"); use the quantity decimals rule.
+  evidence: Found while fixing the review findings; it existed before this branch and was not among the section 4 bugs. A wrong dose is a high-impact display error.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Convert the reference range's high bound from its own unit in `Observation.additionalInfoForRegion`; a 50–100 kg range shows as `110.23 - 100.00 lbs` in the US region.
+  evidence: Pinned as a skipped `BUG:` test in `observation_reference_range_test.dart`; it existed before this branch.
