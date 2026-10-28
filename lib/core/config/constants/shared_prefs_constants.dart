@@ -2,6 +2,10 @@ class SharedPrefsConstants {
   SharedPrefsConstants._();
 
   static const bearerToken = 'bearerToken';
+
+  /// Set by the onboarding's last page. The splash page and the app lock
+  /// read it.
+  static const hasSeenOnboarding = 'hasSeenOnboarding';
   static const vitalsOrder = 'vitalsOrder';
   static const recordsOrder = 'recordsOrder';
   static const vitalsVisibility = 'vitalsVisibility';

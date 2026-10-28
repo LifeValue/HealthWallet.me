@@ -13,6 +13,8 @@ import 'package:health_wallet/core/theme/theme.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
+import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -37,10 +39,13 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> with WidgetsBindingObserver {
+  final AppLockBloc _appLockBloc = getIt<AppLockBloc>();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _appLockBloc.add(const AppLockStarted());
     _startSymmetricDiscovery();
     _listenBluetoothState();
   }
@@ -58,6 +63,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appLockBloc.add(AppLockLifecycleChanged(state));
     if (state == AppLifecycleState.resumed) {
       _startSymmetricDiscovery();
       _reconnectDesktopIfNeeded();
@@ -125,6 +131,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
     return MultiBlocProvider(
       providers: [
+        BlocProvider.value(value: _appLockBloc),
         BlocProvider(
           create: (_) => getIt<UserBloc>()..add(const UserInitialised()),
         ),
@@ -205,7 +212,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               builder: (context, child) {
                 getIt<AppStringsProvider>().update(context.l10n);
                 Intl.defaultLocale = context.l10n.localeName;
-                return child!;
+                return AppLockOverlay(child: child!);
               },
             );
           },

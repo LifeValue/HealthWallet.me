@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -28,7 +29,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   ) : super(const UserState()) {
     on<UserInitialised>(_onInitialised);
     on<UserThemeToggled>(_onThemeToggled);
-    on<UserBiometricAuthToggled>(_onBiometricAuthToggled);
+    on<UserBiometricAuthToggled>(
+      _onBiometricAuthToggled,
+      transformer: droppable(),
+    );
     on<UserBiometricsSetupShown>(_onBiometricsSetupShown);
     on<UserDataUpdatedFromSync>(_onUserDataUpdatedFromSync);
     on<UserNameUpdated>(_onUserNameUpdated);
@@ -204,12 +208,21 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           );
         }
       } else {
-        await _userRepository.saveBiometricAuth(false);
+        // Turning the lock off needs the same check as unlocking, or anyone
+        // holding the unlocked phone could switch it off for good. Without a
+        // passcode the OS can't check and the lock doesn't apply, so it just
+        // turns off.
+        final didAuthenticate =
+            !await _biometricAuthService.isDeviceSecure() ||
+            await _biometricAuthService.authenticate();
+        if (didAuthenticate) {
+          await _userRepository.saveBiometricAuth(false);
+        }
 
         emit(
           state.copyWith(
             status: const UserStatus.success(),
-            isBiometricAuthEnabled: false,
+            isBiometricAuthEnabled: !didAuthenticate,
           ),
         );
       }

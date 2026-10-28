@@ -1618,5 +1618,8 @@
   "syncErrorAuthentication": "Error de autenticación. Comprueba tu token.",
   "syncErrorInvalidFormat": "Formato de datos de sincronización no válido",
   "syncErrorGeneric": "Error al sincronizar los datos: {error}",
-  "syncPlaceholderSubtitle": "Sincroniza o actualiza tus datos para ver los registros de {recordType}"
+  "syncPlaceholderSubtitle": "Sincroniza o actualiza tus datos para ver los registros de {recordType}",
+  "appLockTitle": "HealthWallet está bloqueado",
+  "appLockMessage": "Desbloquea para ver tus registros de salud",
+  "appLockUnlock": "Desbloquear"
 }

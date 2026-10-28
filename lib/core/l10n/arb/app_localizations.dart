@@ -7594,6 +7594,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync or update your data to view {recordType} records'**
   String syncPlaceholderSubtitle(String recordType);
+
+  /// No description provided for @appLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HealthWallet is locked'**
+  String get appLockTitle;
+
+  /// No description provided for @appLockMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock to view your health records'**
+  String get appLockMessage;
+
+  /// No description provided for @appLockUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get appLockUnlock;
 }
 
 class _AppLocalizationsDelegate

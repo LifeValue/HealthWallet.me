@@ -68,7 +68,8 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     if (!mounted || _hasShownTutorial) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    final hasSeenOnboarding =
+        prefs.getBool(SharedPrefsConstants.hasSeenOnboarding) ?? false;
     final tutorialShown = prefs.getBool(_tutorialShownKey) ?? false;
 
     if (hasSeenOnboarding && !tutorialShown && mounted) {

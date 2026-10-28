@@ -1613,5 +1613,8 @@
   "syncErrorAuthentication": "Autentificarea a eșuat. Verifică tokenul.",
   "syncErrorInvalidFormat": "Format nevalid al datelor de sincronizare",
   "syncErrorGeneric": "Sincronizarea datelor a eșuat: {error}",
-  "syncPlaceholderSubtitle": "Sincronizează sau actualizează datele pentru a vedea înregistrările de tip {recordType}"
+  "syncPlaceholderSubtitle": "Sincronizează sau actualizează datele pentru a vedea înregistrările de tip {recordType}",
+  "appLockTitle": "HealthWallet este blocat",
+  "appLockMessage": "Deblochează pentru a-ți vedea înregistrările medicale",
+  "appLockUnlock": "Deblochează"
 }

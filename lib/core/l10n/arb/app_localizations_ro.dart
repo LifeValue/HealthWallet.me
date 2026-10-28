@@ -4316,4 +4316,14 @@ class AppLocalizationsRo extends AppLocalizations {
   String syncPlaceholderSubtitle(String recordType) {
     return 'Sincronizează sau actualizează datele pentru a vedea înregistrările de tip $recordType';
   }
+
+  @override
+  String get appLockTitle => 'HealthWallet este blocat';
+
+  @override
+  String get appLockMessage =>
+      'Deblochează pentru a-ți vedea înregistrările medicale';
+
+  @override
+  String get appLockUnlock => 'Deblochează';
 }

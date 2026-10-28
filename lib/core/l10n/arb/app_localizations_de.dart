@@ -4315,4 +4315,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String syncPlaceholderSubtitle(String recordType) {
     return 'Synchronisiere oder aktualisiere deine Daten, um $recordType-Einträge zu sehen';
   }
+
+  @override
+  String get appLockTitle => 'HealthWallet ist gesperrt';
+
+  @override
+  String get appLockMessage =>
+      'Entsperre die App, um deine Gesundheitsdaten zu sehen';
+
+  @override
+  String get appLockUnlock => 'Entsperren';
 }

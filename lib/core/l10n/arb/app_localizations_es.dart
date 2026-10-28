@@ -4305,4 +4305,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String syncPlaceholderSubtitle(String recordType) {
     return 'Sincroniza o actualiza tus datos para ver los registros de $recordType';
   }
+
+  @override
+  String get appLockTitle => 'HealthWallet está bloqueado';
+
+  @override
+  String get appLockMessage => 'Desbloquea para ver tus registros de salud';
+
+  @override
+  String get appLockUnlock => 'Desbloquear';
 }

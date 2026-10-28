@@ -4249,4 +4249,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String syncPlaceholderSubtitle(String recordType) {
     return 'Sync or update your data to view $recordType records';
   }
+
+  @override
+  String get appLockTitle => 'HealthWallet is locked';
+
+  @override
+  String get appLockMessage => 'Unlock to view your health records';
+
+  @override
+  String get appLockUnlock => 'Unlock';
 }

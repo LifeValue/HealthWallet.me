@@ -11,6 +11,8 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
+import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
+import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
@@ -39,6 +41,8 @@ import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass
 import 'package:intl/intl.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'features/app_lock/app_lock_test_fakes.dart';
 
 // ---------------------------------------------------------------------------
 // Fake implementations for abstract repositories / services
@@ -226,9 +230,18 @@ class MockWalletPassBloc extends MockBloc<WalletPassEvent, WalletPassState>
 // ---------------------------------------------------------------------------
 
 /// Resets getIt and registers the fakes and blocs the App widget resolves.
-Future<void> _registerAppDependencies() async {
+///
+/// The app lock gets its own fakes: [lockAuth] and [lockClock] when given,
+/// with [initialPrefs] deciding whether onboarding is done. Call it from the test
+/// body, so the lock bloc runs in the test's fake async zone.
+Future<void> _registerAppDependencies({
+  Map<String, Object> initialPrefs = const {},
+  bool lockEnabled = false,
+  FakeLockAuthService? lockAuth,
+  FakeAppLockClock? lockClock,
+}) async {
   // Provide fake SharedPreferences values before any code touches it
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues(initialPrefs);
 
   // Reset the service locator to a clean state
   await getIt.reset();
@@ -289,7 +302,15 @@ Future<void> _registerAppDependencies() async {
     initialState: const WalletPassState(),
   );
 
+  final appLockBloc = AppLockBloc(
+    lockAuth ?? FakeLockAuthService(),
+    FakeLockUserRepository(lockEnabled: lockEnabled),
+    prefs,
+    lockClock ?? FakeAppLockClock(),
+  );
+
   // --- Register everything the App widget resolves from getIt ---
+  getIt.registerSingleton<AppLockBloc>(appLockBloc);
   getIt.registerSingleton<AppPlatform>(AppPlatform.mobile);
   getIt.registerSingleton<AppStringsProvider>(AppStringsProvider());
   getIt.registerSingleton<AppRouter>(AppRouter());
@@ -315,6 +336,8 @@ Future<void> _registerAppDependencies() async {
   getIt.registerSingleton<NotificationBloc>(notificationBloc);
 }
 
+const _lockOverlay = Key('app_lock_overlay');
+
 void main() {
   testWidgets('App starts', (WidgetTester tester) async {
     await _registerAppDependencies();
@@ -327,6 +350,8 @@ void main() {
     await tester.pump();
 
     expect(find.byType(MaterialApp), findsOneWidget);
+    // Onboarding isn't done, so nothing covers the app.
+    expect(find.byKey(_lockOverlay), findsNothing);
 
     // Cleanup: unmounting lets BlocProvider close the blocs it created.
     // Awaiting bloc.close() directly would hang, because close() waits for
@@ -352,5 +377,101 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
+  });
+
+  group('app lock', () {
+    const lockedPrefs = {'hasSeenOnboarding': true};
+
+    /// Unmounts the app before the splash's 1 s timer opens a route whose
+    /// pages need dependencies this test doesn't register.
+    Future<void> unmount(WidgetTester tester) async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('Lock fails: covers every route when the start check is '
+        'cancelled', (tester) async {
+      final auth = FakeLockAuthService(results: [false]);
+      await _registerAppDependencies(
+        initialPrefs: lockedPrefs,
+        lockEnabled: true,
+        lockAuth: auth,
+      );
+
+      await tester.pumpWidget(const App());
+      await tester.pump();
+      await tester.pump();
+
+      expect(auth.authenticateCalls, 1);
+      expect(find.text('HealthWallet is locked'), findsOneWidget);
+      expect(getIt<AppLockBloc>().state.status, AppLockStatus.locked);
+
+      await unmount(tester);
+    });
+
+    testWidgets('forwards lifecycle changes: locks after 31 s in the '
+        'background, not after 10 s', (tester) async {
+      final auth = FakeLockAuthService(results: [true]);
+      final clock = FakeAppLockClock();
+      await _registerAppDependencies(
+        initialPrefs: lockedPrefs,
+        lockEnabled: true,
+        lockAuth: auth,
+        lockClock: clock,
+      );
+      await tester.pumpWidget(const App());
+      await tester.pump();
+      await tester.pump();
+      expect(find.byKey(_lockOverlay), findsNothing);
+
+      Future<void> background(Duration stay) async {
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await tester.pump();
+        clock.advance(stay);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump();
+        await tester.pump();
+      }
+
+      await background(const Duration(seconds: 10));
+      expect(find.byKey(_lockOverlay), findsNothing);
+      expect(auth.authenticateCalls, 1);
+
+      await background(const Duration(seconds: 31));
+      expect(find.text('HealthWallet is locked'), findsOneWidget);
+      expect(auth.authenticateCalls, 2);
+
+      await unmount(tester);
+    });
+
+    testWidgets('swallows the back button while locked', (tester) async {
+      await _registerAppDependencies(
+        initialPrefs: lockedPrefs,
+        lockEnabled: true,
+      );
+      await tester.pumpWidget(const App());
+      await tester.pump();
+      await tester.pump();
+
+      expect(await tester.binding.handlePopRoute(), isTrue);
+
+      await unmount(tester);
+    });
+
+    testWidgets('leaves the back button to the router when unlocked', (
+      tester,
+    ) async {
+      await _registerAppDependencies();
+      await tester.pumpWidget(const App());
+      await tester.pump();
+
+      final overlay =
+          tester.state(find.byType(AppLockOverlay)) as WidgetsBindingObserver;
+      expect(await overlay.didPopRoute(), isFalse);
+
+      await unmount(tester);
+    });
   });
 }

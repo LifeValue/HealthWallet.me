@@ -1614,5 +1614,8 @@
   "syncErrorAuthentication": "Authentifizierung fehlgeschlagen. Prüfe dein Token.",
   "syncErrorInvalidFormat": "Ungültiges Format der Synchronisierungsdaten",
   "syncErrorGeneric": "Datensynchronisierung fehlgeschlagen: {error}",
-  "syncPlaceholderSubtitle": "Synchronisiere oder aktualisiere deine Daten, um {recordType}-Einträge zu sehen"
+  "syncPlaceholderSubtitle": "Synchronisiere oder aktualisiere deine Daten, um {recordType}-Einträge zu sehen",
+  "appLockTitle": "HealthWallet ist gesperrt",
+  "appLockMessage": "Entsperre die App, um deine Gesundheitsdaten zu sehen",
+  "appLockUnlock": "Entsperren"
 }
