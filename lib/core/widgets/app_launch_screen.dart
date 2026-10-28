@@ -6,7 +6,7 @@ import 'package:health_wallet/gen/assets.gen.dart';
 
 /// The loading screen shown while the app starts, on mobile and desktop.
 ///
-/// It continues the native launch screen (`splash/splash.yaml`): the same app
+/// It continues the native launch screen (`branding/splash.yaml`): the same app
 /// icon at the same size, centred on the same background, so nothing moves
 /// when Flutter takes over. Only the app name appears, below the icon.
 ///
