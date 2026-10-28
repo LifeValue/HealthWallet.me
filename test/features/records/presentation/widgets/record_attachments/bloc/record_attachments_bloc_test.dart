@@ -842,6 +842,31 @@ void main() {
       );
       expect(storedFiles(), isEmpty);
     });
+
+    test('when a later file fails, the files saved before it are '
+        'listed', () async {
+      await open(_observation());
+      await db.customStatement(
+        'CREATE TEMP TRIGGER fail_b BEFORE INSERT ON fhir_resource '
+        "WHEN NEW.title = 'b.pdf' BEGIN SELECT RAISE(ABORT, 'boom'); END",
+      );
+      final reloaded = bloc.stream.firstWhere(
+        (s) => s.status == const RecordAttachmentsStatus.success(),
+      );
+
+      final state = await run(
+        RecordAttachmentsFileAttached([picked('a.pdf'), picked('b.pdf')]),
+      );
+
+      expect(
+        state.status,
+        RecordAttachmentsStatus.error(strings.l10n.attachFileFailed),
+      );
+      final listed = await reloaded;
+      expect(listed.attachments.map((a) => a.title), ['a.pdf']);
+      expect(storedFiles(), hasLength(1));
+      expect((await documentRows()).map((r) => r.title), ['a.pdf']);
+    });
   });
 
   group('uniqueStoredFileName', () {

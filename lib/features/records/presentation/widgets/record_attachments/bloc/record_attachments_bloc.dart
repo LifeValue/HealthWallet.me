@@ -285,6 +285,9 @@ class RecordAttachmentsBloc
           status: RecordAttachmentsStatus.error(_strings.l10n.attachFileFailed),
         ),
       );
+      // Files saved before the failure are attached; list them, so a retry
+      // does not add them again.
+      add(RecordAttachmentsInitialised(resource: state.resource));
     }
   }
 
