@@ -400,6 +400,30 @@ void main() {
       expect(state.errorMessage, _ro.syncErrorGeneric);
       expect(b.state.hasDemoData, isFalse);
     });
+
+    test('a repeated failure clears the message first, so it shows '
+        'again', () async {
+      recordsRepository.loadError = StateError('asset missing');
+      final b = bloc();
+      final messages = <String?>[];
+      final sub = b.stream.listen((s) => messages.add(s.errorMessage));
+      addTearDown(sub.cancel);
+
+      b.add(const LoadDemoData());
+      await pumpEventQueue();
+      b.add(const LoadDemoData());
+      await pumpEventQueue();
+
+      final changes = <String?>[
+        for (var i = 0; i < messages.length; i++)
+          if (i == 0 || messages[i] != messages[i - 1]) messages[i],
+      ];
+      expect(changes.where((m) => m != null), hasLength(2));
+      expect(
+        changes,
+        containsAllInOrder([_en.syncErrorGeneric, null, _en.syncErrorGeneric]),
+      );
+    });
   });
 
   group('tutorial', () {

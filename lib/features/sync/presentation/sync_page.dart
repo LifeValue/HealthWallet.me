@@ -15,7 +15,6 @@ import 'package:health_wallet/features/desktop/communication/presentation/bloc/c
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
-import 'package:health_wallet/features/sync/presentation/widgets/sync_error_listener.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_loading_widget.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,30 +44,28 @@ class _SyncPageState extends State<SyncPage> {
             _handleSyncCompletion(context);
           }
         },
-        child: SyncErrorListener(
-          child: Scaffold(
-            appBar: AppBar(
-              title: Text(
-                context.l10n.syncTitle,
-                style: AppTextStyle.titleMedium,
-              ),
-              backgroundColor: context.colorScheme.surface,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: false,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  context.router.pop();
-                },
-              ),
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(
+              context.l10n.syncTitle,
+              style: AppTextStyle.titleMedium,
             ),
-            body: GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
+            backgroundColor: context.colorScheme.surface,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                context.router.pop();
               },
-              child: _buildBody(context),
             ),
+          ),
+          body: GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+            },
+            child: _buildBody(context),
           ),
         ),
       ),

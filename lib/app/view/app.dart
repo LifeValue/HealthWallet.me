@@ -26,6 +26,7 @@ import 'package:health_wallet/features/records/presentation/widgets/ips_export_e
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:health_wallet/features/sync/presentation/widgets/sync_error_listener.dart';
 import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -220,7 +221,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 return AppLockOverlay(
                   child: IpsExportErrorListener(
                     child: WalletPassErrorListener(
-                      child: CaptureErrorListener(child: child!),
+                      child: CaptureErrorListener(
+                        child: SyncErrorListener(child: child!),
+                      ),
                     ),
                   ),
                 );

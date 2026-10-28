@@ -235,6 +235,8 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     LoadDemoData event,
     Emitter<SyncState> emit,
   ) async {
+    // Cleared first, so a repeated failure shows its message again.
+    emit(state.copyWith(errorMessage: null));
     try {
       await _defaultPatientService.createAndSetAsMain();
 
