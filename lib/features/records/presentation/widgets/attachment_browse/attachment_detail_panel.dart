@@ -15,6 +15,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -316,6 +317,7 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
   Future<void> _buildPages() async {
     setState(() => _loading = true);
     final pages = <_PreviewPage>[];
+    var failedPdfs = 0;
 
     for (final attachment in widget.detail.attachments) {
       if (attachment.filePath == null) continue;
@@ -349,7 +351,10 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
             }
           }
           await doc.close();
-        } catch (_) {}
+        } catch (e) {
+          logger.w('Could not open the PDF attachment ${attachment.title}', e);
+          failedPdfs++;
+        }
       } else {
         pages.add(
           _PreviewPage(
@@ -365,6 +370,12 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
 
     if (pages.isNotEmpty) {
       _cache[widget.detail.record.id] = pages;
+    }
+
+    if (mounted && failedPdfs > 0) {
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(context.l10n.failedToLoadPdf)));
     }
 
     if (mounted) {

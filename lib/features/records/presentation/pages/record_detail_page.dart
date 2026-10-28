@@ -9,6 +9,7 @@ import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
@@ -84,7 +85,9 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
       try {
         final region = context.read<UserBloc>().state.regionPreset;
         return resource.additionalInfoForRegion(region, context.l10n);
-      } catch (_) {}
+      } catch (e) {
+        logger.w('Could not apply the region units to ${resource.id}', e);
+      }
     }
     return resource.additionalInfo(context.l10n);
   }

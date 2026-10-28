@@ -14,6 +14,7 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
@@ -187,7 +188,9 @@ class _RecordsViewState extends State<RecordsView> {
           return patientGroup.sourceIds;
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not read the selected patient sources', e);
+    }
     return null;
   }
 
@@ -294,7 +297,10 @@ class _RecordsViewState extends State<RecordsView> {
           unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.e('Could not import the picked documents', e);
+      _showImportFailed();
+    }
   }
 
   Future<void> _handlePickImage() async {
@@ -315,7 +321,17 @@ class _RecordsViewState extends State<RecordsView> {
         );
         unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.e('Could not import the picked images', e);
+      _showImportFailed();
+    }
+  }
+
+  void _showImportFailed() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.importFilesFailed)));
   }
 
   void _handleScanDocument() {
@@ -770,7 +786,9 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
           setState(() => _relatedResources = related);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not load the resources related to ${record.id}', e);
+    }
   }
 
   @override
