@@ -794,6 +794,26 @@ void main() {
     );
   });
 
+  test('searchResources keeps type and title matches ahead when they are '
+      'already first', () async {
+    await seed([
+      dto('p', type: 'Patient', title: 'Jane', date: DateTime(2025)),
+      dto('q', title: 'patient summary', date: DateTime(2024)),
+      dto(
+        'r',
+        title: 'Vitals',
+        date: DateTime(2023),
+        raw: rawOf('Observation', 'r', subject: 'Patient/p'),
+      ),
+    ]);
+
+    expect(await ids(repository.searchResources(query: 'patient')), [
+      'p',
+      'q',
+      'r',
+    ]);
+  });
+
   group('buildIpsExport', () {
     test('throws when there is no patient', () async {
       await seed([dto('obs-1')]);
@@ -802,6 +822,38 @@ void main() {
         repository.buildIpsExport(),
         throwsA(isA<Exception>()),
       );
+    });
+
+    test('renders the IPS PDF of the chosen patient', () async {
+      await seed([
+        dto(
+          'pat-1',
+          type: 'Patient',
+          raw: {
+            'resourceType': 'Patient',
+            'id': 'pat-1',
+            'name': [
+              {
+                'family': "O'Neil",
+                'given': ['Mary Ann'],
+              },
+            ],
+          },
+        ),
+        dto('pat-2', type: 'Patient', sourceId: 'src-2'),
+        dto(
+          'obs-1',
+          raw: rawOf('Observation', 'obs-1', subject: 'Patient/pat-1'),
+        ),
+      ]);
+
+      final export = await repository.buildIpsExport(patientId: 'pat-1');
+
+      expect(String.fromCharCodes(export.bytes.take(4)), '%PDF');
+      expect(export.patientName, 'ONeil_Mary_Ann');
+
+      final first = await repository.buildIpsExport(sourceId: 'src-2');
+      expect(first.patientName, 'Unknown');
     });
 
     test('a deleted patient is not exported', () async {
