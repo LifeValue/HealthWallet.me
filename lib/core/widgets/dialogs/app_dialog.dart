@@ -14,8 +14,12 @@ class AppDialog extends StatefulWidget {
   final List<DialogItem> items;
   final AppDialogMode mode;
   final List<String>? initiallySelected;
-  final String cancelText;
-  final String confirmText;
+
+  /// Defaults to the localized "Cancel".
+  final String? cancelText;
+
+  /// Defaults to the localized "Add".
+  final String? confirmText;
   final String? validationMessage;
   final bool Function(List<String> selected)? canConfirm;
   final void Function(List<String> selected)? onConfirm;
@@ -30,8 +34,8 @@ class AppDialog extends StatefulWidget {
     this.items = const [],
     this.mode = AppDialogMode.multiSelect,
     this.initiallySelected,
-    this.cancelText = 'Cancel',
-    this.confirmText = 'Add',
+    this.cancelText,
+    this.confirmText,
     this.validationMessage,
     this.canConfirm,
     this.onConfirm,
@@ -46,8 +50,8 @@ class AppDialog extends StatefulWidget {
     required String description,
     required List<DialogItem> items,
     List<String>? initiallySelected,
-    String cancelText = 'Cancel',
-    String confirmText = 'Add',
+    String? cancelText,
+    String? confirmText,
     String? validationMessage,
   }) async {
     return showDialog<List<String>>(
@@ -71,8 +75,8 @@ class AppDialog extends StatefulWidget {
     required String description,
     required List<DialogItem> items,
     String? initiallySelected,
-    String cancelText = 'Cancel',
-    String confirmText = 'Add',
+    String? cancelText,
+    String? confirmText,
   }) async {
     final result = await showDialog<List<String>>(
       context: context,
@@ -333,7 +337,7 @@ class _AppDialogState extends State<AppDialog> {
                                 Expanded(
                                   child: Text(
                                     widget.validationMessage ??
-                                        'Select at least one item to continue.',
+                                        context.l10n.selectAtLeastOneItem,
                                     style: AppTextStyle.labelLarge.copyWith(
                                       color: AppColors.error,
                                     ),
@@ -359,7 +363,7 @@ class _AppDialogState extends State<AppDialog> {
                                   ),
                                 ),
                                 child: Text(
-                                  widget.cancelText,
+                                  widget.cancelText ?? context.l10n.cancel,
                                   style: AppTextStyle.buttonSmall.copyWith(
                                     color: AppColors.primary,
                                   ),
@@ -393,7 +397,7 @@ class _AppDialogState extends State<AppDialog> {
                                   elevation: 0,
                                 ),
                                 child: Text(
-                                  widget.confirmText,
+                                  widget.confirmText ?? context.l10n.add,
                                   style: AppTextStyle.buttonSmall.copyWith(
                                     color: _canConfirm()
                                         ? Colors.white

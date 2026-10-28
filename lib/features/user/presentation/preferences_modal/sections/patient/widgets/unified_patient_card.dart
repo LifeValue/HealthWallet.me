@@ -42,7 +42,8 @@ class UnifiedPatientCard extends StatefulWidget {
 }
 
 class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
-  String _bloodTypeDisplay = 'Loading...';
+  /// Null while the blood type loads.
+  String? _bloodTypeDisplay;
   late RecordsRepository _recordsRepository;
   late PatientSelectionService _patientSelectionService;
 
@@ -178,7 +179,8 @@ class _UnifiedPatientCardState extends State<UnifiedPatientCard> {
                               textColor: widget.textColor,
                               isExpanding: widget.isExpanding,
                               isCollapsing: widget.isCollapsing,
-                              bloodTypeDisplay: _bloodTypeDisplay,
+                              bloodTypeDisplay:
+                                  _bloodTypeDisplay ?? context.l10n.loading,
                               onBloodTypeUpdated: _loadBloodType,
                             )
                           : const SizedBox.shrink(),

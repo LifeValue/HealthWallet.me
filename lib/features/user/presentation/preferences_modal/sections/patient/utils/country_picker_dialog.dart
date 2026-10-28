@@ -40,13 +40,14 @@ class _CountryPickerDialogState extends State<CountryPickerDialog> {
 
   void _onSearch(String query) {
     final q = query.trim().toLowerCase();
+    final folded = foldCountryName(q);
     setState(() {
       if (q.isEmpty) {
         _filtered = widget.countries;
         return;
       }
       _filtered = widget.countries.where((c) {
-        return c.name.toLowerCase().contains(q) ||
+        return foldCountryName(c.name).contains(folded) ||
             c.isoCode.name.toLowerCase().contains(q) ||
             c.dialCode.contains(q) ||
             '+${c.dialCode}'.contains(q);

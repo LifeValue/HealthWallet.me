@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -50,7 +51,7 @@ class HomeOverviewToggle extends StatelessWidget {
                 borderRadius: BorderRadius.circular(222),
               ),
               child: Text(
-                'Specialties',
+                context.l10n.homeSpecialties,
                 style: AppTextStyle.labelSmall.copyWith(
                   color: isSpecialties ? Colors.white : inactiveTextColor,
                 ),
@@ -63,7 +64,7 @@ class HomeOverviewToggle extends StatelessWidget {
                 borderRadius: BorderRadius.circular(222),
               ),
               child: Text(
-                'Resources',
+                context.l10n.homeResources,
                 style: AppTextStyle.labelSmall.copyWith(
                   color: !isSpecialties ? Colors.white : inactiveTextColor,
                 ),

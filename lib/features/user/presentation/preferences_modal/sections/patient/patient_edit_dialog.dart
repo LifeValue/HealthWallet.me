@@ -79,7 +79,9 @@ class _PatientEditDialogState extends State<PatientEditDialog>
   String _selectedGiven = '';
   String _selectedFamily = '';
   DateTime? _selectedBirthDate;
-  String _selectedGender = 'Prefer not to say';
+
+  /// A label of [_getGenderOptions]; set in [didChangeDependencies].
+  late String _selectedGender;
   String _selectedBloodType = 'N/A';
   String _selectedIdentifier = '';
   String _selectedContactPhone = '';
@@ -198,12 +200,6 @@ class _PatientEditDialogState extends State<PatientEditDialog>
   }
 
   void _initializeControllers() {
-    final extractedGender = FhirFieldExtractor.extractPatientGender(
-      widget.patient,
-    );
-    _selectedGender = GenderMapper.mapFhirGenderToDisplayFallback(
-      extractedGender,
-    );
     _selectedGiven = _extractGiven(widget.patient);
     _selectedFamily = _extractFamily(widget.patient);
 
@@ -444,7 +440,12 @@ class _PatientEditDialogState extends State<PatientEditDialog>
                   ? (currentFamilyValue.isNotEmpty ? currentFamilyValue : null)
                   : null,
               birthDate: birthDateChanged ? _selectedBirthDate : null,
-              gender: genderChanged ? _selectedGender : null,
+              gender: genderChanged
+                  ? GenderMapper.mapLocalizedDisplayToFhirCode(
+                      _selectedGender,
+                      l10n,
+                    )
+                  : null,
               bloodType: bloodTypeChanged
                   ? _selectedBloodType
                   : currentBloodType ?? 'N/A',
@@ -528,6 +529,7 @@ class _PatientEditDialogState extends State<PatientEditDialog>
                 ? CountryIdentifier.forCountry(_countryCode).identifierLabel
                 : FhirFieldExtractor.extractPatientIdentifierLabel(
                     _currentPatient!,
+                    l10n: context.l10n,
                   ),
             selectedCountryCode: _countryCode,
             onCountryChanged: (code) {

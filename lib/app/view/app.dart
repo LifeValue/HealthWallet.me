@@ -4,13 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
 import 'package:health_wallet/core/theme/theme.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/patient_source_utils.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
+import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
+import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
@@ -20,10 +24,12 @@ import 'package:health_wallet/features/records/presentation/bloc/records_bloc.da
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:health_wallet/features/user/domain/entity/user.dart';
 import 'package:health_wallet/features/user/domain/repository/user_repository.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
+import 'package:intl/intl.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -33,10 +39,13 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> with WidgetsBindingObserver {
+  final AppLockBloc _appLockBloc = getIt<AppLockBloc>();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _appLockBloc.add(const AppLockStarted());
     _startSymmetricDiscovery();
     _listenBluetoothState();
   }
@@ -54,6 +63,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appLockBloc.add(AppLockLifecycleChanged(state));
     if (state == AppLifecycleState.resumed) {
       _startSymmetricDiscovery();
       _reconnectDesktopIfNeeded();
@@ -77,7 +87,14 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     if (getIt<AppPlatform>().isDesktop) return;
 
     final userRepository = getIt<UserRepository>();
-    final user = await userRepository.getCurrentUser();
+    final User user;
+    try {
+      user = await userRepository.getCurrentUser();
+    } catch (e) {
+      // Before onboarding there is no user yet, so nothing to listen for.
+      logger.w('Receive mode not started: $e');
+      return;
+    }
     if (!user.isReceiveModeEnabled) return;
 
     final hasPermissions =
@@ -114,6 +131,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
     return MultiBlocProvider(
       providers: [
+        BlocProvider.value(value: _appLockBloc),
         BlocProvider(
           create: (_) => getIt<UserBloc>()..add(const UserInitialised()),
         ),
@@ -192,7 +210,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               builder: (context, child) {
-                return child!;
+                getIt<AppStringsProvider>().update(context.l10n);
+                Intl.defaultLocale = context.l10n.localeName;
+                return AppLockOverlay(child: child!);
               },
             );
           },

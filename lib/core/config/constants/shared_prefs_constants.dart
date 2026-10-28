@@ -2,6 +2,10 @@ class SharedPrefsConstants {
   SharedPrefsConstants._();
 
   static const bearerToken = 'bearerToken';
+
+  /// Set by the onboarding's last page. The splash page and the app lock
+  /// read it.
+  static const hasSeenOnboarding = 'hasSeenOnboarding';
   static const vitalsOrder = 'vitalsOrder';
   static const recordsOrder = 'recordsOrder';
   static const vitalsVisibility = 'vitalsVisibility';
@@ -19,6 +23,10 @@ class SharedPrefsConstants {
   static const countryCode = 'countryCode';
   static const appLocale = 'appLocale';
   static const backupDirectory = 'backupDirectory';
+
+  /// macOS security-scoped bookmark for [backupDirectory], so the sandboxed
+  /// app can open the folder again after a restart.
+  static const backupDirectoryBookmark = 'backupDirectoryBookmark';
   static const minimizeToTray = 'minimizeToTray';
   static const recordsViewMode = 'recordsViewMode';
   static const specialtiesOrder = 'specialtiesOrder';

@@ -78,6 +78,52 @@ extension PatientVitalTypeX on PatientVitalType {
     return null;
   }
 
+  /// Maps a title as written in FHIR data ('Body Weight', 'Pulse',
+  /// 'Oxygen saturation') to the [title] of its [PatientVitalType]. A title
+  /// that matches no type is returned unchanged.
+  static String normalizeTitle(String title) {
+    final t = title.trim().toLowerCase();
+    if (t == 'body height' || t == 'height') {
+      return PatientVitalType.height.title;
+    }
+    if (t == 'body weight' || t == 'weight') {
+      return PatientVitalType.weight.title;
+    }
+    if (t == 'body mass index' || t == 'bmi' || t == 'body mass index (bmi)') {
+      return PatientVitalType.bmi.title;
+    }
+    if (t == 'oxygen saturation' ||
+        t == 'oxygen saturation in arterial blood' ||
+        t == 'blood oxygen saturation' ||
+        t == 'spo2' ||
+        t == 'pulse oximetry' ||
+        t == 'oximetry') {
+      return PatientVitalType.bloodOxygen.title;
+    }
+    if (t == 'body temperature' || t == 'temperature') {
+      return PatientVitalType.temperature.title;
+    }
+    if (t == 'heart rate' || t == 'pulse rate' || t == 'pulse') {
+      return PatientVitalType.heartRate.title;
+    }
+    if (t == 'respiratory rate') {
+      return PatientVitalType.respiratoryRate.title;
+    }
+    if (t == 'systolic blood pressure') {
+      return PatientVitalType.systolicBloodPressure.title;
+    }
+    if (t == 'diastolic blood pressure') {
+      return PatientVitalType.diastolicBloodPressure.title;
+    }
+    if (t == 'blood pressure') {
+      return PatientVitalType.bloodPressure.title;
+    }
+    if (t == 'blood glucose' || t == 'glucose') {
+      return PatientVitalType.bloodGlucose.title;
+    }
+    return title;
+  }
+
   String unitForRegion(RegionPreset region) {
     switch (this) {
       case PatientVitalType.weight:
@@ -124,15 +170,17 @@ class PatientVital {
     final effectiveDate = observation.date;
 
     if (region != null) {
-      final vitalType = PatientVitalTypeX.fromTitle(title);
+      final vitalType = PatientVitalTypeX.fromTitle(
+        PatientVitalTypeX.normalizeTitle(title),
+      );
       if (vitalType != null) {
         final numericValue = double.tryParse(value.trim());
         if (numericValue != null) {
           if (vitalType == PatientVitalType.height &&
               region.heightUnit == 'ft/in') {
-            final normalizedFrom = unit.trim().toLowerCase();
-            if (normalizedFrom == 'cm' || normalizedFrom == 'centimeters') {
-              value = UnitConverter.cmToFeetInchesString(numericValue);
+            final heightCm = UnitConverter.heightInCm(numericValue, unit);
+            if (heightCm != null) {
+              value = UnitConverter.cmToFeetInchesString(heightCm);
               unit = '';
               return PatientVital(
                 title: title,

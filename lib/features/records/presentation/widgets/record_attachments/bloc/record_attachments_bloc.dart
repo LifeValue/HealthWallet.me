@@ -7,6 +7,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -31,6 +32,7 @@ class RecordAttachmentsBloc
     this._syncRepository,
     this._database,
     this._pathResolver,
+    this._strings,
   ) : super(const RecordAttachmentsState()) {
     on<RecordAttachmentsInitialised>(_onRecordAttachmentsInitialised);
     on<RecordAttachmentsFileAttached>(_onRecordAttachmentsFileAttached);
@@ -42,6 +44,7 @@ class RecordAttachmentsBloc
   final SyncRepository _syncRepository;
   final AppDatabase _database;
   final PathResolver _pathResolver;
+  final AppStringsProvider _strings;
 
   Future<void> _onRecordAttachmentsInitialised(
     RecordAttachmentsInitialised event,
@@ -139,7 +142,7 @@ class RecordAttachmentsBloc
               final source = resourceMap[relatedRef]!;
               return info.copyWith(
                 sourceRecordTitle: source.title,
-                sourceRecordType: source.fhirType.name,
+                sourceRecordType: source.fhirType,
               );
             }
             return info;
@@ -218,8 +221,8 @@ class RecordAttachmentsBloc
       if (state.resource.fhirType == FhirType.DocumentReference) {
         emit(
           state.copyWith(
-            status: const RecordAttachmentsStatus.error(
-              'Cannot attach files to DocumentReference resources',
+            status: RecordAttachmentsStatus.error(
+              _strings.l10n.cannotAttachToDocumentReference,
             ),
           ),
         );

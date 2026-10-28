@@ -87,23 +87,24 @@ abstract class MappingOrganization
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'organizationName': TextFieldDescriptor(
-      label: 'Organization Name',
-      value: organizationName.value,
-      confidenceLevel: organizationName.confidenceLevel,
-    ),
-    'address': TextFieldDescriptor(
-      label: 'Address',
-      value: address.value,
-      confidenceLevel: address.confidenceLevel,
-    ),
-    'phone': TextFieldDescriptor(
-      label: 'Phone',
-      value: phone.value,
-      confidenceLevel: phone.confidenceLevel,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'organizationName': TextFieldDescriptor(
+          label: l10n.labelOrganizationName,
+          value: organizationName.value,
+          confidenceLevel: organizationName.confidenceLevel,
+        ),
+        'address': TextFieldDescriptor(
+          label: l10n.labelAddress,
+          value: address.value,
+          confidenceLevel: address.confidenceLevel,
+        ),
+        'phone': TextFieldDescriptor(
+          label: l10n.labelPhone,
+          value: phone.value,
+          confidenceLevel: phone.confidenceLevel,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -130,7 +131,7 @@ abstract class MappingOrganization
       );
 
   @override
-  String get label => 'Organization';
+  String localizedLabel(AppLocalizations l10n) => l10n.organization;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

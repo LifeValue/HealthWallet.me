@@ -7,6 +7,7 @@ import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/device_capability_service.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
@@ -28,6 +29,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
     this._notificationBloc,
     this._deviceCapabilityService,
     this._prefs,
+    this._strings,
   ) : super(const LoadModelState()) {
     on<LoadModelInitialized>(_onLoadModelInitialized);
     on<LoadModelDownloadInitiated>(
@@ -50,6 +52,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
   final NotificationBloc _notificationBloc;
   final DeviceCapabilityService _deviceCapabilityService;
   final SharedPreferences _prefs;
+  final AppStringsProvider _strings;
   StreamSubscription<AiModelDownloadState>? _serviceSubscription;
 
   void _syncFromService() {
@@ -154,7 +157,7 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       emit(
         state.copyWith(
           status: LoadModelStatus.error,
-          errorMessage: 'An error appeared while checking model existence',
+          errorMessage: _strings.l10n.aiModelCheckFailed,
         ),
       );
       return;
@@ -233,15 +236,16 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
       ),
     );
 
-    final modelName = AiModelConfig.fromVariant(variant).displayName;
+    final modelName = AiModelConfig.fromVariant(variant)
+        .localizedName(_strings.l10n);
 
     final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
     _notificationBloc.add(
       NotificationAdded(
         notification: Notification(
           id: notifId,
-          text: 'Downloading $modelName',
-          description: 'Starting download...',
+          text: _strings.l10n.aiModelDownloadingTitle(modelName),
+          description: _strings.l10n.aiModelDownloadStarting,
           type: NotificationType.progress,
           progress: 0.0,
           time: DateTime.now(),
@@ -337,13 +341,14 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
         );
         if (variant != null) {
           final notifId = '${kAiModelDownloadNotificationId}_${variant.name}';
-          final modelName = AiModelConfig.fromVariant(variant).displayName;
+          final modelName = AiModelConfig.fromVariant(variant)
+              .localizedName(_strings.l10n);
           _notificationBloc.add(
             NotificationTypeUpdated(
               id: notifId,
               type: NotificationType.success,
-              text: '$modelName Ready',
-              description: '$modelName has been downloaded successfully.',
+              text: _strings.l10n.aiModelReadyTitle(modelName),
+              description: _strings.l10n.aiModelDownloadedMessage(modelName),
             ),
           );
         }
@@ -368,7 +373,9 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
             status: anyStillDownloading
                 ? LoadModelStatus.loading
                 : LoadModelStatus.error,
-            errorMessage: serviceState.errorMessage ?? 'Download failed',
+            errorMessage:
+                serviceState.errorMessage ??
+                _strings.l10n.aiModelDownloadFailed,
             isBackgroundDownload: anyStillDownloading,
             downloadingVariants: updatedDownloading,
             variantProgress: updatedProgress,
@@ -380,8 +387,8 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
             NotificationTypeUpdated(
               id: notifId,
               type: NotificationType.error,
-              text: 'Download Failed',
-              description: 'AI model download failed. Please check your connection and try again.',
+              text: _strings.l10n.aiModelDownloadFailedTitle,
+              description: _strings.l10n.aiModelDownloadFailedMessage,
             ),
           );
         }
@@ -417,8 +424,8 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
             NotificationTypeUpdated(
               id: notifId,
               type: NotificationType.error,
-              text: 'Download Cancelled',
-              description: 'The download was interrupted. Please try again.',
+              text: _strings.l10n.aiModelDownloadCancelledTitle,
+              description: _strings.l10n.aiModelDownloadInterruptedMessage,
             ),
           );
         }
@@ -428,11 +435,11 @@ class LoadModelBloc extends Bloc<LoadModelEvent, LoadModelState> {
 
   void _addCancelledNotification() {
     _notificationBloc.add(
-      const NotificationTypeUpdated(
+      NotificationTypeUpdated(
         id: kAiModelDownloadNotificationId,
         type: NotificationType.error,
-        text: 'AI Model Download Cancelled',
-        description: 'The download was interrupted. Please try again.',
+        text: _strings.l10n.aiModelDownloadCancelledNotificationTitle,
+        description: _strings.l10n.aiModelDownloadInterruptedMessage,
       ),
     );
   }

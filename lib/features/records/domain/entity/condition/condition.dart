@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -112,7 +113,7 @@ abstract class Condition with _$Condition implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
     // Clinical Status
@@ -123,7 +124,7 @@ abstract class Condition with _$Condition implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         statusDisplay,
-        prefix: 'Clinical Status',
+        prefix: l10n.fieldClinicalStatus,
       ),
     );
 
@@ -135,7 +136,7 @@ abstract class Condition with _$Condition implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         verificationDisplay,
-        prefix: 'Verification',
+        prefix: l10n.fieldVerification,
       ),
     );
 
@@ -147,7 +148,7 @@ abstract class Condition with _$Condition implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createWarningLine(
         severityDisplay,
-        prefix: 'Severity',
+        prefix: l10n.fieldSeverity,
       ),
     );
 
@@ -158,7 +159,7 @@ abstract class Condition with _$Condition implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
@@ -169,22 +170,28 @@ abstract class Condition with _$Condition implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createBodySiteLine(
         bodySiteDisplay,
-        prefix: 'Body Site',
+        prefix: l10n.fieldBodySite,
       ),
     );
 
     // Onset Date
-    final onsetDisplay = FhirFieldExtractor.extractOnsetX(onsetX);
+    final onsetDisplay = FhirFieldExtractor.extractOnsetX(onsetX, l10n: l10n);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(onsetDisplay, prefix: 'Onset'),
+      ResourceFieldMapper.createDateLine(onsetDisplay, prefix: l10n.fieldOnset),
     );
 
     // Abatement Date
-    final abatementDisplay = FhirFieldExtractor.extractAbatementX(abatementX);
+    final abatementDisplay = FhirFieldExtractor.extractAbatementX(
+      abatementX,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(abatementDisplay, prefix: 'Resolved'),
+      ResourceFieldMapper.createDateLine(
+        abatementDisplay,
+        prefix: l10n.fieldResolved,
+      ),
     );
 
     // Stage
@@ -194,7 +201,10 @@ abstract class Condition with _$Condition implements IFhirResource {
       );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createActivityLine(stageDisplay, prefix: 'Stage'),
+        ResourceFieldMapper.createActivityLine(
+          stageDisplay,
+          prefix: l10n.fieldStage,
+        ),
       );
     }
 
@@ -204,7 +214,10 @@ abstract class Condition with _$Condition implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
+      ResourceFieldMapper.createUserLine(
+        recorderDisplay,
+        prefix: l10n.fieldRecorder,
+      ),
     );
 
     // Asserter
@@ -213,7 +226,10 @@ abstract class Condition with _$Condition implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(asserterDisplay, prefix: 'Asserter'),
+      ResourceFieldMapper.createUserLine(
+        asserterDisplay,
+        prefix: l10n.fieldAsserter,
+      ),
     );
 
     // Recorded Date
@@ -221,7 +237,7 @@ abstract class Condition with _$Condition implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }
@@ -230,7 +246,10 @@ abstract class Condition with _$Condition implements IFhirResource {
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

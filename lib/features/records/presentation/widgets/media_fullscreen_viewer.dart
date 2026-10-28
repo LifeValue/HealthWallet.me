@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:get_it/get_it.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
@@ -185,7 +186,7 @@ class MediaFullscreenViewer extends StatelessWidget {
               if (media.statusDisplay.isNotEmpty)
                 _buildInfoRow(
                   context.l10n.mediaInfoStatus,
-                  media.statusDisplay,
+                  localizedStatusDisplay(media.statusDisplay, context.l10n),
                 ),
               if (media.subject?.display?.valueString != null)
                 _buildInfoRow(

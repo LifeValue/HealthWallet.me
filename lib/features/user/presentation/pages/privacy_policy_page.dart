@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/core/utils/bold_markup.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/user/presentation/services/url_launcher.dart';
@@ -11,11 +12,15 @@ import 'package:health_wallet/features/user/presentation/services/url_launcher.d
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
 
+  /// The date the current policy took effect; shown in the user's language.
+  static final _effectiveDate = DateTime(2025, 9, 1);
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.l10n.privacyPolicy),
+        title: Text(l10n.privacyPolicy),
         backgroundColor: context.colorScheme.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -31,7 +36,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${context.l10n.effectiveDate}: September 1, 2025',
+                  l10n.privacyEffectiveDate(_effectiveDate),
                   style: AppTextStyle.bodyMedium.copyWith(
                     fontStyle: FontStyle.italic,
                     color: context.colorScheme.onSurfaceVariant,
@@ -40,279 +45,99 @@ class PrivacyPolicyPage extends StatelessWidget {
                 const SizedBox(height: Insets.normal),
 
                 // Introduction
-                RichText(
-                  text: TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
-                    ),
-                    children: [
-                      TextSpan(text: '${context.l10n.privacyIntro} '),
-                      TextSpan(
-                        text: 'HealthWallet.me',
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                      TextSpan(text: ' ${context.l10n.privacyDescription}'),
-                    ],
-                  ),
+                _buildParagraph(
+                  context,
+                  '${l10n.privacyIntro} **HealthWallet.me** '
+                  '${l10n.privacyDescription}',
                 ),
                 const SizedBox(height: Insets.large),
 
                 // Core Principle Section
-                _buildSectionTitle(context.l10n.corePrinciple),
+                _buildSectionTitle(l10n.corePrinciple),
                 const SizedBox(height: Insets.small),
-                RichText(
-                  text: TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
-                    ),
-                    children: [
-                      const TextSpan(
-                        text: 'The most important thing to know is that we, the developers of ',
-                      ),
-                      TextSpan(
-                        text: 'HealthWallet.me',
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                      const TextSpan(
-                        text: ', do not collect, store, or have access to any of your personal or health information. Our app operates entirely on your device.',
-                      ),
-                    ],
-                  ),
-                ),
+                _buildParagraph(context, l10n.privacyCorePrincipleBody),
                 const SizedBox(height: Insets.medium),
-                _buildBulletPoint(
-                  '✅ No Cloud Processing: All calculations, data organization, and other functions happen locally on your phone or tablet.',
-                ),
-                _buildBulletPoint(
-                  '✅ No Developer Access: We cannot see, access, or export your data. It is never sent to our servers.',
-                ),
-                _buildBulletPoint(
-                  '✅ You Are in Control: Your information is stored securely within the app\'s private storage on your device, which only you can access.',
-                ),
+                _buildBulletPoint(context, l10n.privacyNoCloudProcessing),
+                _buildBulletPoint(context, l10n.privacyNoDeveloperAccess),
+                _buildBulletPoint(context, l10n.privacyYouAreInControl),
                 const SizedBox(height: Insets.large),
 
                 // What Information is Handled Section
-                _buildSectionTitle(context.l10n.whatInformationHandled),
+                _buildSectionTitle(l10n.whatInformationHandled),
                 const SizedBox(height: Insets.medium),
 
                 // Information We Do Not Collect
-                _buildSubsectionTitle(context.l10n.informationWeDoNotCollect),
+                _buildSubsectionTitle(l10n.informationWeDoNotCollect),
                 const SizedBox(height: Insets.small),
-                RichText(
-                  text: TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
-                    ),
-                    children: [
-                      const TextSpan(
-                        text: 'To be perfectly clear, our app is intentionally built to avoid accessing your personal data. We ',
-                      ),
-                      TextSpan(
-                        text: 'do not',
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                      const TextSpan(
-                        text: ' collect, store, link, or process any information that can be tied to you.',
-                      ),
-                    ],
-                  ),
-                ),
+                _buildParagraph(context, l10n.privacyDoNotCollectIntro),
                 const SizedBox(height: Insets.medium),
-                _buildBulletPoint(
-                  'Personal Identifiers: We do not access or store your name, email address, phone number, contacts, or any other personal account information from your device.',
-                ),
-                _buildBulletPoint(
-                  'Health Information: Any health records, medical conditions, medications, or other data you import remain yours alone. We cannot access them.',
-                ),
-                _buildBulletPointWithBold(
-                  context,
-                  'No Cross-Referencing: The app operates in isolation. It ',
-                  'does not',
-                  ' scan, index, or cross-reference your health data with any other personal information on your phone (like your contacts list, name, or phone number). Its only job is to organize the records you provide to it.',
-                ),
-                _buildBulletPoint(
-                  'Usage Analytics: We do not track how you use the app, which buttons you tap, or how long you spend on certain screens.',
-                ),
+                _buildBulletPoint(context, l10n.privacyPersonalIdentifiers),
+                _buildBulletPoint(context, l10n.privacyHealthInformation),
+                _buildBulletPoint(context, l10n.privacyNoCrossReferencing),
+                _buildBulletPoint(context, l10n.privacyUsageAnalytics),
                 const SizedBox(height: Insets.large),
 
                 // Information You Manage
-                _buildSubsectionTitle(context.l10n.informationYouManage),
+                _buildSubsectionTitle(l10n.informationYouManage),
                 const SizedBox(height: Insets.small),
-                RichText(
-                  text: TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
-                    ),
-                    children: [
-                      const TextSpan(
-                        text: 'The only data processed by the app is the health information ',
-                      ),
-                      TextSpan(
-                        text: 'you choose to import',
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                      const TextSpan(
-                        text:
-                            ' into it. This can be done in the following ways:',
-                      ),
-                    ],
-                  ),
-                ),
+                _buildParagraph(context, l10n.privacyYouManageIntro),
                 const SizedBox(height: Insets.medium),
 
                 // Importing Documents
-                _buildSubsectionTitle('1. ${context.l10n.importingDocuments}'),
+                _buildSubsectionTitle('1. ${l10n.importingDocuments}'),
                 const SizedBox(height: Insets.small),
-                const Text(
-                  'You can add health documents (such as PDFs of lab results or clinic summaries) directly into the app using standard mobile operating system features:',
-                  style: AppTextStyle.bodyMedium,
-                ),
+                _buildParagraph(context, l10n.privacyImportingIntro),
                 const SizedBox(height: Insets.small),
-                _buildBulletPoint(
-                  'Scanning: Using your device\'s camera to scan a physical document from within the app.',
-                ),
-                _buildBulletPointWithBold(
-                  context,
-                  'Share Action Sheet: Selecting a file from another app (like your email, photos, or file manager) and "sharing" it directly to ',
-                  'HealthWallet.me',
-                  '.',
-                ),
+                _buildBulletPoint(context, l10n.privacyScanning),
+                _buildBulletPoint(context, l10n.privacyShareActionSheet),
                 const SizedBox(height: Insets.small),
-                RichText(
-                  text: TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
-                    ),
-                    children: [
-                      const TextSpan(
-                        text: 'Once a document is imported, the app processes it locally on your device in the background. It structures the information according to the ',
-                      ),
-                      TextSpan(
-                        text: 'HL7 FHIR (Fast Healthcare Interoperability Resources)',
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                      const TextSpan(
-                        text: ' standard to make it useful and organized. This entire process happens on your device; the document and the structured data never leave it.',
-                      ),
-                    ],
-                  ),
-                ),
+                _buildParagraph(context, l10n.privacyLocalProcessing),
                 const SizedBox(height: Insets.large),
 
                 // Connecting to FastenHealth
-                _buildSubsectionTitle(
-                  '2. ${context.l10n.connectingFastenHealth}',
-                ),
+                _buildSubsectionTitle('2. ${l10n.connectingFastenHealth}'),
                 const SizedBox(height: Insets.small),
-                RichText(
-                  text: TextSpan(
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      color: context.colorScheme.onSurface,
-                    ),
-                    children: [
-                      const TextSpan(
-                        text: 'Our app allows you to consolidate your health records by connecting to ',
-                      ),
-                      TextSpan(
-                        text: 'FastenHealth OnPrem',
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                      const TextSpan(
-                        text: ', a transparent, open-source platform.',
-                      ),
-                    ],
-                  ),
-                ),
+                _buildParagraph(context, l10n.privacyFastenIntro),
                 const SizedBox(height: Insets.small),
-                _buildBulletPoint(
-                  'Open-Source and On-Premises: FastenHealth OnPrem is open-source software that you or a trusted entity controls. This provides an exceptional level of privacy.',
-                ),
-                _buildBulletPointWithBold(
-                  context,
-                  'Direct-to-Device Download: When you authorize the connection, your health records are downloaded ',
-                  'directly from your FastenHealth OnPrem instance to your device',
-                  '. Our app is only a conduit; your data never passes through our servers.',
-                ),
+                _buildBulletPoint(context, l10n.privacyFastenOpenSource),
+                _buildBulletPoint(context, l10n.privacyFastenDirectDownload),
                 const SizedBox(height: Insets.large),
 
                 // How Your Information is Used
-                _buildSectionTitle(context.l10n.howInformationUsed),
+                _buildSectionTitle(l10n.howInformationUsed),
                 const SizedBox(height: Insets.small),
-                const Text(
-                  'Since all your data resides on your device, it is only "used" by the app to help you organize and view your records. This includes:',
-                  style: AppTextStyle.bodyMedium,
-                ),
+                _buildParagraph(context, l10n.privacyUsageIntro),
                 const SizedBox(height: Insets.small),
-                _buildBulletPoint(
-                  'Processing and structuring imported or scanned documents.',
-                ),
-                _buildBulletPoint(
-                  'Displaying your health records, lab results, and medication history to you.',
-                ),
+                _buildBulletPoint(context, l10n.privacyUsageProcessing),
+                _buildBulletPoint(context, l10n.privacyUsageDisplaying),
                 const SizedBox(height: Insets.small),
-                const Text(
-                  'We do not use your information for advertising, research, or any other purpose.',
-                  style: AppTextStyle.bodyMedium,
-                ),
+                _buildParagraph(context, l10n.privacyNoOtherUse),
                 const SizedBox(height: Insets.large),
 
                 // Data Storage, Security, and Sharing
-                _buildSectionTitle(context.l10n.dataStorageSecurity),
+                _buildSectionTitle(l10n.dataStorageSecurity),
                 const SizedBox(height: Insets.small),
-                _buildBulletPoint(
-                  'Storage: All your data is stored in the app\'s secure, sandboxed storage on your device. It is as secure as your device itself. We strongly recommend you protect your device with a passcode, Face ID, or other biometric security.',
-                ),
-                _buildBulletPoint(
-                  'Sharing: We do not and cannot share your data with anyone because we don\'t have it. If you choose to export or share your data from the app, you are in complete control of where it goes.',
-                ),
-                _buildBulletPoint(
-                  'Deletion: You can delete your information at any time from within the app. Deleting the app from your device will also permanently delete all data it has stored.',
-                ),
+                _buildBulletPoint(context, l10n.privacyStorage),
+                _buildBulletPoint(context, l10n.privacySharing),
+                _buildBulletPoint(context, l10n.privacyDeletion),
                 const SizedBox(height: Insets.large),
 
                 // Children's Privacy
-                _buildSectionTitle(context.l10n.childrensPrivacy),
+                _buildSectionTitle(l10n.childrensPrivacy),
                 const SizedBox(height: Insets.small),
-                const Text(
-                  'Our service is not directed to individuals under the age of 16, in accordance with the General Data Protection Regulation (GDPR) as applicable in Romania and across the EU. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us.',
-                  style: AppTextStyle.bodyMedium,
-                ),
+                _buildParagraph(context, l10n.privacyChildrenBody),
                 const SizedBox(height: Insets.large),
 
                 // Changes to This Privacy Policy
-                _buildSectionTitle(context.l10n.changesToPolicy),
+                _buildSectionTitle(l10n.changesToPolicy),
                 const SizedBox(height: Insets.small),
-                const Text(
-                  'We may update this policy from time to time. If we make any material changes, we will notify you through the app or by other means so you can review the changes before they take effect.',
-                  style: AppTextStyle.bodyMedium,
-                ),
+                _buildParagraph(context, l10n.privacyChangesBody),
                 const SizedBox(height: Insets.large),
 
                 // Contact Us
-                _buildSectionTitle(context.l10n.contactUs),
+                _buildSectionTitle(l10n.contactUs),
                 const SizedBox(height: Insets.small),
-                const Text(
-                  'If you have any questions or concerns about this Privacy Policy, please contact us at:',
-                  style: AppTextStyle.bodyMedium,
-                ),
+                _buildParagraph(context, l10n.privacyContactBody),
                 const SizedBox(height: Insets.medium),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +172,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                     ),
                     const SizedBox(height: Insets.medium),
                     Text(
-                      context.l10n.builtWithLove,
+                      l10n.builtWithLove,
                       style: AppTextStyle.bodySmall.copyWith(
                         fontStyle: FontStyle.italic,
                         color: context.colorScheme.onSurfaceVariant,
@@ -382,36 +207,23 @@ class PrivacyPolicyPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBulletPoint(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Insets.small),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Align(
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: 20,
-              child: Text('• ', style: TextStyle(fontSize: 16)),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              text,
-              style: AppTextStyle.bodyMedium,
-            ),
-          ),
-        ],
+  /// A paragraph whose `**`-wrapped parts are bold.
+  Widget _buildParagraph(BuildContext context, String text) {
+    final style = AppTextStyle.bodyMedium.copyWith(
+      color: context.colorScheme.onSurface,
+    );
+    return RichText(
+      text: TextSpan(
+        style: style,
+        children: boldMarkupSpans(
+          text,
+          boldStyle: style.copyWith(fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
 
-  Widget _buildBulletPointWithBold(
-    BuildContext context,
-    String beforeText,
-    String boldText,
-    String afterText,
-  ) {
+  Widget _buildBulletPoint(BuildContext context, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: Insets.small),
       child: Row(
@@ -424,26 +236,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               child: Text('• ', style: TextStyle(fontSize: 16)),
             ),
           ),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: context.colorScheme.onSurface,
-                ),
-                children: [
-                  TextSpan(text: beforeText),
-                  TextSpan(
-                    text: boldText,
-                    style: AppTextStyle.bodyMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: context.colorScheme.onSurface,
-                    ),
-                  ),
-                  TextSpan(text: afterText),
-                ],
-              ),
-            ),
-          ),
+          Expanded(child: _buildParagraph(context, text)),
         ],
       ),
     );

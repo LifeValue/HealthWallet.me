@@ -20,10 +20,8 @@ class SessionEndedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusMessage = state.statusMessage?.toLowerCase() ?? '';
     final isRejected =
-        statusMessage.contains('declined') ||
-        statusMessage.contains('rejected');
+        state.sessionEndReason == ShareSessionEndReason.invitationDeclined;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Insets.large),

@@ -5,9 +5,11 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_google_wallet/flutter_google_wallet_plugin.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart'
-    show ApplePassLabels;
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
 import 'package:health_wallet/features/wallet_pass/domain/service/emergency_card_builder.dart';
 import 'package:injectable/injectable.dart';
@@ -21,8 +23,9 @@ part 'wallet_pass_state.dart';
 class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
   final EmergencyCardBuilder _cardBuilder;
   final WalletPassRepository _repository;
+  final AppStringsProvider _strings;
 
-  WalletPassBloc(this._cardBuilder, this._repository)
+  WalletPassBloc(this._cardBuilder, this._repository, this._strings)
     : super(const WalletPassState()) {
     on<WalletPassRequested>(_onRequested);
   }
@@ -42,16 +45,12 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
         ),
       );
 
+      final labels = event.labels ?? WalletPassLabels.fromL10n(_strings.l10n);
       switch (event.type) {
         case WalletPassType.apple:
-          await _handleApplePass(
-            cardData,
-            event.patientId,
-            emit,
-            event.applePassLabels,
-          );
+          await _handleApplePass(cardData, event.patientId, emit, labels);
         case WalletPassType.google:
-          await _handleGooglePass(cardData, event.patientId, emit);
+          await _handleGooglePass(cardData, event.patientId, emit, labels);
       }
     } catch (e) {
       emit(
@@ -67,24 +66,12 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
     EmergencyCardData cardData,
     String patientId,
     Emitter<WalletPassState> emit,
-    ApplePassLabels? labels,
+    WalletPassLabels labels,
   ) async {
-    final effectiveLabels =
-        labels ??
-        const ApplePassLabels(
-          patient: 'Patient',
-          bloodType: 'Blood Type',
-          allergies: 'Allergies',
-          gender: 'Gender',
-          dateOfBirth: 'Date of Birth',
-          emergencyPhone: 'Emergency Phone',
-          conditions: 'Conditions',
-          medications: 'Medications',
-        );
     final passBytes = await _repository.generateApplePass(
       cardData: cardData,
       patientId: patientId,
-      labels: effectiveLabels,
+      labels: labels,
     );
     emit(
       state.copyWith(
@@ -94,26 +81,43 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
     );
 
     final tempDir = await getTemporaryDirectory();
-    final filePath = '${tempDir.path}/HealthWallet_Emergency.pkpass';
+    final filePath = '${tempDir.path}/${TempFileSweeper.walletPassFileName}';
     final file = File(filePath);
     await file.writeAsBytes(passBytes);
 
     const channel = MethodChannel(
       'com.techstackapps.healthwallet/apple_wallet',
     );
-    await channel.invokeMethod('addPass', {'filePath': filePath});
+    try {
+      await channel.invokeMethod('addPass', {'filePath': filePath});
+    } finally {
+      // The pass holds the emergency health data; Wallet has its own copy
+      // once addPass returns.
+      await _deleteQuietly(file);
+    }
 
     emit(state.copyWith(status: WalletPassStatus.passAddedToWallet));
+  }
+
+  Future<void> _deleteQuietly(File file) async {
+    try {
+      if (await file.exists()) await file.delete();
+    } catch (e, s) {
+      // The startup sweep deletes it next time; don't fail the pass for it.
+      logger.w('Deleting the wallet pass temp file failed', e, s);
+    }
   }
 
   Future<void> _handleGooglePass(
     EmergencyCardData cardData,
     String patientId,
     Emitter<WalletPassState> emit,
+    WalletPassLabels labels,
   ) async {
     final passJson = await _repository.generateGooglePassJson(
       cardData: cardData,
       patientId: patientId,
+      labels: labels,
     );
     emit(
       state.copyWith(

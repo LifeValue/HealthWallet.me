@@ -7,6 +7,7 @@ import 'package:health_wallet/features/home/presentation/widgets/source/source_l
 import 'package:health_wallet/features/home/presentation/widgets/source/source_list_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
+import 'package:health_wallet/features/sync/domain/services/source_type_service.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
 
 class SourceSelectorWidget extends StatelessWidget {
@@ -122,7 +123,14 @@ class SourceSelectorWidget extends StatelessWidget {
   /// Get the display name for a source (labelSource > name > id)
   String _getSourceDisplayName(BuildContext context, Source source) {
     if (source.labelSource?.isNotEmpty == true) {
-      return source.labelSource!;
+      final label = source.labelSource!;
+      return label.endsWith(SourceTypeService.unknownPatientName)
+          ? label.replaceRange(
+              label.length - SourceTypeService.unknownPatientName.length,
+              null,
+              context.l10n.unknownPatient,
+            )
+          : label;
     }
     if (source.platformName?.isNotEmpty == true) {
       return source.platformName!;
@@ -249,7 +257,7 @@ class SourceSelectorWidget extends StatelessWidget {
   String _getSelectedSourceDisplayName(BuildContext context) {
     // Handle "All" option first
     if (selectedSource == 'All') {
-      return 'All';
+      return context.l10n.all;
     }
 
     final patientSources = _getPatientSources(context);
@@ -278,7 +286,7 @@ class SourceSelectorWidget extends StatelessWidget {
         }
         return patientSources.isNotEmpty
             ? _getSourceDisplayName(context, patientSources.first)
-            : 'All';
+            : context.l10n.all;
       }
     }
   }

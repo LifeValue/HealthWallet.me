@@ -18,17 +18,17 @@ class GenderMapper {
     }
   }
 
-  static String mapFhirGenderToDisplayFallback(String? fhirGender) {
-    if (fhirGender == null) return 'Prefer not to say';
-
-    switch (fhirGender.toLowerCase()) {
-      case 'male':
-        return 'Male';
-      case 'female':
-        return 'Female';
-      default:
-        return 'Prefer not to say';
-    }
+  /// The FHIR gender code for an option of the gender picker, whose options
+  /// are [AppLocalizations.male], [AppLocalizations.female] and
+  /// [AppLocalizations.preferNotToSay] in the active language. Save this code,
+  /// never the localized label: [mapDisplayGenderToFhir] reads it back.
+  static String mapLocalizedDisplayToFhirCode(
+    String displayGender,
+    AppLocalizations l10n,
+  ) {
+    if (displayGender == l10n.male) return 'male';
+    if (displayGender == l10n.female) return 'female';
+    return 'unknown';
   }
 
   static fhir_r4.AdministrativeGender? mapDisplayGenderToFhir(

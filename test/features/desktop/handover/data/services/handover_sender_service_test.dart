@@ -8,6 +8,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/messa
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
@@ -140,6 +141,7 @@ void main() {
       expect(tcp.sentOf('handover.file'), isEmpty);
       expect(updates.last.status, HandoverStatus.error);
       expect(updates.last.error, 'File not found: gone.jpg');
+      expect(updates.last.failure, HandoverFailure.fileNotFound);
     });
 
     test('cancelling before the accept sends no files', () async {
@@ -162,6 +164,7 @@ void main() {
       expect(tcp.sentOf('handover.file'), isEmpty);
       expect(updates.last.status, HandoverStatus.error);
       expect(updates.last.error, 'Cancelled');
+      expect(updates.last.failure, HandoverFailure.cancelled);
     });
 
     test('a send failure propagates', () async {
@@ -194,6 +197,7 @@ void main() {
       expect(finished, isTrue);
       expect(updates.last.status, HandoverStatus.error);
       expect(updates.last.error, 'Desktop did not accept');
+      expect(updates.last.failure, HandoverFailure.notAccepted);
       expect(tcp.sentOf('handover.file'), isEmpty);
     });
 
@@ -270,8 +274,33 @@ void main() {
 
       expect(session.status, HandoverStatus.error);
       expect(session.error, 'OCR failed');
+      expect(session.failure, HandoverFailure.failed);
       expect(session.progress, 0.6);
     });
+
+    test('a missing desktop model is recognised by its reason', () async {
+      final session = await afterProgress({
+        'session_id': sessionId,
+        'status': 'error',
+        'error': 'Exception: anything',
+        'reason': HandoverFailure.modelNotFoundReason,
+      });
+
+      expect(session.failure, HandoverFailure.modelNotFound);
+    });
+
+    test(
+      'a missing model from a desktop without the reason field is recognised',
+      () async {
+        final session = await afterProgress({
+          'session_id': sessionId,
+          'status': 'error',
+          'error': const ModelNotFoundException('/models/x.gguf').toString(),
+        });
+
+        expect(session.failure, HandoverFailure.modelNotFound);
+      },
+    );
 
     test('an error without a message gets a default one', () async {
       final session = await afterProgress({

@@ -6,31 +6,10 @@ import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:injectable/injectable.dart';
 import 'package:intl/intl.dart';
 import 'package:passkit/passkit.dart';
-
-class ApplePassLabels {
-  final String patient;
-  final String bloodType;
-  final String allergies;
-  final String gender;
-  final String dateOfBirth;
-  final String emergencyPhone;
-  final String conditions;
-  final String medications;
-
-  const ApplePassLabels({
-    required this.patient,
-    required this.bloodType,
-    required this.allergies,
-    required this.gender,
-    required this.dateOfBirth,
-    required this.emergencyPhone,
-    required this.conditions,
-    required this.medications,
-  });
-}
 
 @injectable
 class ApplePassBuilder {
@@ -40,7 +19,7 @@ class ApplePassBuilder {
   Future<Uint8List> build(
     EmergencyCardData cardData, {
     required String patientId,
-    required ApplePassLabels labels,
+    required WalletPassLabels labels,
   }) async {
     final certificatePem = await _loadAssetString(_certPath);
     final privateKeyPem = await _loadAssetString(_keyPath);
@@ -58,7 +37,7 @@ class ApplePassBuilder {
       serialNumber: 'emergency_$patientId',
       teamIdentifier: Env.appleTeamId,
       organizationName: 'HealthWallet.me',
-      description: 'Emergency Medical ID',
+      description: labels.cardTitle,
       foregroundColor: css.Color.createRgba(255, 255, 255),
       backgroundColor: css.Color.createRgba(87, 103, 255),
       labelColor: css.Color.createRgba(200, 210, 255),
@@ -93,7 +72,7 @@ class ApplePassBuilder {
 
   PassStructure _buildPassStructure(
     EmergencyCardData cardData,
-    ApplePassLabels labels,
+    WalletPassLabels labels,
   ) {
     final primaryFields = <FieldDict>[
       FieldDict(
@@ -126,7 +105,11 @@ class ApplePassBuilder {
     }
     if (cardData.gender != null) {
       secondaryFields.add(
-        FieldDict(key: 'gender', label: labels.gender, value: cardData.gender!),
+        FieldDict(
+          key: 'gender',
+          label: labels.gender,
+          value: labels.genderName(cardData.gender!),
+        ),
       );
     }
 
@@ -139,7 +122,8 @@ class ApplePassBuilder {
           key: 'dob',
           label: labels.dateOfBirth,
           value:
-              '${DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!)} (Age $age)',
+              '${DateFormat.yMMMd(labels.localeName).format(cardData.dateOfBirth!)} '
+              '(${labels.age(age)})',
         ),
       );
     }

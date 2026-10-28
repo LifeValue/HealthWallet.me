@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/change_watcher_service.dart';
@@ -178,6 +179,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         } catch (_) {}
       }
     } catch (e) {
+      logger.e('[LwwSync] sync failed', e);
       emit(
         state.copyWith(
           syncStatus: LwwSyncStatus.error,
@@ -232,6 +234,7 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
         ),
       );
     } catch (e) {
+      logger.e('[LwwSync] sync failed', e);
       emit(
         state.copyWith(
           syncStatus: LwwSyncStatus.error,

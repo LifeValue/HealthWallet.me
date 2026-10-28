@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 part 'onboarding_bloc.freezed.dart';
@@ -7,12 +9,14 @@ part 'onboarding_event.dart';
 part 'onboarding_state.dart';
 
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
-  OnboardingBloc() : super(const OnboardingState()) {
+  OnboardingBloc(this._strings) : super(const OnboardingState()) {
     on<OnboardingPageChanged>(_onPageChanged);
     on<OnboardingNextPage>(_onNextPage);
     on<OnboardingPreviousPage>(_onPreviousPage);
     on<OnboardingLaunchUrl>(_onLaunchUrl);
   }
+
+  final AppStringsProvider _strings;
 
   void _onPageChanged(
     OnboardingPageChanged event,
@@ -64,11 +68,12 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         );
       }
     } catch (e) {
+      logger.w('Opening the onboarding link failed: $e');
       emit(
         state.copyWith(
           isLaunchingUrl: false,
           urlLaunchSuccess: false,
-          errorMessage: 'Could not open link. Please try again.',
+          errorMessage: _strings.l10n.couldNotOpenLink,
         ),
       );
     }

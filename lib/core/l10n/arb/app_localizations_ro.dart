@@ -224,11 +224,12 @@ class AppLocalizationsRo extends AppLocalizations {
   String get actionCannotBeUndone => 'Această acțiune nu poate fi anulată.';
 
   @override
-  String get deleteSourceConfirmPrefix => 'This will permanently delete ';
+  String get deleteSourceConfirmPrefix =>
+      'Această acțiune va șterge definitiv ';
 
   @override
   String get deleteSourceConfirmSuffix =>
-      ' and all its records. To confirm, type the source name below.';
+      ' și toate înregistrările sale. Pentru confirmare, introdu mai jos numele sursei.';
 
   @override
   String get deleteRecordConfirm =>
@@ -286,7 +287,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get unknownSource => 'Sursă Necunoscută';
 
   @override
-  String get desktopSyncAndBackup => 'Desktop Sync & Backup';
+  String get desktopSyncAndBackup => 'Sincronizare și backup date';
 
   @override
   String get desktopSyncDescription =>
@@ -299,7 +300,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get continueImporting => 'Continuă importul';
 
   @override
-  String get noAiModel => 'No AI model';
+  String get noAiModel => 'Niciun model AI';
 
   @override
   String get noAiModelOnDesktop =>
@@ -2100,19 +2101,2237 @@ class AppLocalizationsRo extends AppLocalizations {
   String get minimizeToTray => 'Minimizează în bara de sistem';
 
   @override
-  String get changeSpecialty => 'Change Specialty';
+  String get changeSpecialty => 'Schimbă specialitatea';
 
   @override
-  String get changeSpecialtyConfirm =>
-      'Are you sure you want to change the specialty to';
+  String get changeSpecialtyConfirm => 'Sigur vrei să schimbi specialitatea în';
 
   @override
   String get removeSpecialtyConfirm =>
-      'Are you sure you want to remove the specialty from this record?';
+      'Sigur vrei să elimini specialitatea din această înregistrare?';
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'Confirmă';
 
   @override
   String get currentRecord => 'Înregistrarea curentă';
+
+  @override
+  String get vitalHeartRate => 'Frecvență cardiacă';
+
+  @override
+  String get vitalBloodPressure => 'Tensiune arterială';
+
+  @override
+  String get vitalTemperature => 'Temperatură';
+
+  @override
+  String get vitalBloodOxygen => 'Oxigen în sânge';
+
+  @override
+  String get vitalRespiratoryRate => 'Frecvență respiratorie';
+
+  @override
+  String get vitalWeight => 'Greutate';
+
+  @override
+  String get vitalHeight => 'Înălțime';
+
+  @override
+  String get vitalBmi => 'IMC';
+
+  @override
+  String get vitalBloodGlucose => 'Glicemie';
+
+  @override
+  String get vitalSystolicBloodPressure => 'Tensiune arterială sistolică';
+
+  @override
+  String get vitalDiastolicBloodPressure => 'Tensiune arterială diastolică';
+
+  @override
+  String get unitBeatsPerMinute => 'bătăi/min';
+
+  @override
+  String get unitBreathsPerMinute => 'respirații/min';
+
+  @override
+  String get unitPounds => 'livre';
+
+  @override
+  String get unitInches => 'inci';
+
+  @override
+  String get unitKilograms => 'kilograme';
+
+  @override
+  String get unitCentimeters => 'centimetri';
+
+  @override
+  String get specialtyAllergology => 'Alergologie';
+
+  @override
+  String get specialtyCardiology => 'Cardiologie';
+
+  @override
+  String get specialtyDental => 'Stomatologie';
+
+  @override
+  String get specialtyDermatology => 'Dermatologie';
+
+  @override
+  String get specialtyEmergencyMedicine => 'Medicină de urgență';
+
+  @override
+  String get specialtyEndocrinology => 'Endocrinologie';
+
+  @override
+  String get specialtyGastroenterology => 'Gastroenterologie';
+
+  @override
+  String get specialtyGeneralCare => 'Medicină generală';
+
+  @override
+  String get specialtyGynecology => 'Ginecologie';
+
+  @override
+  String get specialtyNephrology => 'Nefrologie';
+
+  @override
+  String get specialtyNeurology => 'Neurologie';
+
+  @override
+  String get specialtyOncology => 'Oncologie';
+
+  @override
+  String get specialtyOphthalmology => 'Oftalmologie';
+
+  @override
+  String get specialtyOrthopedics => 'Ortopedie';
+
+  @override
+  String get specialtyPsychiatry => 'Psihiatrie';
+
+  @override
+  String get specialtyPulmonology => 'Pneumologie';
+
+  @override
+  String get specialtyRheumatology => 'Reumatologie';
+
+  @override
+  String get specialtyUrology => 'Urologie';
+
+  @override
+  String get categoryAllergies => 'Alergii';
+
+  @override
+  String get categoryCareTeam => 'Echipa medicală';
+
+  @override
+  String get categoryClinicalNotes => 'Note clinice';
+
+  @override
+  String get categoryFiles => 'Fișiere';
+
+  @override
+  String get categoryLabResults => 'Rezultate de laborator';
+
+  @override
+  String get categoryHealthIssues => 'Probleme de sănătate';
+
+  @override
+  String get categoryFacilities => 'Unități medicale';
+
+  @override
+  String get categoryHealthGoals => 'Obiective de sănătate';
+
+  @override
+  String get categoryImmunizations => 'Vaccinări';
+
+  @override
+  String get categoryMedications => 'Medicamente';
+
+  @override
+  String get categoryDemographics => 'Date personale';
+
+  @override
+  String get categoryProcedures => 'Proceduri';
+
+  @override
+  String get categoryHealthInsurance => 'Asigurare de sănătate';
+
+  @override
+  String get fhirTypeAdverseEvent => 'Eveniment advers';
+
+  @override
+  String get fhirTypeAllergyIntolerance => 'Alergie';
+
+  @override
+  String get fhirTypeBinary => 'Fișier binar';
+
+  @override
+  String get fhirTypeCareTeam => 'Echipa medicală';
+
+  @override
+  String get fhirTypeClaim => 'Cerere de decontare';
+
+  @override
+  String get fhirTypeCondition => 'Afecțiune';
+
+  @override
+  String get fhirTypeCoverage => 'Acoperire asigurare';
+
+  @override
+  String get fhirTypeDiagnosticReport => 'Raport de diagnostic';
+
+  @override
+  String get fhirTypeDocumentReference => 'Document';
+
+  @override
+  String get fhirTypeEncounter => 'Consultație';
+
+  @override
+  String get fhirTypeExplanationOfBenefit => 'Decont de beneficii';
+
+  @override
+  String get fhirTypeGoal => 'Obiectiv';
+
+  @override
+  String get fhirTypeImmunization => 'Vaccinare';
+
+  @override
+  String get fhirTypeLocation => 'Locație';
+
+  @override
+  String get fhirTypeMedia => 'Media';
+
+  @override
+  String get fhirTypeMedication => 'Medicament';
+
+  @override
+  String get fhirTypeMedicationAdministration => 'Administrare medicament';
+
+  @override
+  String get fhirTypeMedicationDispense => 'Eliberare medicament';
+
+  @override
+  String get fhirTypeMedicationRequest => 'Prescripție medicament';
+
+  @override
+  String get fhirTypeMedicationStatement => 'Declarație medicament';
+
+  @override
+  String get fhirTypeObservation => 'Observație';
+
+  @override
+  String get fhirTypeOrganization => 'Organizație';
+
+  @override
+  String get fhirTypePatient => 'Pacient';
+
+  @override
+  String get fhirTypePractitioner => 'Practician';
+
+  @override
+  String get fhirTypePractitionerRole => 'Rol practician';
+
+  @override
+  String get fhirTypeProcedure => 'Procedură';
+
+  @override
+  String get fhirTypeRelatedPerson => 'Persoană apropiată';
+
+  @override
+  String get fhirTypeServiceRequest => 'Cerere de servicii';
+
+  @override
+  String get fhirTypeSpecimen => 'Probă';
+
+  @override
+  String get fhirTypeGeneralResource => 'Resursă';
+
+  @override
+  String get processingOriginScan => 'Scanare';
+
+  @override
+  String get processingOriginImport => 'Import';
+
+  @override
+  String get processingOriginHandover => 'Predare';
+
+  @override
+  String get processingStatusPending => 'În așteptare';
+
+  @override
+  String get processingStatusProcessingPatient => 'Se procesează pacientul';
+
+  @override
+  String get processingStatusPatientExtracted => 'Pacient extras';
+
+  @override
+  String get processingStatusProcessing => 'Se procesează';
+
+  @override
+  String get processingStatusDraft => 'Ciornă';
+
+  @override
+  String get processingStatusCancelled => 'Anulat';
+
+  @override
+  String get showAll => 'Afișează tot';
+
+  @override
+  String get showLess => 'Afișează mai puțin';
+
+  @override
+  String get all => 'Toate';
+
+  @override
+  String get gotIt => 'Am înțeles';
+
+  @override
+  String get homeSpecialties => 'Specialități';
+
+  @override
+  String get homeResources => 'Resurse';
+
+  @override
+  String get homeDefaultUserName => 'Utilizator';
+
+  @override
+  String get selectSpecialty => 'Selectează specialitatea';
+
+  @override
+  String get removeSpecialty => 'Elimină specialitatea';
+
+  @override
+  String get chooseRecordsForDashboard =>
+      'Alege înregistrările pe care vrei să le vezi pe panou.';
+
+  @override
+  String get selectAtLeastOneRecordType =>
+      'Selectează cel puțin un tip de înregistrare pentru a continua.';
+
+  @override
+  String get chooseVitalsForDashboard =>
+      'Alege semnele vitale pe care vrei să le vezi pe panou.';
+
+  @override
+  String get selectAtLeastOneVital =>
+      'Selectează cel puțin un semn vital pentru a continua.';
+
+  @override
+  String get chooseSpecialtiesForDashboard =>
+      'Alege specialitățile pe care vrei să le vezi pe panou.';
+
+  @override
+  String get selectAtLeastOneSpecialty =>
+      'Selectează cel puțin o specialitate pentru a continua.';
+
+  @override
+  String get selectAtLeastOneItem =>
+      'Selectează cel puțin un element pentru a continua.';
+
+  @override
+  String get sourceSectionWallet => 'PORTOFEL';
+
+  @override
+  String get sourceSectionEhr => 'SURSE DOSAR MEDICAL';
+
+  @override
+  String get areYouSure => 'Ești sigur?';
+
+  @override
+  String get resourceNotViewable =>
+      'Această resursă nu este un fișier care poate fi vizualizat';
+
+  @override
+  String get noFilePathFound => 'Nu s-a găsit calea fișierului';
+
+  @override
+  String get handoverPatientMatched => 'Pacientul din predare a fost asociat';
+
+  @override
+  String get desktopDiscovering => 'Se caută...';
+
+  @override
+  String get desktopTransportWifi => 'Wi-Fi';
+
+  @override
+  String get desktopTransportDirect => 'Direct';
+
+  @override
+  String get desktopDeviceSync => 'Sincronizare dispozitive';
+
+  @override
+  String get desktopBackupLocation => 'Locație';
+
+  @override
+  String get desktopBackupHistory => 'Istoric';
+
+  @override
+  String desktopPairedWith(String name) {
+    return 'Asociat cu $name';
+  }
+
+  @override
+  String get desktopMobileDevice => 'Dispozitiv mobil';
+
+  @override
+  String get desktopNotFoundScanAgain =>
+      'Desktopul nu a fost găsit. Scanează din nou codul QR.';
+
+  @override
+  String get desktopPairingExpired =>
+      'Conectarea a eșuat. Scanează codul QR pentru a asocia din nou.';
+
+  @override
+  String desktopRemoteBackupName(String date) {
+    return 'De pe telefon $date';
+  }
+
+  @override
+  String get desktopNoBackupLocation =>
+      'Nu este setată o locație de backup pe desktop. Deschide aplicația desktop și alege mai întâi un folder de backup.';
+
+  @override
+  String get desktopBackupFailed => 'Backup-ul a eșuat. Încearcă din nou.';
+
+  @override
+  String get desktopRestoreFailed => 'Restaurarea a eșuat. Încearcă din nou.';
+
+  @override
+  String get desktopBackupActionFailed =>
+      'Backup-urile nu au putut fi actualizate. Încearcă din nou.';
+
+  @override
+  String get desktopSyncFailed =>
+      'Sincronizarea a eșuat. Verifică conexiunea și încearcă din nou.';
+
+  @override
+  String get desktopHandoverTransfer => 'Transfer';
+
+  @override
+  String get desktopHandoverNoActive => 'Nicio predare activă';
+
+  @override
+  String get desktopHandoverSendFromPhone => 'Trimite documente de pe telefon.';
+
+  @override
+  String desktopHandoverFilesProgress(String received, String total) {
+    return '$received/$total fișiere';
+  }
+
+  @override
+  String get desktopHandoverTransferComplete => 'Transfer finalizat';
+
+  @override
+  String get desktopHandoverReceivingFiles => 'Se primesc fișierele...';
+
+  @override
+  String get desktopHandoverProcessingStatus => 'Se procesează...';
+
+  @override
+  String get desktopHandoverSendingResults => 'Se trimit rezultatele...';
+
+  @override
+  String get desktopHandoverDone => 'Finalizat';
+
+  @override
+  String get desktopHandoverStatusError => 'Eroare';
+
+  @override
+  String get desktopHandoverWaitingForResults => 'Se așteaptă rezultatele...';
+
+  @override
+  String get desktopHandoverNotAccepted =>
+      'Desktopul nu a acceptat documentele.';
+
+  @override
+  String get desktopHandoverFileMissing =>
+      'Un document nu a fost găsit pe acest dispozitiv.';
+
+  @override
+  String get desktopHandoverCancelled => 'Anulat';
+
+  @override
+  String get desktopHandoverFailed => 'Procesarea a eșuat. Încearcă din nou.';
+
+  @override
+  String get trayShowWindow => 'Afișează fereastra';
+
+  @override
+  String get trayHideWindow => 'Ascunde fereastra';
+
+  @override
+  String get trayNoDeviceConnected => 'Niciun dispozitiv conectat';
+
+  @override
+  String traySyncStatus(String status) {
+    return 'Sincronizare: $status';
+  }
+
+  @override
+  String get trayUpToDate => 'La zi';
+
+  @override
+  String trayQuit(String appName) {
+    return 'Închide $appName';
+  }
+
+  @override
+  String get desktopFinishedProcessing => 'Desktopul a terminat procesarea';
+
+  @override
+  String get biometricAuthReason =>
+      'Autentifică-te pentru a accesa HealthWallet.me';
+
+  @override
+  String sourceUploadedOn(String date) {
+    return 'Încărcat $date';
+  }
+
+  @override
+  String couldNotOpenPdf(String message) {
+    return 'PDF-ul nu a putut fi deschis: $message';
+  }
+
+  @override
+  String errorOpeningPdf(String error) {
+    return 'Eroare la deschiderea PDF-ului: $error';
+  }
+
+  @override
+  String get shareStatusReadyToShare => 'Gata de partajare';
+
+  @override
+  String get shareStatusWaitingForSender => 'Se așteaptă expeditorul...';
+
+  @override
+  String get shareStatusPermissionsRequired => 'Sunt necesare permisiuni';
+
+  @override
+  String get shareStatusEnablePermissionsInSettings =>
+      'Activează permisiunile din Setări';
+
+  @override
+  String get shareSelectAtLeastOneRecord =>
+      'Selectează cel puțin o înregistrare';
+
+  @override
+  String get shareStatusLookingForDevices =>
+      'Se caută dispozitive din apropiere...';
+
+  @override
+  String get shareStatusTransferFailed => 'Transferul a eșuat';
+
+  @override
+  String get shareStatusConfirmExit =>
+      'Sigur vrei să ieși? Datele vor fi șterse.';
+
+  @override
+  String shareStatusViewingRecords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se vizualizează $count de înregistrări',
+      few: 'Se vizualizează $count înregistrări',
+      one: 'Se vizualizează o înregistrare',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareStatusViewingRecordsFrom(int count, String deviceName) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se vizualizează $count de înregistrări de la $deviceName',
+      few: 'Se vizualizează $count înregistrări de la $deviceName',
+      one: 'Se vizualizează o înregistrare de la $deviceName',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareStatusDataDeleted => 'Datele au fost șterse în siguranță';
+
+  @override
+  String get shareStatusSessionExpired => 'Sesiunea a expirat';
+
+  @override
+  String get shareStatusTerminatingSession =>
+      'Se încheie sesiunea de la distanță...';
+
+  @override
+  String get shareStatusSessionTerminated => 'Sesiune încheiată';
+
+  @override
+  String get shareStatusRemoteSessionTerminated =>
+      'Celălalt dispozitiv a încheiat sesiunea';
+
+  @override
+  String get shareStatusExtensionDeclined =>
+      'Cererea de prelungire a fost refuzată';
+
+  @override
+  String get shareStatusReceiverViewing =>
+      'Destinatarul vizualizează înregistrările - sesiune monitorizată';
+
+  @override
+  String get shareStatusReceiverDeclined => 'Destinatarul a refuzat invitația';
+
+  @override
+  String shareStatusReceivingFrom(String deviceName) {
+    return 'Se primesc înregistrări de la $deviceName...';
+  }
+
+  @override
+  String get shareNoDataAvailable => 'Nu există date disponibile';
+
+  @override
+  String shareStatusDeviceWantsToShare(String deviceName) {
+    return '$deviceName dorește să partajeze înregistrări';
+  }
+
+  @override
+  String get shareStatusScanning => 'Se caută dispozitive...';
+
+  @override
+  String shareStatusFoundDevices(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'S-au găsit $count de dispozitive',
+      few: 'S-au găsit $count dispozitive',
+      one: 'S-a găsit un dispozitiv',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareStatusConnectingTo(String deviceName) {
+    return 'Se conectează la $deviceName...';
+  }
+
+  @override
+  String get shareStatusPreparingRecords => 'Se pregătesc înregistrările...';
+
+  @override
+  String get shareErrorPrepareFiles =>
+      'Fișierele nu au putut fi pregătite pentru trimitere';
+
+  @override
+  String shareStatusTransferring(int percent) {
+    return 'Se transferă $percent%';
+  }
+
+  @override
+  String get shareStatusRecordsSentWaiting =>
+      'Înregistrări trimise - se așteaptă acceptul destinatarului';
+
+  @override
+  String get shareStatusTransferCancelled => 'Transfer anulat';
+
+  @override
+  String get shareStatusInvitationRejected => 'Invitație refuzată';
+
+  @override
+  String get shareErrorParseData => 'Datele primite nu au putut fi citite';
+
+  @override
+  String get shareStatusProcessingReceived =>
+      'Se procesează înregistrările primite...';
+
+  @override
+  String get shareErrorParseFile => 'Fișierul primit nu a putut fi citit';
+
+  @override
+  String get shareIncomingHealthRecords => 'Înregistrări medicale primite';
+
+  @override
+  String shareDeviceWantsToShareHealthRecords(String deviceName) {
+    return '$deviceName dorește să partajeze înregistrări medicale cu tine';
+  }
+
+  @override
+  String get sharePermissionExplanationIos =>
+      'Pentru a partaja înregistrări cu dispozitive din apropiere, HealthWallet are nevoie de acces la:\n\n• Bluetooth - pentru a găsi dispozitivele din apropiere și a se conecta la ele\n\nAstfel poți partaja în siguranță înregistrări medicale cu alte dispozitive din apropiere.';
+
+  @override
+  String get sharePermissionExplanationAndroid =>
+      'Pentru a partaja înregistrări cu dispozitive din apropiere, HealthWallet are nevoie de acces la:\n\n• Bluetooth - pentru a găsi dispozitivele din apropiere și a se conecta la ele\n• Locație/Dispozitive din apropiere - cerute de Android pentru a căuta dispozitive Bluetooth și WiFi Direct\n\nLocația ta nu este niciodată stocată sau transmisă.';
+
+  @override
+  String get sharePermissionsDeniedMessage =>
+      'Acordă toate permisiunile pentru a partaja înregistrări cu dispozitive din apropiere.';
+
+  @override
+  String get sharePermissionsPermanentlyDeniedMessage =>
+      'Unele permisiuni au fost refuzate. Activează-le din Setări pentru a folosi această funcție.';
+
+  @override
+  String shareDurationRequested(String duration) {
+    return '$duration solicitate';
+  }
+
+  @override
+  String get noAttachments => 'Fără atașamente';
+
+  @override
+  String get attachingFiles => 'Se atașează fișierele...';
+
+  @override
+  String get addAttachment => 'Adaugă atașament';
+
+  @override
+  String get noFileName => 'Fără nume de fișier';
+
+  @override
+  String attachmentFileOfTotal(int current, int total) {
+    return '( $current din $total fișiere )';
+  }
+
+  @override
+  String get showDetails => 'Afișează detaliile';
+
+  @override
+  String get viewRelated => 'Vezi asociate';
+
+  @override
+  String get hideRelated => 'Ascunde asociate';
+
+  @override
+  String get noRelatedResourcesFound => 'Nu s-au găsit resurse asociate';
+
+  @override
+  String get loadingRelatedResources => 'Se încarcă resursele asociate...';
+
+  @override
+  String get noRelatedResourcesForEncounter =>
+      'Nu s-au găsit resurse asociate acestei consultații';
+
+  @override
+  String get cannotAttachToDocumentReference =>
+      'Nu se pot atașa fișiere la un document';
+
+  @override
+  String deleteRecordOfType(String type) {
+    return 'Șterge $type';
+  }
+
+  @override
+  String get dateFilterEndBeforeStart =>
+      'Data de sfârșit trebuie să fie după data de început';
+
+  @override
+  String dateFilterChip(String range) {
+    return 'Dată: $range';
+  }
+
+  @override
+  String get aiModelCheckFailed =>
+      'A apărut o eroare la verificarea existenței modelului';
+
+  @override
+  String get aiModelExistenceCheckFailed =>
+      'Verificarea existenței modelului a eșuat';
+
+  @override
+  String aiModelDownloadingTitle(String modelName) {
+    return 'Se descarcă $modelName';
+  }
+
+  @override
+  String get aiModelDownloadStarting => 'Se pornește descărcarea...';
+
+  @override
+  String aiModelReadyTitle(String modelName) {
+    return '$modelName este gata';
+  }
+
+  @override
+  String aiModelDownloadedMessage(String modelName) {
+    return '$modelName a fost descărcat cu succes.';
+  }
+
+  @override
+  String get aiModelDownloadFailedTitle => 'Descărcare eșuată';
+
+  @override
+  String get aiModelDownloadFailedMessage =>
+      'Descărcarea modelului AI a eșuat. Verifică conexiunea și încearcă din nou.';
+
+  @override
+  String get aiModelDownloadFailed => 'Descărcarea a eșuat';
+
+  @override
+  String get aiModelDownloadCancelledTitle => 'Descărcare anulată';
+
+  @override
+  String get aiModelDownloadInterruptedMessage =>
+      'Descărcarea a fost întreruptă. Încearcă din nou.';
+
+  @override
+  String get aiModelDownloadCancelledNotificationTitle =>
+      'Descărcarea modelului AI a fost anulată';
+
+  @override
+  String get aiModelDownloadWasCancelled =>
+      'Descărcarea modelului AI a fost anulată';
+
+  @override
+  String get aiModelDownloadCancelled => 'Descărcare anulată';
+
+  @override
+  String aiModelDownloadingPercent(String percent) {
+    return 'Se descarcă... $percent%';
+  }
+
+  @override
+  String get processingNoImagesGenerated =>
+      'Scanarea nu a generat nicio imagine. Încearcă să scanezi din nou.';
+
+  @override
+  String processingPatientMatched(String origin) {
+    return '$origin: pacientul a fost asociat';
+  }
+
+  @override
+  String processingPatientInfoExtracted(String origin) {
+    return '$origin: datele pacientului au fost extrase';
+  }
+
+  @override
+  String processingFinished(String origin) {
+    return '$origin: procesarea s-a încheiat';
+  }
+
+  @override
+  String scanFailedWithError(String error) {
+    return 'Scanarea a eșuat: $error';
+  }
+
+  @override
+  String get noValidFilesFound => 'Nu s-au găsit fișiere valide';
+
+  @override
+  String failedToImportDocument(String error) {
+    return 'Importul documentului a eșuat: $error';
+  }
+
+  @override
+  String get couldNotOpenLink =>
+      'Linkul nu a putut fi deschis. Încearcă din nou.';
+
+  @override
+  String get continueProcessingOnDesktop => 'Continuă procesarea pe desktop';
+
+  @override
+  String get deleteResourcesTitle => 'Șterge resursele';
+
+  @override
+  String get switchToDiagnosticReport => 'Comută la raport de diagnostic';
+
+  @override
+  String get switchToEncounter => 'Comută la consultație';
+
+  @override
+  String get previewDocument => 'Previzualizează documentul';
+
+  @override
+  String get summaryTitle => 'Rezumat';
+
+  @override
+  String pagesAvailableForProcessing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Total: $count de pagini disponibile pentru procesare',
+      few: 'Total: $count pagini disponibile pentru procesare',
+      one: 'Total: $count pagină disponibilă pentru procesare',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get betaBadge => 'Beta';
+
+  @override
+  String get pleaseSelectSpecialty => 'Selectează o specialitate';
+
+  @override
+  String get patientAndSourceInformation =>
+      'Informații despre pacient și sursă';
+
+  @override
+  String get noPatientsAvailable => 'Nu există pacienți disponibili';
+
+  @override
+  String get selectPatient => 'Selectează pacientul';
+
+  @override
+  String get unknownPatient => 'Pacient necunoscut';
+
+  @override
+  String get documentPreview => 'Previzualizare document';
+
+  @override
+  String filePathLabel(String path) {
+    return 'Cale: $path';
+  }
+
+  @override
+  String get confidenceMedium => 'Încredere medie';
+
+  @override
+  String get confidenceLow => 'Încredere scăzută';
+
+  @override
+  String get dateFormatHintIso => 'AAAA-LL-ZZ';
+
+  @override
+  String retryStep(int step) {
+    return 'Reîncearcă (pasul $step)';
+  }
+
+  @override
+  String failedToCreateEncounter(String error) {
+    return 'Crearea consultației a eșuat: $error';
+  }
+
+  @override
+  String failedToAttachDocuments(String error) {
+    return 'Atașarea documentelor a eșuat: $error';
+  }
+
+  @override
+  String get fieldAccessionNumber => 'Număr de acces';
+
+  @override
+  String get fieldAchievementStatus => 'Stadiu de realizare';
+
+  @override
+  String get fieldActuality => 'Realitate';
+
+  @override
+  String get fieldAdditionalInformation => 'Informații suplimentare';
+
+  @override
+  String get fieldAddress => 'Adresă';
+
+  @override
+  String get fieldAddresses => 'Adrese';
+
+  @override
+  String get fieldAdministeredBy => 'Administrat de';
+
+  @override
+  String get fieldAdmissionSource => 'Sursa internării';
+
+  @override
+  String get fieldAlert => 'Alertă';
+
+  @override
+  String get fieldAllergyDetails => 'Detalii despre alergie';
+
+  @override
+  String get fieldAlsoKnownAs => 'Cunoscut și ca';
+
+  @override
+  String get fieldAsserter => 'Declarant';
+
+  @override
+  String get fieldAttachmentTitle => 'Titlul atașamentului';
+
+  @override
+  String get fieldAuthenticatedBy => 'Autentificat de';
+
+  @override
+  String get fieldAuthor => 'Autor';
+
+  @override
+  String get fieldAvailabilityExceptions => 'Excepții de disponibilitate';
+
+  @override
+  String get fieldAvailabilityNotes => 'Note despre disponibilitate';
+
+  @override
+  String get fieldBasedOn => 'Pe baza';
+
+  @override
+  String get fieldBasicInformation => 'Informații de bază';
+
+  @override
+  String get fieldBeneficiary => 'Beneficiar';
+
+  @override
+  String get fieldBillablePeriod => 'Perioadă facturabilă';
+
+  @override
+  String get fieldBirthDate => 'Data nașterii';
+
+  @override
+  String get fieldBirthPlace => 'Locul nașterii';
+
+  @override
+  String get fieldBirthSex => 'Sexul la naștere';
+
+  @override
+  String get fieldBodySite => 'Localizare anatomică';
+
+  @override
+  String get fieldCareTeam => 'Echipa de îngrijire';
+
+  @override
+  String get fieldCategory => 'Categorie';
+
+  @override
+  String get fieldClinicalNotes => 'Note clinice';
+
+  @override
+  String get fieldClinicalStatus => 'Stare clinică';
+
+  @override
+  String get fieldCollectedBy => 'Recoltat de';
+
+  @override
+  String get fieldCollectionDate => 'Data recoltării';
+
+  @override
+  String get fieldCollectionDuration => 'Durata recoltării';
+
+  @override
+  String get fieldCollectionInformation => 'Informații despre recoltare';
+
+  @override
+  String get fieldCollectionMethod => 'Metoda de recoltare';
+
+  @override
+  String get fieldCollectionPeriod => 'Perioada recoltării';
+
+  @override
+  String get fieldComplicationDetails => 'Detalii despre complicații';
+
+  @override
+  String get fieldComplications => 'Complicații';
+
+  @override
+  String get fieldConclusion => 'Concluzie';
+
+  @override
+  String get fieldConclusionCode => 'Codul concluziei';
+
+  @override
+  String get fieldCondition => 'Afecțiune';
+
+  @override
+  String get fieldContactEmail => 'E-mail de contact';
+
+  @override
+  String get fieldContactInformation => 'Informații de contact';
+
+  @override
+  String get fieldContactPerson => 'Persoană de contact';
+
+  @override
+  String get fieldContactPhone => 'Telefon de contact';
+
+  @override
+  String get fieldContainerAdditive => 'Aditivul recipientului';
+
+  @override
+  String get fieldContainerCapacity => 'Capacitatea recipientului';
+
+  @override
+  String get fieldContainerType => 'Tipul recipientului';
+
+  @override
+  String get fieldContainers => 'Recipiente';
+
+  @override
+  String get fieldContentType => 'Tipul conținutului';
+
+  @override
+  String get fieldContext => 'Context';
+
+  @override
+  String get fieldContract => 'Contract';
+
+  @override
+  String get fieldCostSharing => 'Contribuție la costuri';
+
+  @override
+  String get fieldCourseOfTherapy => 'Durata tratamentului';
+
+  @override
+  String get fieldCoverage => 'Acoperire';
+
+  @override
+  String get fieldCoverageClass => 'Clasa de acoperire';
+
+  @override
+  String get fieldCoverageDetails => 'Detalii despre acoperire';
+
+  @override
+  String get fieldCreated => 'Creat';
+
+  @override
+  String get fieldCriticality => 'Criticitate';
+
+  @override
+  String get fieldCustodian => 'Custode';
+
+  @override
+  String get fieldDataAbsentReason => 'Motivul lipsei datelor';
+
+  @override
+  String get fieldDateGiven => 'Data administrării';
+
+  @override
+  String get fieldDatePerformed => 'Data efectuării';
+
+  @override
+  String get fieldDaysSupply => 'Zile de tratament';
+
+  @override
+  String get fieldDependent => 'Persoană în întreținere';
+
+  @override
+  String get fieldDerivedFrom => 'Derivat din';
+
+  @override
+  String get fieldDescription => 'Descriere';
+
+  @override
+  String get fieldDetected => 'Detectat';
+
+  @override
+  String get fieldDevice => 'Dispozitiv';
+
+  @override
+  String get fieldDiagnoses => 'Diagnostice';
+
+  @override
+  String get fieldDietPreference => 'Preferință alimentară';
+
+  @override
+  String get fieldDimensions => 'Dimensiuni';
+
+  @override
+  String get fieldDischargeDisposition => 'Destinația la externare';
+
+  @override
+  String get fieldDischargeTo => 'Externat către';
+
+  @override
+  String get fieldDisposition => 'Dispoziție';
+
+  @override
+  String get fieldDocumentDetails => 'Detalii despre document';
+
+  @override
+  String get fieldDocumentId => 'ID document';
+
+  @override
+  String get fieldDocumentStatus => 'Starea documentului';
+
+  @override
+  String get fieldDosage => 'Posologie';
+
+  @override
+  String get fieldDose => 'Doză';
+
+  @override
+  String get fieldDoseQuantity => 'Cantitatea dozei';
+
+  @override
+  String get fieldDriversLicenseNumber => 'Numărul permisului de conducere';
+
+  @override
+  String get fieldDuration => 'Durată';
+
+  @override
+  String get fieldEducationProvided => 'Informații oferite';
+
+  @override
+  String get fieldEffective => 'Data efectivă';
+
+  @override
+  String get fieldEffectiveDates => 'Perioada de valabilitate';
+
+  @override
+  String get fieldEmail => 'E-mail';
+
+  @override
+  String get fieldEmergency => 'Urgență';
+
+  @override
+  String get fieldEncounterType => 'Tipul consultației';
+
+  @override
+  String get fieldEndpoints => 'Puncte de conectare';
+
+  @override
+  String get fieldEpisodeOfCare => 'Episod de îngrijire';
+
+  @override
+  String get fieldEthnicity => 'Etnie';
+
+  @override
+  String get fieldExpiration => 'Expirare';
+
+  @override
+  String get fieldExpirationDate => 'Data expirării';
+
+  @override
+  String get fieldFacility => 'Unitate';
+
+  @override
+  String get fieldFacilityDetails => 'Detalii despre unitate';
+
+  @override
+  String get fieldFacilityType => 'Tipul unității';
+
+  @override
+  String get fieldFastingStatus => 'Stare de repaus alimentar';
+
+  @override
+  String get fieldFax => 'Fax';
+
+  @override
+  String get fieldFocalDevice => 'Dispozitiv principal';
+
+  @override
+  String get fieldFollowUp => 'Monitorizare ulterioară';
+
+  @override
+  String get fieldForm => 'Formă farmaceutică';
+
+  @override
+  String get fieldFormat => 'Format';
+
+  @override
+  String get fieldFundingSource => 'Sursa de finanțare';
+
+  @override
+  String get fieldGender => 'Gen';
+
+  @override
+  String get fieldGeneralPractitioner => 'Medic de familie';
+
+  @override
+  String get fieldGoal => 'Obiectiv';
+
+  @override
+  String get fieldGoalDetails => 'Detalii despre obiectiv';
+
+  @override
+  String get fieldGpsCoordinates => 'Coordonate GPS';
+
+  @override
+  String get fieldGroupNumber => 'Numărul grupului';
+
+  @override
+  String get fieldHandedOver => 'Predat';
+
+  @override
+  String get fieldHealthcareFacility => 'Unitate sanitară';
+
+  @override
+  String get fieldHealthcareService => 'Serviciu medical';
+
+  @override
+  String get fieldHours => 'Program';
+
+  @override
+  String get fieldHowToTake => 'Mod de administrare';
+
+  @override
+  String get fieldIdentifiers => 'Identificatori';
+
+  @override
+  String get fieldInformationSource => 'Sursa informației';
+
+  @override
+  String get fieldIngredients => 'Ingrediente';
+
+  @override
+  String get fieldInstructions => 'Instrucțiuni';
+
+  @override
+  String get fieldInsuranceCompany => 'Societate de asigurări';
+
+  @override
+  String get fieldInsurer => 'Asigurător';
+
+  @override
+  String get fieldIntent => 'Intenție';
+
+  @override
+  String get fieldInterpreter => 'Interpret';
+
+  @override
+  String get fieldItemsUsed => 'Materiale folosite';
+
+  @override
+  String get fieldLanguage => 'Limbă';
+
+  @override
+  String get fieldLanguages => 'Limbi';
+
+  @override
+  String get fieldLastOccurrence => 'Ultima apariție';
+
+  @override
+  String get fieldLifecycleStatus => 'Stadiu în ciclul de viață';
+
+  @override
+  String get fieldLocation => 'Locație';
+
+  @override
+  String get fieldLocationProvider => 'Locație și furnizor';
+
+  @override
+  String get fieldLotNumber => 'Număr de lot';
+
+  @override
+  String get fieldManagingOrganization => 'Organizație responsabilă';
+
+  @override
+  String get fieldManufacturer => 'Producător';
+
+  @override
+  String get fieldMaritalStatus => 'Stare civilă';
+
+  @override
+  String get fieldMedia => 'Media';
+
+  @override
+  String get fieldMedicalRecordNumber => 'Număr de fișă medicală';
+
+  @override
+  String get fieldMedication => 'Medicament';
+
+  @override
+  String get fieldMedicationDetails => 'Detalii despre medicament';
+
+  @override
+  String get fieldMemberId => 'ID asigurat';
+
+  @override
+  String get fieldMembers => 'Membri';
+
+  @override
+  String get fieldMethod => 'Metodă';
+
+  @override
+  String get fieldModality => 'Modalitate';
+
+  @override
+  String get fieldMode => 'Mod';
+
+  @override
+  String get fieldMothersMaidenName => 'Numele de fată al mamei';
+
+  @override
+  String get fieldMultipleBirth => 'Naștere multiplă';
+
+  @override
+  String get fieldNetwork => 'Rețea';
+
+  @override
+  String get fieldNextDose => 'Doza următoare';
+
+  @override
+  String get fieldNotes => 'Note';
+
+  @override
+  String get fieldOccurrence => 'Data';
+
+  @override
+  String get fieldOnset => 'Debut';
+
+  @override
+  String get fieldOperationalStatus => 'Stare operațională';
+
+  @override
+  String get fieldOperator => 'Operator';
+
+  @override
+  String get fieldOrder => 'Ordine';
+
+  @override
+  String get fieldOrderedBy => 'Solicitat de';
+
+  @override
+  String get fieldOrganization => 'Organizație';
+
+  @override
+  String get fieldOrganizationDetails => 'Detalii despre organizație';
+
+  @override
+  String get fieldOutcome => 'Rezultat';
+
+  @override
+  String get fieldOutcomeMeasurements => 'Măsurători ale rezultatului';
+
+  @override
+  String get fieldPanelComponents => 'Componentele panelului';
+
+  @override
+  String get fieldParentSpecimen => 'Proba de origine';
+
+  @override
+  String get fieldPartOf => 'Parte din';
+
+  @override
+  String get fieldPassportNumber => 'Numărul pașaportului';
+
+  @override
+  String get fieldPatient => 'Pacient';
+
+  @override
+  String get fieldPerformedBy => 'Efectuat de';
+
+  @override
+  String get fieldPerformer => 'Executant';
+
+  @override
+  String get fieldPerformerType => 'Tipul executantului';
+
+  @override
+  String get fieldPeriod => 'Perioadă';
+
+  @override
+  String get fieldPhone => 'Telefon';
+
+  @override
+  String get fieldPhysicalType => 'Tip fizic';
+
+  @override
+  String get fieldPlanName => 'Denumirea planului';
+
+  @override
+  String get fieldPlanType => 'Tipul planului';
+
+  @override
+  String get fieldPolicyHolder => 'Titularul poliței';
+
+  @override
+  String get fieldPracticeSetting => 'Cadru de practică';
+
+  @override
+  String get fieldPractitioner => 'Medic';
+
+  @override
+  String get fieldPrepared => 'Preparat';
+
+  @override
+  String get fieldPrescribed => 'Prescris';
+
+  @override
+  String get fieldPrescribedBy => 'Prescris de';
+
+  @override
+  String get fieldPrimarySource => 'Sursă primară';
+
+  @override
+  String get fieldPriority => 'Prioritate';
+
+  @override
+  String get fieldProcedureCode => 'Codul procedurii';
+
+  @override
+  String get fieldProcedureDetails => 'Detalii despre procedură';
+
+  @override
+  String get fieldProcessingStorage => 'Procesare și depozitare';
+
+  @override
+  String get fieldProfessionalInformation => 'Informații profesionale';
+
+  @override
+  String get fieldProgramEligibility => 'Eligibilitate pentru programe';
+
+  @override
+  String get fieldProgressNotes => 'Note de evoluție';
+
+  @override
+  String get fieldProvider => 'Furnizor';
+
+  @override
+  String get fieldQualification => 'Calificare';
+
+  @override
+  String get fieldQuantity => 'Cantitate';
+
+  @override
+  String get fieldQuantityCollected => 'Cantitate recoltată';
+
+  @override
+  String get fieldRace => 'Rasă';
+
+  @override
+  String get fieldRangeAppliesTo => 'Intervalul se aplică pentru';
+
+  @override
+  String get fieldRangeNotes => 'Note despre interval';
+
+  @override
+  String get fieldReAdmission => 'Reinternare';
+
+  @override
+  String get fieldReaction => 'Reacție';
+
+  @override
+  String get fieldReactions => 'Reacții';
+
+  @override
+  String get fieldReason => 'Motiv';
+
+  @override
+  String get fieldReasonForVisit => 'Motivul vizitei';
+
+  @override
+  String get fieldReceivedAtLab => 'Primit la laborator';
+
+  @override
+  String get fieldRecorded => 'Înregistrat';
+
+  @override
+  String get fieldRecorder => 'Înregistrat de';
+
+  @override
+  String get fieldReferenceRange => 'Interval de referință';
+
+  @override
+  String get fieldRefills => 'Reînnoiri';
+
+  @override
+  String get fieldRelatedAppointment => 'Programare asociată';
+
+  @override
+  String get fieldRelatedCondition => 'Afecțiune asociată';
+
+  @override
+  String get fieldRelatedDocument => 'Document asociat';
+
+  @override
+  String get fieldRelationship => 'Relație';
+
+  @override
+  String get fieldRelationshipToSubscriber => 'Relația cu titularul';
+
+  @override
+  String get fieldReport => 'Raport';
+
+  @override
+  String get fieldReportedBy => 'Raportat de';
+
+  @override
+  String get fieldRequestedBy => 'Solicitat de';
+
+  @override
+  String get fieldRequester => 'Solicitant';
+
+  @override
+  String get fieldResolved => 'Rezolvat';
+
+  @override
+  String get fieldResult => 'Rezultat';
+
+  @override
+  String get fieldResultDate => 'Data rezultatului';
+
+  @override
+  String get fieldResults => 'Rezultate';
+
+  @override
+  String get fieldRole => 'Rol';
+
+  @override
+  String get fieldRoute => 'Cale de administrare';
+
+  @override
+  String get fieldSecurityClassification => 'Clasificare de securitate';
+
+  @override
+  String get fieldSeries => 'Serie';
+
+  @override
+  String get fieldSeriousness => 'Gravitate';
+
+  @override
+  String get fieldServicePeriod => 'Perioada serviciului';
+
+  @override
+  String get fieldServiceType => 'Tipul serviciului';
+
+  @override
+  String get fieldSetBy => 'Stabilit de';
+
+  @override
+  String get fieldSeverity => 'Severitate';
+
+  @override
+  String get fieldSite => 'Loc';
+
+  @override
+  String get fieldSize => 'Dimensiune';
+
+  @override
+  String get fieldSpecialArrangements => 'Aranjamente speciale';
+
+  @override
+  String get fieldSpecialty => 'Specialitate';
+
+  @override
+  String get fieldSpecimenDetails => 'Detalii despre probă';
+
+  @override
+  String get fieldSpecimenQuantity => 'Cantitatea probei';
+
+  @override
+  String get fieldSpecimenType => 'Tipul probei';
+
+  @override
+  String get fieldSpecimens => 'Probe';
+
+  @override
+  String get fieldStage => 'Stadiu';
+
+  @override
+  String get fieldStartDate => 'Data de început';
+
+  @override
+  String get fieldStatus => 'Stare';
+
+  @override
+  String get fieldStatusDate => 'Data stării';
+
+  @override
+  String get fieldStatusHistory => 'Istoricul stării';
+
+  @override
+  String get fieldStatusReason => 'Motivul stării';
+
+  @override
+  String get fieldStrength => 'Concentrație';
+
+  @override
+  String get fieldSubpotent => 'Potență redusă';
+
+  @override
+  String get fieldSubrogation => 'Subrogare';
+
+  @override
+  String get fieldSubscriber => 'Titular';
+
+  @override
+  String get fieldSubstitution => 'Substituție';
+
+  @override
+  String get fieldSupplies => 'Consumabile';
+
+  @override
+  String get fieldTarget => 'Țintă';
+
+  @override
+  String get fieldTestDate => 'Data testului';
+
+  @override
+  String get fieldTimePeriod => 'Interval de timp';
+
+  @override
+  String get fieldTotal => 'Total';
+
+  @override
+  String get fieldType => 'Tip';
+
+  @override
+  String get fieldUse => 'Utilizare';
+
+  @override
+  String get fieldVaccinationDetails => 'Detalii despre vaccinare';
+
+  @override
+  String get fieldVaccine => 'Vaccin';
+
+  @override
+  String get fieldValue => 'Valoare';
+
+  @override
+  String get fieldVerification => 'Verificare';
+
+  @override
+  String get fieldVerifiedBy => 'Verificat de';
+
+  @override
+  String get fieldView => 'Vizualizare';
+
+  @override
+  String get fieldVisitDetails => 'Detalii despre vizită';
+
+  @override
+  String get fieldVisitType => 'Tipul vizitei';
+
+  @override
+  String get fieldWebsite => 'Site web';
+
+  @override
+  String get fieldDateOfBirth => 'Data nașterii';
+
+  @override
+  String get fieldAge => 'Vârstă';
+
+  @override
+  String get fieldLastUpdated => 'Ultima actualizare';
+
+  @override
+  String get fieldAdditive => 'Aditiv';
+
+  @override
+  String get fieldTime => 'Ora';
+
+  @override
+  String fieldProcessingNumber(int number) {
+    return 'Procesare $number';
+  }
+
+  @override
+  String get inactive => 'Inactiv';
+
+  @override
+  String get yes => 'Da';
+
+  @override
+  String get no => 'Nu';
+
+  @override
+  String moreCount(int count) {
+    return 'încă $count';
+  }
+
+  @override
+  String qualificationIssuedBy(String qualification, String issuer) {
+    return '$qualification (eliberat de $issuer)';
+  }
+
+  @override
+  String qualificationValidPeriod(String qualification, String period) {
+    return '$qualification - Valabil: $period';
+  }
+
+  @override
+  String sizeBytes(String size) {
+    return '$size octeți';
+  }
+
+  @override
+  String doseNumberOfTotal(String dose, String total) {
+    return 'Doza $dose din $total';
+  }
+
+  @override
+  String doseNumber(String dose) {
+    return 'Doza $dose';
+  }
+
+  @override
+  String get immunizationPrimarySourceYes => 'Da (administrat direct)';
+
+  @override
+  String get immunizationPrimarySourceNo =>
+      'Nu (raportat de pacient sau de altă sursă)';
+
+  @override
+  String get immunizationReactionReported => 'Reacție raportată';
+
+  @override
+  String get immunizationNoReactions => 'Nicio reacție adversă raportată';
+
+  @override
+  String get immunizationSeriesComplete => 'Neprogramată (schemă completă)';
+
+  @override
+  String get immunizationSubpotent => 'Vaccinul are potență redusă';
+
+  @override
+  String documentPublished(String document, String date) {
+    return '$document (publicat la $date)';
+  }
+
+  @override
+  String refillsRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de reînnoiri rămase',
+      few: '$count reînnoiri rămase',
+      one: '$count reînnoire rămasă',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String validUntil(String date) {
+    return 'Valabil până la $date';
+  }
+
+  @override
+  String validFrom(String date) {
+    return 'Valabil din $date';
+  }
+
+  @override
+  String get substitutionAllowed => 'Substituirea cu generic este permisă';
+
+  @override
+  String get substitutionNotAllowed =>
+      'Este necesar medicamentul de marcă - fără substituire';
+
+  @override
+  String get doNotPerformRequest => 'NU efectuați această solicitare';
+
+  @override
+  String get complicationsNone => 'Niciuna';
+
+  @override
+  String fastedFor(String duration) {
+    return 'În repaus alimentar de $duration';
+  }
+
+  @override
+  String containerCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de recipiente',
+      few: '$count recipiente',
+      one: '$count recipient',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get coverageOrderPrimary => 'Principală (1)';
+
+  @override
+  String get coverageOrderSecondary => 'Secundară (2)';
+
+  @override
+  String get coverageOrderTertiary => 'Terțiară (3)';
+
+  @override
+  String coverageOrderNumber(int order) {
+    return 'Ordinea $order';
+  }
+
+  @override
+  String goalDueBy(String date) {
+    return 'până la $date';
+  }
+
+  @override
+  String durationSeconds(String seconds) {
+    return '$seconds secunde';
+  }
+
+  @override
+  String ingredientCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de ingrediente',
+      few: '$count ingrediente',
+      one: '$count ingredient',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String resultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de rezultate',
+      few: '$count rezultate',
+      one: '$count rezultat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String specimenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de probe',
+      few: '$count probe',
+      one: '$count probă',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String imageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de imagini',
+      few: '$count imagini',
+      one: '$count imagine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de ani',
+      few: '$count ani',
+      one: '$count an',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get identifierPassport => 'Pașaport';
+
+  @override
+  String multipleBirthOrder(String order) {
+    return 'Da (ordinea nașterii: $order)';
+  }
+
+  @override
+  String timeAgoDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count de zile',
+      few: 'acum $count zile',
+      one: 'acum o zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeAgoHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count de ore',
+      few: 'acum $count ore',
+      one: 'acum o oră',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeAgoMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'acum $count de minute',
+      few: 'acum $count minute',
+      one: 'acum un minut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get justNow => 'Chiar acum';
+
+  @override
+  String get bloodTypeNotAvailable => 'Indisponibil';
+
+  @override
+  String get settingsStorage => 'Stocare';
+
+  @override
+  String get settingsStorageDescription =>
+      'Șterge toate înregistrările, preferințele și datele din cache';
+
+  @override
+  String get settingsReset => 'Resetează';
+
+  @override
+  String get resetDataWarning =>
+      'Această acțiune va șterge definitiv toate datele tale, inclusiv înregistrările sincronizate, notițele, atașamentele și preferințele.';
+
+  @override
+  String resetTypeToConfirm(String word) {
+    return 'Scrie $word pentru a confirma:';
+  }
+
+  @override
+  String get deleting => 'Se șterge...';
+
+  @override
+  String get aiModelDownloadContinuesInBackground =>
+      'Descărcarea continuă în fundal';
+
+  @override
+  String get aiModelAdvanced => 'Avansat';
+
+  @override
+  String get aiModelMedical => 'Medical';
+
+  @override
+  String aiModelDescriptionLite(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Rapid și ușor (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionAdvanced(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Precizie mai mare (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionUltra(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Cea mai bună precizie pentru desktop (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionPreviousAdvanced(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Modelul Avansat anterior (~$sizeGbString GB)';
+  }
+
+  @override
+  String get settingsEhrSync => 'Sincronizare dosar medical';
+
+  @override
+  String get shareProximityTitle => 'Partajare în apropiere';
+
+  @override
+  String get shareProximityDescription =>
+      'Vizibil pentru dispozitivele din apropiere';
+
+  @override
+  String get allow => 'Permite';
+
+  @override
+  String get settingsSendFeedback => 'Trimite-ne feedbackul tău';
+
+  @override
+  String get toggleOn => 'DA';
+
+  @override
+  String get toggleOff => 'NU';
+
+  @override
+  String get idScanVerifyDetails =>
+      'Verifică dacă datele sunt corecte. Scanează din nou dacă este nevoie.';
+
+  @override
+  String get idScanPartial =>
+      'Unele câmpuri nu au putut fi citite. Încearcă o fotografie mai clară.';
+
+  @override
+  String get idScanFailed =>
+      'Documentul nu a putut fi citit. Refă fotografia cu o iluminare mai bună.';
+
+  @override
+  String get genderOther => 'Altul';
+
+  @override
+  String get genderUnknown => 'Necunoscut';
+
+  @override
+  String walletPassAge(int age) {
+    String _temp0 = intl.Intl.pluralLogic(
+      age,
+      locale: localeName,
+      other: '$age de ani',
+      few: '$age ani',
+      one: '$age an',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyEffectiveDate(DateTime date) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
+    final String dateString = dateDateFormat.format(date);
+
+    return 'Data intrării în vigoare: $dateString';
+  }
+
+  @override
+  String get privacyCorePrincipleBody =>
+      'Cel mai important lucru de știut este că noi, dezvoltatorii **HealthWallet.me**, nu colectăm, nu stocăm și nu avem acces la niciuna dintre informațiile tale personale sau medicale. Aplicația noastră funcționează în întregime pe dispozitivul tău.';
+
+  @override
+  String get privacyNoCloudProcessing =>
+      '✅ Fără procesare în cloud: toate calculele, organizarea datelor și celelalte funcții au loc local, pe telefonul sau tableta ta.';
+
+  @override
+  String get privacyNoDeveloperAccess =>
+      '✅ Fără acces din partea dezvoltatorilor: nu putem vedea, accesa sau exporta datele tale. Acestea nu sunt trimise niciodată către serverele noastre.';
+
+  @override
+  String get privacyYouAreInControl =>
+      '✅ Tu deții controlul: informațiile tale sunt stocate în siguranță în spațiul de stocare privat al aplicației de pe dispozitivul tău, la care doar tu ai acces.';
+
+  @override
+  String get privacyDoNotCollectIntro =>
+      'Ca să fie foarte clar: aplicația noastră este construită intenționat astfel încât să nu acceseze datele tale personale. **Nu** colectăm, nu stocăm, nu asociem și nu procesăm nicio informație care poate fi legată de tine.';
+
+  @override
+  String get privacyPersonalIdentifiers =>
+      'Identificatori personali: nu accesăm și nu stocăm numele, adresa de e-mail, numărul de telefon, contactele sau orice alte informații personale de cont de pe dispozitivul tău.';
+
+  @override
+  String get privacyHealthInformation =>
+      'Informații medicale: orice înregistrări medicale, afecțiuni, medicamente sau alte date pe care le imporți rămân exclusiv ale tale. Nu le putem accesa.';
+
+  @override
+  String get privacyNoCrossReferencing =>
+      'Fără corelări: aplicația funcționează izolat. **Nu** scanează, nu indexează și nu corelează datele tale medicale cu alte informații personale de pe telefonul tău (cum ar fi lista de contacte, numele sau numărul de telefon). Singurul ei rol este să organizeze înregistrările pe care i le furnizezi.';
+
+  @override
+  String get privacyUsageAnalytics =>
+      'Analiza utilizării: nu urmărim cum folosești aplicația, ce butoane atingi sau cât timp petreci pe anumite ecrane.';
+
+  @override
+  String get privacyYouManageIntro =>
+      'Singurele date procesate de aplicație sunt informațiile medicale pe care **alegi să le imporți** în ea. Acest lucru se poate face în următoarele moduri:';
+
+  @override
+  String get privacyImportingIntro =>
+      'Poți adăuga documente medicale (de exemplu, PDF-uri cu rezultate de laborator sau rezumate de la clinică) direct în aplicație, folosind funcțiile standard ale sistemului de operare mobil:';
+
+  @override
+  String get privacyScanning =>
+      'Scanare: folosirea camerei dispozitivului tău pentru a scana un document fizic din aplicație.';
+
+  @override
+  String get privacyShareActionSheet =>
+      'Meniul Partajare: selectarea unui fișier din altă aplicație (de exemplu, e-mailul, fotografiile sau managerul de fișiere) și „partajarea” lui direct către **HealthWallet.me**.';
+
+  @override
+  String get privacyLocalProcessing =>
+      'După ce un document este importat, aplicația îl procesează local, pe dispozitivul tău, în fundal. Structurează informațiile conform standardului **HL7 FHIR (Fast Healthcare Interoperability Resources)**, pentru a fi utile și organizate. Întregul proces are loc pe dispozitivul tău; documentul și datele structurate nu îl părăsesc niciodată.';
+
+  @override
+  String get privacyFastenIntro =>
+      'Aplicația noastră îți permite să îți reunești înregistrările medicale prin conectarea la **FastenHealth OnPrem**, o platformă transparentă, open-source.';
+
+  @override
+  String get privacyFastenOpenSource =>
+      'Open-source și găzduit local: FastenHealth OnPrem este un software open-source controlat de tine sau de o entitate de încredere. Acest lucru oferă un nivel excepțional de confidențialitate.';
+
+  @override
+  String get privacyFastenDirectDownload =>
+      'Descărcare direct pe dispozitiv: când autorizezi conexiunea, înregistrările tale medicale sunt descărcate **direct din instanța ta FastenHealth OnPrem pe dispozitivul tău**. Aplicația noastră este doar un canal; datele tale nu trec niciodată prin serverele noastre.';
+
+  @override
+  String get privacyUsageIntro =>
+      'Deoarece toate datele tale se află pe dispozitivul tău, aplicația le „folosește” doar pentru a te ajuta să îți organizezi și să îți vezi înregistrările. Aceasta include:';
+
+  @override
+  String get privacyUsageProcessing =>
+      'Procesarea și structurarea documentelor importate sau scanate.';
+
+  @override
+  String get privacyUsageDisplaying =>
+      'Afișarea pentru tine a înregistrărilor medicale, a rezultatelor de laborator și a istoricului medicației.';
+
+  @override
+  String get privacyNoOtherUse =>
+      'Nu folosim informațiile tale pentru publicitate, cercetare sau orice alt scop.';
+
+  @override
+  String get privacyStorage =>
+      'Stocare: toate datele tale sunt stocate în spațiul de stocare securizat și izolat al aplicației de pe dispozitivul tău. Sunt la fel de sigure ca dispozitivul în sine. Îți recomandăm insistent să îți protejezi dispozitivul cu un cod de acces, Face ID sau altă metodă de securitate biometrică.';
+
+  @override
+  String get privacySharing =>
+      'Partajare: nu partajăm și nu putem partaja datele tale cu nimeni, deoarece nu le avem. Dacă alegi să exporți sau să partajezi datele din aplicație, tu controlezi complet unde ajung.';
+
+  @override
+  String get privacyDeletion =>
+      'Ștergere: îți poți șterge informațiile oricând din aplicație. Dezinstalarea aplicației de pe dispozitiv șterge definitiv și toate datele stocate de aceasta.';
+
+  @override
+  String get privacyChildrenBody =>
+      'Serviciul nostru nu se adresează persoanelor cu vârsta sub 16 ani, în conformitate cu Regulamentul general privind protecția datelor (GDPR), așa cum se aplică în România și în întreaga UE. Nu colectăm în mod intenționat informații personale de la copii. Dacă afli că un copil ne-a furnizat informații personale, te rugăm să ne contactezi.';
+
+  @override
+  String get privacyChangesBody =>
+      'Putem actualiza această politică din când în când. Dacă facem modificări semnificative, te vom anunța prin aplicație sau prin alte mijloace, astfel încât să le poți analiza înainte de intrarea lor în vigoare.';
+
+  @override
+  String get privacyContactBody =>
+      'Dacă ai întrebări sau nelămuriri privind această Politică de confidențialitate, contactează-ne la:';
+
+  @override
+  String get syncQrScanInstructions =>
+      'Scanează un cod QR din aplicația desktop **HealthWallet.me** sau din **Fasten Health** pentru a-ți sincroniza datele.';
+
+  @override
+  String get syncSuccessMessage => 'Datele au fost sincronizate cu succes!';
+
+  @override
+  String get syncErrorConnection =>
+      'Conexiunea a eșuat. Verifică rețeaua și încearcă din nou.';
+
+  @override
+  String get syncErrorEndpointNotFound =>
+      'Punctul de sincronizare nu a fost găsit. Verifică configurația serverului.';
+
+  @override
+  String get syncErrorAuthentication =>
+      'Autentificarea a eșuat. Verifică tokenul.';
+
+  @override
+  String get syncErrorInvalidFormat =>
+      'Format nevalid al datelor de sincronizare';
+
+  @override
+  String syncErrorGeneric(String error) {
+    return 'Sincronizarea datelor a eșuat: $error';
+  }
+
+  @override
+  String syncPlaceholderSubtitle(String recordType) {
+    return 'Sincronizează sau actualizează datele pentru a vedea înregistrările de tip $recordType';
+  }
+
+  @override
+  String get appLockTitle => 'HealthWallet este blocat';
+
+  @override
+  String get appLockMessage =>
+      'Deblochează pentru a-ți vedea înregistrările medicale';
+
+  @override
+  String get appLockUnlock => 'Deblochează';
+
+  @override
+  String get desktopRestoreSucceededTitle => 'Copie de siguranță restaurată';
+
+  @override
+  String desktopRestoreSucceededMessage(String name, int count) {
+    return '\"$name\" a fost restaurată. Acum sunt $count înregistrări pe acest dispozitiv.';
+  }
 }

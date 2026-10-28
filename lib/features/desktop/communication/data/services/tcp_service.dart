@@ -53,8 +53,29 @@ class _IsolateServerConfig {
 @lazySingleton
 class TcpService {
   static const defaultPort = 49152;
-  static const _pingInterval = Duration(seconds: 10);
-  static const _pingTimeout = Duration(seconds: 5);
+
+  /// Largest frame accepted from a server client before its hello is
+  /// verified. A hello is a few hundred bytes.
+  static const maxUnauthenticatedFrameBytes = 64 * 1024;
+
+  /// Largest frame accepted once the peer is known (large LWW deltas and
+  /// `file_data` messages).
+  static const maxFrameBytes = 1024 * 1024 * 1024;
+
+  static const _maxPendingBytes = maxUnauthenticatedFrameBytes + 4;
+
+  /// How long a server client has to send a valid hello before it is closed.
+  /// Generous for slow networks and phones just waking up; a paired phone
+  /// sends its hello right after connecting.
+  @visibleForTesting
+  Duration helloTimeout = const Duration(seconds: 15);
+
+  /// How often a client pings the server, and how long it waits for the
+  /// pong before treating the link as dead.
+  @visibleForTesting
+  Duration pingInterval = const Duration(seconds: 10);
+  @visibleForTesting
+  Duration pingTimeout = const Duration(seconds: 5);
 
   Isolate? _serverIsolate;
   SendPort? _isolateSendPort;
@@ -71,6 +92,14 @@ class TcpService {
   ConnectionState _state = ConnectionState.disconnected;
   Uint8List _buffer = Uint8List(0);
   Completer<void>? _writeLock;
+
+  /// The server isolate's id for the current client, null without one.
+  int? _serverClientId;
+
+  /// Whether the current server client has sent a hello with the pairing
+  /// key's hash. Until then only a hello is read from it.
+  bool _serverClientVerified = false;
+  Timer? _helloTimer;
 
   CommunicationService? _mpcTransport;
   StreamSubscription? _mpcDataSub;
@@ -160,6 +189,7 @@ class TcpService {
         } else if (type == 'sendPort') {
           _isolateSendPort = message['sendPort'] as SendPort;
         } else if (type == 'clientConnected') {
+          _onServerClientConnected(message['id'] as int?);
         } else if (type == 'newClientPending') {
           final address = message['address'] as String? ?? 'unknown';
           _pendingClientController.add(address);
@@ -169,8 +199,8 @@ class TcpService {
           );
           _onData(data);
         } else if (type == 'clientDisconnected') {
-          _handleDisconnect();
-        } else if (type == 'error') {}
+          _onServerClientDisconnected();
+        }
       }
     });
 
@@ -204,30 +234,58 @@ class TcpService {
     config.mainPort.send({'type': 'listening', 'port': server.port, 'ip': ip});
 
     Socket? clientSocket;
+    var clientId = 0;
     Socket? pendingSocket;
-    var pendingIsActive = false;
     final pendingBuffer = <List<int>>[];
+    var pendingBytes = 0;
 
-    void setupClient(Socket client) {
+    void clearPending() {
+      pendingSocket = null;
+      pendingBuffer.clear();
+      pendingBytes = 0;
+    }
+
+    void activate(Socket client, String address) {
       clientSocket = client;
+      clientId++;
+      config.mainPort.send({
+        'type': 'clientConnected',
+        'address': address,
+        'id': clientId,
+      });
+    }
+
+    // One listener per socket, routed by the role the socket has when the
+    // event arrives: a replaced or rejected socket reports nothing.
+    void closed(Socket client, String reason) {
+      if (client == clientSocket) {
+        clientSocket = null;
+        config.mainPort.send({'type': 'clientDisconnected', 'reason': reason});
+      } else if (client == pendingSocket) {
+        clearPending();
+      }
+    }
+
+    void listenTo(Socket client) {
       client.listen(
         (data) {
-          config.mainPort.send({'type': 'data', 'bytes': data});
+          if (client == clientSocket) {
+            config.mainPort.send({'type': 'data', 'bytes': data});
+          } else if (client == pendingSocket) {
+            pendingBytes += data.length;
+            if (pendingBytes > _maxPendingBytes) {
+              // A waiting phone sends only its hello; anything bigger is
+              // not one.
+              clearPending();
+              client.destroy();
+            } else {
+              pendingBuffer.add(data);
+            }
+          }
         },
-        onError: (e) {
-          config.mainPort.send({
-            'type': 'clientDisconnected',
-            'reason': e.toString(),
-          });
-          clientSocket = null;
-        },
-        onDone: () {
-          config.mainPort.send({
-            'type': 'clientDisconnected',
-            'reason': 'done',
-          });
-          clientSocket = null;
-        },
+        onError: (Object e) => closed(client, e.toString()),
+        onDone: () => closed(client, 'done'),
+        cancelOnError: true,
       );
     }
 
@@ -236,43 +294,20 @@ class TcpService {
       try {
         address = client.remoteAddress.address;
       } catch (_) {
+        // The socket closed before its address could be read.
         address = 'unknown';
       }
 
       if (clientSocket == null) {
-        config.mainPort.send({'type': 'clientConnected', 'address': address});
-        setupClient(client);
+        activate(client, address);
+        listenTo(client);
         return;
       }
 
       pendingSocket?.destroy();
+      clearPending();
       pendingSocket = client;
-      pendingIsActive = true;
-      pendingBuffer.clear();
-
-      client.listen(
-        (data) {
-          if (pendingIsActive) {
-            pendingBuffer.add(data);
-          } else {
-            config.mainPort.send({'type': 'data', 'bytes': data});
-          }
-        },
-        onError: (_) {
-          if (pendingSocket == client) {
-            pendingSocket = null;
-            pendingIsActive = false;
-            pendingBuffer.clear();
-          }
-        },
-        onDone: () {
-          if (pendingSocket == client) {
-            pendingSocket = null;
-            pendingIsActive = false;
-            pendingBuffer.clear();
-          }
-        },
-      );
+      listenTo(client);
 
       config.mainPort.send({
         'type': 'newClientPending',
@@ -287,21 +322,28 @@ class TcpService {
           final bytes = Uint8List.fromList(
             (message['bytes'] as List).cast<int>(),
           );
+          final client = clientSocket;
           try {
-            clientSocket?.add(bytes);
+            client?.add(bytes);
           } catch (_) {
-            clientSocket?.destroy();
-            clientSocket = null;
-            config.mainPort.send({
-              'type': 'clientDisconnected',
-              'reason': 'write_failed',
-            });
+            // The write failed: treat the client as gone.
+            client?.destroy();
+            if (client != null) closed(client, 'write_failed');
+          }
+        } else if (type == 'dropClient') {
+          final client = clientSocket;
+          if (client != null && message['id'] == clientId) {
+            client.destroy();
+            closed(client, 'dropped');
           }
         } else if (type == 'acceptPending') {
+          final next = pendingSocket;
+          // The pending client already hung up: keep the current one.
+          if (next == null) return;
           final old = clientSocket;
-          clientSocket = pendingSocket;
-          pendingSocket = null;
-          pendingIsActive = false;
+          final buffered = List<List<int>>.of(pendingBuffer);
+          clearPending();
+          clientSocket = null;
           old?.destroy();
 
           config.mainPort.send({
@@ -309,20 +351,13 @@ class TcpService {
             'reason': 'replaced',
           });
 
-          for (final data in pendingBuffer) {
+          activate(next, 'pending-accepted');
+          for (final data in buffered) {
             config.mainPort.send({'type': 'data', 'bytes': data});
           }
-          pendingBuffer.clear();
-
-          config.mainPort.send({
-            'type': 'clientConnected',
-            'address': 'pending-accepted',
-          });
         } else if (type == 'rejectPending') {
           pendingSocket?.destroy();
-          pendingSocket = null;
-          pendingIsActive = false;
-          pendingBuffer.clear();
+          clearPending();
         }
       } else if (message == 'stop') {
         pendingSocket?.destroy();
@@ -479,6 +514,49 @@ class TcpService {
     );
   }
 
+  bool get _isServerMode => _isolateSendPort != null;
+
+  void _onServerClientConnected(int? id) {
+    _buffer = Uint8List(0);
+    _serverClientId = id;
+    _serverClientVerified = false;
+    _helloTimer?.cancel();
+    _helloTimer = Timer(helloTimeout, () {
+      if (_serverClientId == id && !_serverClientVerified) {
+        debugPrint('[TCP] Rejected: no valid hello in time');
+        _dropServerClient();
+      }
+    });
+  }
+
+  void _onServerClientDisconnected() {
+    _buffer = Uint8List(0);
+    _serverClientId = null;
+    _serverClientVerified = false;
+    _helloTimer?.cancel();
+    _handleDisconnect();
+  }
+
+  /// Closes the current server client; the isolate then reports it gone.
+  void _dropServerClient() {
+    _buffer = Uint8List(0);
+    _serverClientVerified = false;
+    _helloTimer?.cancel();
+    final id = _serverClientId;
+    if (id != null) {
+      _isolateSendPort?.send({'type': 'dropClient', 'id': id});
+    }
+  }
+
+  void _rejectPeer() {
+    if (_isServerMode) {
+      _dropServerClient();
+    } else {
+      _buffer = Uint8List(0);
+      _handleDisconnect();
+    }
+  }
+
   void _onData(Uint8List data) {
     final combined = Uint8List(_buffer.length + data.length);
     combined.setAll(0, _buffer);
@@ -487,28 +565,70 @@ class TcpService {
 
     while (_buffer.length >= 4) {
       final length = ByteData.sublistView(_buffer, 0, 4).getUint32(0);
+      final unverified = _isServerMode && !_serverClientVerified;
+      final cap = unverified ? maxUnauthenticatedFrameBytes : maxFrameBytes;
+      if (length > cap) {
+        debugPrint('[TCP] Rejected: frame of $length bytes over $cap');
+        _rejectPeer();
+        return;
+      }
       if (_buffer.length < 4 + length) break;
 
       final encrypted = _buffer.sublist(4, 4 + length);
       _buffer = _buffer.sublist(4 + length);
 
+      final TcpMessage message;
       try {
         final decrypted = _decrypt(encrypted);
         final type = MessageType.fromCode(decrypted[0]);
-        final payload = decrypted.sublist(1);
-
-        final message = TcpMessage(type: type, payload: payload);
-        if (type != MessageType.ping && type != MessageType.pong) {
-          debugPrint('[TCP] ${type.name}');
-        }
-        _handleMessage(message);
+        message = TcpMessage(type: type, payload: decrypted.sublist(1));
       } catch (e) {
         debugPrint('[TCP] Decrypt/parse failed: $e');
+        if (unverified) {
+          _rejectPeer();
+          return;
+        }
+        continue;
       }
+
+      if (unverified) {
+        // Nothing from an unknown client is read until its hello.
+        if (message.type != MessageType.hello) continue;
+        if (!_isValidHello(message)) {
+          debugPrint('[TCP] Rejected: invalid hello');
+          _rejectPeer();
+          return;
+        }
+        _serverClientVerified = true;
+        _helloTimer?.cancel();
+      }
+
+      if (message.type != MessageType.ping &&
+          message.type != MessageType.pong) {
+        debugPrint('[TCP] ${message.type.name}');
+      }
+      _handleMessage(message, viaServerSocket: _isServerMode);
+      // A rejected hello drops the client; stop reading its bytes.
+      if (_isServerMode && !_serverClientVerified) return;
     }
   }
 
-  void _handleMessage(TcpMessage message) {
+  /// A hello that carries the hash of this side's pairing key.
+  bool _isValidHello(TcpMessage message) {
+    final key = _pairingKey;
+    if (key == null) return false;
+    try {
+      final json = jsonDecode(message.payloadString);
+      if (json is! Map<String, dynamic>) return false;
+      final remoteHash = json['pairing_key_hash'];
+      return remoteHash is String && remoteHash == _hashKey(key);
+    } catch (e) {
+      debugPrint('[TCP] Unreadable hello: $e');
+      return false;
+    }
+  }
+
+  void _handleMessage(TcpMessage message, {bool viaServerSocket = false}) {
     switch (message.type) {
       case MessageType.ping:
         sendMessage(TcpMessage(type: MessageType.pong, payload: Uint8List(0)));
@@ -522,17 +642,15 @@ class TcpService {
         return;
       case MessageType.hello:
         if (_pairingKey != null && _clientSocket == null) {
-          try {
-            final json =
-                jsonDecode(message.payloadString) as Map<String, dynamic>;
-            final remoteHash = json['pairing_key_hash'] as String?;
-            final localHash = _hashKey(_pairingKey!);
-            if (remoteHash != null && remoteHash != localHash) {
-              debugPrint('[TCP] Rejected: pairing key mismatch');
+          if (!_isValidHello(message)) {
+            debugPrint('[TCP] Rejected: pairing key mismatch');
+            if (viaServerSocket) {
+              _dropServerClient();
+            } else {
               _handleDisconnect();
-              return;
             }
-          } catch (_) {}
+            return;
+          }
         }
         _updateState(ConnectionState.connected);
         sendMessage(TcpMessage(type: MessageType.ack, payload: Uint8List(0)));
@@ -652,15 +770,16 @@ class TcpService {
 
   void _startPingTimer() {
     _pingTimer?.cancel();
-    _pingTimer = Timer.periodic(_pingInterval, (_) {
+    _pingTimer = Timer.periodic(pingInterval, (_) {
       sendMessage(TcpMessage(type: MessageType.ping, payload: Uint8List(0)));
-      _pingTimeoutTimer = Timer(_pingTimeout, _handleDisconnect);
+      _pingTimeoutTimer = Timer(pingTimeout, _handleDisconnect);
     });
   }
 
   void _handleDisconnect() {
     _pingTimer?.cancel();
     _pingTimeoutTimer?.cancel();
+    if (_clientSocket != null) _buffer = Uint8List(0);
     _clientSocket?.destroy();
     _clientSocket = null;
     _updateState(ConnectionState.disconnected);
@@ -675,6 +794,10 @@ class TcpService {
   Future<void> stopServer() async {
     _pingTimer?.cancel();
     _pingTimeoutTimer?.cancel();
+    _helloTimer?.cancel();
+    _buffer = Uint8List(0);
+    _serverClientId = null;
+    _serverClientVerified = false;
     _clientSocket?.destroy();
     _clientSocket = null;
     _isolateSendPort?.send('stop');

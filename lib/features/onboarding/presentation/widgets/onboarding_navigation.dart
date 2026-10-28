@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
@@ -49,7 +50,10 @@ class OnboardingNavigation extends StatelessWidget {
                 onPressed: () async {
                   if (isLastPage) {
                     final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('hasSeenOnboarding', true);
+                    await prefs.setBool(
+                      SharedPrefsConstants.hasSeenOnboarding,
+                      true,
+                    );
                     if (!context.mounted) return;
                     unawaited(
                       context.appRouter.replace(const DashboardRoute()),
@@ -365,7 +369,9 @@ class _LoadModelButtonState extends State<_LoadModelButton> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Downloading... ${loadModelState.downloadProgress!.toStringAsFixed(0)}%',
+                      context.l10n.aiModelDownloadingPercent(
+                        loadModelState.downloadProgress!.toStringAsFixed(0),
+                      ),
                       style: AppTextStyle.labelSmall.copyWith(
                         color: context.colorScheme.onSurface.withValues(
                           alpha: 0.6,

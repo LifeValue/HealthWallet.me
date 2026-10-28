@@ -1022,5 +1022,1141 @@
   "changeSpecialtyConfirm": "Are you sure you want to change the specialty to",
   "removeSpecialtyConfirm": "Are you sure you want to remove the specialty from this record?",
   "confirm": "Confirm",
-  "currentRecord": "Current record"
+  "currentRecord": "Current record",
+  "vitalHeartRate": "Heart Rate",
+  "vitalBloodPressure": "Blood Pressure",
+  "vitalTemperature": "Temperature",
+  "vitalBloodOxygen": "Blood Oxygen",
+  "vitalRespiratoryRate": "Respiratory Rate",
+  "vitalWeight": "Weight",
+  "vitalHeight": "Height",
+  "vitalBmi": "BMI",
+  "vitalBloodGlucose": "Blood Glucose",
+  "vitalSystolicBloodPressure": "Systolic Blood Pressure",
+  "vitalDiastolicBloodPressure": "Diastolic Blood Pressure",
+  "unitBeatsPerMinute": "beats/min",
+  "unitBreathsPerMinute": "breaths/min",
+  "unitPounds": "pounds",
+  "unitInches": "inches",
+  "unitKilograms": "kilograms",
+  "unitCentimeters": "centimeters",
+  "specialtyAllergology": "Allergology",
+  "specialtyCardiology": "Cardiology",
+  "specialtyDental": "Dental",
+  "specialtyDermatology": "Dermatology",
+  "specialtyEmergencyMedicine": "Emergency Medicine",
+  "specialtyEndocrinology": "Endocrinology",
+  "specialtyGastroenterology": "Gastroenterology",
+  "specialtyGeneralCare": "General Care",
+  "specialtyGynecology": "Gynecology",
+  "specialtyNephrology": "Nephrology",
+  "specialtyNeurology": "Neurology",
+  "specialtyOncology": "Oncology",
+  "specialtyOphthalmology": "Ophthalmology",
+  "specialtyOrthopedics": "Orthopedics",
+  "specialtyPsychiatry": "Psychiatry",
+  "specialtyPulmonology": "Pulmonology",
+  "specialtyRheumatology": "Rheumatology",
+  "specialtyUrology": "Urology",
+  "categoryAllergies": "Allergies",
+  "categoryCareTeam": "Care Team",
+  "categoryClinicalNotes": "Clinical Notes",
+  "categoryFiles": "Files",
+  "categoryLabResults": "Lab Results",
+  "categoryHealthIssues": "Health Issues",
+  "categoryFacilities": "Facilities",
+  "categoryHealthGoals": "Health Goals",
+  "categoryImmunizations": "Immunizations",
+  "categoryMedications": "Medications",
+  "categoryDemographics": "Demographics",
+  "categoryProcedures": "Procedures",
+  "categoryHealthInsurance": "Health Insurance",
+  "fhirTypeAdverseEvent": "Adverse Event",
+  "fhirTypeAllergyIntolerance": "Allergy",
+  "fhirTypeBinary": "Binary",
+  "fhirTypeCareTeam": "Care Team",
+  "fhirTypeClaim": "Claim",
+  "fhirTypeCondition": "Condition",
+  "fhirTypeCoverage": "Coverage",
+  "fhirTypeDiagnosticReport": "Diagnostic Report",
+  "fhirTypeDocumentReference": "Document",
+  "fhirTypeEncounter": "Encounter",
+  "fhirTypeExplanationOfBenefit": "Explanation of Benefit",
+  "fhirTypeGoal": "Goal",
+  "fhirTypeImmunization": "Immunization",
+  "fhirTypeLocation": "Location",
+  "fhirTypeMedia": "Media",
+  "fhirTypeMedication": "Medication",
+  "fhirTypeMedicationAdministration": "Medication Administration",
+  "fhirTypeMedicationDispense": "Medication Dispense",
+  "fhirTypeMedicationRequest": "Medication Request",
+  "fhirTypeMedicationStatement": "Medication Statement",
+  "fhirTypeObservation": "Observation",
+  "fhirTypeOrganization": "Organization",
+  "fhirTypePatient": "Patient",
+  "fhirTypePractitioner": "Practitioner",
+  "fhirTypePractitionerRole": "Practitioner Role",
+  "fhirTypeProcedure": "Procedure",
+  "fhirTypeRelatedPerson": "Related Person",
+  "fhirTypeServiceRequest": "Service Request",
+  "fhirTypeSpecimen": "Specimen",
+  "fhirTypeGeneralResource": "Resource",
+  "processingOriginScan": "Scan",
+  "processingOriginImport": "Import",
+  "processingOriginHandover": "Handover",
+  "processingStatusPending": "Pending",
+  "processingStatusProcessingPatient": "Processing Patient",
+  "processingStatusPatientExtracted": "Patient Extracted",
+  "processingStatusProcessing": "Processing",
+  "processingStatusDraft": "Draft",
+  "processingStatusCancelled": "Cancelled",
+  "showAll": "Show All",
+  "showLess": "Show Less",
+  "all": "All",
+  "gotIt": "Got it",
+  "homeSpecialties": "Specialties",
+  "homeResources": "Resources",
+  "homeDefaultUserName": "User",
+  "selectSpecialty": "Select Specialty",
+  "removeSpecialty": "Remove Specialty",
+  "chooseRecordsForDashboard": "Choose the records you want to see on your dashboard.",
+  "selectAtLeastOneRecordType": "Select at least one record type to continue.",
+  "chooseVitalsForDashboard": "Choose the vitals you want to see on your dashboard.",
+  "selectAtLeastOneVital": "Select at least one vital sign to continue.",
+  "chooseSpecialtiesForDashboard": "Choose the specialities you want to see on your dashboard.",
+  "selectAtLeastOneSpecialty": "Select at least one specialty to continue.",
+  "selectAtLeastOneItem": "Select at least one item to continue.",
+  "sourceSectionWallet": "WALLET",
+  "sourceSectionEhr": "EHR SOURCES",
+  "areYouSure": "Are you sure?",
+  "resourceNotViewable": "This resource is not a viewable file",
+  "noFilePathFound": "No file path found",
+  "handoverPatientMatched": "Handover patient matched",
+  "desktopDiscovering": "Discovering...",
+  "desktopTransportWifi": "WiFi",
+  "desktopTransportDirect": "Direct",
+  "desktopDeviceSync": "Device Sync",
+  "desktopBackupLocation": "Location",
+  "desktopBackupHistory": "History",
+  "desktopPairedWith": "Paired with {name}",
+  "@desktopPairedWith": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopMobileDevice": "Mobile Device",
+  "desktopNotFoundScanAgain": "Desktop not found. Try scanning QR again.",
+  "desktopPairingExpired": "Could not connect. Scan QR code to pair again.",
+  "desktopRemoteBackupName": "Remote {date}",
+  "@desktopRemoteBackupName": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopNoBackupLocation": "No backup location set on desktop. Open the desktop app and choose a backup folder first.",
+  "desktopBackupFailed": "Backup failed. Please try again.",
+  "desktopRestoreFailed": "Restore failed. Please try again.",
+  "desktopBackupActionFailed": "Could not update the backups. Please try again.",
+  "desktopSyncFailed": "Sync failed. Check the connection and try again.",
+  "desktopHandoverTransfer": "Transfer",
+  "desktopHandoverNoActive": "No active handovers",
+  "desktopHandoverSendFromPhone": "Send documents from your phone.",
+  "desktopHandoverFilesProgress": "{received}/{total} files",
+  "@desktopHandoverFilesProgress": {
+    "placeholders": {
+      "received": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopHandoverTransferComplete": "Transfer complete",
+  "desktopHandoverReceivingFiles": "Receiving files...",
+  "desktopHandoverProcessingStatus": "Processing...",
+  "desktopHandoverSendingResults": "Sending results...",
+  "desktopHandoverDone": "Complete",
+  "desktopHandoverStatusError": "Error",
+  "desktopHandoverWaitingForResults": "Waiting for results...",
+  "desktopHandoverNotAccepted": "The desktop did not accept the documents.",
+  "desktopHandoverFileMissing": "A document could not be found on this device.",
+  "desktopHandoverCancelled": "Cancelled",
+  "desktopHandoverFailed": "Processing failed. Please try again.",
+  "trayShowWindow": "Show Window",
+  "trayHideWindow": "Hide Window",
+  "trayNoDeviceConnected": "No device connected",
+  "traySyncStatus": "Sync: {status}",
+  "@traySyncStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "trayUpToDate": "Up to date",
+  "trayQuit": "Quit {appName}",
+  "@trayQuit": {
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopFinishedProcessing": "Desktop finished processing",
+  "biometricAuthReason": "Please authenticate to access your HealthWallet.me",
+  "sourceUploadedOn": "Uploaded {date}",
+  "@sourceUploadedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenPdf": "Could not open PDF: {message}",
+  "@couldNotOpenPdf": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOpeningPdf": "Error opening PDF: {error}",
+  "@errorOpeningPdf": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "shareStatusReadyToShare": "Ready to share",
+  "shareStatusWaitingForSender": "Waiting for sender...",
+  "shareStatusPermissionsRequired": "Permissions required",
+  "shareStatusEnablePermissionsInSettings": "Please enable permissions in Settings",
+  "shareSelectAtLeastOneRecord": "Please select at least one record",
+  "shareStatusLookingForDevices": "Looking for nearby devices...",
+  "shareStatusTransferFailed": "Transfer failed",
+  "shareStatusConfirmExit": "Are you sure you want to exit? Data will be deleted.",
+  "shareStatusViewingRecords": "{count, plural, one{Viewing 1 record} other{Viewing {count} records}}",
+  "@shareStatusViewingRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareStatusViewingRecordsFrom": "{count, plural, one{Viewing 1 record from {deviceName}} other{Viewing {count} records from {deviceName}}}",
+  "@shareStatusViewingRecordsFrom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareStatusDataDeleted": "Data has been securely deleted",
+  "shareStatusSessionExpired": "Session expired",
+  "shareStatusTerminatingSession": "Terminating remote session...",
+  "shareStatusSessionTerminated": "Session terminated",
+  "shareStatusRemoteSessionTerminated": "Remote session terminated",
+  "shareStatusExtensionDeclined": "Extension request was declined",
+  "shareStatusReceiverViewing": "Receiver is viewing records - monitoring session",
+  "shareStatusReceiverDeclined": "Receiver declined invitation",
+  "shareStatusReceivingFrom": "Receiving records from {deviceName}...",
+  "@shareStatusReceivingFrom": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareNoDataAvailable": "No data available",
+  "shareStatusDeviceWantsToShare": "{deviceName} wants to share records",
+  "@shareStatusDeviceWantsToShare": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareStatusScanning": "Scanning for devices...",
+  "shareStatusFoundDevices": "{count, plural, one{Found 1 device} other{Found {count} devices}}",
+  "@shareStatusFoundDevices": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareStatusConnectingTo": "Connecting to {deviceName}...",
+  "@shareStatusConnectingTo": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "shareStatusPreparingRecords": "Preparing records...",
+  "shareErrorPrepareFiles": "Failed to prepare files for sending",
+  "shareStatusTransferring": "Transferring {percent}%",
+  "@shareStatusTransferring": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "shareStatusRecordsSentWaiting": "Records sent - waiting for receiver to accept",
+  "shareStatusTransferCancelled": "Transfer cancelled",
+  "shareStatusInvitationRejected": "Invitation rejected",
+  "shareErrorParseData": "Failed to parse received data",
+  "shareStatusProcessingReceived": "Processing received records...",
+  "shareErrorParseFile": "Failed to parse received file",
+  "shareIncomingHealthRecords": "Incoming Health Records",
+  "shareDeviceWantsToShareHealthRecords": "{deviceName} wants to share health records with you",
+  "@shareDeviceWantsToShareHealthRecords": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "sharePermissionExplanationIos": "To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n\nThis allows you to securely share health records with other devices nearby.",
+  "sharePermissionExplanationAndroid": "To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n• Location/Nearby Devices - required by Android to scan for Bluetooth and WiFi Direct devices\n\nYour location is never stored or transmitted.",
+  "sharePermissionsDeniedMessage": "Please grant all permissions to share records with nearby devices.",
+  "sharePermissionsPermanentlyDeniedMessage": "Some permissions were denied. Please enable them in Settings to use this feature.",
+  "shareDurationRequested": "{duration} requested",
+  "@shareDurationRequested": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "noAttachments": "No attachments",
+  "attachingFiles": "Attaching files...",
+  "addAttachment": "Add Attachment",
+  "noFileName": "No file name",
+  "attachmentFileOfTotal": "( {current} of {total} files )",
+  "@attachmentFileOfTotal": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "showDetails": "Show Details",
+  "viewRelated": "View Related",
+  "hideRelated": "Hide Related",
+  "noRelatedResourcesFound": "No related resources found",
+  "loadingRelatedResources": "Loading related resources...",
+  "noRelatedResourcesForEncounter": "No related resources found for this encounter",
+  "cannotAttachToDocumentReference": "Cannot attach files to DocumentReference resources",
+  "deleteRecordOfType": "Delete {type}",
+  "@deleteRecordOfType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "dateFilterEndBeforeStart": "End date must be after start date",
+  "dateFilterChip": "Date: {range}",
+  "@dateFilterChip": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelCheckFailed": "An error appeared while checking model existence",
+  "aiModelExistenceCheckFailed": "Failed to check model existence",
+  "aiModelDownloadingTitle": "Downloading {modelName}",
+  "@aiModelDownloadingTitle": {
+    "placeholders": {
+      "modelName": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelDownloadStarting": "Starting download...",
+  "aiModelReadyTitle": "{modelName} Ready",
+  "@aiModelReadyTitle": {
+    "placeholders": {
+      "modelName": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelDownloadedMessage": "{modelName} has been downloaded successfully.",
+  "@aiModelDownloadedMessage": {
+    "placeholders": {
+      "modelName": {
+        "type": "String"
+      }
+    }
+  },
+  "aiModelDownloadFailedTitle": "Download Failed",
+  "aiModelDownloadFailedMessage": "AI model download failed. Please check your connection and try again.",
+  "aiModelDownloadFailed": "Download failed",
+  "aiModelDownloadCancelledTitle": "Download Cancelled",
+  "aiModelDownloadInterruptedMessage": "The download was interrupted. Please try again.",
+  "aiModelDownloadCancelledNotificationTitle": "AI Model Download Cancelled",
+  "aiModelDownloadWasCancelled": "AI model download was cancelled",
+  "aiModelDownloadCancelled": "Download cancelled",
+  "aiModelDownloadingPercent": "Downloading... {percent}%",
+  "@aiModelDownloadingPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "processingNoImagesGenerated": "No images were generated from the scan. Please try scanning again.",
+  "processingPatientMatched": "{origin} patient matched",
+  "@processingPatientMatched": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "processingPatientInfoExtracted": "{origin} patient info extracted",
+  "@processingPatientInfoExtracted": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "processingFinished": "{origin} processing finished",
+  "@processingFinished": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "scanFailedWithError": "Scan failed: {error}",
+  "@scanFailedWithError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noValidFilesFound": "No valid files found",
+  "failedToImportDocument": "Failed to import document: {error}",
+  "@failedToImportDocument": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotOpenLink": "Could not open link. Please try again.",
+  "continueProcessingOnDesktop": "Continue processing on Desktop",
+  "deleteResourcesTitle": "Delete Resources",
+  "switchToDiagnosticReport": "Switch to Diagnostic Report",
+  "switchToEncounter": "Switch to Encounter",
+  "previewDocument": "Preview document",
+  "summaryTitle": "Summary",
+  "pagesAvailableForProcessing": "{count, plural, one{Total: {count} page available for processing} other{Total: {count} pages available for processing}}",
+  "@pagesAvailableForProcessing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "betaBadge": "Beta",
+  "pleaseSelectSpecialty": "Please select a specialty",
+  "patientAndSourceInformation": "Patient & Source Information",
+  "noPatientsAvailable": "No patients available",
+  "selectPatient": "Select patient",
+  "unknownPatient": "Unknown Patient",
+  "documentPreview": "Document Preview",
+  "filePathLabel": "Path: {path}",
+  "@filePathLabel": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "confidenceMedium": "Medium confidence",
+  "confidenceLow": "Low confidence",
+  "dateFormatHintIso": "YYYY-MM-DD",
+  "retryStep": "Retry (Step {step})",
+  "@retryStep": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "failedToCreateEncounter": "Failed to create encounter: {error}",
+  "@failedToCreateEncounter": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToAttachDocuments": "Failed to attach documents: {error}",
+  "@failedToAttachDocuments": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldAccessionNumber": "Accession Number",
+  "fieldAchievementStatus": "Achievement Status",
+  "fieldActuality": "Actuality",
+  "fieldAdditionalInformation": "Additional Information",
+  "fieldAddress": "Address",
+  "fieldAddresses": "Addresses",
+  "fieldAdministeredBy": "Administered By",
+  "fieldAdmissionSource": "Admission Source",
+  "fieldAlert": "Alert",
+  "fieldAllergyDetails": "Allergy Details",
+  "fieldAlsoKnownAs": "Also Known As",
+  "fieldAsserter": "Asserter",
+  "fieldAttachmentTitle": "Attachment Title",
+  "fieldAuthenticatedBy": "Authenticated By",
+  "fieldAuthor": "Author",
+  "fieldAvailabilityExceptions": "Availability Exceptions",
+  "fieldAvailabilityNotes": "Availability Notes",
+  "fieldBasedOn": "Based On",
+  "fieldBasicInformation": "Basic Information",
+  "fieldBeneficiary": "Beneficiary",
+  "fieldBillablePeriod": "Billable Period",
+  "fieldBirthDate": "Birth Date",
+  "fieldBirthPlace": "Birth Place",
+  "fieldBirthSex": "Birth Sex",
+  "fieldBodySite": "Body Site",
+  "fieldCareTeam": "Care Team",
+  "fieldCategory": "Category",
+  "fieldClinicalNotes": "Clinical Notes",
+  "fieldClinicalStatus": "Clinical Status",
+  "fieldCollectedBy": "Collected By",
+  "fieldCollectionDate": "Collection Date",
+  "fieldCollectionDuration": "Collection Duration",
+  "fieldCollectionInformation": "Collection Information",
+  "fieldCollectionMethod": "Collection Method",
+  "fieldCollectionPeriod": "Collection Period",
+  "fieldComplicationDetails": "Complication Details",
+  "fieldComplications": "Complications",
+  "fieldConclusion": "Conclusion",
+  "fieldConclusionCode": "Conclusion Code",
+  "fieldCondition": "Condition",
+  "fieldContactEmail": "Contact Email",
+  "fieldContactInformation": "Contact Information",
+  "fieldContactPerson": "Contact Person",
+  "fieldContactPhone": "Contact Phone",
+  "fieldContainerAdditive": "Container Additive",
+  "fieldContainerCapacity": "Container Capacity",
+  "fieldContainerType": "Container Type",
+  "fieldContainers": "Containers",
+  "fieldContentType": "Content Type",
+  "fieldContext": "Context",
+  "fieldContract": "Contract",
+  "fieldCostSharing": "Cost Sharing",
+  "fieldCourseOfTherapy": "Course of Therapy",
+  "fieldCoverage": "Coverage",
+  "fieldCoverageClass": "Coverage Class",
+  "fieldCoverageDetails": "Coverage Details",
+  "fieldCreated": "Created",
+  "fieldCriticality": "Criticality",
+  "fieldCustodian": "Custodian",
+  "fieldDataAbsentReason": "Data Absent Reason",
+  "fieldDateGiven": "Date Given",
+  "fieldDatePerformed": "Date Performed",
+  "fieldDaysSupply": "Days Supply",
+  "fieldDependent": "Dependent",
+  "fieldDerivedFrom": "Derived From",
+  "fieldDescription": "Description",
+  "fieldDetected": "Detected",
+  "fieldDevice": "Device",
+  "fieldDiagnoses": "Diagnoses",
+  "fieldDietPreference": "Diet Preference",
+  "fieldDimensions": "Dimensions",
+  "fieldDischargeDisposition": "Discharge Disposition",
+  "fieldDischargeTo": "Discharge To",
+  "fieldDisposition": "Disposition",
+  "fieldDocumentDetails": "Document Details",
+  "fieldDocumentId": "Document ID",
+  "fieldDocumentStatus": "Document Status",
+  "fieldDosage": "Dosage",
+  "fieldDose": "Dose",
+  "fieldDoseQuantity": "Dose Quantity",
+  "fieldDriversLicenseNumber": "Driver's License Number",
+  "fieldDuration": "Duration",
+  "fieldEducationProvided": "Education Provided",
+  "fieldEffective": "Effective",
+  "fieldEffectiveDates": "Effective Dates",
+  "fieldEmail": "Email",
+  "fieldEmergency": "Emergency",
+  "fieldEncounterType": "Encounter Type",
+  "fieldEndpoints": "Endpoints",
+  "fieldEpisodeOfCare": "Episode of Care",
+  "fieldEthnicity": "Ethnicity",
+  "fieldExpiration": "Expiration",
+  "fieldExpirationDate": "Expiration Date",
+  "fieldFacility": "Facility",
+  "fieldFacilityDetails": "Facility Details",
+  "fieldFacilityType": "Facility Type",
+  "fieldFastingStatus": "Fasting Status",
+  "fieldFax": "Fax",
+  "fieldFocalDevice": "Focal Device",
+  "fieldFollowUp": "Follow-up",
+  "fieldForm": "Form",
+  "fieldFormat": "Format",
+  "fieldFundingSource": "Funding Source",
+  "fieldGender": "Gender",
+  "fieldGeneralPractitioner": "General Practitioner",
+  "fieldGoal": "Goal",
+  "fieldGoalDetails": "Goal Details",
+  "fieldGpsCoordinates": "GPS Coordinates",
+  "fieldGroupNumber": "Group Number",
+  "fieldHandedOver": "Handed Over",
+  "fieldHealthcareFacility": "Healthcare Facility",
+  "fieldHealthcareService": "Healthcare Service",
+  "fieldHours": "Hours",
+  "fieldHowToTake": "How to Take",
+  "fieldIdentifiers": "Identifiers",
+  "fieldInformationSource": "Information Source",
+  "fieldIngredients": "Ingredients",
+  "fieldInstructions": "Instructions",
+  "fieldInsuranceCompany": "Insurance Company",
+  "fieldInsurer": "Insurer",
+  "fieldIntent": "Intent",
+  "fieldInterpreter": "Interpreter",
+  "fieldItemsUsed": "Items Used",
+  "fieldLanguage": "Language",
+  "fieldLanguages": "Languages",
+  "fieldLastOccurrence": "Last Occurrence",
+  "fieldLifecycleStatus": "Lifecycle Status",
+  "fieldLocation": "Location",
+  "fieldLocationProvider": "Location & Provider",
+  "fieldLotNumber": "Lot Number",
+  "fieldManagingOrganization": "Managing Organization",
+  "fieldManufacturer": "Manufacturer",
+  "fieldMaritalStatus": "Marital Status",
+  "fieldMedia": "Media",
+  "fieldMedicalRecordNumber": "Medical Record Number",
+  "fieldMedication": "Medication",
+  "fieldMedicationDetails": "Medication Details",
+  "fieldMemberId": "Member ID",
+  "fieldMembers": "Members",
+  "fieldMethod": "Method",
+  "fieldModality": "Modality",
+  "fieldMode": "Mode",
+  "fieldMothersMaidenName": "Mother's Maiden Name",
+  "fieldMultipleBirth": "Multiple Birth",
+  "fieldNetwork": "Network",
+  "fieldNextDose": "Next Dose",
+  "fieldNotes": "Notes",
+  "fieldOccurrence": "Occurrence",
+  "fieldOnset": "Onset",
+  "fieldOperationalStatus": "Operational Status",
+  "fieldOperator": "Operator",
+  "fieldOrder": "Order",
+  "fieldOrderedBy": "Ordered By",
+  "fieldOrganization": "Organization",
+  "fieldOrganizationDetails": "Organization Details",
+  "fieldOutcome": "Outcome",
+  "fieldOutcomeMeasurements": "Outcome Measurements",
+  "fieldPanelComponents": "Panel Components",
+  "fieldParentSpecimen": "Parent Specimen",
+  "fieldPartOf": "Part Of",
+  "fieldPassportNumber": "Passport Number",
+  "fieldPatient": "Patient",
+  "fieldPerformedBy": "Performed By",
+  "fieldPerformer": "Performer",
+  "fieldPerformerType": "Performer Type",
+  "fieldPeriod": "Period",
+  "fieldPhone": "Phone",
+  "fieldPhysicalType": "Physical Type",
+  "fieldPlanName": "Plan Name",
+  "fieldPlanType": "Plan Type",
+  "fieldPolicyHolder": "Policy Holder",
+  "fieldPracticeSetting": "Practice Setting",
+  "fieldPractitioner": "Practitioner",
+  "fieldPrepared": "Prepared",
+  "fieldPrescribed": "Prescribed",
+  "fieldPrescribedBy": "Prescribed By",
+  "fieldPrimarySource": "Primary Source",
+  "fieldPriority": "Priority",
+  "fieldProcedureCode": "Procedure Code",
+  "fieldProcedureDetails": "Procedure Details",
+  "fieldProcessingStorage": "Processing & Storage",
+  "fieldProfessionalInformation": "Professional Information",
+  "fieldProgramEligibility": "Program Eligibility",
+  "fieldProgressNotes": "Progress Notes",
+  "fieldProvider": "Provider",
+  "fieldQualification": "Qualification",
+  "fieldQuantity": "Quantity",
+  "fieldQuantityCollected": "Quantity Collected",
+  "fieldRace": "Race",
+  "fieldRangeAppliesTo": "Range Applies To",
+  "fieldRangeNotes": "Range Notes",
+  "fieldReAdmission": "Re-admission",
+  "fieldReaction": "Reaction",
+  "fieldReactions": "Reactions",
+  "fieldReason": "Reason",
+  "fieldReasonForVisit": "Reason for Visit",
+  "fieldReceivedAtLab": "Received at Lab",
+  "fieldRecorded": "Recorded",
+  "fieldRecorder": "Recorder",
+  "fieldReferenceRange": "Reference Range",
+  "fieldRefills": "Refills",
+  "fieldRelatedAppointment": "Related Appointment",
+  "fieldRelatedCondition": "Related Condition",
+  "fieldRelatedDocument": "Related Document",
+  "fieldRelationship": "Relationship",
+  "fieldRelationshipToSubscriber": "Relationship to Subscriber",
+  "fieldReport": "Report",
+  "fieldReportedBy": "Reported By",
+  "fieldRequestedBy": "Requested By",
+  "fieldRequester": "Requester",
+  "fieldResolved": "Resolved",
+  "fieldResult": "Result",
+  "fieldResultDate": "Result Date",
+  "fieldResults": "Results",
+  "fieldRole": "Role",
+  "fieldRoute": "Route",
+  "fieldSecurityClassification": "Security Classification",
+  "fieldSeries": "Series",
+  "fieldSeriousness": "Seriousness",
+  "fieldServicePeriod": "Service Period",
+  "fieldServiceType": "Service Type",
+  "fieldSetBy": "Set By",
+  "fieldSeverity": "Severity",
+  "fieldSite": "Site",
+  "fieldSize": "Size",
+  "fieldSpecialArrangements": "Special Arrangements",
+  "fieldSpecialty": "Specialty",
+  "fieldSpecimenDetails": "Specimen Details",
+  "fieldSpecimenQuantity": "Specimen Quantity",
+  "fieldSpecimenType": "Specimen Type",
+  "fieldSpecimens": "Specimens",
+  "fieldStage": "Stage",
+  "fieldStartDate": "Start Date",
+  "fieldStatus": "Status",
+  "fieldStatusDate": "Status Date",
+  "fieldStatusHistory": "Status History",
+  "fieldStatusReason": "Status Reason",
+  "fieldStrength": "Strength",
+  "fieldSubpotent": "Subpotent",
+  "fieldSubrogation": "Subrogation",
+  "fieldSubscriber": "Subscriber",
+  "fieldSubstitution": "Substitution",
+  "fieldSupplies": "Supplies",
+  "fieldTarget": "Target",
+  "fieldTestDate": "Test Date",
+  "fieldTimePeriod": "Time Period",
+  "fieldTotal": "Total",
+  "fieldType": "Type",
+  "fieldUse": "Use",
+  "fieldVaccinationDetails": "Vaccination Details",
+  "fieldVaccine": "Vaccine",
+  "fieldValue": "Value",
+  "fieldVerification": "Verification",
+  "fieldVerifiedBy": "Verified By",
+  "fieldView": "View",
+  "fieldVisitDetails": "Visit Details",
+  "fieldVisitType": "Visit Type",
+  "fieldWebsite": "Website",
+  "fieldDateOfBirth": "Date of Birth",
+  "fieldAge": "Age",
+  "fieldLastUpdated": "Last Updated",
+  "fieldAdditive": "Additive",
+  "fieldTime": "Time",
+  "fieldProcessingNumber": "Processing {number}",
+  "@fieldProcessingNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "inactive": "Inactive",
+  "yes": "Yes",
+  "no": "No",
+  "moreCount": "{count} more",
+  "@moreCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "qualificationIssuedBy": "{qualification} (issued by {issuer})",
+  "@qualificationIssuedBy": {
+    "placeholders": {
+      "qualification": {
+        "type": "String"
+      },
+      "issuer": {
+        "type": "String"
+      }
+    }
+  },
+  "qualificationValidPeriod": "{qualification} - Valid: {period}",
+  "@qualificationValidPeriod": {
+    "placeholders": {
+      "qualification": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeBytes": "{size} bytes",
+  "@sizeBytes": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "doseNumberOfTotal": "Dose {dose} of {total}",
+  "@doseNumberOfTotal": {
+    "placeholders": {
+      "dose": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "doseNumber": "Dose {dose}",
+  "@doseNumber": {
+    "placeholders": {
+      "dose": {
+        "type": "String"
+      }
+    }
+  },
+  "immunizationPrimarySourceYes": "Yes (directly administered)",
+  "immunizationPrimarySourceNo": "No (reported by patient or other source)",
+  "immunizationReactionReported": "Reaction reported",
+  "immunizationNoReactions": "No adverse reactions reported",
+  "immunizationSeriesComplete": "Not scheduled (series complete)",
+  "immunizationSubpotent": "Vaccine is subpotent",
+  "documentPublished": "{document} (published {date})",
+  "@documentPublished": {
+    "placeholders": {
+      "document": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "refillsRemaining": "{count, plural, other{{count} refills remaining}}",
+  "@refillsRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "validUntil": "Valid until {date}",
+  "@validUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "validFrom": "Valid from {date}",
+  "@validFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "substitutionAllowed": "Generic substitution allowed",
+  "substitutionNotAllowed": "Brand name required - no substitution",
+  "doNotPerformRequest": "Do NOT perform this request",
+  "complicationsNone": "None",
+  "fastedFor": "Fasted for {duration}",
+  "@fastedFor": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "containerCount": "{count, plural, other{{count} container(s)}}",
+  "@containerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "coverageOrderPrimary": "Primary (1)",
+  "coverageOrderSecondary": "Secondary (2)",
+  "coverageOrderTertiary": "Tertiary (3)",
+  "coverageOrderNumber": "Order {order}",
+  "@coverageOrderNumber": {
+    "placeholders": {
+      "order": {
+        "type": "int"
+      }
+    }
+  },
+  "goalDueBy": "by {date}",
+  "@goalDueBy": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "durationSeconds": "{seconds} seconds",
+  "@durationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "ingredientCount": "{count, plural, other{{count} ingredient(s)}}",
+  "@ingredientCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultCount": "{count, plural, other{{count} result(s)}}",
+  "@resultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "specimenCount": "{count, plural, other{{count} specimen(s)}}",
+  "@specimenCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "imageCount": "{count, plural, other{{count} image(s)}}",
+  "@imageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ageYears": "{count, plural, one{{count} year} other{{count} years}}",
+  "@ageYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "identifierPassport": "Passport",
+  "multipleBirthOrder": "Yes (Birth order: {order})",
+  "@multipleBirthOrder": {
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "timeAgoDays": "{count, plural, one{{count} day ago} other{{count} days ago}}",
+  "@timeAgoDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeAgoHours": "{count, plural, one{{count} hour ago} other{{count} hours ago}}",
+  "@timeAgoHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeAgoMinutes": "{count, plural, one{{count} minute ago} other{{count} minutes ago}}",
+  "@timeAgoMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "justNow": "Just now",
+  "bloodTypeNotAvailable": "Not Available",
+  "settingsStorage": "Storage",
+  "settingsStorageDescription": "Clear all records, preferences and cached data",
+  "settingsReset": "Reset",
+  "resetDataWarning": "This will permanently delete all your data including synced records, notes, attachments, and preferences.",
+  "resetTypeToConfirm": "Type {word} to confirm:",
+  "@resetTypeToConfirm": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "deleting": "Deleting...",
+  "aiModelDownloadContinuesInBackground": "Download continues in background",
+  "aiModelAdvanced": "Advanced",
+  "aiModelMedical": "Medical",
+  "aiModelDescriptionLite": "Fast and lightweight (~{sizeGb} GB)",
+  "@aiModelDescriptionLite": {
+    "placeholders": {
+      "sizeGb": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "aiModelDescriptionAdvanced": "Higher accuracy (~{sizeGb} GB)",
+  "@aiModelDescriptionAdvanced": {
+    "placeholders": {
+      "sizeGb": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "aiModelDescriptionUltra": "Best accuracy for desktop (~{sizeGb} GB)",
+  "@aiModelDescriptionUltra": {
+    "placeholders": {
+      "sizeGb": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "aiModelDescriptionPreviousAdvanced": "Previous Advanced model (~{sizeGb} GB)",
+  "@aiModelDescriptionPreviousAdvanced": {
+    "placeholders": {
+      "sizeGb": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "settingsEhrSync": "EHR Sync",
+  "shareProximityTitle": "Share Proximity",
+  "shareProximityDescription": "Advertise to nearby devices",
+  "allow": "Allow",
+  "settingsSendFeedback": "Send us your feedback",
+  "toggleOn": "ON",
+  "toggleOff": "OFF",
+  "idScanVerifyDetails": "Verify the details are correct. Retry scanning if needed.",
+  "idScanPartial": "Some fields could not be read. Try a clearer photo.",
+  "idScanFailed": "Could not read the document. Retake with better lighting.",
+  "genderOther": "Other",
+  "genderUnknown": "Unknown",
+  "walletPassAge": "Age {age}",
+  "@walletPassAge": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyEffectiveDate": "Effective Date: {date}",
+  "@privacyEffectiveDate": {
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd"
+      }
+    }
+  },
+  "privacyCorePrincipleBody": "The most important thing to know is that we, the developers of **HealthWallet.me**, do not collect, store, or have access to any of your personal or health information. Our app operates entirely on your device.",
+  "privacyNoCloudProcessing": "✅ No Cloud Processing: All calculations, data organization, and other functions happen locally on your phone or tablet.",
+  "privacyNoDeveloperAccess": "✅ No Developer Access: We cannot see, access, or export your data. It is never sent to our servers.",
+  "privacyYouAreInControl": "✅ You Are in Control: Your information is stored securely within the app's private storage on your device, which only you can access.",
+  "privacyDoNotCollectIntro": "To be perfectly clear, our app is intentionally built to avoid accessing your personal data. We **do not** collect, store, link, or process any information that can be tied to you.",
+  "privacyPersonalIdentifiers": "Personal Identifiers: We do not access or store your name, email address, phone number, contacts, or any other personal account information from your device.",
+  "privacyHealthInformation": "Health Information: Any health records, medical conditions, medications, or other data you import remain yours alone. We cannot access them.",
+  "privacyNoCrossReferencing": "No Cross-Referencing: The app operates in isolation. It **does not** scan, index, or cross-reference your health data with any other personal information on your phone (like your contacts list, name, or phone number). Its only job is to organize the records you provide to it.",
+  "privacyUsageAnalytics": "Usage Analytics: We do not track how you use the app, which buttons you tap, or how long you spend on certain screens.",
+  "privacyYouManageIntro": "The only data processed by the app is the health information **you choose to import** into it. This can be done in the following ways:",
+  "privacyImportingIntro": "You can add health documents (such as PDFs of lab results or clinic summaries) directly into the app using standard mobile operating system features:",
+  "privacyScanning": "Scanning: Using your device's camera to scan a physical document from within the app.",
+  "privacyShareActionSheet": "Share Action Sheet: Selecting a file from another app (like your email, photos, or file manager) and \"sharing\" it directly to **HealthWallet.me**.",
+  "privacyLocalProcessing": "Once a document is imported, the app processes it locally on your device in the background. It structures the information according to the **HL7 FHIR (Fast Healthcare Interoperability Resources)** standard to make it useful and organized. This entire process happens on your device; the document and the structured data never leave it.",
+  "privacyFastenIntro": "Our app allows you to consolidate your health records by connecting to **FastenHealth OnPrem**, a transparent, open-source platform.",
+  "privacyFastenOpenSource": "Open-Source and On-Premises: FastenHealth OnPrem is open-source software that you or a trusted entity controls. This provides an exceptional level of privacy.",
+  "privacyFastenDirectDownload": "Direct-to-Device Download: When you authorize the connection, your health records are downloaded **directly from your FastenHealth OnPrem instance to your device**. Our app is only a conduit; your data never passes through our servers.",
+  "privacyUsageIntro": "Since all your data resides on your device, it is only \"used\" by the app to help you organize and view your records. This includes:",
+  "privacyUsageProcessing": "Processing and structuring imported or scanned documents.",
+  "privacyUsageDisplaying": "Displaying your health records, lab results, and medication history to you.",
+  "privacyNoOtherUse": "We do not use your information for advertising, research, or any other purpose.",
+  "privacyStorage": "Storage: All your data is stored in the app's secure, sandboxed storage on your device. It is as secure as your device itself. We strongly recommend you protect your device with a passcode, Face ID, or other biometric security.",
+  "privacySharing": "Sharing: We do not and cannot share your data with anyone because we don't have it. If you choose to export or share your data from the app, you are in complete control of where it goes.",
+  "privacyDeletion": "Deletion: You can delete your information at any time from within the app. Deleting the app from your device will also permanently delete all data it has stored.",
+  "privacyChildrenBody": "Our service is not directed to individuals under the age of 16, in accordance with the General Data Protection Regulation (GDPR) as applicable in Romania and across the EU. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us.",
+  "privacyChangesBody": "We may update this policy from time to time. If we make any material changes, we will notify you through the app or by other means so you can review the changes before they take effect.",
+  "privacyContactBody": "If you have any questions or concerns about this Privacy Policy, please contact us at:",
+  "syncQrScanInstructions": "Scan a QR code from your **HealthWallet.me** desktop app or **Fasten Health** to sync your data.",
+  "syncSuccessMessage": "Data was successfully synced!",
+  "syncErrorConnection": "Connection failed. Please check your network and try again.",
+  "syncErrorEndpointNotFound": "Sync endpoint not found. Please check server configuration.",
+  "syncErrorAuthentication": "Authentication failed. Please check your token.",
+  "syncErrorInvalidFormat": "Invalid sync data format",
+  "syncErrorGeneric": "Data sync failed: {error}",
+  "@syncErrorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPlaceholderSubtitle": "Sync or update your data to view {recordType} records",
+  "@syncPlaceholderSubtitle": {
+    "placeholders": {
+      "recordType": {
+        "type": "String"
+      }
+    }
+  },
+  "appLockTitle": "HealthWallet is locked",
+  "appLockMessage": "Unlock to view your health records",
+  "appLockUnlock": "Unlock",
+  "desktopRestoreSucceededTitle": "Backup restored",
+  "desktopRestoreSucceededMessage": "\"{name}\" has been restored. {count} records are now on this device.",
+  "@desktopRestoreSucceededMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -93,48 +93,8 @@ class PatientVitalFactory {
     return ordered;
   }
 
-  String _normalizeTitle(String title) {
-    final t = title.trim().toLowerCase();
-    if (t == 'body height' || t == 'height') {
-      return PatientVitalType.height.title;
-    }
-    if (t == 'body weight' || t == 'weight') {
-      return PatientVitalType.weight.title;
-    }
-    if (t == 'body mass index' || t == 'bmi' || t == 'body mass index (bmi)') {
-      return PatientVitalType.bmi.title;
-    }
-    if (t == 'oxygen saturation' ||
-        t == 'oxygen saturation in arterial blood' ||
-        t == 'blood oxygen saturation' ||
-        t == 'spo2' ||
-        t == 'pulse oximetry' ||
-        t == 'oximetry') {
-      return PatientVitalType.bloodOxygen.title;
-    }
-    if (t == 'body temperature' || t == 'temperature') {
-      return PatientVitalType.temperature.title;
-    }
-    if (t == 'heart rate' || t == 'pulse rate' || t == 'pulse') {
-      return PatientVitalType.heartRate.title;
-    }
-    if (t == 'respiratory rate') {
-      return PatientVitalType.respiratoryRate.title;
-    }
-    if (t == 'systolic blood pressure') {
-      return PatientVitalType.systolicBloodPressure.title;
-    }
-    if (t == 'diastolic blood pressure') {
-      return PatientVitalType.diastolicBloodPressure.title;
-    }
-    if (t == 'blood pressure') {
-      return PatientVitalType.bloodPressure.title;
-    }
-    if (t == 'blood glucose' || t == 'glucose') {
-      return PatientVitalType.bloodGlucose.title;
-    }
-    return title;
-  }
+  String _normalizeTitle(String title) =>
+      PatientVitalTypeX.normalizeTitle(title);
 
   List<PatientVital> _extractVitalSignsFromObservation(
     Observation observation, {

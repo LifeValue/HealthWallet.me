@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -32,8 +34,10 @@ class RecentRecordsSection extends StatelessWidget {
   }
 
   Widget _buildRecentRecordCard(BuildContext context, IFhirResource record) {
-    final tag = record.fhirType.display;
-    final RecordInfoLine? infoLine = record.additionalInfo.firstOrNull;
+    final tag = record.fhirType.localizedName(context.l10n);
+    final RecordInfoLine? infoLine = record
+        .additionalInfo(context.l10n)
+        .firstOrNull;
 
     // Get icon based on resource type
     Widget icon;
@@ -130,7 +134,10 @@ class RecentRecordsSection extends StatelessWidget {
                   ),
                   if (record.statusDisplay.isNotEmpty)
                     Text(
-                      record.statusDisplay,
+                      localizedStatusDisplay(
+                        record.statusDisplay,
+                        context.l10n,
+                      ),
                       style: AppTextStyle.labelMedium.copyWith(
                         color: context.colorScheme.onSurface,
                       ),

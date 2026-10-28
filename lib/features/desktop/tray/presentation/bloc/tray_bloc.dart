@@ -87,7 +87,7 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     await _trayService.updateMenu(
       connectionStatus: state.connectionStatus,
       deviceName: state.connectedDeviceName,
-      syncLabel: _syncLabel(state.syncStatus),
+      syncStatus: state.syncStatus,
     );
   }
 
@@ -110,7 +110,7 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     await _trayService.updateMenu(
       connectionStatus: event.connectionStatus,
       deviceName: event.deviceName,
-      syncLabel: _syncLabel(state.syncStatus),
+      syncStatus: state.syncStatus,
     );
   }
 
@@ -125,7 +125,7 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     await _trayService.updateMenu(
       connectionStatus: state.connectionStatus,
       deviceName: state.connectedDeviceName,
-      syncLabel: _syncLabel(event.syncStatus),
+      syncStatus: event.syncStatus,
     );
   }
 
@@ -136,13 +136,5 @@ class TrayBloc extends Bloc<TrayEvent, TrayState> {
     await _trayService.dispose();
     _windowLifecycleService.dispose();
     exit(0);
-  }
-
-  String _syncLabel(LwwSyncStatus status) {
-    return switch (status) {
-      LwwSyncStatus.idle => 'Up to date',
-      LwwSyncStatus.syncing => 'Syncing...',
-      LwwSyncStatus.error => 'Error',
-    };
   }
 }

@@ -456,11 +456,35 @@ void main() {
 
       expect(updates.last.status, HandoverStatus.error);
       expect(updates.last.error, 'model crashed');
+      expect(updates.last.failure, HandoverFailure.failed);
       expect(sentFor('handover.progress').single, {
         'session_id': 's1',
         'progress': 0.5,
         'status': 'error',
         'error': 'model crashed',
+      });
+    });
+
+    test('a missing model is sent to the phone with its reason', () async {
+      const error = 'Exception: Model file not found';
+      bloc.push(
+        stateWith(
+          ProcessingStatus.pending,
+          pipeline: const PipelineStatus.failure(
+            error: error,
+            reason: PipelineFailureReason.modelNotFound,
+          ),
+        ),
+      );
+      await flushEvents();
+
+      expect(updates.last.failure, HandoverFailure.modelNotFound);
+      expect(sentFor('handover.progress').single, {
+        'session_id': 's1',
+        'progress': 0.5,
+        'status': 'error',
+        'error': error,
+        'reason': HandoverFailure.modelNotFoundReason,
       });
     });
 

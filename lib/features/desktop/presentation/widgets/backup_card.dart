@@ -10,7 +10,9 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
+import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
@@ -36,17 +38,44 @@ class _BackupCardState extends State<BackupCard> {
   bool _syncFirst = true;
   bool _showForm = false;
 
+  /// The backup whose restore the user confirmed, until it finishes.
+  BackupEntry? _restoring;
+
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(BackupCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final restored = _restoring;
+    final finished =
+        oldWidget.backupState.isRestoring && !widget.backupState.isRestoring;
+    if (restored == null || !finished) return;
+    _restoring = null;
+    // A failed restore shows its error in the card; only success is
+    // announced here, so the user knows the data was replaced.
+    if (widget.backupState.error != null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      AppSimpleDialog.showSuccess(
+        context: context,
+        title: context.l10n.desktopRestoreSucceededTitle,
+        message: context.l10n.desktopRestoreSucceededMessage(
+          _backupDisplayName(context, restored),
+          restored.recordCount,
+        ),
+      );
+    });
+  }
+
   void _create() {
     final name = _nameController.text.trim();
     final effectiveName = name.isNotEmpty
         ? name
-        : '${context.l10n.desktopBackup} ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
+        : '${context.l10n.desktopBackup} ${backupNameDate(DateTime.now(), context.l10n.localeName, withTime: true)}';
 
     if (_syncFirst &&
         widget.syncState.connectionStatus == ConnectionStatus.connected) {
@@ -70,7 +99,7 @@ class _BackupCardState extends State<BackupCard> {
         widget.backupState.isBackingUp || widget.backupState.isRestoring;
     final selected = widget.backupState.selectedBackup;
     final defaultName =
-        '${context.l10n.desktopBackup} ${DateFormat('MMM d, yyyy').format(DateTime.now())}';
+        '${context.l10n.desktopBackup} ${backupNameDate(DateTime.now(), context.l10n.localeName)}';
 
     if (!widget.backupState.hasUserSelectedPath) {
       return Center(
@@ -149,7 +178,7 @@ class _BackupCardState extends State<BackupCard> {
             top: Insets.normal,
           ),
           child: Text(
-            'Location',
+            context.l10n.desktopBackupLocation,
             style: AppTextStyle.labelSmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.5),
               fontSize: 11,
@@ -172,7 +201,7 @@ class _BackupCardState extends State<BackupCard> {
             bottom: Insets.small,
           ),
           child: Text(
-            'History',
+            context.l10n.desktopBackupHistory,
             style: AppTextStyle.labelSmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.5),
               fontSize: 11,
@@ -188,6 +217,7 @@ class _BackupCardState extends State<BackupCard> {
                       backup: selected,
                       isWorking: isWorking,
                       isConnected: isConnected,
+                      onRestoreConfirmed: (backup) => _restoring = backup,
                     ),
                   )
                 : _BackupList(
@@ -500,10 +530,14 @@ class _BackupPreview extends StatelessWidget {
   final bool isWorking;
   final bool isConnected;
 
+  /// Called when the user confirms the restore, before it starts.
+  final ValueChanged<BackupEntry> onRestoreConfirmed;
+
   const _BackupPreview({
     required this.backup,
     required this.isWorking,
     required this.isConnected,
+    required this.onRestoreConfirmed,
   });
 
   @override
@@ -600,73 +634,35 @@ class _BackupPreview extends StatelessWidget {
   }
 
   void _confirmRestore(BuildContext context, BackupEntry backup) {
-    showDialog(
+    AppSimpleDialog.showConfirmation(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.desktopRestoreBackupTitle),
-        content: Text(
-          context.l10n.desktopRestoreBackupMessage(
-            backup.name.isNotEmpty
-                ? backup.name
-                : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}',
-            backup.recordCount,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context.read<BackupBloc>().add(
-                RestoreRequested(backupId: backup.id),
-              );
-            },
-            child: Text(
-              context.l10n.desktopRestore,
-              style: const TextStyle(
-                color: AppColors.warning,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+      title: context.l10n.desktopRestoreBackupTitle,
+      subtitle: context.l10n.desktopRestoreBackupMessage(
+        _backupDisplayName(context, backup),
+        backup.recordCount,
       ),
+      cancelText: context.l10n.cancel,
+      confirmText: context.l10n.desktopRestore,
+      confirmColor: AppColors.warning,
+      onConfirm: () {
+        onRestoreConfirmed(backup);
+        context.read<BackupBloc>().add(RestoreRequested(backupId: backup.id));
+      },
     );
   }
 
   void _confirmDelete(BuildContext context, BackupEntry backup) {
-    showDialog(
+    AppSimpleDialog.showConfirmation(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.desktopDeleteBackupTitle),
-        content: Text(
-          context.l10n.desktopDeleteBackupMessage(
-            backup.name.isNotEmpty
-                ? backup.name
-                : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context.read<BackupBloc>().add(
-                BackupDeleted(backupId: backup.id),
-              );
-            },
-            child: Text(
-              context.l10n.desktopDelete,
-              style: const TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
+      title: context.l10n.desktopDeleteBackupTitle,
+      subtitle: context.l10n.desktopDeleteBackupMessage(
+        _backupDisplayName(context, backup),
+      ),
+      cancelText: context.l10n.cancel,
+      confirmText: context.l10n.desktopDelete,
+      confirmColor: AppColors.error,
+      onConfirm: () => context.read<BackupBloc>().add(
+        BackupDeleted(backupId: backup.id),
       ),
     );
   }
@@ -768,3 +764,9 @@ String _formatBytes(int bytes) {
   }
   return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
 }
+
+/// A backup's name, or "Backup from" and its date when it has none.
+String _backupDisplayName(BuildContext context, BackupEntry backup) =>
+    backup.name.isNotEmpty
+    ? backup.name
+    : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}';

@@ -6,12 +6,14 @@ import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_resource.dart';
+import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
@@ -42,6 +44,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   final SourceTypeService _sourceTypeService;
   final RecordsRepository _recordsRepository;
   final SharedPreferences _prefs;
+  final AppStringsProvider _strings;
 
   @override
   ProcessingRepository get processingRepository => _repository;
@@ -68,6 +71,9 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
   @override
   SharedPreferences get prefs => _prefs;
 
+  @override
+  AppStringsProvider get strings => _strings;
+
   ProcessingBloc(
     this._repository,
     this._ocrProcessingHelper,
@@ -77,6 +83,7 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
     this._sourceTypeService,
     this._recordsRepository,
     this._prefs,
+    this._strings,
   ) : super(const ProcessingState()) {
     on<ProcessingInitialised>(onProcessingInitialised);
     on<CaptureButtonPressed>(onCaptureButtonPressed);
@@ -185,7 +192,14 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
         ),
       );
     } on Exception catch (e) {
-      emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
+      emit(
+        state.copyWith(
+          status: PipelineStatus.failure(
+            error: e.toString(),
+            reason: PipelineFailureReason.of(e),
+          ),
+        ),
+      );
     }
   }
 

@@ -95,7 +95,9 @@ class _PeerDiscoveryViewState extends State<PeerDiscoveryView> {
         Padding(
           padding: const EdgeInsets.all(Insets.normal),
           child: Text(
-            context.l10n.shareFoundDevices(widget.state.discoveredPeers.length),
+            context.l10n.shareStatusFoundDevices(
+              widget.state.discoveredPeers.length,
+            ),
             style: AppTextStyle.titleSmall.copyWith(
               color: context.colorScheme.onSurface,
             ),
@@ -194,7 +196,7 @@ class _PeerDeviceTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      peer.displayName,
+                      peer.displayName(context.l10n),
                       style: AppTextStyle.titleSmall.copyWith(
                         color: context.colorScheme.onSurface,
                         fontWeight: FontWeight.w600,

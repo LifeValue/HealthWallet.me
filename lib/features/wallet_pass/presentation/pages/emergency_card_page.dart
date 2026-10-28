@@ -1,11 +1,13 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,8 +17,30 @@ class EmergencyCardPage extends StatelessWidget {
 
   const EmergencyCardPage({super.key, required this.cardData});
 
+  /// Goes back to the previous page. A link that starts the app opens the
+  /// card as the only page, so then it opens the app instead: the splash
+  /// sends the user to onboarding or the dashboard.
+  static void _goBack(BuildContext context) {
+    final router = context.router;
+    if (router.canPop()) {
+      router.maybePop();
+      return;
+    }
+    router.replaceAll([const SplashRoute()]);
+  }
+
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      canPop: context.router.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goBack(context);
+      },
+      child: _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -26,7 +50,7 @@ class EmergencyCardPage extends StatelessWidget {
         centerTitle: false,
         backgroundColor: context.colorScheme.surface,
         leading: IconButton(
-          onPressed: () => context.router.maybePop(),
+          onPressed: () => _goBack(context),
           icon: const Icon(Icons.arrow_back),
         ),
         elevation: 0,
@@ -79,7 +103,7 @@ class EmergencyCardPage extends StatelessWidget {
 
   Widget _buildPatientHeader(BuildContext context) {
     final gender = cardData.gender != null
-        ? cardData.gender![0].toUpperCase() + cardData.gender!.substring(1)
+        ? WalletPassLabels.fromL10n(context.l10n).genderName(cardData.gender!)
         : null;
 
     return Container(
@@ -124,7 +148,9 @@ class EmergencyCardPage extends StatelessWidget {
               ],
               if (cardData.dateOfBirth != null)
                 _buildBadge(
-                  DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!),
+                  DateFormat.yMMMd(
+                    context.l10n.localeName,
+                  ).format(cardData.dateOfBirth!),
                   Colors.white.withValues(alpha: 0.2),
                   Colors.white,
                 ),

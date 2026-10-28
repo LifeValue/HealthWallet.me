@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -161,7 +162,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
                       ),
                   onResourceRemoved: () => DeleteConfirmationDialog.show(
                     context: context,
-                    title: 'Delete Resources',
+                    title: context.l10n.deleteResourcesTitle,
                     onConfirm: () {
                       context.read<ProcessingBloc>().add(
                         ResourceRemoved(sessionId: sessionId, index: index),
@@ -188,7 +189,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
     bool isLocked = false,
   }) {
     final Map<String, TextFieldDescriptor> textFields = resource
-        .getFieldDescriptors();
+        .getFieldDescriptors(context.l10n);
 
     return Container(
       key: ValueKey('${resource.id}_v$patientVersion'),
@@ -212,7 +213,10 @@ class _ResourcesFormState extends State<ResourcesForm> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(resource.label, style: AppTextStyle.bodyLarge),
+                Text(
+                  resource.localizedLabel(context.l10n),
+                  style: AppTextStyle.bodyLarge,
+                ),
                 Row(
                   children: [
                     if (isStagedResource &&
@@ -241,8 +245,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                           ),
                           child: Tooltip(
                             message: resource is MappingEncounter
-                                ? 'Switch to Diagnostic Report'
-                                : 'Switch to Encounter',
+                                ? context.l10n.switchToDiagnosticReport
+                                : context.l10n.switchToEncounter,
                             child: Icon(
                               Icons.swap_horiz,
                               size: 20,
@@ -304,7 +308,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
                       ),
                       if (confidenceLevel != ConfidenceLevel.high)
                         Text(
-                          '(${confidenceLevel.getString()})',
+                          '(${confidenceLevel.localizedName(context.l10n)})',
                           style: AppTextStyle.labelSmall.copyWith(
                             color: confidenceLevel.getColor(context),
                             fontStyle: FontStyle.italic,
@@ -319,14 +323,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                         '${resource.id}_${propertyKey}_form_${descriptor.value}',
                       ),
                       initialValue: descriptor.value,
-                      validator: (value) {
-                        final error = descriptor.validate(value);
-                        if (error != null &&
-                            error == 'This field cannot be empty') {
-                          return context.l10n.fieldCannotBeEmpty;
-                        }
-                        return error;
-                      },
+                      validator: (value) =>
+                          descriptor.validate(value)?.message(context.l10n),
                       onSaved: (value) {
                         if (value != null &&
                             value != descriptor.value &&
@@ -440,6 +438,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                             items: MedicalSpecialty.values,
                             openAbove: true,
                             hasError: field.hasError,
+                            // The English name is the stored value the
+                            // dropdown matches; the builders show it localized.
                             getDisplayText: (s) => s.displayName,
                             onChanged: (MedicalSpecialty s) {
                               onPropertyChanged?.call(
@@ -463,7 +463,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    s.displayName,
+                                    s.localizedName(context.l10n),
                                     style: AppTextStyle.bodyMedium.copyWith(
                                       color: isSelected
                                           ? context.colorScheme.primary
@@ -504,7 +504,7 @@ class _ResourcesFormState extends State<ResourcesForm> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    match.displayName,
+                                    match.localizedName(context.l10n),
                                     overflow: TextOverflow.ellipsis,
                                     style: AppTextStyle.labelLarge.copyWith(
                                       color: context.colorScheme.onSurface,
@@ -548,7 +548,8 @@ class _ResourcesFormState extends State<ResourcesForm> {
                     TextFormField(
                       key: ValueKey('${resource.id}_$propertyKey'),
                       initialValue: descriptor.value,
-                      validator: descriptor.validate,
+                      validator: (value) =>
+                          descriptor.validate(value)?.message(context.l10n),
                       inputFormatters: descriptor.inputFormatters,
                       keyboardType: descriptor.keyboardType,
                       autovalidateMode: AutovalidateMode.onUserInteraction,

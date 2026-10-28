@@ -96,7 +96,8 @@ class FakeTcpService extends Fake implements TcpService {
   }
 }
 
-/// The peer's side of the wire format in doc/architecture.md, written
+/// The peer's side of the wire format in
+/// _bmad-output/planning-artifacts/architecture.md, written
 /// independently of [TcpService]: AES-256-GCM with the first 32 bytes of the
 /// base64url-decoded key (zero-padded), `[12-byte nonce][ciphertext+tag]`,
 /// and a 4-byte big-endian length prefix on TCP.

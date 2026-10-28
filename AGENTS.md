@@ -3,14 +3,14 @@
 
 ## HealthWallet.me
 
-Patient-controlled health record app in Flutter: FHIR R4 records from providers through a self-hosted Fasten Health backend, on-device AI document scanning (llamadart), offline-first storage in Drift/SQLite. One codebase ships mobile (iOS, Android) and desktop (macOS, Windows), which pair and sync over an encrypted local link. Architecture and protocol reference: `doc/architecture.md`. BMad planning output: `_bmad-output/`.
+Patient-controlled health record app in Flutter: FHIR R4 records from providers through a self-hosted Fasten Health backend, on-device AI document scanning (llamadart), offline-first storage in Drift/SQLite. One codebase ships mobile (iOS, Android) and desktop (macOS, Windows), which pair and sync over an encrypted local link. Architecture and protocol reference: `_bmad-output/planning-artifacts/architecture.md`. Current priority and known issues: `_bmad-output/planning-artifacts/mobile-stabilization.md` (stabilize mobile; desktop is aligned later).
 
 ## Policy
 
 - Never commit or stage secrets (`.pem`, `.p8`, `.p12`, `.key`, `.jks`, `.keystore`, `service-account*.json`, `.env`, API keys, tokens); they live in protected GitLab CI/CD variables. Before every commit run `git diff --cached --name-only | grep -iE '\.(pem|p8|p12|key|jks|keystore)$|service-account|\.env$'` and stop if it prints anything.
 - Never hardcode keys or tokens; read them through envied (`lib/core/config/env/env.dart`, values from `.env`).
 - Keep Clean Architecture: presentation → domain → data, dependencies by constructor. Business logic (transformations, calculations, validation) belongs in BLoCs, repositories, services or use cases, never in widgets.
-- Never move or rename `docs/`: it is the live emergency.healthwallet.me page (GitHub Pages) that the QR code on every wallet pass opens. Put developer and agent docs in `doc/`.
+- Never move or rename `docs/`: it is the live emergency.healthwallet.me page (GitHub Pages) that the QR code on every wallet pass opens. Put developer and agent docs in `_bmad-output/` (`project-knowledge/` for how the app works, `planning-artifacts/` for plans and architecture).
 - Change the QR payload in `lib/features/wallet_pass/data/service/emergency_qr_encoder.dart` only together with `docs/index.html`, and keep the page decoding the old format; passes already in users' wallets keep their QR.
 - Branches follow Gitflow: `master` is production, `develop` staging (betas to TestFlight and Play internal are deployed by hand from its pipeline). `feature/*` and `bugfix/*` branch from `develop` and merge back into it; `release/*` branches from `develop` and merges into `master` and `develop`; `hotfix/*` branches from `master` and merges into both. Name branches after the work, without the ticket number. Merge with `--no-ff`, never fast-forward.
 - GitLab CI (`.gitlab-ci.yml`) is the only CI. Don't edit `.github/workflows/`; they are unused and the GitHub repo is left untouched. Deploys run only from `develop`, `release/*` and `master`, always started by hand, after every check passes.
@@ -19,7 +19,7 @@ Patient-controlled health record app in Flutter: FHIR R4 records from providers 
 
 - Entry points: `lib/main.dart` (mobile) and `lib/main_desktop.dart` (desktop: communication, tray, backup, handover and LWW sync BLoCs).
 - DI `lib/core/di/` (`configureDependencies()`), routes `lib/core/navigation/app_router.dart`, database `lib/core/data/local/app_database.dart`, UI kit `lib/core/widgets/` and `lib/core/theme/`.
-- Before changing `lib/features/processing/`, `lib/features/capture/` or `lib/features/desktop/`, read the matching section of `doc/architecture.md` (pipeline stages, wire protocol, message types, LWW rules).
+- Before changing `lib/features/processing/`, `lib/features/capture/` or `lib/features/desktop/`, read the matching section of `_bmad-output/planning-artifacts/architecture.md` (pipeline stages, wire protocol, message types, LWW rules).
 
 ## Running and verifying
 

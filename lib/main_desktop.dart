@@ -1,8 +1,12 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:health_wallet/app/view/app.dart';
 import 'package:health_wallet/bootstrap.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/services/startup_hardening.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/discovery_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
@@ -17,6 +21,8 @@ import 'package:health_wallet/features/processing/presentation/bloc/processing_b
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  unawaited(hardenStartup(releaseMode: kReleaseMode));
 
   getIt.registerSingleton<AppPlatform>(AppPlatform.desktop);
 

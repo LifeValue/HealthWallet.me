@@ -322,7 +322,7 @@ class _PanelContentState extends State<_PanelContent> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
             ),
-          ...record.additionalInfo.map((info) {
+          ...record.additionalInfo(context.l10n).map((info) {
             if (info.isSection) {
               return Padding(
                 padding: const EdgeInsets.only(top: 20, bottom: 8),
@@ -442,7 +442,8 @@ class _PanelContentState extends State<_PanelContent> {
 
   Widget _buildResourceInfo(BuildContext context, IFhirResource resource) {
     final dimColor = context.colorScheme.onSurface.withValues(alpha: 0.6);
-    final lines = resource.additionalInfo
+    final lines = resource
+        .additionalInfo(context.l10n)
         .where((l) => !l.isSection)
         .take(2)
         .toList();

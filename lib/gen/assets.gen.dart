@@ -303,6 +303,10 @@ class $AssetsIconsGen {
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  /// File path: assets/images/app_launch_icon.png
+  AssetGenImage get appLaunchIcon =>
+      const AssetGenImage('assets/images/app_launch_icon.png');
+
   /// File path: assets/images/battery-plugged-in.svg
   SvgGenImage get batteryPluggedIn =>
       const SvgGenImage('assets/images/battery-plugged-in.svg');
@@ -338,14 +342,6 @@ class $AssetsImagesGen {
   SvgGenImage get placeholder =>
       const SvgGenImage('assets/images/placeholder.svg');
 
-  /// File path: assets/images/splash-android-padded.png
-  AssetGenImage get splashAndroidPadded =>
-      const AssetGenImage('assets/images/splash-android-padded.png');
-
-
-  /// File path: assets/images/splash.png
-  AssetGenImage get splash => const AssetGenImage('assets/images/splash.png');
-
   /// File path: assets/images/sync-ilustration.svg
   SvgGenImage get syncIlustration =>
       const SvgGenImage('assets/images/sync-ilustration.svg');
@@ -360,6 +356,7 @@ class $AssetsImagesGen {
 
   /// List of all assets
   List<dynamic> get values => [
+        appLaunchIcon,
         batteryPluggedIn,
         batteryWarning,
         completeCheck,
@@ -369,8 +366,6 @@ class $AssetsImagesGen {
         noDeviceFound,
         placeholderDark,
         placeholder,
-        splashAndroidPadded,
-        splash,
         syncIlustration,
         syncScanIlustration,
         viewingRecords

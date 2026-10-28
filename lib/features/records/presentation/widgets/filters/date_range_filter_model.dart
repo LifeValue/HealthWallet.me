@@ -1,3 +1,8 @@
+import 'package:intl/intl.dart';
+
+/// Which part of a date a dropdown edits.
+enum DateField { day, month, year }
+
 class DateRangeFilterModel {
   int? fromYear;
   int? fromMonth;
@@ -57,30 +62,27 @@ class DateRangeDropdownService {
     ];
   }
 
-  static List<DateDropdownItem> getMonths() {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
+  /// The twelve months abbreviated in [locale] (standalone form), after a
+  /// "-" entry that clears the month.
+  static List<DateDropdownItem> getMonths(String locale) {
+    final format = DateFormat.LLL(locale);
     return [
       DateDropdownItem(value: null, displayText: '-'),
       ...List.generate(
         12,
-        (index) =>
-            DateDropdownItem(value: index + 1, displayText: months[index]),
+        (index) => DateDropdownItem(
+          value: index + 1,
+          displayText: format.format(DateTime(2000, index + 1)),
+        ),
       ),
     ];
+  }
+
+  /// One-letter weekday names in [locale], Sunday first.
+  static List<String> getWeekdayInitials(String locale) {
+    final format = DateFormat.EEEEE(locale);
+    // 2 January 2000 was a Sunday.
+    return List.generate(7, (i) => format.format(DateTime(2000, 1, 2 + i)));
   }
 
   static List<DateDropdownItem> getDays(int? year, int? month) {

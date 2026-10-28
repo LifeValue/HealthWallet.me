@@ -24,6 +24,7 @@ class ConnectionDialog extends StatefulWidget {
   static void openQRScanner(BuildContext context) {
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
 
     rootNavigator.push(
       MaterialPageRoute<void>(
@@ -51,7 +52,9 @@ class ConnectionDialog extends StatefulWidget {
                   rootNavigator.pop();
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
-                      content: Text('Paired with ${pairing.deviceName}'),
+                      content: Text(
+                        l10n.desktopPairedWith(pairing.deviceName),
+                      ),
                     ),
                   );
                   getIt<CommunicationBloc>().add(

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/attachment_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/domain/entity/sync_delta.dart';
 import 'package:injectable/injectable.dart';
@@ -311,18 +312,49 @@ class LwwSyncService {
     for (final entry in fileData.entries) {
       try {
         final bytes = base64Decode(entry.value);
-        final fileName = entry.key.split('/').last;
-        final sanitized = fileName.replaceAll(RegExp(r'[^\w.\-]'), '_');
-        final file = File('${docsDir.path}/$sanitized');
-        await file.writeAsBytes(bytes);
+        final fileName = await _freeFileName(docsDir.path, entry.key);
+        final file = File('${docsDir.path}/$fileName');
+        await file.writeAsBytes(bytes, flush: true);
         saved++;
 
-        await _updateAttachmentUrls(entry.key, sanitized);
-      } catch (_) {}
+        await _updateAttachmentUrls(entry.key, fileName);
+      } catch (e) {
+        logger.w('Received file ${entry.key} could not be saved', e);
+      }
     }
 
     return saved;
   }
+
+  /// A file name for [requestedPath] in [docsPath] that never replaces an
+  /// existing file or the database: the sanitised base name, with a unique
+  /// suffix when it is taken, reserved or empty.
+  Future<String> _freeFileName(String docsPath, String requestedPath) async {
+    final base = requestedPath
+        .split(RegExp(r'[/\\]'))
+        .last
+        .replaceAll(RegExp(r'[^\w.\-]'), '_');
+    final valid = base.replaceAll('.', '').isNotEmpty;
+    final reserved = base.toLowerCase().startsWith('db.sqlite');
+    if (valid && !reserved && !await _exists('$docsPath/$base')) return base;
+
+    final dot = base.lastIndexOf('.');
+    final hasExt = valid && dot > 0;
+    final stem = !valid
+        ? 'file'
+        : hasExt
+        ? base.substring(0, dot)
+        : base;
+    final ext = hasExt ? base.substring(dot) : '';
+    while (true) {
+      final name = '${stem}_${const Uuid().v4().substring(0, 8)}$ext';
+      if (!await _exists('$docsPath/$name')) return name;
+    }
+  }
+
+  static Future<bool> _exists(String path) async =>
+      await FileSystemEntity.type(path, followLinks: false) !=
+      FileSystemEntityType.notFound;
 
   Future<void> _updateAttachmentUrls(
     String oldPath,

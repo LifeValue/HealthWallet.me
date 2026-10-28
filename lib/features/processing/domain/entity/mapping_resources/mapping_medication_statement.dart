@@ -98,23 +98,24 @@ abstract class MappingMedicationStatement
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'medicationName': TextFieldDescriptor(
-      label: 'Medication Name',
-      value: medicationName.value,
-      confidenceLevel: medicationName.confidenceLevel,
-    ),
-    'dosage': TextFieldDescriptor(
-      label: 'Dosage',
-      value: dosage.value,
-      confidenceLevel: dosage.confidenceLevel,
-    ),
-    'reason': TextFieldDescriptor(
-      label: 'Reason',
-      value: reason.value,
-      confidenceLevel: reason.confidenceLevel,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'medicationName': TextFieldDescriptor(
+          label: l10n.labelMedicationName,
+          value: medicationName.value,
+          confidenceLevel: medicationName.confidenceLevel,
+        ),
+        'dosage': TextFieldDescriptor(
+          label: l10n.labelDosage,
+          value: dosage.value,
+          confidenceLevel: dosage.confidenceLevel,
+        ),
+        'reason': TextFieldDescriptor(
+          label: l10n.labelReason,
+          value: reason.value,
+          confidenceLevel: reason.confidenceLevel,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(
@@ -138,7 +139,7 @@ abstract class MappingMedicationStatement
   );
 
   @override
-  String get label => 'Medication Statement';
+  String localizedLabel(AppLocalizations l10n) => l10n.medicationStatement;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

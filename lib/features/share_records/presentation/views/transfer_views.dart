@@ -3,6 +3,7 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/features/share_records/domain/services/share_log_buffer.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/share_debug_log_sheet.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -67,15 +68,17 @@ class ConnectingView extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: () => ShareDebugLogSheet.show(context),
-            child: Icon(
-              Icons.terminal,
-              size: 28,
-              color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+          if (ShareLogBuffer.instance.isEnabled) ...[
+            const SizedBox(height: 24),
+            GestureDetector(
+              onTap: () => ShareDebugLogSheet.show(context),
+              child: Icon(
+                Icons.terminal,
+                size: 28,
+                color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -129,15 +132,17 @@ class TransferProgressView extends StatelessWidget {
               const SizedBox(height: 8),
               Text(state.statusMessage!),
             ],
-            const SizedBox(height: 24),
-            GestureDetector(
-              onTap: () => ShareDebugLogSheet.show(context),
-              child: Icon(
-                Icons.terminal,
-                size: 28,
-                color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+            if (ShareLogBuffer.instance.isEnabled) ...[
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: () => ShareDebugLogSheet.show(context),
+                child: Icon(
+                  Icons.terminal,
+                  size: 28,
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.3),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

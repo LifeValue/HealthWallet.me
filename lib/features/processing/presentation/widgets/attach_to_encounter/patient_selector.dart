@@ -36,7 +36,7 @@ class PatientSelector extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title ?? 'Patient & Source Information',
+                title ?? context.l10n.patientAndSourceInformation,
                 style: AppTextStyle.bodyLarge.copyWith(
                   color: context.colorScheme.onSurface,
                 ),
@@ -59,7 +59,7 @@ class PatientSelector extends StatelessWidget {
 
     if (state.existingPatients.isEmpty && patient.draft == null) {
       return Text(
-        'No patients available',
+        context.l10n.noPatientsAvailable,
         style: AppTextStyle.bodySmall.copyWith(
           color: context.colorScheme.onSurfaceVariant,
         ),
@@ -85,13 +85,13 @@ class PatientSelector extends StatelessWidget {
     final selectedValue = state.selectedPatient;
     final displayText = selectedValue != null
         ? getDisplayText(selectedValue)
-        : 'Select patient';
+        : context.l10n.selectPatient;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Patient',
+          context.l10n.patient,
           style: AppTextStyle.bodySmall.copyWith(
             color: context.colorScheme.onSurfaceVariant,
           ),

@@ -8,12 +8,12 @@ import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
-import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/features/capture/import/presentation/pages/import_page.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/scan_page.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
+import 'package:health_wallet/features/dashboard/presentation/widgets/dashboard_nav_item.dart';
 import 'package:health_wallet/features/desktop/handover/data/services/handover_sender_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/bloc/handover_bloc.dart';
@@ -67,7 +67,7 @@ class _DashboardPageState extends State<DashboardPage> {
               .length;
           if (completedCount > lastCompletedCount && mounted) {
             lastCompletedCount = completedCount;
-            _showHandoverNotification('Handover patient matched');
+            _showHandoverNotification(context.l10n.handoverPatientMatched);
           }
         });
       } catch (_) {}
@@ -76,7 +76,7 @@ class _DashboardPageState extends State<DashboardPage> {
         final senderService = getIt<HandoverSenderService>();
         _handoverResultSub = senderService.resultReceived.listen((_) {
           if (!mounted) return;
-          _showHandoverNotification('Desktop finished processing');
+          _showHandoverNotification(context.l10n.desktopFinishedProcessing);
         });
       } catch (_) {}
     }
@@ -598,37 +598,14 @@ class _DashboardPageState extends State<DashboardPage> {
     required bool isSelected,
     required int pageIndex,
   }) {
-    return GestureDetector(
+    return DashboardNavItem(
+      icon: icon,
+      label: label,
+      isSelected: isSelected,
       onTap: () {
         FocusScope.of(context).unfocus();
         _navigationController.jumpToPage(pageIndex);
       },
-      child: Container(
-        height: double.infinity,
-        decoration: BoxDecoration(
-          color: isSelected ? context.colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(100),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              icon,
-              const SizedBox(height: Insets.extraSmall),
-              Text(
-                label,
-                style: AppTextStyle.labelSmall.copyWith(
-                  color: isSelected
-                      ? (context.isDarkMode
-                            ? Colors.white
-                            : context.colorScheme.surface)
-                      : context.colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -23,7 +23,7 @@ import 'package:health_wallet/features/processing/presentation/pages/processing/
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_resources_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/debug_log_sheet.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/debug_log_button.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/summary_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -437,8 +437,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
               color: context.colorScheme.onSurface,
             ),
             tooltip: isStep2Retry
-                ? '${context.l10n.retry} (Step 2)'
-                : '${context.l10n.retry} (Step 1)',
+                ? context.l10n.retryStep(2)
+                : context.l10n.retryStep(1),
             onPressed: () {
               if (isStep2Retry) {
                 context.read<ProcessingBloc>().add(
@@ -466,15 +466,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
               ? null
               : _showAiSettingsDialog,
         ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          icon: Icon(
-            Icons.terminal,
-            size: 18,
-            color: context.colorScheme.onSurface,
-          ),
-          onPressed: () => DebugLogSheet.show(context),
-        ),
+        const DebugLogButton(),
       ],
     );
   }

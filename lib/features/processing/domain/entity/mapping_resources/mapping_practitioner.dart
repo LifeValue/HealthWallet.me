@@ -97,23 +97,24 @@ abstract class MappingPractitioner
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'practitionerName': TextFieldDescriptor(
-      label: 'Practitioner Name',
-      value: practitionerName.value,
-      confidenceLevel: practitionerName.confidenceLevel,
-    ),
-    'specialty': TextFieldDescriptor(
-      label: 'Specialty',
-      value: specialty.value,
-      confidenceLevel: specialty.confidenceLevel,
-    ),
-    'identifier': TextFieldDescriptor(
-      label: 'Identifier',
-      value: identifier.value,
-      confidenceLevel: identifier.confidenceLevel,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'practitionerName': TextFieldDescriptor(
+          label: l10n.labelPractitionerName,
+          value: practitionerName.value,
+          confidenceLevel: practitionerName.confidenceLevel,
+        ),
+        'specialty': TextFieldDescriptor(
+          label: l10n.labelSpecialty,
+          value: specialty.value,
+          confidenceLevel: specialty.confidenceLevel,
+        ),
+        'identifier': TextFieldDescriptor(
+          label: l10n.labelIdentifier,
+          value: identifier.value,
+          confidenceLevel: identifier.confidenceLevel,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -140,7 +141,7 @@ abstract class MappingPractitioner
       );
 
   @override
-  String get label => 'Practitioner';
+  String localizedLabel(AppLocalizations l10n) => l10n.practitioner;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

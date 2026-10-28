@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -118,7 +119,7 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
     // Actuality
@@ -127,7 +128,7 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         actualityDisplay,
-        prefix: 'Actuality',
+        prefix: l10n.fieldActuality,
       ),
     );
 
@@ -138,7 +139,7 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
@@ -150,7 +151,7 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createWarningLine(
         seriousnessDisplay,
-        prefix: 'Seriousness',
+        prefix: l10n.fieldSeriousness,
       ),
     );
 
@@ -162,7 +163,7 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createWarningLine(
         severityDisplay,
-        prefix: 'Severity',
+        prefix: l10n.fieldSeverity,
       ),
     );
 
@@ -172,7 +173,10 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(outcomeDisplay, prefix: 'Outcome'),
+      ResourceFieldMapper.createStatusLine(
+        outcomeDisplay,
+        prefix: l10n.fieldOutcome,
+      ),
     );
 
     // Location
@@ -183,7 +187,7 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createLocationLine(
         locationDisplay,
-        prefix: 'Location',
+        prefix: l10n.fieldLocation,
       ),
     );
 
@@ -193,14 +197,20 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
+      ResourceFieldMapper.createUserLine(
+        recorderDisplay,
+        prefix: l10n.fieldRecorder,
+      ),
     );
 
     // Detected Date
     final detectedDisplay = detected?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(detectedDisplay, prefix: 'Detected'),
+      ResourceFieldMapper.createDateLine(
+        detectedDisplay,
+        prefix: l10n.fieldDetected,
+      ),
     );
 
     // Date
@@ -208,7 +218,7 @@ abstract class AdverseEvent with _$AdverseEvent implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }

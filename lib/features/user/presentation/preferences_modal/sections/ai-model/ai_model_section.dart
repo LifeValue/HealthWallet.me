@@ -274,7 +274,7 @@ class _AiModelSectionState extends State<AiModelSection> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Download continues in background',
+            context.l10n.aiModelDownloadContinuesInBackground,
             textAlign: TextAlign.center,
             style: AppTextStyle.labelSmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.6),

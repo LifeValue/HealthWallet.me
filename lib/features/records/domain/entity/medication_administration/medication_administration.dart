@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -119,7 +120,7 @@ abstract class MedicationAdministration
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
     // Medication
@@ -135,7 +136,10 @@ abstract class MedicationAdministration
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Status Reason
@@ -145,7 +149,7 @@ abstract class MedicationAdministration
       infoLines,
       ResourceFieldMapper.createStatusLine(
         statusReasonDisplay,
-        prefix: 'Status Reason',
+        prefix: l10n.fieldStatusReason,
       ),
     );
 
@@ -157,15 +161,21 @@ abstract class MedicationAdministration
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
     // Effective Time
-    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(effectiveX);
+    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(
+      effectiveX,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(effectiveDisplay, prefix: 'Effective'),
+      ResourceFieldMapper.createDateLine(
+        effectiveDisplay,
+        prefix: l10n.fieldEffective,
+      ),
     );
 
     // Performer
@@ -178,7 +188,7 @@ abstract class MedicationAdministration
         infoLines,
         ResourceFieldMapper.createUserLine(
           performerDisplay.isNotEmpty ? performerDisplay : null,
-          prefix: 'Performer',
+          prefix: l10n.fieldPerformer,
         ),
       );
     }
@@ -188,7 +198,7 @@ abstract class MedicationAdministration
       final doseText = dosage!.text?.valueString;
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createValueLine(doseText, prefix: 'Dosage'),
+        ResourceFieldMapper.createValueLine(doseText, prefix: l10n.fieldDosage),
       );
 
       final route = FhirFieldExtractor.extractCodeableConceptText(
@@ -196,13 +206,13 @@ abstract class MedicationAdministration
       );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createActivityLine(route, prefix: 'Route'),
+        ResourceFieldMapper.createActivityLine(route, prefix: l10n.fieldRoute),
       );
 
       final site = FhirFieldExtractor.extractCodeableConceptText(dosage!.site);
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createBodySiteLine(site, prefix: 'Site'),
+        ResourceFieldMapper.createBodySiteLine(site, prefix: l10n.fieldSite),
       );
     }
 
@@ -210,7 +220,10 @@ abstract class MedicationAdministration
     final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+      ResourceFieldMapper.createNotesLine(
+        reasonCodeDisplay,
+        prefix: l10n.fieldReason,
+      ),
     );
 
     // Date
@@ -218,7 +231,7 @@ abstract class MedicationAdministration
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }
@@ -227,7 +240,10 @@ abstract class MedicationAdministration
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

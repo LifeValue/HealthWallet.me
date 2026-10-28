@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -118,14 +119,17 @@ abstract class DiagnosticReport
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Category
@@ -135,7 +139,7 @@ abstract class DiagnosticReport
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
@@ -144,7 +148,10 @@ abstract class DiagnosticReport
         FhirFieldExtractor.extractMultipleReferenceDisplays(performer);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(performerDisplay, prefix: 'Performer'),
+      ResourceFieldMapper.createUserLine(
+        performerDisplay,
+        prefix: l10n.fieldPerformer,
+      ),
     );
 
     // Results Interpreter
@@ -154,22 +161,31 @@ abstract class DiagnosticReport
       infoLines,
       ResourceFieldMapper.createUserLine(
         interpreterDisplay,
-        prefix: 'Interpreter',
+        prefix: l10n.fieldInterpreter,
       ),
     );
 
     // Effective Date
-    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(effectiveX);
+    final effectiveDisplay = FhirFieldExtractor.extractEffectiveX(
+      effectiveX,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(effectiveDisplay, prefix: 'Effective'),
+      ResourceFieldMapper.createDateLine(
+        effectiveDisplay,
+        prefix: l10n.fieldEffective,
+      ),
     );
 
     // Conclusion
     final conclusionText = conclusion?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLabLine(conclusionText, prefix: 'Conclusion'),
+      ResourceFieldMapper.createLabLine(
+        conclusionText,
+        prefix: l10n.fieldConclusion,
+      ),
     );
 
     // Conclusion Code
@@ -179,7 +195,7 @@ abstract class DiagnosticReport
       infoLines,
       ResourceFieldMapper.createLabLine(
         conclusionCodeDisplay,
-        prefix: 'Conclusion Code',
+        prefix: l10n.fieldConclusionCode,
       ),
     );
 
@@ -188,8 +204,8 @@ abstract class DiagnosticReport
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createLabLine(
-          '${result!.length} result(s)',
-          prefix: 'Results',
+          l10n.resultCount(result!.length),
+          prefix: l10n.fieldResults,
         ),
       );
     }
@@ -199,8 +215,8 @@ abstract class DiagnosticReport
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createLabLine(
-          '${specimen!.length} specimen(s)',
-          prefix: 'Specimens',
+          l10n.specimenCount(specimen!.length),
+          prefix: l10n.fieldSpecimens,
         ),
       );
     }
@@ -210,8 +226,8 @@ abstract class DiagnosticReport
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createImageLine(
-          '${media!.length} image(s)',
-          prefix: 'Media',
+          l10n.imageCount(media!.length),
+          prefix: l10n.fieldMedia,
         ),
       );
     }
@@ -221,7 +237,7 @@ abstract class DiagnosticReport
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }

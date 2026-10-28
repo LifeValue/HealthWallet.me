@@ -104,24 +104,25 @@ abstract class MappingProcedure
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'procedureName': TextFieldDescriptor(
-      label: 'Procedure Name',
-      value: procedureName.value,
-      confidenceLevel: procedureName.confidenceLevel,
-    ),
-    'performedDateTime': TextFieldDescriptor(
-      label: 'Performed Date',
-      value: performedDateTime.value,
-      confidenceLevel: performedDateTime.confidenceLevel,
-      fieldType: FieldType.date,
-    ),
-    'reason': TextFieldDescriptor(
-      label: 'Reason',
-      value: reason.value,
-      confidenceLevel: reason.confidenceLevel,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'procedureName': TextFieldDescriptor(
+          label: l10n.labelProcedureName,
+          value: procedureName.value,
+          confidenceLevel: procedureName.confidenceLevel,
+        ),
+        'performedDateTime': TextFieldDescriptor(
+          label: l10n.labelPerformedDate,
+          value: performedDateTime.value,
+          confidenceLevel: performedDateTime.confidenceLevel,
+          fieldType: FieldType.date,
+        ),
+        'reason': TextFieldDescriptor(
+          label: l10n.labelReason,
+          value: reason.value,
+          confidenceLevel: reason.confidenceLevel,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -148,7 +149,7 @@ abstract class MappingProcedure
       );
 
   @override
-  String get label => 'Procedure';
+  String localizedLabel(AppLocalizations l10n) => l10n.procedure;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

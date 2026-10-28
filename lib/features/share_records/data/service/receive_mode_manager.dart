@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:airdrop/airdrop.dart';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -19,6 +20,9 @@ import 'package:injectable/injectable.dart';
 @Singleton(as: ReceiveModeService)
 class ReceiveModeManager implements ReceiveModeService {
   final ShareRecordsService _shareRecordsService;
+  // The invitation dialog can open while the app is backgrounded, from a
+  // context outside any screen, so its texts come from the provider.
+  final AppStringsProvider _strings;
 
   StreamSubscription<Map<String, dynamic>>? _invitationSubscription;
   StreamSubscription<ReceivedData>? _receivedDataSubscription;
@@ -31,7 +35,7 @@ class ReceiveModeManager implements ReceiveModeService {
 
   EphemeralRecordsContainer? _pendingReceivedData;
 
-  ReceiveModeManager(this._shareRecordsService);
+  ReceiveModeManager(this._shareRecordsService, this._strings);
 
   @override
   bool get isListening => _isListening;
@@ -205,7 +209,7 @@ class ReceiveModeManager implements ReceiveModeService {
     final deviceName =
         invitation['senderDeviceName'] as String? ??
         invitation['deviceName'] as String? ??
-        'Unknown Device';
+        _strings.l10n.shareUnknownDevice;
     final invitationId = invitation['invitationId'] as String? ?? '';
 
     debugPrint('[ReceiveMode] Invitation from: $deviceName');
@@ -243,6 +247,7 @@ class ReceiveModeManager implements ReceiveModeService {
       return;
     }
 
+    final l10n = _strings.l10n;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -274,14 +279,14 @@ class ReceiveModeManager implements ReceiveModeService {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Incoming Health Records',
+                        l10n.shareIncomingHealthRecords,
                         style: AppTextStyle.titleSmall.copyWith(
                           color: textColor,
                         ),
                       ),
                       const SizedBox(height: Insets.small),
                       Text(
-                        '$deviceName wants to share health records with you',
+                        l10n.shareDeviceWantsToShareHealthRecords(deviceName),
                         style: AppTextStyle.bodyMedium.copyWith(
                           color: textColor,
                         ),
@@ -310,7 +315,7 @@ class ReceiveModeManager implements ReceiveModeService {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Records will be view-only and automatically deleted when you exit',
+                                l10n.shareViewOnlyWarning,
                                 style: AppTextStyle.labelLarge.copyWith(
                                   color: textColor,
                                 ),
@@ -356,7 +361,7 @@ class ReceiveModeManager implements ReceiveModeService {
                                 ),
                               ),
                               child: Text(
-                                'Decline',
+                                l10n.shareDecline,
                                 style: AppTextStyle.buttonSmall.copyWith(
                                   color: AppColors.primary,
                                 ),
@@ -387,7 +392,7 @@ class ReceiveModeManager implements ReceiveModeService {
                                 elevation: 0,
                               ),
                               child: Text(
-                                'Accept',
+                                l10n.shareAccept,
                                 style: AppTextStyle.buttonSmall.copyWith(
                                   color: Colors.white,
                                 ),

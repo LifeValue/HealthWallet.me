@@ -2092,4 +2092,2178 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currentRecord => 'Current record';
+
+  @override
+  String get vitalHeartRate => 'Heart Rate';
+
+  @override
+  String get vitalBloodPressure => 'Blood Pressure';
+
+  @override
+  String get vitalTemperature => 'Temperature';
+
+  @override
+  String get vitalBloodOxygen => 'Blood Oxygen';
+
+  @override
+  String get vitalRespiratoryRate => 'Respiratory Rate';
+
+  @override
+  String get vitalWeight => 'Weight';
+
+  @override
+  String get vitalHeight => 'Height';
+
+  @override
+  String get vitalBmi => 'BMI';
+
+  @override
+  String get vitalBloodGlucose => 'Blood Glucose';
+
+  @override
+  String get vitalSystolicBloodPressure => 'Systolic Blood Pressure';
+
+  @override
+  String get vitalDiastolicBloodPressure => 'Diastolic Blood Pressure';
+
+  @override
+  String get unitBeatsPerMinute => 'beats/min';
+
+  @override
+  String get unitBreathsPerMinute => 'breaths/min';
+
+  @override
+  String get unitPounds => 'pounds';
+
+  @override
+  String get unitInches => 'inches';
+
+  @override
+  String get unitKilograms => 'kilograms';
+
+  @override
+  String get unitCentimeters => 'centimeters';
+
+  @override
+  String get specialtyAllergology => 'Allergology';
+
+  @override
+  String get specialtyCardiology => 'Cardiology';
+
+  @override
+  String get specialtyDental => 'Dental';
+
+  @override
+  String get specialtyDermatology => 'Dermatology';
+
+  @override
+  String get specialtyEmergencyMedicine => 'Emergency Medicine';
+
+  @override
+  String get specialtyEndocrinology => 'Endocrinology';
+
+  @override
+  String get specialtyGastroenterology => 'Gastroenterology';
+
+  @override
+  String get specialtyGeneralCare => 'General Care';
+
+  @override
+  String get specialtyGynecology => 'Gynecology';
+
+  @override
+  String get specialtyNephrology => 'Nephrology';
+
+  @override
+  String get specialtyNeurology => 'Neurology';
+
+  @override
+  String get specialtyOncology => 'Oncology';
+
+  @override
+  String get specialtyOphthalmology => 'Ophthalmology';
+
+  @override
+  String get specialtyOrthopedics => 'Orthopedics';
+
+  @override
+  String get specialtyPsychiatry => 'Psychiatry';
+
+  @override
+  String get specialtyPulmonology => 'Pulmonology';
+
+  @override
+  String get specialtyRheumatology => 'Rheumatology';
+
+  @override
+  String get specialtyUrology => 'Urology';
+
+  @override
+  String get categoryAllergies => 'Allergies';
+
+  @override
+  String get categoryCareTeam => 'Care Team';
+
+  @override
+  String get categoryClinicalNotes => 'Clinical Notes';
+
+  @override
+  String get categoryFiles => 'Files';
+
+  @override
+  String get categoryLabResults => 'Lab Results';
+
+  @override
+  String get categoryHealthIssues => 'Health Issues';
+
+  @override
+  String get categoryFacilities => 'Facilities';
+
+  @override
+  String get categoryHealthGoals => 'Health Goals';
+
+  @override
+  String get categoryImmunizations => 'Immunizations';
+
+  @override
+  String get categoryMedications => 'Medications';
+
+  @override
+  String get categoryDemographics => 'Demographics';
+
+  @override
+  String get categoryProcedures => 'Procedures';
+
+  @override
+  String get categoryHealthInsurance => 'Health Insurance';
+
+  @override
+  String get fhirTypeAdverseEvent => 'Adverse Event';
+
+  @override
+  String get fhirTypeAllergyIntolerance => 'Allergy';
+
+  @override
+  String get fhirTypeBinary => 'Binary';
+
+  @override
+  String get fhirTypeCareTeam => 'Care Team';
+
+  @override
+  String get fhirTypeClaim => 'Claim';
+
+  @override
+  String get fhirTypeCondition => 'Condition';
+
+  @override
+  String get fhirTypeCoverage => 'Coverage';
+
+  @override
+  String get fhirTypeDiagnosticReport => 'Diagnostic Report';
+
+  @override
+  String get fhirTypeDocumentReference => 'Document';
+
+  @override
+  String get fhirTypeEncounter => 'Encounter';
+
+  @override
+  String get fhirTypeExplanationOfBenefit => 'Explanation of Benefit';
+
+  @override
+  String get fhirTypeGoal => 'Goal';
+
+  @override
+  String get fhirTypeImmunization => 'Immunization';
+
+  @override
+  String get fhirTypeLocation => 'Location';
+
+  @override
+  String get fhirTypeMedia => 'Media';
+
+  @override
+  String get fhirTypeMedication => 'Medication';
+
+  @override
+  String get fhirTypeMedicationAdministration => 'Medication Administration';
+
+  @override
+  String get fhirTypeMedicationDispense => 'Medication Dispense';
+
+  @override
+  String get fhirTypeMedicationRequest => 'Medication Request';
+
+  @override
+  String get fhirTypeMedicationStatement => 'Medication Statement';
+
+  @override
+  String get fhirTypeObservation => 'Observation';
+
+  @override
+  String get fhirTypeOrganization => 'Organization';
+
+  @override
+  String get fhirTypePatient => 'Patient';
+
+  @override
+  String get fhirTypePractitioner => 'Practitioner';
+
+  @override
+  String get fhirTypePractitionerRole => 'Practitioner Role';
+
+  @override
+  String get fhirTypeProcedure => 'Procedure';
+
+  @override
+  String get fhirTypeRelatedPerson => 'Related Person';
+
+  @override
+  String get fhirTypeServiceRequest => 'Service Request';
+
+  @override
+  String get fhirTypeSpecimen => 'Specimen';
+
+  @override
+  String get fhirTypeGeneralResource => 'Resource';
+
+  @override
+  String get processingOriginScan => 'Scan';
+
+  @override
+  String get processingOriginImport => 'Import';
+
+  @override
+  String get processingOriginHandover => 'Handover';
+
+  @override
+  String get processingStatusPending => 'Pending';
+
+  @override
+  String get processingStatusProcessingPatient => 'Processing Patient';
+
+  @override
+  String get processingStatusPatientExtracted => 'Patient Extracted';
+
+  @override
+  String get processingStatusProcessing => 'Processing';
+
+  @override
+  String get processingStatusDraft => 'Draft';
+
+  @override
+  String get processingStatusCancelled => 'Cancelled';
+
+  @override
+  String get showAll => 'Show All';
+
+  @override
+  String get showLess => 'Show Less';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get gotIt => 'Got it';
+
+  @override
+  String get homeSpecialties => 'Specialties';
+
+  @override
+  String get homeResources => 'Resources';
+
+  @override
+  String get homeDefaultUserName => 'User';
+
+  @override
+  String get selectSpecialty => 'Select Specialty';
+
+  @override
+  String get removeSpecialty => 'Remove Specialty';
+
+  @override
+  String get chooseRecordsForDashboard =>
+      'Choose the records you want to see on your dashboard.';
+
+  @override
+  String get selectAtLeastOneRecordType =>
+      'Select at least one record type to continue.';
+
+  @override
+  String get chooseVitalsForDashboard =>
+      'Choose the vitals you want to see on your dashboard.';
+
+  @override
+  String get selectAtLeastOneVital =>
+      'Select at least one vital sign to continue.';
+
+  @override
+  String get chooseSpecialtiesForDashboard =>
+      'Choose the specialities you want to see on your dashboard.';
+
+  @override
+  String get selectAtLeastOneSpecialty =>
+      'Select at least one specialty to continue.';
+
+  @override
+  String get selectAtLeastOneItem => 'Select at least one item to continue.';
+
+  @override
+  String get sourceSectionWallet => 'WALLET';
+
+  @override
+  String get sourceSectionEhr => 'EHR SOURCES';
+
+  @override
+  String get areYouSure => 'Are you sure?';
+
+  @override
+  String get resourceNotViewable => 'This resource is not a viewable file';
+
+  @override
+  String get noFilePathFound => 'No file path found';
+
+  @override
+  String get handoverPatientMatched => 'Handover patient matched';
+
+  @override
+  String get desktopDiscovering => 'Discovering...';
+
+  @override
+  String get desktopTransportWifi => 'WiFi';
+
+  @override
+  String get desktopTransportDirect => 'Direct';
+
+  @override
+  String get desktopDeviceSync => 'Device Sync';
+
+  @override
+  String get desktopBackupLocation => 'Location';
+
+  @override
+  String get desktopBackupHistory => 'History';
+
+  @override
+  String desktopPairedWith(String name) {
+    return 'Paired with $name';
+  }
+
+  @override
+  String get desktopMobileDevice => 'Mobile Device';
+
+  @override
+  String get desktopNotFoundScanAgain =>
+      'Desktop not found. Try scanning QR again.';
+
+  @override
+  String get desktopPairingExpired =>
+      'Could not connect. Scan QR code to pair again.';
+
+  @override
+  String desktopRemoteBackupName(String date) {
+    return 'Remote $date';
+  }
+
+  @override
+  String get desktopNoBackupLocation =>
+      'No backup location set on desktop. Open the desktop app and choose a backup folder first.';
+
+  @override
+  String get desktopBackupFailed => 'Backup failed. Please try again.';
+
+  @override
+  String get desktopRestoreFailed => 'Restore failed. Please try again.';
+
+  @override
+  String get desktopBackupActionFailed =>
+      'Could not update the backups. Please try again.';
+
+  @override
+  String get desktopSyncFailed =>
+      'Sync failed. Check the connection and try again.';
+
+  @override
+  String get desktopHandoverTransfer => 'Transfer';
+
+  @override
+  String get desktopHandoverNoActive => 'No active handovers';
+
+  @override
+  String get desktopHandoverSendFromPhone => 'Send documents from your phone.';
+
+  @override
+  String desktopHandoverFilesProgress(String received, String total) {
+    return '$received/$total files';
+  }
+
+  @override
+  String get desktopHandoverTransferComplete => 'Transfer complete';
+
+  @override
+  String get desktopHandoverReceivingFiles => 'Receiving files...';
+
+  @override
+  String get desktopHandoverProcessingStatus => 'Processing...';
+
+  @override
+  String get desktopHandoverSendingResults => 'Sending results...';
+
+  @override
+  String get desktopHandoverDone => 'Complete';
+
+  @override
+  String get desktopHandoverStatusError => 'Error';
+
+  @override
+  String get desktopHandoverWaitingForResults => 'Waiting for results...';
+
+  @override
+  String get desktopHandoverNotAccepted =>
+      'The desktop did not accept the documents.';
+
+  @override
+  String get desktopHandoverFileMissing =>
+      'A document could not be found on this device.';
+
+  @override
+  String get desktopHandoverCancelled => 'Cancelled';
+
+  @override
+  String get desktopHandoverFailed => 'Processing failed. Please try again.';
+
+  @override
+  String get trayShowWindow => 'Show Window';
+
+  @override
+  String get trayHideWindow => 'Hide Window';
+
+  @override
+  String get trayNoDeviceConnected => 'No device connected';
+
+  @override
+  String traySyncStatus(String status) {
+    return 'Sync: $status';
+  }
+
+  @override
+  String get trayUpToDate => 'Up to date';
+
+  @override
+  String trayQuit(String appName) {
+    return 'Quit $appName';
+  }
+
+  @override
+  String get desktopFinishedProcessing => 'Desktop finished processing';
+
+  @override
+  String get biometricAuthReason =>
+      'Please authenticate to access your HealthWallet.me';
+
+  @override
+  String sourceUploadedOn(String date) {
+    return 'Uploaded $date';
+  }
+
+  @override
+  String couldNotOpenPdf(String message) {
+    return 'Could not open PDF: $message';
+  }
+
+  @override
+  String errorOpeningPdf(String error) {
+    return 'Error opening PDF: $error';
+  }
+
+  @override
+  String get shareStatusReadyToShare => 'Ready to share';
+
+  @override
+  String get shareStatusWaitingForSender => 'Waiting for sender...';
+
+  @override
+  String get shareStatusPermissionsRequired => 'Permissions required';
+
+  @override
+  String get shareStatusEnablePermissionsInSettings =>
+      'Please enable permissions in Settings';
+
+  @override
+  String get shareSelectAtLeastOneRecord => 'Please select at least one record';
+
+  @override
+  String get shareStatusLookingForDevices => 'Looking for nearby devices...';
+
+  @override
+  String get shareStatusTransferFailed => 'Transfer failed';
+
+  @override
+  String get shareStatusConfirmExit =>
+      'Are you sure you want to exit? Data will be deleted.';
+
+  @override
+  String shareStatusViewingRecords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Viewing $count records',
+      one: 'Viewing 1 record',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareStatusViewingRecordsFrom(int count, String deviceName) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Viewing $count records from $deviceName',
+      one: 'Viewing 1 record from $deviceName',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareStatusDataDeleted => 'Data has been securely deleted';
+
+  @override
+  String get shareStatusSessionExpired => 'Session expired';
+
+  @override
+  String get shareStatusTerminatingSession => 'Terminating remote session...';
+
+  @override
+  String get shareStatusSessionTerminated => 'Session terminated';
+
+  @override
+  String get shareStatusRemoteSessionTerminated => 'Remote session terminated';
+
+  @override
+  String get shareStatusExtensionDeclined => 'Extension request was declined';
+
+  @override
+  String get shareStatusReceiverViewing =>
+      'Receiver is viewing records - monitoring session';
+
+  @override
+  String get shareStatusReceiverDeclined => 'Receiver declined invitation';
+
+  @override
+  String shareStatusReceivingFrom(String deviceName) {
+    return 'Receiving records from $deviceName...';
+  }
+
+  @override
+  String get shareNoDataAvailable => 'No data available';
+
+  @override
+  String shareStatusDeviceWantsToShare(String deviceName) {
+    return '$deviceName wants to share records';
+  }
+
+  @override
+  String get shareStatusScanning => 'Scanning for devices...';
+
+  @override
+  String shareStatusFoundDevices(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Found $count devices',
+      one: 'Found 1 device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareStatusConnectingTo(String deviceName) {
+    return 'Connecting to $deviceName...';
+  }
+
+  @override
+  String get shareStatusPreparingRecords => 'Preparing records...';
+
+  @override
+  String get shareErrorPrepareFiles => 'Failed to prepare files for sending';
+
+  @override
+  String shareStatusTransferring(int percent) {
+    return 'Transferring $percent%';
+  }
+
+  @override
+  String get shareStatusRecordsSentWaiting =>
+      'Records sent - waiting for receiver to accept';
+
+  @override
+  String get shareStatusTransferCancelled => 'Transfer cancelled';
+
+  @override
+  String get shareStatusInvitationRejected => 'Invitation rejected';
+
+  @override
+  String get shareErrorParseData => 'Failed to parse received data';
+
+  @override
+  String get shareStatusProcessingReceived => 'Processing received records...';
+
+  @override
+  String get shareErrorParseFile => 'Failed to parse received file';
+
+  @override
+  String get shareIncomingHealthRecords => 'Incoming Health Records';
+
+  @override
+  String shareDeviceWantsToShareHealthRecords(String deviceName) {
+    return '$deviceName wants to share health records with you';
+  }
+
+  @override
+  String get sharePermissionExplanationIos =>
+      'To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n\nThis allows you to securely share health records with other devices nearby.';
+
+  @override
+  String get sharePermissionExplanationAndroid =>
+      'To share records with nearby devices, HealthWallet needs access to:\n\n• Bluetooth - to discover and connect to nearby devices\n• Location/Nearby Devices - required by Android to scan for Bluetooth and WiFi Direct devices\n\nYour location is never stored or transmitted.';
+
+  @override
+  String get sharePermissionsDeniedMessage =>
+      'Please grant all permissions to share records with nearby devices.';
+
+  @override
+  String get sharePermissionsPermanentlyDeniedMessage =>
+      'Some permissions were denied. Please enable them in Settings to use this feature.';
+
+  @override
+  String shareDurationRequested(String duration) {
+    return '$duration requested';
+  }
+
+  @override
+  String get noAttachments => 'No attachments';
+
+  @override
+  String get attachingFiles => 'Attaching files...';
+
+  @override
+  String get addAttachment => 'Add Attachment';
+
+  @override
+  String get noFileName => 'No file name';
+
+  @override
+  String attachmentFileOfTotal(int current, int total) {
+    return '( $current of $total files )';
+  }
+
+  @override
+  String get showDetails => 'Show Details';
+
+  @override
+  String get viewRelated => 'View Related';
+
+  @override
+  String get hideRelated => 'Hide Related';
+
+  @override
+  String get noRelatedResourcesFound => 'No related resources found';
+
+  @override
+  String get loadingRelatedResources => 'Loading related resources...';
+
+  @override
+  String get noRelatedResourcesForEncounter =>
+      'No related resources found for this encounter';
+
+  @override
+  String get cannotAttachToDocumentReference =>
+      'Cannot attach files to DocumentReference resources';
+
+  @override
+  String deleteRecordOfType(String type) {
+    return 'Delete $type';
+  }
+
+  @override
+  String get dateFilterEndBeforeStart => 'End date must be after start date';
+
+  @override
+  String dateFilterChip(String range) {
+    return 'Date: $range';
+  }
+
+  @override
+  String get aiModelCheckFailed =>
+      'An error appeared while checking model existence';
+
+  @override
+  String get aiModelExistenceCheckFailed => 'Failed to check model existence';
+
+  @override
+  String aiModelDownloadingTitle(String modelName) {
+    return 'Downloading $modelName';
+  }
+
+  @override
+  String get aiModelDownloadStarting => 'Starting download...';
+
+  @override
+  String aiModelReadyTitle(String modelName) {
+    return '$modelName Ready';
+  }
+
+  @override
+  String aiModelDownloadedMessage(String modelName) {
+    return '$modelName has been downloaded successfully.';
+  }
+
+  @override
+  String get aiModelDownloadFailedTitle => 'Download Failed';
+
+  @override
+  String get aiModelDownloadFailedMessage =>
+      'AI model download failed. Please check your connection and try again.';
+
+  @override
+  String get aiModelDownloadFailed => 'Download failed';
+
+  @override
+  String get aiModelDownloadCancelledTitle => 'Download Cancelled';
+
+  @override
+  String get aiModelDownloadInterruptedMessage =>
+      'The download was interrupted. Please try again.';
+
+  @override
+  String get aiModelDownloadCancelledNotificationTitle =>
+      'AI Model Download Cancelled';
+
+  @override
+  String get aiModelDownloadWasCancelled => 'AI model download was cancelled';
+
+  @override
+  String get aiModelDownloadCancelled => 'Download cancelled';
+
+  @override
+  String aiModelDownloadingPercent(String percent) {
+    return 'Downloading... $percent%';
+  }
+
+  @override
+  String get processingNoImagesGenerated =>
+      'No images were generated from the scan. Please try scanning again.';
+
+  @override
+  String processingPatientMatched(String origin) {
+    return '$origin patient matched';
+  }
+
+  @override
+  String processingPatientInfoExtracted(String origin) {
+    return '$origin patient info extracted';
+  }
+
+  @override
+  String processingFinished(String origin) {
+    return '$origin processing finished';
+  }
+
+  @override
+  String scanFailedWithError(String error) {
+    return 'Scan failed: $error';
+  }
+
+  @override
+  String get noValidFilesFound => 'No valid files found';
+
+  @override
+  String failedToImportDocument(String error) {
+    return 'Failed to import document: $error';
+  }
+
+  @override
+  String get couldNotOpenLink => 'Could not open link. Please try again.';
+
+  @override
+  String get continueProcessingOnDesktop => 'Continue processing on Desktop';
+
+  @override
+  String get deleteResourcesTitle => 'Delete Resources';
+
+  @override
+  String get switchToDiagnosticReport => 'Switch to Diagnostic Report';
+
+  @override
+  String get switchToEncounter => 'Switch to Encounter';
+
+  @override
+  String get previewDocument => 'Preview document';
+
+  @override
+  String get summaryTitle => 'Summary';
+
+  @override
+  String pagesAvailableForProcessing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Total: $count pages available for processing',
+      one: 'Total: $count page available for processing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get betaBadge => 'Beta';
+
+  @override
+  String get pleaseSelectSpecialty => 'Please select a specialty';
+
+  @override
+  String get patientAndSourceInformation => 'Patient & Source Information';
+
+  @override
+  String get noPatientsAvailable => 'No patients available';
+
+  @override
+  String get selectPatient => 'Select patient';
+
+  @override
+  String get unknownPatient => 'Unknown Patient';
+
+  @override
+  String get documentPreview => 'Document Preview';
+
+  @override
+  String filePathLabel(String path) {
+    return 'Path: $path';
+  }
+
+  @override
+  String get confidenceMedium => 'Medium confidence';
+
+  @override
+  String get confidenceLow => 'Low confidence';
+
+  @override
+  String get dateFormatHintIso => 'YYYY-MM-DD';
+
+  @override
+  String retryStep(int step) {
+    return 'Retry (Step $step)';
+  }
+
+  @override
+  String failedToCreateEncounter(String error) {
+    return 'Failed to create encounter: $error';
+  }
+
+  @override
+  String failedToAttachDocuments(String error) {
+    return 'Failed to attach documents: $error';
+  }
+
+  @override
+  String get fieldAccessionNumber => 'Accession Number';
+
+  @override
+  String get fieldAchievementStatus => 'Achievement Status';
+
+  @override
+  String get fieldActuality => 'Actuality';
+
+  @override
+  String get fieldAdditionalInformation => 'Additional Information';
+
+  @override
+  String get fieldAddress => 'Address';
+
+  @override
+  String get fieldAddresses => 'Addresses';
+
+  @override
+  String get fieldAdministeredBy => 'Administered By';
+
+  @override
+  String get fieldAdmissionSource => 'Admission Source';
+
+  @override
+  String get fieldAlert => 'Alert';
+
+  @override
+  String get fieldAllergyDetails => 'Allergy Details';
+
+  @override
+  String get fieldAlsoKnownAs => 'Also Known As';
+
+  @override
+  String get fieldAsserter => 'Asserter';
+
+  @override
+  String get fieldAttachmentTitle => 'Attachment Title';
+
+  @override
+  String get fieldAuthenticatedBy => 'Authenticated By';
+
+  @override
+  String get fieldAuthor => 'Author';
+
+  @override
+  String get fieldAvailabilityExceptions => 'Availability Exceptions';
+
+  @override
+  String get fieldAvailabilityNotes => 'Availability Notes';
+
+  @override
+  String get fieldBasedOn => 'Based On';
+
+  @override
+  String get fieldBasicInformation => 'Basic Information';
+
+  @override
+  String get fieldBeneficiary => 'Beneficiary';
+
+  @override
+  String get fieldBillablePeriod => 'Billable Period';
+
+  @override
+  String get fieldBirthDate => 'Birth Date';
+
+  @override
+  String get fieldBirthPlace => 'Birth Place';
+
+  @override
+  String get fieldBirthSex => 'Birth Sex';
+
+  @override
+  String get fieldBodySite => 'Body Site';
+
+  @override
+  String get fieldCareTeam => 'Care Team';
+
+  @override
+  String get fieldCategory => 'Category';
+
+  @override
+  String get fieldClinicalNotes => 'Clinical Notes';
+
+  @override
+  String get fieldClinicalStatus => 'Clinical Status';
+
+  @override
+  String get fieldCollectedBy => 'Collected By';
+
+  @override
+  String get fieldCollectionDate => 'Collection Date';
+
+  @override
+  String get fieldCollectionDuration => 'Collection Duration';
+
+  @override
+  String get fieldCollectionInformation => 'Collection Information';
+
+  @override
+  String get fieldCollectionMethod => 'Collection Method';
+
+  @override
+  String get fieldCollectionPeriod => 'Collection Period';
+
+  @override
+  String get fieldComplicationDetails => 'Complication Details';
+
+  @override
+  String get fieldComplications => 'Complications';
+
+  @override
+  String get fieldConclusion => 'Conclusion';
+
+  @override
+  String get fieldConclusionCode => 'Conclusion Code';
+
+  @override
+  String get fieldCondition => 'Condition';
+
+  @override
+  String get fieldContactEmail => 'Contact Email';
+
+  @override
+  String get fieldContactInformation => 'Contact Information';
+
+  @override
+  String get fieldContactPerson => 'Contact Person';
+
+  @override
+  String get fieldContactPhone => 'Contact Phone';
+
+  @override
+  String get fieldContainerAdditive => 'Container Additive';
+
+  @override
+  String get fieldContainerCapacity => 'Container Capacity';
+
+  @override
+  String get fieldContainerType => 'Container Type';
+
+  @override
+  String get fieldContainers => 'Containers';
+
+  @override
+  String get fieldContentType => 'Content Type';
+
+  @override
+  String get fieldContext => 'Context';
+
+  @override
+  String get fieldContract => 'Contract';
+
+  @override
+  String get fieldCostSharing => 'Cost Sharing';
+
+  @override
+  String get fieldCourseOfTherapy => 'Course of Therapy';
+
+  @override
+  String get fieldCoverage => 'Coverage';
+
+  @override
+  String get fieldCoverageClass => 'Coverage Class';
+
+  @override
+  String get fieldCoverageDetails => 'Coverage Details';
+
+  @override
+  String get fieldCreated => 'Created';
+
+  @override
+  String get fieldCriticality => 'Criticality';
+
+  @override
+  String get fieldCustodian => 'Custodian';
+
+  @override
+  String get fieldDataAbsentReason => 'Data Absent Reason';
+
+  @override
+  String get fieldDateGiven => 'Date Given';
+
+  @override
+  String get fieldDatePerformed => 'Date Performed';
+
+  @override
+  String get fieldDaysSupply => 'Days Supply';
+
+  @override
+  String get fieldDependent => 'Dependent';
+
+  @override
+  String get fieldDerivedFrom => 'Derived From';
+
+  @override
+  String get fieldDescription => 'Description';
+
+  @override
+  String get fieldDetected => 'Detected';
+
+  @override
+  String get fieldDevice => 'Device';
+
+  @override
+  String get fieldDiagnoses => 'Diagnoses';
+
+  @override
+  String get fieldDietPreference => 'Diet Preference';
+
+  @override
+  String get fieldDimensions => 'Dimensions';
+
+  @override
+  String get fieldDischargeDisposition => 'Discharge Disposition';
+
+  @override
+  String get fieldDischargeTo => 'Discharge To';
+
+  @override
+  String get fieldDisposition => 'Disposition';
+
+  @override
+  String get fieldDocumentDetails => 'Document Details';
+
+  @override
+  String get fieldDocumentId => 'Document ID';
+
+  @override
+  String get fieldDocumentStatus => 'Document Status';
+
+  @override
+  String get fieldDosage => 'Dosage';
+
+  @override
+  String get fieldDose => 'Dose';
+
+  @override
+  String get fieldDoseQuantity => 'Dose Quantity';
+
+  @override
+  String get fieldDriversLicenseNumber => 'Driver\'s License Number';
+
+  @override
+  String get fieldDuration => 'Duration';
+
+  @override
+  String get fieldEducationProvided => 'Education Provided';
+
+  @override
+  String get fieldEffective => 'Effective';
+
+  @override
+  String get fieldEffectiveDates => 'Effective Dates';
+
+  @override
+  String get fieldEmail => 'Email';
+
+  @override
+  String get fieldEmergency => 'Emergency';
+
+  @override
+  String get fieldEncounterType => 'Encounter Type';
+
+  @override
+  String get fieldEndpoints => 'Endpoints';
+
+  @override
+  String get fieldEpisodeOfCare => 'Episode of Care';
+
+  @override
+  String get fieldEthnicity => 'Ethnicity';
+
+  @override
+  String get fieldExpiration => 'Expiration';
+
+  @override
+  String get fieldExpirationDate => 'Expiration Date';
+
+  @override
+  String get fieldFacility => 'Facility';
+
+  @override
+  String get fieldFacilityDetails => 'Facility Details';
+
+  @override
+  String get fieldFacilityType => 'Facility Type';
+
+  @override
+  String get fieldFastingStatus => 'Fasting Status';
+
+  @override
+  String get fieldFax => 'Fax';
+
+  @override
+  String get fieldFocalDevice => 'Focal Device';
+
+  @override
+  String get fieldFollowUp => 'Follow-up';
+
+  @override
+  String get fieldForm => 'Form';
+
+  @override
+  String get fieldFormat => 'Format';
+
+  @override
+  String get fieldFundingSource => 'Funding Source';
+
+  @override
+  String get fieldGender => 'Gender';
+
+  @override
+  String get fieldGeneralPractitioner => 'General Practitioner';
+
+  @override
+  String get fieldGoal => 'Goal';
+
+  @override
+  String get fieldGoalDetails => 'Goal Details';
+
+  @override
+  String get fieldGpsCoordinates => 'GPS Coordinates';
+
+  @override
+  String get fieldGroupNumber => 'Group Number';
+
+  @override
+  String get fieldHandedOver => 'Handed Over';
+
+  @override
+  String get fieldHealthcareFacility => 'Healthcare Facility';
+
+  @override
+  String get fieldHealthcareService => 'Healthcare Service';
+
+  @override
+  String get fieldHours => 'Hours';
+
+  @override
+  String get fieldHowToTake => 'How to Take';
+
+  @override
+  String get fieldIdentifiers => 'Identifiers';
+
+  @override
+  String get fieldInformationSource => 'Information Source';
+
+  @override
+  String get fieldIngredients => 'Ingredients';
+
+  @override
+  String get fieldInstructions => 'Instructions';
+
+  @override
+  String get fieldInsuranceCompany => 'Insurance Company';
+
+  @override
+  String get fieldInsurer => 'Insurer';
+
+  @override
+  String get fieldIntent => 'Intent';
+
+  @override
+  String get fieldInterpreter => 'Interpreter';
+
+  @override
+  String get fieldItemsUsed => 'Items Used';
+
+  @override
+  String get fieldLanguage => 'Language';
+
+  @override
+  String get fieldLanguages => 'Languages';
+
+  @override
+  String get fieldLastOccurrence => 'Last Occurrence';
+
+  @override
+  String get fieldLifecycleStatus => 'Lifecycle Status';
+
+  @override
+  String get fieldLocation => 'Location';
+
+  @override
+  String get fieldLocationProvider => 'Location & Provider';
+
+  @override
+  String get fieldLotNumber => 'Lot Number';
+
+  @override
+  String get fieldManagingOrganization => 'Managing Organization';
+
+  @override
+  String get fieldManufacturer => 'Manufacturer';
+
+  @override
+  String get fieldMaritalStatus => 'Marital Status';
+
+  @override
+  String get fieldMedia => 'Media';
+
+  @override
+  String get fieldMedicalRecordNumber => 'Medical Record Number';
+
+  @override
+  String get fieldMedication => 'Medication';
+
+  @override
+  String get fieldMedicationDetails => 'Medication Details';
+
+  @override
+  String get fieldMemberId => 'Member ID';
+
+  @override
+  String get fieldMembers => 'Members';
+
+  @override
+  String get fieldMethod => 'Method';
+
+  @override
+  String get fieldModality => 'Modality';
+
+  @override
+  String get fieldMode => 'Mode';
+
+  @override
+  String get fieldMothersMaidenName => 'Mother\'s Maiden Name';
+
+  @override
+  String get fieldMultipleBirth => 'Multiple Birth';
+
+  @override
+  String get fieldNetwork => 'Network';
+
+  @override
+  String get fieldNextDose => 'Next Dose';
+
+  @override
+  String get fieldNotes => 'Notes';
+
+  @override
+  String get fieldOccurrence => 'Occurrence';
+
+  @override
+  String get fieldOnset => 'Onset';
+
+  @override
+  String get fieldOperationalStatus => 'Operational Status';
+
+  @override
+  String get fieldOperator => 'Operator';
+
+  @override
+  String get fieldOrder => 'Order';
+
+  @override
+  String get fieldOrderedBy => 'Ordered By';
+
+  @override
+  String get fieldOrganization => 'Organization';
+
+  @override
+  String get fieldOrganizationDetails => 'Organization Details';
+
+  @override
+  String get fieldOutcome => 'Outcome';
+
+  @override
+  String get fieldOutcomeMeasurements => 'Outcome Measurements';
+
+  @override
+  String get fieldPanelComponents => 'Panel Components';
+
+  @override
+  String get fieldParentSpecimen => 'Parent Specimen';
+
+  @override
+  String get fieldPartOf => 'Part Of';
+
+  @override
+  String get fieldPassportNumber => 'Passport Number';
+
+  @override
+  String get fieldPatient => 'Patient';
+
+  @override
+  String get fieldPerformedBy => 'Performed By';
+
+  @override
+  String get fieldPerformer => 'Performer';
+
+  @override
+  String get fieldPerformerType => 'Performer Type';
+
+  @override
+  String get fieldPeriod => 'Period';
+
+  @override
+  String get fieldPhone => 'Phone';
+
+  @override
+  String get fieldPhysicalType => 'Physical Type';
+
+  @override
+  String get fieldPlanName => 'Plan Name';
+
+  @override
+  String get fieldPlanType => 'Plan Type';
+
+  @override
+  String get fieldPolicyHolder => 'Policy Holder';
+
+  @override
+  String get fieldPracticeSetting => 'Practice Setting';
+
+  @override
+  String get fieldPractitioner => 'Practitioner';
+
+  @override
+  String get fieldPrepared => 'Prepared';
+
+  @override
+  String get fieldPrescribed => 'Prescribed';
+
+  @override
+  String get fieldPrescribedBy => 'Prescribed By';
+
+  @override
+  String get fieldPrimarySource => 'Primary Source';
+
+  @override
+  String get fieldPriority => 'Priority';
+
+  @override
+  String get fieldProcedureCode => 'Procedure Code';
+
+  @override
+  String get fieldProcedureDetails => 'Procedure Details';
+
+  @override
+  String get fieldProcessingStorage => 'Processing & Storage';
+
+  @override
+  String get fieldProfessionalInformation => 'Professional Information';
+
+  @override
+  String get fieldProgramEligibility => 'Program Eligibility';
+
+  @override
+  String get fieldProgressNotes => 'Progress Notes';
+
+  @override
+  String get fieldProvider => 'Provider';
+
+  @override
+  String get fieldQualification => 'Qualification';
+
+  @override
+  String get fieldQuantity => 'Quantity';
+
+  @override
+  String get fieldQuantityCollected => 'Quantity Collected';
+
+  @override
+  String get fieldRace => 'Race';
+
+  @override
+  String get fieldRangeAppliesTo => 'Range Applies To';
+
+  @override
+  String get fieldRangeNotes => 'Range Notes';
+
+  @override
+  String get fieldReAdmission => 'Re-admission';
+
+  @override
+  String get fieldReaction => 'Reaction';
+
+  @override
+  String get fieldReactions => 'Reactions';
+
+  @override
+  String get fieldReason => 'Reason';
+
+  @override
+  String get fieldReasonForVisit => 'Reason for Visit';
+
+  @override
+  String get fieldReceivedAtLab => 'Received at Lab';
+
+  @override
+  String get fieldRecorded => 'Recorded';
+
+  @override
+  String get fieldRecorder => 'Recorder';
+
+  @override
+  String get fieldReferenceRange => 'Reference Range';
+
+  @override
+  String get fieldRefills => 'Refills';
+
+  @override
+  String get fieldRelatedAppointment => 'Related Appointment';
+
+  @override
+  String get fieldRelatedCondition => 'Related Condition';
+
+  @override
+  String get fieldRelatedDocument => 'Related Document';
+
+  @override
+  String get fieldRelationship => 'Relationship';
+
+  @override
+  String get fieldRelationshipToSubscriber => 'Relationship to Subscriber';
+
+  @override
+  String get fieldReport => 'Report';
+
+  @override
+  String get fieldReportedBy => 'Reported By';
+
+  @override
+  String get fieldRequestedBy => 'Requested By';
+
+  @override
+  String get fieldRequester => 'Requester';
+
+  @override
+  String get fieldResolved => 'Resolved';
+
+  @override
+  String get fieldResult => 'Result';
+
+  @override
+  String get fieldResultDate => 'Result Date';
+
+  @override
+  String get fieldResults => 'Results';
+
+  @override
+  String get fieldRole => 'Role';
+
+  @override
+  String get fieldRoute => 'Route';
+
+  @override
+  String get fieldSecurityClassification => 'Security Classification';
+
+  @override
+  String get fieldSeries => 'Series';
+
+  @override
+  String get fieldSeriousness => 'Seriousness';
+
+  @override
+  String get fieldServicePeriod => 'Service Period';
+
+  @override
+  String get fieldServiceType => 'Service Type';
+
+  @override
+  String get fieldSetBy => 'Set By';
+
+  @override
+  String get fieldSeverity => 'Severity';
+
+  @override
+  String get fieldSite => 'Site';
+
+  @override
+  String get fieldSize => 'Size';
+
+  @override
+  String get fieldSpecialArrangements => 'Special Arrangements';
+
+  @override
+  String get fieldSpecialty => 'Specialty';
+
+  @override
+  String get fieldSpecimenDetails => 'Specimen Details';
+
+  @override
+  String get fieldSpecimenQuantity => 'Specimen Quantity';
+
+  @override
+  String get fieldSpecimenType => 'Specimen Type';
+
+  @override
+  String get fieldSpecimens => 'Specimens';
+
+  @override
+  String get fieldStage => 'Stage';
+
+  @override
+  String get fieldStartDate => 'Start Date';
+
+  @override
+  String get fieldStatus => 'Status';
+
+  @override
+  String get fieldStatusDate => 'Status Date';
+
+  @override
+  String get fieldStatusHistory => 'Status History';
+
+  @override
+  String get fieldStatusReason => 'Status Reason';
+
+  @override
+  String get fieldStrength => 'Strength';
+
+  @override
+  String get fieldSubpotent => 'Subpotent';
+
+  @override
+  String get fieldSubrogation => 'Subrogation';
+
+  @override
+  String get fieldSubscriber => 'Subscriber';
+
+  @override
+  String get fieldSubstitution => 'Substitution';
+
+  @override
+  String get fieldSupplies => 'Supplies';
+
+  @override
+  String get fieldTarget => 'Target';
+
+  @override
+  String get fieldTestDate => 'Test Date';
+
+  @override
+  String get fieldTimePeriod => 'Time Period';
+
+  @override
+  String get fieldTotal => 'Total';
+
+  @override
+  String get fieldType => 'Type';
+
+  @override
+  String get fieldUse => 'Use';
+
+  @override
+  String get fieldVaccinationDetails => 'Vaccination Details';
+
+  @override
+  String get fieldVaccine => 'Vaccine';
+
+  @override
+  String get fieldValue => 'Value';
+
+  @override
+  String get fieldVerification => 'Verification';
+
+  @override
+  String get fieldVerifiedBy => 'Verified By';
+
+  @override
+  String get fieldView => 'View';
+
+  @override
+  String get fieldVisitDetails => 'Visit Details';
+
+  @override
+  String get fieldVisitType => 'Visit Type';
+
+  @override
+  String get fieldWebsite => 'Website';
+
+  @override
+  String get fieldDateOfBirth => 'Date of Birth';
+
+  @override
+  String get fieldAge => 'Age';
+
+  @override
+  String get fieldLastUpdated => 'Last Updated';
+
+  @override
+  String get fieldAdditive => 'Additive';
+
+  @override
+  String get fieldTime => 'Time';
+
+  @override
+  String fieldProcessingNumber(int number) {
+    return 'Processing $number';
+  }
+
+  @override
+  String get inactive => 'Inactive';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String moreCount(int count) {
+    return '$count more';
+  }
+
+  @override
+  String qualificationIssuedBy(String qualification, String issuer) {
+    return '$qualification (issued by $issuer)';
+  }
+
+  @override
+  String qualificationValidPeriod(String qualification, String period) {
+    return '$qualification - Valid: $period';
+  }
+
+  @override
+  String sizeBytes(String size) {
+    return '$size bytes';
+  }
+
+  @override
+  String doseNumberOfTotal(String dose, String total) {
+    return 'Dose $dose of $total';
+  }
+
+  @override
+  String doseNumber(String dose) {
+    return 'Dose $dose';
+  }
+
+  @override
+  String get immunizationPrimarySourceYes => 'Yes (directly administered)';
+
+  @override
+  String get immunizationPrimarySourceNo =>
+      'No (reported by patient or other source)';
+
+  @override
+  String get immunizationReactionReported => 'Reaction reported';
+
+  @override
+  String get immunizationNoReactions => 'No adverse reactions reported';
+
+  @override
+  String get immunizationSeriesComplete => 'Not scheduled (series complete)';
+
+  @override
+  String get immunizationSubpotent => 'Vaccine is subpotent';
+
+  @override
+  String documentPublished(String document, String date) {
+    return '$document (published $date)';
+  }
+
+  @override
+  String refillsRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count refills remaining',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String validUntil(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String validFrom(String date) {
+    return 'Valid from $date';
+  }
+
+  @override
+  String get substitutionAllowed => 'Generic substitution allowed';
+
+  @override
+  String get substitutionNotAllowed => 'Brand name required - no substitution';
+
+  @override
+  String get doNotPerformRequest => 'Do NOT perform this request';
+
+  @override
+  String get complicationsNone => 'None';
+
+  @override
+  String fastedFor(String duration) {
+    return 'Fasted for $duration';
+  }
+
+  @override
+  String containerCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count container(s)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get coverageOrderPrimary => 'Primary (1)';
+
+  @override
+  String get coverageOrderSecondary => 'Secondary (2)';
+
+  @override
+  String get coverageOrderTertiary => 'Tertiary (3)';
+
+  @override
+  String coverageOrderNumber(int order) {
+    return 'Order $order';
+  }
+
+  @override
+  String goalDueBy(String date) {
+    return 'by $date';
+  }
+
+  @override
+  String durationSeconds(String seconds) {
+    return '$seconds seconds';
+  }
+
+  @override
+  String ingredientCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ingredient(s)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String resultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count result(s)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String specimenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count specimen(s)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String imageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count image(s)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ageYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count years',
+      one: '$count year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get identifierPassport => 'Passport';
+
+  @override
+  String multipleBirthOrder(String order) {
+    return 'Yes (Birth order: $order)';
+  }
+
+  @override
+  String timeAgoDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: '$count day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeAgoHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours ago',
+      one: '$count hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeAgoMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes ago',
+      one: '$count minute ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get justNow => 'Just now';
+
+  @override
+  String get bloodTypeNotAvailable => 'Not Available';
+
+  @override
+  String get settingsStorage => 'Storage';
+
+  @override
+  String get settingsStorageDescription =>
+      'Clear all records, preferences and cached data';
+
+  @override
+  String get settingsReset => 'Reset';
+
+  @override
+  String get resetDataWarning =>
+      'This will permanently delete all your data including synced records, notes, attachments, and preferences.';
+
+  @override
+  String resetTypeToConfirm(String word) {
+    return 'Type $word to confirm:';
+  }
+
+  @override
+  String get deleting => 'Deleting...';
+
+  @override
+  String get aiModelDownloadContinuesInBackground =>
+      'Download continues in background';
+
+  @override
+  String get aiModelAdvanced => 'Advanced';
+
+  @override
+  String get aiModelMedical => 'Medical';
+
+  @override
+  String aiModelDescriptionLite(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Fast and lightweight (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionAdvanced(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Higher accuracy (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionUltra(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Best accuracy for desktop (~$sizeGbString GB)';
+  }
+
+  @override
+  String aiModelDescriptionPreviousAdvanced(double sizeGb) {
+    final intl.NumberFormat sizeGbNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String sizeGbString = sizeGbNumberFormat.format(sizeGb);
+
+    return 'Previous Advanced model (~$sizeGbString GB)';
+  }
+
+  @override
+  String get settingsEhrSync => 'EHR Sync';
+
+  @override
+  String get shareProximityTitle => 'Share Proximity';
+
+  @override
+  String get shareProximityDescription => 'Advertise to nearby devices';
+
+  @override
+  String get allow => 'Allow';
+
+  @override
+  String get settingsSendFeedback => 'Send us your feedback';
+
+  @override
+  String get toggleOn => 'ON';
+
+  @override
+  String get toggleOff => 'OFF';
+
+  @override
+  String get idScanVerifyDetails =>
+      'Verify the details are correct. Retry scanning if needed.';
+
+  @override
+  String get idScanPartial =>
+      'Some fields could not be read. Try a clearer photo.';
+
+  @override
+  String get idScanFailed =>
+      'Could not read the document. Retake with better lighting.';
+
+  @override
+  String get genderOther => 'Other';
+
+  @override
+  String get genderUnknown => 'Unknown';
+
+  @override
+  String walletPassAge(int age) {
+    return 'Age $age';
+  }
+
+  @override
+  String privacyEffectiveDate(DateTime date) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
+    final String dateString = dateDateFormat.format(date);
+
+    return 'Effective Date: $dateString';
+  }
+
+  @override
+  String get privacyCorePrincipleBody =>
+      'The most important thing to know is that we, the developers of **HealthWallet.me**, do not collect, store, or have access to any of your personal or health information. Our app operates entirely on your device.';
+
+  @override
+  String get privacyNoCloudProcessing =>
+      '✅ No Cloud Processing: All calculations, data organization, and other functions happen locally on your phone or tablet.';
+
+  @override
+  String get privacyNoDeveloperAccess =>
+      '✅ No Developer Access: We cannot see, access, or export your data. It is never sent to our servers.';
+
+  @override
+  String get privacyYouAreInControl =>
+      '✅ You Are in Control: Your information is stored securely within the app\'s private storage on your device, which only you can access.';
+
+  @override
+  String get privacyDoNotCollectIntro =>
+      'To be perfectly clear, our app is intentionally built to avoid accessing your personal data. We **do not** collect, store, link, or process any information that can be tied to you.';
+
+  @override
+  String get privacyPersonalIdentifiers =>
+      'Personal Identifiers: We do not access or store your name, email address, phone number, contacts, or any other personal account information from your device.';
+
+  @override
+  String get privacyHealthInformation =>
+      'Health Information: Any health records, medical conditions, medications, or other data you import remain yours alone. We cannot access them.';
+
+  @override
+  String get privacyNoCrossReferencing =>
+      'No Cross-Referencing: The app operates in isolation. It **does not** scan, index, or cross-reference your health data with any other personal information on your phone (like your contacts list, name, or phone number). Its only job is to organize the records you provide to it.';
+
+  @override
+  String get privacyUsageAnalytics =>
+      'Usage Analytics: We do not track how you use the app, which buttons you tap, or how long you spend on certain screens.';
+
+  @override
+  String get privacyYouManageIntro =>
+      'The only data processed by the app is the health information **you choose to import** into it. This can be done in the following ways:';
+
+  @override
+  String get privacyImportingIntro =>
+      'You can add health documents (such as PDFs of lab results or clinic summaries) directly into the app using standard mobile operating system features:';
+
+  @override
+  String get privacyScanning =>
+      'Scanning: Using your device\'s camera to scan a physical document from within the app.';
+
+  @override
+  String get privacyShareActionSheet =>
+      'Share Action Sheet: Selecting a file from another app (like your email, photos, or file manager) and \"sharing\" it directly to **HealthWallet.me**.';
+
+  @override
+  String get privacyLocalProcessing =>
+      'Once a document is imported, the app processes it locally on your device in the background. It structures the information according to the **HL7 FHIR (Fast Healthcare Interoperability Resources)** standard to make it useful and organized. This entire process happens on your device; the document and the structured data never leave it.';
+
+  @override
+  String get privacyFastenIntro =>
+      'Our app allows you to consolidate your health records by connecting to **FastenHealth OnPrem**, a transparent, open-source platform.';
+
+  @override
+  String get privacyFastenOpenSource =>
+      'Open-Source and On-Premises: FastenHealth OnPrem is open-source software that you or a trusted entity controls. This provides an exceptional level of privacy.';
+
+  @override
+  String get privacyFastenDirectDownload =>
+      'Direct-to-Device Download: When you authorize the connection, your health records are downloaded **directly from your FastenHealth OnPrem instance to your device**. Our app is only a conduit; your data never passes through our servers.';
+
+  @override
+  String get privacyUsageIntro =>
+      'Since all your data resides on your device, it is only \"used\" by the app to help you organize and view your records. This includes:';
+
+  @override
+  String get privacyUsageProcessing =>
+      'Processing and structuring imported or scanned documents.';
+
+  @override
+  String get privacyUsageDisplaying =>
+      'Displaying your health records, lab results, and medication history to you.';
+
+  @override
+  String get privacyNoOtherUse =>
+      'We do not use your information for advertising, research, or any other purpose.';
+
+  @override
+  String get privacyStorage =>
+      'Storage: All your data is stored in the app\'s secure, sandboxed storage on your device. It is as secure as your device itself. We strongly recommend you protect your device with a passcode, Face ID, or other biometric security.';
+
+  @override
+  String get privacySharing =>
+      'Sharing: We do not and cannot share your data with anyone because we don\'t have it. If you choose to export or share your data from the app, you are in complete control of where it goes.';
+
+  @override
+  String get privacyDeletion =>
+      'Deletion: You can delete your information at any time from within the app. Deleting the app from your device will also permanently delete all data it has stored.';
+
+  @override
+  String get privacyChildrenBody =>
+      'Our service is not directed to individuals under the age of 16, in accordance with the General Data Protection Regulation (GDPR) as applicable in Romania and across the EU. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us.';
+
+  @override
+  String get privacyChangesBody =>
+      'We may update this policy from time to time. If we make any material changes, we will notify you through the app or by other means so you can review the changes before they take effect.';
+
+  @override
+  String get privacyContactBody =>
+      'If you have any questions or concerns about this Privacy Policy, please contact us at:';
+
+  @override
+  String get syncQrScanInstructions =>
+      'Scan a QR code from your **HealthWallet.me** desktop app or **Fasten Health** to sync your data.';
+
+  @override
+  String get syncSuccessMessage => 'Data was successfully synced!';
+
+  @override
+  String get syncErrorConnection =>
+      'Connection failed. Please check your network and try again.';
+
+  @override
+  String get syncErrorEndpointNotFound =>
+      'Sync endpoint not found. Please check server configuration.';
+
+  @override
+  String get syncErrorAuthentication =>
+      'Authentication failed. Please check your token.';
+
+  @override
+  String get syncErrorInvalidFormat => 'Invalid sync data format';
+
+  @override
+  String syncErrorGeneric(String error) {
+    return 'Data sync failed: $error';
+  }
+
+  @override
+  String syncPlaceholderSubtitle(String recordType) {
+    return 'Sync or update your data to view $recordType records';
+  }
+
+  @override
+  String get appLockTitle => 'HealthWallet is locked';
+
+  @override
+  String get appLockMessage => 'Unlock to view your health records';
+
+  @override
+  String get appLockUnlock => 'Unlock';
+
+  @override
+  String get desktopRestoreSucceededTitle => 'Backup restored';
+
+  @override
+  String desktopRestoreSucceededMessage(String name, int count) {
+    return '\"$name\" has been restored. $count records are now on this device.';
+  }
 }
