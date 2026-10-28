@@ -1457,6 +1457,7 @@
   "couldNotOpenLink": "Could not open link. Please try again.",
   "importFilesFailed": "Could not open the selected files. Please try again.",
   "continueProcessingOnDesktop": "Continue processing on Desktop",
+  "handoverSendFailed": "Could not send the document to the desktop. Please try again.",
   "deleteResourcesTitle": "Delete Resources",
   "switchToDiagnosticReport": "Switch to Diagnostic Report",
   "switchToEncounter": "Switch to Encounter",

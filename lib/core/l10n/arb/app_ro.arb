@@ -1231,6 +1231,7 @@
   "couldNotOpenLink": "Linkul nu a putut fi deschis. Încearcă din nou.",
   "importFilesFailed": "Fișierele selectate nu au putut fi deschise. Încearcă din nou.",
   "continueProcessingOnDesktop": "Continuă procesarea pe desktop",
+  "handoverSendFailed": "Documentul nu a putut fi trimis pe desktop. Încearcă din nou.",
   "deleteResourcesTitle": "Șterge resursele",
   "switchToDiagnosticReport": "Comută la raport de diagnostic",
   "switchToEncounter": "Comută la consultație",

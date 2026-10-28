@@ -2958,6 +2958,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Verarbeitung auf dem Desktop fortsetzen';
 
   @override
+  String get handoverSendFailed =>
+      'Das Dokument konnte nicht an den Desktop gesendet werden. Bitte versuche es erneut.';
+
+  @override
   String get deleteResourcesTitle => 'Ressourcen löschen';
 
   @override

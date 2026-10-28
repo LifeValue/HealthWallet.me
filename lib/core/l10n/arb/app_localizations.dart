@@ -5297,6 +5297,12 @@ abstract class AppLocalizations {
   /// **'Continue processing on Desktop'**
   String get continueProcessingOnDesktop;
 
+  /// No description provided for @handoverSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send the document to the desktop. Please try again.'**
+  String get handoverSendFailed;
+
   /// No description provided for @deleteResourcesTitle.
   ///
   /// In en, this message translates to:

@@ -13,6 +13,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/processing/domain/services/ai_model_download_service.dart';
@@ -116,7 +117,9 @@ class AiTokenSettingsDialog extends StatefulWidget {
           final memInfo = await File('/proc/meminfo').readAsString();
           final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
           if (match != null) return int.parse(match.group(1)!) ~/ 1024;
-        } catch (_) {}
+        } catch (_) {
+          // A failed RAM probe falls back to the low-RAM flag below.
+        }
         final deviceInfo = DeviceInfoPlugin();
         final android = await deviceInfo.androidInfo;
         return android.isLowRamDevice ? 2048 : 4096;
@@ -141,7 +144,9 @@ class AiTokenSettingsDialog extends StatefulWidget {
         final match = RegExp(r'MemTotal:\s+(\d+)').firstMatch(memInfo);
         if (match != null) return int.parse(match.group(1)!) ~/ 1024;
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not read the device RAM; assuming 4096 MB', e);
+    }
     return 4096;
   }
 

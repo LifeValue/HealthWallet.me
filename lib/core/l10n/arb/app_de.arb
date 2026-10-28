@@ -1232,6 +1232,7 @@
   "couldNotOpenLink": "Der Link konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
   "importFilesFailed": "Die ausgewählten Dateien konnten nicht geöffnet werden. Bitte versuche es erneut.",
   "continueProcessingOnDesktop": "Verarbeitung auf dem Desktop fortsetzen",
+  "handoverSendFailed": "Das Dokument konnte nicht an den Desktop gesendet werden. Bitte versuche es erneut.",
   "deleteResourcesTitle": "Ressourcen löschen",
   "switchToDiagnosticReport": "Zu Befundbericht wechseln",
   "switchToEncounter": "Zu Termin wechseln",

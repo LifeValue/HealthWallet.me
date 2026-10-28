@@ -40,7 +40,9 @@ mixin PdfConversionMixin implements TextRecognitionService {
           );
           await tempFile.writeAsBytes(pngOut);
           imagePaths.add(tempFile.path);
-        } catch (_) {}
+        } catch (e) {
+          logger.w('Could not convert PDF page $index; skipping it', e);
+        }
         index++;
       }
       return imagePaths;
@@ -103,7 +105,9 @@ mixin PdfConversionMixin implements TextRecognitionService {
         for (final imagePath in cachedImagePaths) {
           try {
             await File(imagePath).delete();
-          } catch (_) {}
+          } catch (_) {
+            // Best-effort cleanup; a leftover cached page is harmless.
+          }
         }
         return null;
       }
@@ -125,7 +129,9 @@ mixin PdfConversionMixin implements TextRecognitionService {
       };
 
       await cacheMetadataFile.writeAsString(jsonEncode(metadata));
-    } catch (_) {}
+    } catch (_) {
+      // The cache only saves time; without it the PDF is converted again.
+    }
   }
 
   @override

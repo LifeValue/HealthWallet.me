@@ -2949,6 +2949,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get continueProcessingOnDesktop => 'Continuă procesarea pe desktop';
 
   @override
+  String get handoverSendFailed =>
+      'Documentul nu a putut fi trimis pe desktop. Încearcă din nou.';
+
+  @override
   String get deleteResourcesTitle => 'Șterge resursele';
 
   @override

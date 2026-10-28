@@ -1236,6 +1236,7 @@
   "couldNotOpenLink": "No se pudo abrir el enlace. Inténtalo de nuevo.",
   "importFilesFailed": "No se pudieron abrir los archivos seleccionados. Inténtalo de nuevo.",
   "continueProcessingOnDesktop": "Continuar el procesamiento en el escritorio",
+  "handoverSendFailed": "No se pudo enviar el documento al escritorio. Inténtalo de nuevo.",
   "deleteResourcesTitle": "Eliminar recursos",
   "switchToDiagnosticReport": "Cambiar a informe diagnóstico",
   "switchToEncounter": "Cambiar a encuentro",

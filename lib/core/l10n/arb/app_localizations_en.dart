@@ -2910,6 +2910,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueProcessingOnDesktop => 'Continue processing on Desktop';
 
   @override
+  String get handoverSendFailed =>
+      'Could not send the document to the desktop. Please try again.';
+
+  @override
   String get deleteResourcesTitle => 'Delete Resources';
 
   @override

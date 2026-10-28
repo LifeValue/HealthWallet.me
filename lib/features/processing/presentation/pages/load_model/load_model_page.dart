@@ -10,6 +10,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -391,7 +392,13 @@ class _LoadModelPageState extends State<LoadModelPage> {
             ? context.l10n.continueImporting
             : null,
       );
-    } catch (_) {}
+    } catch (e) {
+      logger.e('Could not send the pending document to the desktop', e);
+      if (!context.mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(context.l10n.handoverSendFailed)),
+      );
+    }
   }
 
   Widget _buildRichDescription(BuildContext context, String description) {

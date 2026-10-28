@@ -2950,6 +2950,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Continuar el procesamiento en el escritorio';
 
   @override
+  String get handoverSendFailed =>
+      'No se pudo enviar el documento al escritorio. Inténtalo de nuevo.';
+
+  @override
   String get deleteResourcesTitle => 'Eliminar recursos';
 
   @override
