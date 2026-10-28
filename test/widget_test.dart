@@ -551,4 +551,69 @@ void main() {
       await unmount(tester);
     });
   });
+
+  group('emergency card', () {
+    Future<void> openCard(WidgetTester tester, EmergencyCardData card) async {
+      await _registerAppDependencies(initialPrefs: {'hasSeenOnboarding': true});
+      await tester.pumpWidget(const App());
+      await tester.pump();
+      unawaited(
+        getIt<AppRouter>().replaceAll([EmergencyCardRoute(cardData: card)]),
+      );
+      await tester.pump();
+      await tester.pump();
+    }
+
+    Future<void> unmount(WidgetTester tester) async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('shows every field of a full card', (tester) async {
+      await openCard(
+        tester,
+        EmergencyCardData(
+          patientName: 'Test Patient',
+          bloodType: 'A+',
+          dateOfBirth: DateTime(1985, 5, 14),
+          gender: 'female',
+          patientPhone: '+40700000001',
+          emergencyContactName: 'Maria Pop',
+          emergencyContactPhone: '+40700000000',
+          allergies: const ['Penicillin', 'Peanuts'],
+          conditions: const ['Asthma'],
+          medications: const ['Salbutamol'],
+        ),
+      );
+
+      for (final text in [
+        'Test Patient',
+        'A+',
+        'May 14, 1985',
+        '+40700000001',
+        'Maria Pop',
+        '+40700000000',
+        'Penicillin',
+        'Peanuts',
+        'Asthma',
+        'Salbutamol',
+      ]) {
+        expect(find.text(text), findsOne, reason: text);
+      }
+      await unmount(tester);
+    });
+
+    testWidgets('shows only the name when nothing else is known', (
+      tester,
+    ) async {
+      await openCard(tester, const EmergencyCardData(patientName: 'Only Name'));
+
+      expect(find.text('Only Name'), findsOne);
+      expect(find.byIcon(Icons.phone), findsNothing);
+      expect(find.byIcon(Icons.contact_phone_outlined), findsNothing);
+      expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
+      expect(find.byIcon(Icons.medication_outlined), findsNothing);
+      await unmount(tester);
+    });
+  });
 }
