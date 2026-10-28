@@ -70,15 +70,23 @@ class _FakeAppLinks extends Fake implements AppLinks {
   final Uri? initial;
   final Error? initialError;
   final links = StreamController<Uri>.broadcast();
+  var initialLinkReads = 0;
 
   @override
   Future<Uri?> getInitialLink() async {
+    initialLinkReads++;
     if (initialError != null) throw initialError!;
     return initial;
   }
 
+  /// Like app_links 6+: the stream delivers the link the app was opened
+  /// with first, then the later ones.
   @override
-  Stream<Uri> get uriLinkStream => links.stream;
+  Stream<Uri> get uriLinkStream async* {
+    if (initialError != null) throw initialError!;
+    if (initial != null) yield initial!;
+    yield* links.stream;
+  }
 
   Future<void> close() => links.close();
 }
@@ -392,6 +400,7 @@ void main() {
         final deepLinks = service(appLinks: links);
 
         await deepLinks.initialize();
+        await flushEvents();
         links.links.add(Uri.parse('healthwallet://emergency?name=Second'));
         await flushEvents();
 
@@ -413,20 +422,35 @@ void main() {
 
       await deepLinks.initialize();
       await deepLinks.initialize();
+      await flushEvents();
 
       expect(router.pushed, hasLength(1));
       deepLinks.dispose();
     });
 
-    test('a failing initial link still listens for later links', () async {
+    test('handles the link the app was opened with only once', () async {
+      final links = _FakeAppLinks(
+        initial: Uri.parse('healthwallet://emergency?name=Once'),
+      );
+      final deepLinks = service(appLinks: links);
+
+      await deepLinks.initialize();
+      await flushEvents();
+
+      // One emergency card, so back leaves it instead of showing a copy.
+      expect(router.pushed, hasLength(1));
+      expect(links.initialLinkReads, 0);
+      deepLinks.dispose();
+    });
+
+    test('a failing link stream is logged, not thrown', () async {
       final links = _FakeAppLinks(initialError: StateError('no channel'));
       final deepLinks = service(appLinks: links);
 
       await deepLinks.initialize();
-      links.links.add(Uri.parse('healthwallet://emergency?name=Later'));
       await flushEvents();
 
-      expect(router.pushed, hasLength(1));
+      expect(router.pushed, isEmpty);
       deepLinks.dispose();
     });
 

@@ -34,19 +34,14 @@ class DeepLinkService {
     if (_isInitialized) return;
     _isInitialized = true;
 
-    try {
-      final initialUri = await _appLinks.getInitialLink();
-      if (initialUri != null) {
-        await handleDeepLink(initialUri);
-      }
-    } catch (e) {
-      logger.w('Initial deep link could not be handled', e);
-    }
-
+    // Since app_links 6 the stream also delivers the link the app was opened
+    // with, so it is the only source: reading getInitialLink() as well
+    // handled that link twice (two emergency cards, two downloads).
     _linkSubscription = _appLinks.uriLinkStream.listen(
       (Uri uri) async {
         await handleDeepLink(uri);
       },
+      onError: (Object e) => logger.w('A deep link could not be read', e),
     );
   }
 
