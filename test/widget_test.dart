@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
@@ -37,6 +39,7 @@ import 'package:health_wallet/features/user/domain/services/patient_edit_service
 import 'package:health_wallet/features/user/domain/services/patient_selection_service.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:mockito/mockito.dart';
@@ -471,6 +474,80 @@ void main() {
           tester.state(find.byType(AppLockOverlay)) as WidgetsBindingObserver;
       expect(await overlay.didPopRoute(), isFalse);
 
+      await unmount(tester);
+    });
+  });
+
+  group('emergency card back', () {
+    const card = EmergencyCardData(patientName: 'Test Patient');
+
+    Future<AppRouter> pumpApp(WidgetTester tester) async {
+      await _registerAppDependencies(initialPrefs: {'hasSeenOnboarding': true});
+      await tester.pumpWidget(const App());
+      await tester.pump();
+      return getIt<AppRouter>();
+    }
+
+    /// Unmounts the app before the splash's 1 s timer opens a route whose
+    /// pages need dependencies this test doesn't register.
+    Future<void> unmount(WidgetTester tester) async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('opens the app when a link at start made the card the only '
+        'page', (tester) async {
+      final router = await pumpApp(tester);
+      // What DeepLinkService does before the app is drawn.
+      unawaited(router.replaceAll([EmergencyCardRoute(cardData: card)]));
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('Test Patient'), findsOneWidget);
+      expect(router.canPop(), isFalse);
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pump();
+      await tester.pump();
+
+      expect(router.current.name, SplashRoute.name);
+      // Let the page transition finish (well before the splash's 1 s timer).
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Test Patient'), findsNothing);
+      await unmount(tester);
+    });
+
+    testWidgets('the system back button also opens the app', (tester) async {
+      final router = await pumpApp(tester);
+      unawaited(router.replaceAll([EmergencyCardRoute(cardData: card)]));
+      await tester.pump();
+      await tester.pump();
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump();
+
+      expect(router.current.name, SplashRoute.name);
+      // Let the page transition finish (well before the splash's 1 s timer).
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Test Patient'), findsNothing);
+      await unmount(tester);
+    });
+
+    testWidgets('returns to the page below when the app opened the card', (
+      tester,
+    ) async {
+      final router = await pumpApp(tester);
+      unawaited(router.push(EmergencyCardRoute(cardData: card)));
+      await tester.pump();
+      await tester.pump();
+      expect(router.stack, hasLength(2));
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pump();
+      await tester.pump();
+
+      expect(router.stack, hasLength(1));
+      expect(router.current.name, SplashRoute.name);
       await unmount(tester);
     });
   });
