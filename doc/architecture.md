@@ -224,6 +224,15 @@ Phone-to-phone shares (`share_records/`) are end-to-end encrypted in the app, on
 
 The commitment makes the sender fix its key before seeing the receiver's, so a man in the middle cannot try keys until the two codes agree; with the sender's confirmation this protects the records' confidentiality. Receivers reject unencrypted (pre-encryption) payloads and older apps cannot open encrypted ones, so both phones need this version. Background receive mode (`ReceiveModeManager`) only holds the envelope; the share screen runs the exchange so the code is visible.
 
+**Session lifecycle.**
+
+- After "Codes match" the sender is in `SharePhase.awaitingViewer` until the receiver reports it is viewing. Every way out of that phase goes through `killSessionRequested`, since the receiver already has the key. If the kill can't be handed to the transport, the sender is told the other phone keeps the records until its timer ends (`remoteEndUnconfirmed`).
+- The receiver ends the session when the connection drops, when the app is paused or hidden (not on `inactive`, which also covers Control Center and system prompts), when cancelled, or at expiry. Cancelling or leaving while decrypting stops the records from opening.
+- Received notes are served from memory (`SharedNotesDatasource` behind `RecordsRepository.showSharedNotes`) and never written to `record_notes`, so they aren't synced and can't be left behind.
+- Decrypted attachments live in `tmp/share_session_<id>/`, which is deleted by its own path when the session ends or the screen closes. `ShareRecordsService.sweepLeftovers()` runs at mobile startup and removes session folders and `share_*.bin` payloads left by a kill or crash.
+- The share page owns screen protection from the moment records open until it closes, and pops anything opened on top of it (records, documents, dialogs) when the session ends.
+- While a share screen owns the transport, receive mode is paused (`ReceiveModeService.isPaused`) and the app's lifecycle handler leaves it alone, so locking the phone doesn't cut a live share.
+
 ## CI/CD
 
 GitLab CI (`.gitlab-ci.yml`) on `git.techstackapps.com/mobile/health-wallet/app`.
