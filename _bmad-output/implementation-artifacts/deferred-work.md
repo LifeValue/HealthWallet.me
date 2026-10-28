@@ -55,3 +55,18 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
   summary: Check the desktop app by hand in ro and de (From Phone tab, tray menu, pairing, backup) before release.
   evidence: The desktop texts are covered by unit and widget tests and the macOS build succeeds, but no one has looked at the running desktop app in another language.
+- source_spec: `_bmad-output/implementation-artifacts/spec-security-hardening.md`
+  summary: Confine the proximity-share attachment resolver (`FhirBundleMapper._resolveFile`) to the documents directory, like `AttachmentSyncService.resolveFile`.
+  evidence: `fhir_bundle_mapper.dart:82-115` still accepts absolute paths, `../` and the Caches/tmp fallbacks and inlines the bytes into the outgoing share; first check whether iOS attachments really live in Caches/tmp.
+- source_spec: `_bmad-output/implementation-artifacts/spec-security-hardening.md`
+  summary: Make desktop backup restore copy by shared column names so backups from an older schema version can be restored.
+  evidence: `backup_service.dart` restore uses positional `INSERT INTO … SELECT *`; a different column count fails (now rolling back cleanly), a different order would put values in the wrong columns.
+- source_spec: `_bmad-output/implementation-artifacts/spec-security-hardening.md`
+  summary: Make the desktop Reset delete all health data: attachments in documents, `provider_downloads/`, the backups folder, and use `allTables` instead of a hand-kept table list.
+  evidence: `AppDataResetService.reset` deletes four tables, prefs, known temp files and `share_sessions` only, as `_performReset` did before.
+- source_spec: `_bmad-output/implementation-artifacts/spec-security-hardening.md`
+  summary: Harden the deep-link document download: https-only or confirmation before importing, a size cap, and no overwrite of an earlier download with the same name.
+  evidence: `deep_link_service.dart` `downloadFile` fetches any `file=` URL with `http.get` into memory and writes `provider_downloads/<name>` over an existing file.
+- source_spec: `_bmad-output/implementation-artifacts/spec-security-hardening.md`
+  summary: Cover native modals (iOS share sheet, PKAddPassesViewController) when the app lock engages on resume.
+  evidence: The lock overlay lives in the Flutter view; a native sheet presented above it, e.g. an IPS PDF preview, stays visible after a resume past 30 s.
