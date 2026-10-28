@@ -4,12 +4,14 @@ import 'dart:io';
 
 import 'package:airdrop/airdrop.dart';
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/share_records/data/mapper/fhir_bundle_mapper.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 @lazySingleton
 class ShareRecordsService {
@@ -37,7 +39,9 @@ class ShareRecordsService {
 
   Future<String?> prepareFilesForSending(SharePayload payload) async {
     final tempDir = await getTemporaryDirectory();
-    final tempFile = File('${tempDir.path}/share_${payload.id}.json');
+    final tempFile = File(
+      '${tempDir.path}/${TempFileSweeper.sharePayloadName(payload.id)}',
+    );
 
     try {
       final jsonString = jsonEncode(payload.toJson());
@@ -48,6 +52,8 @@ class ShareRecordsService {
       return tempFile.path;
     } catch (e) {
       debugPrint('[TRANSFER:❌] Error preparing files: $e');
+      // The payload is plaintext health data: don't leave it in temp.
+      await cleanupTempFile(tempFile.path);
       return null;
     }
   }
@@ -79,12 +85,25 @@ class ShareRecordsService {
     );
   }
 
+  /// Whether [id] can name a share session: payload ids are UUIDs, and
+  /// anything else could reach a file path (`share_session_<id>`).
+  static bool isValidSessionId(String id) => Uuid.isValidUUID(
+    fromString: id,
+    validationMode: ValidationMode.nonStrict,
+  );
+
   Future<EphemeralRecordsContainer?> _parsePayloadBytes(Uint8List bytes) async {
+    String? sessionId;
     try {
       final jsonString = utf8.decode(bytes);
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       final payload = SharePayload.fromJson(json);
+      if (!isValidSessionId(payload.id)) {
+        debugPrint('[TRANSFER] Rejected a payload whose id is not a UUID');
+        return null;
+      }
 
+      sessionId = payload.id;
       final sessionTempDir = await _createSessionTempDir(payload.id);
       final result = await FhirBundleMapper.parseBundle(
         payload.bundle,
@@ -104,17 +123,39 @@ class ShareRecordsService {
       );
     } catch (e) {
       debugPrint('[TRANSFER] Error parsing payload: $e');
+      // Attachments already restored for the rejected share are health data.
+      if (sessionId != null) await cleanupSessionTempDir(sessionId);
       return null;
     }
   }
 
-  Future<String> _createSessionTempDir(String sessionId) async {
+  Future<Directory> _sessionTempDir(String sessionId) async {
     final tempDir = await getTemporaryDirectory();
-    final sessionDir = Directory('${tempDir.path}/share_session_$sessionId');
+    return Directory(
+      '${tempDir.path}/${TempFileSweeper.shareSessionName(sessionId)}',
+    );
+  }
+
+  Future<String> _createSessionTempDir(String sessionId) async {
+    final sessionDir = await _sessionTempDir(sessionId);
     if (!await sessionDir.exists()) {
       await sessionDir.create(recursive: true);
     }
     return sessionDir.path;
+  }
+
+  /// Deletes the `share_session_<sessionId>` directory holding a received
+  /// share's attachments. Does nothing for an id that isn't a UUID.
+  Future<void> cleanupSessionTempDir(String sessionId) async {
+    if (!isValidSessionId(sessionId)) return;
+    try {
+      final sessionDir = await _sessionTempDir(sessionId);
+      if (await sessionDir.exists()) {
+        await sessionDir.delete(recursive: true);
+      }
+    } catch (e) {
+      debugPrint('[TRANSFER:❌] Error cleaning up session directory: $e');
+    }
   }
 
   Future<EphemeralRecordsContainer?> parseReceivedData(
@@ -136,7 +177,9 @@ class ShareRecordsService {
         if (await file.exists()) {
           await file.delete();
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[TRANSFER:❌] Error deleting the received file: $e');
+      }
       return null;
     }
   }

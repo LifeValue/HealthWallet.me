@@ -236,6 +236,8 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         activeFilters: state.appliedFilters.map((f) => f.name).toList(),
       );
       _shareLog('Preparing files for sending...');
+      // A retry selects a peer again with a new payload: drop the old one.
+      await _deleteSentPayload();
       _tempFilePath = await _service.prepareFilesForSending(payload);
       if (_tempFilePath == null) {
         _shareLog('ERROR: Failed to prepare files for sending');
@@ -250,6 +252,14 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     }
 
     await _service.selectPeer(event.deviceId);
+  }
+
+  /// Deletes the temp JSON of the payload being sent, if there is one.
+  Future<void> _deleteSentPayload() async {
+    final path = _tempFilePath;
+    if (path == null) return;
+    _tempFilePath = null;
+    await _service.cleanupTempFile(path);
   }
 
   Future<List<IFhirResource>> _enrichSelectionWithRelatedResources(
@@ -318,10 +328,10 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     );
   }
 
-  void handleTransferCompleted(
+  Future<void> handleTransferCompleted(
     TransferCompleted event,
     Emitter<ShareRecordsState> emit,
-  ) {
+  ) async {
     _shareLog('=== Transfer completed (isSending=${state.isSending}) ===');
     if (state.isSending) {
       if (_pendingViewingStarted) {
@@ -350,6 +360,9 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         );
         _startMonitoringFallbackTimer();
       }
+      // The payload has been sent; its plaintext copy in temp isn't needed.
+      // Deleted after the state changes so no other event sees a stale phase.
+      await _deleteSentPayload();
     } else {
       debugPrint(
         '[SHARE] Transfer completed for receiver - waiting for data to be parsed',
@@ -386,10 +399,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       return;
     }
 
-    if (_tempFilePath != null) {
-      await _service.cleanupTempFile(_tempFilePath!);
-      _tempFilePath = null;
-    }
+    await _deleteSentPayload();
 
     emit(
       state.copyWith(

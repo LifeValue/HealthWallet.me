@@ -6,6 +6,8 @@ import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -26,6 +28,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   RecordsRepository get recordsRepository => _recordsRepository;
   Timer? _searchDebounceTimer;
   bool _isSearching = false;
+  String? _lastIpsPdfPath;
 
   RecordsBloc(
     this._recordsRepository,
@@ -378,11 +381,15 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         prefs.getString(SharedPrefsConstants.regionPreset),
       );
       final date = region.formatDate(DateTime.now());
-      final fileName = '$name - IPS Summary - $date';
+      final fileName = TempFileSweeper.ipsSummaryName(name, date);
 
+      // The previous export has been shared by now; Android targets read the
+      // file lazily, so the newest one stays until the next export or start.
+      await _deletePreviousIpsPdf();
       final File pdfFile = await File(
         '${(await getTemporaryDirectory()).path}/$fileName.pdf',
       ).writeAsBytes(export.bytes);
+      _lastIpsPdfPath = pdfFile.path;
 
       unawaited(
         SharePlus.instance.share(
@@ -393,7 +400,22 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
           ),
         ),
       );
-    } catch (_) {}
+    } catch (e, s) {
+      logger.e('IPS export failed', e, s);
+    }
+  }
+
+  Future<void> _deletePreviousIpsPdf() async {
+    final path = _lastIpsPdfPath;
+    if (path == null) return;
+    _lastIpsPdfPath = null;
+    try {
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    } catch (e, s) {
+      // The startup sweep deletes it next time.
+      logger.w('Deleting the previous IPS PDF failed', e, s);
+    }
   }
 
   void _onSelectionToggled(

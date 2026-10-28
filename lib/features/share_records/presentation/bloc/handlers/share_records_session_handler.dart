@@ -89,22 +89,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
   Future<void> _cleanupEphemeralData() async {
     final receivedData = state.receivedData;
     if (receivedData != null) {
-      for (final path in receivedData.tempAttachmentPaths) {
-        try {
-          await File(path).delete();
-        } catch (_) {}
-      }
-
-      final sessionDir = File(
-        receivedData.tempAttachmentPaths.isNotEmpty
-            ? receivedData.tempAttachmentPaths.first
-            : '',
-      ).parent;
-      try {
-        if (await sessionDir.exists()) {
-          await sessionDir.delete(recursive: true);
-        }
-      } catch (_) {}
+      // The attachments all live in the session's own directory, found by
+      // its id (never derived from the attachment paths).
+      await _service.cleanupSessionTempDir(receivedData.sessionId);
     }
 
     for (final noteId in _insertedEphemeralNoteIds) {
@@ -112,7 +99,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
         await _recordsRepository.deleteRecordNote(
           RecordNote(id: noteId, timestamp: DateTime.now()),
         );
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[SHARE] Error deleting ephemeral note $noteId: $e');
+      }
     }
     _insertedEphemeralNoteIds.clear();
   }

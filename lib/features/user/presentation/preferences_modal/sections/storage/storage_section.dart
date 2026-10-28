@@ -8,9 +8,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/logger.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/features/user/data/service/app_data_reset_service.dart';
 
 /// The word the user types to confirm a reset. It is the same in every
 /// language, and the prompt shows this exact word, so the check below always
@@ -84,7 +82,11 @@ class StorageSection extends StatelessWidget {
 }
 
 class ResetConfirmationDialog extends StatefulWidget {
-  const ResetConfirmationDialog({super.key});
+  const ResetConfirmationDialog({super.key, this.onReset});
+
+  /// Deletes the data once confirmed; by default [AppDataResetService.reset]
+  /// followed by quitting the app.
+  final Future<void> Function()? onReset;
 
   @override
   State<ResetConfirmationDialog> createState() =>
@@ -256,38 +258,12 @@ class _ResetConfirmationDialogState extends State<ResetConfirmationDialog> {
   Future<void> _performReset() async {
     setState(() => _isProcessing = true);
 
-    try {
-      final db = getIt<AppDatabase>();
-      await db.delete(db.fhirResource).go();
-      await db.delete(db.sources).go();
-      await db.delete(db.recordNotes).go();
-      await db.delete(db.processingSessions).go();
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-
-      try {
-        final cacheDir = await getTemporaryDirectory();
-        if (cacheDir.existsSync()) {
-          await cacheDir.delete(recursive: true);
-        }
-      } catch (e, s) {
-        logger.w('Reset: clearing the cache directory failed', e, s);
-      }
-
-      try {
-        final supportDir = await getApplicationSupportDirectory();
-        final shareDir = Directory('${supportDir.path}/share_sessions');
-        if (shareDir.existsSync()) {
-          await shareDir.delete(recursive: true);
-        }
-      } catch (e, s) {
-        logger.w('Reset: clearing the share sessions failed', e, s);
-      }
-    } catch (e, s) {
-      logger.e('Reset: clearing the app data failed', e, s);
+    final onReset = widget.onReset;
+    if (onReset != null) {
+      await onReset();
+      return;
     }
-
+    await AppDataResetService(getIt<AppDatabase>()).reset();
     exit(0);
   }
 }

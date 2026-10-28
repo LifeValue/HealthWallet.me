@@ -84,7 +84,8 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     on<DiscoveryStarted>(handleDiscoveryStarted);
     on<SymmetricDiscoveryStarted>(handleSymmetricDiscoveryStarted);
     on<PeerDiscovered>(handlePeerDiscovered, transformer: sequential());
-    on<PeerSelected>(handlePeerSelected);
+    // Sequential: each selection writes and may delete the temp payload.
+    on<PeerSelected>(handlePeerSelected, transformer: sequential());
 
     on<TransferStarted>(handleTransferStarted);
     on<TransferProgressUpdated>(
@@ -522,6 +523,11 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     _monitoringFallbackTimer?.cancel();
     await _cancelSubscriptions();
     WidgetsBinding.instance.removeObserver(this);
+    await _deleteSentPayload();
+    final receivedData = state.receivedData;
+    if (receivedData != null) {
+      await _service.cleanupSessionTempDir(receivedData.sessionId);
+    }
     await _service.disconnect();
     final manager = getIt<ReceiveModeService>();
     if (manager.isListening) {

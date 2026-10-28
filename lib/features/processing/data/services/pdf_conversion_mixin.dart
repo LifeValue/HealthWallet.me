@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
 import 'package:image/image.dart' as img;
@@ -35,7 +36,7 @@ mixin PdfConversionMixin implements TextRecognitionService {
           final pngOut = img.encodePng(whiteBg, level: 6);
 
           final tempFile = File(
-            '${tempDir.path}/pdf_page_${DateTime.now().millisecondsSinceEpoch}_$index.png',
+            '${tempDir.path}/${TempFileSweeper.ocrPagePrefix}${DateTime.now().millisecondsSinceEpoch}_$index.png',
           );
           await tempFile.writeAsBytes(pngOut);
           imagePaths.add(tempFile.path);

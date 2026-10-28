@@ -42,4 +42,27 @@ void main() {
       expect(_deleteEnabled(tester), isTrue);
     });
   }
+
+  testWidgets('Delete runs the reset once and disables itself', (
+    tester,
+  ) async {
+    var resets = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: ResetConfirmationDialog(onReset: () async => resets++),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), resetConfirmationWord);
+    await tester.pump();
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pump();
+
+    expect(resets, 1);
+    expect(_deleteEnabled(tester), isFalse);
+  });
 }

@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_google_wallet/flutter_google_wallet_plugin.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
@@ -79,16 +81,31 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
     );
 
     final tempDir = await getTemporaryDirectory();
-    final filePath = '${tempDir.path}/HealthWallet_Emergency.pkpass';
+    final filePath = '${tempDir.path}/${TempFileSweeper.walletPassFileName}';
     final file = File(filePath);
     await file.writeAsBytes(passBytes);
 
     const channel = MethodChannel(
       'com.techstackapps.healthwallet/apple_wallet',
     );
-    await channel.invokeMethod('addPass', {'filePath': filePath});
+    try {
+      await channel.invokeMethod('addPass', {'filePath': filePath});
+    } finally {
+      // The pass holds the emergency health data; Wallet has its own copy
+      // once addPass returns.
+      await _deleteQuietly(file);
+    }
 
     emit(state.copyWith(status: WalletPassStatus.passAddedToWallet));
+  }
+
+  Future<void> _deleteQuietly(File file) async {
+    try {
+      if (await file.exists()) await file.delete();
+    } catch (e, s) {
+      // The startup sweep deletes it next time; don't fail the pass for it.
+      logger.w('Deleting the wallet pass temp file failed', e, s);
+    }
   }
 
   Future<void> _handleGooglePass(
