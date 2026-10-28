@@ -14,13 +14,15 @@ class AttachmentSyncService {
 
   AttachmentSyncService(this._pathResolver);
 
+  /// Inlines the files of outgoing DocumentReferences. Tombstones are sent
+  /// as they are: the peer only needs to know the row is deleted.
   Future<List<Map<String, dynamic>>> embedAttachments(
     List<Map<String, dynamic>> rows,
   ) async {
     final result = <Map<String, dynamic>>[];
     for (final row in rows) {
       final resourceType = row['resource_type'] as String?;
-      if (resourceType == 'DocumentReference') {
+      if (resourceType == 'DocumentReference' && row['deleted_at'] == null) {
         final modified = Map<String, dynamic>.from(row);
         final resourceRaw = row['resource_raw'] as String?;
         if (resourceRaw != null) {
@@ -40,13 +42,18 @@ class AttachmentSyncService {
     return result;
   }
 
+  /// Writes the inline files of incoming DocumentReferences to disk. A
+  /// tombstone gets no file; inline data it still carries (an older peer
+  /// may send it) is dropped instead of being stored in the row.
   Future<List<Map<String, dynamic>>> restoreAttachments(
     List<Map<String, dynamic>> rows,
   ) async {
     final result = <Map<String, dynamic>>[];
     for (final row in rows) {
       final resourceType = row['resource_type'] as String?;
-      if (resourceType == 'DocumentReference') {
+      if (resourceType == 'DocumentReference' && row['deleted_at'] != null) {
+        result.add(_withoutInlineData(row));
+      } else if (resourceType == 'DocumentReference') {
         final modified = Map<String, dynamic>.from(row);
         final resourceRaw = row['resource_raw'] as String?;
         if (resourceRaw != null) {
@@ -64,6 +71,32 @@ class AttachmentSyncService {
       }
     }
     return result;
+  }
+
+  Map<String, dynamic> _withoutInlineData(Map<String, dynamic> row) {
+    final resourceRaw = row['resource_raw'] as String?;
+    if (resourceRaw == null || !resourceRaw.contains('"data"')) return row;
+    final Object? json;
+    try {
+      json = jsonDecode(resourceRaw);
+    } on FormatException catch (e) {
+      logger.w('Tombstone ${row['id']} has an unreadable resource_raw', e);
+      return row;
+    }
+    final content = json is Map<String, dynamic> ? json['content'] : null;
+    if (content is! List) return row;
+    var dropped = false;
+    for (final item in content) {
+      final attachment = item is Map<String, dynamic>
+          ? item['attachment']
+          : null;
+      if (attachment is Map<String, dynamic> &&
+          attachment.remove('data') != null) {
+        dropped = true;
+      }
+    }
+    if (!dropped) return row;
+    return {...row, 'resource_raw': jsonEncode(json)};
   }
 
   Future<bool> _embedFiles(Map<String, dynamic> json) async {

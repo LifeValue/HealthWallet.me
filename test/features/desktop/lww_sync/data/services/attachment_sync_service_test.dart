@@ -113,9 +113,77 @@ void main() {
 
       expect(result, rows);
     });
+
+    test(
+      'passes a tombstoned DocumentReference through without its file',
+      () async {
+        await dirs.writeDoc('report.pdf', pdfBytes);
+        final row = {
+          ...docRow([
+            {'url': 'file://report.pdf'},
+          ]),
+          'deleted_at': ms(t0),
+        };
+
+        final result = await service.embedAttachments([row]);
+
+        expect(identical(result.single, row), isTrue);
+      },
+    );
   });
 
   group('restoreAttachments', () {
+    test('drops inline data of a tombstoned DocumentReference without '
+        'writing a file', () async {
+      final row = {
+        ...docRow([
+          {'data': base64Encode(pdfBytes), 'title': 'scan.pdf'},
+          {'url': 'https://example.org/remote.pdf'},
+        ]),
+        'deleted_at': ms(t0),
+      };
+
+      final result = await service.restoreAttachments([row]);
+
+      expect(dirs.docNames(), isEmpty);
+      expect(attachmentsOf(result.single), [
+        {'title': 'scan.pdf'},
+        {'url': 'https://example.org/remote.pdf'},
+      ]);
+      expect(result.single['deleted_at'], ms(t0));
+      expect(attachmentsOf(row).first['data'], isNotNull);
+    });
+
+    test('passes a tombstone without inline data through as-is', () async {
+      final row = {
+        ...docRow([
+          {'url': 'file://report.pdf'},
+        ]),
+        'deleted_at': ms(t0),
+      };
+      Map<String, dynamic> tombstone(String? raw) => {
+        'id': 'bad',
+        'resource_type': 'DocumentReference',
+        'resource_raw': raw,
+        'deleted_at': ms(t0),
+      };
+      final odd = [
+        tombstone(null),
+        tombstone('{not json "data"'),
+        tombstone('["data"]'),
+        tombstone('{"content": "data"}'),
+        tombstone('{"content": ["data", {"attachment": "data"}]}'),
+        tombstone('{"content": [{"attachment": {"title": "data"}}]}'),
+      ];
+
+      final result = await service.restoreAttachments([row, ...odd]);
+
+      expect(identical(result.first, row), isTrue);
+      for (var i = 0; i < odd.length; i++) {
+        expect(identical(result[i + 1], odd[i]), isTrue, reason: '$i');
+      }
+    });
+
     test('writes inline data to a uniquely named file and points the url at '
         'it', () async {
       final row = docRow([

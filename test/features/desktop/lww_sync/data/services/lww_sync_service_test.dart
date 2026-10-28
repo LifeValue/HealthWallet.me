@@ -713,6 +713,142 @@ void main() {
 
       expect(applied, 0);
     });
+
+    test('an older live row does not resurrect a local tombstoned document '
+        'whose file was removed', () async {
+      await insertFhir(
+        db,
+        id: 'doc',
+        updatedAt: ms(at(5)),
+        deletedAt: ms(at(5)),
+        resourceType: 'DocumentReference',
+        title: 'deleted',
+        raw: documentReferenceRaw([
+          {'url': 'file://removed.pdf'},
+        ]),
+      );
+
+      final applied = await service.applyDelta(
+        incoming('fhir_resource', [
+          fhirRow(
+            'doc',
+            updatedAt: ms(at(1)),
+            resourceType: 'DocumentReference',
+          ),
+        ]),
+      );
+
+      expect(applied, 0);
+      final row = await fetchRow(db, 'fhir_resource', 'doc');
+      expect(row!['deleted_at'], ms(at(5)));
+      expect(row['title'], 'deleted');
+    });
+
+    test('an older tombstone does not delete a newer local document whose '
+        'file is missing', () async {
+      await insertFhir(
+        db,
+        id: 'doc',
+        updatedAt: ms(at(5)),
+        resourceType: 'DocumentReference',
+        title: 'edited later',
+        raw: documentReferenceRaw([
+          {'url': 'file://lost.pdf'},
+        ]),
+      );
+
+      final applied = await service.applyDelta(
+        incoming('fhir_resource', [
+          fhirRow(
+            'doc',
+            updatedAt: ms(at(1)),
+            deletedAt: ms(at(1)),
+            resourceType: 'DocumentReference',
+          ),
+        ]),
+      );
+
+      expect(applied, 0);
+      final row = await fetchRow(db, 'fhir_resource', 'doc');
+      expect(row!['deleted_at'], isNull);
+      expect(row['title'], 'edited later');
+    });
+
+    test('a newer tombstone still replaces a local document whose file is '
+        'missing', () async {
+      await insertFhir(
+        db,
+        id: 'doc',
+        updatedAt: ms(at(1)),
+        resourceType: 'DocumentReference',
+        raw: documentReferenceRaw([
+          {'url': 'file://lost.pdf'},
+        ]),
+      );
+
+      final applied = await service.applyDelta(
+        incoming('fhir_resource', [
+          fhirRow(
+            'doc',
+            updatedAt: ms(at(5)),
+            deletedAt: ms(at(5)),
+            resourceType: 'DocumentReference',
+          ),
+        ]),
+      );
+
+      expect(applied, 1);
+      expect(
+        (await fetchRow(db, 'fhir_resource', 'doc'))!['deleted_at'],
+        ms(at(5)),
+      );
+    });
+
+    test('a tombstoned DocumentReference is sent without its file', () async {
+      await dirs.writeDoc('r.pdf', pdfBytes);
+      final raw = documentReferenceRaw([
+        {'url': 'file://r.pdf', 'title': 'r.pdf'},
+      ]);
+      await insertFhir(
+        db,
+        id: 'doc',
+        updatedAt: ms(at(1)),
+        deletedAt: ms(at(1)),
+        resourceType: 'DocumentReference',
+        raw: raw,
+      );
+
+      final delta = await service.computeDelta('fhir_resource', at(0));
+
+      expect(delta.rows.single['resource_raw'], raw);
+      expect(delta.rows.single['deleted_at'], ms(at(1)));
+    });
+
+    test('an incoming tombstoned DocumentReference writes no file and keeps '
+        'no inline data', () async {
+      final applied = await service.applyDelta(
+        incoming('fhir_resource', [
+          fhirRow(
+            'doc',
+            updatedAt: ms(at(1)),
+            deletedAt: ms(at(1)),
+            resourceType: 'DocumentReference',
+            raw: documentReferenceRaw([
+              {'data': base64Encode(pdfBytes), 'title': 'scan.pdf'},
+            ]),
+          ),
+        ]),
+      );
+
+      expect(applied, 1);
+      expect(dirs.docNames(), isEmpty);
+      final raw = (await fetchRow(db, 'fhir_resource', 'doc'))!['resource_raw'];
+      final attachment =
+          ((jsonDecode(raw as String)['content'] as List).single
+                  as Map)['attachment']
+              as Map;
+      expect(attachment, {'title': 'scan.pdf'});
+    });
   });
 
   test('a delta survives the wire and converges a second database', () async {
