@@ -368,7 +368,9 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
       }
     }
 
-    if (pages.isNotEmpty) {
+    // A partial result is not cached, so reopening retries the failed PDFs
+    // and shows the failure again.
+    if (pages.isNotEmpty && failedPdfs == 0) {
       _cache[widget.detail.record.id] = pages;
     }
 
