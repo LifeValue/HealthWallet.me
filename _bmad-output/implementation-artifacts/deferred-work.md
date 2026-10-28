@@ -73,6 +73,3 @@
 - source_spec: none
   summary: Host the Google Wallet pass logo on a domain we control (for example healthwallet.me) instead of raw.githubusercontent.com.
   evidence: The old link pointed at a deleted feature branch and returned 404; `GooglePassBuilder.logoUrl` now points at the GitHub `master` branch, which works but depends on a repository this project no longer updates. Google also recommends a 660×660 logo; the hosted one is 180×180.
-- source_spec: none
-  summary: Keep access to the user-chosen desktop backup folder across app restarts with a macOS security-scoped bookmark.
-  evidence: The sandboxed macOS app stores only the folder path (no bookmark, no `files.bookmarks.app-scope` entitlement), so after a restart listing `~/Desktop/backup-test` fails with "Operation not permitted" and the backup history and new backups fail until the folder is chosen again (seen 2026-10-28 in the debug and release builds).
