@@ -11,6 +11,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
+import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
@@ -46,7 +47,7 @@ class _BackupCardState extends State<BackupCard> {
     final name = _nameController.text.trim();
     final effectiveName = name.isNotEmpty
         ? name
-        : '${context.l10n.desktopBackup} ${DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now())}';
+        : '${context.l10n.desktopBackup} ${backupNameDate(DateTime.now(), context.l10n.localeName, withTime: true)}';
 
     if (_syncFirst &&
         widget.syncState.connectionStatus == ConnectionStatus.connected) {
@@ -70,7 +71,7 @@ class _BackupCardState extends State<BackupCard> {
         widget.backupState.isBackingUp || widget.backupState.isRestoring;
     final selected = widget.backupState.selectedBackup;
     final defaultName =
-        '${context.l10n.desktopBackup} ${DateFormat('MMM d, yyyy').format(DateTime.now())}';
+        '${context.l10n.desktopBackup} ${backupNameDate(DateTime.now(), context.l10n.localeName)}';
 
     if (!widget.backupState.hasUserSelectedPath) {
       return Center(

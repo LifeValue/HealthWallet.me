@@ -11,11 +11,11 @@ import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
+import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:intl/intl.dart';
 
 part 'backup_bloc.freezed.dart';
 part 'backup_event.dart';
@@ -380,7 +380,11 @@ class BackupBloc extends Bloc<BackupEvent, BackupState> {
     );
 
     final name = _strings.l10n.desktopRemoteBackupName(
-      DateFormat('MMM d, yyyy – HH:mm').format(DateTime.now()),
+      backupNameDate(
+        DateTime.now(),
+        _strings.l10n.localeName,
+        withTime: true,
+      ),
     );
     add(BackupRequested(name: name));
   }
