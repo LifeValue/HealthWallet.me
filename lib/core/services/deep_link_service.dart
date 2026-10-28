@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:app_links/app_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/external_files_service.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:http/http.dart' as http;
@@ -20,10 +22,11 @@ class DeepLinkService {
   DeepLinkService(
     this._router,
     this._externalFilesService,
-    this._navigationController,
-  );
+    this._navigationController, {
+    @ignoreParam AppLinks? appLinks,
+  }) : _appLinks = appLinks ?? AppLinks();
 
-  final _appLinks = AppLinks();
+  final AppLinks _appLinks;
   StreamSubscription? _linkSubscription;
   bool _isInitialized = false;
 
@@ -34,18 +37,21 @@ class DeepLinkService {
     try {
       final initialUri = await _appLinks.getInitialLink();
       if (initialUri != null) {
-        await _handleDeepLink(initialUri);
+        await handleDeepLink(initialUri);
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Initial deep link could not be handled', e);
+    }
 
     _linkSubscription = _appLinks.uriLinkStream.listen(
       (Uri uri) async {
-        await _handleDeepLink(uri);
+        await handleDeepLink(uri);
       },
     );
   }
 
-  Future<void> _handleDeepLink(Uri uri) async {
+  @visibleForTesting
+  Future<void> handleDeepLink(Uri uri) async {
     if (uri.scheme == 'healthwallet' && uri.host == 'emergency') {
       _handleEmergencyLink(uri);
       return;
@@ -79,14 +85,18 @@ class DeepLinkService {
         _navigationController.jumpToPage(0);
       }
       unawaited(_navigationController.navigateToPage(3));
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Linked document could not be downloaded', e);
+    }
   }
 
   void _handleEmergencyLink(Uri uri) {
     try {
       final cardData = EmergencyQrEncoder.decode(uri.toString());
       _router.push(EmergencyCardRoute(cardData: cardData));
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Emergency link could not be read', e);
+    }
   }
 
   Future<String> downloadFile(String fileUrl, {String? customFileName}) async {
@@ -104,13 +114,29 @@ class DeepLinkService {
     }
 
     final fileName =
-        customFileName ??
+        safeFileName(customFileName) ??
         'provider_doc_${DateTime.now().millisecondsSinceEpoch}${_getExtensionFromUrl(fileUrl)}';
     final filePath = path.join(downloadsDir.path, fileName);
 
     final file = File(filePath);
     await file.writeAsBytes(response.bodyBytes);
     return filePath;
+  }
+
+  /// The link's `name` reduced to a plain file name, so it can't reach
+  /// outside `provider_downloads/`: the last segment after any `/` or `\`,
+  /// without control characters. Null when nothing usable is left, so the
+  /// caller generates a name.
+  @visibleForTesting
+  static String? safeFileName(String? name) {
+    if (name == null) return null;
+    final base = name
+        .split(RegExp(r'[/\\]'))
+        .last
+        .replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '')
+        .trim();
+    if (base.isEmpty || base == '.' || base == '..') return null;
+    return base;
   }
 
   String _getExtensionFromUrl(String url) {
@@ -120,7 +146,9 @@ class DeepLinkService {
       if (segs.isNotEmpty && segs.last.contains('.')) {
         return path.extension(segs.last);
       }
-    } catch (_) {}
+    } on FormatException {
+      // An unparsable URL has no extension to read; use the default.
+    }
     return '.pdf';
   }
 
