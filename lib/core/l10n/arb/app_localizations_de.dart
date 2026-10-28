@@ -1996,6 +1996,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Deine Gesundheitsübersicht konnte nicht exportiert werden. Bitte versuche es erneut.';
 
   @override
+  String get walletPassFailed =>
+      'Der Pass konnte nicht zu deinem Wallet hinzugefügt werden. Bitte versuche es erneut.';
+
+  @override
   String get sourcesTitle => 'Quellen';
 
   @override

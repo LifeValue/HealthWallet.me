@@ -934,6 +934,7 @@
   "addIpsToAppleWallet": "IPS zu Apple Wallet hinzufügen",
   "addIpsToGoogleWallet": "IPS zu Google Wallet hinzufügen",
   "ipsExportFailed": "Deine Gesundheitsübersicht konnte nicht exportiert werden. Bitte versuche es erneut.",
+  "walletPassFailed": "Der Pass konnte nicht zu deinem Wallet hinzugefügt werden. Bitte versuche es erneut.",
   "sourcesTitle": "Quellen",
   "emergencyMedicalId": "Medizinischer Notfallausweis",
   "phoneLabel": "Telefon",

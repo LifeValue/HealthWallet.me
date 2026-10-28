@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
@@ -52,11 +51,12 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
         case WalletPassType.google:
           await _handleGooglePass(cardData, event.patientId, emit, labels);
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('Adding the ${event.type.name} wallet pass failed', e, s);
       emit(
         state.copyWith(
           status: WalletPassStatus.failure,
-          errorMessage: e.toString(),
+          errorMessage: _strings.l10n.walletPassFailed,
         ),
       );
     }
@@ -126,14 +126,14 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
       ),
     );
 
+    // The plugin reports only a failure to launch the save; a cancel or a
+    // save error inside Google Wallet never comes back. Google Wallet's own
+    // screen is what tells the user the pass was added.
     final plugin = FlutterGoogleWalletPlugin();
-    unawaited(plugin.initWalletClient());
-
-    unawaited(
-      plugin.savePassesJwt(
-        jsonPass: passJson,
-        addToGoogleWalletRequestCode: 1,
-      ),
+    await plugin.initWalletClient();
+    await plugin.savePassesJwt(
+      jsonPass: passJson,
+      addToGoogleWalletRequestCode: 1,
     );
 
     emit(state.copyWith(status: WalletPassStatus.passAddedToWallet));

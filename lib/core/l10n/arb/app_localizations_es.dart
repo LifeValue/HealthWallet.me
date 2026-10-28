@@ -1992,6 +1992,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo exportar tu resumen de salud. Inténtalo de nuevo.';
 
   @override
+  String get walletPassFailed =>
+      'No se pudo agregar el pase a tu billetera. Inténtalo de nuevo.';
+
+  @override
   String get sourcesTitle => 'Fuentes';
 
   @override

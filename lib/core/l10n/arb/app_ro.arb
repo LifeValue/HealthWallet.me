@@ -937,6 +937,7 @@
   "addIpsToAppleWallet": "Adaugă IPS în Apple Wallet",
   "addIpsToGoogleWallet": "Adaugă IPS în Google Wallet",
   "ipsExportFailed": "Rezumatul medical nu a putut fi exportat. Încearcă din nou.",
+  "walletPassFailed": "Cardul nu a putut fi adăugat în portofel. Încearcă din nou.",
   "sourcesTitle": "Surse",
   "emergencyMedicalId": "Card medical de urgență",
   "phoneLabel": "Telefon",

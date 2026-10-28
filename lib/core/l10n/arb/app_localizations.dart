@@ -3653,6 +3653,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t export your health summary. Please try again.'**
   String get ipsExportFailed;
 
+  /// No description provided for @walletPassFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add the pass to your wallet. Please try again.'**
+  String get walletPassFailed;
+
   /// No description provided for @sourcesTitle.
   ///
   /// In en, this message translates to:

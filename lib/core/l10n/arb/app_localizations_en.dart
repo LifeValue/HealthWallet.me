@@ -1972,6 +1972,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t export your health summary. Please try again.';
 
   @override
+  String get walletPassFailed =>
+      'Couldn\'t add the pass to your wallet. Please try again.';
+
+  @override
   String get sourcesTitle => 'Sources';
 
   @override

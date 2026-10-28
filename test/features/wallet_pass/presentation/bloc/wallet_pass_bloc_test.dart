@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
@@ -17,6 +18,8 @@ const _appleWallet = MethodChannel(
 );
 const _googleWallet =
     'dev.flutter.pigeon.flutter_google_wallet.GoogleWalletApi';
+
+final _en = lookupAppLocalizations(const Locale('en'));
 
 const _card = EmergencyCardData(patientName: 'Jane Doe', bloodType: 'A+');
 
@@ -156,7 +159,7 @@ void main() {
       final statuses = await request(WalletPassType.apple);
 
       expect(statuses.last, WalletPassStatus.failure);
-      expect(bloc.state.errorMessage, contains('ADD_FAILED'));
+      expect(bloc.state.errorMessage, _en.walletPassFailed);
       expect(addPassCalls, hasLength(1));
       expect(passFile().existsSync(), isFalse);
     });
@@ -171,7 +174,7 @@ void main() {
         WalletPassStatus.dataReady,
         WalletPassStatus.failure,
       ]);
-      expect(bloc.state.errorMessage, contains('no signing key'));
+      expect(bloc.state.errorMessage, _en.walletPassFailed);
       expect(addPassCalls, isEmpty);
       expect(passFile().existsSync(), isFalse);
     });
@@ -218,11 +221,26 @@ void main() {
         await pumpEventQueue();
 
         expect(statuses.last, WalletPassStatus.failure);
+        expect(bloc.state.errorMessage, _en.walletPassFailed);
+        expect(bloc.state.errorMessage, isNot(contains('SAVE_FAILED')));
       },
-      skip:
-          'BUG: savePassesJwt is not awaited, so passAddedToWallet is '
-          'emitted whatever the result (B1)',
     );
+
+    test('a failed wallet client start is reported as a failure', () async {
+      messenger.setMockMessageHandler(
+        '$_googleWallet.initWalletClient',
+        (_) async => const StandardMessageCodec().encodeMessage(<Object?>[
+          'INIT_FAILED',
+          'no Play services',
+          null,
+        ]),
+      );
+
+      final statuses = await request(WalletPassType.google);
+
+      expect(statuses.last, WalletPassStatus.failure);
+      expect(googleCalls, isNot(contains('savePassesJwt')));
+    });
   });
 
   test('fails when the card data cannot be read', () async {
@@ -231,6 +249,34 @@ void main() {
     final statuses = await request(WalletPassType.apple);
 
     expect(statuses, [WalletPassStatus.loading, WalletPassStatus.failure]);
-    expect(bloc.state.errorMessage, contains('no patient'));
+    expect(bloc.state.errorMessage, _en.walletPassFailed);
+  });
+
+  test('the failure message is in the app language', () async {
+    await bloc.close();
+    bloc = WalletPassBloc(
+      builder,
+      repository,
+      AppStringsProvider.forLocale(const Locale('ro')),
+    );
+    builder.error = StateError('no patient');
+
+    await request(WalletPassType.google);
+
+    final ro = lookupAppLocalizations(const Locale('ro'));
+    expect(bloc.state.errorMessage, ro.walletPassFailed);
+    expect(ro.walletPassFailed, isNot(_en.walletPassFailed));
+  });
+
+  test('a new request clears the previous failure', () async {
+    builder.error = StateError('no patient');
+    await request(WalletPassType.apple);
+    builder.error = null;
+
+    final statuses = await request(WalletPassType.apple);
+
+    expect(statuses.first, WalletPassStatus.loading);
+    expect(statuses.last, WalletPassStatus.passAddedToWallet);
+    expect(bloc.state.errorMessage, isNull);
   });
 }

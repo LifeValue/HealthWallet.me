@@ -1995,6 +1995,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Rezumatul medical nu a putut fi exportat. Încearcă din nou.';
 
   @override
+  String get walletPassFailed =>
+      'Cardul nu a putut fi adăugat în portofel. Încearcă din nou.';
+
+  @override
   String get sourcesTitle => 'Surse';
 
   @override
