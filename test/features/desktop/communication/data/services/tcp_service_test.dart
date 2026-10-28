@@ -779,7 +779,10 @@ void main() {
     final peers = <PeerSocket>[];
 
     setUp(() async {
-      service = TcpService();
+      // Far longer than any wait in these tests, so a client is only ever
+      // dropped by the rule a test checks, never by the hello deadline; the
+      // tests of the deadline set their own short value.
+      service = TcpService()..helloTimeout = const Duration(minutes: 5);
       address = await service
           .startServer(pairingKey: key, port: 0)
           .timeout(const Duration(seconds: 10));
