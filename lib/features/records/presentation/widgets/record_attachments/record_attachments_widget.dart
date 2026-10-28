@@ -55,127 +55,140 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => _bloc,
-      child: BlocBuilder<RecordAttachmentsBloc, RecordAttachmentsState>(
-        builder: (context, state) {
-          return ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height / 1.5,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (state.status == const RecordAttachmentsStatus.loading())
-                  const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                else ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: context.theme.dividerColor,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          context.l10n.attachments,
-                          style:
-                              context.textTheme.bodyMedium ??
-                              AppTextStyle.bodyMedium,
-                        ),
-                        IconButton(
-                          iconSize: 20,
-                          visualDensity: const VisualDensity(
-                            horizontal: -4,
-                            vertical: -4,
-                          ),
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (state.attachments.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Center(
-                        child: Text(
-                          context.l10n.noFilesAttached,
-                          style: AppTextStyle.labelLarge,
-                        ),
-                      ),
+      child: BlocListener<RecordAttachmentsBloc, RecordAttachmentsState>(
+        listenWhen: (previous, current) =>
+            previous.status != current.status && _errorMessage(current) != null,
+        listener: (context, state) => ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_errorMessage(state)!))),
+        child: BlocBuilder<RecordAttachmentsBloc, RecordAttachmentsState>(
+          builder: (context, state) {
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height / 1.5,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (state.status == const RecordAttachmentsStatus.loading())
+                    const Center(
+                      child: CircularProgressIndicator(),
                     )
-                  else
-                    Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: [
-                            ...state.attachments.map(
-                              (attachment) =>
-                                  _buildAttachmentRow(context, attachment),
-                            ),
-                          ],
-                        ),
+                  else ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
                       ),
-                    ),
-                  if (!widget.readOnly)
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadiusGeometry.circular(6),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: context.theme.dividerColor,
+                            width: 1,
                           ),
                         ),
-                        onPressed: () async {
-                          final picked = await FilePicker.pickFiles();
-
-                          final files = picked
-                              .where((f) => f.path != null)
-                              .map((f) => File(f.path!))
-                              .toList();
-                          if (files.isNotEmpty) {
-                            _bloc.add(RecordAttachmentsFileAttached(files));
-                          }
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Assets.icons.attachment.svg(
-                              width: 16,
-                              color: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            context.l10n.attachments,
+                            style:
+                                context.textTheme.bodyMedium ??
+                                AppTextStyle.bodyMedium,
+                          ),
+                          IconButton(
+                            iconSize: 20,
+                            visualDensity: const VisualDensity(
+                              horizontal: -4,
+                              vertical: -4,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              context.l10n.attachFile,
-                              style: AppTextStyle.buttonSmall,
-                            ),
-                          ],
-                        ),
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
                       ),
                     ),
+                    if (state.attachments.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                          child: Text(
+                            context.l10n.noFilesAttached,
+                            style: AppTextStyle.labelLarge,
+                          ),
+                        ),
+                      )
+                    else
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          child: ListView(
+                            shrinkWrap: true,
+                            children: [
+                              ...state.attachments.map(
+                                (attachment) =>
+                                    _buildAttachmentRow(context, attachment),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (!widget.readOnly)
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.all(10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadiusGeometry.circular(6),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final picked = await FilePicker.pickFiles();
+
+                            final files = picked
+                                .where((f) => f.path != null)
+                                .map((f) => File(f.path!))
+                                .toList();
+                            if (files.isNotEmpty) {
+                              _bloc.add(RecordAttachmentsFileAttached(files));
+                            }
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Assets.icons.attachment.svg(
+                                width: 16,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                context.l10n.attachFile,
+                                style: AppTextStyle.buttonSmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 ],
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
+
+  /// The translated message of a failed attach or delete. The bloc puts
+  /// only translated text in an error as a `String`; other errors are not
+  /// shown.
+  static String? _errorMessage(RecordAttachmentsState state) =>
+      state.status.whenOrNull(error: (e) => e is String ? e : null);
 
   void _viewFile(
     BuildContext context,
