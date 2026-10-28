@@ -705,13 +705,22 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                     );
 
                     attachBloc.add(RecordAttachmentsFileAttached(files));
-                    await attachBloc.stream.firstWhere(
+                    final attached = await attachBloc.stream.firstWhere(
                       (s) => s.status.when(
                         loading: () => false,
                         success: () => true,
                         error: (_) => true,
                       ),
                     );
+                    // The bloc puts only translated text in a String error.
+                    final attachError = attached.status.whenOrNull(
+                      error: (e) => e is String ? e : null,
+                    );
+                    if (attachError != null && context.mounted) {
+                      ScaffoldMessenger.maybeOf(
+                        context,
+                      )?.showSnackBar(SnackBar(content: Text(attachError)));
+                    }
 
                     debugPrint('[ATTACH] File saved, refreshing browse list');
                     browseBloc.add(
