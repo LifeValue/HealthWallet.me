@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bloc/bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
@@ -44,7 +45,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<ClearDemoData>(_onClearDemoData);
     on<RecordsSearch>(_onSearch);
     on<RecordsSearchExecuted>(_onSearchExecuted);
-    on<RecordsSharePressed>(_onRecordsSharePressed);
+    on<RecordsSharePressed>(_onRecordsSharePressed, transformer: droppable());
     on<RecordsSelectionToggled>(_onSelectionToggled);
     on<RecordsSelectionCleared>(_onSelectionCleared);
     on<RecordsSelectionModeToggled>(_onSelectionModeToggled);

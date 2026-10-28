@@ -25,9 +25,11 @@ const _card = EmergencyCardData(patientName: 'Jane Doe', bloodType: 'A+');
 
 class _FakeCardBuilder extends Fake implements EmergencyCardBuilder {
   Error? error;
+  int calls = 0;
 
   @override
   Future<EmergencyCardData> build({required String patientId}) async {
+    calls++;
     if (error != null) throw error!;
     return _card;
   }
@@ -130,6 +132,28 @@ void main() {
     await sub.cancel();
     return statuses;
   }
+
+  test('a second tap while a pass is being made is dropped', () async {
+    final done = bloc.stream
+        .firstWhere(
+          (s) =>
+              s.status == WalletPassStatus.passAddedToWallet ||
+              s.status == WalletPassStatus.failure,
+        )
+        .timeout(const Duration(seconds: 5));
+    bloc
+      ..add(
+        const WalletPassRequested(type: WalletPassType.apple, patientId: 'p1'),
+      )
+      ..add(
+        const WalletPassRequested(type: WalletPassType.apple, patientId: 'p1'),
+      );
+    await done;
+    await pumpEventQueue();
+
+    expect(builder.calls, 1);
+    expect(addPassCalls, hasLength(1));
+  });
 
   group('Apple Wallet', () {
     test('adds the pass, then deletes its temp file', () async {

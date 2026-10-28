@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_google_wallet/flutter_google_wallet_plugin.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -26,7 +27,7 @@ class WalletPassBloc extends Bloc<WalletPassEvent, WalletPassState> {
 
   WalletPassBloc(this._cardBuilder, this._repository, this._strings)
     : super(const WalletPassState()) {
-    on<WalletPassRequested>(_onRequested);
+    on<WalletPassRequested>(_onRequested, transformer: droppable());
   }
 
   Future<void> _onRequested(

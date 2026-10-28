@@ -91,6 +91,21 @@ void main() {
     await pumpEventQueue();
   }
 
+  test('a second tap while exporting is dropped', () async {
+    final done = bloc.stream
+        .skipWhile((s) => s.ipsExportStatus != IpsExportStatus.exporting)
+        .firstWhere((s) => s.ipsExportStatus != IpsExportStatus.exporting)
+        .timeout(const Duration(seconds: 5));
+    bloc
+      ..add(const RecordsSharePressed(patientId: 'p1'))
+      ..add(const RecordsSharePressed(patientId: 'p1'));
+    await done;
+    await pumpEventQueue();
+
+    expect(repository.requests, hasLength(1));
+    expect(shared, hasLength(1));
+  });
+
   test('starts idle', () {
     expect(bloc.state.ipsExportStatus, IpsExportStatus.idle);
   });
