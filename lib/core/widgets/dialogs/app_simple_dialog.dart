@@ -370,42 +370,30 @@ class _ActionButtons extends StatelessWidget {
       children: [
         if (showCancel) ...[
           Expanded(
-            child: useCancelTextButton
-                ? TextButton(
-                    onPressed: onCancel,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: Insets.small,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: Text(
-                      cancelText,
-                      style: AppTextStyle.buttonSmall.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  )
-                : OutlinedButton(
-                    onPressed: onCancel,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: BorderSide.none,
-                      padding: const EdgeInsets.all(8),
-                      fixedSize: const Size.fromHeight(36),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: Text(
-                      cancelText,
-                      style: AppTextStyle.buttonSmall.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
+            // An outlined button, so Cancel reads as a button next to the
+            // filled action, not as plain text.
+            child: OutlinedButton(
+              onPressed: onCancel,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                padding: useCancelTextButton
+                    ? const EdgeInsets.symmetric(vertical: Insets.small)
+                    : const EdgeInsets.all(8),
+                fixedSize: useCancelTextButton
+                    ? null
+                    : const Size.fromHeight(36),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: Text(
+                cancelText,
+                style: AppTextStyle.buttonSmall.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
           ),
           const SizedBox(width: Insets.small),
         ],
