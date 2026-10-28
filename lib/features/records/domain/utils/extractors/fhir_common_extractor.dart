@@ -20,10 +20,12 @@ class FhirCommonExtractor {
     }
 
     try {
-      final coding = codeableConcept.coding;
-      if (coding?.isNotEmpty == true) {
-        final display = coding!.first.display?.toString();
-        if (display != null && display.isNotEmpty) return display;
+      final codings = codeableConcept.coding;
+      if (codings is Iterable) {
+        for (final coding in codings) {
+          final display = coding.display?.toString();
+          if (display != null && display.isNotEmpty) return display;
+        }
       }
     } catch (_) {
       // Malformed coding; there is no display text to return.

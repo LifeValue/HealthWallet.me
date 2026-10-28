@@ -109,9 +109,6 @@ void main() {
           'Glucose [Mass/volume] in Blood',
         );
       },
-      skip:
-          'BUG: only coding.first is inspected; later codings with a '
-          'display are ignored',
     );
 
     test('strips the enum prefix of dotted toString values', () {
