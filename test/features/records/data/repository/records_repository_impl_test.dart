@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
@@ -615,6 +616,16 @@ void main() {
         (await syncLocal.getSources()).map((s) => s.id),
         isNot(contains('demo_data')),
       );
+      final stamps = await db
+          .customSelect(
+            'SELECT DISTINCT deleted_at FROM fhir_resource '
+            "WHERE source_id = 'demo_data' UNION "
+            "SELECT deleted_at FROM sources WHERE id = 'demo_data' UNION "
+            'SELECT deleted_at FROM record_notes WHERE id = ?',
+            variables: [Variable.withInt(noteId)],
+          )
+          .get();
+      expect(stamps, hasLength(1), reason: 'one transaction, one stamp');
     });
 
     test(
@@ -633,7 +644,7 @@ void main() {
         expect(
           source['updated_at'] as int,
           greaterThan(1e12),
-          reason: 'stamped in ms by the trigger, so it beats the tombstone',
+          reason: 'stamped by the trigger in ms units, not drift seconds',
         );
         expect(
           (await syncLocal.getSources()).map((s) => s.id),

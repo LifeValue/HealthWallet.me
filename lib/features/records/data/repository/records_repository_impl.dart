@@ -496,12 +496,10 @@ class RecordsRepositoryImpl implements RecordsRepository {
   }
 
   @override
-  Future<void> clearDemoData() async {
-    await _datasource.deleteResourcesBySourceId('demo_data');
-
-    // Delete the demo_data source itself
-    await _syncLocalDataSource.deleteSource('demo_data');
-  }
+  Future<void> clearDemoData() =>
+      // Tombstones the source, its records and their notes in one
+      // transaction.
+      _syncLocalDataSource.deleteSource('demo_data');
 
   @override
   Future<bool> hasDemoData() async {
