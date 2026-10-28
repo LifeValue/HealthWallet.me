@@ -2132,14 +2132,7 @@
   "syncErrorEndpointNotFound": "Sync endpoint not found. Please check server configuration.",
   "syncErrorAuthentication": "Authentication failed. Please check your token.",
   "syncErrorInvalidFormat": "Invalid sync data format",
-  "syncErrorGeneric": "Data sync failed: {error}",
-  "@syncErrorGeneric": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "syncErrorGeneric": "Data sync failed. Please try again.",
   "syncPlaceholderSubtitle": "Sync or update your data to view {recordType} records",
   "@syncPlaceholderSubtitle": {
     "placeholders": {

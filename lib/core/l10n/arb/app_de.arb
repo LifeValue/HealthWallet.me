@@ -1617,7 +1617,7 @@
   "syncErrorEndpointNotFound": "Sync-Endpunkt nicht gefunden. Prüfe die Serverkonfiguration.",
   "syncErrorAuthentication": "Authentifizierung fehlgeschlagen. Prüfe dein Token.",
   "syncErrorInvalidFormat": "Ungültiges Format der Synchronisierungsdaten",
-  "syncErrorGeneric": "Datensynchronisierung fehlgeschlagen: {error}",
+  "syncErrorGeneric": "Datensynchronisierung fehlgeschlagen. Bitte versuche es erneut.",
   "syncPlaceholderSubtitle": "Synchronisiere oder aktualisiere deine Daten, um {recordType}-Einträge zu sehen",
   "appLockTitle": "HealthWallet ist gesperrt",
   "appLockMessage": "Entsperre die App, um deine Gesundheitsdaten zu sehen",

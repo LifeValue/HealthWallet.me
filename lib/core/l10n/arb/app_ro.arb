@@ -1616,7 +1616,7 @@
   "syncErrorEndpointNotFound": "Punctul de sincronizare nu a fost găsit. Verifică configurația serverului.",
   "syncErrorAuthentication": "Autentificarea a eșuat. Verifică tokenul.",
   "syncErrorInvalidFormat": "Format nevalid al datelor de sincronizare",
-  "syncErrorGeneric": "Sincronizarea datelor a eșuat: {error}",
+  "syncErrorGeneric": "Sincronizarea datelor a eșuat. Încearcă din nou.",
   "syncPlaceholderSubtitle": "Sincronizează sau actualizează datele pentru a vedea înregistrările de tip {recordType}",
   "appLockTitle": "HealthWallet este blocat",
   "appLockMessage": "Deblochează pentru a-ți vedea înregistrările medicale",

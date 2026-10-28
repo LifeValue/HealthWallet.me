@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -66,8 +68,14 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
           isLoading: false,
         ),
       );
-    } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString(), isLoading: false));
+    } catch (e, s) {
+      logger.e('Reading the saved sync state failed', e, s);
+      emit(
+        state.copyWith(
+          errorMessage: _strings.l10n.syncErrorGeneric,
+          isLoading: false,
+        ),
+      );
     }
   }
 
@@ -86,11 +94,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         successMessage: null,
       ),
     );
+    final syncQrData = _parseQrData(event.qrData);
+    if (syncQrData == null) {
+      emit(_syncFailed(SyncFailureReason.invalidFormat));
+      return;
+    }
     try {
-      debugPrint('[SYNC] Parsing QR JSON...');
-      final qrDataJson = jsonDecode(event.qrData) as Map<String, dynamic>;
-      debugPrint('[SYNC] JSON keys: ${qrDataJson.keys.toList()}');
-      final syncQrData = SyncQrData.fromJson(qrDataJson);
       debugPrint(
         '[SYNC] Parsed SyncQrData: token=${syncQrData.token.substring(0, syncQrData.token.length > 10 ? 10 : syncQrData.token.length)}... urls=${syncQrData.serverBaseUrls} endpoint=${syncQrData.syncEndpoint}',
       );
@@ -152,38 +161,38 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
           isSuccess: true,
         ),
       );
-    } catch (e, stackTrace) {
-      debugPrint('[SYNC] ERROR: $e');
-      debugPrint(
-        '[SYNC] Stack: ${stackTrace.toString().split('\n').take(5).join('\n')}',
-      );
-
-      final l10n = _strings.l10n;
-      String errorMessage;
-      if (e.toString().contains('HandshakeException') ||
-          e.toString().contains('Connection refused') ||
-          e.toString().contains('timeout')) {
-        errorMessage = l10n.syncErrorConnection;
-      } else if (e.toString().contains('404')) {
-        errorMessage = l10n.syncErrorEndpointNotFound;
-      } else if (e.toString().contains('401') || e.toString().contains('403')) {
-        errorMessage = l10n.syncErrorAuthentication;
-      } else if (e.toString().contains('FormatException')) {
-        errorMessage = l10n.syncErrorInvalidFormat;
-      } else {
-        errorMessage = l10n.syncErrorGeneric(e.toString());
-      }
-
-      debugPrint('[SYNC] Emitting error: $errorMessage');
-      emit(
-        state.copyWith(
-          isLoading: false,
-          errorMessage: errorMessage,
-          successMessage: null,
-          syncStatus: SyncStatus.initial,
-        ),
-      );
+    } catch (e, s) {
+      logger.e('Fasten sync failed', e, s);
+      emit(_syncFailed(SyncFailureReason.of(e)));
     }
+  }
+
+  /// The QR code's sync data, or null when the code is not a Fasten sync QR.
+  SyncQrData? _parseQrData(String qrData) {
+    try {
+      final json = jsonDecode(qrData) as Map<String, dynamic>;
+      debugPrint('[SYNC] QR JSON keys: ${json.keys.toList()}');
+      return SyncQrData.fromJson(json);
+    } catch (e, s) {
+      logger.w('The scanned QR code is not a sync QR code', e, s);
+      return null;
+    }
+  }
+
+  SyncState _syncFailed(SyncFailureReason reason) {
+    final l10n = _strings.l10n;
+    return state.copyWith(
+      isLoading: false,
+      errorMessage: switch (reason) {
+        SyncFailureReason.connection => l10n.syncErrorConnection,
+        SyncFailureReason.endpointNotFound => l10n.syncErrorEndpointNotFound,
+        SyncFailureReason.authentication => l10n.syncErrorAuthentication,
+        SyncFailureReason.invalidFormat => l10n.syncErrorInvalidFormat,
+        SyncFailureReason.unknown => l10n.syncErrorGeneric,
+      },
+      successMessage: null,
+      syncStatus: SyncStatus.initial,
+    );
   }
 
   Future<void> _onScanQRCode(
@@ -245,14 +254,16 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
           isSuccess: true,
         ),
       );
-    } catch (e) {
-      logger.e('Failed to load demo data: $e');
+    } catch (e, s) {
+      logger.e('Failed to load demo data', e, s);
+      final message = _strings.l10n.syncErrorGeneric;
+      emit(state.copyWith(errorMessage: message));
 
       add(
         DataHandled(
           sourceId: 'demo_data',
           isSuccess: false,
-          errorMessage: e.toString(),
+          errorMessage: message,
         ),
       );
     }

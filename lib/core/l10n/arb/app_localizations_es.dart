@@ -4313,9 +4313,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Formato de datos de sincronización no válido';
 
   @override
-  String syncErrorGeneric(String error) {
-    return 'Error al sincronizar los datos: $error';
-  }
+  String get syncErrorGeneric =>
+      'Error al sincronizar los datos. Inténtalo de nuevo.';
 
   @override
   String syncPlaceholderSubtitle(String recordType) {

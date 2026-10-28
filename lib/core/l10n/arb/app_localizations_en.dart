@@ -4257,9 +4257,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncErrorInvalidFormat => 'Invalid sync data format';
 
   @override
-  String syncErrorGeneric(String error) {
-    return 'Data sync failed: $error';
-  }
+  String get syncErrorGeneric => 'Data sync failed. Please try again.';
 
   @override
   String syncPlaceholderSubtitle(String recordType) {

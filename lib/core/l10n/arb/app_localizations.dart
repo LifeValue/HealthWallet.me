@@ -7610,8 +7610,8 @@ abstract class AppLocalizations {
   /// No description provided for @syncErrorGeneric.
   ///
   /// In en, this message translates to:
-  /// **'Data sync failed: {error}'**
-  String syncErrorGeneric(String error);
+  /// **'Data sync failed. Please try again.'**
+  String get syncErrorGeneric;
 
   /// No description provided for @syncPlaceholderSubtitle.
   ///

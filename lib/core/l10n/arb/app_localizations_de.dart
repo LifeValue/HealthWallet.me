@@ -4323,9 +4323,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ungültiges Format der Synchronisierungsdaten';
 
   @override
-  String syncErrorGeneric(String error) {
-    return 'Datensynchronisierung fehlgeschlagen: $error';
-  }
+  String get syncErrorGeneric =>
+      'Datensynchronisierung fehlgeschlagen. Bitte versuche es erneut.';
 
   @override
   String syncPlaceholderSubtitle(String recordType) {

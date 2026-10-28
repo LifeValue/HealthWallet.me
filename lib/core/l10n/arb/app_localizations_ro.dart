@@ -4324,9 +4324,8 @@ class AppLocalizationsRo extends AppLocalizations {
       'Format nevalid al datelor de sincronizare';
 
   @override
-  String syncErrorGeneric(String error) {
-    return 'Sincronizarea datelor a eșuat: $error';
-  }
+  String get syncErrorGeneric =>
+      'Sincronizarea datelor a eșuat. Încearcă din nou.';
 
   @override
   String syncPlaceholderSubtitle(String recordType) {
