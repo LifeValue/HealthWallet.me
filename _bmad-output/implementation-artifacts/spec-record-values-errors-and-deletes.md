@@ -91,16 +91,16 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] Section 4 extractors + `fhir_reference_utils.dart` + `records_repository_impl.dart:589` -- fix and un-skip the 9 tests; pin the unpinned siblings (ratio, period, abatement) with passing tests.
-- [ ] `records_bloc.dart`, `records_state.dart`, listener in the home/records UI -- IPS export failure state with a translated snackbar.
-- [ ] `wallet_pass_bloc.dart` + a `BlocListener` near `app.dart:150` -- await the Google save; failures carry a translated message; un-skip :205-225.
-- [ ] `sync_bloc.dart` + sync page -- typed classification, no raw text at :70/174/255, error shown; update `sync_bloc_test.dart`.
-- [ ] Processing files listed above + ARB -- typed reasons and translated UI text; `Failure.error` unchanged for handover.
-- [ ] Empty catches (65) -- log, show, or comment per the Code Map, one commit per feature.
-- [ ] `record_attachments_bloc.dart` -- unique stored names and ids; first `RecordAttachmentsBloc` tests (attach, view and delete paths).
-- [ ] `emergency_card_builder.dart` -- status filters, MedicationRequest, de-duplication; first builder tests.
-- [ ] Delete sync, last -- add the contract below to `architecture.md` (LWW section, replacing the "nothing sets deleted_at" note); soft-delete and filter as in the Code Map; save paths clear `deleted_at`; tombstone guards in the LWW services; tests for repository deletes, reads, resurrect-on-save, and a phone→desktop delete round trip through `LwwSyncService`.
-- [ ] `deferred-work.md` + `mobile-stabilization.md` -- mark done items; defer the note-id collision (pinned as a `BUG:` test) and orphaned files of tombstoned DocumentReferences.
+- [x] Section 4 extractors + `fhir_reference_utils.dart` + `records_repository_impl.dart:589` -- fix and un-skip the 9 tests; pin the unpinned siblings (ratio, period, abatement) with passing tests.
+- [x] `records_bloc.dart`, `records_state.dart`, listener in the home/records UI -- IPS export failure state with a translated snackbar.
+- [x] `wallet_pass_bloc.dart` + a `BlocListener` near `app.dart:150` -- await the Google save; failures carry a translated message; un-skip :205-225.
+- [x] `sync_bloc.dart` + sync page -- typed classification, no raw text at :70/174/255, error shown; update `sync_bloc_test.dart`.
+- [x] Processing files listed above + ARB -- typed reasons and translated UI text; `Failure.error` unchanged for handover.
+- [x] Empty catches (65) -- log, show, or comment per the Code Map, one commit per feature.
+- [x] `record_attachments_bloc.dart` -- unique stored names and ids; first `RecordAttachmentsBloc` tests (attach, view and delete paths).
+- [x] `emergency_card_builder.dart` -- status filters, MedicationRequest, de-duplication; first builder tests.
+- [x] Delete sync, last -- add the contract below to `architecture.md` (LWW section, replacing the "nothing sets deleted_at" note); soft-delete and filter as in the Code Map; save paths clear `deleted_at`; tombstone guards in the LWW services; tests for repository deletes, reads, resurrect-on-save, and a phone→desktop delete round trip through `LwwSyncService`.
+- [x] `deferred-work.md` + `mobile-stabilization.md` -- mark done items; defer the note-id collision (pinned as a `BUG:` test) and orphaned files of tombstoned DocumentReferences.
 
 **Acceptance Criteria:**
 - Given any record with a missing unit, value or bound, when it is displayed, then no "null" appears.
@@ -108,6 +108,29 @@ context:
 - Given `grep` for empty catch bodies in lib/ outside desktop and share_records, when it runs, then every hit has a reason comment.
 - Given a mobile build with this change paired with a desktop build of it, when either side deletes a record, note or source, then it stays deleted on both after reconnect and after a full-table resend.
 - Given `scripts/check.sh`, when it runs, then it passes, with 9 fewer skipped tests plus the wallet one.
+
+## Implementation Notes
+
+- **How the work ran:** five agents in parallel on one branch. The extractors and delete sync ran in the main checkout; the error messages, empty catches, and attachments plus wallet pass ran in worktrees and were cherry-picked. Every commit applied without conflicts, and gen-l10n and build_runner regenerated identical output.
+- **Values:** the decimals of a region-converted value follow the recorded value (70 kg shows as `154.32 lbs`). `valueRange`/`valueRatio` stay unitless, as before. The raw `extractOnsetX`/`extractAbatementX` keep raw numbers, while the `…Formatted` variants use `extractQuantity`. If either bound of a period does not parse, both bounds are shown as recorded.
+- **Blood type:** the order is value text, then a SNOMED code (SNOMED or system-less codings only), then a coding display, then the observation's code display.
+- **Errors:** IPS export uses `RecordsState.ipsExportStatus` (each export passes through `exporting`). The wallet pass uses a translated `errorMessage`. Sync uses `SyncFailureReason.of` (a QR code that does not parse fails before any network call; `syncErrorGeneric` lost its placeholder). Scan and import use the extended `PipelineFailureReason` with `localizedMessage`. The IPS, wallet and capture listeners live in `MaterialApp.builder`, inside the app's `ScaffoldMessenger`; the sync listener wraps `SyncPage`. "Not enough memory" and "corrupted" are still matched on the AI engine's fixed English text.
+- **Empty catches:** grep found 61 bare ones plus 13 comment-only ones, 74 rather than 75. All bare ones are now logged, shown (6) or commented (the 8 extractor ones included). The `patient_source_utils` and `sync_repository_impl` comments already state a reason and were kept.
+- **Attachments:** the stored name is always the sanitized name plus an 8-character suffix (`report_1a2b3c4d.pdf`), and ids are UUIDs. A copy whose database save fails is deleted again. Attach and delete failures carry `attachFileFailed`/`attachmentDeleteFailed`, shown by `RecordAttachmentsWidget` and the attachment detail panel.
+- **Wallet pass:** a status without a code is matched on its text. MedicationStatement takes its name from the title, then the medication; MedicationRequest from the medication, then the title. Statements come before requests when names are de-duplicated.
+- **Delete sync:** the SQL lives in the `SoftDelete` extension (`lib/core/data/local/soft_delete.dart`). "Any save clears `deleted_at`" means upserts and replaces; single-column updates (raw JSON, specialty, note text, encounter link) leave it alone. The demo and wallet source rows now leave `updated_at` to the trigger (ms), so a re-created source beats its tombstone. Share sessions call `deleteRecordNote`, so their cleanup now sends tombstones too; `share_records` itself is untouched.
+- **New `BUG:` pins (skipped):**
+  - the note-id collision across devices;
+  - `DocumentReferenceService` ids colliding within one millisecond;
+  - attaching to a record without a subject, which writes `Patient/`;
+  - the out-of-memory scan message, which tells the user to raise the context size.
+- **Tests:** 2,133 pass and 17 are skipped (baseline 1,707 / 23; 10 un-skipped, 4 new pins). Total coverage went from 30.0% to 37.0%.
+- **Touched files left at low coverage:** `records_page`, `attachment_detail_panel`, `record_detail_page`, `dashboard_page`, `image_preview_page`, `processing_page`, `sync_page`, `ai_settings_dialog`, `source_selector_widget` and `ai_inference_data_source`. Most are large widgets that read several BLoCs from getIt; their changed lines are logs, comments or a snackbar. Listed in `deferred-work.md`.
+- **Flaky test:** `ssdp_service_test` "stopAdvertising releases the socket" failed once during the parallel runs (port 1900 shared by the agents) and passed on every rerun.
+
+## Spec Change Log
+
+## Review Triage Log
 
 ## Design Notes
 

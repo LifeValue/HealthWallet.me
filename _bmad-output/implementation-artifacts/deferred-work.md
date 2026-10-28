@@ -33,7 +33,7 @@
   evidence: An optional l10n falls back to English silently when a caller forgets it.
 - source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
   summary: Replace raw exception text (e.toString()) in user-facing error messages with localized, user-friendly text.
-  evidence: Done for the desktop LWW sync, backup and handover errors. Still open on mobile: syncErrorGeneric, scanFailedWithError, failedToImportDocument and PipelineStatus.failure append English technical detail.
+  evidence: Done for the desktop LWW sync, backup and handover errors. Still open on mobile: syncErrorGeneric, scanFailedWithError, failedToImportDocument and PipelineStatus.failure append English technical detail. Mobile done on `bugfix/record-values-errors-and-deletes` (typed reasons, translated text, cause only logged).
 - source_spec: `_bmad-output/implementation-artifacts/spec-translate-mobile-app.md`
   summary: Decide whether the translated privacy policy needs a clause naming the authoritative language version.
   evidence: Legal question for the product owner (maybe-false as a defect); the policy now exists in four languages.
@@ -73,3 +73,27 @@
 - source_spec: none
   summary: Host the Google Wallet pass logo on a domain we control (for example healthwallet.me) instead of raw.githubusercontent.com.
   evidence: The old link pointed at a deleted feature branch and returned 404; `GooglePassBuilder.logoUrl` now points at the GitHub `master` branch, which works but depends on a repository this project no longer updates. Google also recommends a 660×660 logo; the hosted one is 180×180.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Give record notes ids that are unique across devices (for example a UUID column used as the sync key), so a note created on the phone and one created on the desktop no longer share an id.
+  evidence: `record_notes.id` is an autoincrement integer; LWW matches on it, so two notes with the same id overwrite each other and a note tombstone deletes the other device's note. Pinned as a skipped `BUG:` test in `delete_sync_round_trip_test.dart`. Changing the key changes the synced row shape, so both ends must ship together.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Delete the attachment files of DocumentReferences that arrive as tombstones from the paired device, and sweep orphaned files.
+  evidence: The deleting device removes the file; the receiving device keeps the row's file on disk because nothing reacts to an incoming tombstone.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Fix the existing bugs pinned during this work. `DocumentReferenceService` ids collide within one millisecond. Attaching to a record without a subject writes `Patient/`. The out-of-memory scan message tells the user to raise the context size.
+  evidence: Each is a skipped `BUG:` test (`document_reference_service_test.dart`, `record_attachments_bloc_test.dart`, `processing_failures_test.dart`); none was in scope.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Throw typed exceptions from the AI engine for "not enough memory" and "model corrupted" instead of matching their English text in `PipelineFailureReason.of`.
+  evidence: `ai_inference_data_source.dart` throws plain `Exception`s with fixed English text; the UI is translated now but still depends on that text.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Write `updated_at` in milliseconds in `updateSourceLabel` and `cacheSources`, and stamp edits at millisecond precision so an edit made in the same second as a delete on the other device does not lose to the tombstone.
+  evidence: Both write a drift `DateTime` (seconds), already pinned as a KNOWN ISSUE in `lww_sync_service_test.dart`; the triggers stamp whole seconds, documented in the delete contract in `architecture.md`.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Add widget tests for the touched screens left at low coverage: `records_page`, `attachment_detail_panel`, `record_detail_page`, `dashboard_page`, `image_preview_page`, `processing_page`, `sync_page`, `ai_settings_dialog` and `source_selector_widget`.
+  evidence: Their changes are logs, comments or a snackbar, but each reads several BLoCs from getIt, so a test needs a harness that registers fakes for them.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Check that attachments land in the right documents directory on Windows. `RecordAttachmentsBloc` copies into the platform documents directory, while `PathResolver` uses `HealthWallet/Documents`, so the stored path may stay absolute. Also guard `image_preview_page`, where `lastModifiedSync()` runs after a failed `statSync`.
+  evidence: Found while fixing attachments and empty catches; neither is reproduced on a device.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Ship the desktop build together with this mobile change, or note in the release that a desktop build without it keeps showing records deleted on the phone.
+  evidence: A peer without the delete contract stores tombstones as ordinary rows and does not filter its reads; its own deletes stay hard and come back from the updated phone (`architecture.md`, LWW section, point 6).
