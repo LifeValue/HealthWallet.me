@@ -5105,6 +5105,12 @@ abstract class AppLocalizations {
   /// **'The file could not be attached. Please try again.'**
   String get attachFileFailed;
 
+  /// No description provided for @attachmentDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The attachment could not be deleted. Please try again.'**
+  String get attachmentDeleteFailed;
+
   /// No description provided for @deleteRecordOfType.
   ///
   /// In en, this message translates to:

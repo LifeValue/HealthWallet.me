@@ -2820,6 +2820,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Fișierul nu a putut fi atașat. Încearcă din nou.';
 
   @override
+  String get attachmentDeleteFailed =>
+      'Atașamentul nu a putut fi șters. Încearcă din nou.';
+
+  @override
   String deleteRecordOfType(String type) {
     return 'Șterge $type';
   }

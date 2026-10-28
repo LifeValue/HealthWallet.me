@@ -1204,6 +1204,7 @@
   "noRelatedResourcesForEncounter": "No se encontraron recursos relacionados con este encuentro",
   "cannotAttachToDocumentReference": "No se pueden adjuntar archivos a un documento",
   "attachFileFailed": "No se pudo adjuntar el archivo. Inténtalo de nuevo.",
+  "attachmentDeleteFailed": "No se pudo eliminar el archivo adjunto. Inténtalo de nuevo.",
   "deleteRecordOfType": "Eliminar {type}",
   "dateFilterEndBeforeStart": "La fecha de fin debe ser posterior a la fecha de inicio",
   "dateFilterChip": "Fecha: {range}",

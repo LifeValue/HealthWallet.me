@@ -1199,6 +1199,7 @@
   "noRelatedResourcesForEncounter": "Nu s-au găsit resurse asociate acestei consultații",
   "cannotAttachToDocumentReference": "Nu se pot atașa fișiere la un document",
   "attachFileFailed": "Fișierul nu a putut fi atașat. Încearcă din nou.",
+  "attachmentDeleteFailed": "Atașamentul nu a putut fi șters. Încearcă din nou.",
   "deleteRecordOfType": "Șterge {type}",
   "dateFilterEndBeforeStart": "Data de sfârșit trebuie să fie după data de început",
   "dateFilterChip": "Dată: {range}",

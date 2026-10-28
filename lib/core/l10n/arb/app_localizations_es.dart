@@ -2820,6 +2820,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo adjuntar el archivo. Inténtalo de nuevo.';
 
   @override
+  String get attachmentDeleteFailed =>
+      'No se pudo eliminar el archivo adjunto. Inténtalo de nuevo.';
+
+  @override
   String deleteRecordOfType(String type) {
     return 'Eliminar $type';
   }

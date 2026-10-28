@@ -2827,6 +2827,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Datei konnte nicht angehängt werden. Bitte versuche es erneut.';
 
   @override
+  String get attachmentDeleteFailed =>
+      'Der Anhang konnte nicht gelöscht werden. Bitte versuche es erneut.';
+
+  @override
   String deleteRecordOfType(String type) {
     return '$type löschen';
   }

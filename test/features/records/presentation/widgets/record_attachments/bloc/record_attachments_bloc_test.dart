@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart' hide Source;
+import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
@@ -16,8 +17,9 @@ import 'package:health_wallet/features/sync/domain/services/source_type_service.
 
 import '../../../../../share_records/share_test_helpers.dart';
 
-/// Reads DocumentReferences from the test database, like the real
-/// repository, plus [extraDocuments] that the database cannot hold.
+/// Reads live DocumentReferences from the test database and soft-deletes
+/// them, like the real repository, plus [extraDocuments] that the database
+/// cannot hold.
 class _FakeRecordsRepository extends Fake implements RecordsRepository {
   _FakeRecordsRepository(this._db);
 
@@ -40,11 +42,19 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
     if (error != null) throw error!;
     expect(resourceTypes, [FhirType.DocumentReference]);
     documentReads++;
-    final rows = await (_db.select(
-      _db.fhirResource,
-    )..where((t) => t.resourceType.equals('DocumentReference'))).get();
+    final rows =
+        await (_db.select(_db.fhirResource)..where(
+              (t) =>
+                  t.resourceType.equals('DocumentReference') &
+                  t.deletedAt.isNull(),
+            ))
+            .get();
     return [...rows.map(IFhirResource.fromLocalDto), ...extraDocuments];
   }
+
+  @override
+  Future<void> deleteResource(String resourceId) =>
+      _db.softDeleteResources([resourceId]);
 
   @override
   Future<List<IFhirResource>> getRelatedResourcesForEncounter({
@@ -242,6 +252,26 @@ void main() {
   Future<List<FhirResourceLocalDto>> documentRows() => (db.select(
     db.fhirResource,
   )..where((t) => t.resourceType.equals('DocumentReference'))).get();
+
+  /// The DocumentReferences that are not deleted.
+  Future<List<FhirResourceLocalDto>> liveDocumentRows() async => [
+    for (final row in await documentRows())
+      if (row.deletedAt == null) row,
+  ];
+
+  /// Expects the row [id] to be a tombstone written now, in milliseconds.
+  Future<void> expectTombstone(String id, int beforeMs) async {
+    final row =
+        (await db
+                .customSelect(
+                  'SELECT deleted_at, updated_at FROM fhir_resource WHERE id = ?',
+                  variables: [drift.Variable.withString(id)],
+                )
+                .getSingle())
+            .data;
+    expect(row['deleted_at'] as int, greaterThanOrEqualTo(beforeMs));
+    expect(row['updated_at'], row['deleted_at']);
+  }
 
   Map<String, dynamic> attachmentOf(FhirResourceLocalDto row) =>
       ((jsonDecode(row.resourceRaw) as Map)['content'] as List)
@@ -854,7 +884,8 @@ void main() {
   });
 
   group('delete', () {
-    test('removes the record and its file, keeping a same-name one', () async {
+    test('tombstones the record and removes its file, keeping a same-name '
+        'one', () async {
       await open(_observation());
       await run(
         RecordAttachmentsFileAttached([
@@ -866,12 +897,14 @@ void main() {
       final first = rows.first;
       final firstFile = attachmentOf(first)['url'].toString().substring(7);
       final document = IFhirResource.fromLocalDto(first);
+      final before = DateTime.now().millisecondsSinceEpoch;
 
       final state = await run(RecordAttachmentsFileDeleted(document));
 
       expect(state.status, const RecordAttachmentsStatus.success());
-      final remaining = await documentRows();
-      expect(remaining.map((r) => r.id), [rows.last.id]);
+      expect(await documentRows(), hasLength(2), reason: 'rows are kept');
+      await expectTombstone(first.id, before);
+      expect((await liveDocumentRows()).map((r) => r.id), [rows.last.id]);
       expect(storedFiles(), hasLength(1));
       expect(storedFiles(), isNot(contains(firstFile)));
       expect(state.attachments, hasLength(1));
@@ -881,7 +914,7 @@ void main() {
       );
     });
 
-    test('deletes the record when its file is already gone', () async {
+    test('tombstones the record when its file is already gone', () async {
       await storeDocument(
         _documentJson(
           id: 'doc-1',
@@ -890,14 +923,16 @@ void main() {
         ),
       );
       await open(_observation());
-      final document = IFhirResource.fromLocalDto(
-        (await documentRows()).single,
+      final row = (await documentRows()).single;
+      final before = DateTime.now().millisecondsSinceEpoch;
+
+      final state = await run(
+        RecordAttachmentsFileDeleted(IFhirResource.fromLocalDto(row)),
       );
 
-      final state = await run(RecordAttachmentsFileDeleted(document));
-
       expect(state.status, const RecordAttachmentsStatus.success());
-      expect(await documentRows(), isEmpty);
+      await expectTombstone(row.id, before);
+      expect(await liveDocumentRows(), isEmpty);
       expect(state.attachments, isEmpty);
     });
 
@@ -917,7 +952,7 @@ void main() {
         RecordAttachmentsFileDeleted(IFhirResource.fromLocalDto(rows[1])),
       );
 
-      expect(await documentRows(), isEmpty);
+      expect(await liveDocumentRows(), isEmpty);
       expect(storedFiles(), ['keep.pdf']);
     });
 
@@ -925,6 +960,7 @@ void main() {
       await storeDocument(_documentJson(id: 'doc-1'));
       await open(_observation());
       final row = (await documentRows()).single;
+      final before = DateTime.now().millisecondsSinceEpoch;
 
       final state = await run(
         RecordAttachmentsFileDeleted(
@@ -936,22 +972,28 @@ void main() {
       );
 
       expect(state.status, const RecordAttachmentsStatus.success());
-      expect(await documentRows(), isEmpty);
+      await expectTombstone(row.id, before);
+      expect(await liveDocumentRows(), isEmpty);
     });
 
-    test('a failed delete shows the error state and keeps the file', () async {
-      await open(_observation());
-      await run(RecordAttachmentsFileAttached([picked('a.pdf')]));
-      final document = IFhirResource.fromLocalDto(
-        (await documentRows()).single,
-      );
-      await db.customStatement('DROP TABLE fhir_resource');
+    test(
+      'a failed delete shows a translated error and keeps the file',
+      () async {
+        await open(_observation());
+        await run(RecordAttachmentsFileAttached([picked('a.pdf')]));
+        final document = IFhirResource.fromLocalDto(
+          (await documentRows()).single,
+        );
+        await db.customStatement('DROP TABLE fhir_resource');
 
-      final state = await run(RecordAttachmentsFileDeleted(document));
+        final state = await run(RecordAttachmentsFileDeleted(document));
 
-      expect(state.status, isA<RecordAttachmentsStatus>());
-      expect(state.status, isNot(const RecordAttachmentsStatus.success()));
-      expect(storedFiles(), hasLength(1));
-    });
+        expect(
+          state.status,
+          RecordAttachmentsStatus.error(strings.l10n.attachmentDeleteFailed),
+        );
+        expect(storedFiles(), hasLength(1));
+      },
+    );
   });
 }

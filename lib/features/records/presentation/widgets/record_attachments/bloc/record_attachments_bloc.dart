@@ -453,6 +453,7 @@ class RecordAttachmentsBloc
       subjectId: subjectId != null
           ? drift.Value(subjectId)
           : const drift.Value.absent(),
+      deletedAt: const drift.Value(null),
     );
 
     await _database.into(_database.fhirResource).insertOnConflictUpdate(dto);
@@ -486,9 +487,8 @@ class RecordAttachmentsBloc
     emit(state.copyWith(status: const RecordAttachmentsStatus.loading()));
 
     try {
-      await (_database.delete(
-        _database.fhirResource,
-      )..where((t) => t.id.equals(event.attachment.id))).go();
+      // A soft delete, so the paired device drops the attachment too.
+      await _recordsRepository.deleteResource(event.attachment.id);
 
       try {
         final content = event.attachment.rawResource['content'] as List?;
@@ -509,8 +509,15 @@ class RecordAttachmentsBloc
       }
 
       add(RecordAttachmentsInitialised(resource: state.resource));
-    } catch (e) {
-      emit(state.copyWith(status: RecordAttachmentsStatus.error(e)));
+    } catch (e, s) {
+      logger.e('Deleting an attachment failed', e, s);
+      emit(
+        state.copyWith(
+          status: RecordAttachmentsStatus.error(
+            _strings.l10n.attachmentDeleteFailed,
+          ),
+        ),
+      );
     }
   }
 
