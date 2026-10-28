@@ -2,6 +2,9 @@ import 'dart:typed_data';
 
 abstract class ReceiveModeService {
   bool get isListening;
+
+  /// A share screen has taken over the transport (see [pauseListening]).
+  bool get isPaused;
   String? get pendingInvitationId;
   String? get pendingInvitationDeviceName;
 

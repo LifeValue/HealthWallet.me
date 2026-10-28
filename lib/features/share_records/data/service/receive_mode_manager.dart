@@ -25,6 +25,7 @@ class ReceiveModeManager implements ReceiveModeService {
   StreamSubscription<ReceivedData>? _receivedDataSubscription;
   StreamSubscription<List<String>>? _receivedFilesSubscription;
   bool _isListening = false;
+  bool _isPaused = false;
   bool _isRestarting = false;
 
   String? _pendingInvitationId;
@@ -36,6 +37,9 @@ class ReceiveModeManager implements ReceiveModeService {
 
   @override
   bool get isListening => _isListening;
+
+  @override
+  bool get isPaused => _isPaused;
 
   @override
   String? get pendingInvitationId => _pendingInvitationId;
@@ -63,6 +67,7 @@ class ReceiveModeManager implements ReceiveModeService {
     }
 
     _isListening = true;
+    _isPaused = false;
 
     try {
       debugPrint('[ReceiveMode] Starting background listener...');
@@ -103,6 +108,7 @@ class ReceiveModeManager implements ReceiveModeService {
 
       await _shareRecordsService.disconnect();
       _isListening = false;
+      _isPaused = false;
       clearPendingInvitation();
       clearPendingPayload();
 
@@ -114,6 +120,7 @@ class ReceiveModeManager implements ReceiveModeService {
 
   @override
   void pauseListening() {
+    _isPaused = true;
     _invitationSubscription?.cancel();
     _invitationSubscription = null;
     _receivedDataSubscription?.cancel();
@@ -125,6 +132,7 @@ class ReceiveModeManager implements ReceiveModeService {
 
   @override
   Future<void> resumeListening() async {
+    _isPaused = false;
     if (!_isListening) return;
     unawaited(_invitationSubscription?.cancel());
     unawaited(_receivedDataSubscription?.cancel());

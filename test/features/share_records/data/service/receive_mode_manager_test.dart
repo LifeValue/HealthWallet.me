@@ -222,6 +222,21 @@ void main() {
       expect(manager.pendingInvitationId, 'inv-3');
     });
 
+    test('isPaused follows pause, resume and stop', () async {
+      await manager.startListening();
+      expect(manager.isPaused, isFalse);
+
+      manager.pauseListening();
+      expect(manager.isPaused, isTrue);
+
+      await manager.resumeListening();
+      expect(manager.isPaused, isFalse);
+
+      manager.pauseListening();
+      await manager.stopListening();
+      expect(manager.isPaused, isFalse);
+    });
+
     test('resume does nothing when not listening', () async {
       await manager.resumeListening();
       expect(service.calls, isEmpty);
