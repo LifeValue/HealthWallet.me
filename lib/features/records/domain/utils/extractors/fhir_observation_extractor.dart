@@ -470,14 +470,18 @@ class FhirObservationExtractor {
     return BloodTypes.fhirDisplayMapping[trimmed];
   }
 
-  /// The blood type coded in a value's codings: a known SNOMED code first,
-  /// then a recognisable display.
+  /// The blood type coded in a value's codings: a known SNOMED code first
+  /// (only in SNOMED codings or codings without a system), then a
+  /// recognisable display.
   static String? _bloodTypeFromCodings(List<fhir_r4.Coding>? codings) {
     if (codings == null) return null;
     for (final coding in codings) {
-      final code = coding.code?.toString();
-      for (final entry in BloodTypes.snomedCodes.entries) {
-        if (entry.value == code) return entry.key;
+      final system = coding.system?.toString();
+      if (system == null || system.contains('snomed.info/sct')) {
+        final code = coding.code?.toString();
+        for (final entry in BloodTypes.snomedCodes.entries) {
+          if (entry.value == code) return entry.key;
+        }
       }
       final display = _normalizeBloodType(coding.display?.toString());
       if (display != null) return display;

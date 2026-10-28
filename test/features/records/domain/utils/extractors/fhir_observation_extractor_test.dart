@@ -913,6 +913,34 @@ void main() {
       },
     );
 
+    test('reads a SNOMED code in a coding without a system', () {
+      expect(
+        FhirObservationExtractor.extractBloodTypeFromObservations([
+          bloodType({
+            'valueCodeableConcept': codeableConcept(
+              codings: [
+                {'code': '278149003'},
+              ],
+            ),
+          }),
+        ]),
+        'A+',
+      );
+    });
+
+    test('ignores a SNOMED blood type code in another coding system', () {
+      expect(
+        FhirObservationExtractor.extractBloodTypeFromObservations([
+          bloodType({
+            'valueCodeableConcept': codeableConcept(
+              codings: [coding('urn:oid:1.2.3', '278149003')],
+            ),
+          }),
+        ]),
+        isNot('A+'),
+      );
+    });
+
     test('reads a SNOMED display in the value coding', () {
       expect(
         FhirObservationExtractor.extractBloodTypeFromObservations([
