@@ -83,7 +83,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           commBloc.state.connectionStatus == ConnectionStatus.disconnected) {
         commBloc.add(const CommunicationConnectionRequested());
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not reconnect to the paired desktop', e);
+    }
   }
 
   Future<void> _startSymmetricDiscovery() async {
