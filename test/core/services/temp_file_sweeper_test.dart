@@ -117,37 +117,46 @@ void main() {
       await expectLater(failing.sweep(), completes);
     });
 
-    test(
-      'goes on when an entry cannot be deleted',
-      () async {
-        final locked = Directory('${temp.path}/share_session_$_id')
-          ..createSync();
-        File('${locked.path}/scan.png').writeAsStringSync('x');
-        final lockedDocs = Directory('${root.path}/locked')..createSync();
-        File('${lockedDocs.path}/share_debug.log').writeAsStringSync('x');
-        final pass = tempFile('HealthWallet_Emergency.pkpass');
-        // Read-only directories: their entries can't be removed.
-        Process.runSync('chmod', ['0555', locked.path, lockedDocs.path]);
-        addTearDown(
-          () =>
-              Process.runSync('chmod', ['0755', locked.path, lockedDocs.path]),
-        );
+    // A failed delete is simulated, not made with chmod: the CI container
+    // runs the tests as root, which ignores file permissions.
+    test('goes on when an entry cannot be deleted', () async {
+      final pass = tempFile('HealthWallet_Emergency.pkpass');
+      final locked = _UndeletableDirectory('${temp.path}/share_session_$_id');
+      final listed = _ListedDirectory(temp.path, [locked, File(pass.path)]);
 
-        await expectLater(
+      await expectLater(
+        TempFileSweeper(
+          temporaryDirectory: () async => listed,
+          documentsDirectory: () async => docs,
+          deleteDebugLogs: false,
+        ).sweep(),
+        completes,
+      );
+
+      expect(locked.deleteCalls, 1);
+      expect(pass.existsSync(), isFalse);
+    });
+
+    test('goes on when an old debug log cannot be deleted', () async {
+      final attempts = <String>[];
+
+      await IOOverrides.runZoned(
+        () => expectLater(
           TempFileSweeper(
             temporaryDirectory: () async => temp,
-            documentsDirectory: () async => lockedDocs,
+            documentsDirectory: () async => docs,
             deleteDebugLogs: true,
           ).sweep(),
           completes,
-        );
+        ),
+        createFile: (path) => _UndeletableFile(path, attempts),
+      );
 
-        expect(File('${locked.path}/scan.png').existsSync(), isTrue);
-        expect(File('${lockedDocs.path}/share_debug.log').existsSync(), isTrue);
-        expect(pass.existsSync(), isFalse);
-      },
-      skip: Platform.isWindows ? 'chmod is POSIX only' : false,
-    );
+      expect(attempts, [
+        '${docs.path}/${TempFileSweeper.shareDebugLogName}',
+        '${docs.path}/${TempFileSweeper.scanDebugLogName}',
+      ]);
+    });
 
     test('defaults to deleting the logs only in release builds', () {
       expect(TempFileSweeper.deleteDebugLogsFor(releaseMode: true), isTrue);
@@ -268,4 +277,55 @@ void main() {
     expect(ours.existsSync(), isFalse);
     expect(theirs.every((f) => f.existsSync()), isTrue);
   });
+}
+
+/// A temporary directory that lists the given entries.
+class _ListedDirectory extends Fake implements Directory {
+  _ListedDirectory(this.path, this.entries);
+
+  @override
+  final String path;
+  final List<FileSystemEntity> entries;
+
+  @override
+  Future<bool> exists() async => true;
+
+  @override
+  Stream<FileSystemEntity> list({
+    bool recursive = false,
+    bool followLinks = true,
+  }) => Stream.fromIterable(entries);
+}
+
+/// A directory whose delete fails, as a locked or busy one would.
+class _UndeletableDirectory extends Fake implements Directory {
+  _UndeletableDirectory(this.path);
+
+  @override
+  final String path;
+  var deleteCalls = 0;
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) async {
+    deleteCalls++;
+    throw FileSystemException('Directory not empty', path);
+  }
+}
+
+/// A file that exists but can't be deleted; records each attempt.
+class _UndeletableFile extends Fake implements File {
+  _UndeletableFile(this.path, this.attempts);
+
+  @override
+  final String path;
+  final List<String> attempts;
+
+  @override
+  Future<bool> exists() async => true;
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) async {
+    attempts.add(path);
+    throw FileSystemException('Permission denied', path);
+  }
 }

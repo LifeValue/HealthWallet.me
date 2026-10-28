@@ -375,23 +375,18 @@ void main() {
       expect(sentinel.existsSync(), isTrue);
     });
 
-    test(
-      'completes when the session directory cannot be deleted',
-      () async {
-        final dir = Directory('${tmp.path}/share_session_$_sessionId')
-          ..createSync();
-        File('${dir.path}/a.png').writeAsBytesSync([1]);
-        Process.runSync('chmod', ['0555', dir.path]);
-        addTearDown(() => Process.runSync('chmod', ['0755', dir.path]));
+    // A failed delete is simulated, not made with chmod: the CI container
+    // runs the tests as root, which ignores file permissions.
+    test('completes when the session directory cannot be deleted', () async {
+      final attempts = <String>[];
 
-        await expectLater(
-          service.cleanupSessionTempDir(_sessionId),
-          completes,
-        );
-        expect(File('${dir.path}/a.png').existsSync(), isTrue);
-      },
-      skip: Platform.isWindows ? 'chmod is POSIX only' : false,
-    );
+      await IOOverrides.runZoned(
+        () => expectLater(service.cleanupSessionTempDir(_sessionId), completes),
+        createDirectory: (path) => _UndeletableDirectory(path, attempts),
+      );
+
+      expect(attempts, [endsWith('/share_session_$_sessionId')]);
+    });
 
     test('completes when the session directory does not exist', () async {
       await expectLater(service.cleanupSessionTempDir(_sessionId), completes);
@@ -578,4 +573,22 @@ void main() {
       expect(service.progressStream, isA<Stream<TransferProgress>>());
     });
   });
+}
+
+/// A directory that exists but can't be deleted; records each attempt.
+class _UndeletableDirectory extends Fake implements Directory {
+  _UndeletableDirectory(this.path, this.attempts);
+
+  @override
+  final String path;
+  final List<String> attempts;
+
+  @override
+  Future<bool> exists() async => true;
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) async {
+    attempts.add(path);
+    throw FileSystemException('Directory not empty', path);
+  }
 }
