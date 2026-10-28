@@ -1991,6 +1991,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get addIpsToGoogleWallet => 'Adaugă IPS în Google Wallet';
 
   @override
+  String get ipsExportFailed =>
+      'Rezumatul medical nu a putut fi exportat. Încearcă din nou.';
+
+  @override
   String get sourcesTitle => 'Surse';
 
   @override

@@ -937,6 +937,7 @@
   "exportIpsPdf": "Exportar IPS (PDF)",
   "addIpsToAppleWallet": "Agregar IPS a Apple Wallet",
   "addIpsToGoogleWallet": "Agregar IPS a Google Wallet",
+  "ipsExportFailed": "No se pudo exportar tu resumen de salud. Inténtalo de nuevo.",
   "sourcesTitle": "Fuentes",
   "emergencyMedicalId": "Identificación médica de emergencia",
   "phoneLabel": "Teléfono",

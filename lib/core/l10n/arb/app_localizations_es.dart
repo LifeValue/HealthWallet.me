@@ -1988,6 +1988,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get addIpsToGoogleWallet => 'Agregar IPS a Google Wallet';
 
   @override
+  String get ipsExportFailed =>
+      'No se pudo exportar tu resumen de salud. Inténtalo de nuevo.';
+
+  @override
   String get sourcesTitle => 'Fuentes';
 
   @override

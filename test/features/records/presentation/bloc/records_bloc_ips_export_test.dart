@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -41,6 +42,9 @@ void main() {
   late _FakeRecordsRepository repository;
   late RecordsBloc bloc;
   late List<Map<Object?, Object?>> shared;
+  late List<IpsExportStatus> statuses;
+  late StreamSubscription<IpsExportStatus> statusSub;
+  PlatformException? shareError;
 
   setUp(() {
     root = mockPathProvider();
@@ -48,13 +52,21 @@ void main() {
     repository = _FakeRecordsRepository();
     bloc = RecordsBloc(repository, _FakeSpecialtyClassifier());
     shared = [];
+    shareError = null;
+    statuses = [];
+    statusSub = bloc.stream
+        .map((s) => s.ipsExportStatus)
+        .distinct()
+        .listen(statuses.add);
     messenger.setMockMethodCallHandler(_shareChannel, (call) async {
       shared.add(call.arguments as Map<Object?, Object?>);
+      if (shareError != null) throw shareError!;
       return 'dev.fluttercommunity.plus/share/success';
     });
   });
 
   tearDown(() async {
+    await statusSub.cancel();
     await bloc.close();
     messenger.setMockMethodCallHandler(_shareChannel, null);
   });
@@ -64,28 +76,29 @@ void main() {
   File pdf(String name) =>
       File('${root.path}/tmp/$name - IPS Summary - ${today()}.pdf');
 
-  /// Exports and waits until the share sheet opens, or until the export
-  /// failed. The handler emits no state and does real file I/O, so the share
-  /// call is the signal that it finished.
+  /// Exports and waits until the export has ended, in success or failure.
+  /// The handler does real file I/O, so wait for its last state rather than
+  /// for the microtask queue.
   Future<void> export({String? patientName, String? patientId}) async {
-    final sharesBefore = shared.length;
-    final requestsBefore = repository.requests.length;
+    final done = bloc.stream
+        .skipWhile((s) => s.ipsExportStatus != IpsExportStatus.exporting)
+        .firstWhere((s) => s.ipsExportStatus != IpsExportStatus.exporting)
+        .timeout(const Duration(seconds: 5));
     bloc.add(
       RecordsSharePressed(patientName: patientName, patientId: patientId),
     );
-    final deadline = DateTime.now().add(const Duration(seconds: 5));
-    while (shared.length == sharesBefore && DateTime.now().isBefore(deadline)) {
-      if (repository.error != null &&
-          repository.requests.length > requestsBefore) {
-        break;
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 5));
-    }
+    await done;
     await pumpEventQueue();
   }
 
+  test('starts idle', () {
+    expect(bloc.state.ipsExportStatus, IpsExportStatus.idle);
+  });
+
   test('writes the IPS PDF to temp and opens the share sheet', () async {
     await export(patientId: 'p1');
+
+    expect(statuses, [IpsExportStatus.exporting, IpsExportStatus.idle]);
 
     final file = pdf('Jane Doe');
     expect(repository.requests, [(null, 'p1')]);
@@ -138,5 +151,40 @@ void main() {
 
     expect(Directory('${root.path}/tmp').listSync(), isEmpty);
     expect(shared, isEmpty);
+    expect(statuses, [IpsExportStatus.exporting, IpsExportStatus.failed]);
+  });
+
+  test('each failed export is a new failure for listeners', () async {
+    repository.error = StateError('no patient');
+
+    await export();
+    await export();
+
+    expect(statuses, [
+      IpsExportStatus.exporting,
+      IpsExportStatus.failed,
+      IpsExportStatus.exporting,
+      IpsExportStatus.failed,
+    ]);
+  });
+
+  test('a share sheet that fails to open fails the export', () async {
+    shareError = PlatformException(code: 'SHARE_FAILED');
+
+    await export();
+
+    expect(shared, hasLength(1));
+    expect(bloc.state.ipsExportStatus, IpsExportStatus.failed);
+  });
+
+  test('an export after a failure succeeds again', () async {
+    repository.error = StateError('no patient');
+    await export();
+    repository.error = null;
+
+    await export();
+
+    expect(bloc.state.ipsExportStatus, IpsExportStatus.idle);
+    expect(shared, hasLength(1));
   });
 }

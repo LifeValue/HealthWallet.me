@@ -3647,6 +3647,12 @@ abstract class AppLocalizations {
   /// **'Add IPS to Google Wallet'**
   String get addIpsToGoogleWallet;
 
+  /// No description provided for @ipsExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t export your health summary. Please try again.'**
+  String get ipsExportFailed;
+
   /// No description provided for @sourcesTitle.
   ///
   /// In en, this message translates to:

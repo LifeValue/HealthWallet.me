@@ -366,6 +366,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     RecordsSharePressed event,
     Emitter<RecordsState> emit,
   ) async {
+    emit(state.copyWith(ipsExportStatus: IpsExportStatus.exporting));
     try {
       final export = await _recordsRepository.buildIpsExport(
         sourceId: state.sourceId,
@@ -391,17 +392,19 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       ).writeAsBytes(export.bytes);
       _lastIpsPdfPath = pdfFile.path;
 
-      unawaited(
-        SharePlus.instance.share(
-          ShareParams(
-            title: fileName,
-            files: [XFile(pdfFile.path)],
-            sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
-          ),
+      // Awaited so a share sheet that fails to open counts as a failed
+      // export; it returns once the sheet is dismissed.
+      await SharePlus.instance.share(
+        ShareParams(
+          title: fileName,
+          files: [XFile(pdfFile.path)],
+          sharePositionOrigin: const Rect.fromLTWH(0, 0, 100, 100),
         ),
       );
+      emit(state.copyWith(ipsExportStatus: IpsExportStatus.idle));
     } catch (e, s) {
       logger.e('IPS export failed', e, s);
+      emit(state.copyWith(ipsExportStatus: IpsExportStatus.failed));
     }
   }
 

@@ -936,6 +936,7 @@
   "exportIpsPdf": "Exportă IPS (PDF)",
   "addIpsToAppleWallet": "Adaugă IPS în Apple Wallet",
   "addIpsToGoogleWallet": "Adaugă IPS în Google Wallet",
+  "ipsExportFailed": "Rezumatul medical nu a putut fi exportat. Încearcă din nou.",
   "sourcesTitle": "Surse",
   "emergencyMedicalId": "Card medical de urgență",
   "phoneLabel": "Telefon",
