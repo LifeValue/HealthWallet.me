@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
+import 'package:health_wallet/core/widgets/app_launch_screen.dart';
 import 'package:health_wallet/features/onboarding/presentation/pages/splash_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -92,7 +93,7 @@ void main() {
   testWidgets('shows the logo for at least one second', (tester) async {
     await pumpSplash(tester, {'hasSeenOnboarding': true});
 
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(AppLaunchScreen), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 900));
     expect(router.replaced, isEmpty);
 

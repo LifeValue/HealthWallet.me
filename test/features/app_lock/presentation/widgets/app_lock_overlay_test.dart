@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_launch_screen.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -110,7 +111,7 @@ void main() {
 
     expect(bloc.state.status, AppLockStatus.checking);
     expect(lockOverlay, findsOneWidget);
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(AppLaunchScreen), findsOneWidget);
     expect(lockTitle, findsNothing);
 
     await tester.tap(find.text('Dashboard'), warnIfMissed: false);

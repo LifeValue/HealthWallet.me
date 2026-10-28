@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_launch_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Shows the logo for a second, then opens onboarding or the dashboard.
+/// Shows the [AppLaunchScreen] for a second, then opens onboarding or the dashboard.
 ///
 /// The app lock is not checked here: `AppLockOverlay` covers every route,
 /// so a failed or cancelled check can no longer lead to onboarding.
@@ -43,11 +44,6 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      body: Center(
-        child: Image.asset('assets/images/splash.png', width: 200),
-      ),
-    );
+    return const Scaffold(body: AppLaunchScreen());
   }
 }

@@ -7,6 +7,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_launch_screen.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 
 /// Covers [child] (the app's router) while [AppLockBloc] isn't unlocked.
@@ -81,10 +82,8 @@ class _LockScreen extends StatelessWidget {
       key: const Key('app_lock_overlay'),
       color: context.colorScheme.surface,
       child: state.status == AppLockStatus.checking
-          // Same look as the splash page, so start-up doesn't flicker.
-          ? Center(
-              child: Image.asset('assets/images/splash.png', width: 200),
-            )
+          // Same screen as the splash page, so start-up doesn't flicker.
+          ? const AppLaunchScreen()
           : SafeArea(
               child: Center(
                 child: ConstrainedBox(
