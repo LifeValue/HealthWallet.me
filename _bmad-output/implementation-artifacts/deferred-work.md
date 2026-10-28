@@ -70,3 +70,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-security-hardening.md`
   summary: Cover native modals (iOS share sheet, PKAddPassesViewController) when the app lock engages on resume.
   evidence: The lock overlay lives in the Flutter view; a native sheet presented above it, e.g. an IPS PDF preview, stays visible after a resume past 30 s.
+- source_spec: none
+  summary: Host the Google Wallet pass logo on a domain we control (for example healthwallet.me) instead of raw.githubusercontent.com.
+  evidence: The old link pointed at a deleted feature branch and returned 404; `GooglePassBuilder.logoUrl` now points at the GitHub `master` branch, which works but depends on a repository this project no longer updates. Google also recommends a 660×660 logo; the hosted one is 180×180.
