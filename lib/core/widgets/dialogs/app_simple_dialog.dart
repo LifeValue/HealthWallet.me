@@ -7,6 +7,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
 
 class AppSimpleDialog {
   AppSimpleDialog._();
@@ -245,6 +246,8 @@ class AppSimpleDialog {
     );
   }
 
+  /// A small, centred confirmation: a check mark, the title, a short message
+  /// and one OK button.
   static Future<void> showSuccess({
     required BuildContext context,
     required String title,
@@ -255,51 +258,53 @@ class AppSimpleDialog {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        final textColor = context.isDarkMode
-            ? AppColors.textPrimaryDark
-            : AppColors.textPrimary;
-
         return _DialogShell(
+          width: successDialogWidth,
           child: Padding(
-            padding: const EdgeInsets.all(Insets.normal),
+            padding: const EdgeInsets.all(Insets.medium),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Container(
+                    key: const Key('success_dialog_icon'),
+                    padding: const EdgeInsets.all(Insets.smallNormal),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      color: AppColors.success,
+                      size: Insets.large,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Insets.normal),
                 Text(
                   title,
-                  style: AppTextStyle.titleLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
                   textAlign: TextAlign.center,
+                  style: AppTextStyle.titleSmall.copyWith(
+                    color: dialogContext.primaryTextColor,
+                  ),
                 ),
-                const SizedBox(height: Insets.normal),
+                const SizedBox(height: Insets.small),
                 Text(
                   message,
-                  style: AppTextStyle.labelLarge.copyWith(color: textColor),
+                  textAlign: TextAlign.center,
+                  style: AppTextStyle.bodyMedium.copyWith(
+                    color: dialogContext.secondaryTextColor,
+                  ),
                 ),
-                const SizedBox(height: Insets.normal),
-                ElevatedButton(
+                const SizedBox(height: Insets.medium),
+                AppButton(
+                  label: dialogContext.l10n.ok,
+                  height: 40,
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
                     onOkPressed?.call();
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.all(8),
-                    fixedSize: const Size.fromHeight(36),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    dialogContext.l10n.ok,
-                    style: AppTextStyle.buttonSmall.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -308,15 +313,23 @@ class AppSimpleDialog {
       },
     );
   }
+
+  /// Width of [showSuccess]: a short message reads best in a narrow card.
+  @visibleForTesting
+  static const double successDialogWidth = 360;
 }
 
 class _DialogShell extends StatelessWidget {
   final Widget child;
   final bool useResponsiveWidth;
 
+  /// A fixed width; overrides [useResponsiveWidth].
+  final double? width;
+
   const _DialogShell({
     required this.child,
     this.useResponsiveWidth = false,
+    this.width,
   });
 
   @override
@@ -329,7 +342,7 @@ class _DialogShell extends StatelessWidget {
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(Insets.normal),
         child: Container(
-          width: useResponsiveWidth ? context.dialogWidth : null,
+          width: width ?? (useResponsiveWidth ? context.dialogWidth : null),
           decoration: BoxDecoration(
             color: context.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
