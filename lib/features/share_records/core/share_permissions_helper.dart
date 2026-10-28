@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class SharePermissionsHelper {
@@ -29,18 +30,7 @@ class SharePermissionsHelper {
       return const PermissionDenied([Permission.bluetooth]);
     }
 
-    final bluetoothPermissions = <Permission>[
-      Permission.bluetoothConnect,
-      Permission.bluetoothScan,
-      Permission.bluetoothAdvertise,
-    ];
-
-    final networkPermissions = <Permission>[
-      Permission.nearbyWifiDevices,
-      Permission.locationWhenInUse,
-    ];
-
-    final allPermissions = [...bluetoothPermissions, ...networkPermissions];
+    final allPermissions = await _androidPermissions();
 
     final notGranted = <Permission>[];
     for (final permission in allPermissions) {
@@ -88,13 +78,7 @@ class SharePermissionsHelper {
       return bluetoothStatus.isGranted;
     }
 
-    final permissions = <Permission>[
-      Permission.bluetoothConnect,
-      Permission.bluetoothScan,
-      Permission.bluetoothAdvertise,
-      Permission.nearbyWifiDevices,
-      Permission.locationWhenInUse,
-    ];
+    final permissions = await _androidPermissions();
 
     for (final permission in permissions) {
       final status = await permission.status;
@@ -104,6 +88,20 @@ class SharePermissionsHelper {
     }
 
     return true;
+  }
+
+  /// NEARBY_WIFI_DEVICES only exists from Android 13 (API 33). Below that,
+  /// permission_handler finds nothing to check and reports it as denied
+  /// forever, so asking for it would keep Share Proximity locked.
+  static Future<List<Permission>> _androidPermissions() async {
+    final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+    return [
+      Permission.bluetoothConnect,
+      Permission.bluetoothScan,
+      Permission.bluetoothAdvertise,
+      if (sdkInt >= 33) Permission.nearbyWifiDevices,
+      Permission.locationWhenInUse,
+    ];
   }
 
   static Future<bool> openSettings() async {
