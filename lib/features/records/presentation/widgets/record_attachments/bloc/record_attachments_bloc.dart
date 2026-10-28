@@ -10,6 +10,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
@@ -18,6 +19,7 @@ import 'package:health_wallet/features/sync/domain/services/source_type_service.
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 part 'record_attachments_bloc.freezed.dart';
 part 'record_attachments_event.dart';
@@ -115,6 +117,8 @@ class RecordAttachmentsBloc
 
             return false;
           } catch (e) {
+            // A document whose context has an unexpected shape is not linked
+            // to this record; the other documents still show.
             return false;
           }
         }).toList();
@@ -203,7 +207,8 @@ class RecordAttachmentsBloc
         contentType: contentType,
         filePath: filePath,
       );
-    } catch (e) {
+    } catch (e, s) {
+      logger.w('Reading an attachment of a DocumentReference failed', e, s);
       return AttachmentInfo(
         documentReference: documentReference,
         title: documentReference.title,
@@ -239,24 +244,32 @@ class RecordAttachmentsBloc
 
       for (final file in event.files) {
         final String originalFileName = basename(file.path);
-        final String newFilePath = join(appDirectory.path, originalFileName);
+        final String newFilePath = join(
+          appDirectory.path,
+          await uniqueStoredFileName(appDirectory.path, originalFileName),
+        );
 
         await file.copy(newFilePath);
 
-        final documentReference = await _createDocumentReference(
-          filePath: newFilePath,
-          fileName: originalFileName,
-          subjectId: subjectId ?? '',
-          encounterId: encounterId,
-          relatedResourceId: state.resource.resourceId,
-          relatedResourceType: state.resource.fhirType.name,
-        );
+        try {
+          final documentReference = await _createDocumentReference(
+            filePath: newFilePath,
+            fileName: originalFileName,
+            subjectId: subjectId ?? '',
+            encounterId: encounterId,
+            relatedResourceId: state.resource.resourceId,
+            relatedResourceType: state.resource.fhirType.name,
+          );
 
-        await _saveDocumentReferenceToDatabase(
-          documentReference: documentReference,
-          sourceId: effectiveSourceId,
-          title: originalFileName,
-        );
+          await _saveDocumentReferenceToDatabase(
+            documentReference: documentReference,
+            sourceId: effectiveSourceId,
+            title: originalFileName,
+          );
+        } catch (_) {
+          await _deleteUnsavedCopy(newFilePath);
+          rethrow;
+        }
         debugPrint(
           '[ATTACH_BLOC] Saved DocumentReference to DB: title=$originalFileName, sourceId=$effectiveSourceId, subjectId=$subjectId, encounterId=$encounterId',
         );
@@ -265,8 +278,54 @@ class RecordAttachmentsBloc
       debugPrint('[ATTACH_BLOC] All files saved, refreshing state');
       emit(state.copyWith(attachments: []));
       add(RecordAttachmentsInitialised(resource: state.resource));
-    } catch (e) {
-      emit(state.copyWith(status: RecordAttachmentsStatus.error(e)));
+    } catch (e, s) {
+      logger.e('Attaching files to a record failed', e, s);
+      emit(
+        state.copyWith(
+          status: RecordAttachmentsStatus.error(_strings.l10n.attachFileFailed),
+        ),
+      );
+    }
+  }
+
+  /// A file name for [originalName] in [directory] that no file has yet: the
+  /// sanitised name with an 8-character unique suffix, so two attachments
+  /// with the same name never replace each other. The original name stays
+  /// the attachment's title.
+  @visibleForTesting
+  static Future<String> uniqueStoredFileName(
+    String directory,
+    String originalName,
+  ) async {
+    final base = originalName.replaceAll(RegExp(r'[^\w.\-]'), '_');
+    final dot = base.lastIndexOf('.');
+    final hasExtension =
+        dot >= 0 && dot < base.length - 1 && base.length - dot <= 16;
+    var stem = (hasExtension ? base.substring(0, dot) : base).replaceFirst(
+      RegExp(r'^\.+'),
+      '',
+    );
+    if (!stem.contains(RegExp('[A-Za-z0-9]'))) stem = 'file';
+    if (stem.length > 100) stem = stem.substring(0, 100);
+    final extension = hasExtension ? base.substring(dot) : '';
+    while (true) {
+      final name = '${stem}_${const Uuid().v4().substring(0, 8)}$extension';
+      final type = await FileSystemEntity.type(
+        join(directory, name),
+        followLinks: false,
+      );
+      if (type == FileSystemEntityType.notFound) return name;
+    }
+  }
+
+  /// Removes a copied file whose DocumentReference could not be saved, so no
+  /// file is left that no record points to.
+  Future<void> _deleteUnsavedCopy(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    } catch (e, s) {
+      logger.w('Removing an unsaved attachment copy failed', e, s);
     }
   }
 
@@ -540,7 +599,7 @@ class RecordAttachmentsBloc
     return FhirReferenceUtils.extractReferenceId(refStr);
   }
 
-  String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
-  }
+  /// A random id; unlike a timestamp it stays unique for files attached in
+  /// the same millisecond.
+  String _generateId() => const Uuid().v4();
 }

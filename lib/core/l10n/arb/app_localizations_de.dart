@@ -2823,6 +2823,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'An ein Dokument können keine Dateien angehängt werden';
 
   @override
+  String get attachFileFailed =>
+      'Die Datei konnte nicht angehängt werden. Bitte versuche es erneut.';
+
+  @override
   String deleteRecordOfType(String type) {
     return '$type löschen';
   }

@@ -2781,6 +2781,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cannot attach files to DocumentReference resources';
 
   @override
+  String get attachFileFailed =>
+      'The file could not be attached. Please try again.';
+
+  @override
   String deleteRecordOfType(String type) {
     return 'Delete $type';
   }

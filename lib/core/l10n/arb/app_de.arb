@@ -1199,6 +1199,7 @@
   "loadingRelatedResources": "Zugehörige Einträge werden geladen...",
   "noRelatedResourcesForEncounter": "Keine zugehörigen Einträge zu diesem Termin gefunden",
   "cannotAttachToDocumentReference": "An ein Dokument können keine Dateien angehängt werden",
+  "attachFileFailed": "Die Datei konnte nicht angehängt werden. Bitte versuche es erneut.",
   "deleteRecordOfType": "{type} löschen",
   "dateFilterEndBeforeStart": "Das Enddatum muss nach dem Startdatum liegen",
   "dateFilterChip": "Datum: {range}",

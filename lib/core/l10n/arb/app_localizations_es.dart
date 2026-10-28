@@ -2816,6 +2816,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pueden adjuntar archivos a un documento';
 
   @override
+  String get attachFileFailed =>
+      'No se pudo adjuntar el archivo. Inténtalo de nuevo.';
+
+  @override
   String deleteRecordOfType(String type) {
     return 'Eliminar $type';
   }

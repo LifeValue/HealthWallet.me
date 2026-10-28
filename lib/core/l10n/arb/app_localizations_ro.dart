@@ -2816,6 +2816,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Nu se pot atașa fișiere la un document';
 
   @override
+  String get attachFileFailed =>
+      'Fișierul nu a putut fi atașat. Încearcă din nou.';
+
+  @override
   String deleteRecordOfType(String type) {
     return 'Șterge $type';
   }

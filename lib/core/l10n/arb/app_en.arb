@@ -1361,6 +1361,7 @@
   "loadingRelatedResources": "Loading related resources...",
   "noRelatedResourcesForEncounter": "No related resources found for this encounter",
   "cannotAttachToDocumentReference": "Cannot attach files to DocumentReference resources",
+  "attachFileFailed": "The file could not be attached. Please try again.",
   "deleteRecordOfType": "Delete {type}",
   "@deleteRecordOfType": {
     "placeholders": {
