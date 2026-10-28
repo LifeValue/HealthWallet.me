@@ -1088,8 +1088,8 @@ void main() {
       await disconnected.timeout(const Duration(seconds: 10));
     });
 
-    test('waits 5 s for the hello by default', () {
-      expect(TcpService().helloTimeout, const Duration(seconds: 5));
+    test('waits 15 s for the hello by default', () {
+      expect(TcpService().helloTimeout, const Duration(seconds: 15));
     });
 
     test('a pending client sending more than a hello is dropped, the current '

@@ -65,8 +65,10 @@ class TcpService {
   static const _maxPendingBytes = maxUnauthenticatedFrameBytes + 4;
 
   /// How long a server client has to send a valid hello before it is closed.
+  /// Generous for slow networks and phones just waking up; a paired phone
+  /// sends its hello right after connecting.
   @visibleForTesting
-  Duration helloTimeout = const Duration(seconds: 5);
+  Duration helloTimeout = const Duration(seconds: 15);
 
   /// How often a client pings the server, and how long it waits for the
   /// pong before treating the link as dead.
