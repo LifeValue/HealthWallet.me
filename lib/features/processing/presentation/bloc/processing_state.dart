@@ -27,19 +27,16 @@ enum PipelineFailureReason {
 
   other;
 
-  /// The reason for [error], or [fallback] when the error has no reason of
-  /// its own.
-  static PipelineFailureReason of(
-    Object error, {
-    PipelineFailureReason fallback = other,
-  }) {
+  /// The reason for [error], or [other] when the error has no reason of its
+  /// own.
+  static PipelineFailureReason of(Object error) {
     if (error is ModelNotFoundException) return modelNotFound;
     // The AI engine (ai_inference_data_source.dart) throws plain Exceptions
     // with fixed English text for these two.
     final text = error.toString();
     if (text.contains('Not enough memory')) return notEnoughMemory;
     if (text.contains('corrupted')) return modelCorrupted;
-    return fallback;
+    return other;
   }
 
   /// Text shown to the user; never the exception text.

@@ -155,7 +155,7 @@ void main() {
   }
 
   group('PipelineFailureReason.of', () {
-    test('reads the type, then the AI engine text, then the fallback', () {
+    test('reads the type, then the AI engine text, then other', () {
       expect(
         PipelineFailureReason.of(const ModelNotFoundException()),
         PipelineFailureReason.modelNotFound,
@@ -175,20 +175,6 @@ void main() {
       expect(
         PipelineFailureReason.of(Exception('boom')),
         PipelineFailureReason.other,
-      );
-      expect(
-        PipelineFailureReason.of(
-          Exception('boom'),
-          fallback: PipelineFailureReason.importFailed,
-        ),
-        PipelineFailureReason.importFailed,
-      );
-      expect(
-        PipelineFailureReason.of(
-          const ModelNotFoundException(),
-          fallback: PipelineFailureReason.importFailed,
-        ),
-        PipelineFailureReason.modelNotFound,
       );
     });
   });
