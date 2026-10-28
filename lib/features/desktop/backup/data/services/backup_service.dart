@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/folder_access_service.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
@@ -13,8 +14,31 @@ import 'package:shared_preferences/shared_preferences.dart';
 @lazySingleton
 class BackupService {
   final AppDatabase _database;
+  final FolderAccessService _folderAccess;
 
-  BackupService(this._database);
+  BackupService(this._database, this._folderAccess);
+
+  /// Whether this run has already reopened the chosen folder from its
+  /// bookmark (macOS only; see [FolderAccessService]).
+  bool _folderAccessRestored = false;
+
+  /// Reopens the chosen folder after a restart, once per run, so the
+  /// sandboxed macOS app can list and write backups there again.
+  Future<void> _restoreFolderAccess(SharedPreferences prefs) async {
+    if (_folderAccessRestored) return;
+    _folderAccessRestored = true;
+    final bookmark = prefs.getString(
+      SharedPrefsConstants.backupDirectoryBookmark,
+    );
+    if (bookmark == null) return;
+    final current = await _folderAccess.restore(bookmark);
+    if (current != null && current != bookmark) {
+      await prefs.setString(
+        SharedPrefsConstants.backupDirectoryBookmark,
+        current,
+      );
+    }
+  }
 
   Future<String> _defaultBackupPath() async {
     final home =
@@ -31,6 +55,7 @@ class BackupService {
 
   Future<Directory> getBackupDirectory() async {
     final prefs = await SharedPreferences.getInstance();
+    await _restoreFolderAccess(prefs);
     final customPath = prefs.getString(SharedPrefsConstants.backupDirectory);
     final dirPath = customPath ?? await _defaultBackupPath();
     final backupDir = Directory(dirPath);
@@ -46,14 +71,27 @@ class BackupService {
     return customPath ?? await _defaultBackupPath();
   }
 
+  /// Saves the folder the user chose, with a bookmark on macOS so it stays
+  /// accessible after a restart. Call it right after the user picks it.
   Future<void> setBackupDirectory(String path) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(SharedPrefsConstants.backupDirectory, path);
+    final bookmark = await _folderAccess.bookmarkFor(path);
+    if (bookmark != null) {
+      await prefs.setString(
+        SharedPrefsConstants.backupDirectoryBookmark,
+        bookmark,
+      );
+    } else {
+      await prefs.remove(SharedPrefsConstants.backupDirectoryBookmark);
+    }
+    _folderAccessRestored = true;
   }
 
   Future<void> resetBackupDirectory() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(SharedPrefsConstants.backupDirectory);
+    await prefs.remove(SharedPrefsConstants.backupDirectoryBookmark);
   }
 
   Future<BackupEntry> createSnapshot({String? name}) async {

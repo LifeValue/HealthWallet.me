@@ -23,6 +23,10 @@ class SharedPrefsConstants {
   static const countryCode = 'countryCode';
   static const appLocale = 'appLocale';
   static const backupDirectory = 'backupDirectory';
+
+  /// macOS security-scoped bookmark for [backupDirectory], so the sandboxed
+  /// app can open the folder again after a restart.
+  static const backupDirectoryBookmark = 'backupDirectoryBookmark';
   static const minimizeToTray = 'minimizeToTray';
   static const recordsViewMode = 'recordsViewMode';
   static const specialtiesOrder = 'specialtiesOrder';

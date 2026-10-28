@@ -6,6 +6,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/folder_access_service.dart';
 import 'package:health_wallet/features/desktop/backup/data/services/backup_service.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:path/path.dart' as p;
@@ -24,18 +25,36 @@ Future<List<String>> resourceIds(AppDatabase db) async {
   return rows.map((r) => r.data['id'] as String).toList();
 }
 
+/// Stands in for the macOS bookmark channel.
+class _FakeFolderAccess extends Fake implements FolderAccessService {
+  String? Function(String path) bookmark = (_) => null;
+  String? Function(String bookmark) restored = (b) => b;
+  final restores = <String>[];
+
+  @override
+  Future<String?> bookmarkFor(String path) async => bookmark(path);
+
+  @override
+  Future<String?> restore(String bookmark) async {
+    restores.add(bookmark);
+    return restored(bookmark);
+  }
+}
+
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   late Directory dir;
   late AppDatabase db;
+  late _FakeFolderAccess folderAccess;
   late BackupService service;
 
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('backup_service_test');
     SharedPreferences.setMockInitialValues({'backupDirectory': dir.path});
     db = AppDatabase(NativeDatabase.memory());
-    service = BackupService(db);
+    folderAccess = _FakeFolderAccess();
+    service = BackupService(db, folderAccess);
   });
 
   tearDown(() async {
@@ -387,6 +406,103 @@ void main() {
 
     test('deleting an unknown id throws', () async {
       await expectLater(service.deleteBackup('missing'), throwsStateError);
+    });
+  });
+
+  group('folder access after a restart (macOS sandbox)', () {
+    Future<SharedPreferences> prefs() => SharedPreferences.getInstance();
+
+    test('choosing a folder saves its bookmark', () async {
+      folderAccess.bookmark = (path) => 'bookmark:$path';
+
+      await service.setBackupDirectory(dir.path);
+
+      expect(
+        (await prefs()).getString('backupDirectoryBookmark'),
+        'bookmark:${dir.path}',
+      );
+    });
+
+    test('a platform without bookmarks stores none', () async {
+      SharedPreferences.setMockInitialValues({
+        'backupDirectory': dir.path,
+        'backupDirectoryBookmark': 'old',
+      });
+
+      await service.setBackupDirectory(dir.path);
+
+      expect((await prefs()).containsKey('backupDirectoryBookmark'), isFalse);
+    });
+
+    test('reopens the saved folder once, before the first use', () async {
+      SharedPreferences.setMockInitialValues({
+        'backupDirectory': dir.path,
+        'backupDirectoryBookmark': 'saved',
+      });
+
+      await service.listBackups();
+      await service.listBackups();
+      await service.createSnapshot(name: 'after restart');
+
+      expect(folderAccess.restores, ['saved']);
+    });
+
+    test('keeps the refreshed bookmark macOS gives for a stale one', () async {
+      SharedPreferences.setMockInitialValues({
+        'backupDirectory': dir.path,
+        'backupDirectoryBookmark': 'stale',
+      });
+      folderAccess.restored = (_) => 'fresh';
+
+      await service.listBackups();
+
+      expect((await prefs()).getString('backupDirectoryBookmark'), 'fresh');
+    });
+
+    test('keeps the bookmark when access could not be restored', () async {
+      SharedPreferences.setMockInitialValues({
+        'backupDirectory': dir.path,
+        'backupDirectoryBookmark': 'saved',
+      });
+      folderAccess.restored = (_) => null;
+
+      await service.listBackups();
+
+      expect((await prefs()).getString('backupDirectoryBookmark'), 'saved');
+    });
+
+    test('without a saved bookmark nothing is restored', () async {
+      await service.listBackups();
+
+      expect(folderAccess.restores, isEmpty);
+    });
+
+    test(
+      'a folder chosen in this run is not reopened from a bookmark',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'backupDirectory': dir.path,
+          'backupDirectoryBookmark': 'old',
+        });
+        folderAccess.bookmark = (path) => 'new';
+
+        await service.setBackupDirectory(dir.path);
+        await service.listBackups();
+
+        expect(folderAccess.restores, isEmpty);
+      },
+    );
+
+    test('going back to the default folder forgets the bookmark', () async {
+      SharedPreferences.setMockInitialValues({
+        'backupDirectory': dir.path,
+        'backupDirectoryBookmark': 'saved',
+      });
+
+      await service.resetBackupDirectory();
+
+      expect((await prefs()).containsKey('backupDirectoryBookmark'), isFalse);
+      expect((await prefs()).containsKey('backupDirectory'), isFalse);
     });
   });
 }
