@@ -100,9 +100,9 @@ void main() {
     () async {
       final payload = File('${temp.path}/share_$_id.json')
         ..writeAsStringSync('{}');
-      final ocrPage = File('${temp.path}/pdf_page_1_0.png')
+      final ocrPage = File('${temp.path}/healthwallet_pdf_page_1_0.png')
         ..writeAsStringSync('x');
-      final resized = File('${temp.path}/resized_scan.jpg')
+      final resized = File('${temp.path}/healthwallet_resized_scan.jpg')
         ..writeAsStringSync('x');
       final otherApp = File('${temp.path}/other_app.tmp')
         ..writeAsStringSync('x');

@@ -52,8 +52,8 @@ void main() {
 
     test('keeps the temp directory and every other file in it', () async {
       final kept = [
-        tempFile('pdf_page_1.png'),
-        tempFile('resized_photo.jpg'),
+        tempFile('healthwallet_pdf_page_1.png'),
+        tempFile('healthwallet_resized_photo.jpg'),
         tempFile('other_app.json'),
         tempFile('share_not-a-uuid.json'),
         tempFile('share_$_id.json.bak'),
@@ -168,8 +168,8 @@ void main() {
           ..writeAsStringSync('{}');
 
     test('is kept by default (startup)', () async {
-      final page = tempFile('pdf_page_1700000000000_0.png');
-      final resized = tempFile('resized_photo.jpg');
+      final page = tempFile('healthwallet_pdf_page_1700000000000_0.png');
+      final resized = tempFile('healthwallet_resized_photo.jpg');
       final metadata = cacheFile('$cacheKey.json');
 
       await sweeper(deleteDebugLogs: true).sweep();
@@ -180,18 +180,19 @@ void main() {
     });
 
     test('is deleted when included (reset)', () async {
-      final page = tempFile('pdf_page_1700000000000_0.png');
-      final resized = tempFile('resized_photo.jpg');
+      final page = tempFile('healthwallet_pdf_page_1700000000000_0.png');
+      final resized = tempFile('healthwallet_resized_photo.jpg');
       final metadata = cacheFile('$cacheKey.json');
       final keptInTemp = [
         tempFile('other_app.png'),
-        tempFile('nested/pdf_page_1.png'),
+        tempFile('nested/healthwallet_pdf_page_1.png'),
       ];
       final keptInCache = [
         cacheFile('notes.json'),
         cacheFile('$cacheKey.txt'),
       ];
-      final pageDir = Directory('${temp.path}/pdf_page_dir')..createSync();
+      final pageDir = Directory('${temp.path}/healthwallet_pdf_page_dir')
+        ..createSync();
 
       await TempFileSweeper(
         temporaryDirectory: () async => temp,
@@ -244,5 +245,27 @@ void main() {
     for (final file in files) {
       expect(file.existsSync(), isFalse, reason: file.path);
     }
+  });
+
+  test('Reset leaves other apps\' files with generic names alone', () async {
+    // On Windows the temporary directory is the user's shared %TEMP%.
+    final temp = await Directory.systemTemp.createTemp('sweeper_shared');
+    addTearDown(() => temp.delete(recursive: true));
+    final ours = File('${temp.path}/${TempFileSweeper.ocrPagePrefix}1_0.png')
+      ..writeAsStringSync('x');
+    final theirs = [
+      File('${temp.path}/pdf_page_1_0.png')..writeAsStringSync('x'),
+      File('${temp.path}/resized_photo.jpg')..writeAsStringSync('x'),
+    ];
+
+    await TempFileSweeper(
+      temporaryDirectory: () async => temp,
+      documentsDirectory: () async => temp,
+      deleteDebugLogs: false,
+      includeProcessingCache: true,
+    ).sweep();
+
+    expect(ours.existsSync(), isFalse);
+    expect(theirs.every((f) => f.existsSync()), isTrue);
   });
 }

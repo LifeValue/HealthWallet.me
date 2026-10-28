@@ -41,11 +41,13 @@ class TempFileSweeper {
   /// The Apple Wallet pass written before it is handed to Wallet.
   static const walletPassFileName = 'HealthWallet_Emergency.pkpass';
 
-  /// Prefix of a PDF page rendered for OCR and AI.
-  static const ocrPagePrefix = 'pdf_page_';
+  /// Prefix of a PDF page rendered for OCR and AI. Unique to this app,
+  /// because on Windows the temporary directory is the user's shared `%TEMP%`
+  /// and Reset deletes every top-level file with this prefix.
+  static const ocrPagePrefix = 'healthwallet_pdf_page_';
 
-  /// Prefix of an image downscaled for AI.
-  static const resizedImagePrefix = 'resized_';
+  /// Prefix of an image downscaled for AI; unique for the same reason.
+  static const resizedImagePrefix = 'healthwallet_resized_';
 
   /// Directory in the documents directory holding the OCR cache metadata
   /// (`<sha256 cache key>.json`, listing the `pdf_page_*` images).
