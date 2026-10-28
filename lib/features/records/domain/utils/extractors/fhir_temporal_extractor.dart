@@ -40,6 +40,15 @@ class FhirTemporalExtractor {
     return null;
   }
 
+  /// "low - high" with the raw recorded values; a missing bound is left out
+  /// and an empty range is null.
+  static String? _rangeValues(fhir_r4.Range range) {
+    final low = range.low?.value?.toString();
+    final high = range.high?.value?.toString();
+    if (low != null && high != null) return '$low - $high';
+    return low ?? high;
+  }
+
   static String? extractPeriodStart(fhir_r4.Period? period) {
     return period?.start?.toString();
   }
@@ -67,6 +76,13 @@ class FhirTemporalExtractor {
       }
       if (end != null) {
         endDate = DateTime.tryParse(end);
+      }
+
+      // A partial FHIR date ("2024-03") does not parse; show the period as
+      // recorded rather than dropping a bound.
+      if ((start != null && startDate == null) ||
+          (end != null && endDate == null)) {
+        return extractPeriod(period, l10n: l10n);
       }
 
       if (startDate != null && endDate != null) {
@@ -112,9 +128,7 @@ class FhirTemporalExtractor {
     if (onsetPeriod != null) return extractPeriod(onsetPeriod, l10n: l10n);
 
     final onsetRange = onsetX.isAs<fhir_r4.Range>();
-    if (onsetRange != null) {
-      return '${onsetRange.low?.value} - ${onsetRange.high?.value}';
-    }
+    if (onsetRange != null) return _rangeValues(onsetRange);
 
     final onsetString = onsetX.isAs<fhir_r4.FhirString>();
     if (onsetString != null) return onsetString.valueString;
@@ -142,9 +156,7 @@ class FhirTemporalExtractor {
     }
 
     final abatementRange = abatementX.isAs<fhir_r4.Range>();
-    if (abatementRange != null) {
-      return '${abatementRange.low?.value} - ${abatementRange.high?.value}';
-    }
+    if (abatementRange != null) return _rangeValues(abatementRange);
 
     final abatementString = abatementX.isAs<fhir_r4.FhirString>();
     if (abatementString != null) return abatementString.valueString;

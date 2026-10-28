@@ -1,5 +1,7 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_temporal_extractor.dart';
 
 import '../../../../../fixtures/fhir/fhir_fixtures.dart';
@@ -119,10 +121,103 @@ void main() {
           'From 2024-03',
         );
       },
-      skip:
-          'BUG: DateTime.tryParse fails on partial FHIR dates, so a period '
-          'starting "2024-03" is formatted as null instead of falling back',
     );
+  });
+
+  group('extractPeriodFormatted partial dates', () {
+    test('an end-only partial date is shown as recorded', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(_period(end: '2024')),
+        'Until 2024',
+      );
+    });
+
+    test('a mixed full and partial period falls back to both raw bounds', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-03', end: '2024-04-02T10:00:00Z'),
+        ),
+        '2024-03 - 2024-04-02T10:00:00Z',
+      );
+    });
+
+    test('a partial date keeps the translated From and Until', () {
+      final de = lookupAppLocalizations(const Locale('de'));
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-03'),
+          l10n: de,
+        ),
+        'Ab 2024-03',
+      );
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(end: '2024'),
+          l10n: de,
+        ),
+        de.untilDate('2024'),
+      );
+    });
+
+    test('a full start with a partial end falls back to both raw bounds', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-04-02T10:00:00Z', end: '2025'),
+        ),
+        '2024-04-02T10:00:00Z - 2025',
+      );
+    });
+  });
+
+  group('open ranges on onset and abatement', () {
+    test('an onset Range without a high bound shows only the low', () {
+      expect(
+        FhirTemporalExtractor.extractOnsetX(
+          _onset({
+            'onsetRange': {
+              'low': {'value': 40, 'unit': 'a'},
+            },
+          }),
+        ),
+        '40',
+      );
+    });
+
+    test('an abatement Range without a low bound shows only the high', () {
+      expect(
+        FhirTemporalExtractor.extractAbatementX(
+          _abatement({
+            'abatementRange': {
+              'high': {'value': 50, 'unit': 'a'},
+            },
+          }),
+        ),
+        '50',
+      );
+    });
+
+    test('an empty Range is null', () {
+      expect(
+        FhirTemporalExtractor.extractAbatementX(
+          _abatement({
+            'abatementRange': {
+              'low': {'unit': 'a'},
+            },
+          }),
+        ),
+        isNull,
+      );
+      expect(
+        FhirTemporalExtractor.extractOnsetX(
+          _onset({
+            'onsetRange': {
+              'high': {'unit': 'a'},
+            },
+          }),
+        ),
+        isNull,
+      );
+    });
   });
 
   group('extractOnsetX / extractAbatementX', () {
@@ -202,7 +297,6 @@ void main() {
           isNot(contains('null')),
         );
       },
-      skip: 'BUG: an open Range onset renders as "null - 50"',
     );
   });
 
