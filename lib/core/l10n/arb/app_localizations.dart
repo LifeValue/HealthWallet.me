@@ -5285,6 +5285,12 @@ abstract class AppLocalizations {
   /// **'Could not open link. Please try again.'**
   String get couldNotOpenLink;
 
+  /// No description provided for @importFilesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the selected files. Please try again.'**
+  String get importFilesFailed;
+
   /// No description provided for @continueProcessingOnDesktop.
   ///
   /// In en, this message translates to:

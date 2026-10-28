@@ -1455,6 +1455,7 @@
   "noValidFilesFound": "No valid files found",
   "importDocumentFailed": "Couldn't import the document. Please try again.",
   "couldNotOpenLink": "Could not open link. Please try again.",
+  "importFilesFailed": "Could not open the selected files. Please try again.",
   "continueProcessingOnDesktop": "Continue processing on Desktop",
   "deleteResourcesTitle": "Delete Resources",
   "switchToDiagnosticReport": "Switch to Diagnostic Report",

@@ -1234,6 +1234,7 @@
   "noValidFilesFound": "No se encontraron archivos válidos",
   "importDocumentFailed": "No se pudo importar el documento. Inténtalo de nuevo.",
   "couldNotOpenLink": "No se pudo abrir el enlace. Inténtalo de nuevo.",
+  "importFilesFailed": "No se pudieron abrir los archivos seleccionados. Inténtalo de nuevo.",
   "continueProcessingOnDesktop": "Continuar el procesamiento en el escritorio",
   "deleteResourcesTitle": "Eliminar recursos",
   "switchToDiagnosticReport": "Cambiar a informe diagnóstico",

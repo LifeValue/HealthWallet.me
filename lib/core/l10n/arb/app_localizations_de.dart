@@ -2950,6 +2950,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Link konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.';
 
   @override
+  String get importFilesFailed =>
+      'Die ausgewählten Dateien konnten nicht geöffnet werden. Bitte versuche es erneut.';
+
+  @override
   String get continueProcessingOnDesktop =>
       'Verarbeitung auf dem Desktop fortsetzen';
 

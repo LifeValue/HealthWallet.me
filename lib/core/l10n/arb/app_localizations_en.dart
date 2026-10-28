@@ -2903,6 +2903,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotOpenLink => 'Could not open link. Please try again.';
 
   @override
+  String get importFilesFailed =>
+      'Could not open the selected files. Please try again.';
+
+  @override
   String get continueProcessingOnDesktop => 'Continue processing on Desktop';
 
   @override

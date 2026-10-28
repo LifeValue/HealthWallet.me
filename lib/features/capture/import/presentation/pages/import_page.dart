@@ -12,6 +12,7 @@ import 'package:health_wallet/core/services/external_files_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
@@ -409,7 +410,10 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
           );
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.e('Could not import the picked documents', e);
+      if (context.mounted) _showImportFailed(context);
+    }
   }
 
   Future<void> _handlePickImage(BuildContext context) async {
@@ -433,6 +437,15 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
           DocumentImported(filePaths: validPaths),
         );
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.e('Could not import the picked images', e);
+      if (context.mounted) _showImportFailed(context);
+    }
+  }
+
+  void _showImportFailed(BuildContext context) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.importFilesFailed)));
   }
 }

@@ -2942,6 +2942,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo abrir el enlace. Inténtalo de nuevo.';
 
   @override
+  String get importFilesFailed =>
+      'No se pudieron abrir los archivos seleccionados. Inténtalo de nuevo.';
+
+  @override
   String get continueProcessingOnDesktop =>
       'Continuar el procesamiento en el escritorio';
 

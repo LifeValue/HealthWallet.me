@@ -2942,6 +2942,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Linkul nu a putut fi deschis. Încearcă din nou.';
 
   @override
+  String get importFilesFailed =>
+      'Fișierele selectate nu au putut fi deschise. Încearcă din nou.';
+
+  @override
   String get continueProcessingOnDesktop => 'Continuă procesarea pe desktop';
 
   @override

@@ -1229,6 +1229,7 @@
   "noValidFilesFound": "Nu s-au găsit fișiere valide",
   "importDocumentFailed": "Importul documentului a eșuat. Încearcă din nou.",
   "couldNotOpenLink": "Linkul nu a putut fi deschis. Încearcă din nou.",
+  "importFilesFailed": "Fișierele selectate nu au putut fi deschise. Încearcă din nou.",
   "continueProcessingOnDesktop": "Continuă procesarea pe desktop",
   "deleteResourcesTitle": "Șterge resursele",
   "switchToDiagnosticReport": "Comută la raport de diagnostic",
