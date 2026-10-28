@@ -9,6 +9,7 @@ import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -181,8 +182,8 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (referenceRange != null && referenceRange!.isNotEmpty) {
       final range = referenceRange!.first;
-      final lowValue = range.low?.value?.valueDouble?.toStringAsFixed(2);
-      final highValue = range.high?.value?.valueDouble?.toStringAsFixed(2);
+      final lowValue = FhirCommonExtractor.quantityValue(range.low);
+      final highValue = FhirCommonExtractor.quantityValue(range.high);
       final unit = localizedUnit(
         (range.low?.unit ?? range.high?.unit ?? '').toString(),
         l10n,
@@ -505,14 +506,23 @@ abstract class Observation with _$Observation implements IFhirResource {
 
       displayUnit = localizedUnit(displayUnit, l10n);
 
+      final lowValue = displayLow == null
+          ? null
+          : FhirCommonExtractor.formatQuantityValue(displayLow, source: rawLow);
+      final highValue = displayHigh == null
+          ? null
+          : FhirCommonExtractor.formatQuantityValue(
+              displayHigh,
+              source: rawHigh,
+            );
+
       String? rangeDisplay;
-      if (displayLow != null && displayHigh != null) {
-        rangeDisplay =
-            '${displayLow.toStringAsFixed(2)} - ${displayHigh.toStringAsFixed(2)} $displayUnit';
-      } else if (displayLow != null) {
-        rangeDisplay = '> ${displayLow.toStringAsFixed(2)} $displayUnit';
-      } else if (displayHigh != null) {
-        rangeDisplay = '< ${displayHigh.toStringAsFixed(2)} $displayUnit';
+      if (lowValue != null && highValue != null) {
+        rangeDisplay = '$lowValue - $highValue $displayUnit';
+      } else if (lowValue != null) {
+        rangeDisplay = '> $lowValue $displayUnit';
+      } else if (highValue != null) {
+        rangeDisplay = '< $highValue $displayUnit';
       }
 
       final rangeType = FhirFieldExtractor.extractCodeableConceptText(range);
