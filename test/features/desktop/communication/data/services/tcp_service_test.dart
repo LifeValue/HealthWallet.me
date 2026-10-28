@@ -44,6 +44,13 @@ class _FakeMpcTransport extends CommunicationService {
   Future<void> dispose() => _data.close();
 }
 
+/// A bare 4-byte length prefix announcing a frame of [length] bytes.
+Uint8List lengthHeader(int length) {
+  final out = Uint8List(4);
+  ByteData.sublistView(out).setUint32(0, length);
+  return out;
+}
+
 void main() {
   final key = testPairingKey();
   final codec = WireCodec(key);
@@ -277,6 +284,95 @@ void main() {
       await disconnected.timeout(const Duration(seconds: 10));
       expect(service.isConnected, isFalse);
       await peer.done;
+    });
+
+    test('a frame announced over 1 GiB from the server disconnects', () async {
+      await peer.reader.nextOfType(MessageType.hello);
+      final disconnected = service.connectionState.firstWhere(
+        (s) => s == ConnectionState.disconnected,
+      );
+
+      await peer.send(lengthHeader(TcpService.maxFrameBytes + 1));
+
+      await disconnected.timeout(const Duration(seconds: 10));
+      await peer.done;
+    });
+
+    test(
+      'a frame announced at exactly 1 GiB is awaited, not dropped',
+      () async {
+        await peer.reader.nextOfType(MessageType.hello);
+
+        await peer.send(lengthHeader(TcpService.maxFrameBytes));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        expect(service.isConnected, isTrue);
+        expect(peer.isClosed, isFalse);
+      },
+    );
+
+    test('pings the server on the default schedule', () {
+      expect(TcpService().pingInterval, const Duration(seconds: 10));
+      expect(TcpService().pingTimeout, const Duration(seconds: 5));
+    });
+
+    test(
+      'the server cancelling a ping timeout with pong keeps the link',
+      () async {
+        final quick = TcpService()
+          ..pingInterval = const Duration(milliseconds: 100)
+          ..pingTimeout = const Duration(milliseconds: 300);
+        addTearDown(quick.dispose);
+        final desktop = await ServerSocket.bind(
+          InternetAddress.loopbackIPv4,
+          0,
+        );
+        addTearDown(desktop.close);
+        final accepted = desktop.first;
+        await quick.connectToServer(
+          ip: '127.0.0.1',
+          port: desktop.port,
+          pairingKey: key,
+        );
+        final other = PeerSocket.wrap(await accepted, codec);
+        addTearDown(other.close);
+
+        for (var i = 0; i < 3; i++) {
+          await other.reader.nextOfType(MessageType.ping);
+          await other.send(codec.frame(MessageType.pong, const []));
+        }
+
+        expect(quick.isConnected, isTrue);
+        expect(other.isClosed, isFalse);
+      },
+    );
+
+    test('a server that never answers a ping is disconnected', () async {
+      final quick = TcpService()
+        ..pingInterval = const Duration(milliseconds: 100)
+        ..pingTimeout = const Duration(milliseconds: 200);
+      addTearDown(quick.dispose);
+      final desktop = await ServerSocket.bind(
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(desktop.close);
+      final accepted = desktop.first;
+      await quick.connectToServer(
+        ip: '127.0.0.1',
+        port: desktop.port,
+        pairingKey: key,
+      );
+      final other = PeerSocket.wrap(await accepted, codec);
+      addTearDown(other.close);
+      final disconnected = quick.connectionState.firstWhere(
+        (s) => s == ConnectionState.disconnected,
+      );
+
+      await other.reader.nextOfType(MessageType.ping);
+
+      await disconnected.timeout(const Duration(seconds: 10));
+      await other.done;
     });
 
     test('the server closing the socket disconnects', () async {
@@ -588,6 +684,27 @@ void main() {
       expect(mpc.sent, isEmpty);
     });
 
+    test('an MPC hello without a key hash is rejected', () async {
+      service
+        ..setPairingKeyForMpc(key)
+        ..setUseMpc(true);
+      final hellos = <TcpMessage>[];
+      final sub = service.messages.listen(hellos.add);
+
+      mpc.receive(
+        codec.message(
+          MessageType.hello,
+          utf8.encode(jsonEncode({'device_name': 'Mac'})),
+        ),
+      );
+      await flushEvents();
+      await sub.cancel();
+
+      expect(hellos, isEmpty);
+      expect(service.isConnected, isFalse);
+      expect(mpc.sent, isEmpty);
+    });
+
     test('drops undecryptable or unknown MPC data and keeps going', () async {
       service.setPairingKeyForMpc(key);
       final all = <TcpMessage>[];
@@ -717,21 +834,342 @@ void main() {
       expect((await peer.reader.next()).type, MessageType.ack.code);
     });
 
-    test('rejects a hello with the wrong key hash', () async {
-      final hellos = <TcpMessage>[];
-      final sub = service.messages.listen(hellos.add);
+    Future<List<TcpMessage>> surfacedWhile(Future<void> Function() body) async {
+      final surfaced = <TcpMessage>[];
+      final sub = service.messages.listen(surfaced.add);
+      await body();
+      await flushEvents();
+      await sub.cancel();
+      return surfaced;
+    }
+
+    test('rejects and closes a hello with the wrong key hash', () async {
+      final surfaced = await surfacedWhile(() async {
+        final peer = await connectPeer();
+        await peer.send([
+          ...codec.helloFrame(keyHash: 'not-the-hash'),
+          ...codec.frame(MessageType.ping, const []),
+        ]);
+        await peer.done;
+      });
+
+      expect(surfaced, isEmpty);
+      expect(service.isConnected, isFalse);
+    });
+
+    test('rejects a hello without a key hash', () async {
+      final surfaced = await surfacedWhile(() async {
+        final peer = await connectPeer();
+        await peer.send(
+          codec.frame(
+            MessageType.hello,
+            utf8.encode(jsonEncode({'device_name': 'No hash'})),
+          ),
+        );
+        await peer.done;
+      });
+
+      expect(surfaced, isEmpty);
+      expect(service.isConnected, isFalse);
+    });
+
+    test('rejects a client whose first frame does not decrypt', () async {
+      final stranger = WireCodec(testPairingKey(seed: 99));
+      final surfaced = await surfacedWhile(() async {
+        final peer = await connectPeer();
+        await peer.send(stranger.helloFrame());
+        await peer.done;
+      });
+
+      expect(surfaced, isEmpty);
+    });
+
+    test('does not read or answer frames sent before the hello', () async {
       final peer = await connectPeer();
+      final surfaced = await surfacedWhile(() async {
+        final data = service.messages
+            .firstWhere((m) => m.type == MessageType.data)
+            .timeout(const Duration(seconds: 10));
+        await peer.send([
+          ...codec.dataFrame('early', {}),
+          ...codec.frame(MessageType.ping, const []),
+          ...codec.helloFrame(),
+          ...codec.dataFrame('late', {}),
+        ]);
+        // The first frame back is the hello's ack, not a pong for the ping.
+        expect((await peer.reader.next()).type, MessageType.ack.code);
+        await data;
+      });
+
+      expect(
+        surfaced
+            .where((m) => m.type == MessageType.data)
+            .map((m) => jsonDecode(m.payloadString)['type']),
+        ['late'],
+      );
+      expect(peer.isClosed, isFalse);
+    });
+
+    test('drops a client announcing a huge frame before its hello, and the '
+        'next client works', () async {
+      final attacker = await connectPeer();
+      await attacker.send([0xFF, 0xFF, 0xFF, 0xFF]);
+      await attacker.done;
+
+      final hello = service.messages.first;
+      final phone = await connectPeer();
+      await phone.send(codec.helloFrame(deviceName: 'Real phone'));
+
+      final message = await hello.timeout(const Duration(seconds: 10));
+      expect(jsonDecode(message.payloadString)['device_name'], 'Real phone');
+      expect((await phone.reader.next()).type, MessageType.ack.code);
+    });
+
+    test('rejects a hello whose payload is not JSON', () async {
+      final surfaced = await surfacedWhile(() async {
+        final peer = await connectPeer();
+        await peer.send(
+          codec.frame(MessageType.hello, utf8.encode('{not json')),
+        );
+        await peer.done;
+      });
+
+      expect(surfaced, isEmpty);
+      expect(service.isConnected, isFalse);
+    });
+
+    test('rejects a hello whose JSON is not an object', () async {
+      final surfaced = await surfacedWhile(() async {
+        final peer = await connectPeer();
+        await peer.send(codec.frame(MessageType.hello, utf8.encode('["x"]')));
+        await peer.done;
+      });
+
+      expect(surfaced, isEmpty);
+    });
+
+    test('rejects a hello whose key hash is not a string', () async {
+      final surfaced = await surfacedWhile(() async {
+        final peer = await connectPeer();
+        await peer.send(
+          codec.frame(
+            MessageType.hello,
+            utf8.encode(jsonEncode({'pairing_key_hash': 42})),
+          ),
+        );
+        await peer.done;
+      });
+
+      expect(surfaced, isEmpty);
+    });
+
+    /// A hello whose encrypted frame body is exactly [bytes] long.
+    Uint8List helloOfSize(int bytes) {
+      final overhead = codec.helloFrame(deviceName: '').length - 4;
+      final frame = codec.helloFrame(deviceName: 'x' * (bytes - overhead));
+      expect(frame.length - 4, bytes);
+      return frame;
+    }
+
+    test('accepts a hello of exactly 64 KiB', () async {
+      final peer = await connectPeer();
+      final hello = service.messages.first;
+
+      await peer.send(helloOfSize(TcpService.maxUnauthenticatedFrameBytes));
+
+      final message = await hello.timeout(const Duration(seconds: 10));
+      expect(message.type, MessageType.hello);
+      expect((await peer.reader.next()).type, MessageType.ack.code);
+    });
+
+    test('drops a hello one byte over 64 KiB', () async {
+      final peer = await connectPeer();
+      await peer.send(helloOfSize(TcpService.maxUnauthenticatedFrameBytes + 1));
+      await peer.done;
+      expect(service.isConnected, isFalse);
+    });
+
+    test(
+      'drops a frame announced at 64 KiB + 1 before any of it arrives',
+      () async {
+        final peer = await connectPeer();
+        await peer.send(
+          lengthHeader(TcpService.maxUnauthenticatedFrameBytes + 1),
+        );
+        await peer.done;
+      },
+    );
+
+    test(
+      'after the hello, a frame announced at exactly 1 GiB is awaited',
+      () async {
+        final peer = await connectPeer();
+        await peer.send(codec.helloFrame());
+        await peer.reader.nextOfType(MessageType.ack);
+
+        await peer.send(lengthHeader(TcpService.maxFrameBytes));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        expect(peer.isClosed, isFalse);
+        expect(service.isConnected, isTrue);
+      },
+    );
+
+    test('after the hello, a frame announced over 1 GiB drops the client, '
+        'and the phone can reconnect', () async {
+      final peer = await connectPeer();
+      await peer.send(codec.helloFrame());
+      await peer.reader.nextOfType(MessageType.ack);
+      final disconnected = service.connectionState.firstWhere(
+        (s) => s == ConnectionState.disconnected,
+      );
+
+      await peer.send(lengthHeader(TcpService.maxFrameBytes + 1));
+      await peer.done;
+      await disconnected.timeout(const Duration(seconds: 10));
+
+      final again = await connectPeer();
+      await again.send(codec.helloFrame());
+      expect((await again.reader.next()).type, MessageType.ack.code);
+    });
+
+    test('after the hello, an undecryptable frame is skipped', () async {
+      final peer = await connectPeer();
+      await peer.send(codec.helloFrame());
+      await peer.reader.nextOfType(MessageType.ack);
+      final next = service.messages.firstWhere(
+        (m) => m.type == MessageType.data,
+      );
 
       await peer.send([
-        ...codec.helloFrame(keyHash: 'not-the-hash'),
-        // A ping right after it: its pong proves the hello was processed.
+        ...WireCodec(testPairingKey(seed: 3)).dataFrame('stranger', {}),
+        ...codec.dataFrame('mine', {}),
+      ]);
+
+      final message = await next.timeout(const Duration(seconds: 10));
+      expect(jsonDecode(message.payloadString)['type'], 'mine');
+      expect(peer.isClosed, isFalse);
+    });
+
+    test(
+      'a second hello with the wrong hash drops a verified client',
+      () async {
+        final peer = await connectPeer();
+        await peer.send(codec.helloFrame());
+        await peer.reader.nextOfType(MessageType.ack);
+
+        await peer.send(codec.helloFrame(keyHash: 'wrong'));
+        await peer.done;
+      },
+    );
+
+    test('answers a verified client\'s ping with pong', () async {
+      final peer = await connectPeer();
+      await peer.send([
+        ...codec.helloFrame(),
         ...codec.frame(MessageType.ping, const []),
       ]);
 
+      expect((await peer.reader.next()).type, MessageType.ack.code);
       expect((await peer.reader.next()).type, MessageType.pong.code);
-      await sub.cancel();
-      expect(hellos, isEmpty);
-      expect(service.isConnected, isFalse);
+    });
+
+    test('a kill from the client is acknowledged and disconnects', () async {
+      final peer = await connectPeer();
+      await peer.send(codec.helloFrame());
+      await peer.reader.nextOfType(MessageType.ack);
+      final disconnected = service.connectionState.firstWhere(
+        (s) => s == ConnectionState.disconnected,
+      );
+
+      await peer.send(codec.frame(MessageType.kill, const []));
+
+      expect((await peer.reader.next()).type, MessageType.ack.code);
+      await disconnected.timeout(const Duration(seconds: 10));
+    });
+
+    test('waits 5 s for the hello by default', () {
+      expect(TcpService().helloTimeout, const Duration(seconds: 5));
+    });
+
+    test('a pending client sending more than a hello is dropped, the current '
+        'client stays', () async {
+      final first = await connectPeer();
+      await first.send(codec.helloFrame());
+      await first.reader.nextOfType(MessageType.ack);
+
+      final pending = service.pendingClients.first;
+      final squatter = await connectPeer();
+      await pending.timeout(const Duration(seconds: 10));
+      await squatter.send(
+        randomBytes(TcpService.maxUnauthenticatedFrameBytes + 5),
+      );
+      await squatter.done;
+
+      final next = service.messages.first;
+      await first.send(codec.dataFrame('first.still.here', {}));
+      expect(
+        jsonDecode(
+          (await next.timeout(const Duration(seconds: 10))).payloadString,
+        )['type'],
+        'first.still.here',
+      );
+    });
+
+    test(
+      'an accepted pending client is held to the hello deadline too',
+      () async {
+        final first = await connectPeer();
+        await first.send(codec.helloFrame());
+        await first.reader.nextOfType(MessageType.ack);
+
+        final pending = service.pendingClients.first;
+        final second = await connectPeer();
+        await pending.timeout(const Duration(seconds: 10));
+        service
+          ..helloTimeout = const Duration(milliseconds: 300)
+          ..acceptPendingClient();
+
+        await first.done;
+        await second.done;
+      },
+    );
+
+    test('closes a silent client, and the real phone can connect', () async {
+      service.helloTimeout = const Duration(milliseconds: 300);
+
+      final silent = await connectPeer();
+      await silent.done;
+
+      final connected = service.connectionState.firstWhere(
+        (s) => s == ConnectionState.connected,
+      );
+      final phone = await connectPeer();
+      await phone.send(codec.helloFrame(deviceName: 'Phone'));
+      await connected.timeout(const Duration(seconds: 10));
+
+      // A verified client is not timed out.
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      expect(phone.isClosed, isFalse);
+      expect(service.isConnected, isTrue);
+    });
+
+    test('a frame over 64 KiB is delivered after the hello', () async {
+      final peer = await connectPeer();
+      await peer.send(codec.helloFrame());
+      await peer.reader.nextOfType(MessageType.ack);
+
+      final payload = randomBytes(2 * 1024 * 1024);
+      final next = service.messages.firstWhere(
+        (m) => m.type == MessageType.data,
+      );
+      await peer.send(codec.frame(MessageType.data, payload));
+
+      expect(
+        (await next.timeout(const Duration(seconds: 10))).payload,
+        payload,
+      );
+      expect(peer.isClosed, isFalse);
     });
 
     test('carries data both ways, whole and in order', () async {
@@ -884,6 +1322,36 @@ void main() {
     );
 
     test(
+      'accepting a pending client that already hung up keeps the current one',
+      () async {
+        final first = await connectPeer();
+        await first.send(codec.helloFrame());
+        await first.reader.nextOfType(MessageType.ack);
+
+        final pending = service.pendingClients.first;
+        final second = await connectPeer();
+        await pending.timeout(const Duration(seconds: 10));
+        await second.close();
+        // Let the isolate see the hang-up before the accept arrives.
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        service.acceptPendingClient();
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        expect(first.isClosed, isFalse);
+        expect(service.isConnected, isTrue);
+        final next = service.messages.first;
+        await first.send(codec.dataFrame('first.still.here', {}));
+        expect(
+          jsonDecode(
+            (await next.timeout(const Duration(seconds: 10))).payloadString,
+          )['type'],
+          'first.still.here',
+        );
+      },
+    );
+
+    test(
       'an accepted pending client receives what the desktop sends',
       () async {
         final first = await connectPeer();
@@ -905,10 +1373,6 @@ void main() {
         final frame = await second.reader.nextOfType(MessageType.data);
         expect(jsonDecode(utf8.decode(frame.payload))['type'], 'to.new');
       },
-      skip:
-          'BUG: in the server isolate the replaced client\'s onDone sets '
-          'clientSocket = null after acceptPending, so every later send to '
-          'the accepted client is dropped (tcp_service.dart:224-229).',
     );
 
     test(
@@ -935,11 +1399,6 @@ void main() {
         final message = await hello.timeout(const Duration(seconds: 5));
         expect(jsonDecode(message.payloadString)['device_name'], 'Reconnected');
       },
-      skip:
-          'BUG: TcpService._buffer is never reset in server mode (not on '
-          'clientDisconnected, acceptPending, stopServer or startServer), so '
-          'leftover bytes of a half-received frame swallow and misalign every '
-          'frame from the next client (tcp_service.dart:171-172, 482-509).',
     );
 
     test(
