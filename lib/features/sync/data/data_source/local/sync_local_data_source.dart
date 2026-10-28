@@ -229,8 +229,10 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
       }
 
       // Create the Wallet source, replacing a deleted one. `updated_at` is
-      // left to the trigger, which stamps milliseconds (drift would store
-      // seconds), so the new row wins over the tombstone on the peer.
+      // left to the trigger, which stamps it in ms units at whole-second
+      // precision (drift would store seconds), so the new row beats an older
+      // tombstone on the peer. A row re-created within the same second as
+      // its delete loses to the tombstone; that limit is accepted.
       await _appDatabase
           .into(_appDatabase.sources)
           .insert(
@@ -255,7 +257,9 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     try {
       // Create demo_data source in sources table with correct name for
       // display logic. Replacing the row clears a tombstone; `updated_at` is
-      // left to the trigger (ms), so the new row wins over the tombstone.
+      // left to the trigger, in ms units at whole-second precision, so the
+      // new row beats a tombstone from an earlier second (see
+      // createWalletSource).
       await _appDatabase
           .into(_appDatabase.sources)
           .insert(
