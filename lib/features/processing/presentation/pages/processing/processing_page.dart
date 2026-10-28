@@ -18,13 +18,12 @@ import 'package:health_wallet/features/desktop/handover/presentation/utils/hando
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
-import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_mapping_section.dart';
 import 'package:health_wallet/features/processing/presentation/pages/processing/widgets/processing_resources_section.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/ai_settings/ai_settings_dialog.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/attach_to_encounter_widget.dart';
-import 'package:health_wallet/features/processing/presentation/widgets/debug_log_sheet.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/debug_log_button.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/preview_card.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/summary_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -467,16 +466,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
               ? null
               : _showAiSettingsDialog,
         ),
-        if (ProcessingLogBuffer.instance.isEnabled)
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            icon: Icon(
-              Icons.terminal,
-              size: 18,
-              color: context.colorScheme.onSurface,
-            ),
-            onPressed: () => DebugLogSheet.show(context),
-          ),
+        const DebugLogButton(),
       ],
     );
   }
