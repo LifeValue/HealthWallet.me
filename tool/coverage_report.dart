@@ -21,6 +21,9 @@ const criticalAreas = <String, String>{
   'Patient services': 'lib/features/user/domain/services/',
   'Share records': 'lib/features/share_records/data/',
   'Sync data': 'lib/features/sync/data/',
+  'App lock': 'lib/features/app_lock/',
+  'Temp file sweeper': 'lib/core/services/temp_file_sweeper.dart',
+  'Deep links': 'lib/core/services/deep_link_service.dart',
 };
 
 final _generated = RegExp(
