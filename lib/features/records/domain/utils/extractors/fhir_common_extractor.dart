@@ -107,6 +107,16 @@ class FhirCommonExtractor {
     return value == null ? null : formatQuantityValue(value);
   }
 
+  /// "[low] - [high]"; an open range keeps its direction ("≥ [low]",
+  /// "≤ [high]") so it does not read as an exact value. Null when both
+  /// bounds are missing.
+  static String? formatRange(String? low, String? high) {
+    if (low != null && high != null) return '$low - $high';
+    if (low != null) return '≥ $low';
+    if (high != null) return '≤ $high';
+    return null;
+  }
+
   static String? extractQuantity(fhir_r4.Quantity? quantity) {
     final value = quantityValue(quantity);
     if (value == null) return null;
@@ -196,8 +206,10 @@ class FhirCommonExtractor {
         if (dosage.doseAndRate != null && dosage.doseAndRate!.isNotEmpty) {
           final doseAndRate = dosage.doseAndRate!.first;
           final doseQuantity = doseAndRate.doseX?.isAs<fhir_r4.Quantity>();
-          if (doseQuantity != null) {
-            parts.add('${doseQuantity.value} ${doseQuantity.unit ?? ''}');
+          final value = doseQuantity?.value?.toString();
+          if (value != null) {
+            final unit = quantityUnit(doseQuantity);
+            parts.add(unit == null ? value : '$value $unit');
           }
         }
 

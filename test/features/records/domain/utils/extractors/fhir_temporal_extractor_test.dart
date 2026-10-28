@@ -170,7 +170,7 @@ void main() {
   });
 
   group('open ranges on onset and abatement', () {
-    test('an onset Range without a high bound shows only the low', () {
+    test('an onset Range without a high bound keeps its direction', () {
       expect(
         FhirTemporalExtractor.extractOnsetX(
           _onset({
@@ -179,11 +179,11 @@ void main() {
             },
           }),
         ),
-        '40',
+        '≥ 40',
       );
     });
 
-    test('an abatement Range without a low bound shows only the high', () {
+    test('an abatement Range without a low bound keeps its direction', () {
       expect(
         FhirTemporalExtractor.extractAbatementX(
           _abatement({
@@ -192,7 +192,7 @@ void main() {
             },
           }),
         ),
-        '50',
+        '≤ 50',
       );
     });
 
@@ -229,6 +229,20 @@ void main() {
         'Age without unit',
         {
           'Age': {'value': 3},
+        },
+        '3 years',
+      ),
+      (
+        'Age without value',
+        {
+          'Age': {'unit': 'a'},
+        },
+        null,
+      ),
+      (
+        'Age with an empty unit',
+        {
+          'Age': {'value': 3, 'unit': ' '},
         },
         '3 years',
       ),
@@ -551,7 +565,7 @@ void main() {
             'high': {'value': 50, 'unit': 'a'},
           },
         },
-        '50.00 a',
+        '≤ 50.00 a',
       ),
       (
         'Range with only a low bound',
@@ -560,7 +574,7 @@ void main() {
             'low': {'value': 40, 'unit': 'a'},
           },
         },
-        '40.00 a',
+        '≥ 40.00 a',
       ),
       ('string', {'String': 'adolescence'}, 'adolescence'),
     ];
@@ -659,7 +673,25 @@ void main() {
             'low': {'value': 1, 'unit': 'a'},
           },
         }),
-        '1.00 a',
+        '≥ 1.00 a',
+      ),
+      (
+        'Range with only a high bound',
+        _performed({
+          'performedRange': {
+            'high': {'value': 2, 'unit': 'a'},
+          },
+        }),
+        '≤ 2.00 a',
+      ),
+      (
+        'empty Range',
+        _performed({
+          'performedRange': {
+            'low': {'unit': 'a'},
+          },
+        }),
+        null,
       ),
       ('unsupported', fhir.FhirBoolean(true), null),
     ];

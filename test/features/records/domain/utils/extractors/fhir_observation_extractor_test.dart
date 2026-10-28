@@ -177,14 +177,14 @@ void main() {
         {
           'valueRange': {'low': quantity(1)},
         },
-        '1.00',
+        '≥ 1.00',
       ),
       (
         'Range without low',
         {
           'valueRange': {'high': quantity(5)},
         },
-        '5.00',
+        '≤ 5.00',
       ),
       (
         'Range keeps the decimals of each bound',
@@ -205,14 +205,14 @@ void main() {
         {
           'valueRatio': {'numerator': quantity(1)},
         },
-        '1.00',
+        null,
       ),
       (
         'Ratio without numerator',
         {
           'valueRatio': {'denominator': quantity(128)},
         },
-        '128.00',
+        null,
       ),
       (
         'empty Ratio',

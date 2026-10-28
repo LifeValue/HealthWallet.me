@@ -51,18 +51,21 @@ class FhirObservationExtractor {
 
     final valueRange = valueX?.isAs<fhir_r4.Range>();
     if (valueRange != null) {
-      return FhirCommonExtractor.joinNullable([
+      return FhirCommonExtractor.formatRange(
         FhirCommonExtractor.quantityValue(valueRange.low),
         FhirCommonExtractor.quantityValue(valueRange.high),
-      ], ' - ');
+      );
     }
 
     final valueRatio = valueX?.isAs<fhir_r4.Ratio>();
     if (valueRatio != null) {
-      return FhirCommonExtractor.joinNullable([
-        FhirCommonExtractor.quantityValue(valueRatio.numerator),
-        FhirCommonExtractor.quantityValue(valueRatio.denominator),
-      ], ' / ');
+      // One term alone is not a ratio; show nothing rather than a bare number.
+      final numerator = FhirCommonExtractor.quantityValue(valueRatio.numerator);
+      final denominator = FhirCommonExtractor.quantityValue(
+        valueRatio.denominator,
+      );
+      if (numerator == null || denominator == null) return null;
+      return '$numerator / $denominator';
     }
 
     final valueTime = valueX?.isAs<fhir_r4.FhirTime>();

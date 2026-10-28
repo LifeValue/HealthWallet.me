@@ -291,6 +291,13 @@ void main() {
       );
     });
 
+    test('formatRange keeps the direction of an open range', () {
+      expect(FhirCommonExtractor.formatRange('1', '2'), '1 - 2');
+      expect(FhirCommonExtractor.formatRange('1', null), '≥ 1');
+      expect(FhirCommonExtractor.formatRange(null, '2'), '≤ 2');
+      expect(FhirCommonExtractor.formatRange(null, null), isNull);
+    });
+
     test('quantityValue is null without a value', () {
       expect(FhirCommonExtractor.quantityValue(null), isNull);
       expect(
@@ -495,7 +502,31 @@ void main() {
       ];
       expect(
         FhirCommonExtractor.extractDosageInstructions(dosages),
-        'Morning: 1 tablet; At bedtime, 2 ',
+        'Morning: 1 tablet; At bedtime, 2',
+      );
+    });
+
+    test('skips a dose without value and falls back to the UCUM code', () {
+      expect(
+        FhirCommonExtractor.extractDosageInstructions([
+          _dosage({
+            'route': codeableConcept(text: 'Oral'),
+            'doseAndRate': [
+              {'doseQuantity': quantity(null, unit: 'mg')},
+            ],
+          }),
+        ]),
+        'Oral',
+      );
+      expect(
+        FhirCommonExtractor.extractDosageInstructions([
+          _dosage({
+            'doseAndRate': [
+              {'doseQuantity': quantity(5, code: 'mg')},
+            ],
+          }),
+        ]),
+        '5 mg',
       );
     });
   });

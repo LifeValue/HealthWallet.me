@@ -40,13 +40,21 @@ class FhirTemporalExtractor {
     return null;
   }
 
-  /// "low - high" with the raw recorded values; a missing bound is left out
-  /// and an empty range is null.
-  static String? _rangeValues(fhir_r4.Range range) {
-    final low = range.low?.value?.toString();
-    final high = range.high?.value?.toString();
-    if (low != null && high != null) return '$low - $high';
-    return low ?? high;
+  /// "low - high" with the raw recorded values; an open range keeps its
+  /// direction ("≥ low", "≤ high") and an empty range is null.
+  static String? _rangeValues(fhir_r4.Range range) =>
+      FhirCommonExtractor.formatRange(
+        range.low?.value?.toString(),
+        range.high?.value?.toString(),
+      );
+
+  /// "[value] [unit]" of an Age, the unit defaulting to years; null without
+  /// a value.
+  static String? _ageValue(fhir_r4.Age age, AppLocalizations? l10n) {
+    final value = age.value?.toString();
+    if (value == null) return null;
+    final unit = age.unit?.toString().trim();
+    return '$value ${unit == null || unit.isEmpty ? l10n?.years ?? 'years' : unit}';
   }
 
   static String? extractPeriodStart(fhir_r4.Period? period) {
@@ -120,9 +128,7 @@ class FhirTemporalExtractor {
     if (onsetDateTime != null) return onsetDateTime.valueString;
 
     final onsetAge = onsetX.isAs<fhir_r4.Age>();
-    if (onsetAge != null) {
-      return '${onsetAge.value} ${onsetAge.unit ?? l10n?.years ?? 'years'}';
-    }
+    if (onsetAge != null) return _ageValue(onsetAge, l10n);
 
     final onsetPeriod = onsetX.isAs<fhir_r4.Period>();
     if (onsetPeriod != null) return extractPeriod(onsetPeriod, l10n: l10n);
@@ -146,9 +152,7 @@ class FhirTemporalExtractor {
     if (abatementDateTime != null) return abatementDateTime.valueString;
 
     final abatementAge = abatementX.isAs<fhir_r4.Age>();
-    if (abatementAge != null) {
-      return '${abatementAge.value} ${abatementAge.unit ?? l10n?.years ?? 'years'}';
-    }
+    if (abatementAge != null) return _ageValue(abatementAge, l10n);
 
     final abatementPeriod = abatementX.isAs<fhir_r4.Period>();
     if (abatementPeriod != null) {
@@ -328,12 +332,10 @@ class FhirTemporalExtractor {
 
     final onsetRange = onsetX.isAs<fhir_r4.Range>();
     if (onsetRange != null) {
-      final low = FhirCommonExtractor.extractQuantity(onsetRange.low);
-      final high = FhirCommonExtractor.extractQuantity(onsetRange.high);
-      if (low != null && high != null) {
-        return '$low - $high';
-      }
-      return low ?? high;
+      return FhirCommonExtractor.formatRange(
+        FhirCommonExtractor.extractQuantity(onsetRange.low),
+        FhirCommonExtractor.extractQuantity(onsetRange.high),
+      );
     }
 
     final onsetString = onsetX.isAs<fhir_r4.FhirString>();
@@ -367,12 +369,10 @@ class FhirTemporalExtractor {
 
     final abatementRange = abatementX.isAs<fhir_r4.Range>();
     if (abatementRange != null) {
-      final low = FhirCommonExtractor.extractQuantity(abatementRange.low);
-      final high = FhirCommonExtractor.extractQuantity(abatementRange.high);
-      if (low != null && high != null) {
-        return '$low - $high';
-      }
-      return low ?? high;
+      return FhirCommonExtractor.formatRange(
+        FhirCommonExtractor.extractQuantity(abatementRange.low),
+        FhirCommonExtractor.extractQuantity(abatementRange.high),
+      );
     }
 
     final abatementString = abatementX.isAs<fhir_r4.FhirString>();
@@ -416,12 +416,10 @@ class FhirTemporalExtractor {
 
     final performedRange = performedX.isAs<fhir_r4.Range>();
     if (performedRange != null) {
-      final low = FhirCommonExtractor.extractQuantity(performedRange.low);
-      final high = FhirCommonExtractor.extractQuantity(performedRange.high);
-      if (low != null && high != null) {
-        return '$low - $high';
-      }
-      return low ?? high;
+      return FhirCommonExtractor.formatRange(
+        FhirCommonExtractor.extractQuantity(performedRange.low),
+        FhirCommonExtractor.extractQuantity(performedRange.high),
+      );
     }
 
     return null;
