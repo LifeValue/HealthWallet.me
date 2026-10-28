@@ -6,6 +6,7 @@ import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/utils/unit_converter.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/extractors/fhir_temporal_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
 
 class FhirObservationExtractor {
@@ -17,7 +18,13 @@ class FhirObservationExtractor {
   }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
-      return '${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${_unit(valueQuantity.unit.toString(), l10n)}';
+      final value = FhirCommonExtractor.quantityValue(valueQuantity);
+      if (value == null) return null;
+      return _withUnit(
+        value,
+        FhirCommonExtractor.quantityUnit(valueQuantity),
+        l10n,
+      );
     }
 
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
@@ -44,12 +51,18 @@ class FhirObservationExtractor {
 
     final valueRange = valueX?.isAs<fhir_r4.Range>();
     if (valueRange != null) {
-      return '${valueRange.low?.value?.valueDouble?.toStringAsFixed(2)} - ${valueRange.high?.value?.valueDouble?.toStringAsFixed(2)}';
+      return FhirCommonExtractor.joinNullable([
+        FhirCommonExtractor.quantityValue(valueRange.low),
+        FhirCommonExtractor.quantityValue(valueRange.high),
+      ], ' - ');
     }
 
     final valueRatio = valueX?.isAs<fhir_r4.Ratio>();
     if (valueRatio != null) {
-      return '${valueRatio.numerator?.value?.valueDouble?.toStringAsFixed(2)} / ${valueRatio.denominator?.value?.valueDouble?.toStringAsFixed(2)}';
+      return FhirCommonExtractor.joinNullable([
+        FhirCommonExtractor.quantityValue(valueRatio.numerator),
+        FhirCommonExtractor.quantityValue(valueRatio.denominator),
+      ], ' / ');
     }
 
     final valueTime = valueX?.isAs<fhir_r4.FhirTime>();
@@ -64,7 +77,7 @@ class FhirObservationExtractor {
 
     final valuePeriod = valueX?.isAs<fhir_r4.Period>();
     if (valuePeriod != null) {
-      return '${valuePeriod.start} - ${valuePeriod.end}';
+      return FhirTemporalExtractor.extractPeriod(valuePeriod, l10n: l10n);
     }
 
     return null;
@@ -78,17 +91,21 @@ class FhirObservationExtractor {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
       final rawValue = valueQuantity.value?.valueDouble;
-      final rawUnit = valueQuantity.unit?.toString() ?? '';
-      if (rawValue != null) {
-        if (UnitConverter.heightInCm(rawValue, rawUnit) != null &&
-            region.heightUnit == 'ft/in') {
-          final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-          return converted.unit;
-        }
-        final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-        return '${converted.value.toStringAsFixed(2)} ${_unit(converted.unit, l10n)}';
+      if (rawValue == null) return null;
+      final rawUnit = FhirCommonExtractor.quantityUnit(valueQuantity) ?? '';
+      final converted = convertQuantityForRegion(rawValue, rawUnit, region);
+      if (UnitConverter.heightInCm(rawValue, rawUnit) != null &&
+          region.heightUnit == 'ft/in') {
+        return converted.unit;
       }
-      return '${rawValue?.toStringAsFixed(2)} ${_unit(rawUnit, l10n)}';
+      return _withUnit(
+        FhirCommonExtractor.formatQuantityValue(
+          converted.value,
+          source: rawValue,
+        ),
+        converted.unit,
+        l10n,
+      );
     }
 
     return extractObservationValue(valueX, l10n: l10n);
@@ -96,6 +113,12 @@ class FhirObservationExtractor {
 
   static String _unit(String unit, AppLocalizations? l10n) =>
       l10n == null ? unit : localizedUnit(unit, l10n);
+
+  /// "[value] [unit]", or the bare value when there is no unit.
+  static String _withUnit(String value, String? unit, AppLocalizations? l10n) {
+    if (unit == null || unit.trim().isEmpty) return value;
+    return '$value ${_unit(unit, l10n)}';
+  }
 
   static ({double value, String unit}) convertQuantityForRegion(
     double value,

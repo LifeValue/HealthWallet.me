@@ -73,14 +73,45 @@ class FhirCommonExtractor {
     return null;
   }
 
+  static const _minQuantityDecimals = 2;
+  static const _maxQuantityDecimals = 6;
+
+  /// The decimals a quantity is shown with: at least 2, at most as many as
+  /// [source] carries, capped at 6 (120 -> 2, 0.004 -> 3, 1.2345 -> 4).
+  static int quantityDecimals(double source) {
+    for (var d = _minQuantityDecimals; d < _maxQuantityDecimals; d++) {
+      if (double.parse(source.toStringAsFixed(d)) == source) return d;
+    }
+    return _maxQuantityDecimals;
+  }
+
+  /// Formats [value] with the decimals of [source] (default: [value] itself),
+  /// so a converted value keeps the precision of the recorded one.
+  static String formatQuantityValue(double value, {double? source}) =>
+      value.toStringAsFixed(quantityDecimals(source ?? value));
+
+  /// The unit of [quantity], falling back to its UCUM `code`; null when
+  /// neither is present.
+  static String? quantityUnit(fhir_r4.Quantity? quantity) {
+    final unit = quantity?.unit?.valueString?.trim();
+    if (unit != null && unit.isNotEmpty) return unit;
+    final code = quantity?.code?.valueString?.trim();
+    if (code != null && code.isNotEmpty) return code;
+    return null;
+  }
+
+  /// The formatted value of [quantity] without its unit, or null when it has
+  /// no value.
+  static String? quantityValue(fhir_r4.Quantity? quantity) {
+    final value = quantity?.value?.valueDouble;
+    return value == null ? null : formatQuantityValue(value);
+  }
+
   static String? extractQuantity(fhir_r4.Quantity? quantity) {
-    if (quantity == null) return null;
-    if (quantity.value == null) return null;
-
-    final value = quantity.value?.valueDouble?.toStringAsFixed(2);
-    final unit = quantity.unit?.toString() ?? '';
-
-    return '$value $unit'.trim();
+    final value = quantityValue(quantity);
+    if (value == null) return null;
+    final unit = quantityUnit(quantity);
+    return unit == null ? value : '$value $unit';
   }
 
   static String? extractAllCodeableConceptsFromArray(

@@ -132,9 +132,6 @@ void main() {
           '7.20',
         );
       },
-      skip:
-          'BUG: interpolates the nullable unit, giving "7.20 null" (also '
-          'for UCUM-only quantities that carry `code` but no `unit`)',
     );
 
     test(
@@ -149,8 +146,124 @@ void main() {
           isNot(contains('null')),
         );
       },
-      skip: 'BUG: an open Range is rendered as "null - 5.00"',
     );
+  });
+
+  group('extractObservationValue missing parts', () {
+    final cases = <(String, Map<String, dynamic>, String?)>[
+      (
+        'UCUM code without unit',
+        {'valueQuantity': quantity(7.2, code: 'mmol/L')},
+        '7.20 mmol/L',
+      ),
+      ('Quantity without value', {'valueQuantity': quantity(null)}, null),
+      (
+        'small lab value',
+        {'valueQuantity': quantity(0.004, unit: 'ng/mL')},
+        '0.004 ng/mL',
+      ),
+      (
+        'value with four decimals',
+        {'valueQuantity': quantity(1.2345, unit: 'mg/dL')},
+        '1.2345 mg/dL',
+      ),
+      (
+        'whole value',
+        {'valueQuantity': quantity(120, unit: 'mg/dL')},
+        '120.00 mg/dL',
+      ),
+      (
+        'Range without high',
+        {
+          'valueRange': {'low': quantity(1)},
+        },
+        '1.00',
+      ),
+      (
+        'Range without low',
+        {
+          'valueRange': {'high': quantity(5)},
+        },
+        '5.00',
+      ),
+      (
+        'Range keeps the decimals of each bound',
+        {
+          'valueRange': {'low': quantity(0.004), 'high': quantity(0.04)},
+        },
+        '0.004 - 0.04',
+      ),
+      (
+        'Range without high or low',
+        {
+          'valueRange': {'low': quantity(null, unit: 'mg')},
+        },
+        null,
+      ),
+      (
+        'Ratio without denominator',
+        {
+          'valueRatio': {'numerator': quantity(1)},
+        },
+        '1.00',
+      ),
+      (
+        'Ratio without numerator',
+        {
+          'valueRatio': {'denominator': quantity(128)},
+        },
+        '128.00',
+      ),
+      (
+        'empty Ratio',
+        {
+          'valueRatio': {'numerator': quantity(null, unit: 'mg')},
+        },
+        null,
+      ),
+      (
+        'Period with start only',
+        {
+          'valuePeriod': {'start': '2024-01-01'},
+        },
+        'From 2024-01-01',
+      ),
+      (
+        'Period with end only',
+        {
+          'valuePeriod': {'end': '2024-01-02'},
+        },
+        'Until 2024-01-02',
+      ),
+    ];
+    for (final (name, value, expected) in cases) {
+      test('$name -> $expected', () {
+        expect(
+          FhirObservationExtractor.extractObservationValue(_value(value)),
+          expected,
+        );
+      });
+    }
+
+    test('a UCUM code without unit is converted for the region', () {
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(70, code: 'kg')}),
+          RegionPreset.us,
+        ),
+        '154.32 lbs',
+      );
+    });
+
+    test('a converted value without unit keeps the bare value', () {
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(0.004, code: 'ng/mL')}),
+          RegionPreset.us,
+        ),
+        '0.004 ng/mL',
+      );
+    });
   });
 
   group('convertQuantityForRegion', () {
@@ -279,7 +392,7 @@ void main() {
           _value({'valueQuantity': quantity(7)}),
           RegionPreset.europe,
         ),
-        '7.00 ',
+        '7.00',
       );
     });
 
@@ -335,7 +448,6 @@ void main() {
           isNull,
         );
       },
-      skip: 'BUG: a value-less Quantity is rendered as "null mmHg"',
     );
   });
 
