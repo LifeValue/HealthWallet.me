@@ -95,27 +95,6 @@ class ProcessingMappingSection extends StatelessWidget {
     );
   }
 
-  String _sanitizeError(BuildContext context, Failure failure) {
-    if (failure.reason == PipelineFailureReason.modelNotFound) {
-      return context.l10n.modelNotFoundError;
-    }
-    final error = failure.error;
-    // The two checks below read the English exception text of the AI engine
-    // (ai_inference_data_source.dart), not translated text.
-    if (error.contains('Not enough memory')) {
-      return context.l10n.processingFailedCapacity;
-    }
-    if (error.contains('corrupted')) {
-      return context.l10n.modelCorruptedError;
-    }
-    if (error.contains('Exception:')) {
-      return error
-          .replaceAll(RegExp(r'Exception:\s*'), '')
-          .replaceAll(RegExp(r'/[\w/\-\.]+/'), '');
-    }
-    return error;
-  }
-
   Widget _buildFailure(BuildContext context, Failure failure) {
     final isNoModel = failure.reason == PipelineFailureReason.modelNotFound;
     final title = isNoModel
@@ -166,7 +145,7 @@ class ProcessingMappingSection extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                _sanitizeError(context, failure),
+                failure.reason.localizedMessage(context.l10n),
                 style: AppTextStyle.bodySmall.copyWith(
                   color: context.colorScheme.onSurface,
                 ),

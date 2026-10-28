@@ -20,6 +20,7 @@ import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/processing/presentation/widgets/capture_error_listener.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/records/presentation/widgets/ips_export_error_listener.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
@@ -216,7 +217,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 Intl.defaultLocale = context.l10n.localeName;
                 return AppLockOverlay(
                   child: IpsExportErrorListener(
-                    child: WalletPassErrorListener(child: child!),
+                    child: WalletPassErrorListener(
+                      child: CaptureErrorListener(child: child!),
+                    ),
                   ),
                 );
               },

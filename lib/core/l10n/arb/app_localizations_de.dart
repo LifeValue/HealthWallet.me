@@ -599,6 +599,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Modelldatei ist beschädigt. Bitte laden Sie das KI-Modell erneut herunter.';
 
   @override
+  String get processingFailedGeneric =>
+      'Beim Verarbeiten des Dokuments ist ein Fehler aufgetreten. Bitte versuche es erneut.';
+
+  @override
   String get processingCancelled => 'Die Verarbeitung wurde abgebrochen';
 
   @override
@@ -2931,17 +2935,15 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String scanFailedWithError(String error) {
-    return 'Scannen fehlgeschlagen: $error';
-  }
+  String get scanFailed =>
+      'Der Scan ist fehlgeschlagen. Bitte versuche es erneut.';
 
   @override
   String get noValidFilesFound => 'Keine gültigen Dateien gefunden';
 
   @override
-  String failedToImportDocument(String error) {
-    return 'Dokument konnte nicht importiert werden: $error';
-  }
+  String get importDocumentFailed =>
+      'Das Dokument konnte nicht importiert werden. Bitte versuche es erneut.';
 
   @override
   String get couldNotOpenLink =>

@@ -185,6 +185,7 @@
   "processingFailed": "Processing failed",
   "modelNotFoundError": "Model file not found. Please download the AI model first.",
   "modelCorruptedError": "Model file is corrupted. Please re-download the AI model.",
+  "processingFailedGeneric": "Something went wrong while processing the document. Please try again.",
   "processingCancelled": "Processing was cancelled",
   "processingBasicDetails": "Processing basic details...",
   "processingPages": "Processing pages...",
@@ -1450,23 +1451,9 @@
       }
     }
   },
-  "scanFailedWithError": "Scan failed: {error}",
-  "@scanFailedWithError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "scanFailed": "The scan failed. Please try again.",
   "noValidFilesFound": "No valid files found",
-  "failedToImportDocument": "Failed to import document: {error}",
-  "@failedToImportDocument": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "importDocumentFailed": "Couldn't import the document. Please try again.",
   "couldNotOpenLink": "Could not open link. Please try again.",
   "continueProcessingOnDesktop": "Continue processing on Desktop",
   "deleteResourcesTitle": "Delete Resources",

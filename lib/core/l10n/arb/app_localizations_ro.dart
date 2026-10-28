@@ -598,6 +598,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Fișierul modelului este corupt. Re-descarcă modelul AI.';
 
   @override
+  String get processingFailedGeneric =>
+      'A apărut o eroare la procesarea documentului. Încearcă din nou.';
+
+  @override
   String get processingCancelled => 'Procesarea a fost anulată';
 
   @override
@@ -2924,17 +2928,14 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String scanFailedWithError(String error) {
-    return 'Scanarea a eșuat: $error';
-  }
+  String get scanFailed => 'Scanarea a eșuat. Încearcă din nou.';
 
   @override
   String get noValidFilesFound => 'Nu s-au găsit fișiere valide';
 
   @override
-  String failedToImportDocument(String error) {
-    return 'Importul documentului a eșuat: $error';
-  }
+  String get importDocumentFailed =>
+      'Importul documentului a eșuat. Încearcă din nou.';
 
   @override
   String get couldNotOpenLink =>

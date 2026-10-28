@@ -1176,6 +1176,12 @@ abstract class AppLocalizations {
   /// **'Model file is corrupted. Please re-download the AI model.'**
   String get modelCorruptedError;
 
+  /// No description provided for @processingFailedGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong while processing the document. Please try again.'**
+  String get processingFailedGeneric;
+
   /// No description provided for @processingCancelled.
   ///
   /// In en, this message translates to:
@@ -5255,11 +5261,11 @@ abstract class AppLocalizations {
   /// **'{origin} processing finished'**
   String processingFinished(String origin);
 
-  /// No description provided for @scanFailedWithError.
+  /// No description provided for @scanFailed.
   ///
   /// In en, this message translates to:
-  /// **'Scan failed: {error}'**
-  String scanFailedWithError(String error);
+  /// **'The scan failed. Please try again.'**
+  String get scanFailed;
 
   /// No description provided for @noValidFilesFound.
   ///
@@ -5267,11 +5273,11 @@ abstract class AppLocalizations {
   /// **'No valid files found'**
   String get noValidFilesFound;
 
-  /// No description provided for @failedToImportDocument.
+  /// No description provided for @importDocumentFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to import document: {error}'**
-  String failedToImportDocument(String error);
+  /// **'Couldn\'t import the document. Please try again.'**
+  String get importDocumentFailed;
 
   /// No description provided for @couldNotOpenLink.
   ///

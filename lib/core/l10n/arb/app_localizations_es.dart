@@ -597,6 +597,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'El archivo del modelo está dañado. Vuelve a descargar el modelo de IA.';
 
   @override
+  String get processingFailedGeneric =>
+      'Algo salió mal al procesar el documento. Inténtalo de nuevo.';
+
+  @override
   String get processingCancelled => 'El procesamiento fue cancelado';
 
   @override
@@ -2924,17 +2928,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String scanFailedWithError(String error) {
-    return 'Error al escanear: $error';
-  }
+  String get scanFailed => 'Error al escanear. Inténtalo de nuevo.';
 
   @override
   String get noValidFilesFound => 'No se encontraron archivos válidos';
 
   @override
-  String failedToImportDocument(String error) {
-    return 'No se pudo importar el documento: $error';
-  }
+  String get importDocumentFailed =>
+      'No se pudo importar el documento. Inténtalo de nuevo.';
 
   @override
   String get couldNotOpenLink =>

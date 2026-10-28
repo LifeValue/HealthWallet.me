@@ -588,6 +588,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Model file is corrupted. Please re-download the AI model.';
 
   @override
+  String get processingFailedGeneric =>
+      'Something went wrong while processing the document. Please try again.';
+
+  @override
   String get processingCancelled => 'Processing was cancelled';
 
   @override
@@ -2886,17 +2890,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String scanFailedWithError(String error) {
-    return 'Scan failed: $error';
-  }
+  String get scanFailed => 'The scan failed. Please try again.';
 
   @override
   String get noValidFilesFound => 'No valid files found';
 
   @override
-  String failedToImportDocument(String error) {
-    return 'Failed to import document: $error';
-  }
+  String get importDocumentFailed =>
+      'Couldn\'t import the document. Please try again.';
 
   @override
   String get couldNotOpenLink => 'Could not open link. Please try again.';
