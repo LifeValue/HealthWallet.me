@@ -14,6 +14,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/tcp_s
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
+import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -42,6 +43,8 @@ void main() async {
 
   getIt<CommunicationBloc>().add(const CommunicationInitialised());
 
+  // A share interrupted by a kill or crash leaves its files behind.
+  unawaited(getIt<ShareRecordsService>().sweepLeftovers());
   unawaited(getIt<ShareIntentService>().initialize());
   unawaited(getIt<DeepLinkService>().initialize());
   getIt<ProcessingBloc>().add(const ProcessingInitialised());

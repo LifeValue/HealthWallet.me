@@ -119,9 +119,56 @@ class ShareRecordsService {
     }
   }
 
+  static const _sessionDirPrefix = 'share_session_';
+  static const _payloadFilePrefix = 'share_';
+
+  /// Deletes the decrypted attachments of a receive session.
+  Future<void> deleteSessionFiles(String sessionId) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final sessionDir = Directory(
+        '${tempDir.path}/$_sessionDirPrefix$sessionId',
+      );
+      if (await sessionDir.exists()) {
+        await sessionDir.delete(recursive: true);
+      }
+    } catch (e) {
+      debugPrint('[TRANSFER] Error deleting session files: $e');
+    }
+  }
+
+  /// Removes what a share left in the temp directory when the app was killed
+  /// or crashed mid-session: decrypted attachments and encrypted payloads.
+  /// Run at startup, before any share can be in progress.
+  Future<void> sweepLeftovers() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      if (!await tempDir.exists()) return;
+      await for (final entity in tempDir.list(followLinks: false)) {
+        final name = entity.uri.pathSegments.lastWhere(
+          (segment) => segment.isNotEmpty,
+          orElse: () => '',
+        );
+        final isSessionDir =
+            entity is Directory && name.startsWith(_sessionDirPrefix);
+        final isPayload =
+            entity is File &&
+            name.startsWith(_payloadFilePrefix) &&
+            name.endsWith('.bin');
+        if (isSessionDir || isPayload) {
+          await entity.delete(recursive: true);
+        }
+      }
+    } catch (e) {
+      debugPrint('[TRANSFER] Error sweeping share leftovers: $e');
+    }
+  }
+
   Future<String> _createSessionTempDir(String sessionId) async {
     final tempDir = await getTemporaryDirectory();
-    final sessionDir = Directory('${tempDir.path}/share_session_$sessionId');
+    final sessionDir = Directory(
+      '${tempDir.path}/$_sessionDirPrefix$sessionId',
+    );
     if (!await sessionDir.exists()) {
       await sessionDir.create(recursive: true);
     }

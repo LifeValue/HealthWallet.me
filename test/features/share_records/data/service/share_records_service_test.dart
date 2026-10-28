@@ -226,6 +226,37 @@ void main() {
       expect(file.existsSync(), isFalse);
     });
 
+    test('deleteSessionFiles removes only that session\'s folder', () async {
+      final session = Directory('${root.path}/tmp/share_session_s1')
+        ..createSync();
+      File('${session.path}/scan.png').writeAsBytesSync([1]);
+      final other = Directory('${root.path}/tmp/share_session_s2')
+        ..createSync();
+
+      await service.deleteSessionFiles('s1');
+
+      expect(session.existsSync(), isFalse);
+      expect(other.existsSync(), isTrue);
+      await expectLater(service.deleteSessionFiles('missing'), completes);
+    });
+
+    test('sweepLeftovers removes share files and nothing else', () async {
+      final tmp = '${root.path}/tmp';
+      final session = Directory('$tmp/share_session_old')..createSync();
+      File('${session.path}/scan.png').writeAsBytesSync([1]);
+      final payload = File('$tmp/share_p1.bin')..writeAsBytesSync([2]);
+      final unrelated = File('$tmp/scan_upload.pdf')..writeAsBytesSync([3]);
+      final shareNamedJson = File('$tmp/share_notes.json')
+        ..writeAsStringSync('{}');
+
+      await service.sweepLeftovers();
+
+      expect(session.existsSync(), isFalse);
+      expect(payload.existsSync(), isFalse);
+      expect(unrelated.existsSync(), isTrue);
+      expect(shareNamedJson.existsSync(), isTrue);
+    });
+
     test('readReceivedFile returns null for a missing file', () async {
       expect(
         await service.readReceivedFile('${root.path}/tmp/nope.bin'),
