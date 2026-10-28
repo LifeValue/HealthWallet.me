@@ -1001,6 +1001,24 @@ class AppLocalizationsRo extends AppLocalizations {
   String get shareReceivingRecords => 'Se primesc înregistrările...';
 
   @override
+  String get shareVerifyTitle => 'Compară codurile';
+
+  @override
+  String get shareVerifySenderHint =>
+      'Verifică dacă celălalt telefon afișează același cod. Înregistrările tale rămân blocate până confirmi.';
+
+  @override
+  String get shareVerifyReceiverHint =>
+      'Verifică dacă celălalt telefon afișează același cod. Înregistrările se deschid după ce expeditorul confirmă.';
+
+  @override
+  String get shareVerifyCodesMatch => 'Codurile coincid';
+
+  @override
+  String get shareVerifyWaitingForSender =>
+      'Se așteaptă confirmarea expeditorului...';
+
+  @override
   String get shareConfirmExit => 'Confirmă Ieșirea';
 
   @override

@@ -16,6 +16,7 @@ import 'package:health_wallet/features/share_records/core/share_permissions_help
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
+import 'package:health_wallet/features/share_records/presentation/views/code_verification_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/ephemeral_viewer_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/peer_discovery_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/record_selection_view.dart';
@@ -487,6 +488,8 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
         return state.isSending
             ? context.l10n.shareSending
             : context.l10n.shareReceiving;
+      case SharePhase.verifyingCode:
+        return context.l10n.shareVerifyTitle;
       case SharePhase.monitoringSession:
         return context.l10n.shareSessionActive;
       case SharePhase.viewingRecords:
@@ -511,6 +514,8 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
         return ConnectingView(state: state);
       case SharePhase.transferring:
         return TransferProgressView(state: state);
+      case SharePhase.verifyingCode:
+        return CodeVerificationView(state: state);
       case SharePhase.monitoringSession:
         return SessionMonitoringView(state: state);
       case SharePhase.viewingRecords:
@@ -530,6 +535,8 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
       if (confirmed == true && context.mounted) {
         bloc.add(const ShareRecordsEvent.killSessionRequested());
       }
+    } else if (state.phase == SharePhase.verifyingCode) {
+      CodeVerificationView.cancel(context, state);
     } else if (state.phase == SharePhase.discoveringPeers) {
       bloc.add(const ShareRecordsEvent.sendModeSelected());
     } else if (state.receivedData != null) {

@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
+import 'package:health_wallet/features/share_records/data/crypto/share_crypto.dart';
+import 'package:health_wallet/features/share_records/data/service/secure_share_session.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 
@@ -81,6 +83,12 @@ void main() {
     activeFilters: const ['Observation', 'DocumentReference'],
   );
 
+  SecureShareSession newSession() {
+    final session = service.createSecureSession();
+    addTearDown(session.dispose);
+    return session;
+  }
+
   group('sending', () {
     test('createPayload builds a view-only bundle', () async {
       final payload = await payloadWithAttachment();
@@ -92,18 +100,23 @@ void main() {
     });
 
     test(
-      'prepareFilesForSending writes the payload and hands it over',
+      'prepareFilesForSending writes only the encrypted envelope',
       () async {
         final payload = await payloadWithAttachment();
 
-        final path = await service.prepareFilesForSending(payload);
-
-        expect(path, '${root.path}/tmp/share_${payload.id}.json');
-        final written = SharePayload.fromJson(
-          jsonDecode(File(path!).readAsStringSync()) as Map<String, dynamic>,
+        final path = await service.prepareFilesForSending(
+          payload,
+          newSession(),
         );
-        expect(written.id, payload.id);
-        expect(written.bundle.entry, hasLength(2));
+
+        expect(path, '${root.path}/tmp/share_${payload.id}.bin');
+        final written = File(path!).readAsBytesSync();
+        expect(ShareEnvelope.looksLikeEnvelope(written), isTrue);
+        expect(ShareEnvelope.decode(written).ciphertext, isNotEmpty);
+        expect(
+          utf8.decode(written, allowMalformed: true),
+          isNot(contains('Jane')),
+        );
         expect(native.calls.single.method, 'addFiles');
         expect(native.calls.single.arguments, {
           'filePaths': [path],
@@ -115,7 +128,10 @@ void main() {
       native.onCall = (_) => throw PlatformException(code: 'NO_PEER');
       final payload = await payloadWithAttachment();
 
-      expect(await service.prepareFilesForSending(payload), isNull);
+      expect(
+        await service.prepareFilesForSending(payload, newSession()),
+        isNull,
+      );
     });
 
     test(
@@ -124,16 +140,13 @@ void main() {
         native.onCall = (_) => throw PlatformException(code: 'NO_PEER');
         final payload = await payloadWithAttachment();
 
-        await service.prepareFilesForSending(payload);
+        await service.prepareFilesForSending(payload, newSession());
 
         expect(
-          File('${root.path}/tmp/share_${payload.id}.json').existsSync(),
+          File('${root.path}/tmp/share_${payload.id}.bin').existsSync(),
           isFalse,
         );
       },
-      skip:
-          'BUG: on failure the plaintext health-record JSON is left behind '
-          'in the temp directory',
     );
 
     test('cleanupTempFile deletes the file and ignores missing ones', () async {
@@ -148,17 +161,10 @@ void main() {
   });
 
   group('receiving', () {
-    test('parseReceivedData restores records, notes and attachments', () async {
+    test('parsePayload restores records, notes and attachments', () async {
       final payload = await payloadWithAttachment();
 
-      final container = await service.parseReceivedData(
-        ReceivedData(
-          fileName: 'share.json',
-          data: _bytes(payload),
-          totalFiles: 1,
-          currentFile: 1,
-        ),
-      );
+      final container = await service.parsePayload(_bytes(payload));
 
       expect(container, isNotNull);
       expect(container!.sessionId, payload.id);
@@ -177,20 +183,13 @@ void main() {
       expect(File('$sessionDir/scan.png').readAsBytesSync(), [137, 80, 78, 71]);
     });
 
-    test('parseReceivedData reuses an existing session directory', () async {
+    test('parsePayload reuses an existing session directory', () async {
       final payload = await payloadWithAttachment();
       Directory(
         '${root.path}/tmp/share_session_${payload.id}',
       ).createSync(recursive: true);
 
-      final container = await service.parseReceivedData(
-        ReceivedData(
-          fileName: 'share.json',
-          data: _bytes(payload),
-          totalFiles: 1,
-          currentFile: 1,
-        ),
-      );
+      final container = await service.parsePayload(_bytes(payload));
       expect(container?.records, hasLength(2));
     });
 
@@ -202,60 +201,34 @@ void main() {
       'empty': const [],
     };
     for (final MapEntry(key: name, value: bytes) in corrupted.entries) {
-      test('parseReceivedData returns null for $name', () async {
-        final container = await service.parseReceivedData(
-          ReceivedData(
-            fileName: 'share.json',
-            data: Uint8List.fromList(bytes),
-            totalFiles: 1,
-            currentFile: 1,
-          ),
-        );
+      test('parsePayload returns null for $name', () async {
+        final container = await service.parsePayload(Uint8List.fromList(bytes));
         expect(container, isNull);
       });
     }
 
     test(
-      'parseReceivedData returns null for a truncated real payload',
+      'parsePayload returns null for a truncated real payload',
       () async {
         final bytes = _bytes(await payloadWithAttachment());
-        final container = await service.parseReceivedData(
-          ReceivedData(
-            fileName: 'share.json',
-            data: Uint8List.sublistView(bytes, 0, bytes.length ~/ 2),
-            totalFiles: 1,
-            currentFile: 1,
-          ),
+        final container = await service.parsePayload(
+          Uint8List.sublistView(bytes, 0, bytes.length ~/ 2),
         );
         expect(container, isNull);
       },
     );
 
-    test('parseReceivedFile parses and deletes the received file', () async {
-      final payload = await payloadWithAttachment();
-      final file = File('${root.path}/tmp/received.json')
-        ..writeAsBytesSync(_bytes(payload));
+    test('readReceivedFile returns the bytes and deletes the file', () async {
+      final file = File('${root.path}/tmp/received.bin')
+        ..writeAsBytesSync([1, 2, 3]);
 
-      final container = await service.parseReceivedFile(file.path);
-
-      expect(container?.sessionId, payload.id);
+      expect(await service.readReceivedFile(file.path), [1, 2, 3]);
       expect(file.existsSync(), isFalse);
     });
 
-    test(
-      'parseReceivedFile deletes a corrupted file and returns null',
-      () async {
-        final file = File('${root.path}/tmp/received.json')
-          ..writeAsStringSync('{"broken": ');
-
-        expect(await service.parseReceivedFile(file.path), isNull);
-        expect(file.existsSync(), isFalse);
-      },
-    );
-
-    test('parseReceivedFile returns null for a missing file', () async {
+    test('readReceivedFile returns null for a missing file', () async {
       expect(
-        await service.parseReceivedFile('${root.path}/tmp/nope.json'),
+        await service.readReceivedFile('${root.path}/tmp/nope.bin'),
         isNull,
       );
     });
@@ -373,6 +346,36 @@ void main() {
       );
     });
 
+    test('secure sessions exchange keys over session messages', () async {
+      // The mocked plugin relays this phone's messages to a sender session
+      // and delivers the sender's replies as onSessionMessage events.
+      final toSender = StreamController<Uint8List>.broadcast();
+      addTearDown(toSender.close);
+      native.onCall = (call) {
+        if (call.method == 'sendSessionMessage') {
+          toSender.add((call.arguments as Map)['data'] as Uint8List);
+        }
+        return null;
+      };
+      final sender = SecureShareSession(
+        _PeerTransport(
+          toSender.stream,
+          (message) => native.emit('onSessionMessage', {'data': message}),
+        ),
+      );
+      addTearDown(sender.dispose);
+      final receiver = newSession();
+
+      final envelope = await sender.seal(utf8.encode('hello'));
+      final senderCode = sender.awaitReceiver();
+      final receiverCode = await receiver.open(envelope);
+      expect(await senderCode, receiverCode);
+
+      await sender.confirm();
+      expect(utf8.decode(await receiver.awaitPayload()), 'hello');
+      expect(native.calls.single.method, 'sendSessionMessage');
+    });
+
     test('session lifecycle signals', () async {
       await expectEvent(service.killSignalStream, 'onKillSignal', null, isNull);
       await expectEvent(
@@ -426,4 +429,15 @@ void main() {
       expect(service.progressStream, isA<Stream<TransferProgress>>());
     });
   });
+}
+
+class _PeerTransport implements ShareMessageTransport {
+  @override
+  final Stream<Uint8List> messages;
+  final Future<void> Function(Uint8List message) _send;
+
+  _PeerTransport(this.messages, this._send);
+
+  @override
+  Future<void> send(Uint8List message) => _send(message);
 }

@@ -230,8 +230,11 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         notesMap: notesMap,
         activeFilters: state.appliedFilters.map((f) => f.name).toList(),
       );
-      _shareLog('Preparing files for sending...');
-      _tempFilePath = await _service.prepareFilesForSending(payload);
+      _shareLog('Encrypting and preparing files for sending...');
+      await _disposeSecureSession();
+      final session = _service.createSecureSession();
+      _secureSession = session;
+      _tempFilePath = await _service.prepareFilesForSending(payload, session);
       if (_tempFilePath == null) {
         _shareLog('ERROR: Failed to prepare files for sending');
         emit(
@@ -242,9 +245,26 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         );
         return;
       }
+      unawaited(_awaitReceiverKey(session));
     }
 
     await _service.selectPeer(event.deviceId);
+  }
+
+  /// Runs in the background until the receiver answers with its key, which
+  /// happens only after it has the encrypted records.
+  Future<void> _awaitReceiverKey(SecureShareSession session) async {
+    try {
+      final code = await session.awaitReceiver();
+      if (_isClosed || !identical(session, _secureSession)) return;
+      add(ShareRecordsEvent.verificationCodeReady(code));
+    } on SecureShareCancelled {
+      return;
+    } on SecureShareException catch (e) {
+      _shareLog('ERROR: Key exchange failed: ${e.message}');
+      if (_isClosed || !identical(session, _secureSession)) return;
+      add(ShareRecordsEvent.secureShareFailed(e.message));
+    }
   }
 
   Future<List<IFhirResource>> _enrichSelectionWithRelatedResources(
@@ -334,7 +354,9 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           ),
         );
         _startViewingTimer();
-      } else {
+      } else if (state.phase != SharePhase.verifyingCode) {
+        // The monitoring fallback starts only once the codes are confirmed:
+        // until then the receiver cannot open the records.
         debugPrint(
           '[SHARE] Files sent - staying on connecting until receiver accepts',
         );
@@ -345,7 +367,6 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
             statusMessage: 'Records sent - waiting for receiver to accept',
           ),
         );
-        _startMonitoringFallbackTimer();
       }
     } else {
       debugPrint(
@@ -387,6 +408,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       await _service.cleanupTempFile(_tempFilePath!);
       _tempFilePath = null;
     }
+    await _disposeSecureSession();
 
     emit(
       state.copyWith(
@@ -418,6 +440,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     Emitter<ShareRecordsState> emit,
   ) async {
     _shareLog('Connection retry attempt ${state.connectionRetryCount}');
+    await _disposeSecureSession();
     await _service.disconnect();
     emit(
       state.copyWith(
@@ -489,21 +512,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     _shareLog(
       'Data received: ${event.data.fileName} (${event.data.size} bytes)',
     );
-    final container = await _service.parseReceivedData(event.data);
-    if (container != null) {
-      _shareLog(
-        'Parsed ${container.recordCount} records from ${container.senderDeviceName}',
-      );
-      add(ShareRecordsEvent.ephemeralDataParsed(container));
-    } else {
-      _shareLog('ERROR: parseReceivedData returned null');
-      emit(
-        state.copyWith(
-          phase: SharePhase.error,
-          errorMessage: 'Failed to parse received data',
-        ),
-      );
-    }
+    await _receiveSecurePayload(event.data.data, emit);
   }
 
   Future<void> handleFilesReceived(
@@ -514,23 +523,164 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     emit(state.copyWith(statusMessage: 'Processing received records...'));
 
     for (final filePath in event.filePaths) {
-      _shareLog('Parsing file: $filePath');
-      final container = await _service.parseReceivedFile(filePath);
-      if (container != null) {
-        _shareLog(
-          'Parsed ${container.recordCount} records, ${container.tempAttachmentPaths.length} attachments',
-        );
-        add(ShareRecordsEvent.ephemeralDataParsed(container));
-      } else {
-        _shareLog('ERROR: Failed to parse file: $filePath');
+      _shareLog('Reading file: $filePath');
+      final bytes = await _service.readReceivedFile(filePath);
+      if (bytes == null) {
+        _shareLog('ERROR: Failed to read file: $filePath');
         emit(
           state.copyWith(
             phase: SharePhase.error,
-            errorMessage: 'Failed to parse received file',
+            errorMessage: 'Failed to read received file',
           ),
         );
+        return;
       }
+      await _receiveSecurePayload(bytes, emit);
     }
+  }
+
+  /// Receiver: runs the key exchange for an encrypted share, shows the code,
+  /// and opens the records once the sender confirms it.
+  Future<void> _receiveSecurePayload(
+    Uint8List bytes,
+    Emitter<ShareRecordsState> emit,
+  ) async {
+    if (!ShareEnvelope.looksLikeEnvelope(bytes)) {
+      _shareLog('ERROR: Received an unencrypted share');
+      emit(
+        state.copyWith(
+          phase: SharePhase.error,
+          errorMessage:
+              'This share came from an older version of HealthWallet. '
+              'Update the app on both phones and try again.',
+        ),
+      );
+      return;
+    }
+
+    await _disposeSecureSession();
+    final session = _service.createSecureSession();
+    _secureSession = session;
+
+    try {
+      final code = await session.open(bytes);
+      if (emit.isDone || !identical(session, _secureSession)) return;
+      _shareLog('Key exchange done, waiting for the sender to confirm');
+      emit(
+        state.copyWith(
+          mode: ShareMode.receiving,
+          phase: SharePhase.verifyingCode,
+          verificationCode: code,
+          statusMessage: 'Compare the code with the sender',
+        ),
+      );
+
+      final plaintext = await session.awaitPayload();
+      await _disposeSecureSession();
+      final container = await _service.parsePayload(plaintext);
+      if (emit.isDone) return;
+      if (container == null) {
+        _shareLog('ERROR: Failed to parse the decrypted payload');
+        emit(
+          state.copyWith(
+            phase: SharePhase.error,
+            verificationCode: null,
+            errorMessage: 'Failed to parse received data',
+          ),
+        );
+        return;
+      }
+      _shareLog(
+        'Parsed ${container.recordCount} records from ${container.senderDeviceName}',
+      );
+      add(ShareRecordsEvent.ephemeralDataParsed(container));
+    } on SecureShareCancelled {
+      return;
+    } on SecureShareException catch (e) {
+      _shareLog('ERROR: Key exchange failed: ${e.message}');
+      if (emit.isDone || !identical(session, _secureSession)) return;
+      add(ShareRecordsEvent.secureShareFailed(e.message));
+    }
+  }
+
+  void handleVerificationCodeReady(
+    VerificationCodeReady event,
+    Emitter<ShareRecordsState> emit,
+  ) {
+    if (!state.isSending || _secureSession == null) return;
+    _shareLog('Receiver key received, showing verification code');
+    emit(
+      state.copyWith(
+        phase: SharePhase.verifyingCode,
+        verificationCode: event.code,
+        statusMessage: 'Compare the code with the receiver',
+      ),
+    );
+  }
+
+  Future<void> handleVerificationConfirmed(
+    VerificationConfirmed event,
+    Emitter<ShareRecordsState> emit,
+  ) async {
+    final session = _secureSession;
+    if (!state.isSending || session == null) return;
+
+    // Leave the verification phase before the key goes out, so a fast
+    // viewingStarted from the receiver is not buffered and lost.
+    final viewing = state.sessionStartedAt != null;
+    emit(
+      state.copyWith(
+        phase: viewing ? SharePhase.monitoringSession : SharePhase.connecting,
+        verificationCode: null,
+        statusMessage: viewing
+            ? 'Receiver is viewing records - monitoring session'
+            : 'Records sent - waiting for receiver to open them',
+      ),
+    );
+
+    try {
+      await session.confirm();
+      _shareLog('Codes confirmed, payload key sent');
+    } on SecureShareException catch (e) {
+      _shareLog('ERROR: Could not send the payload key: ${e.message}');
+      add(ShareRecordsEvent.secureShareFailed(e.message));
+      return;
+    } on SecureShareCancelled {
+      return;
+    }
+    await _disposeSecureSession();
+    if (!viewing) _startMonitoringFallbackTimer();
+  }
+
+  Future<void> handleSecureShareFailed(
+    SecureShareFailed event,
+    Emitter<ShareRecordsState> emit,
+  ) async {
+    _viewingTimer?.cancel();
+    _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
+    if (_tempFilePath != null) {
+      await _service.cleanupTempFile(_tempFilePath!);
+      _tempFilePath = null;
+    }
+    try {
+      await _service.sendKillSignal();
+    } catch (e) {
+      debugPrint('[SHARE] Failed to send kill signal: $e');
+    }
+    await _service.disconnect();
+
+    emit(
+      state.copyWith(
+        phase: SharePhase.error,
+        isSessionActive: false,
+        verificationCode: null,
+        errorMessage:
+            "Couldn't set up a secure connection with the other phone. "
+            'Try sharing again.',
+        statusMessage: 'Secure connection failed',
+      ),
+    );
   }
 
   Future<void> handleEphemeralDataParsed(
@@ -548,6 +698,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       state.copyWith(
         phase: SharePhase.viewingRecords,
         receivedData: event.container,
+        verificationCode: null,
         viewingTimeRemaining: event.container.viewDuration,
         isSessionActive: true,
         statusMessage:

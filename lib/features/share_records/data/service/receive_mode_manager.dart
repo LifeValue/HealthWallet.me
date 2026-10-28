@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:airdrop/airdrop.dart';
@@ -10,8 +11,8 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/features/share_records/data/crypto/share_crypto.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
-import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 import 'package:injectable/injectable.dart';
@@ -29,7 +30,7 @@ class ReceiveModeManager implements ReceiveModeService {
   String? _pendingInvitationId;
   String? _pendingInvitationDeviceName;
 
-  EphemeralRecordsContainer? _pendingReceivedData;
+  Uint8List? _pendingPayload;
 
   ReceiveModeManager(this._shareRecordsService);
 
@@ -41,7 +42,7 @@ class ReceiveModeManager implements ReceiveModeService {
   @override
   String? get pendingInvitationDeviceName => _pendingInvitationDeviceName;
   @override
-  EphemeralRecordsContainer? get pendingReceivedData => _pendingReceivedData;
+  Uint8List? get pendingPayload => _pendingPayload;
 
   @override
   void clearPendingInvitation() {
@@ -50,8 +51,8 @@ class ReceiveModeManager implements ReceiveModeService {
   }
 
   @override
-  void clearPendingReceivedData() {
-    _pendingReceivedData = null;
+  void clearPendingPayload() {
+    _pendingPayload = null;
   }
 
   @override
@@ -103,7 +104,7 @@ class ReceiveModeManager implements ReceiveModeService {
       await _shareRecordsService.disconnect();
       _isListening = false;
       clearPendingInvitation();
-      clearPendingReceivedData();
+      clearPendingPayload();
 
       debugPrint('[ReceiveMode] Background listener stopped');
     } catch (e) {
@@ -167,25 +168,28 @@ class ReceiveModeManager implements ReceiveModeService {
     });
   }
 
-  Future<void> _handleReceivedData(ReceivedData data) async {
-    final container = await _shareRecordsService.parseReceivedData(data);
-    if (container != null) {
-      _onDataParsed(container);
+  // The share screen decrypts the payload, since the users have to compare
+  // the verification code there.
+  void _handleReceivedData(ReceivedData data) {
+    if (ShareEnvelope.looksLikeEnvelope(data.data)) {
+      _onPayloadReceived(data.data);
+    } else {
+      debugPrint('[ReceiveMode] Ignoring data that is not a share envelope');
     }
   }
 
   Future<void> _handleReceivedFiles(List<String> filePaths) async {
     for (final filePath in filePaths) {
-      final container = await _shareRecordsService.parseReceivedFile(filePath);
-      if (container != null) {
-        _onDataParsed(container);
+      final bytes = await _shareRecordsService.readReceivedFile(filePath);
+      if (bytes != null && ShareEnvelope.looksLikeEnvelope(bytes)) {
+        _onPayloadReceived(bytes);
         return;
       }
     }
   }
 
-  void _onDataParsed(EphemeralRecordsContainer container) {
-    _pendingReceivedData = container;
+  void _onPayloadReceived(Uint8List payload) {
+    _pendingPayload = payload;
 
     if (_pendingInvitationId != null) {
       debugPrint(
@@ -194,9 +198,7 @@ class ReceiveModeManager implements ReceiveModeService {
       return;
     }
 
-    debugPrint(
-      '[ReceiveMode] Auto-navigating to viewer: ${container.recordCount} records from ${container.senderDeviceName}',
-    );
+    debugPrint('[ReceiveMode] Auto-navigating to the share screen');
     final router = getIt<AppRouter>();
     router.push(ShareRecordsRoute(hasReceivedData: true));
   }
@@ -220,7 +222,7 @@ class ReceiveModeManager implements ReceiveModeService {
     _pendingInvitationId = invitationId;
     _pendingInvitationDeviceName = deviceName;
 
-    if (_pendingReceivedData != null) {
+    if (_pendingPayload != null) {
       debugPrint('[ReceiveMode] Data already received, skipping dialog');
       return;
     }

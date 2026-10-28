@@ -987,6 +987,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareReceivingRecords => 'Receiving records...';
 
   @override
+  String get shareVerifyTitle => 'Compare codes';
+
+  @override
+  String get shareVerifySenderHint =>
+      'Check that the other phone shows the same code. Your records stay locked until you confirm.';
+
+  @override
+  String get shareVerifyReceiverHint =>
+      'Check that the other phone shows the same code. The records open once the sender confirms.';
+
+  @override
+  String get shareVerifyCodesMatch => 'Codes match';
+
+  @override
+  String get shareVerifyWaitingForSender =>
+      'Waiting for the sender to confirm...';
+
+  @override
   String get shareConfirmExit => 'Confirm Exit';
 
   @override

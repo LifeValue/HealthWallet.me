@@ -1896,6 +1896,36 @@ abstract class AppLocalizations {
   /// **'Receiving records...'**
   String get shareReceivingRecords;
 
+  /// No description provided for @shareVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare codes'**
+  String get shareVerifyTitle;
+
+  /// No description provided for @shareVerifySenderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the other phone shows the same code. Your records stay locked until you confirm.'**
+  String get shareVerifySenderHint;
+
+  /// No description provided for @shareVerifyReceiverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the other phone shows the same code. The records open once the sender confirms.'**
+  String get shareVerifyReceiverHint;
+
+  /// No description provided for @shareVerifyCodesMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes match'**
+  String get shareVerifyCodesMatch;
+
+  /// No description provided for @shareVerifyWaitingForSender.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the sender to confirm...'**
+  String get shareVerifyWaitingForSender;
+
   /// No description provided for @shareConfirmExit.
   ///
   /// In en, this message translates to:

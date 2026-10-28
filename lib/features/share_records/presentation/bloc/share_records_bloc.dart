@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:airdrop/airdrop.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
@@ -12,6 +13,8 @@ import 'package:health_wallet/features/records/domain/entity/record_note/record_
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
+import 'package:health_wallet/features/share_records/data/crypto/share_crypto.dart';
+import 'package:health_wallet/features/share_records/data/service/secure_share_session.dart';
 import 'package:health_wallet/features/share_records/data/service/share_preferences_service.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
@@ -51,6 +54,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
   Timer? _monitoringFallbackTimer;
 
   String? _tempFilePath;
+  SecureShareSession? _secureSession;
   String _deviceName = 'HealthWallet Device';
   final List<int> _insertedEphemeralNoteIds = [];
 
@@ -120,6 +124,12 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     on<RemoteExtendAccepted>(handleRemoteExtendAccepted);
     on<RemoteExtendRejected>(handleRemoteExtendRejected);
     on<ViewingStartedReceived>(handleViewingStartedReceived);
+    on<VerificationCodeReady>(handleVerificationCodeReady);
+    on<VerificationConfirmed>(
+      handleVerificationConfirmed,
+      transformer: droppable(),
+    );
+    on<SecureShareFailed>(handleSecureShareFailed);
     on<RemoteInvitationRejected>(handleRemoteInvitationRejected);
     on<ShareFiltersApplied>(_onFiltersApplied);
     on<WifiToggleRequested>(_onWifiToggleRequested);
@@ -169,6 +179,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     _monitoringFallbackTimer?.cancel();
 
     EphemeralSessionManager.instance.destroySession(reason: 'bloc_disposed');
+    await _disposeSecureSession();
 
     await _service.disconnect();
   }
@@ -188,6 +199,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
 
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
     await _service.disconnect();
   }
 
@@ -232,6 +244,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     ModeCleared event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    await _disposeSecureSession();
     await _service.disconnect();
 
     emit(ShareRecordsState.initial());
@@ -413,7 +426,8 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
       if (_isClosed) return;
       if (state.isSending &&
           (state.phase == SharePhase.monitoringSession ||
-              state.phase == SharePhase.connecting)) {
+              state.phase == SharePhase.connecting ||
+              state.phase == SharePhase.verifyingCode)) {
         _viewingTimer?.cancel();
         _monitoringFallbackTimer?.cancel();
         if (state.sessionStartedAt == null) {
@@ -501,11 +515,18 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     });
   }
 
+  Future<void> _disposeSecureSession() async {
+    final session = _secureSession;
+    _secureSession = null;
+    await session?.dispose();
+  }
+
   @override
   Future<void> close() async {
     _isClosed = true;
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
     await _cancelSubscriptions();
     WidgetsBinding.instance.removeObserver(this);
     await _service.disconnect();

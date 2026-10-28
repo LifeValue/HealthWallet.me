@@ -213,6 +213,17 @@ On `handover.step1_complete` and `handover.result` mobile clears its pending pro
 
 **Tray** (`desktop/tray/`): `TrayService` owns the macOS/Windows tray icon and menu, `WindowLifecycleService` minimise-to-tray and restore, `TrayBloc` reflects connection and sync state.
 
+## Proximity sharing encryption
+
+Phone-to-phone shares (`share_records/`) are end-to-end encrypted in the app, on top of whatever the `airdrop` transport provides (an Android hotspot between iOS and Android, Wi-Fi Direct between Androids, MPC between iPhones). Crypto is in `data/crypto/share_crypto.dart`, the exchange in `data/service/secure_share_session.dart`, both on pointycastle: P-256 ECDH, HKDF-SHA256, AES-256-GCM.
+
+1. The sender encrypts the payload JSON with a random 32-byte key K and transfers the envelope `"HWSE" | version 1 | SHA-256(sender public key) | nonce (12) | ciphertext + tag`, with the bytes before the nonce as associated data. The file holds no plaintext and not the sender's key.
+2. After the transfer, over `airdrop` session messages (signal `-8`, see the package's ARCHITECTURE.md): the receiver sends `0x01 | receiver public key`; the sender answers `0x02 | sender public key`; the receiver checks it against the commitment.
+3. HKDF over the ECDH secret (salt: sender key ‖ receiver key) gives the wrap key and a six-digit code. Both phones show the code (`SharePhase.verifyingCode`).
+4. Only when the sender taps "Codes match" does it send `0x03 | nonce | K wrapped with the wrap key`. The receiver unwraps K, decrypts and opens the records.
+
+The commitment makes the sender fix its key before seeing the receiver's, so a man in the middle cannot try keys until the two codes agree; with the sender's confirmation this protects the records' confidentiality. Receivers reject unencrypted (pre-encryption) payloads and older apps cannot open encrypted ones, so both phones need this version. Background receive mode (`ReceiveModeManager`) only holds the envelope; the share screen runs the exchange so the code is visible.
+
 ## CI/CD
 
 GitLab CI (`.gitlab-ci.yml`) on `git.techstackapps.com/mobile/health-wallet/app`.

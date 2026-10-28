@@ -60,6 +60,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     }
 
     EphemeralSessionManager.instance.destroySession(reason: 'user_confirmed');
+    await _disposeSecureSession();
 
     await _service.disconnect();
 
@@ -76,6 +77,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       state.copyWith(
         phase: SharePhase.sessionEnded,
         receivedData: null,
+        verificationCode: null,
         viewingTimeRemaining: null,
         isSessionActive: false,
         isDataDestroyed: true,
@@ -169,6 +171,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
 
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
 
     await _service.disconnect();
 
@@ -176,6 +179,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       state.copyWith(
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
+        verificationCode: null,
         statusMessage: 'Session terminated',
       ),
     );
@@ -187,6 +191,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
   ) async {
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
 
     await _service.disconnect();
 
@@ -194,6 +199,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       state.copyWith(
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
+        verificationCode: null,
         statusMessage: 'Remote session terminated',
       ),
     );
@@ -374,11 +380,13 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
 
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
 
     emit(
       state.copyWith(
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
+        verificationCode: null,
         statusMessage: 'Receiver declined invitation',
       ),
     );
@@ -394,22 +402,17 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     manager.clearPendingInvitation();
     manager.pauseListening();
 
-    final pendingData = manager.pendingReceivedData;
-    if (pendingData != null) {
-      manager.clearPendingReceivedData();
-      EphemeralSessionManager.instance.startSession(pendingData);
+    final pendingPayload = manager.pendingPayload;
+    if (pendingPayload != null) {
+      manager.clearPendingPayload();
       emit(
         state.copyWith(
           mode: ShareMode.receiving,
-          phase: SharePhase.viewingRecords,
-          receivedData: pendingData,
-          viewingTimeRemaining: pendingData.viewDuration,
-          isSessionActive: true,
-          statusMessage:
-              'Viewing ${pendingData.recordCount} records from ${pendingData.senderDeviceName}',
+          phase: SharePhase.transferring,
+          pendingInvitationDeviceName: event.deviceName,
         ),
       );
-      _startViewingTimer();
+      await _receiveSecurePayload(pendingPayload, emit);
       return;
     }
 
@@ -441,12 +444,12 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     Emitter<ShareRecordsState> emit,
   ) async {
     final manager = getIt<ReceiveModeService>();
-    final container = manager.pendingReceivedData;
-    manager.clearPendingReceivedData();
+    final payload = manager.pendingPayload;
+    manager.clearPendingPayload();
     manager.clearPendingInvitation();
     manager.pauseListening();
 
-    if (container == null) {
+    if (payload == null) {
       emit(
         state.copyWith(
           phase: SharePhase.error,
@@ -456,20 +459,12 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       return;
     }
 
-    EphemeralSessionManager.instance.startSession(container);
-
     emit(
       state.copyWith(
         mode: ShareMode.receiving,
-        phase: SharePhase.viewingRecords,
-        receivedData: container,
-        viewingTimeRemaining: container.viewDuration,
-        isSessionActive: true,
-        statusMessage:
-            'Viewing ${container.recordCount} records from ${container.senderDeviceName}',
+        phase: SharePhase.transferring,
       ),
     );
-
-    _startViewingTimer();
+    await _receiveSecurePayload(payload, emit);
   }
 }

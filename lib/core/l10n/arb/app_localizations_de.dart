@@ -1005,6 +1005,24 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shareReceivingRecords => 'Aufzeichnungen werden empfangen...';
 
   @override
+  String get shareVerifyTitle => 'Codes vergleichen';
+
+  @override
+  String get shareVerifySenderHint =>
+      'Prüfe, ob das andere Telefon denselben Code anzeigt. Deine Einträge bleiben gesperrt, bis du bestätigst.';
+
+  @override
+  String get shareVerifyReceiverHint =>
+      'Prüfe, ob das andere Telefon denselben Code anzeigt. Die Einträge öffnen sich, sobald der Absender bestätigt.';
+
+  @override
+  String get shareVerifyCodesMatch => 'Codes stimmen überein';
+
+  @override
+  String get shareVerifyWaitingForSender =>
+      'Warte auf die Bestätigung des Absenders...';
+
+  @override
   String get shareConfirmExit => 'Ausgang Bestätigen';
 
   @override

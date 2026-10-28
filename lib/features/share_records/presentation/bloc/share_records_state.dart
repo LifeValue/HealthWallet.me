@@ -17,6 +17,7 @@ enum SharePhase {
   discoveringPeers,
   connecting,
   transferring,
+  verifyingCode,
   monitoringSession,
   viewingRecords,
   sessionEnded,
@@ -56,6 +57,9 @@ abstract class ShareRecordsState with _$ShareRecordsState {
     int? pendingExtendDurationSeconds,
     @Default(false) bool extensionRequestPending,
     @Default([]) List<FhirType> appliedFilters,
+
+    /// Six digits both phones show while the users compare them.
+    String? verificationCode,
   }) = _ShareRecordsState;
 
   factory ShareRecordsState.initial() => const ShareRecordsState();
