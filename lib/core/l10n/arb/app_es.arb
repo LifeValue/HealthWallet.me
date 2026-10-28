@@ -322,6 +322,8 @@
   "shareVerifyReceiverHint": "Comprueba que el otro teléfono muestra el mismo código. Los registros se abrirán cuando el remitente confirme.",
   "shareVerifyCodesMatch": "Los códigos coinciden",
   "shareVerifyWaitingForSender": "Esperando a que el remitente confirme...",
+  "shareAwaitingViewer": "Códigos confirmados. Esperando a que el otro teléfono abra los registros.",
+  "shareEndNotDelivered": "No se pudo contactar con el otro teléfono. Conservará los registros hasta que termine su temporizador.",
   "shareConfirmExit": "Confirmar salida",
   "shareDeleteSharedRecords": "\u00bfEliminar registros compartidos?",
   "shareDeleteWarning": "El registro compartido se eliminar\u00e1 permanentemente de este dispositivo. La acci\u00f3n no se puede deshacer",

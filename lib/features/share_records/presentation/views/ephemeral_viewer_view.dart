@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/services/screen_security_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -64,7 +63,6 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   @override
   void initState() {
     super.initState();
-    ScreenSecurityService.enable();
     _searchAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
@@ -227,7 +225,6 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
     _searchFocusNode.dispose();
     _bottomBarHeight.dispose();
     _attachmentBrowseBloc?.close();
-    ScreenSecurityService.disable();
     super.dispose();
   }
 

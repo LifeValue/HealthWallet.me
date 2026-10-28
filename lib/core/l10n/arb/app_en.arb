@@ -352,6 +352,8 @@
   "shareVerifyReceiverHint": "Check that the other phone shows the same code. The records open once the sender confirms.",
   "shareVerifyCodesMatch": "Codes match",
   "shareVerifyWaitingForSender": "Waiting for the sender to confirm...",
+  "shareAwaitingViewer": "Codes confirmed. Waiting for the other phone to open the records.",
+  "shareEndNotDelivered": "The other phone couldn't be reached. It keeps the records until its timer runs out.",
   "shareConfirmExit": "Confirm Exit",
   "shareDeleteSharedRecords": "Delete Shared Records?",
   "shareDeleteWarning": "The shared record will be permanently deleted from this device. Action cannot be undone",

@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
+import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
+import 'package:health_wallet/features/share_records/presentation/widgets/exit_confirmation_dialog.dart';
 import 'package:health_wallet/features/share_records/presentation/widgets/share_debug_log_sheet.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -137,6 +143,52 @@ class TransferProgressView extends StatelessWidget {
                 size: 28,
                 color: context.colorScheme.onSurface.withValues(alpha: 0.3),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Sender, after the codes were confirmed: the receiver can open the records,
+/// so the only way out ends the session on both phones.
+class AwaitingViewerView extends StatelessWidget {
+  final ShareRecordsState state;
+
+  const AwaitingViewerView({super.key, required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Insets.large),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: Insets.large),
+            Text(
+              context.l10n.shareAwaitingViewer,
+              textAlign: TextAlign.center,
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: Insets.large),
+            AppButton(
+              label: context.l10n.shareEndSession,
+              backgroundColor: AppColors.error,
+              fullWidth: false,
+              onPressed: () async {
+                final bloc = context.read<ShareRecordsBloc>();
+                final confirmed = await ExitConfirmationDialog.show(
+                  context: context,
+                );
+                if (confirmed == true) {
+                  bloc.add(const ShareRecordsEvent.killSessionRequested());
+                }
+              },
             ),
           ],
         ),

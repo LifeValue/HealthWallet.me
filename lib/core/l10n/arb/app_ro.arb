@@ -321,6 +321,8 @@
   "shareVerifyReceiverHint": "Verifică dacă celălalt telefon afișează același cod. Înregistrările se deschid după ce expeditorul confirmă.",
   "shareVerifyCodesMatch": "Codurile coincid",
   "shareVerifyWaitingForSender": "Se așteaptă confirmarea expeditorului...",
+  "shareAwaitingViewer": "Coduri confirmate. Se așteaptă ca celălalt telefon să deschidă înregistrările.",
+  "shareEndNotDelivered": "Celălalt telefon nu a putut fi contactat. Păstrează înregistrările până la expirarea temporizatorului său.",
   "shareConfirmExit": "Confirmă Ieșirea",
   "shareDeleteSharedRecords": "Ștergi Înregistrările Partajate?",
   "shareDeleteWarning": "Înregistrarea partajată va fi ștearsă permanent de pe acest dispozitiv. Acțiunea nu poate fi anulată",

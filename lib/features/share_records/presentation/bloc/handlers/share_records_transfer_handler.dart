@@ -108,6 +108,12 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     return a == b || a.startsWith(b) || b.startsWith(a);
   }
 
+  // iPhones found through MultipeerConnectivity carry a per-launch id. Two such
+  // ids are always two phones, even when both are called "iPhone" (iOS 16+).
+  static const _mpcIdPrefix = 'mpc_';
+
+  bool _isMpcId(String deviceId) => deviceId.startsWith(_mpcIdPrefix);
+
   void handlePeerDiscovered(
     PeerDiscovered event,
     Emitter<ShareRecordsState> emit,
@@ -130,7 +136,8 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         final nameMatchIndex = peers.indexWhere(
           (p) =>
               !_isUnknownName(p.deviceName) &&
-              _namesMatch(p.deviceName!, newName!),
+              _namesMatch(p.deviceName!, newName!) &&
+              !(_isMpcId(p.deviceId) && _isMpcId(event.peer.deviceId)),
         );
         if (nameMatchIndex >= 0) {
           final existing = peers[nameMatchIndex];
@@ -138,8 +145,13 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
               newName!.length >= (existing.deviceName?.length ?? 0)
               ? newName
               : existing.deviceName;
+          // Keep the MPC id when merging the same phone's BLE entry: the
+          // plugin can invite it exactly.
           peers[nameMatchIndex] = existing.copyWith(
-            deviceId: event.peer.deviceId,
+            deviceId:
+                _isMpcId(existing.deviceId) && !_isMpcId(event.peer.deviceId)
+                ? existing.deviceId
+                : event.peer.deviceId,
             deviceName: longerName,
             osType: event.peer.osType ?? existing.osType,
             status: event.peer.status,
@@ -182,9 +194,12 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     );
 
     _shareLog('Connecting to ${peer.deviceName}...');
+    _pendingViewingStarted = false;
     emit(
       state.copyWith(
         selectedPeer: peer,
+        sessionStartedAt: null,
+        remoteEndUnconfirmed: false,
         phase: SharePhase.connecting,
         statusMessage: 'Connecting to ${peer.deviceName}...',
       ),
@@ -354,7 +369,8 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           ),
         );
         _startViewingTimer();
-      } else if (state.phase != SharePhase.verifyingCode) {
+      } else if (state.phase != SharePhase.verifyingCode &&
+          state.phase != SharePhase.awaitingViewer) {
         // The monitoring fallback starts only once the codes are confirmed:
         // until then the receiver cannot open the records.
         debugPrint(
@@ -576,9 +592,17 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       );
 
       final plaintext = await session.awaitPayload();
-      await _disposeSecureSession();
+      if (emit.isDone || !identical(session, _secureSession)) return;
       final container = await _service.parsePayload(plaintext);
-      if (emit.isDone) return;
+      // Cancelled, backgrounded or closed while decrypting: the session was
+      // ended already, so the records must not open.
+      if (emit.isDone || !identical(session, _secureSession)) {
+        if (container != null) {
+          await _service.deleteSessionFiles(container.sessionId);
+        }
+        return;
+      }
+      await _disposeSecureSession();
       if (container == null) {
         _shareLog('ERROR: Failed to parse the decrypted payload');
         emit(
@@ -630,7 +654,9 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     final viewing = state.sessionStartedAt != null;
     emit(
       state.copyWith(
-        phase: viewing ? SharePhase.monitoringSession : SharePhase.connecting,
+        phase: viewing
+            ? SharePhase.monitoringSession
+            : SharePhase.awaitingViewer,
         verificationCode: null,
         statusMessage: viewing
             ? 'Receiver is viewing records - monitoring session'
@@ -687,6 +713,11 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     EphemeralDataParsed event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    // A cancel can land between parsing and this event.
+    if (state.phase != SharePhase.verifyingCode) {
+      await _service.deleteSessionFiles(event.container.sessionId);
+      return;
+    }
     _shareLog('=== Session started: ${event.container.sessionId} ===');
     _shareLog(
       'Records: ${event.container.recordCount}, Duration: ${event.container.viewDuration.inMinutes}min',
@@ -706,35 +737,14 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       ),
     );
 
+    _recordsRepository.showSharedNotes(event.container.notes);
     _startViewingTimer();
-
-    await _insertEphemeralNotes(event.container);
 
     try {
       await _service.sendViewingStarted();
       _shareLog('Sent viewing started signal to sender');
     } catch (e) {
       _shareLog('WARNING: Failed to send viewing started signal: $e');
-    }
-  }
-
-  Future<void> _insertEphemeralNotes(
-    EphemeralRecordsContainer container,
-  ) async {
-    for (final resource in container.records) {
-      final notes = container.notes[resource.id];
-      if (notes == null) continue;
-      for (final note in notes) {
-        try {
-          final noteId = await _recordsRepository.addRecordNote(
-            resourceId: resource.id,
-            content: note.content,
-          );
-          _insertedEphemeralNoteIds.add(noteId);
-        } catch (e) {
-          debugPrint('[SHARE] Error inserting ephemeral note: $e');
-        }
-      }
     }
   }
 }

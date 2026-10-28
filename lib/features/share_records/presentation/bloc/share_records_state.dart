@@ -18,6 +18,10 @@ enum SharePhase {
   connecting,
   transferring,
   verifyingCode,
+
+  /// Sender: codes confirmed and the key sent; the receiver can open the
+  /// records, so leaving this phase must end the session on both phones.
+  awaitingViewer,
   monitoringSession,
   viewingRecords,
   sessionEnded,
@@ -60,6 +64,10 @@ abstract class ShareRecordsState with _$ShareRecordsState {
 
     /// Six digits both phones show while the users compare them.
     String? verificationCode,
+
+    /// Sender: ending the session could not be confirmed with the other
+    /// phone, which keeps the records until its own timer runs out.
+    @Default(false) bool remoteEndUnconfirmed,
   }) = _ShareRecordsState;
 
   factory ShareRecordsState.initial() => const ShareRecordsState();

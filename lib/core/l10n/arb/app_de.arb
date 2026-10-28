@@ -318,6 +318,8 @@
   "shareVerifyReceiverHint": "Prüfe, ob das andere Telefon denselben Code anzeigt. Die Einträge öffnen sich, sobald der Absender bestätigt.",
   "shareVerifyCodesMatch": "Codes stimmen überein",
   "shareVerifyWaitingForSender": "Warte auf die Bestätigung des Absenders...",
+  "shareAwaitingViewer": "Codes bestätigt. Warte darauf, dass das andere Telefon die Einträge öffnet.",
+  "shareEndNotDelivered": "Das andere Telefon war nicht erreichbar. Es behält die Einträge, bis sein Timer abläuft.",
   "shareConfirmExit": "Ausgang Bestätigen",
   "shareDeleteSharedRecords": "Geteilte Aufzeichnungen Löschen?",
   "shareDeleteWarning": "Die geteilte Aufzeichnung wird dauerhaft von diesem Gerät gelöscht. Die Aktion kann nicht rückgängig gemacht werden",

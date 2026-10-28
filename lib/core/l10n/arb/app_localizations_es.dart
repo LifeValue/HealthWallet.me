@@ -1017,6 +1017,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esperando a que el remitente confirme...';
 
   @override
+  String get shareAwaitingViewer =>
+      'Códigos confirmados. Esperando a que el otro teléfono abra los registros.';
+
+  @override
+  String get shareEndNotDelivered =>
+      'No se pudo contactar con el otro teléfono. Conservará los registros hasta que termine su temporizador.';
+
+  @override
   String get shareConfirmExit => 'Confirmar salida';
 
   @override

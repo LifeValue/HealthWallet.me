@@ -1926,6 +1926,18 @@ abstract class AppLocalizations {
   /// **'Waiting for the sender to confirm...'**
   String get shareVerifyWaitingForSender;
 
+  /// No description provided for @shareAwaitingViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes confirmed. Waiting for the other phone to open the records.'**
+  String get shareAwaitingViewer;
+
+  /// No description provided for @shareEndNotDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'The other phone couldn\'t be reached. It keeps the records until its timer runs out.'**
+  String get shareEndNotDelivered;
+
   /// No description provided for @shareConfirmExit.
   ///
   /// In en, this message translates to:

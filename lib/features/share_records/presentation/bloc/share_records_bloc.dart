@@ -56,7 +56,6 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
   String? _tempFilePath;
   SecureShareSession? _secureSession;
   String _deviceName = 'HealthWallet Device';
-  final List<int> _insertedEphemeralNoteIds = [];
 
   bool _isClosed = false;
   bool _pendingViewingStarted = false;
@@ -340,10 +339,11 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     emit(state.copyWith(connectionHealthStatus: status));
   }
 
+  // Only leaving the app counts: `inactive` also fires for Control Center,
+  // the notification shade, call banners and system prompts.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
         state == AppLifecycleState.hidden) {
       add(const ShareRecordsEvent.appBackgrounded());
     }
@@ -424,13 +424,23 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     });
     _sessionEndedSub = _service.sessionEndedStream.listen((_) {
       if (_isClosed) return;
+      if (state.isReceiving &&
+          (state.phase == SharePhase.viewingRecords ||
+              state.phase == SharePhase.verifyingCode)) {
+        // The sender can no longer reach this phone to end the session, so
+        // end it here rather than keep the records until the timer runs out.
+        add(const ShareRecordsEvent.dataDestructionConfirmed());
+        return;
+      }
       if (state.isSending &&
           (state.phase == SharePhase.monitoringSession ||
               state.phase == SharePhase.connecting ||
-              state.phase == SharePhase.verifyingCode)) {
+              state.phase == SharePhase.verifyingCode ||
+              state.phase == SharePhase.awaitingViewer)) {
         _viewingTimer?.cancel();
         _monitoringFallbackTimer?.cancel();
-        if (state.sessionStartedAt == null) {
+        if (state.sessionStartedAt == null &&
+            state.phase != SharePhase.awaitingViewer) {
           debugPrint(
             '[SHARE] Session ended before receiver started viewing - treating as rejection',
           );
@@ -505,7 +515,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
       if (_isClosed) return;
       if (state.isSending &&
           (state.phase == SharePhase.monitoringSession ||
-              state.phase == SharePhase.connecting) &&
+              state.phase == SharePhase.awaitingViewer) &&
           state.sessionStartedAt == null) {
         debugPrint(
           '[SHARE] Fallback: no viewingStarted after 60s, starting timer from now',
@@ -528,6 +538,14 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     _monitoringFallbackTimer?.cancel();
     await _disposeSecureSession();
     await _cancelSubscriptions();
+    // Leaving the screen any other way than the normal end must not leave
+    // received records behind.
+    EphemeralSessionManager.instance.destroySession(reason: 'bloc_closed');
+    await _cleanupEphemeralData();
+    if (_tempFilePath != null) {
+      await _service.cleanupTempFile(_tempFilePath!);
+      _tempFilePath = null;
+    }
     WidgetsBinding.instance.removeObserver(this);
     await _service.disconnect();
     final manager = getIt<ReceiveModeService>();

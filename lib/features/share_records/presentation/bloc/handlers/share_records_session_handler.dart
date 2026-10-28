@@ -30,7 +30,11 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     AppBackgrounded event,
     Emitter<ShareRecordsState> emit,
   ) {
-    if (state.receivedData != null) {
+    // While the codes are compared the records are not open yet; cancelling
+    // keeps them from opening in the background once the key arrives.
+    final verifying =
+        state.isReceiving && state.phase == SharePhase.verifyingCode;
+    if (state.receivedData != null || verifying) {
       add(const ShareRecordsEvent.dataDestructionConfirmed());
     }
   }
@@ -89,32 +93,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
   Future<void> _cleanupEphemeralData() async {
     final receivedData = state.receivedData;
     if (receivedData != null) {
-      for (final path in receivedData.tempAttachmentPaths) {
-        try {
-          await File(path).delete();
-        } catch (_) {}
-      }
-
-      final sessionDir = File(
-        receivedData.tempAttachmentPaths.isNotEmpty
-            ? receivedData.tempAttachmentPaths.first
-            : '',
-      ).parent;
-      try {
-        if (await sessionDir.exists()) {
-          await sessionDir.delete(recursive: true);
-        }
-      } catch (_) {}
+      await _service.deleteSessionFiles(receivedData.sessionId);
     }
-
-    for (final noteId in _insertedEphemeralNoteIds) {
-      try {
-        await _recordsRepository.deleteRecordNote(
-          RecordNote(id: noteId, timestamp: DateTime.now()),
-        );
-      } catch (_) {}
-    }
-    _insertedEphemeralNoteIds.clear();
+    _recordsRepository.clearSharedNotes();
   }
 
   void handleTimerTicked(
@@ -138,6 +119,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
             ),
           );
           _viewingTimer?.cancel();
+          // The receiver's own timer should end it too; this covers clocks
+          // that drifted apart or a missed extension.
+          unawaited(_endRemoteSession());
           return;
         }
 
@@ -162,27 +146,36 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
   ) async {
     emit(state.copyWith(statusMessage: 'Terminating remote session...'));
 
-    try {
-      await _service.sendKillSignal();
-      await Future.delayed(const Duration(milliseconds: 500));
-    } catch (e) {
-      debugPrint('[ERROR] Kill signal failed: $e');
-    }
-
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
     await _disposeSecureSession();
-
-    await _service.disconnect();
+    final delivered = await _endRemoteSession();
 
     emit(
       state.copyWith(
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
         verificationCode: null,
+        remoteEndUnconfirmed: !delivered,
         statusMessage: 'Session terminated',
       ),
     );
+  }
+
+  /// Sends the kill signal and disconnects; returns whether the signal was
+  /// handed to the transport. A sent signal can still be lost on a link that
+  /// drops right after, but a failed send means it certainly was not seen.
+  Future<bool> _endRemoteSession() async {
+    var delivered = false;
+    try {
+      await _service.sendKillSignal();
+      delivered = true;
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (e) {
+      _shareLog('WARNING: Kill signal not delivered: $e');
+    }
+    await _service.disconnect();
+    return delivered;
   }
 
   Future<void> handleRemoteSessionKilled(
@@ -340,6 +333,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     }
 
     if (state.phase == SharePhase.connecting ||
+        state.phase == SharePhase.awaitingViewer ||
         state.phase == SharePhase.monitoringSession) {
       _monitoringFallbackTimer?.cancel();
       _monitoringFallbackTimer = null;

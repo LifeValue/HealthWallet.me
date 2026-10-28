@@ -1005,6 +1005,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Waiting for the sender to confirm...';
 
   @override
+  String get shareAwaitingViewer =>
+      'Codes confirmed. Waiting for the other phone to open the records.';
+
+  @override
+  String get shareEndNotDelivered =>
+      'The other phone couldn\'t be reached. It keeps the records until its timer runs out.';
+
+  @override
   String get shareConfirmExit => 'Confirm Exit';
 
   @override

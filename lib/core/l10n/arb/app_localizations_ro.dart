@@ -1019,6 +1019,14 @@ class AppLocalizationsRo extends AppLocalizations {
       'Se așteaptă confirmarea expeditorului...';
 
   @override
+  String get shareAwaitingViewer =>
+      'Coduri confirmate. Se așteaptă ca celălalt telefon să deschidă înregistrările.';
+
+  @override
+  String get shareEndNotDelivered =>
+      'Celălalt telefon nu a putut fi contactat. Păstrează înregistrările până la expirarea temporizatorului său.';
+
+  @override
   String get shareConfirmExit => 'Confirmă Ieșirea';
 
   @override

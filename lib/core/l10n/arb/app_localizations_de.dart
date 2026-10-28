@@ -1023,6 +1023,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Warte auf die Bestätigung des Absenders...';
 
   @override
+  String get shareAwaitingViewer =>
+      'Codes bestätigt. Warte darauf, dass das andere Telefon die Einträge öffnet.';
+
+  @override
+  String get shareEndNotDelivered =>
+      'Das andere Telefon war nicht erreichbar. Es behält die Einträge, bis sein Timer abläuft.';
+
+  @override
   String get shareConfirmExit => 'Ausgang Bestätigen';
 
   @override
