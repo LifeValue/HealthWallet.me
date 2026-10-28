@@ -4326,4 +4326,12 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get appLockUnlock => 'Deblochează';
+
+  @override
+  String get desktopRestoreSucceededTitle => 'Copie de siguranță restaurată';
+
+  @override
+  String desktopRestoreSucceededMessage(String name, int count) {
+    return '\"$name\" a fost restaurată. Acum sunt $count înregistrări pe acest dispozitiv.';
+  }
 }

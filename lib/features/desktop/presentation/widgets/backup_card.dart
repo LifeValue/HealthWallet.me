@@ -38,10 +38,37 @@ class _BackupCardState extends State<BackupCard> {
   bool _syncFirst = true;
   bool _showForm = false;
 
+  /// The backup whose restore the user confirmed, until it finishes.
+  BackupEntry? _restoring;
+
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(BackupCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final restored = _restoring;
+    final finished =
+        oldWidget.backupState.isRestoring && !widget.backupState.isRestoring;
+    if (restored == null || !finished) return;
+    _restoring = null;
+    // A failed restore shows its error in the card; only success is
+    // announced here, so the user knows the data was replaced.
+    if (widget.backupState.error != null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      AppSimpleDialog.showSuccess(
+        context: context,
+        title: context.l10n.desktopRestoreSucceededTitle,
+        message: context.l10n.desktopRestoreSucceededMessage(
+          _backupDisplayName(context, restored),
+          restored.recordCount,
+        ),
+      );
+    });
   }
 
   void _create() {
@@ -190,6 +217,7 @@ class _BackupCardState extends State<BackupCard> {
                       backup: selected,
                       isWorking: isWorking,
                       isConnected: isConnected,
+                      onRestoreConfirmed: (backup) => _restoring = backup,
                     ),
                   )
                 : _BackupList(
@@ -502,10 +530,14 @@ class _BackupPreview extends StatelessWidget {
   final bool isWorking;
   final bool isConnected;
 
+  /// Called when the user confirms the restore, before it starts.
+  final ValueChanged<BackupEntry> onRestoreConfirmed;
+
   const _BackupPreview({
     required this.backup,
     required this.isWorking,
     required this.isConnected,
+    required this.onRestoreConfirmed,
   });
 
   @override
@@ -606,15 +638,16 @@ class _BackupPreview extends StatelessWidget {
       context: context,
       title: context.l10n.desktopRestoreBackupTitle,
       subtitle: context.l10n.desktopRestoreBackupMessage(
-        _displayName(context, backup),
+        _backupDisplayName(context, backup),
         backup.recordCount,
       ),
       cancelText: context.l10n.cancel,
       confirmText: context.l10n.desktopRestore,
       confirmColor: AppColors.warning,
-      onConfirm: () => context.read<BackupBloc>().add(
-        RestoreRequested(backupId: backup.id),
-      ),
+      onConfirm: () {
+        onRestoreConfirmed(backup);
+        context.read<BackupBloc>().add(RestoreRequested(backupId: backup.id));
+      },
     );
   }
 
@@ -623,7 +656,7 @@ class _BackupPreview extends StatelessWidget {
       context: context,
       title: context.l10n.desktopDeleteBackupTitle,
       subtitle: context.l10n.desktopDeleteBackupMessage(
-        _displayName(context, backup),
+        _backupDisplayName(context, backup),
       ),
       cancelText: context.l10n.cancel,
       confirmText: context.l10n.desktopDelete,
@@ -633,11 +666,6 @@ class _BackupPreview extends StatelessWidget {
       ),
     );
   }
-
-  String _displayName(BuildContext context, BackupEntry backup) =>
-      backup.name.isNotEmpty
-      ? backup.name
-      : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}';
 }
 
 class _BackupLocationRow extends StatelessWidget {
@@ -736,3 +764,9 @@ String _formatBytes(int bytes) {
   }
   return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
 }
+
+/// A backup's name, or "Backup from" and its date when it has none.
+String _backupDisplayName(BuildContext context, BackupEntry backup) =>
+    backup.name.isNotEmpty
+    ? backup.name
+    : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}';

@@ -4325,4 +4325,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get appLockUnlock => 'Entsperren';
+
+  @override
+  String get desktopRestoreSucceededTitle => 'Backup wiederhergestellt';
+
+  @override
+  String desktopRestoreSucceededMessage(String name, int count) {
+    return '\"$name\" wurde wiederhergestellt. Auf diesem Gerät sind jetzt $count Aufzeichnungen.';
+  }
 }

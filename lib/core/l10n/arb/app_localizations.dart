@@ -7612,6 +7612,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unlock'**
   String get appLockUnlock;
+
+  /// No description provided for @desktopRestoreSucceededTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored'**
+  String get desktopRestoreSucceededTitle;
+
+  /// No description provided for @desktopRestoreSucceededMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" has been restored. {count} records are now on this device.'**
+  String desktopRestoreSucceededMessage(String name, int count);
 }
 
 class _AppLocalizationsDelegate

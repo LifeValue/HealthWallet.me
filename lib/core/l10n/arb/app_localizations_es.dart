@@ -4314,4 +4314,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appLockUnlock => 'Desbloquear';
+
+  @override
+  String get desktopRestoreSucceededTitle => 'Respaldo restaurado';
+
+  @override
+  String desktopRestoreSucceededMessage(String name, int count) {
+    return 'Se restauró \"$name\". Ahora hay $count registros en este dispositivo.';
+  }
 }

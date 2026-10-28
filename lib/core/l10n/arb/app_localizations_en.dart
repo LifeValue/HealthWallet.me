@@ -4258,4 +4258,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appLockUnlock => 'Unlock';
+
+  @override
+  String get desktopRestoreSucceededTitle => 'Backup restored';
+
+  @override
+  String desktopRestoreSucceededMessage(String name, int count) {
+    return '\"$name\" has been restored. $count records are now on this device.';
+  }
 }

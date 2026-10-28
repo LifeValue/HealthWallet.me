@@ -1616,5 +1616,7 @@
   "syncPlaceholderSubtitle": "Sincronizează sau actualizează datele pentru a vedea înregistrările de tip {recordType}",
   "appLockTitle": "HealthWallet este blocat",
   "appLockMessage": "Deblochează pentru a-ți vedea înregistrările medicale",
-  "appLockUnlock": "Deblochează"
+  "appLockUnlock": "Deblochează",
+  "desktopRestoreSucceededTitle": "Copie de siguranță restaurată",
+  "desktopRestoreSucceededMessage": "\"{name}\" a fost restaurată. Acum sunt {count} înregistrări pe acest dispozitiv."
 }

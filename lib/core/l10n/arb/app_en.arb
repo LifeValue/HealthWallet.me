@@ -2146,5 +2146,17 @@
   },
   "appLockTitle": "HealthWallet is locked",
   "appLockMessage": "Unlock to view your health records",
-  "appLockUnlock": "Unlock"
+  "appLockUnlock": "Unlock",
+  "desktopRestoreSucceededTitle": "Backup restored",
+  "desktopRestoreSucceededMessage": "\"{name}\" has been restored. {count} records are now on this device.",
+  "@desktopRestoreSucceededMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

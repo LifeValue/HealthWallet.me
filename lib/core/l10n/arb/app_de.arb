@@ -1617,5 +1617,7 @@
   "syncPlaceholderSubtitle": "Synchronisiere oder aktualisiere deine Daten, um {recordType}-Einträge zu sehen",
   "appLockTitle": "HealthWallet ist gesperrt",
   "appLockMessage": "Entsperre die App, um deine Gesundheitsdaten zu sehen",
-  "appLockUnlock": "Entsperren"
+  "appLockUnlock": "Entsperren",
+  "desktopRestoreSucceededTitle": "Backup wiederhergestellt",
+  "desktopRestoreSucceededMessage": "\"{name}\" wurde wiederhergestellt. Auf diesem Gerät sind jetzt {count} Aufzeichnungen."
 }

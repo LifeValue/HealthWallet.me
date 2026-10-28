@@ -34,30 +34,35 @@ void main() {
 
   setUp(() => bloc = _MockBackupBloc());
 
-  Future<void> pumpCard(WidgetTester tester) async {
+  BackupState cardState({bool isRestoring = false, String? error}) =>
+      BackupState(
+        hasUserSelectedPath: true,
+        backupPath: '/tmp',
+        backupHistory: [_backup],
+        selectedBackup: _backup,
+        isRestoring: isRestoring,
+        error: error,
+      );
+
+  Widget card(BackupState state) => MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      body: BlocProvider<BackupBloc>.value(
+        value: bloc,
+        child: BackupCard(
+          syncState: const DesktopSyncState(),
+          backupState: state,
+        ),
+      ),
+    ),
+  );
+
+  Future<void> pumpCard(WidgetTester tester, [BackupState? state]) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: BlocProvider<BackupBloc>.value(
-            value: bloc,
-            child: BackupCard(
-              syncState: const DesktopSyncState(),
-              backupState: BackupState(
-                hasUserSelectedPath: true,
-                backupPath: '/tmp',
-                backupHistory: [_backup],
-                selectedBackup: _backup,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(card(state ?? cardState()));
     await tester.pumpAndSettle();
   }
 
@@ -160,6 +165,61 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(bloc.events, [const BackupDeleted(backupId: 'b1')]);
+    });
+  });
+
+  group('after a restore', () {
+    Future<void> confirmRestore(WidgetTester tester) async {
+      await pumpCard(tester);
+      await tester.tap(find.text(_l10n.desktopRestoreThisBackup));
+      await tester.pumpAndSettle();
+      await tester.tap(dialogButton(_l10n.desktopRestore));
+      await tester.pumpAndSettle();
+      // The bloc reports the restore running, then finished.
+      await tester.pumpWidget(card(cardState(isRestoring: true)));
+      await tester.pump();
+    }
+
+    testWidgets('a successful restore is announced', (tester) async {
+      await confirmRestore(tester);
+      await tester.pumpWidget(card(cardState()));
+      await tester.pumpAndSettle();
+
+      expect(find.text(_l10n.desktopRestoreSucceededTitle), findsOne);
+      expect(
+        find.text(
+          _l10n.desktopRestoreSucceededMessage('backup-28-10-2026', 27),
+        ),
+        findsOne,
+      );
+
+      await tester.tap(find.text(_l10n.ok));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+    });
+
+    testWidgets('a failed restore shows no success message', (tester) async {
+      await confirmRestore(tester);
+      await tester.pumpWidget(card(cardState(error: 'Restore failed')));
+      await tester.pumpAndSettle();
+
+      expect(find.text(_l10n.desktopRestoreSucceededTitle), findsNothing);
+      expect(find.text('Restore failed'), findsOne);
+    });
+
+    testWidgets('a restore the user did not start here is not announced', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      // The progress indicator never settles, so pump a frame instead.
+      await tester.pumpWidget(card(cardState(isRestoring: true)));
+      await tester.pump();
+      await tester.pumpWidget(card(cardState()));
+      await tester.pumpAndSettle();
+
+      expect(find.text(_l10n.desktopRestoreSucceededTitle), findsNothing);
     });
   });
 }

@@ -1621,5 +1621,7 @@
   "syncPlaceholderSubtitle": "Sincroniza o actualiza tus datos para ver los registros de {recordType}",
   "appLockTitle": "HealthWallet está bloqueado",
   "appLockMessage": "Desbloquea para ver tus registros de salud",
-  "appLockUnlock": "Desbloquear"
+  "appLockUnlock": "Desbloquear",
+  "desktopRestoreSucceededTitle": "Respaldo restaurado",
+  "desktopRestoreSucceededMessage": "Se restauró \"{name}\". Ahora hay {count} registros en este dispositivo."
 }
