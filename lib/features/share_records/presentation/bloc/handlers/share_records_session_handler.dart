@@ -100,7 +100,8 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
           RecordNote(id: noteId, timestamp: DateTime.now()),
         );
       } catch (e) {
-        debugPrint('[SHARE] Error deleting ephemeral note $noteId: $e');
+        // A note left behind would sync to the desktop: report it in release too.
+        logger.w('A received share note could not be deleted', e);
       }
     }
     _insertedEphemeralNoteIds.clear();
