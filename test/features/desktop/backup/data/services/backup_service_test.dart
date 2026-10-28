@@ -119,6 +119,18 @@ void main() {
       expect(BackupEntry.fromJson(meta as Map<String, dynamic>), entry);
     });
 
+    test('counts only records that are not deleted', () async {
+      await insertResource(db, 'r1');
+      await insertResource(db, 'r2');
+      await db.customStatement(
+        "UPDATE fhir_resource SET deleted_at = 1, updated_at = 1 WHERE id = 'r2'",
+      );
+
+      final entry = await service.createSnapshot();
+
+      expect(entry.recordCount, 1);
+    });
+
     test('sanitises a custom name into the file name', () async {
       final entry = await service.createSnapshot(
         name: '  Before trip/2026: v1!  ',

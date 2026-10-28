@@ -221,7 +221,7 @@ class BackupService {
   Future<int> _getRecordCount() async {
     final result = await _database
         .customSelect(
-          'SELECT COUNT(*) as count FROM fhir_resource',
+          'SELECT COUNT(*) as count FROM fhir_resource WHERE deleted_at IS NULL',
           readsFrom: {_database.fhirResource},
         )
         .getSingle();
