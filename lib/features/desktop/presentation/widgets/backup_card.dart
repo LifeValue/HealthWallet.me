@@ -10,6 +10,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/backup/domain/entity/backup_entry.dart';
 import 'package:health_wallet/features/desktop/backup/domain/utils/backup_name_date.dart';
 import 'package:health_wallet/features/desktop/backup/presentation/bloc/backup_bloc.dart';
@@ -601,76 +602,42 @@ class _BackupPreview extends StatelessWidget {
   }
 
   void _confirmRestore(BuildContext context, BackupEntry backup) {
-    showDialog(
+    AppSimpleDialog.showConfirmation(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.desktopRestoreBackupTitle),
-        content: Text(
-          context.l10n.desktopRestoreBackupMessage(
-            backup.name.isNotEmpty
-                ? backup.name
-                : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}',
-            backup.recordCount,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context.read<BackupBloc>().add(
-                RestoreRequested(backupId: backup.id),
-              );
-            },
-            child: Text(
-              context.l10n.desktopRestore,
-              style: const TextStyle(
-                color: AppColors.warning,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+      title: context.l10n.desktopRestoreBackupTitle,
+      subtitle: context.l10n.desktopRestoreBackupMessage(
+        _displayName(context, backup),
+        backup.recordCount,
+      ),
+      cancelText: context.l10n.cancel,
+      confirmText: context.l10n.desktopRestore,
+      confirmColor: AppColors.warning,
+      onConfirm: () => context.read<BackupBloc>().add(
+        RestoreRequested(backupId: backup.id),
       ),
     );
   }
 
   void _confirmDelete(BuildContext context, BackupEntry backup) {
-    showDialog(
+    AppSimpleDialog.showConfirmation(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.desktopDeleteBackupTitle),
-        content: Text(
-          context.l10n.desktopDeleteBackupMessage(
-            backup.name.isNotEmpty
-                ? backup.name
-                : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context.read<BackupBloc>().add(
-                BackupDeleted(backupId: backup.id),
-              );
-            },
-            child: Text(
-              context.l10n.desktopDelete,
-              style: const TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
+      title: context.l10n.desktopDeleteBackupTitle,
+      subtitle: context.l10n.desktopDeleteBackupMessage(
+        _displayName(context, backup),
+      ),
+      cancelText: context.l10n.cancel,
+      confirmText: context.l10n.desktopDelete,
+      confirmColor: AppColors.error,
+      onConfirm: () => context.read<BackupBloc>().add(
+        BackupDeleted(backupId: backup.id),
       ),
     );
   }
+
+  String _displayName(BuildContext context, BackupEntry backup) =>
+      backup.name.isNotEmpty
+      ? backup.name
+      : '${context.l10n.desktopBackupFrom} ${DateFormat.yMMMd().format(backup.timestamp)}';
 }
 
 class _BackupLocationRow extends StatelessWidget {
