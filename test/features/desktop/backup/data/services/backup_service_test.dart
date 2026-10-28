@@ -190,13 +190,164 @@ void main() {
           throwsA(anything),
         );
         expect(await resourceIds(db), ['original']);
+        final attached = await db.customSelect('PRAGMA database_list').get();
+        expect(
+          attached.map((r) => r.data['name']),
+          isNot(contains('backup_db')),
+        );
+
+        // The database is usable for the next restore.
+        final good = await service.createSnapshot();
+        await insertResource(db, 'later');
+        await service.restoreFromFile(good.filePath);
+        expect(await resourceIds(db), ['original']);
       },
-      skip:
-          'BUG: restoreFromFile deletes every table before attaching and '
-          'copying the backup, outside a transaction; any failure while '
-          'copying (older schema, extra table, disk error) loses all data and '
-          'leaves backup_db attached (backup_service.dart:112-141).',
     );
+
+    test('ignores tables in the backup that are not the app\'s own', () async {
+      await insertResource(db, 'kept');
+      final entry = await service.createSnapshot();
+      File('${entry.filePath}.meta.json').deleteSync();
+      final backup = AppDatabase(NativeDatabase(File(entry.filePath)));
+      await backup.customStatement('CREATE TABLE intruder (x TEXT)');
+      await backup.customStatement("INSERT INTO intruder VALUES ('evil')");
+      await backup.close();
+
+      await service.restoreFromFile(entry.filePath);
+
+      expect(await resourceIds(db), ['kept']);
+      final tables = await db
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE name = 'intruder'",
+          )
+          .get();
+      expect(tables, isEmpty);
+    });
+  });
+
+  group('restoreFromFile edge cases', () {
+    Future<void> insertNote(AppDatabase db, String content) =>
+        db.customStatement(
+          'INSERT INTO record_notes (resource_id, content, timestamp) '
+          'VALUES (?, ?, ?)',
+          ['r1', content, 0],
+        );
+
+    Future<List<String>> notes(AppDatabase db) async {
+      final rows = await db
+          .customSelect('SELECT content FROM record_notes ORDER BY id')
+          .get();
+      return rows.map((r) => r.data['content'] as String).toList();
+    }
+
+    /// Opens the snapshot file directly so a test can change it.
+    Future<void> editBackup(
+      BackupEntry entry,
+      Future<void> Function(AppDatabase backup) change,
+    ) async {
+      File('${entry.filePath}.meta.json').deleteSync();
+      final backup = AppDatabase(NativeDatabase(File(entry.filePath)));
+      await change(backup);
+      await backup.close();
+    }
+
+    Future<List<String>> attachedSchemas() async => [
+      for (final r in await db.customSelect('PRAGMA database_list').get())
+        r.data['name'] as String,
+    ];
+
+    test('restores every app table', () async {
+      await insertResource(db, 'res');
+      await insertNote(db, 'note');
+      await db.customStatement(
+        "INSERT INTO sources (id, platform_name) VALUES ('s1', 'Clinic')",
+      );
+      final entry = await service.createSnapshot();
+      await db.customStatement('DELETE FROM fhir_resource');
+      await db.customStatement('DELETE FROM record_notes');
+      await db.customStatement('DELETE FROM sources');
+      await insertNote(db, 'later');
+
+      await service.restoreFromFile(entry.filePath);
+
+      expect(await resourceIds(db), ['res']);
+      expect(await notes(db), ['note']);
+      final sources = await db.customSelect('SELECT id FROM sources').get();
+      expect(sources.map((r) => r.data['id']), ['s1']);
+      expect(await attachedSchemas(), isNot(contains('backup_db')));
+    });
+
+    test('keeps the backed-up updated_at, so sync sees no new edits', () async {
+      await db.customStatement(
+        'INSERT INTO fhir_resource (id, resource_raw, updated_at) '
+        "VALUES ('r', '{}', 1234)",
+      );
+      final entry = await service.createSnapshot();
+      await db.customStatement(
+        "UPDATE fhir_resource SET updated_at = 9999 WHERE id = 'r'",
+      );
+
+      await service.restoreFromFile(entry.filePath);
+
+      final row = await db
+          .customSelect("SELECT updated_at FROM fhir_resource WHERE id = 'r'")
+          .getSingle();
+      expect(row.data['updated_at'], 1234);
+    });
+
+    test('a table missing from the backup keeps its current rows', () async {
+      await insertResource(db, 'from-backup');
+      await insertNote(db, 'old note');
+      final entry = await service.createSnapshot();
+      await editBackup(
+        entry,
+        (b) => b.customStatement('DROP TABLE record_notes'),
+      );
+      await db.customStatement('DELETE FROM fhir_resource');
+      await insertNote(db, 'current note');
+
+      await service.restoreFromFile(entry.filePath);
+
+      expect(await resourceIds(db), ['from-backup']);
+      expect(await notes(db), ['old note', 'current note']);
+    });
+
+    test('a file that is not a database throws and changes nothing', () async {
+      await insertResource(db, 'original');
+      final junk = File(p.join(dir.path, 'junk.db'))
+        ..writeAsBytesSync(List.generate(8192, (i) => i % 251));
+
+      await expectLater(service.restoreFromFile(junk.path), throwsA(anything));
+
+      expect(await resourceIds(db), ['original']);
+      expect(await attachedSchemas(), isNot(contains('backup_db')));
+    });
+
+    test('a backup path with a quote in it restores', () async {
+      await insertResource(db, 'kept');
+      final quoted = Directory(p.join(dir.path, "it's here"))..createSync();
+      await service.setBackupDirectory(quoted.path);
+      final entry = await service.createSnapshot();
+      await db.customStatement('DELETE FROM fhir_resource');
+
+      await service.restoreFromFile(entry.filePath);
+
+      expect(await resourceIds(db), ['kept']);
+    });
+
+    test('metadata without a matching checksum is refused even if the file '
+        'is a valid database', () async {
+      await insertResource(db, 'original');
+      final entry = await service.createSnapshot();
+      await service.saveBackupMetadata(entry.copyWith(checksum: '00'));
+      await db.customStatement('DELETE FROM fhir_resource');
+
+      await expectLater(
+        service.restoreFromFile(entry.filePath),
+        throwsStateError,
+      );
+      expect(await resourceIds(db), isEmpty);
+    });
   });
 
   group('listBackups / deleteBackup', () {

@@ -111,34 +111,39 @@ class BackupService {
 
     await _database.customStatement('PRAGMA wal_checkpoint(TRUNCATE)');
 
-    final tables = await _database
-        .customSelect(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
-        )
-        .get();
-
-    for (final row in tables) {
-      final name = row.data['name'] as String;
-      await _database.customStatement('DELETE FROM "$name"');
-    }
-
+    // SQLite refuses ATTACH inside a transaction, so attach first, copy in
+    // one transaction (all or nothing), and always detach afterwards.
     final escaped = backupPath.replaceAll("'", "''");
     await _database.customStatement("ATTACH DATABASE '$escaped' AS backup_db");
+    try {
+      final mainTables = await _tableNames('main');
+      final backupTables = await _tableNames('backup_db');
+      final tables = _database.allTables
+          .map((t) => t.actualTableName)
+          .where((t) => mainTables.contains(t) && backupTables.contains(t))
+          .toList();
 
-    final backupTables = await _database
+      await _database.transaction(() async {
+        for (final name in tables) {
+          await _database.customStatement('DELETE FROM main."$name"');
+          await _database.customStatement(
+            'INSERT INTO main."$name" SELECT * FROM backup_db."$name"',
+          );
+        }
+      });
+    } finally {
+      await _database.customStatement('DETACH DATABASE backup_db');
+    }
+  }
+
+  Future<Set<String>> _tableNames(String schema) async {
+    final rows = await _database
         .customSelect(
-          "SELECT name FROM backup_db.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+          "SELECT name FROM $schema.sqlite_master WHERE type='table' "
+          "AND name NOT LIKE 'sqlite_%'",
         )
         .get();
-
-    for (final row in backupTables) {
-      final name = row.data['name'] as String;
-      await _database.customStatement(
-        'INSERT OR REPLACE INTO main."$name" SELECT * FROM backup_db."$name"',
-      );
-    }
-
-    await _database.customStatement('DETACH DATABASE backup_db');
+    return rows.map((r) => r.data['name'] as String).toSet();
   }
 
   Future<List<BackupEntry>> listBackups() async {
