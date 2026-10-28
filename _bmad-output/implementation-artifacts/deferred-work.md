@@ -1,6 +1,6 @@
 - source_spec: none
-  summary: Fix the security items S1–S5 of the mobile stabilization backlog (signing keys in the app, biometric lock bypass, share debug log in release, plain-text share JSON left in temp, share encryption).
-  evidence: Split from the mobile stabilization request on 2026-10-27; the user chose to fix missing translations first and treat security next.
+  summary: Fix the security items S1 and S5 of the mobile stabilization backlog (signing keys in the app, share encryption); S2–S4 were done in `spec-security-hardening.md`.
+  evidence: Split from the mobile stabilization request on 2026-10-27; S1 needs a signing server and S5 needs changes in the `airdrop` package, so both stayed out of the security hardening work.
 - source_spec: none
   summary: Raise mobile test coverage per section 6 of the stabilization backlog (BLoC tests for the main flows, critical areas, widget tests, a simulator integration test, per-area coverage ratchet).
   evidence: Split from the mobile stabilization request on 2026-10-27; each fix carries its own tests, while the broader coverage work is a separate deliverable.

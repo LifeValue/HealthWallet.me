@@ -159,7 +159,7 @@ The decrypted payload starts with a `MessageType` byte:
 
 | Code | Type    | Meaning                                                                                                                             |
 | ---- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 0x01 | `hello` | Handshake, JSON `{pairing_key_hash, device_name}` (hash: SHA-256 of the key, base64url). Receiver checks the hash and replies `ack` |
+| 0x01 | `hello` | Handshake, JSON `{pairing_key_hash, device_name}` (hash: SHA-256 of the key, base64url). Receiver checks the hash and replies `ack`. The desktop server reads nothing else from a new connection until a valid hello arrives, closes it if none arrives within 15 s or the hash is missing or wrong, and caps frames at 64 KiB before the hello and 1 GiB after |
 | 0x02 | `ack`   | Acknowledgement                                                                                                                     |
 | 0x03 | `ping`  | Client keep-alive every 10 s; 5 s pong timeout                                                                                      |
 | 0x04 | `pong`  | Reply to ping                                                                                                                       |
