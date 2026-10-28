@@ -24,7 +24,7 @@ context:
 - Decisions taken with the user (2026-10-28):
   - **Lock screen:** a failed or cancelled check shows a lock screen with Retry, never onboarding. Biometrics or the device passcode unlock it. It re-locks after more than 30 s in the background. Mobile and desktop share the same lock. Turning the lock off requires a successful authentication.
   - **Debug logs:** the share and scan debug logs, their terminal icons and `debugPrint` output exist only when `!kReleaseMode`. Release builds delete the old `share_debug.log` and `scan_debug.log` on start.
-  - **Desktop link:** a client that doesn't send a hello within 5 s that decrypts with the pairing key and matches its hash is closed. Backup restore is all-or-nothing and only restores the app's own tables.
+  - **Desktop link:** a client that doesn't send a hello within 15 s (raised from 5 s at the user's request on 2026-10-28) that decrypts with the pairing key and matches its hash is closed. Backup restore is all-or-nothing and only restores the app's own tables.
 - Each fix starts with a failing test. Every `BUG:` test the fix covers is un-skipped.
 - The wire protocol, QR payloads and synced table shapes stay unchanged, so phones already paired keep working.
 - Every new string goes into all four ARBs.
@@ -49,7 +49,7 @@ context:
 | Bad share id | `payload.id` = `../../x` | Share rejected (parse returns null), nothing written |
 | Deep link name | `name=../../db.sqlite` | Saved as a sanitised basename inside `provider_downloads/` |
 | Huge frame before hello | 4 bytes `FFFFFFFF` | Client dropped, buffer reset, next client works |
-| Silent client | Connects, sends nothing for 5 s | Closed. The real phone can still connect. |
+| Silent client | Connects, sends nothing for 15 s | Closed. The real phone can still connect. |
 | file_request outside docs | `/etc/passwd`, `../x` | Not resolved (null) |
 | file_data name | `db.sqlite` | Doesn't overwrite the DB: written under a unique name |
 | Restore fails | Backup with a missing column | Throws. Current data intact, `backup_db` detached. |
@@ -100,7 +100,7 @@ context:
 - [x] `tcp_service.dart`
   - Cap frames at 64 KiB until the hello is verified and at 1 GiB after that. Drop any client over the cap. Large LWW deltas and `file_data` messages from the paired phone stay unaffected.
   - Reset `_buffer` on every client connect and disconnect.
-  - Server mode: an unauthenticated client is closed after 5 s. Frames before a valid hello aren't forwarded, and a missing hash or a parse error rejects the client.
+  - Server mode: an unauthenticated client is closed after 15 s. Frames before a valid hello aren't forwarded, and a missing hash or a parse error rejects the client.
 - [x] `attachment_sync_service.dart` -- `resolveFile` returns only canonical paths inside the docs directory. The fallbacks use a basename with no separators or `..`.
 - [x] `lww_sync_service.dart` -- never overwrite: if the name already exists or is `db.sqlite*`, add a unique suffix.
 - [x] `backup_service.dart` -- ATTACH, then a transaction (DELETE and INSERT only for tables that are in the app's table list and present in both databases), then DETACH in a `finally`.
@@ -151,7 +151,7 @@ SQLite refuses `ATTACH` inside a transaction, so the order is attach → `transa
 ### Untrusted input
 
 - **Deep link:** `DeepLinkService.safeFileName` keeps the last segment after any `/` or `\`, drops control characters and trims; empty, `.` and `..` fall back to the generated `provider_doc_<ms><ext>`. Unicode names are kept. `handleDeepLink` is now `@visibleForTesting` and `AppLinks` can be passed in (`@ignoreParam`, so the injectable registration doesn't change). Its empty `catch` blocks now log. A second download with the same name still replaces the earlier file in `provider_downloads/` (unchanged).
-- **TCP server:** frames are capped at 64 KiB (`maxUnauthenticatedFrameBytes`) until the hello is verified and at 1 GiB (`maxFrameBytes`) after; the cap is checked on the length prefix, before the body arrives. A client is dropped through a `dropClient` command to the server isolate, keyed by a per-client id so a late drop can't close the next client. Before the hello nothing is forwarded or answered (pings included); a frame that doesn't decrypt, a hello without a string `pairing_key_hash` that matches, or unreadable hello JSON drops the client. `helloTimeout` (5 s) runs from every `clientConnected`, also for an accepted pending client. `_buffer` resets on connect, disconnect, drop and `stopServer`. The isolate now uses one listener per socket routed by its current role, which also fixes the replaced-client bug (its `BUG:` test is un-skipped). The client side (mobile) applies the 1 GiB cap and resets its buffer on disconnect.
+- **TCP server:** frames are capped at 64 KiB (`maxUnauthenticatedFrameBytes`) until the hello is verified and at 1 GiB (`maxFrameBytes`) after; the cap is checked on the length prefix, before the body arrives. A client is dropped through a `dropClient` command to the server isolate, keyed by a per-client id so a late drop can't close the next client. Before the hello nothing is forwarded or answered (pings included); a frame that doesn't decrypt, a hello without a string `pairing_key_hash` that matches, or unreadable hello JSON drops the client. `helloTimeout` (15 s; 5 s at first) runs from every `clientConnected`, also for an accepted pending client. `_buffer` resets on connect, disconnect, drop and `stopServer`. The isolate now uses one listener per socket routed by its current role, which also fixes the replaced-client bug (its `BUG:` test is un-skipped). The client side (mobile) applies the 1 GiB cap and resets its buffer on disconnect.
 - **Behaviour changes to know:** a hello with the wrong hash now closes the socket (before, it only marked the link disconnected and kept answering pings); an MPC hello without a key hash is now rejected (phones always send one). A pending (second) client is destroyed once it has sent more than 64 KiB + 4 bytes while waiting for the accept dialog; a phone that starts syncing before it is accepted is therefore dropped and reconnects. `pingInterval`/`pingTimeout` became `@visibleForTesting` instance fields (same values) so the keep-alive is tested.
 - **`resolveFile`:** candidates are the path itself (relative ones joined to documents), the part after `/Containers/Data/Application/<id>/Documents/` re-rooted in the current documents, and the bare file name in documents; each must be inside documents after normalising and after resolving symbolic links. The temporary-directory fallback and the old remap to the whole app container (outside `Documents`) are gone.
 - **`saveReceivedFiles`:** the sanitised base name is used only when it is free (no file, directory or link of that name) and not `db.sqlite*` (case-insensitive); otherwise `<stem>_<8 hex><ext>`. Failures are logged.
