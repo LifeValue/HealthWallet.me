@@ -303,12 +303,11 @@ class FhirObservationExtractor {
           final value = observation.valueX;
 
           if (value is fhir_r4.CodeableConcept) {
-            if (value.text != null && value.text.toString().isNotEmpty) {
-              final directText = value.text.toString();
-              if (_isValidBloodType(directText)) {
-                return directText;
-              }
-            }
+            final fromText = _normalizeBloodType(value.text?.toString());
+            if (fromText != null) return fromText;
+
+            final fromCoding = _bloodTypeFromCodings(value.coding);
+            if (fromCoding != null) return fromCoding;
 
             final display = code.display?.toString();
             if (display != null && _isValidBloodType(display)) {
@@ -460,5 +459,29 @@ class FhirObservationExtractor {
 
   static bool _isValidBloodType(String bloodType) {
     return BloodTypes.isValidBloodType(bloodType);
+  }
+
+  /// [text] as a short blood type ("A+"), accepting the standard SNOMED
+  /// displays ("Blood group A Rh(D) positive"); null when it is neither.
+  static String? _normalizeBloodType(String? text) {
+    final trimmed = text?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    if (_isValidBloodType(trimmed)) return trimmed;
+    return BloodTypes.fhirDisplayMapping[trimmed];
+  }
+
+  /// The blood type coded in a value's codings: a known SNOMED code first,
+  /// then a recognisable display.
+  static String? _bloodTypeFromCodings(List<fhir_r4.Coding>? codings) {
+    if (codings == null) return null;
+    for (final coding in codings) {
+      final code = coding.code?.toString();
+      for (final entry in BloodTypes.snomedCodes.entries) {
+        if (entry.value == code) return entry.key;
+      }
+      final display = _normalizeBloodType(coding.display?.toString());
+      if (display != null) return display;
+    }
+    return null;
   }
 }

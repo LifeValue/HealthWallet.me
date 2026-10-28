@@ -911,11 +911,36 @@ void main() {
           'A+',
         );
       },
-      skip:
-          'BUG: without value.text the code falls back to the display of '
-          'the *observation* code (e.g. "ABO and Rh group"), never the '
-          'value coding',
     );
+
+    test('reads a SNOMED display in the value coding', () {
+      expect(
+        FhirObservationExtractor.extractBloodTypeFromObservations([
+          bloodType({
+            'valueCodeableConcept': codeableConcept(
+              codings: [
+                coding(snomedSystem, '0000', 'Blood group O Rh(D) negative'),
+              ],
+            ),
+          }),
+        ]),
+        'O-',
+      );
+    });
+
+    test('a short value text wins over the value coding', () {
+      expect(
+        FhirObservationExtractor.extractBloodTypeFromObservations([
+          bloodType({
+            'valueCodeableConcept': codeableConcept(
+              text: 'B+',
+              codings: [coding(snomedSystem, '278149003', 'A+')],
+            ),
+          }),
+        ]),
+        'B+',
+      );
+    });
 
     test(
       'maps SNOMED blood group displays to the short form',
@@ -931,9 +956,6 @@ void main() {
           'A+',
         );
       },
-      skip:
-          'BUG: BloodTypes.fhirDisplayMapping is never consulted, so '
-          'standard SNOMED displays are rejected',
     );
   });
 }
