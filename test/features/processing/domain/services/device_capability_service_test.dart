@@ -91,7 +91,7 @@ void main() {
       expect(small.threadsBatch, inInclusiveRange(1, 8));
     });
 
-    test('computeModelConfig offloads more layers with vision on a Mac', () {
+    test('computeModelConfig sets GPU layers for this desktop', () {
       final text = DeviceCapabilityService.computeModelConfig(
         withVision: false,
         profile: _profile(),
@@ -100,19 +100,21 @@ void main() {
         withVision: true,
         profile: _profile(),
       );
-
-      expect(text.gpuLayers, 33);
-      expect(vision.gpuLayers, 99);
-    }, skip: !Platform.isMacOS);
-
-    test('computeModelConfig uses no GPU layers without a usable GPU', () {
-      final config = DeviceCapabilityService.computeModelConfig(
+      final noGpu = DeviceCapabilityService.computeModelConfig(
         withVision: true,
-        profile: _profile(gpuType: GpuType.integratedOnly, ramMB: 16384),
+        profile: _profile(gpuType: GpuType.integratedOnly),
       );
 
-      expect(config.gpuLayers, 0);
-      expect(config.contextSize, 2048);
-    }, skip: !(Platform.isLinux || Platform.isWindows));
+      if (Platform.isMacOS) {
+        // Apple silicon always has a usable GPU; vision offloads more.
+        expect(text.gpuLayers, 33);
+        expect(vision.gpuLayers, 99);
+      } else {
+        expect(text.gpuLayers, 16);
+        expect(vision.gpuLayers, 33);
+        expect(noGpu.gpuLayers, 0);
+        expect(noGpu.contextSize, 2048);
+      }
+    });
   }, skip: !(Platform.isMacOS || Platform.isLinux || Platform.isWindows));
 }
