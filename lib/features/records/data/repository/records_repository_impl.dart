@@ -584,14 +584,8 @@ class RecordsRepositoryImpl implements RecordsRepository {
         return false;
       }
 
-      String subjectPatientId;
-      if (subject.contains('/')) {
-        subjectPatientId = subject.split('/').last;
-      } else if (subject.startsWith('urn:uuid:')) {
-        subjectPatientId = subject.replaceFirst('urn:uuid:', '');
-      } else {
-        subjectPatientId = subject;
-      }
+      final subjectPatientId =
+          FhirReferenceUtils.extractReferenceId(subject) ?? subject;
 
       final matches =
           subjectPatientId == targetPatient.resourceId ||
