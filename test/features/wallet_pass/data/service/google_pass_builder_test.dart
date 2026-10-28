@@ -188,7 +188,7 @@ void main() {
       );
       expect(
         ((object['logo'] as Map)['sourceUri'] as Map)['uri'],
-        startsWith('https://'),
+        GooglePassBuilder.logoUrl,
       );
     });
 
@@ -323,5 +323,12 @@ void main() {
       final en = await genericObjectOf(card);
       expect(de['barcode'], en['barcode']);
     });
+  });
+
+  test('the logo is served from master, never from a feature branch', () {
+    final uri = Uri.parse(GooglePassBuilder.logoUrl);
+    expect(uri.scheme, 'https');
+    expect(uri.pathSegments, contains('master'));
+    expect(uri.path, endsWith('/assets/icons/app-icon.png'));
   });
 }

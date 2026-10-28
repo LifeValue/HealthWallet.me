@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/core/utils/phone_formatter.dart';
@@ -16,6 +17,13 @@ import 'package:pointycastle/export.dart';
 class GooglePassBuilder {
   static const _serviceAccountPath =
       'assets/certs/android/service-account.json';
+
+  /// Public URL Google Wallet downloads the pass logo from. It must stay
+  /// reachable for as long as passes exist, so it points at `master`, never
+  /// at a feature branch (the old branch link returned 404).
+  @visibleForTesting
+  static const logoUrl =
+      'https://raw.githubusercontent.com/LifeValue/HealthWallet.me/master/assets/icons/app-icon.png';
 
   String get _issuerId => Env.googleWalletIssuerId;
 
@@ -146,7 +154,7 @@ class GooglePassBuilder {
       'hexBackgroundColor': '#5767FF',
       'logo': {
         'sourceUri': {
-          'uri': 'https://raw.githubusercontent.com/LifeValue/HealthWallet.me/dev/HM-180-llamadart/assets/icons/app-icon.png',
+          'uri': logoUrl,
         },
         'contentDescription': {
           'defaultValue': {
