@@ -301,7 +301,9 @@ class FhirCommonExtractor {
               names.add(display);
             }
           }
-        } catch (_) {}
+        } catch (_) {
+          // An element without this field (NoSuchMethodError on dynamic); skip it.
+        }
       }
     }
 
@@ -321,7 +323,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
 
       try {
         final member = (participant as dynamic).member;
@@ -331,7 +335,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
     }
 
     return names.isEmpty ? null : names.join(', ');
@@ -350,7 +356,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
 
       if (location is fhir_r4.Reference) {
         final display = location.display?.toString();
@@ -376,7 +384,9 @@ class FhirCommonExtractor {
             names.add(display);
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        // An element without this field (NoSuchMethodError on dynamic); skip it.
+      }
     }
 
     return names.isEmpty ? null : names.join(', ');
