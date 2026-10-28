@@ -9,6 +9,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/user/data/service/app_data_reset_service.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
 
 /// The word the user types to confirm a reset. It is the same in every
 /// language, and the prompt shows this exact word, so the check below always
@@ -135,6 +136,30 @@ class _ResetConfirmationDialogState extends State<ResetConfirmationDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      context.l10n.settingsReset,
+                      style: AppTextStyle.titleSmall,
+                    ),
+                  ),
+                  IconButton(
+                    key: const Key('reset_dialog_close'),
+                    tooltip: context.l10n.close,
+                    onPressed: _isProcessing
+                        ? null
+                        : () => Navigator.pop(context),
+                    icon: Assets.icons.close.svg(
+                      colorFilter: ColorFilter.mode(
+                        context.colorScheme.onSurface,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Insets.small),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(Insets.smallNormal),
