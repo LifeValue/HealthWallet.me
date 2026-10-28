@@ -91,4 +91,97 @@ void main() {
       expect(find.text(l10n.ok), findsOne);
     });
   });
+
+  group('confirmation dialog', () {
+    late List<String> calls;
+    late bool? result;
+
+    Future<void> openConfirmation(
+      WidgetTester tester, {
+      String? message,
+      String? subtitle,
+    }) async {
+      calls = [];
+      result = null;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  result = await AppSimpleDialog.showConfirmation(
+                    context: context,
+                    title: 'Disable the lock?',
+                    message: message,
+                    subtitle: subtitle,
+                    confirmText: 'Disable',
+                    cancelText: 'Cancel',
+                    onConfirm: () => calls.add('confirm'),
+                    onCancel: () => calls.add('cancel'),
+                  );
+                },
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    final close = find.byKey(const Key('confirmation_dialog_close'));
+
+    for (final variant in <String, ({String? message, String? subtitle})>{
+      'title only': (message: null, subtitle: null),
+      'with a message': (message: 'You can turn it on again.', subtitle: null),
+      'with a subtitle': (message: null, subtitle: 'You can turn it on again.'),
+    }.entries) {
+      testWidgets('${variant.key}: shows the title and an X', (tester) async {
+        await openConfirmation(
+          tester,
+          message: variant.value.message,
+          subtitle: variant.value.subtitle,
+        );
+
+        expect(find.text('Disable the lock?'), findsOne);
+        expect(close, findsOne);
+        expect(find.byTooltip(l10n.close), findsOne);
+        if (variant.value.message != null || variant.value.subtitle != null) {
+          expect(find.text('You can turn it on again.'), findsOne);
+        }
+      });
+    }
+
+    testWidgets('the X closes without confirming or cancelling', (
+      tester,
+    ) async {
+      await openConfirmation(tester, message: 'You can turn it on again.');
+
+      await tester.tap(close);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Dialog), findsNothing);
+      expect(result, isNull);
+      expect(calls, isEmpty);
+    });
+
+    testWidgets('Cancel and the action still work', (tester) async {
+      await openConfirmation(tester);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(result, isFalse);
+      expect(calls, ['cancel']);
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      calls.clear();
+      await tester.tap(find.text('Disable'));
+      await tester.pumpAndSettle();
+      expect(result, isTrue);
+      expect(calls, ['confirm']);
+    });
+  });
 }

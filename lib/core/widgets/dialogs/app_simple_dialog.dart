@@ -41,41 +41,43 @@ class AppSimpleDialog {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (message != null)
-                  Text(
-                    message,
-                    style: AppTextStyle.labelLarge.copyWith(
-                      color: (subtitle != null || subtitleWidget != null)
-                          ? textColor
-                          : textColor,
-                    ),
-                  )
-                else if (subtitle != null || subtitleWidget != null)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
                         title,
                         style: AppTextStyle.bodyLarge.copyWith(
                           color: textColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () => Navigator.of(dialogContext).pop(),
-                        child: Icon(
-                          Icons.close,
-                          size: 18,
-                          color: textColor.withValues(alpha: 0.5),
-                        ),
+                    ),
+                    const SizedBox(width: Insets.small),
+                    // Closes without choosing: unlike Cancel, it doesn't run
+                    // onCancel, which some dialogs use as a second action.
+                    IconButton(
+                      key: const Key('confirmation_dialog_close'),
+                      tooltip: dialogContext.l10n.close,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        size: 18,
+                        color: textColor.withValues(alpha: 0.5),
                       ),
-                    ],
-                  )
-                else
+                    ),
+                  ],
+                ),
+                if (message != null) ...[
+                  const SizedBox(height: Insets.normal),
                   Text(
-                    title,
+                    message,
                     style: AppTextStyle.labelLarge.copyWith(color: textColor),
                   ),
+                ],
                 if (subtitleWidget != null) ...[
                   const SizedBox(height: Insets.normal),
                   subtitleWidget,
