@@ -64,6 +64,16 @@ void main() {
       );
     });
 
+    test('keeps the digits of a small lab value', () {
+      expect(
+        _infos(
+          _lab('6598-7', 0.004, 'ng/mL', high: 0.04),
+          RegionPreset.europe,
+        ),
+        containsAll(['Value: 0.004 ng/mL', 'Reference Range: < 0.04 ng/mL']),
+      );
+    });
+
     test('keeps a lesion size in cm in the US', () {
       expect(
         _infos(_lab('21889-1', 2.3, 'cm'), RegionPreset.us),

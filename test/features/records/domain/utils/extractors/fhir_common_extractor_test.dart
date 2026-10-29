@@ -245,10 +245,13 @@ void main() {
           ),
           '0.004 ng/mL',
         );
+        expect(
+          FhirCommonExtractor.extractQuantity(
+            fhir.Quantity.fromJson(quantity(1.234, unit: 'mmol/L')),
+          ),
+          '1.234 mmol/L',
+        );
       },
-      skip:
-          'BUG: values are rounded to 2 decimals, so a troponin of '
-          '0.004 ng/mL is shown as "0.00 ng/mL"',
     );
   });
 

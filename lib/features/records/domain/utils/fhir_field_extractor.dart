@@ -33,6 +33,9 @@ class FhirFieldExtractor {
   static String? extractCodingDisplay(dynamic coding) =>
       FhirCommonExtractor.extractCodingDisplay(coding);
 
+  static String formatDecimal(double value) =>
+      FhirCommonExtractor.formatDecimal(value);
+
   static String? extractQuantity(fhir_r4.Quantity? quantity) =>
       FhirCommonExtractor.extractQuantity(quantity);
 

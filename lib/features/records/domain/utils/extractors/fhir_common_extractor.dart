@@ -85,7 +85,14 @@ class FhirCommonExtractor {
 
     final unit = quantityUnit(quantity);
     final shownUnit = localizeUnit == null ? unit : localizeUnit(unit);
-    return '${value.toStringAsFixed(2)} $shownUnit'.trim();
+    return '${formatDecimal(value)} $shownUnit'.trim();
+  }
+
+  /// [value] with two decimals, keeping any further digits it has: 13.5 is
+  /// "13.50" and a troponin of 0.004 stays "0.004" instead of "0.00".
+  static String formatDecimal(double value) {
+    final fixed = value.toStringAsFixed(2);
+    return double.parse(fixed) == value ? fixed : value.toString();
   }
 
   /// The unit of [quantity]: its `unit`, or its UCUM `code` without one.

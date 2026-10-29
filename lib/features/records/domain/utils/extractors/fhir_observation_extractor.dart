@@ -108,8 +108,12 @@ class FhirObservationExtractor {
       if (_isBodyHeight(codes) && region.heightUnit == 'ft/in') {
         return converted.unit;
       }
-      return '${converted.value.toStringAsFixed(2)} ${_unit(converted.unit, l10n)}'
-          .trim();
+      // A converted value has spurious digits; one shown as reported keeps
+      // the digits the source sent.
+      final shownValue = converted.unit == rawUnit
+          ? FhirCommonExtractor.formatDecimal(rawValue)
+          : converted.value.toStringAsFixed(2);
+      return '$shownValue ${_unit(converted.unit, l10n)}'.trim();
     }
 
     return extractObservationValue(valueX, l10n: l10n);
