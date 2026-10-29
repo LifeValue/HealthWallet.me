@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/data/repository/records_repository_impl.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/sync_local_data_source.dart';
@@ -9,15 +10,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 export '../desktop/lww_sync/lww_sync_test_helpers.dart' show openTestDatabase;
 
-/// The real repository on [db], with in-memory preferences.
-Future<RecordsRepositoryImpl> openRepository(AppDatabase db) async {
+/// The real repository on [db], with in-memory preferences and attachment
+/// files in [documentsPath].
+Future<RecordsRepositoryImpl> openRepository(
+  AppDatabase db, {
+  String documentsPath = '/nonexistent',
+}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   return RecordsRepositoryImpl(
     db,
     SyncLocalDataSourceImpl(db, prefs),
     SharedNotesDatasource(),
+    DocumentsPathResolver(documentsPath),
   );
+}
+
+/// The real [PathResolver] with a fixed documents directory.
+class DocumentsPathResolver extends PathResolver {
+  DocumentsPathResolver(this.documentsPath);
+
+  final String documentsPath;
+
+  @override
+  Future<String> getDocumentsPath() async => documentsPath;
 }
 
 /// Inserts a minimal valid FHIR resource of [type] as a `fhir_resource` row.

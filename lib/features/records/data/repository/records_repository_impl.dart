@@ -10,6 +10,7 @@ import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/data/data_source/fhir_resource_datasource.dart';
@@ -22,6 +23,7 @@ import 'package:health_wallet/features/sync/data/data_source/local/sync_local_da
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/features/sync/domain/services/demo_data_extractor.dart';
 import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -32,11 +34,13 @@ class RecordsRepositoryImpl implements RecordsRepository {
   final SyncLocalDataSource _syncLocalDataSource;
   final AppDatabase _database;
   final SharedNotesDatasource _sharedNotes;
+  final PathResolver _pathResolver;
 
   RecordsRepositoryImpl(
     this._database,
     this._syncLocalDataSource,
     this._sharedNotes,
+    this._pathResolver,
   ) : _datasource = FhirResourceDatasource(_database);
 
   @override
@@ -202,13 +206,143 @@ class RecordsRepositoryImpl implements RecordsRepository {
   }
 
   @override
-  Future<void> deleteResource(String resourceId) async {
-    await _datasource.deleteResourceById(resourceId);
-  }
+  Future<void> deleteResource(String resourceId) =>
+      _deleteRecords({resourceId});
 
   @override
-  Future<void> deleteResourcesByIds(List<String> ids) async {
-    await _datasource.deleteResourcesByIds(ids);
+  Future<void> deleteResourcesByIds(List<String> ids) =>
+      _deleteRecords(ids.toSet());
+
+  /// Deletes the records [ids] with what belongs to them: their notes and the
+  /// documents attached only to them; then the attachment files no remaining
+  /// record uses.
+  Future<void> _deleteRecords(Set<String> ids) async {
+    if (ids.isEmpty) return;
+    final fileUrls = <String>{};
+
+    await _database.transaction(() async {
+      final rows = await (_database.select(
+        _database.fhirResource,
+      )..where((f) => f.id.isIn(ids))).get();
+      final attached = await _documentsAttachedOnlyTo(rows, ids);
+      final allIds = {...ids, ...attached.map((r) => r.id)};
+
+      for (final row in [...rows, ...attached]) {
+        fileUrls.addAll(_attachmentFileUrls(row.resourceRaw));
+      }
+
+      await (_database.delete(
+        _database.recordNotes,
+      )..where((n) => n.resourceId.isIn(allIds))).go();
+      await _datasource.deleteResourcesByIds(allIds.toList());
+    });
+
+    for (final url in fileUrls) {
+      await _deleteFileIfUnused(url);
+    }
+  }
+
+  /// DocumentReferences attached (`context.related`) to [rows] and to no
+  /// record outside [ids].
+  Future<List<FhirResourceLocalDto>> _documentsAttachedOnlyTo(
+    List<FhirResourceLocalDto> rows,
+    Set<String> ids,
+  ) async {
+    final references = {
+      for (final row in rows)
+        if (row.resourceType != null && row.resourceId != null)
+          '${row.resourceType}/${row.resourceId}',
+    };
+    if (references.isEmpty) return [];
+
+    final candidates =
+        await (_database.select(_database.fhirResource)..where(
+              (f) =>
+                  f.resourceType.equals('DocumentReference') &
+                  f.id.isNotIn(ids) &
+                  references
+                      .map((r) => f.resourceRaw.contains('"$r"'))
+                      .reduce((a, b) => a | b),
+            ))
+            .get();
+
+    return [
+      for (final doc in candidates)
+        if (_relatedReferences(doc.resourceRaw) case final related
+            when related.isNotEmpty && related.every(references.contains))
+          doc,
+    ];
+  }
+
+  static List<String> _relatedReferences(String rawJson) {
+    try {
+      final related =
+          (jsonDecode(rawJson) as Map<String, dynamic>)['context']?['related']
+              as List?;
+      return [
+        for (final r in related ?? const [])
+          if (r is Map && r['reference'] is String) r['reference'] as String,
+      ];
+    } catch (e) {
+      logger.w('Unreadable DocumentReference context', e);
+      return const [];
+    }
+  }
+
+  /// The `file://` URLs of a DocumentReference's or Media's attachments.
+  static List<String> _attachmentFileUrls(String rawJson) {
+    try {
+      final json = jsonDecode(rawJson);
+      if (json is! Map<String, dynamic>) return const [];
+      final content = json['content'];
+      final attachments = switch (content) {
+        final List list => [
+          for (final item in list)
+            if (item is Map) item['attachment'],
+        ],
+        final Map attachment => [attachment],
+        _ => const [],
+      };
+      return [
+        for (final a in attachments)
+          if (a is Map && a['url'] is String)
+            if ((a['url'] as String).startsWith('file://')) a['url'] as String,
+      ];
+    } catch (e) {
+      logger.w('Unreadable attachment content', e);
+      return const [];
+    }
+  }
+
+  /// Deletes the file behind [url] unless another record still refers to it
+  /// (two attachments can share a file) or it lies outside the app's
+  /// documents, where a URL synced from another device could point.
+  Future<void> _deleteFileIfUnused(String url) async {
+    try {
+      final stillUsed = await _database
+          .customSelect(
+            'SELECT 1 FROM fhir_resource WHERE instr(resource_raw, ?) > 0 '
+            'LIMIT 1',
+            variables: [Variable.withString(url)],
+            readsFrom: {_database.fhirResource},
+          )
+          .get();
+      if (stillUsed.isNotEmpty) return;
+
+      final docsPath = p.normalize(await _pathResolver.getDocumentsPath());
+      final path = p.normalize(
+        await _pathResolver.toAbsolute(Uri.decodeComponent(url.substring(7))),
+      );
+      if (!p.isWithin(docsPath, path) ||
+          p.basename(path).toLowerCase().startsWith('db.sqlite')) {
+        return;
+      }
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    } catch (e, s) {
+      // The record is gone either way; a leftover file is only disk space.
+      logger.w('Deleting an attachment file failed', e, s);
+    }
   }
 
   @override
@@ -242,7 +376,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
       idsToDelete.addAll(siblings.map((r) => r.id));
     }
 
-    await _datasource.deleteResourcesByIds(idsToDelete.toList());
+    await _deleteRecords(idsToDelete);
   }
 
   @override
@@ -518,7 +652,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<void> clearDemoData() async {
-    await _datasource.deleteResourcesBySourceId('demo_data');
+    final demoRows = await _datasource.getResources(
+      resourceTypes: [],
+      sourceId: 'demo_data',
+    );
+    await _deleteRecords({for (final row in demoRows) row.id});
 
     // Delete the demo_data source itself
     await _syncLocalDataSource.deleteSource('demo_data');
