@@ -13,10 +13,14 @@ import 'package:health_wallet/features/desktop/communication/data/services/tcp_s
 
 /// Opens the real app database on an in-memory SQLite connection, so the
 /// schema, the `updated_at` triggers and the constraints are the production
-/// ones.
+/// ones, foreign keys included.
 AppDatabase openTestDatabase() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-  return AppDatabase(NativeDatabase.memory());
+  return AppDatabase(
+    NativeDatabase.memory(
+      setup: (database) => database.execute('PRAGMA foreign_keys = ON'),
+    ),
+  );
 }
 
 /// Fixed, millisecond-precise timestamps used across the LWW tests.

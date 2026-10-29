@@ -136,7 +136,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
   }) async {
     final companion = RecordNotesCompanion.insert(
       resourceId: resourceId,
-      sourceId: Value(sourceId),
+      sourceId: Value(await _existingSourceId(sourceId)),
       content: content,
       timestamp: DateTime.now(),
     );
@@ -144,6 +144,17 @@ class RecordsRepositoryImpl implements RecordsRepository {
     return await _database
         .into(_database.recordNotes)
         .insertOnConflictUpdate(companion);
+  }
+
+  /// [sourceId] when that source exists. A note refers to its source, so a
+  /// record without one (or whose source is gone) gets a note without one,
+  /// rather than a note that can't be saved.
+  Future<String?> _existingSourceId(String? sourceId) async {
+    if (sourceId == null || sourceId.isEmpty) return null;
+    final source = await (_database.select(
+      _database.sources,
+    )..where((s) => s.id.equals(sourceId))).getSingleOrNull();
+    return source?.id;
   }
 
   @override
@@ -174,7 +185,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
     )..where((t) => t.id.equals(note.id))).write(
       RecordNotesCompanion(
         resourceId: Value(note.resourceId),
-        sourceId: Value(note.sourceId),
+        sourceId: Value(await _existingSourceId(note.sourceId)),
         content: Value(note.content),
         timestamp: Value(note.timestamp),
       ),

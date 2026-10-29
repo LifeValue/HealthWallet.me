@@ -17,7 +17,11 @@ void main() {
   late SyncLocalDataSourceImpl dataSource;
 
   setUp(() async {
-    database = db.AppDatabase(NativeDatabase.memory());
+    database = db.AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+      ),
+    );
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
     dataSource = SyncLocalDataSourceImpl(database, prefs);
@@ -404,6 +408,33 @@ void main() {
       await dataSource.deleteSource('demo_data');
       expect(await sourceRows(), isEmpty);
       expect(await resourceRows(), isEmpty);
+    });
+
+    test('removes the notes on its records too', () async {
+      await dataSource.cacheSources(const [Source(id: 'a'), Source(id: 'b')]);
+      await dataSource.cacheFhirResources([
+        resource('a1', sourceId: 'a'),
+        resource('b1', sourceId: 'b'),
+      ]);
+      for (final (resourceId, sourceId) in [('a1', 'a'), ('b1', 'b')]) {
+        await database
+            .into(database.recordNotes)
+            .insert(
+              db.RecordNotesCompanion.insert(
+                resourceId: resourceId,
+                sourceId: Value(sourceId),
+                content: 'note on $resourceId',
+                timestamp: DateTime(2024),
+              ),
+            );
+      }
+
+      await dataSource.deleteSource('a');
+
+      expect((await sourceRows()).map((s) => s.id), ['b']);
+      expect((await resourceRows()).map((r) => r.id), ['b1']);
+      final notes = await database.select(database.recordNotes).get();
+      expect(notes.map((n) => n.resourceId), ['b1']);
     });
 
     test('is a no-op for an unknown source', () async {

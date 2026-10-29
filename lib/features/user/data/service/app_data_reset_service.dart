@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/services/temp_file_sweeper.dart';
@@ -36,16 +37,26 @@ class AppDataResetService {
   /// Deletes everything it can. Never throws: each failure is logged and the
   /// reset goes on, since the app exits right after.
   Future<void> reset() async {
-    try {
-      await _database.delete(_database.fhirResource).go();
-      await _database.delete(_database.sources).go();
-      await _database.delete(_database.recordNotes).go();
-      await _database.delete(_database.processingSessions).go();
+    // Notes refer to sources, so they go before them; each table on its own,
+    // so one failure doesn't keep the rest.
+    for (final table in <TableInfo>[
+      _database.recordNotes,
+      _database.fhirResource,
+      _database.sources,
+      _database.processingSessions,
+    ]) {
+      try {
+        await _database.delete(table).go();
+      } catch (e, s) {
+        logger.e('Reset: clearing ${table.actualTableName} failed', e, s);
+      }
+    }
 
+    try {
       final prefs = await _preferences();
       await prefs.clear();
     } catch (e, s) {
-      logger.e('Reset: clearing the app data failed', e, s);
+      logger.e('Reset: clearing the preferences failed', e, s);
     }
 
     await _sweeper.sweep();

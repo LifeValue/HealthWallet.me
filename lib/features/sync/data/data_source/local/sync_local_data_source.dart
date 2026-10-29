@@ -272,14 +272,25 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
   @override
   Future<void> deleteSource(String sourceId) async {
-    // Delete from sources table
-    await (_appDatabase.delete(
-      _appDatabase.sources,
-    )..where((tbl) => tbl.id.equals(sourceId))).go();
+    // Notes refer to the source, so they go first; all or nothing.
+    await _appDatabase.transaction(() async {
+      final resourceIds = _appDatabase.selectOnly(_appDatabase.fhirResource)
+        ..addColumns([_appDatabase.fhirResource.id])
+        ..where(_appDatabase.fhirResource.sourceId.equals(sourceId));
+      await (_appDatabase.delete(_appDatabase.recordNotes)..where(
+            (note) =>
+                note.sourceId.equals(sourceId) |
+                note.resourceId.isInQuery(resourceIds),
+          ))
+          .go();
 
-    // Delete all FHIR resources associated with this source
-    await (_appDatabase.delete(
-      _appDatabase.fhirResource,
-    )..where((tbl) => tbl.sourceId.equals(sourceId))).go();
+      await (_appDatabase.delete(
+        _appDatabase.fhirResource,
+      )..where((tbl) => tbl.sourceId.equals(sourceId))).go();
+
+      await (_appDatabase.delete(
+        _appDatabase.sources,
+      )..where((tbl) => tbl.id.equals(sourceId))).go();
+    });
   }
 }
