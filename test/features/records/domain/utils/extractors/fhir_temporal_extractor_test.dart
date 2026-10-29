@@ -152,7 +152,7 @@ void main() {
             'high': {'value': 50, 'unit': 'a'},
           },
         },
-        '40 - 50',
+        '40.00 a - 50.00 a',
       ),
       ('string', {'String': 'childhood'}, 'childhood'),
     ];
@@ -199,10 +199,9 @@ void main() {
         });
         expect(
           FhirTemporalExtractor.extractOnsetX(onset),
-          isNot(contains('null')),
+          '≤ 50.00 a',
         );
       },
-      skip: 'BUG: an open Range onset renders as "null - 50"',
     );
   });
 
@@ -457,7 +456,7 @@ void main() {
             'high': {'value': 50, 'unit': 'a'},
           },
         },
-        '50.00 a',
+        '≤ 50.00 a',
       ),
       (
         'Range with only a low bound',
@@ -466,7 +465,7 @@ void main() {
             'low': {'value': 40, 'unit': 'a'},
           },
         },
-        '40.00 a',
+        '≥ 40.00 a',
       ),
       ('string', {'String': 'adolescence'}, 'adolescence'),
     ];
@@ -565,7 +564,7 @@ void main() {
             'low': {'value': 1, 'unit': 'a'},
           },
         }),
-        '1.00 a',
+        '≥ 1.00 a',
       ),
       ('unsupported', fhir.FhirBoolean(true), null),
     ];

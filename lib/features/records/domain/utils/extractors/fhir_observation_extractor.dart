@@ -17,7 +17,10 @@ class FhirObservationExtractor {
   }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
-      return '${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${_unit(valueQuantity.unit.toString(), l10n)}';
+      return FhirCommonExtractor.formatQuantity(
+        valueQuantity,
+        localizeUnit: (unit) => _unit(unit, l10n),
+      );
     }
 
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
@@ -44,12 +47,24 @@ class FhirObservationExtractor {
 
     final valueRange = valueX?.isAs<fhir_r4.Range>();
     if (valueRange != null) {
-      return '${valueRange.low?.value?.valueDouble?.toStringAsFixed(2)} - ${valueRange.high?.value?.valueDouble?.toStringAsFixed(2)}';
+      return FhirCommonExtractor.formatRange(
+        valueRange,
+        localizeUnit: (unit) => _unit(unit, l10n),
+      );
     }
 
     final valueRatio = valueX?.isAs<fhir_r4.Ratio>();
     if (valueRatio != null) {
-      return '${valueRatio.numerator?.value?.valueDouble?.toStringAsFixed(2)} / ${valueRatio.denominator?.value?.valueDouble?.toStringAsFixed(2)}';
+      final numerator = FhirCommonExtractor.formatQuantity(
+        valueRatio.numerator,
+        localizeUnit: (unit) => _unit(unit, l10n),
+      );
+      final denominator = FhirCommonExtractor.formatQuantity(
+        valueRatio.denominator,
+        localizeUnit: (unit) => _unit(unit, l10n),
+      );
+      if (numerator == null || denominator == null) return null;
+      return '$numerator / $denominator';
     }
 
     final valueTime = valueX?.isAs<fhir_r4.FhirTime>();
@@ -82,20 +97,19 @@ class FhirObservationExtractor {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
       final rawValue = valueQuantity.value?.valueDouble;
-      final rawUnit = valueQuantity.unit?.toString() ?? '';
-      if (rawValue != null) {
-        final converted = convertQuantityForRegion(
-          rawValue,
-          rawUnit,
-          region,
-          codes: codes,
-        );
-        if (_isBodyHeight(codes) && region.heightUnit == 'ft/in') {
-          return converted.unit;
-        }
-        return '${converted.value.toStringAsFixed(2)} ${_unit(converted.unit, l10n)}';
+      if (rawValue == null) return null;
+      final rawUnit = FhirCommonExtractor.quantityUnit(valueQuantity);
+      final converted = convertQuantityForRegion(
+        rawValue,
+        rawUnit,
+        region,
+        codes: codes,
+      );
+      if (_isBodyHeight(codes) && region.heightUnit == 'ft/in') {
+        return converted.unit;
       }
-      return '${rawValue?.toStringAsFixed(2)} ${_unit(rawUnit, l10n)}';
+      return '${converted.value.toStringAsFixed(2)} ${_unit(converted.unit, l10n)}'
+          .trim();
     }
 
     return extractObservationValue(valueX, l10n: l10n);

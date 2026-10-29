@@ -112,9 +112,7 @@ class FhirTemporalExtractor {
     if (onsetPeriod != null) return extractPeriod(onsetPeriod, l10n: l10n);
 
     final onsetRange = onsetX.isAs<fhir_r4.Range>();
-    if (onsetRange != null) {
-      return '${onsetRange.low?.value} - ${onsetRange.high?.value}';
-    }
+    if (onsetRange != null) return FhirCommonExtractor.formatRange(onsetRange);
 
     final onsetString = onsetX.isAs<fhir_r4.FhirString>();
     if (onsetString != null) return onsetString.valueString;
@@ -143,7 +141,7 @@ class FhirTemporalExtractor {
 
     final abatementRange = abatementX.isAs<fhir_r4.Range>();
     if (abatementRange != null) {
-      return '${abatementRange.low?.value} - ${abatementRange.high?.value}';
+      return FhirCommonExtractor.formatRange(abatementRange);
     }
 
     final abatementString = abatementX.isAs<fhir_r4.FhirString>();
@@ -315,14 +313,7 @@ class FhirTemporalExtractor {
     }
 
     final onsetRange = onsetX.isAs<fhir_r4.Range>();
-    if (onsetRange != null) {
-      final low = FhirCommonExtractor.extractQuantity(onsetRange.low);
-      final high = FhirCommonExtractor.extractQuantity(onsetRange.high);
-      if (low != null && high != null) {
-        return '$low - $high';
-      }
-      return low ?? high;
-    }
+    if (onsetRange != null) return FhirCommonExtractor.formatRange(onsetRange);
 
     final onsetString = onsetX.isAs<fhir_r4.FhirString>();
     if (onsetString != null) return onsetString.valueString;
@@ -355,12 +346,7 @@ class FhirTemporalExtractor {
 
     final abatementRange = abatementX.isAs<fhir_r4.Range>();
     if (abatementRange != null) {
-      final low = FhirCommonExtractor.extractQuantity(abatementRange.low);
-      final high = FhirCommonExtractor.extractQuantity(abatementRange.high);
-      if (low != null && high != null) {
-        return '$low - $high';
-      }
-      return low ?? high;
+      return FhirCommonExtractor.formatRange(abatementRange);
     }
 
     final abatementString = abatementX.isAs<fhir_r4.FhirString>();
@@ -404,12 +390,7 @@ class FhirTemporalExtractor {
 
     final performedRange = performedX.isAs<fhir_r4.Range>();
     if (performedRange != null) {
-      final low = FhirCommonExtractor.extractQuantity(performedRange.low);
-      final high = FhirCommonExtractor.extractQuantity(performedRange.high);
-      if (low != null && high != null) {
-        return '$low - $high';
-      }
-      return low ?? high;
+      return FhirCommonExtractor.formatRange(performedRange);
     }
 
     return null;

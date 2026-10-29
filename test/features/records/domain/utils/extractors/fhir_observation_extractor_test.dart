@@ -132,10 +132,25 @@ void main() {
           '7.20',
         );
       },
-      skip:
-          'BUG: interpolates the nullable unit, giving "7.20 null" (also '
-          'for UCUM-only quantities that carry `code` but no `unit`)',
     );
+
+    test('falls back to the UCUM code of a Quantity without unit', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({'valueQuantity': quantity(7.2, code: 'mmol/L')}),
+        ),
+        '7.20 mmol/L',
+      );
+    });
+
+    test('returns null for a Quantity without value', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({'valueQuantity': quantity(null, unit: 'mmHg')}),
+        ),
+        isNull,
+      );
+    });
 
     test(
       'does not print "null" for an open Range',
@@ -146,10 +161,17 @@ void main() {
               'valueRange': {'high': quantity(5)},
             }),
           ),
-          isNot(contains('null')),
+          '≤ 5.00',
+        );
+        expect(
+          FhirObservationExtractor.extractObservationValue(
+            _value({
+              'valueRange': {'low': quantity(1, unit: 'mmol/L')},
+            }),
+          ),
+          '≥ 1.00 mmol/L',
         );
       },
-      skip: 'BUG: an open Range is rendered as "null - 5.00"',
     );
   });
 
@@ -361,7 +383,7 @@ void main() {
           _value({'valueQuantity': quantity(7)}),
           RegionPreset.europe,
         ),
-        '7.00 ',
+        '7.00',
       );
     });
 
@@ -419,7 +441,6 @@ void main() {
           isNull,
         );
       },
-      skip: 'BUG: a value-less Quantity is rendered as "null mmHg"',
     );
   });
 

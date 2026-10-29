@@ -71,14 +71,44 @@ class FhirCommonExtractor {
     return null;
   }
 
-  static String? extractQuantity(fhir_r4.Quantity? quantity) {
-    if (quantity == null) return null;
-    if (quantity.value == null) return null;
+  static String? extractQuantity(fhir_r4.Quantity? quantity) =>
+      formatQuantity(quantity);
 
-    final value = quantity.value?.valueDouble?.toStringAsFixed(2);
-    final unit = quantity.unit?.toString() ?? '';
+  /// "value unit", or null when [quantity] has no value. Without a `unit`
+  /// the UCUM `code` is shown instead. [localizeUnit] translates the unit.
+  static String? formatQuantity(
+    fhir_r4.Quantity? quantity, {
+    String Function(String unit)? localizeUnit,
+  }) {
+    final value = quantity?.value?.valueDouble;
+    if (quantity == null || value == null) return null;
 
-    return '$value $unit'.trim();
+    final unit = quantityUnit(quantity);
+    final shownUnit = localizeUnit == null ? unit : localizeUnit(unit);
+    return '${value.toStringAsFixed(2)} $shownUnit'.trim();
+  }
+
+  /// The unit of [quantity]: its `unit`, or its UCUM `code` without one.
+  static String quantityUnit(fhir_r4.Quantity quantity) {
+    final unit = quantity.unit?.valueString;
+    if (unit != null && unit.isNotEmpty) return unit;
+    final system = quantity.system?.valueString;
+    final isUcum = system == null || system == 'http://unitsofmeasure.org';
+    return isUcum ? quantity.code?.valueString ?? '' : '';
+  }
+
+  /// "low - high", or "≥ low" / "≤ high" for a range open on one side; null
+  /// when neither bound has a value.
+  static String? formatRange(
+    fhir_r4.Range? range, {
+    String Function(String unit)? localizeUnit,
+  }) {
+    final low = formatQuantity(range?.low, localizeUnit: localizeUnit);
+    final high = formatQuantity(range?.high, localizeUnit: localizeUnit);
+    if (low != null && high != null) return '$low - $high';
+    if (low != null) return '≥ $low';
+    if (high != null) return '≤ $high';
+    return null;
   }
 
   static String? extractAllCodeableConceptsFromArray(
