@@ -21,6 +21,18 @@ void main() {
     for (final f in tmp.listSync()) f.uri.pathSegments.last,
   ];
 
+  /// Pumps until [condition] holds. The file I/O is real and takes as long
+  /// as the machine needs, so both the real and the test clock move on.
+  Future<void> pumpUntil(WidgetTester tester, bool Function() condition) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    while (!condition() && DateTime.now().isBefore(deadline)) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+  }
+
   testWidgets('the decoded PDF is written once and deleted when the viewer '
       'closes', (tester) async {
     final media = entityFromJson({
@@ -42,10 +54,7 @@ void main() {
         home: MediaFullscreenViewer(media: media),
       ),
     );
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 200)),
-    );
-    await tester.pump();
+    await pumpUntil(tester, () => tempFiles().isNotEmpty);
     await tester.pump();
 
     final names = tempFiles();
@@ -53,13 +62,7 @@ void main() {
     expect(names.single, startsWith(TempFileSweeper.recordPreviewPrefix));
 
     await tester.pumpWidget(const SizedBox());
-    // The delete starts under the test clock and does real file I/O.
-    for (var i = 0; i < 5; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 50)),
-      );
-      await tester.pump();
-    }
+    await pumpUntil(tester, () => tempFiles().isEmpty);
 
     expect(tempFiles(), isEmpty);
   });

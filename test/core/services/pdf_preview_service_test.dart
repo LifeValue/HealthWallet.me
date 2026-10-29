@@ -50,7 +50,12 @@ void main() {
     late Future<void> viewing;
     await tester.runAsync(() async {
       viewing = PdfPreviewService(PathResolver()).previewInApp(context, media);
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      // The file is written with real I/O, as fast as the machine allows.
+      final deadline = DateTime.now().add(const Duration(seconds: 5));
+      while ((tempFiles().isEmpty || !Navigator.of(context).canPop()) &&
+          DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     });
     await tester.pump();
 

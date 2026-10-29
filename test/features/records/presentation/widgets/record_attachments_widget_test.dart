@@ -37,14 +37,19 @@ void main() {
     dir.deleteSync(recursive: true);
   });
 
-  /// Taps the view icon; the widget checks the file on disk, which needs
-  /// real time.
-  Future<void> tapView(WidgetTester tester) async {
-    await tester.runAsync(() async {
-      await tester.tap(find.byIcon(Icons.remove_red_eye_outlined));
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-    });
-    await tester.pump();
+  /// Taps the view icon and pumps until [done]; the widget checks the file
+  /// on disk, which takes real time.
+  Future<void> tapView(WidgetTester tester, bool Function() done) async {
+    await tester.runAsync(
+      () => tester.tap(find.byIcon(Icons.remove_red_eye_outlined)),
+    );
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    while (!done() && DateTime.now().isBefore(deadline)) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
   }
 
   Future<void> pumpWithFile(WidgetTester tester, {required bool readOnly}) {
@@ -87,20 +92,20 @@ void main() {
   testWidgets('a shared file that is not an image or PDF is not handed to '
       'another app', (tester) async {
     await pumpWithFile(tester, readOnly: true);
+    final notPreviewable = find.text(
+      AppLocalizationsEn().sharedFileNotPreviewable,
+    );
 
-    await tapView(tester);
+    await tapView(tester, () => notPreviewable.evaluate().isNotEmpty);
 
     expect(opened, isEmpty);
-    expect(
-      find.text(AppLocalizationsEn().sharedFileNotPreviewable),
-      findsOneWidget,
-    );
+    expect(notPreviewable, findsOneWidget);
   });
 
   testWidgets('the owner\'s own file opens in another app', (tester) async {
     await pumpWithFile(tester, readOnly: false);
 
-    await tapView(tester);
+    await tapView(tester, () => opened.isNotEmpty);
 
     expect(opened, hasLength(1));
   });
