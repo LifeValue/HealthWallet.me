@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -19,7 +20,9 @@ class AttachmentBrowseBloc
 
   AttachmentBrowseBloc(this._service, this._specialtyClassifier)
     : super(const AttachmentBrowseState()) {
-    on<AttachmentBrowseInitialised>(_onInitialised);
+    // A new scope or filter replaces a load still running, so an earlier,
+    // slower load can't show another scope's records.
+    on<AttachmentBrowseInitialised>(_onInitialised, transformer: restartable());
     on<AttachmentBrowseSelected>(_onRecordSelected);
     on<AttachmentBrowseMonthSelected>(_onMonthSelected);
     on<AttachmentBrowseSearchChanged>(_onSearchChanged);
