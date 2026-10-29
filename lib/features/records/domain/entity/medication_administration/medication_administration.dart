@@ -113,6 +113,12 @@ abstract class MedicationAdministration
       return title;
     }
 
+    final medicationName = FhirFieldExtractor.extractMedicationName(
+      medicationX,
+      rawResource,
+    );
+    if (medicationName != null) return medicationName;
+
     final displayText = FhirFieldExtractor.extractCodeableConceptText(category);
     if (displayText != null) return displayText;
 
@@ -135,8 +141,9 @@ abstract class MedicationAdministration
     );
 
     // Medication
-    final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
-      medicationX?.isAs<CodeableConcept>(),
+    final medicationDisplay = FhirFieldExtractor.extractMedicationName(
+      medicationX,
+      rawResource,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,

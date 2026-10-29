@@ -82,6 +82,46 @@ void main() {
     });
   });
 
+  group('medication given by reference', () {
+    Map<String, dynamic> byReference(
+      Map<String, dynamic> json,
+      Map<String, dynamic> reference, {
+      List<Map<String, dynamic>>? contained,
+    }) => {
+      ...json..remove('medicationCodeableConcept'),
+      'medicationReference': reference,
+      'contained': ?contained,
+    };
+
+    test('is named from the reference display', () {
+      final json = byReference(medicationRequestJson(), {
+        'reference': 'Medication/med-1',
+        'display': 'Lisinopril 10 MG',
+      });
+      expect(
+        _cardLines(json).last.info,
+        'Medication: Lisinopril 10 MG',
+      );
+      expect(entityFromJson(json).displayTitle, 'Lisinopril 10 MG');
+    });
+
+    test('is named from a contained Medication', () {
+      final json = byReference(
+        medicationStatementJson(),
+        {'reference': '#m1'},
+        contained: [
+          {
+            'resourceType': 'Medication',
+            'id': 'm1',
+            'code': codeableConcept(text: 'Amoxicillin 500 mg'),
+          },
+        ],
+      );
+      expect(_cardLines(json).last.info, 'Amoxicillin 500 mg');
+      expect(entityFromJson(json).displayTitle, 'Amoxicillin 500 mg');
+    });
+  });
+
   group('allergy and condition status', () {
     Map<String, dynamic> status(String system, String code) => codeableConcept(
       codings: [coding('http://terminology.hl7.org/CodeSystem/$system', code)],

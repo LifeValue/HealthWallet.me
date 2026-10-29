@@ -15,6 +15,11 @@ class FhirFieldExtractor {
   static String? extractCodeableConceptText(dynamic codeableConcept) =>
       FhirCommonExtractor.extractCodeableConceptText(codeableConcept);
 
+  static String? extractMedicationName(
+    dynamic medicationX,
+    Map<String, dynamic> rawResource,
+  ) => FhirCommonExtractor.extractMedicationName(medicationX, rawResource);
+
   static String? extractReferenceDisplay(dynamic reference) =>
       FhirCommonExtractor.extractReferenceDisplay(reference);
 
