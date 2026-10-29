@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -115,26 +116,21 @@ abstract class Condition with _$Condition implements IFhirResource {
   List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
 
-    // Clinical Status
-    final statusDisplay = FhirFieldExtractor.extractCodeableConceptText(
-      clinicalStatus,
-    );
+    // Clinical and verification status first: a resolved, refuted or
+    // entered-in-error condition is flagged on the card.
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusDisplay,
+      FhirCodeLabels.statusConceptLine(
+        clinicalStatus,
+        l10n,
         prefix: l10n.fieldClinicalStatus,
       ),
     );
-
-    // Verification Status
-    final verificationDisplay = FhirFieldExtractor.extractCodeableConceptText(
-      verificationStatus,
-    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(
-        verificationDisplay,
+      FhirCodeLabels.statusConceptLine(
+        verificationStatus,
+        l10n,
         prefix: l10n.fieldVerification,
       ),
     );
@@ -266,5 +262,7 @@ abstract class Condition with _$Condition implements IFhirResource {
 
   @override
   String get statusDisplay =>
-      FhirFieldExtractor.extractCodeableConceptText(clinicalStatus) ?? '';
+      FhirFieldExtractor.extractCodeableConceptText(clinicalStatus) ??
+      FhirCodeLabels.statusCodeOf(clinicalStatus) ??
+      '';
 }

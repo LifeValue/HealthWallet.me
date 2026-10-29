@@ -71,13 +71,88 @@ void main() {
       expect(first.icon.path, ResourceFieldMapper.statusIcon.path);
     });
 
-    test('the status is shown in the app language', () {
+    test('the medication status is shown in the app language', () {
       expect(
         _cardLines({
           ...medicationRequestJson(),
           'status': 'stopped',
         }, _de).first.info,
         'Status: Abgesetzt',
+      );
+    });
+  });
+
+  group('allergy and condition status', () {
+    Map<String, dynamic> status(String system, String code) => codeableConcept(
+      codings: [coding('http://terminology.hl7.org/CodeSystem/$system', code)],
+    );
+
+    test('a refuted allergy says so before its criticality', () {
+      final lines = _cardLines({
+        ...allergyJson(),
+        'criticality': 'high',
+        'reaction': [
+          {
+            'manifestation': [codeableConcept(text: 'Anaphylaxis')],
+          },
+        ],
+        'verificationStatus': status(
+          'allergyintolerance-verification',
+          'refuted',
+        ),
+      });
+      expect(lines.map((l) => l.info), [
+        'Clinical Status: Active',
+        'Verification: Refuted',
+      ]);
+      expect(lines.last.icon.path, ResourceFieldMapper.warningIcon.path);
+    });
+
+    test('an inactive allergy is flagged', () {
+      final first = _cardLines({
+        ...allergyJson(),
+        'clinicalStatus': status('allergyintolerance-clinical', 'inactive'),
+      }).first;
+      expect(first.info, 'Clinical Status: Inactive');
+      expect(first.icon.path, ResourceFieldMapper.warningIcon.path);
+    });
+
+    test('a resolved condition given only as a code is named and flagged', () {
+      final first = _cardLines({
+        ...conditionJson(),
+        'clinicalStatus': status('condition-clinical', 'resolved'),
+      }).first;
+      expect(first.info, 'Clinical Status: Resolved');
+      expect(first.icon.path, ResourceFieldMapper.warningIcon.path);
+    });
+
+    test('an entered-in-error condition is flagged in the app language', () {
+      final lines = _cardLines({
+        ...conditionJson(),
+        'verificationStatus': status(
+          'condition-ver-status',
+          'entered-in-error',
+        ),
+      }, _de);
+      expect(lines.last.info, 'Verifizierung: Irrtümlich erfasst');
+      expect(lines.last.icon.path, ResourceFieldMapper.warningIcon.path);
+    });
+
+    test('statusDisplay falls back to the code of a code-only status', () {
+      final condition = entityFromJson({
+        ...conditionJson(),
+        'clinicalStatus': status('condition-clinical', 'resolved'),
+      });
+      expect(condition.statusDisplay, 'resolved');
+    });
+
+    test('a status without a known code keeps its text', () {
+      expect(
+        _cardLines({
+          ...conditionJson(),
+          'clinicalStatus': codeableConcept(text: 'chronic'),
+        }).first.info,
+        'Clinical Status: chronic',
       );
     });
   });
