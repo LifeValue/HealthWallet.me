@@ -95,8 +95,5 @@ void main() {
       );
       expect(infos, contains('Reference Range: 110.23 - 220.46 lbs'));
     },
-    skip:
-        'BUG: the high bound is converted from the already converted unit, '
-        'so 50-100 kg shows as "110.23 - 100.00 lbs"',
   );
 }

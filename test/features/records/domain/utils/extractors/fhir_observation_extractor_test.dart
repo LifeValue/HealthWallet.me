@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_observation_extractor.dart';
 
@@ -250,6 +251,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(70, code: 'kg')}),
           RegionPreset.us,
+          measured: PatientVitalType.weight,
         ),
         '154.32 lbs',
       );
@@ -260,6 +262,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(0.004, code: 'ng/mL')}),
           RegionPreset.us,
+          measured: null,
         ),
         '0.004 ng/mL',
       );
@@ -267,36 +270,73 @@ void main() {
   });
 
   group('convertQuantityForRegion', () {
-    final cases = <(double, String, RegionPreset, double, String)>[
-      (70, 'kg', RegionPreset.us, 154.3234, 'lbs'),
-      (70, 'kilograms', RegionPreset.uk, 154.3234, 'lbs'),
-      (70, 'kg', RegionPreset.europe, 70, 'kg'),
-      (154.3234, 'lbs', RegionPreset.europe, 70, 'kg'),
-      (154.3234, '[lb_av]', RegionPreset.europe, 70, 'kg'),
-      (154.3234, 'lb', RegionPreset.us, 154.3234, 'lb'),
-      (37, '°C', RegionPreset.us, 98.6, '°F'),
-      (37, 'Cel', RegionPreset.us, 98.6, '°F'),
-      (37, 'Cel', RegionPreset.uk, 37, 'Cel'),
-      (98.6, '[degF]', RegionPreset.europe, 37, '°C'),
-      (98.6, 'degF', RegionPreset.uk, 37, '°C'),
-      (98.6, '°F', RegionPreset.us, 98.6, '°F'),
-      (99.1, 'mg/dL', RegionPreset.europe, 5.5, 'mmol/L'),
-      (5.5, 'mmol/L', RegionPreset.us, 99.1, 'mg/dL'),
-      (5.5, 'mmol/L', RegionPreset.uk, 5.5, 'mmol/L'),
-      (120, 'mmHg', RegionPreset.us, 120, 'mmHg'),
-    ];
-    for (final (value, unit, region, expectedValue, expectedUnit) in cases) {
-      test('$value $unit in ${region.name} -> '
+    const weight = PatientVitalType.weight;
+    const temperature = PatientVitalType.temperature;
+    const glucose = PatientVitalType.bloodGlucose;
+    final cases =
+        <(double, String, PatientVitalType?, RegionPreset, double, String)>[
+          (70, 'kg', weight, RegionPreset.us, 154.3234, 'lbs'),
+          (70, 'kilograms', weight, RegionPreset.uk, 154.3234, 'lbs'),
+          (70, 'kg', weight, RegionPreset.europe, 70, 'kg'),
+          (154.3234, 'lbs', weight, RegionPreset.europe, 70, 'kg'),
+          (154.3234, '[lb_av]', weight, RegionPreset.europe, 70, 'kg'),
+          (154.3234, 'lb', weight, RegionPreset.us, 154.3234, 'lb'),
+          (37, '°C', temperature, RegionPreset.us, 98.6, '°F'),
+          (37, 'Cel', temperature, RegionPreset.us, 98.6, '°F'),
+          (37, 'Cel', temperature, RegionPreset.uk, 37, 'Cel'),
+          (98.6, '[degF]', temperature, RegionPreset.europe, 37, '°C'),
+          (98.6, 'degF', temperature, RegionPreset.uk, 37, '°C'),
+          (98.6, '°F', temperature, RegionPreset.us, 98.6, '°F'),
+          (99.1, 'mg/dL', glucose, RegionPreset.europe, 5.5, 'mmol/L'),
+          (5.5, 'mmol/L', glucose, RegionPreset.us, 99.1, 'mg/dL'),
+          (5.5, 'mmol/L', glucose, RegionPreset.uk, 5.5, 'mmol/L'),
+          (120, 'mmHg', null, RegionPreset.us, 120, 'mmHg'),
+          // What was measured decides, not the unit alone: cholesterol and
+          // creatinine are reported in mg/dL too.
+          (200, 'mg/dL', null, RegionPreset.europe, 200, 'mg/dL'),
+          (70, 'kg', null, RegionPreset.us, 70, 'kg'),
+          // A unit that does not belong to what was measured stays.
+          (200, 'mg/dL', weight, RegionPreset.europe, 200, 'mg/dL'),
+          (37, 'Cel', glucose, RegionPreset.us, 37, 'Cel'),
+        ];
+    for (final (value, unit, measured, region, expectedValue, expectedUnit)
+        in cases) {
+      test('$value $unit (${measured?.name}) in ${region.name} -> '
           '$expectedValue $expectedUnit', () {
         final result = FhirObservationExtractor.convertQuantityForRegion(
           value,
           unit,
           region,
+          measured: measured,
         );
         expect(result.value, closeTo(expectedValue, 0.01));
         expect(result.unit, expectedUnit);
       });
     }
+
+    test('recognises the unit by its UCUM code first', () {
+      final result = FhirObservationExtractor.convertQuantityForRegion(
+        70,
+        'Kilogram',
+        RegionPreset.us,
+        measured: weight,
+        ucumCode: 'kg',
+      );
+      expect(result.value, closeTo(154.32, 0.01));
+      expect(result.unit, 'lbs');
+    });
+
+    test('keeps the written unit when nothing is converted', () {
+      final result = FhirObservationExtractor.convertQuantityForRegion(
+        70,
+        'Kilogram',
+        RegionPreset.europe,
+        measured: weight,
+        ucumCode: 'kg',
+      );
+      expect(result.value, 70);
+      expect(result.unit, 'Kilogram');
+    });
 
     final heightCases = <(double, String)>[
       (175, '5\'9"'),
@@ -311,6 +351,7 @@ void main() {
           cm,
           'cm',
           RegionPreset.us,
+          measured: PatientVitalType.height,
         );
         expect(result.unit, display);
         expect(result.value, cm);
@@ -332,6 +373,7 @@ void main() {
         _value({'valueQuantity': quantity(200, unit: 'pounds')}),
         RegionPreset.us,
         l10n: ro,
+        measured: PatientVitalType.weight,
       ),
       '200.00 livre',
     );
@@ -343,6 +385,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(70, unit: 'kg', code: 'kg')}),
           RegionPreset.us,
+          measured: PatientVitalType.weight,
         ),
         '154.32 lbs',
       );
@@ -350,6 +393,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(100, unit: 'mg/dL')}),
           RegionPreset.europe,
+          measured: PatientVitalType.bloodGlucose,
         ),
         '5.55 mmol/L',
       );
@@ -357,6 +401,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(37.2, unit: 'Cel')}),
           RegionPreset.us,
+          measured: PatientVitalType.temperature,
         ),
         '98.96 °F',
       );
@@ -367,6 +412,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(175, unit: 'cm')}),
           RegionPreset.us,
+          measured: PatientVitalType.height,
         ),
         '5\'9"',
       );
@@ -374,6 +420,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(175, unit: 'centimeters')}),
           RegionPreset.europe,
+          measured: PatientVitalType.height,
         ),
         '175.00 cm',
       );
@@ -384,6 +431,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(120, unit: 'mmHg')}),
           RegionPreset.us,
+          measured: null,
         ),
         '120.00 mmHg',
       );
@@ -391,8 +439,20 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(7)}),
           RegionPreset.europe,
+          measured: null,
         ),
         '7.00',
+      );
+    });
+
+    test('keeps a lab value that is not a region unit as recorded', () {
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(200, unit: 'mg/dL')}),
+          RegionPreset.europe,
+          measured: null,
+        ),
+        '200.00 mg/dL',
       );
     });
 
@@ -401,6 +461,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(200, unit: 'pounds')}),
           RegionPreset.europe,
+          measured: PatientVitalType.weight,
         ),
         '90.72 kg',
       );
@@ -408,6 +469,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(70, unit: 'inches')}),
           RegionPreset.europe,
+          measured: PatientVitalType.height,
         ),
         '177.80 cm',
       );
@@ -415,6 +477,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(70, unit: 'inches')}),
           RegionPreset.us,
+          measured: PatientVitalType.height,
         ),
         '5\'10"',
       );
@@ -425,6 +488,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueString': 'Trace'}),
           RegionPreset.us,
+          measured: null,
         ),
         'Trace',
       );
@@ -432,6 +496,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           null,
           RegionPreset.us,
+          measured: null,
         ),
         isNull,
       );
@@ -444,6 +509,7 @@ void main() {
           FhirObservationExtractor.extractObservationValueForRegion(
             _value({'valueQuantity': quantity(null, unit: 'mmHg')}),
             RegionPreset.us,
+            measured: null,
           ),
           isNull,
         );

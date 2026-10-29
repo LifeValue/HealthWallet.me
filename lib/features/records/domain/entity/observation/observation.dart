@@ -427,10 +427,12 @@ abstract class Observation with _$Observation implements IFhirResource {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
 
+    final measured = FhirFieldExtractor.regionUnitVitalOf(code);
     final valueDisplay = FhirFieldExtractor.extractObservationValueForRegion(
       valueX,
       region,
       l10n: l10n,
+      measured: measured,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -450,6 +452,7 @@ abstract class Observation with _$Observation implements IFhirResource {
               comp.valueX,
               region,
               l10n: l10n,
+              measured: FhirFieldExtractor.regionUnitVitalOf(comp.code),
             );
 
         if (componentCode != null && componentValue != null) {
@@ -479,30 +482,23 @@ abstract class Observation with _$Observation implements IFhirResource {
       final range = referenceRange!.first;
       final rawLow = range.low?.value?.valueDouble;
       final rawHigh = range.high?.value?.valueDouble;
-      final rawUnit = range.low?.unit ?? range.high?.unit ?? '';
 
-      double? displayLow = rawLow;
-      double? displayHigh = rawHigh;
-      String displayUnit = rawUnit.toString();
-
-      if (rawLow != null) {
-        final converted = FhirFieldExtractor.convertQuantityForRegion(
-          rawLow,
-          displayUnit,
-          region,
-        );
-        displayLow = converted.value;
-        displayUnit = converted.unit;
-      }
-      if (rawHigh != null) {
-        final converted = FhirFieldExtractor.convertQuantityForRegion(
-          rawHigh,
-          displayUnit,
-          region,
-        );
-        displayHigh = converted.value;
-        displayUnit = converted.unit;
-      }
+      // Each bound is converted from its own unit.
+      ({double value, String unit})? convert(Quantity? bound, double? value) =>
+          value == null
+          ? null
+          : FhirFieldExtractor.convertQuantityForRegion(
+              value,
+              FhirCommonExtractor.quantityUnit(bound) ?? '',
+              region,
+              measured: measured,
+              ucumCode: bound?.code?.valueString,
+            );
+      final low = convert(range.low, rawLow);
+      final high = convert(range.high, rawHigh);
+      final double? displayLow = low?.value;
+      final double? displayHigh = high?.value;
+      String displayUnit = low?.unit ?? high?.unit ?? '';
 
       displayUnit = localizedUnit(displayUnit, l10n);
 

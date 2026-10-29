@@ -1,6 +1,7 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
+import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 
@@ -159,6 +160,7 @@ void main() {
       FhirFieldExtractor.extractObservationValueForRegion(
         heartRate.valueX,
         RegionPreset.europe,
+        measured: null,
       ),
       '72.40 /min',
     );
@@ -166,6 +168,7 @@ void main() {
       100,
       'kg',
       RegionPreset.us,
+      measured: PatientVitalType.weight,
     );
     expect(converted.unit, 'lbs');
     expect(converted.value, closeTo(220.46, 0.01));
