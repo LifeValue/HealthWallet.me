@@ -74,8 +74,9 @@ class FhirCommonExtractor {
   static String? extractQuantity(fhir_r4.Quantity? quantity) =>
       formatQuantity(quantity);
 
-  /// "value unit", or null when [quantity] has no value. Without a `unit`
-  /// the UCUM `code` is shown instead. [localizeUnit] translates the unit.
+  /// "value unit", or null when [quantity] has no value. The comparator is
+  /// kept ("<20 copies/mL"), and without a `unit` the UCUM `code` is shown
+  /// instead. [localizeUnit] translates the unit.
   static String? formatQuantity(
     fhir_r4.Quantity? quantity, {
     String Function(String unit)? localizeUnit,
@@ -85,7 +86,7 @@ class FhirCommonExtractor {
 
     final unit = quantityUnit(quantity);
     final shownUnit = localizeUnit == null ? unit : localizeUnit(unit);
-    return '${formatDecimal(value)} $shownUnit'.trim();
+    return '${comparatorOf(quantity)}${formatDecimal(value)} $shownUnit'.trim();
   }
 
   /// [value] with two decimals, keeping any further digits it has: 13.5 is
@@ -94,6 +95,10 @@ class FhirCommonExtractor {
     final fixed = value.toStringAsFixed(2);
     return double.parse(fixed) == value ? fixed : value.toString();
   }
+
+  /// The comparator of [quantity] ("<", "<=", ">=", ">"), or "".
+  static String comparatorOf(fhir_r4.Quantity quantity) =>
+      quantity.comparator?.valueString ?? '';
 
   /// The unit of [quantity]: its `unit`, or its UCUM `code` without one.
   static String quantityUnit(fhir_r4.Quantity quantity) {

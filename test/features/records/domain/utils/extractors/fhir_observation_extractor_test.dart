@@ -134,6 +134,45 @@ void main() {
       },
     );
 
+    test('keeps the comparator of a Quantity', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({
+            'valueQuantity': {
+              ...quantity(60, unit: 'mL/min/1.73m2'),
+              'comparator': '>',
+            },
+          }),
+        ),
+        '>60.00 mL/min/1.73m2',
+      );
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({
+            'valueQuantity': {
+              ...quantity(20, unit: 'copies/mL'),
+              'comparator': '<',
+            },
+          }),
+          RegionPreset.europe,
+        ),
+        '<20.00 copies/mL',
+      );
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({
+            'valueQuantity': {
+              ...quantity(70, unit: 'mg/dL'),
+              'comparator': '<=',
+            },
+          }),
+          RegionPreset.europe,
+          codes: {'2339-0'},
+        ),
+        '<=3.88 mmol/L',
+      );
+    });
+
     test('falls back to the UCUM code of a Quantity without unit', () {
       expect(
         FhirObservationExtractor.extractObservationValue(

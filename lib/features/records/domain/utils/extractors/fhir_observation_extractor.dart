@@ -113,7 +113,8 @@ class FhirObservationExtractor {
       final shownValue = converted.unit == rawUnit
           ? FhirCommonExtractor.formatDecimal(rawValue)
           : converted.value.toStringAsFixed(2);
-      return '$shownValue ${_unit(converted.unit, l10n)}'.trim();
+      final comparator = FhirCommonExtractor.comparatorOf(valueQuantity);
+      return '$comparator$shownValue ${_unit(converted.unit, l10n)}'.trim();
     }
 
     return extractObservationValue(valueX, l10n: l10n);
