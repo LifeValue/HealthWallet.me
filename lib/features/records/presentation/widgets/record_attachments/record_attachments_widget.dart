@@ -197,6 +197,7 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     BuildContext context,
     String filePath,
     String? contentType,
+    String title,
   ) async {
     if (!await File(filePath).exists()) {
       if (context.mounted) {
@@ -218,11 +219,15 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
     if (isImage) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => _ImageViewer(filePath: filePath)),
+        MaterialPageRoute(
+          builder: (_) => _ImageViewer(filePath: filePath, title: title),
+        ),
       );
     } else if (isPdf) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => _PdfViewer(filePath: filePath)),
+        MaterialPageRoute(
+          builder: (_) => _PdfViewer(filePath: filePath, title: title),
+        ),
       );
     } else {
       unawaited(_openFileExternal(context, filePath));
@@ -255,7 +260,11 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     AttachmentInfo attachmentInfo,
   ) {
     final filePath = attachmentInfo.filePath;
-    final title = attachmentInfo.title;
+    // Files are stored under a unique name (`report_1a2b3c4d.pdf`); the
+    // title keeps the name the user picked.
+    final title = attachmentInfo.title.isNotEmpty || filePath == null
+        ? attachmentInfo.title
+        : basename(filePath);
     final contentType = attachmentInfo.contentType;
 
     final isEncounterView = widget.resource.fhirType == FhirType.Encounter;
@@ -288,12 +297,14 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                     Expanded(
                       child: GestureDetector(
                         onTap: filePath != null
-                            ? () => _viewFile(context, filePath, contentType)
+                            ? () => _viewFile(
+                                context,
+                                filePath,
+                                contentType,
+                                title,
+                              )
                             : null,
-                        child: Text(
-                          filePath != null ? basename(filePath) : title,
-                          style: AppTextStyle.labelLarge,
-                        ),
+                        child: Text(title, style: AppTextStyle.labelLarge),
                       ),
                     ),
                   ],
@@ -305,7 +316,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                     Padding(
                       padding: const EdgeInsets.all(6),
                       child: GestureDetector(
-                        onTap: () => _viewFile(context, filePath, contentType),
+                        onTap: () =>
+                            _viewFile(context, filePath, contentType, title),
                         child: const Icon(Icons.remove_red_eye_outlined),
                       ),
                     ),
@@ -381,8 +393,9 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
 class _ImageViewer extends StatelessWidget {
   final String filePath;
+  final String title;
 
-  const _ImageViewer({required this.filePath});
+  const _ImageViewer({required this.filePath, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -391,7 +404,7 @@ class _ImageViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(basename(filePath)),
+        title: Text(title),
       ),
       body: Center(
         child: InteractiveViewer(
@@ -420,8 +433,9 @@ class _ImageViewer extends StatelessWidget {
 
 class _PdfViewer extends StatelessWidget {
   final String filePath;
+  final String title;
 
-  const _PdfViewer({required this.filePath});
+  const _PdfViewer({required this.filePath, required this.title});
 
   static bool get _isDesktop =>
       Platform.isMacOS || Platform.isWindows || Platform.isLinux;
@@ -433,7 +447,7 @@ class _PdfViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(basename(filePath)),
+        title: Text(title),
       ),
       body: _isDesktop
           ? _DesktopPdfBody(filePath: filePath)

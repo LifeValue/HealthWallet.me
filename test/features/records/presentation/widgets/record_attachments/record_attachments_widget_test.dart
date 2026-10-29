@@ -115,4 +115,52 @@ void main() {
 
     expect(find.byType(SnackBar), findsNothing);
   });
+
+  testWidgets('lists a file by its original name, not the stored one', (
+    tester,
+  ) async {
+    await pumpWidget(tester);
+    states.add(
+      const RecordAttachmentsState(
+        status: RecordAttachmentsStatus.success(),
+        resource: resource,
+        attachments: [
+          AttachmentInfo(
+            documentReference: GeneralResource(id: 'doc-1'),
+            title: 'report.pdf',
+            contentType: 'application/pdf',
+            filePath: '/docs/report_1a2b3c4d.pdf',
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 750));
+
+    expect(find.text('report.pdf'), findsOne);
+    expect(find.text('report_1a2b3c4d.pdf'), findsNothing);
+  });
+
+  testWidgets('falls back to the file name for an attachment without a title', (
+    tester,
+  ) async {
+    await pumpWidget(tester);
+    states.add(
+      const RecordAttachmentsState(
+        status: RecordAttachmentsStatus.success(),
+        resource: resource,
+        attachments: [
+          AttachmentInfo(
+            documentReference: GeneralResource(id: 'doc-1'),
+            title: '',
+            filePath: '/docs/scan.pdf',
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 750));
+
+    expect(find.text('scan.pdf'), findsOne);
+  });
 }
