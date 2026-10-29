@@ -7990,6 +7990,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{name}\" has been restored. {count} records are now on this device.'**
   String desktopRestoreSucceededMessage(String name, int count);
+
+  /// Shown in a received share when the receiver taps a file that is neither an image nor a PDF; it is not handed to other apps.
+  ///
+  /// In en, this message translates to:
+  /// **'This type of file can\'t be shown in shared records.'**
+  String get sharedFileNotPreviewable;
 }
 
 class _AppLocalizationsDelegate

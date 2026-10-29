@@ -4458,4 +4458,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String desktopRestoreSucceededMessage(String name, int count) {
     return '\"$name\" has been restored. $count records are now on this device.';
   }
+
+  @override
+  String get sharedFileNotPreviewable =>
+      'This type of file can\'t be shown in shared records.';
 }

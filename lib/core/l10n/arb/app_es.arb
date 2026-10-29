@@ -1684,5 +1684,6 @@
   "appLockMessage": "Desbloquea para ver tus registros de salud",
   "appLockUnlock": "Desbloquear",
   "desktopRestoreSucceededTitle": "Respaldo restaurado",
-  "desktopRestoreSucceededMessage": "Se restauró \"{name}\". Ahora hay {count} registros en este dispositivo."
+  "desktopRestoreSucceededMessage": "Se restauró \"{name}\". Ahora hay {count} registros en este dispositivo.",
+  "sharedFileNotPreviewable": "Este tipo de archivo no se puede mostrar en los registros compartidos."
 }

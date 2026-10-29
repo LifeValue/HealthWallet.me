@@ -4526,4 +4526,8 @@ class AppLocalizationsRo extends AppLocalizations {
   String desktopRestoreSucceededMessage(String name, int count) {
     return '\"$name\" a fost restaurată. Acum sunt $count înregistrări pe acest dispozitiv.';
   }
+
+  @override
+  String get sharedFileNotPreviewable =>
+      'Acest tip de fișier nu poate fi afișat în înregistrările partajate.';
 }

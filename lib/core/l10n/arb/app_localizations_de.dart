@@ -4527,4 +4527,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String desktopRestoreSucceededMessage(String name, int count) {
     return '\"$name\" wurde wiederhergestellt. Auf diesem Gerät sind jetzt $count Aufzeichnungen.';
   }
+
+  @override
+  String get sharedFileNotPreviewable =>
+      'Dieser Dateityp kann in geteilten Unterlagen nicht angezeigt werden.';
 }
