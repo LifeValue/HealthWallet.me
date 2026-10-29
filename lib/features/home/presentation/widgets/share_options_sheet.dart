@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
+import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
@@ -98,10 +99,12 @@ Future<void> showShareOptionsMenu(
 
   switch (value) {
     case 'export_ips':
+      final selectedSource = context.read<HomeBloc>().state.selectedSource;
       context.read<RecordsBloc>().add(
         RecordsSharePressed(
           patientName: patientName,
           patientId: patientId,
+          sourceId: selectedSource == 'All' ? null : selectedSource,
         ),
       );
     case 'apple_wallet':

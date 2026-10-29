@@ -80,27 +80,24 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     try {
       List<IFhirResource> resources;
 
+      // One source, or the selected patient's sources; every query uses the
+      // same scope.
+      final sourceId = state.sourceId;
+      final sourceIds = sourceId == null ? state.sourceIds : null;
+
       if (isSearching) {
         resources = await _recordsRepository.searchResources(
           query: state.searchQuery,
           resourceTypes: [],
-          sourceId: state.sourceId,
+          sourceId: sourceId,
+          sourceIds: sourceIds,
           limit: 100,
         );
       } else {
-        final sourceIdToUse = state.activeFilters.contains(FhirType.Media)
-            ? null
-            : state.sourceId;
-
-        List<String>? sourceIdsToUse;
-        if (state.sourceId == null && state.sourceIds != null) {
-          sourceIdsToUse = state.sourceIds;
-        }
-
         resources = await _recordsRepository.getResources(
           resourceTypes: state.activeFilters,
-          sourceId: sourceIdToUse,
-          sourceIds: sourceIdsToUse,
+          sourceId: sourceId,
+          sourceIds: sourceIds,
           limit: limit,
           offset: offset,
           dateFilter: state.dateFilter,
@@ -368,7 +365,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   ) async {
     try {
       final export = await _recordsRepository.buildIpsExport(
-        sourceId: state.sourceId,
+        sourceId: event.sourceId,
         patientId: event.patientId,
       );
 

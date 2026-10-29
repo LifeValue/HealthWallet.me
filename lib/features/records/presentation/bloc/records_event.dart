@@ -95,9 +95,12 @@ abstract class RecordsSharePressed extends RecordsEvent
     with _$RecordsSharePressed {
   const RecordsSharePressed._();
 
+  /// [sourceId] is the source selected on Home, or null for all of the
+  /// patient's sources.
   const factory RecordsSharePressed({
     String? patientName,
     String? patientId,
+    String? sourceId,
   }) = _RecordsSharePressed;
 }
 
