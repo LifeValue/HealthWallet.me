@@ -3765,6 +3765,150 @@ class AppLocalizationsRo extends AppLocalizations {
   String get fieldStatusReason => 'Motivul stării';
 
   @override
+  String get fhirStatusActive => 'Activ';
+
+  @override
+  String get fhirStatusInactive => 'Inactiv';
+
+  @override
+  String get fhirStatusResolved => 'Rezolvat';
+
+  @override
+  String get fhirStatusRecurrence => 'Recurență';
+
+  @override
+  String get fhirStatusRelapse => 'Recădere';
+
+  @override
+  String get fhirStatusRemission => 'Remisie';
+
+  @override
+  String get fhirStatusUnconfirmed => 'Neconfirmat';
+
+  @override
+  String get fhirStatusProvisional => 'Provizoriu';
+
+  @override
+  String get fhirStatusDifferential => 'Diferențial';
+
+  @override
+  String get fhirStatusConfirmed => 'Confirmat';
+
+  @override
+  String get fhirStatusRefuted => 'Infirmat';
+
+  @override
+  String get fhirStatusEnteredInError => 'Înregistrat din eroare';
+
+  @override
+  String get fhirStatusOnHold => 'Suspendat temporar';
+
+  @override
+  String get fhirStatusCancelled => 'Anulat';
+
+  @override
+  String get fhirStatusCompleted => 'Finalizat';
+
+  @override
+  String get fhirStatusStopped => 'Întrerupt';
+
+  @override
+  String get fhirStatusDraft => 'Ciornă';
+
+  @override
+  String get fhirStatusUnknown => 'Necunoscut';
+
+  @override
+  String get fhirStatusIntended => 'Planificat';
+
+  @override
+  String get fhirStatusNotTaken => 'Nu a fost luat';
+
+  @override
+  String get fhirStatusInProgress => 'În desfășurare';
+
+  @override
+  String get fhirStatusNotDone => 'Neefectuat';
+
+  @override
+  String get fhirStatusPreparation => 'În pregătire';
+
+  @override
+  String get fhirStatusDeclined => 'Refuzat';
+
+  @override
+  String get fhirStatusRegistered => 'Înregistrat';
+
+  @override
+  String get fhirStatusPreliminary => 'Preliminar';
+
+  @override
+  String get fhirStatusFinal => 'Final';
+
+  @override
+  String get fhirStatusAmended => 'Modificat';
+
+  @override
+  String get fhirStatusCorrected => 'Corectat';
+
+  @override
+  String get fieldInterpretation => 'Interpretare';
+
+  @override
+  String get interpretationHigh => 'Crescut';
+
+  @override
+  String get interpretationLow => 'Scăzut';
+
+  @override
+  String get interpretationNormal => 'Normal';
+
+  @override
+  String get interpretationAbnormal => 'Anormal';
+
+  @override
+  String get interpretationCriticallyAbnormal => 'Critic anormal';
+
+  @override
+  String get interpretationCriticallyHigh => 'Critic crescut';
+
+  @override
+  String get interpretationCriticallyLow => 'Critic scăzut';
+
+  @override
+  String get interpretationSignificantlyHigh => 'Semnificativ crescut';
+
+  @override
+  String get interpretationSignificantlyLow => 'Semnificativ scăzut';
+
+  @override
+  String get interpretationIntermediate => 'Intermediar';
+
+  @override
+  String get interpretationResistant => 'Rezistent';
+
+  @override
+  String get interpretationSusceptible => 'Sensibil';
+
+  @override
+  String get interpretationPositive => 'Pozitiv';
+
+  @override
+  String get interpretationNegative => 'Negativ';
+
+  @override
+  String get interpretationDetected => 'Detectat';
+
+  @override
+  String get interpretationNotDetected => 'Nedetectat';
+
+  @override
+  String get interpretationIndeterminate => 'Nedeterminat';
+
+  @override
+  String get interpretationEquivocal => 'Echivoc';
+
+  @override
   String get fieldStrength => 'Concentrație';
 
   @override

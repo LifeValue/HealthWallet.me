@@ -15,6 +15,11 @@ class FhirFieldExtractor {
   static String? extractCodeableConceptText(dynamic codeableConcept) =>
       FhirCommonExtractor.extractCodeableConceptText(codeableConcept);
 
+  static String? extractMedicationName(
+    dynamic medicationX,
+    Map<String, dynamic> rawResource,
+  ) => FhirCommonExtractor.extractMedicationName(medicationX, rawResource);
+
   static String? extractReferenceDisplay(dynamic reference) =>
       FhirCommonExtractor.extractReferenceDisplay(reference);
 
@@ -32,6 +37,9 @@ class FhirFieldExtractor {
 
   static String? extractCodingDisplay(dynamic coding) =>
       FhirCommonExtractor.extractCodingDisplay(coding);
+
+  static String formatDecimal(double value) =>
+      FhirCommonExtractor.formatDecimal(value);
 
   static String? extractQuantity(fhir_r4.Quantity? quantity) =>
       FhirCommonExtractor.extractQuantity(quantity);
@@ -88,17 +96,28 @@ class FhirFieldExtractor {
     dynamic valueX,
     RegionPreset region, {
     AppLocalizations? l10n,
+    Set<String> codes = const {},
   }) => FhirObservationExtractor.extractObservationValueForRegion(
     valueX,
     region,
     l10n: l10n,
+    codes: codes,
   );
+
+  static Set<String> codesOf(fhir_r4.CodeableConcept? concept) =>
+      FhirObservationExtractor.codesOf(concept);
 
   static ({double value, String unit}) convertQuantityForRegion(
     double value,
     String unit,
-    RegionPreset region,
-  ) => FhirObservationExtractor.convertQuantityForRegion(value, unit, region);
+    RegionPreset region, {
+    Set<String> codes = const {},
+  }) => FhirObservationExtractor.convertQuantityForRegion(
+    value,
+    unit,
+    region,
+    codes: codes,
+  );
 
   static bool isVitalSign(Observation observation) =>
       FhirObservationExtractor.isVitalSign(observation);
@@ -273,6 +292,12 @@ class FhirFieldExtractor {
 
   static String? formatDateTimeString(String? dateTimeString) =>
       FhirTemporalExtractor.formatDateTimeString(dateTimeString);
+
+  static DateTime recordDay(DateTime date) =>
+      FhirTemporalExtractor.recordDay(date);
+
+  static String formatRecordDate(DateTime date, String? locale) =>
+      FhirTemporalExtractor.formatRecordDate(date, locale);
 
   static String? extractOnsetXFormatted(
     dynamic onsetX, {

@@ -17,7 +17,10 @@ class FhirObservationExtractor {
   }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
-      return '${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${_unit(valueQuantity.unit.toString(), l10n)}';
+      return FhirCommonExtractor.formatQuantity(
+        valueQuantity,
+        localizeUnit: (unit) => _unit(unit, l10n),
+      );
     }
 
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
@@ -44,12 +47,24 @@ class FhirObservationExtractor {
 
     final valueRange = valueX?.isAs<fhir_r4.Range>();
     if (valueRange != null) {
-      return '${valueRange.low?.value?.valueDouble?.toStringAsFixed(2)} - ${valueRange.high?.value?.valueDouble?.toStringAsFixed(2)}';
+      return FhirCommonExtractor.formatRange(
+        valueRange,
+        localizeUnit: (unit) => _unit(unit, l10n),
+      );
     }
 
     final valueRatio = valueX?.isAs<fhir_r4.Ratio>();
     if (valueRatio != null) {
-      return '${valueRatio.numerator?.value?.valueDouble?.toStringAsFixed(2)} / ${valueRatio.denominator?.value?.valueDouble?.toStringAsFixed(2)}';
+      final numerator = FhirCommonExtractor.formatQuantity(
+        valueRatio.numerator,
+        localizeUnit: (unit) => _unit(unit, l10n),
+      );
+      final denominator = FhirCommonExtractor.formatQuantity(
+        valueRatio.denominator,
+        localizeUnit: (unit) => _unit(unit, l10n),
+      );
+      if (numerator == null || denominator == null) return null;
+      return '$numerator / $denominator';
     }
 
     final valueTime = valueX?.isAs<fhir_r4.FhirTime>();
@@ -70,38 +85,64 @@ class FhirObservationExtractor {
     return null;
   }
 
+  /// Like [extractObservationValue], with the value converted to the
+  /// [region]'s units. [codes] are the codes of the observation (or
+  /// component) the value belongs to; see [convertQuantityForRegion].
   static String? extractObservationValueForRegion(
     dynamic valueX,
     RegionPreset region, {
     AppLocalizations? l10n,
+    Set<String> codes = const {},
   }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
       final rawValue = valueQuantity.value?.valueDouble;
-      final rawUnit = valueQuantity.unit?.toString() ?? '';
-      if (rawValue != null) {
-        if (UnitConverter.heightInCm(rawValue, rawUnit) != null &&
-            region.heightUnit == 'ft/in') {
-          final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-          return converted.unit;
-        }
-        final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-        return '${converted.value.toStringAsFixed(2)} ${_unit(converted.unit, l10n)}';
+      if (rawValue == null) return null;
+      final rawUnit = FhirCommonExtractor.quantityUnit(valueQuantity);
+      final converted = convertQuantityForRegion(
+        rawValue,
+        rawUnit,
+        region,
+        codes: codes,
+      );
+      if (_isBodyHeight(codes) && region.heightUnit == 'ft/in') {
+        return converted.unit;
       }
-      return '${rawValue?.toStringAsFixed(2)} ${_unit(rawUnit, l10n)}';
+      // A converted value has spurious digits; one shown as reported keeps
+      // the digits the source sent.
+      final shownValue = converted.unit == rawUnit
+          ? FhirCommonExtractor.formatDecimal(rawValue)
+          : converted.value.toStringAsFixed(2);
+      final comparator = FhirCommonExtractor.comparatorOf(valueQuantity);
+      return '$comparator$shownValue ${_unit(converted.unit, l10n)}'.trim();
     }
 
     return extractObservationValue(valueX, l10n: l10n);
   }
 
+  /// The codes of every coding in [concept], used to decide which unit
+  /// conversions apply to a value.
+  static Set<String> codesOf(fhir_r4.CodeableConcept? concept) => {
+    for (final coding in concept?.coding ?? const <fhir_r4.Coding>[])
+      ?coding.code?.valueString,
+  };
+
+  static bool _isBodyHeight(Set<String> codes) =>
+      codes.any(kBodyHeightLoincCodes.contains);
+
   static String _unit(String unit, AppLocalizations? l10n) =>
       l10n == null ? unit : localizedUnit(unit, l10n);
 
+  /// Converts [value] to the [region]'s unit. Weight and temperature follow
+  /// the unit alone. mg/dL and mmol/L convert only when [codes] name a
+  /// glucose observation, and lengths only for a body height: any other lab
+  /// in mg/dL, or a lesion in cm, is shown as reported.
   static ({double value, String unit}) convertQuantityForRegion(
     double value,
     String unit,
-    RegionPreset region,
-  ) {
+    RegionPreset region, {
+    Set<String> codes = const {},
+  }) {
     final u = unit.trim().toLowerCase();
 
     if ((u == 'kg' || u == 'kilograms') && region.weightUnit == 'lbs') {
@@ -120,12 +161,15 @@ class FhirObservationExtractor {
       return (value: (value - 32) * 5 / 9, unit: region.temperatureUnit);
     }
 
-    if (u == 'mg/dl' && region.glucoseUnit == 'mmol/L') {
+    final isGlucose = codes.any(kGlucoseLoincCodes.contains);
+    if (isGlucose && u == 'mg/dl' && region.glucoseUnit == 'mmol/L') {
       return (value: value / 18.0182, unit: region.glucoseUnit);
     }
-    if (u == 'mmol/l' && region.glucoseUnit == 'mg/dL') {
+    if (isGlucose && u == 'mmol/l' && region.glucoseUnit == 'mg/dL') {
       return (value: value * 18.0182, unit: region.glucoseUnit);
     }
+
+    if (!_isBodyHeight(codes)) return (value: value, unit: unit);
 
     final heightCm = UnitConverter.heightInCm(value, unit);
     if (heightCm != null && region.heightUnit == 'ft/in') {
@@ -280,12 +324,8 @@ class FhirObservationExtractor {
           final value = observation.valueX;
 
           if (value is fhir_r4.CodeableConcept) {
-            if (value.text != null && value.text.toString().isNotEmpty) {
-              final directText = value.text.toString();
-              if (_isValidBloodType(directText)) {
-                return directText;
-              }
-            }
+            final fromValue = _bloodTypeFromConcept(value);
+            if (fromValue != null) return fromValue;
 
             final display = code.display?.toString();
             if (display != null && _isValidBloodType(display)) {
@@ -437,5 +477,30 @@ class FhirObservationExtractor {
 
   static bool _isValidBloodType(String bloodType) {
     return BloodTypes.isValidBloodType(bloodType);
+  }
+
+  /// The blood type a coded value names: its text or a coding display as
+  /// "A+" or a standard SNOMED display ("Blood group A Rh(D) positive"), or
+  /// a SNOMED blood group code.
+  static String? _bloodTypeFromConcept(fhir_r4.CodeableConcept concept) {
+    final names = [
+      concept.text?.valueString,
+      for (final coding in concept.coding ?? const <fhir_r4.Coding>[])
+        coding.display?.valueString,
+    ];
+    for (final name in names.nonNulls) {
+      final trimmed = name.trim();
+      if (_isValidBloodType(trimmed)) return trimmed;
+      final mapped = BloodTypes.fhirDisplayMapping[trimmed];
+      if (mapped != null) return mapped;
+    }
+
+    for (final coding in concept.coding ?? const <fhir_r4.Coding>[]) {
+      final code = coding.code?.valueString;
+      for (final entry in BloodTypes.snomedCodes.entries) {
+        if (entry.value == code) return entry.key;
+      }
+    }
+    return null;
   }
 }

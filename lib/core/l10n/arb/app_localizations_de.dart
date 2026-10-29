@@ -3775,6 +3775,150 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fieldStatusReason => 'Grund für den Status';
 
   @override
+  String get fhirStatusActive => 'Aktiv';
+
+  @override
+  String get fhirStatusInactive => 'Inaktiv';
+
+  @override
+  String get fhirStatusResolved => 'Abgeklungen';
+
+  @override
+  String get fhirStatusRecurrence => 'Wiederauftreten';
+
+  @override
+  String get fhirStatusRelapse => 'Rückfall';
+
+  @override
+  String get fhirStatusRemission => 'Remission';
+
+  @override
+  String get fhirStatusUnconfirmed => 'Unbestätigt';
+
+  @override
+  String get fhirStatusProvisional => 'Vorläufig';
+
+  @override
+  String get fhirStatusDifferential => 'Differenzialdiagnose';
+
+  @override
+  String get fhirStatusConfirmed => 'Bestätigt';
+
+  @override
+  String get fhirStatusRefuted => 'Widerlegt';
+
+  @override
+  String get fhirStatusEnteredInError => 'Irrtümlich erfasst';
+
+  @override
+  String get fhirStatusOnHold => 'Pausiert';
+
+  @override
+  String get fhirStatusCancelled => 'Abgebrochen';
+
+  @override
+  String get fhirStatusCompleted => 'Abgeschlossen';
+
+  @override
+  String get fhirStatusStopped => 'Abgesetzt';
+
+  @override
+  String get fhirStatusDraft => 'Entwurf';
+
+  @override
+  String get fhirStatusUnknown => 'Unbekannt';
+
+  @override
+  String get fhirStatusIntended => 'Geplant';
+
+  @override
+  String get fhirStatusNotTaken => 'Nicht eingenommen';
+
+  @override
+  String get fhirStatusInProgress => 'Laufend';
+
+  @override
+  String get fhirStatusNotDone => 'Nicht durchgeführt';
+
+  @override
+  String get fhirStatusPreparation => 'In Vorbereitung';
+
+  @override
+  String get fhirStatusDeclined => 'Abgelehnt';
+
+  @override
+  String get fhirStatusRegistered => 'Registriert';
+
+  @override
+  String get fhirStatusPreliminary => 'Vorläufig';
+
+  @override
+  String get fhirStatusFinal => 'Endgültig';
+
+  @override
+  String get fhirStatusAmended => 'Geändert';
+
+  @override
+  String get fhirStatusCorrected => 'Korrigiert';
+
+  @override
+  String get fieldInterpretation => 'Bewertung';
+
+  @override
+  String get interpretationHigh => 'Erhöht';
+
+  @override
+  String get interpretationLow => 'Erniedrigt';
+
+  @override
+  String get interpretationNormal => 'Normal';
+
+  @override
+  String get interpretationAbnormal => 'Abnormal';
+
+  @override
+  String get interpretationCriticallyAbnormal => 'Kritisch abnormal';
+
+  @override
+  String get interpretationCriticallyHigh => 'Kritisch erhöht';
+
+  @override
+  String get interpretationCriticallyLow => 'Kritisch erniedrigt';
+
+  @override
+  String get interpretationSignificantlyHigh => 'Deutlich erhöht';
+
+  @override
+  String get interpretationSignificantlyLow => 'Deutlich erniedrigt';
+
+  @override
+  String get interpretationIntermediate => 'Intermediär';
+
+  @override
+  String get interpretationResistant => 'Resistent';
+
+  @override
+  String get interpretationSusceptible => 'Sensibel';
+
+  @override
+  String get interpretationPositive => 'Positiv';
+
+  @override
+  String get interpretationNegative => 'Negativ';
+
+  @override
+  String get interpretationDetected => 'Nachgewiesen';
+
+  @override
+  String get interpretationNotDetected => 'Nicht nachgewiesen';
+
+  @override
+  String get interpretationIndeterminate => 'Unbestimmt';
+
+  @override
+  String get interpretationEquivocal => 'Grenzwertig';
+
+  @override
   String get fieldStrength => 'Wirkstärke';
 
   @override

@@ -132,10 +132,64 @@ void main() {
           '7.20',
         );
       },
-      skip:
-          'BUG: interpolates the nullable unit, giving "7.20 null" (also '
-          'for UCUM-only quantities that carry `code` but no `unit`)',
     );
+
+    test('keeps the comparator of a Quantity', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({
+            'valueQuantity': {
+              ...quantity(60, unit: 'mL/min/1.73m2'),
+              'comparator': '>',
+            },
+          }),
+        ),
+        '>60.00 mL/min/1.73m2',
+      );
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({
+            'valueQuantity': {
+              ...quantity(20, unit: 'copies/mL'),
+              'comparator': '<',
+            },
+          }),
+          RegionPreset.europe,
+        ),
+        '<20.00 copies/mL',
+      );
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({
+            'valueQuantity': {
+              ...quantity(70, unit: 'mg/dL'),
+              'comparator': '<=',
+            },
+          }),
+          RegionPreset.europe,
+          codes: {'2339-0'},
+        ),
+        '<=3.88 mmol/L',
+      );
+    });
+
+    test('falls back to the UCUM code of a Quantity without unit', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({'valueQuantity': quantity(7.2, code: 'mmol/L')}),
+        ),
+        '7.20 mmol/L',
+      );
+    });
+
+    test('returns null for a Quantity without value', () {
+      expect(
+        FhirObservationExtractor.extractObservationValue(
+          _value({'valueQuantity': quantity(null, unit: 'mmHg')}),
+        ),
+        isNull,
+      );
+    });
 
     test(
       'does not print "null" for an open Range',
@@ -146,10 +200,17 @@ void main() {
               'valueRange': {'high': quantity(5)},
             }),
           ),
-          isNot(contains('null')),
+          '≤ 5.00',
+        );
+        expect(
+          FhirObservationExtractor.extractObservationValue(
+            _value({
+              'valueRange': {'low': quantity(1, unit: 'mmol/L')},
+            }),
+          ),
+          '≥ 1.00 mmol/L',
         );
       },
-      skip: 'BUG: an open Range is rendered as "null - 5.00"',
     );
   });
 
@@ -167,9 +228,6 @@ void main() {
       (98.6, '[degF]', RegionPreset.europe, 37, '°C'),
       (98.6, 'degF', RegionPreset.uk, 37, '°C'),
       (98.6, '°F', RegionPreset.us, 98.6, '°F'),
-      (99.1, 'mg/dL', RegionPreset.europe, 5.5, 'mmol/L'),
-      (5.5, 'mmol/L', RegionPreset.us, 99.1, 'mg/dL'),
-      (5.5, 'mmol/L', RegionPreset.uk, 5.5, 'mmol/L'),
       (120, 'mmHg', RegionPreset.us, 120, 'mmHg'),
     ];
     for (final (value, unit, region, expectedValue, expectedUnit) in cases) {
@@ -185,6 +243,66 @@ void main() {
       });
     }
 
+    final glucoseCases =
+        <(String, double, String, RegionPreset, double, String)>[
+          ('2339-0', 99.1, 'mg/dL', RegionPreset.europe, 5.5, 'mmol/L'),
+          ('2345-7', 99.1, 'mg/dL', RegionPreset.uk, 5.5, 'mmol/L'),
+          ('15074-8', 5.5, 'mmol/L', RegionPreset.us, 99.1, 'mg/dL'),
+          ('2339-0', 5.5, 'mmol/L', RegionPreset.uk, 5.5, 'mmol/L'),
+        ];
+    for (final (code, value, unit, region, expectedValue, expectedUnit)
+        in glucoseCases) {
+      test('glucose $code $value $unit in ${region.name} -> '
+          '$expectedValue $expectedUnit', () {
+        final result = FhirObservationExtractor.convertQuantityForRegion(
+          value,
+          unit,
+          region,
+          codes: {code},
+        );
+        expect(result.value, closeTo(expectedValue, 0.01));
+        expect(result.unit, expectedUnit);
+      });
+    }
+
+    // Only glucose converts between mg/dL and mmol/L; the factor depends on
+    // the analyte's molar mass, so any other lab stays as reported.
+    final otherLabs = <(String, double, String, RegionPreset)>[
+      ('2093-3', 200, 'mg/dL', RegionPreset.europe), // cholesterol
+      ('17861-6', 9.5, 'mg/dL', RegionPreset.europe), // calcium
+      ('2160-0', 1.0, 'mg/dL', RegionPreset.uk), // creatinine
+      ('2951-2', 140, 'mmol/L', RegionPreset.us), // sodium
+    ];
+    for (final (code, value, unit, region) in otherLabs) {
+      test('keeps $code $value $unit in ${region.name}', () {
+        final result = FhirObservationExtractor.convertQuantityForRegion(
+          value,
+          unit,
+          region,
+          codes: {code},
+        );
+        expect(result.value, value);
+        expect(result.unit, unit);
+      });
+    }
+
+    test('keeps lengths that are not a body height', () {
+      final lesion = FhirObservationExtractor.convertQuantityForRegion(
+        2.3,
+        'cm',
+        RegionPreset.us,
+        codes: {'21889-1'},
+      );
+      expect(lesion.value, 2.3);
+      expect(lesion.unit, 'cm');
+      final uncoded = FhirObservationExtractor.convertQuantityForRegion(
+        45,
+        'cm',
+        RegionPreset.us,
+      );
+      expect(uncoded.unit, 'cm');
+    });
+
     final heightCases = <(double, String)>[
       (175, '5\'9"'),
       (182.88, '6\'0"'),
@@ -198,6 +316,7 @@ void main() {
           cm,
           'cm',
           RegionPreset.us,
+          codes: {'8302-2'},
         );
         expect(result.unit, display);
         expect(result.value, cm);
@@ -237,6 +356,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(100, unit: 'mg/dL')}),
           RegionPreset.europe,
+          codes: {'2339-0'},
         ),
         '5.55 mmol/L',
       );
@@ -249,11 +369,23 @@ void main() {
       );
     });
 
+    test('shows a non-glucose mg/dL lab as reported', () {
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(200, unit: 'mg/dL')}),
+          RegionPreset.europe,
+          codes: {'2093-3'},
+        ),
+        '200.00 mg/dL',
+      );
+    });
+
     test('returns only the ft/in display for heights in the US', () {
       expect(
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(175, unit: 'cm')}),
           RegionPreset.us,
+          codes: {'8302-2'},
         ),
         '5\'9"',
       );
@@ -261,8 +393,19 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(175, unit: 'centimeters')}),
           RegionPreset.europe,
+          codes: {'8302-2'},
         ),
         '175.00 cm',
+      );
+    });
+
+    test('keeps a length that is not a body height', () {
+      expect(
+        FhirObservationExtractor.extractObservationValueForRegion(
+          _value({'valueQuantity': quantity(2.3, unit: 'cm')}),
+          RegionPreset.us,
+        ),
+        '2.30 cm',
       );
     });
 
@@ -279,7 +422,7 @@ void main() {
           _value({'valueQuantity': quantity(7)}),
           RegionPreset.europe,
         ),
-        '7.00 ',
+        '7.00',
       );
     });
 
@@ -295,6 +438,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(70, unit: 'inches')}),
           RegionPreset.europe,
+          codes: {'8302-2'},
         ),
         '177.80 cm',
       );
@@ -302,6 +446,7 @@ void main() {
         FhirObservationExtractor.extractObservationValueForRegion(
           _value({'valueQuantity': quantity(70, unit: 'inches')}),
           RegionPreset.us,
+          codes: {'8302-2'},
         ),
         '5\'10"',
       );
@@ -335,7 +480,6 @@ void main() {
           isNull,
         );
       },
-      skip: 'BUG: a value-less Quantity is rendered as "null mmHg"',
     );
   });
 
@@ -799,11 +943,20 @@ void main() {
           'A+',
         );
       },
-      skip:
-          'BUG: without value.text the code falls back to the display of '
-          'the *observation* code (e.g. "ABO and Rh group"), never the '
-          'value coding',
     );
+
+    test('reads a SNOMED blood group code without display', () {
+      expect(
+        FhirObservationExtractor.extractBloodTypeFromObservations([
+          bloodType({
+            'valueCodeableConcept': codeableConcept(
+              codings: [coding(snomedSystem, '278152006')],
+            ),
+          }),
+        ]),
+        'B-',
+      );
+    });
 
     test(
       'maps SNOMED blood group displays to the short form',
@@ -819,9 +972,6 @@ void main() {
           'A+',
         );
       },
-      skip:
-          'BUG: BloodTypes.fhirDisplayMapping is never consulted, so '
-          'standard SNOMED displays are rejected',
     );
   });
 }

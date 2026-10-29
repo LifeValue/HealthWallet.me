@@ -20,15 +20,48 @@ class FhirCommonExtractor {
     }
 
     try {
-      final coding = codeableConcept.coding;
-      if (coding?.isNotEmpty == true) {
-        final display = coding!.first.display?.toString();
+      // A local coding often comes first without a display; use the first
+      // coding that has one.
+      for (final coding in codeableConcept.coding ?? const []) {
+        final display = coding.display?.toString();
         if (display != null && display.isNotEmpty) return display;
       }
     } catch (_) {
       // Malformed coding; there is no display text to return.
     }
 
+    return null;
+  }
+
+  /// The name of a `medication[x]`: its CodeableConcept, or for a Reference
+  /// its display, else the code of the Medication it points to inside the
+  /// record's `contained` resources ([rawResource]).
+  static String? extractMedicationName(
+    dynamic medicationX,
+    Map<String, dynamic> rawResource,
+  ) {
+    final concept = medicationX?.isAs<fhir_r4.CodeableConcept>();
+    if (concept != null) return extractCodeableConceptText(concept);
+
+    final reference = medicationX?.isAs<fhir_r4.Reference>();
+    if (reference == null) return null;
+    final display = reference.display?.valueString;
+    if (display != null && display.isNotEmpty) return display;
+
+    final target = reference.reference?.valueString;
+    if (target == null || !target.startsWith('#')) return null;
+    final contained = rawResource['contained'];
+    if (contained is! List) return null;
+    for (final resource in contained) {
+      if (resource is Map<String, dynamic> &&
+          resource['resourceType'] == 'Medication' &&
+          resource['id'] == target.substring(1) &&
+          resource['code'] is Map<String, dynamic>) {
+        return extractCodeableConceptText(
+          fhir_r4.CodeableConcept.fromJson(resource['code']),
+        );
+      }
+    }
     return null;
   }
 
@@ -71,14 +104,56 @@ class FhirCommonExtractor {
     return null;
   }
 
-  static String? extractQuantity(fhir_r4.Quantity? quantity) {
-    if (quantity == null) return null;
-    if (quantity.value == null) return null;
+  static String? extractQuantity(fhir_r4.Quantity? quantity) =>
+      formatQuantity(quantity);
 
-    final value = quantity.value?.valueDouble?.toStringAsFixed(2);
-    final unit = quantity.unit?.toString() ?? '';
+  /// "value unit", or null when [quantity] has no value. The comparator is
+  /// kept ("<20 copies/mL"), and without a `unit` the UCUM `code` is shown
+  /// instead. [localizeUnit] translates the unit.
+  static String? formatQuantity(
+    fhir_r4.Quantity? quantity, {
+    String Function(String unit)? localizeUnit,
+  }) {
+    final value = quantity?.value?.valueDouble;
+    if (quantity == null || value == null) return null;
 
-    return '$value $unit'.trim();
+    final unit = quantityUnit(quantity);
+    final shownUnit = localizeUnit == null ? unit : localizeUnit(unit);
+    return '${comparatorOf(quantity)}${formatDecimal(value)} $shownUnit'.trim();
+  }
+
+  /// [value] with two decimals, keeping any further digits it has: 13.5 is
+  /// "13.50" and a troponin of 0.004 stays "0.004" instead of "0.00".
+  static String formatDecimal(double value) {
+    final fixed = value.toStringAsFixed(2);
+    return double.parse(fixed) == value ? fixed : value.toString();
+  }
+
+  /// The comparator of [quantity] ("<", "<=", ">=", ">"), or "".
+  static String comparatorOf(fhir_r4.Quantity quantity) =>
+      quantity.comparator?.valueString ?? '';
+
+  /// The unit of [quantity]: its `unit`, or its UCUM `code` without one.
+  static String quantityUnit(fhir_r4.Quantity quantity) {
+    final unit = quantity.unit?.valueString;
+    if (unit != null && unit.isNotEmpty) return unit;
+    final system = quantity.system?.valueString;
+    final isUcum = system == null || system == 'http://unitsofmeasure.org';
+    return isUcum ? quantity.code?.valueString ?? '' : '';
+  }
+
+  /// "low - high", or "≥ low" / "≤ high" for a range open on one side; null
+  /// when neither bound has a value.
+  static String? formatRange(
+    fhir_r4.Range? range, {
+    String Function(String unit)? localizeUnit,
+  }) {
+    final low = formatQuantity(range?.low, localizeUnit: localizeUnit);
+    final high = formatQuantity(range?.high, localizeUnit: localizeUnit);
+    if (low != null && high != null) return '$low - $high';
+    if (low != null) return '≥ $low';
+    if (high != null) return '≤ $high';
+    return null;
   }
 
   static String? extractAllCodeableConceptsFromArray(

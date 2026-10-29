@@ -1770,6 +1770,198 @@
   "fieldStatusDate": "Status Date",
   "fieldStatusHistory": "Status History",
   "fieldStatusReason": "Status Reason",
+  "fhirStatusActive": "Active",
+  "@fhirStatusActive": {
+    "description": "FHIR status code 'active' of a record (condition, allergy, medication)"
+  },
+  "fhirStatusInactive": "Inactive",
+  "@fhirStatusInactive": {
+    "description": "FHIR status code 'inactive'"
+  },
+  "fhirStatusResolved": "Resolved",
+  "@fhirStatusResolved": {
+    "description": "FHIR clinical status 'resolved' of a condition or allergy"
+  },
+  "fhirStatusRecurrence": "Recurrence",
+  "@fhirStatusRecurrence": {
+    "description": "FHIR clinical status 'recurrence' of a condition"
+  },
+  "fhirStatusRelapse": "Relapse",
+  "@fhirStatusRelapse": {
+    "description": "FHIR clinical status 'relapse' of a condition"
+  },
+  "fhirStatusRemission": "Remission",
+  "@fhirStatusRemission": {
+    "description": "FHIR clinical status 'remission' of a condition"
+  },
+  "fhirStatusUnconfirmed": "Unconfirmed",
+  "@fhirStatusUnconfirmed": {
+    "description": "FHIR verification status 'unconfirmed'"
+  },
+  "fhirStatusProvisional": "Provisional",
+  "@fhirStatusProvisional": {
+    "description": "FHIR verification status 'provisional' of a condition"
+  },
+  "fhirStatusDifferential": "Differential",
+  "@fhirStatusDifferential": {
+    "description": "FHIR verification status 'differential' of a condition"
+  },
+  "fhirStatusConfirmed": "Confirmed",
+  "@fhirStatusConfirmed": {
+    "description": "FHIR verification status 'confirmed'"
+  },
+  "fhirStatusRefuted": "Refuted",
+  "@fhirStatusRefuted": {
+    "description": "FHIR verification status 'refuted': the condition or allergy was ruled out"
+  },
+  "fhirStatusEnteredInError": "Entered in error",
+  "@fhirStatusEnteredInError": {
+    "description": "FHIR status 'entered-in-error': the record is not valid"
+  },
+  "fhirStatusOnHold": "On hold",
+  "@fhirStatusOnHold": {
+    "description": "FHIR status 'on-hold'"
+  },
+  "fhirStatusCancelled": "Cancelled",
+  "@fhirStatusCancelled": {
+    "description": "FHIR status 'cancelled'"
+  },
+  "fhirStatusCompleted": "Completed",
+  "@fhirStatusCompleted": {
+    "description": "FHIR status 'completed'"
+  },
+  "fhirStatusStopped": "Stopped",
+  "@fhirStatusStopped": {
+    "description": "FHIR status 'stopped', e.g. a medication that is no longer taken"
+  },
+  "fhirStatusDraft": "Draft",
+  "@fhirStatusDraft": {
+    "description": "FHIR status 'draft'"
+  },
+  "fhirStatusUnknown": "Unknown",
+  "@fhirStatusUnknown": {
+    "description": "FHIR status 'unknown'"
+  },
+  "fhirStatusIntended": "Intended",
+  "@fhirStatusIntended": {
+    "description": "FHIR medication statement status 'intended'"
+  },
+  "fhirStatusNotTaken": "Not taken",
+  "@fhirStatusNotTaken": {
+    "description": "FHIR medication statement status 'not-taken'"
+  },
+  "fhirStatusInProgress": "In progress",
+  "@fhirStatusInProgress": {
+    "description": "FHIR status 'in-progress'"
+  },
+  "fhirStatusNotDone": "Not done",
+  "@fhirStatusNotDone": {
+    "description": "FHIR status 'not-done', e.g. an immunization that was not given"
+  },
+  "fhirStatusPreparation": "Preparation",
+  "@fhirStatusPreparation": {
+    "description": "FHIR status 'preparation'"
+  },
+  "fhirStatusDeclined": "Declined",
+  "@fhirStatusDeclined": {
+    "description": "FHIR medication dispense status 'declined'"
+  },
+  "fhirStatusRegistered": "Registered",
+  "@fhirStatusRegistered": {
+    "description": "FHIR observation status 'registered'"
+  },
+  "fhirStatusPreliminary": "Preliminary",
+  "@fhirStatusPreliminary": {
+    "description": "FHIR observation status 'preliminary'"
+  },
+  "fhirStatusFinal": "Final",
+  "@fhirStatusFinal": {
+    "description": "FHIR observation status 'final'"
+  },
+  "fhirStatusAmended": "Amended",
+  "@fhirStatusAmended": {
+    "description": "FHIR observation status 'amended'"
+  },
+  "fhirStatusCorrected": "Corrected",
+  "@fhirStatusCorrected": {
+    "description": "FHIR observation status 'corrected'"
+  },
+  "fieldInterpretation": "Interpretation",
+  "@fieldInterpretation": {
+    "description": "Label of an observation's interpretation flag (high, low, critical)"
+  },
+  "interpretationHigh": "High",
+  "@interpretationHigh": {
+    "description": "Observation interpretation code H"
+  },
+  "interpretationLow": "Low",
+  "@interpretationLow": {
+    "description": "Observation interpretation code L"
+  },
+  "interpretationNormal": "Normal",
+  "@interpretationNormal": {
+    "description": "Observation interpretation code N"
+  },
+  "interpretationAbnormal": "Abnormal",
+  "@interpretationAbnormal": {
+    "description": "Observation interpretation code A"
+  },
+  "interpretationCriticallyAbnormal": "Critically abnormal",
+  "@interpretationCriticallyAbnormal": {
+    "description": "Observation interpretation code AA"
+  },
+  "interpretationCriticallyHigh": "Critically high",
+  "@interpretationCriticallyHigh": {
+    "description": "Observation interpretation code HH"
+  },
+  "interpretationCriticallyLow": "Critically low",
+  "@interpretationCriticallyLow": {
+    "description": "Observation interpretation code LL"
+  },
+  "interpretationSignificantlyHigh": "Significantly high",
+  "@interpretationSignificantlyHigh": {
+    "description": "Observation interpretation code HU"
+  },
+  "interpretationSignificantlyLow": "Significantly low",
+  "@interpretationSignificantlyLow": {
+    "description": "Observation interpretation code LU"
+  },
+  "interpretationIntermediate": "Intermediate",
+  "@interpretationIntermediate": {
+    "description": "Observation interpretation code I (antimicrobial susceptibility)"
+  },
+  "interpretationResistant": "Resistant",
+  "@interpretationResistant": {
+    "description": "Observation interpretation code R (antimicrobial susceptibility)"
+  },
+  "interpretationSusceptible": "Susceptible",
+  "@interpretationSusceptible": {
+    "description": "Observation interpretation code S (antimicrobial susceptibility)"
+  },
+  "interpretationPositive": "Positive",
+  "@interpretationPositive": {
+    "description": "Observation interpretation code POS"
+  },
+  "interpretationNegative": "Negative",
+  "@interpretationNegative": {
+    "description": "Observation interpretation code NEG"
+  },
+  "interpretationDetected": "Detected",
+  "@interpretationDetected": {
+    "description": "Observation interpretation code DET"
+  },
+  "interpretationNotDetected": "Not detected",
+  "@interpretationNotDetected": {
+    "description": "Observation interpretation code ND"
+  },
+  "interpretationIndeterminate": "Indeterminate",
+  "@interpretationIndeterminate": {
+    "description": "Observation interpretation code IND"
+  },
+  "interpretationEquivocal": "Equivocal",
+  "@interpretationEquivocal": {
+    "description": "Observation interpretation code E"
+  },
   "fieldStrength": "Strength",
   "fieldSubpotent": "Subpotent",
   "fieldSubrogation": "Subrogation",

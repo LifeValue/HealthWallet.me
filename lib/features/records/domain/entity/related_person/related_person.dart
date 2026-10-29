@@ -255,7 +255,7 @@ abstract class RelatedPerson with _$RelatedPerson implements IFhirResource {
         RecordInfoLine(
           icon: Assets.icons.calendar,
           info:
-              '${l10n.fieldLastUpdated}: ${DateFormat.yMMMMd(l10n.localeName).format(date!)}',
+              '${l10n.fieldLastUpdated}: ${FhirFieldExtractor.formatRecordDate(date!, l10n.localeName)}',
         ),
       );
     }
