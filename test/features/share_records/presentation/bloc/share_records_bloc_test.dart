@@ -393,6 +393,21 @@ void main() {
         expect(EphemeralSessionManager.instance.hasActiveSession, isTrue);
       });
 
+      test('a screen closed while ending its share leaves the next share '
+          'open', () async {
+        await openShare();
+        _lifecycle(AppLifecycleState.hidden);
+        await _until(() => service.calls.contains('sendKillSignal'));
+        await bloc.close();
+
+        EphemeralSessionManager.instance.startSession(container());
+        addTearDown(EphemeralSessionManager.instance.destroySession);
+        // Past the kill's 500 ms grace period; its timer fires first.
+        await Future<void>.delayed(const Duration(milliseconds: 700));
+
+        expect(EphemeralSessionManager.instance.hasActiveSession, isTrue);
+      });
+
       test('leaving while comparing codes keeps the records closed', () async {
         await receiveShare();
         await senderCode;

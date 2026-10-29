@@ -64,13 +64,16 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       debugPrint('[SHARE] Failed to send kill signal to sender: $e');
     }
 
+    // The screen can close during the kill's grace period; close() has
+    // cleaned up by then, and the session manager may already hold the
+    // next share, which is not this screen's to destroy.
+    if (_isClosed) return;
+
     EphemeralSessionManager.instance.destroySession(reason: 'user_confirmed');
     await _disposeSecureSession();
 
     await _service.disconnect();
 
-    // The screen can close during the kill's grace period; close() has
-    // cleaned up by then.
     if (_isClosed) return;
     add(const ShareRecordsEvent.dataDestroyed());
   }
