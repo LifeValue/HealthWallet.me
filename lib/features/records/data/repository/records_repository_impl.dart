@@ -672,103 +672,67 @@ class RecordsRepositoryImpl implements RecordsRepository {
     return resources.isNotEmpty;
   }
 
+  /// The patient's blood-type observations (ABO, Rh, or both), newest
+  /// first, found by LOINC code so they don't drop out behind newer results.
+  /// With [sourceId], the ones from that source when it has any.
   @override
   Future<List<IFhirResource>> getBloodTypeObservations({
     required String patientId,
     String? sourceId,
   }) async {
-    List<IFhirResource> observations;
+    final patientRow =
+        await (_database.select(_database.fhirResource)..where(
+              (f) => f.id.equals(patientId) & f.resourceType.equals('Patient'),
+            ))
+            .getSingleOrNull();
+    if (patientRow == null) return [];
+    final patientIds = {patientRow.id, ?patientRow.resourceId};
 
-    if (sourceId != null && sourceId.isNotEmpty) {
-      observations = await getResources(
-        resourceTypes: [FhirType.Observation],
-        sourceId: sourceId,
-        limit: 100,
-        offset: 0,
-      );
+    const codes = [
+      BloodTypes.aboLoincCode,
+      BloodTypes.rhLoincCode,
+      BloodTypes.combinedLoincCode,
+    ];
+    final rows =
+        await (_database.select(_database.fhirResource)
+              ..where(
+                (f) =>
+                    f.resourceType.equals('Observation') &
+                    codes
+                        .map((code) => f.resourceRaw.contains('"$code"'))
+                        .reduce((a, b) => a | b),
+              )
+              ..orderBy([(f) => OrderingTerm.desc(f.date)]))
+            .get();
 
-      if (observations.isEmpty) {
-        observations = await getResources(
-          resourceTypes: [FhirType.Observation],
-          limit: 100,
-          offset: 0,
-        );
+    final matches = <Observation>[];
+    for (final row in rows) {
+      final IFhirResource resource;
+      try {
+        resource = IFhirResource.fromLocalDto(row);
+      } catch (e) {
+        logger.w('Unreadable blood type observation ${row.id}', e);
+        continue;
       }
-    } else {
-      observations = await getResources(
-        resourceTypes: [FhirType.Observation],
-        limit: 100,
-        offset: 0,
-      );
+      if (resource is! Observation) continue;
+      final hasCode =
+          resource.code?.coding?.any(
+            (c) => codes.contains(c.code?.toString()),
+          ) ??
+          false;
+      final subject = resource.subject?.reference?.valueString;
+      if (!hasCode || subject == null) continue;
+      final subjectId = subject.startsWith('urn:uuid:')
+          ? subject.substring(9)
+          : subject.split('/').last;
+      if (patientIds.contains(subjectId)) matches.add(resource);
     }
 
-    final patients = await getResources(
-      resourceTypes: [FhirType.Patient],
-      limit: 100,
-      offset: 0,
-    );
-
-    final patientList = patients.whereType<Patient>().toList();
-    if (patientList.isEmpty) return [];
-
-    final targetPatient = patientList.firstWhere(
-      (p) => p.id == patientId,
-      orElse: () => patientList.first,
-    );
-
-    final bloodTypeObservations = observations.where((resource) {
-      if (resource is! Observation) {
-        return false;
-      }
-
-      final coding = resource.code?.coding;
-      if (coding == null || coding.isEmpty) {
-        return false;
-      }
-
-      bool hasBloodTypeCode = false;
-      for (final code in coding) {
-        if (code.code == null) continue;
-
-        final loincCode = code.code.toString();
-
-        if (loincCode == BloodTypes.aboLoincCode ||
-            loincCode == BloodTypes.rhLoincCode ||
-            loincCode == BloodTypes.combinedLoincCode) {
-          hasBloodTypeCode = true;
-          break;
-        }
-      }
-
-      if (!hasBloodTypeCode) {
-        return false;
-      }
-
-      final subject = resource.subject?.reference?.valueString;
-
-      if (subject == null) {
-        return false;
-      }
-
-      String subjectPatientId;
-      if (subject.contains('/')) {
-        subjectPatientId = subject.split('/').last;
-      } else if (subject.startsWith('urn:uuid:')) {
-        subjectPatientId = subject.replaceFirst('urn:uuid:', '');
-      } else {
-        subjectPatientId = subject;
-      }
-
-      final matches =
-          subjectPatientId == targetPatient.resourceId ||
-          subjectPatientId == targetPatient.id ||
-          subject == targetPatient.resourceId ||
-          subject == targetPatient.id;
-
-      return matches;
-    }).toList();
-
-    return bloodTypeObservations;
+    if (sourceId != null && sourceId.isNotEmpty) {
+      final fromSource = matches.where((o) => o.sourceId == sourceId).toList();
+      if (fromSource.isNotEmpty) return fromSource;
+    }
+    return matches;
   }
 
   @override
