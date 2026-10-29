@@ -10,6 +10,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/records/domain/services/fhir_resource_relationship_service.dart';
@@ -191,12 +192,27 @@ class RecordAttachmentsBloc
         return;
       }
 
-      final Directory appDirectory = await getApplicationDocumentsDirectory();
       final subjectId = _extractSubjectId(state.resource);
+      if (subjectId == null) {
+        // A document without a patient would fall outside every patient's
+        // records and create a wallet source with no name.
+        logger.w(
+          'Not attaching to a ${state.resource.fhirType.name} with no patient',
+        );
+        emit(
+          state.copyWith(
+            status: RecordAttachmentsStatus.error(
+              StateError('The record has no patient'),
+            ),
+          ),
+        );
+        return;
+      }
+      final Directory appDirectory = await getApplicationDocumentsDirectory();
       final encounterId = _extractEncounterId(state.resource);
       final effectiveSourceId = await _getEffectiveSourceId(
         resourceSourceId: state.resource.sourceId,
-        patientId: subjectId ?? '',
+        patientId: subjectId,
       );
 
       for (final file in event.files) {
@@ -208,7 +224,7 @@ class RecordAttachmentsBloc
         final documentReference = await _createDocumentReference(
           filePath: newFilePath,
           fileName: originalFileName,
-          subjectId: subjectId ?? '',
+          subjectId: subjectId,
           encounterId: encounterId,
           relatedResourceId: state.resource.resourceId,
           relatedResourceType: state.resource.fhirType.name,
@@ -418,22 +434,10 @@ class RecordAttachmentsBloc
   }
 
   String? _extractSubjectId(IFhirResource resource) {
-    final rawResource = resource.rawResource;
-
-    if (resource.fhirType == FhirType.Patient) {
-      return resource.resourceId;
-    }
-
-    if (rawResource['subject']?['reference'] != null) {
-      final reference = rawResource['subject']['reference'] as String;
-      if (reference.startsWith('Patient/')) {
-        return reference.substring(8);
-      } else if (reference.startsWith('urn:uuid:')) {
-        return reference.substring(9);
-      }
-    }
-
-    return null;
+    if (resource.fhirType == FhirType.Patient) return resource.resourceId;
+    final fromReference = FhirReferenceUtils.patientIdOf(resource.rawResource);
+    if (fromReference != null) return fromReference;
+    return resource.subjectId.isNotEmpty ? resource.subjectId : null;
   }
 
   String? _extractEncounterId(IFhirResource resource) {

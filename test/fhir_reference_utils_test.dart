@@ -29,4 +29,56 @@ void main() {
       expect(FhirReferenceUtils.extractReferenceId('plain-id'), 'plain-id');
     });
   });
+
+  group('FhirReferenceUtils.patientIdOf', () {
+    Map<String, dynamic> withRef(String field, String reference) => {
+      field: {'reference': reference},
+    };
+
+    test('reads subject', () {
+      expect(
+        FhirReferenceUtils.patientIdOf(withRef('subject', 'Patient/p1')),
+        'p1',
+      );
+    });
+
+    test('reads patient, as allergies and immunizations name it', () {
+      expect(
+        FhirReferenceUtils.patientIdOf(withRef('patient', 'Patient/p1')),
+        'p1',
+      );
+    });
+
+    test('reads beneficiary, as coverage names it', () {
+      expect(
+        FhirReferenceUtils.patientIdOf(withRef('beneficiary', 'Patient/p1')),
+        'p1',
+      );
+    });
+
+    test('reads absolute and urn:uuid references', () {
+      expect(
+        FhirReferenceUtils.patientIdOf(
+          withRef('patient', 'https://ehr.example/fhir/Patient/p1'),
+        ),
+        'p1',
+      );
+      expect(
+        FhirReferenceUtils.patientIdOf(withRef('subject', 'urn:uuid:abc')),
+        'abc',
+      );
+    });
+
+    test('ignores a subject that is not a patient', () {
+      expect(
+        FhirReferenceUtils.patientIdOf(withRef('subject', 'Group/g1')),
+        isNull,
+      );
+      expect(FhirReferenceUtils.patientIdOf(const {}), isNull);
+      expect(
+        FhirReferenceUtils.patientIdOf(withRef('subject', 'Patient/')),
+        isNull,
+      );
+    });
+  });
 }
