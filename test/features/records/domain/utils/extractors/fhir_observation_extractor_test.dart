@@ -943,11 +943,20 @@ void main() {
           'A+',
         );
       },
-      skip:
-          'BUG: without value.text the code falls back to the display of '
-          'the *observation* code (e.g. "ABO and Rh group"), never the '
-          'value coding',
     );
+
+    test('reads a SNOMED blood group code without display', () {
+      expect(
+        FhirObservationExtractor.extractBloodTypeFromObservations([
+          bloodType({
+            'valueCodeableConcept': codeableConcept(
+              codings: [coding(snomedSystem, '278152006')],
+            ),
+          }),
+        ]),
+        'B-',
+      );
+    });
 
     test(
       'maps SNOMED blood group displays to the short form',
@@ -963,9 +972,6 @@ void main() {
           'A+',
         );
       },
-      skip:
-          'BUG: BloodTypes.fhirDisplayMapping is never consulted, so '
-          'standard SNOMED displays are rejected',
     );
   });
 }
