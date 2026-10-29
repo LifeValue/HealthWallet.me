@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -90,6 +91,26 @@ void main() {
 
   List<String> sentTypes() => [for (final m in link.sent) m.type];
 
+  /// Waits until [done] holds. The bloc works on a real database and real
+  /// files, which take as long as the machine needs.
+  Future<void> until(FutureOr<bool> Function() done) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 10));
+    while (!await done()) {
+      if (DateTime.now().isAfter(deadline)) fail('not reached within 10 s');
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+  }
+
+  /// Adds [event] to [bloc] and waits until [done] holds.
+  Future<void> addAndWait(
+    LwwSyncBloc bloc,
+    LwwSyncEvent event,
+    FutureOr<bool> Function() done,
+  ) async {
+    bloc.add(event);
+    await until(done);
+  }
+
   setUp(() async {
     dirs = await TestDirs.create();
     db = openTestDatabase();
@@ -134,8 +155,14 @@ void main() {
         await insertFhir(db, id: 'tomb', updatedAt: old, deletedAt: old);
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(const LwwSyncInitialised()),
-      wait: const Duration(milliseconds: 50),
+      act: (bloc) async {
+        bloc.add(const LwwSyncInitialised());
+        await until(
+          () async =>
+              watcher.starts == 1 &&
+              await fetchRow(db, 'fhir_resource', 'tomb') == null,
+        );
+      },
       expect: () => [
         isA<LwwSyncState>()
             .having((s) => s.lastSyncTime, 'lastSyncTime', at(3).toLocal())
@@ -154,7 +181,7 @@ void main() {
 
     test('listens to the link until closed, then stops watching', () async {
       final bloc = buildBloc()..add(const LwwSyncInitialised());
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await until(() => watcher.starts == 1);
       expect(link.hasListeners, isTrue);
       expect(watcher.stops, 0);
 
@@ -168,7 +195,7 @@ void main() {
   group('incoming link messages (after LwwSyncInitialised)', () {
     Future<void> init(LwwSyncBloc bloc) async {
       bloc.add(const LwwSyncInitialised());
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await until(() => watcher.starts == 1);
     }
 
     blocTest<LwwSyncBloc, LwwSyncState>(
@@ -180,8 +207,12 @@ void main() {
           'sync.delta',
           remoteDelta('sources', [sourceRow('s1', ms(at(1)))]).toJson(),
         );
+        await until(
+          () =>
+              link.sentOfType('sync.ack').isNotEmpty &&
+              bloc.state.lastSyncTime != null,
+        );
       },
-      wait: const Duration(milliseconds: 100),
       verify: (bloc) async {
         expect(
           (await fetchRow(db, 'sources', 's1'))!['label_source'],
@@ -211,8 +242,8 @@ void main() {
           'table_name': 'sources',
           'timestamp': ms(at(100)),
         });
+        await until(() => queue.pendingCount == 1);
       },
-      wait: const Duration(milliseconds: 50),
       verify: (_) => expect(queue.pendingCount, 1),
     );
 
@@ -227,15 +258,17 @@ void main() {
           'sources': 0,
           'record_notes': 0,
         });
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await until(() => link.sentOfType('sync.delta').isNotEmpty);
         link.receiveData('sync.verify', {
           'fhir_resource': 0,
           'sources': 1.0,
           'record_notes': 0,
         });
+        // The reconciliation sends its own sync.verify after a 1 s pause.
+        await until(
+          () => sentTypes().contains('sync.verify') && bloc.state.isSynced,
+        );
       },
-      // Covers the 1 s pause before the reconciliation's own sync.verify.
-      wait: const Duration(milliseconds: 1300),
       verify: (bloc) {
         expect(sentTypes(), ['sync.delta', 'sync.verify']);
         expect(bloc.state.isSynced, isTrue);
@@ -251,8 +284,8 @@ void main() {
         link.receiveData('sync.file_request', {
           'paths': ['a.pdf', 'missing.pdf'],
         });
+        await until(() => link.sentOfType('sync.file_data').isNotEmpty);
       },
-      wait: const Duration(milliseconds: 100),
       verify: (_) {
         final data = link.sentOfType('sync.file_data').single.payload;
         expect(data.keys, ['a.pdf']);
@@ -279,8 +312,11 @@ void main() {
       act: (bloc) async {
         await init(bloc);
         link.receiveData('sync.file_data', {'x.pdf': base64Encode(pdfBytes)});
+        final file = dirs.docFile('x.pdf');
+        await until(
+          () => file.existsSync() && file.lengthSync() == pdfBytes.length,
+        );
       },
-      wait: const Duration(milliseconds: 100),
       verify: (_) async {
         expect(await dirs.docFile('x.pdf').readAsBytes(), pdfBytes);
       },
@@ -292,8 +328,8 @@ void main() {
       act: (bloc) async {
         await init(bloc);
         link.emitState(tcp.ConnectionState.connected);
+        await until(() => sentTypes().length == 2 && bloc.state.isSynced);
       },
-      wait: const Duration(milliseconds: 400),
       verify: (bloc) {
         expect(sentTypes(), ['sync.status', 'sync.status']);
         expect(bloc.state.isSynced, isTrue);
@@ -336,8 +372,10 @@ void main() {
         await insertNote(db, id: 2, content: 'n', updatedAt: ms(at(1)));
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
+      act: (bloc) async {
+        bloc.add(const SyncTriggered());
+        await until(() => sentTypes().length == 3);
+      },
       expect: () => [
         stateWhere(
           status: LwwSyncStatus.syncing,
@@ -384,8 +422,10 @@ void main() {
       },
       build: buildBloc,
       seed: () => LwwSyncState(lastSyncTime: at(5)),
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
+      act: (bloc) async {
+        bloc.add(const SyncTriggered());
+        await until(() => link.sent.isNotEmpty);
+      },
       verify: (_) {
         final delta = SyncDelta.fromJson(link.sent.first.payload);
         expect(delta.rows.map((r) => r['id']), ['new']);
@@ -395,8 +435,10 @@ void main() {
     blocTest<LwwSyncBloc, LwwSyncState>(
       'with nothing to send it ends synced',
       build: buildBloc,
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
+      act: (bloc) async {
+        bloc.add(const SyncTriggered());
+        await until(() => sentTypes().contains('sync.status'));
+      },
       expect: () => [
         stateWhere(status: LwwSyncStatus.syncing),
         stateWhere(currentTable: 'fhir_resource'),
@@ -433,8 +475,14 @@ void main() {
       },
       build: buildBloc,
       seed: () => LwwSyncState(lastSyncTime: at(0)),
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
+      act: (bloc) async {
+        bloc.add(const SyncTriggered());
+        await until(
+          () =>
+              bloc.state.syncStatus == LwwSyncStatus.idle &&
+              bloc.state.completedTables == 3,
+        );
+      },
       verify: (bloc) {
         expect(link.sent, isEmpty);
         expect(queue.pendingCount, 2);
@@ -463,8 +511,10 @@ void main() {
         await insertFhir(db, id: 'f', updatedAt: ms(at(1)));
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
+      act: (bloc) async {
+        bloc.add(const SyncTriggered());
+        await until(() => bloc.state.syncStatus == LwwSyncStatus.error);
+      },
       expect: () => [
         stateWhere(status: LwwSyncStatus.syncing),
         stateWhere(currentTable: 'fhir_resource'),
@@ -486,8 +536,10 @@ void main() {
         syncStatus: LwwSyncStatus.error,
         error: 'old failure',
       ),
-      act: (bloc) => bloc.add(const SyncTriggered()),
-      wait: const Duration(milliseconds: 50),
+      act: (bloc) async {
+        bloc.add(const SyncTriggered());
+        await until(() => bloc.state.syncStatus == LwwSyncStatus.idle);
+      },
       verify: (bloc) {
         expect(bloc.state.error, isNull);
         expect(bloc.state.syncStatus, LwwSyncStatus.idle);
@@ -503,7 +555,9 @@ void main() {
         await insertSource(db, id: 'take', updatedAt: ms(at(1)));
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         DeltaReceived(
           delta: remoteDelta('sources', [
             sourceRow('keep', ms(at(5))),
@@ -511,8 +565,10 @@ void main() {
             sourceRow('new', ms(at(5))),
           ]),
         ),
+
+        () =>
+            sentTypes().contains('sync.ack') && bloc.state.lastSyncTime != null,
       ),
-      wait: const Duration(milliseconds: 50),
       expect: () => [
         stateWhere(
           status: LwwSyncStatus.syncing,
@@ -544,12 +600,15 @@ void main() {
       setUp: () => link.connected = false,
       build: buildBloc,
       seed: () => const LwwSyncState(receivedRows: 4),
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         DeltaReceived(
           delta: remoteDelta('sources', [sourceRow('s', ms(at(1)))]),
         ),
+
+        () => bloc.state.lastSyncTime != null,
       ),
-      wait: const Duration(milliseconds: 50),
       verify: (bloc) {
         expect(bloc.state.receivedRows, 5);
         expect(link.sent, isEmpty);
@@ -571,7 +630,9 @@ void main() {
         );
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         DeltaReceived(
           delta: remoteDelta('fhir_resource', [
             {
@@ -582,8 +643,9 @@ void main() {
             },
           ]),
         ),
+
+        () => bloc.state.lastSyncTime != null,
       ),
-      wait: const Duration(milliseconds: 50),
       verify: (_) async {
         expect(await fetchRow(db, 'fhir_resource', 'obs'), isNotNull);
         expect(
@@ -596,14 +658,17 @@ void main() {
     blocTest<LwwSyncBloc, LwwSyncState>(
       'a delta that cannot be applied ends in the error state, unacknowledged',
       build: buildBloc,
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         DeltaReceived(
           delta: remoteDelta('sources', [
             {...sourceRow('s', ms(at(1))), 'column_from_v99': 1},
           ]),
         ),
+
+        () => bloc.state.syncStatus == LwwSyncStatus.error,
       ),
-      wait: const Duration(milliseconds: 50),
       expect: () => [
         stateWhere(status: LwwSyncStatus.syncing),
         stateWhere(
@@ -631,8 +696,11 @@ void main() {
         receivedRows: 2,
         pendingChangeCount: 1,
       ),
-      act: (bloc) => bloc.add(const ConnectionChanged(isConnected: true)),
-      wait: const Duration(milliseconds: 400),
+      act: (bloc) => addAndWait(
+        bloc,
+        const ConnectionChanged(isConnected: true),
+        () => sentTypes().length == 4,
+      ),
       verify: (bloc) {
         expect(bloc.state.pendingChangeCount, 0);
         expect(sentTypes(), [
@@ -659,8 +727,11 @@ void main() {
       'connected: emits the counter reset first',
       build: buildBloc,
       seed: () => const LwwSyncState(isSynced: true, sentRows: 5),
-      act: (bloc) => bloc.add(const ConnectionChanged(isConnected: true)),
-      wait: const Duration(milliseconds: 400),
+      act: (bloc) => addAndWait(
+        bloc,
+        const ConnectionChanged(isConnected: true),
+        () => sentTypes().length == 2,
+      ),
       expect: () => [
         stateWhere(isSynced: false, sentRows: 0, receivedRows: 0),
         stateWhere(status: LwwSyncStatus.syncing),
@@ -678,8 +749,13 @@ void main() {
         link.failAfter = 0;
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(const ConnectionChanged(isConnected: true)),
-      wait: const Duration(milliseconds: 400),
+      act: (bloc) => addAndWait(
+        bloc,
+        const ConnectionChanged(isConnected: true),
+        () =>
+            bloc.state.completedTables == 3 &&
+            bloc.state.syncStatus != LwwSyncStatus.syncing,
+      ),
       verify: (bloc) {
         expect(queue.pendingCount, 1);
         expect(bloc.state.pendingChangeCount, 1);
@@ -713,12 +789,15 @@ void main() {
         await insertSource(db, id: 's', updatedAt: ms(at(1)));
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         const TableStatusReceived(
           remoteCounts: {'fhir_resource': 1, 'sources': 1, 'record_notes': 7},
         ),
+
+        () => sentTypes().contains('sync.verify'),
       ),
-      wait: const Duration(milliseconds: 1300),
       expect: () => [
         stateWhere(
           status: LwwSyncStatus.syncing,
@@ -755,12 +834,15 @@ void main() {
         await insertSource(db, id: 's', updatedAt: ms(at(1)));
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         const TableStatusReceived(
           remoteCounts: {'fhir_resource': 0, 'sources': 1},
         ),
+
+        () => sentTypes().contains('sync.verify'),
       ),
-      wait: const Duration(milliseconds: 1300),
       // Only the closing "idle" emission, identical to the initial state.
       expect: () => [stateWhere(status: LwwSyncStatus.idle, sentRows: 0)],
       verify: (_) async {
@@ -776,10 +858,13 @@ void main() {
         await insertSource(db, id: 's', updatedAt: ms(at(1)));
       },
       build: buildBloc,
-      act: (bloc) => bloc.add(
-        const TableStatusReceived(remoteCounts: {'sources': 3}),
-      ),
-      wait: const Duration(milliseconds: 1300),
+      act: (bloc) async {
+        final idle = bloc.stream.firstWhere(
+          (s) => s.syncStatus == LwwSyncStatus.idle,
+        );
+        bloc.add(const TableStatusReceived(remoteCounts: {'sources': 3}));
+        await idle.timeout(const Duration(seconds: 10));
+      },
       expect: () => [
         stateWhere(status: LwwSyncStatus.syncing, currentTable: 'sources'),
         stateWhere(status: LwwSyncStatus.idle, currentTable: null),
@@ -796,12 +881,15 @@ void main() {
       'matching counts mark the devices as synced',
       setUp: () => insertSource(db, id: 's', updatedAt: ms(at(1))),
       build: buildBloc,
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         const SyncVerifyReceived(
           remoteCounts: {'fhir_resource': 0, 'sources': 1, 'record_notes': 0},
         ),
+
+        () => bloc.state.isSynced,
       ),
-      wait: const Duration(milliseconds: 50),
       expect: () => [stateWhere(isSynced: true)],
       verify: (_) => expect(link.sent, isEmpty),
     );
@@ -810,10 +898,13 @@ void main() {
       'a count mismatch marks the devices as not synced',
       build: buildBloc,
       seed: () => const LwwSyncState(isSynced: true),
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         const SyncVerifyReceived(remoteCounts: {'record_notes': 1}),
+
+        () => !bloc.state.isSynced,
       ),
-      wait: const Duration(milliseconds: 50),
       expect: () => [stateWhere(isSynced: false)],
     );
 
@@ -829,10 +920,13 @@ void main() {
         ]),
       ),
       build: buildBloc,
-      act: (bloc) => bloc.add(
+      act: (bloc) => addAndWait(
+        bloc,
+
         const SyncVerifyReceived(remoteCounts: {'fhir_resource': 1}),
+
+        () => link.sentOfType('sync.file_request').isNotEmpty,
       ),
-      wait: const Duration(milliseconds: 50),
       verify: (_) {
         expect(link.sentOfType('sync.file_request').single.payload, {
           'paths': ['lost.pdf'],
@@ -885,10 +979,14 @@ void main() {
             delta: remoteDelta('sources', [sourceRow('s', ms(at(1)))]),
           ),
         );
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await until(
+          () =>
+              bloc.state.syncStatus == LwwSyncStatus.idle &&
+              bloc.state.lastSyncTime != at(0),
+        );
         bloc.add(const SyncTriggered());
+        await until(() => sentTypes().contains('sync.status'));
       },
-      wait: const Duration(milliseconds: 100),
       verify: (_) async {
         expect(link.sentOfType('sync.delta'), isEmpty);
         // The edit is still only local, and the row counts match, so neither
@@ -910,14 +1008,18 @@ void main() {
       seed: () => LwwSyncState(lastSyncTime: at(0)),
       act: (bloc) async {
         bloc.add(const SyncTriggered());
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await until(
+          () =>
+              bloc.state.syncStatus == LwwSyncStatus.idle &&
+              bloc.state.completedTables == 3,
+        );
         expect(queue.pendingCount, 1);
         // lib/main.dart removes lww_offline_queue on every mobile start.
         await queue.clear();
         link.connected = true;
         bloc.add(const SyncTriggered());
+        await until(() => sentTypes().contains('sync.status'));
       },
-      wait: const Duration(milliseconds: 100),
       verify: (_) {
         expect(link.sentOfType('sync.delta'), isEmpty);
         expect(sentTypes(), ['sync.status']);

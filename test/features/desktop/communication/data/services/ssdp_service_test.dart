@@ -13,7 +13,13 @@ void main() {
   setUp(() => ssdp = SsdpService());
   tearDown(() => ssdp.stopAdvertising());
 
-  Future<String?> mSearch(String body) async {
+  /// Sends [body] to the advertiser and returns its reply, or null when none
+  /// comes within [wait]. A reply can take a while on a busy machine; checks
+  /// that expect none pass a shorter [wait].
+  Future<String?> mSearch(
+    String body, {
+    Duration wait = const Duration(seconds: 10),
+  }) async {
     final socket = await RawDatagramSocket.bind(
       InternetAddress.loopbackIPv4,
       0,
@@ -28,10 +34,7 @@ void main() {
     });
     socket.send(utf8.encode(body), InternetAddress.loopbackIPv4, 1900);
     try {
-      return await reply.future.timeout(
-        const Duration(seconds: 2),
-        onTimeout: () => null,
-      );
+      return await reply.future.timeout(wait, onTimeout: () => null);
     } finally {
       await sub.cancel();
       socket.close();
@@ -72,6 +75,7 @@ void main() {
 
     final reply = await mSearch(
       search.replaceAll('healthwallet:device:desktop', 'other:thing'),
+      wait: const Duration(seconds: 2),
     );
 
     expect(reply, isNull);
@@ -80,7 +84,7 @@ void main() {
   test('stopAdvertising releases the socket and can restart', () async {
     await ssdp.startAdvertising(ip: '10.0.0.1', port: 1, deviceId: 'a');
     await ssdp.stopAdvertising();
-    expect(await mSearch(search), isNull);
+    expect(await mSearch(search, wait: const Duration(seconds: 2)), isNull);
 
     await ssdp.startAdvertising(ip: '10.0.0.2', port: 2, deviceId: 'b');
     expect(await mSearch(search), contains('tcp://10.0.0.2:2'));

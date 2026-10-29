@@ -52,6 +52,15 @@ class _ScopeRecordingRepository extends Fake implements RecordsRepository {
 
 class _FakeSpecialtyClassifier extends Fake implements SpecialtyClassifier {}
 
+/// Waits until [done] holds, for as long as a slow machine needs.
+Future<void> _until(bool Function() done) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  while (!done()) {
+    if (DateTime.now().isAfter(deadline)) fail('not reached within 10 s');
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+}
+
 void main() {
   late _ScopeRecordingRepository repository;
 
@@ -67,7 +76,8 @@ void main() {
     act: (bloc) async {
       bloc.add(const RecordsSourceChanged(null, sourceIds: janeSources));
       bloc.add(const RecordsSearch('insulin'));
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      // The search runs after a 500 ms debounce.
+      await _until(() => repository.searches.isNotEmpty);
     },
     verify: (_) {
       expect(repository.searches, [(sourceId: null, sourceIds: 's1,s2')]);
@@ -104,7 +114,7 @@ void main() {
     act: (bloc) async {
       bloc.add(const RecordsSourceChanged('s1'));
       bloc.add(const RecordsSharePressed(patientId: 'tom', sourceId: 's3'));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await _until(() => repository.exports.isNotEmpty);
     },
     verify: (_) {
       expect(repository.exports, [('s3', 'tom')]);
@@ -117,7 +127,7 @@ void main() {
     act: (bloc) async {
       bloc.add(const RecordsSourceChanged('s1'));
       bloc.add(const RecordsSharePressed(patientId: 'tom'));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await _until(() => repository.exports.isNotEmpty);
     },
     verify: (_) {
       expect(repository.exports, [(null, 'tom')]);

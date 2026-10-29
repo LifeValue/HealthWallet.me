@@ -1335,8 +1335,9 @@ void main() {
         final second = await connectPeer();
         await pending.timeout(const Duration(seconds: 10));
         await second.close();
-        // Let the isolate see the hang-up before the accept arrives.
-        await Future<void>.delayed(const Duration(milliseconds: 200));
+        // Let the isolate see the hang-up before the accept arrives. The
+        // isolate doesn't report it, so this can only wait, and generously.
+        await Future<void>.delayed(const Duration(seconds: 1));
 
         service.acceptPendingClient();
         await Future<void>.delayed(const Duration(milliseconds: 200));
