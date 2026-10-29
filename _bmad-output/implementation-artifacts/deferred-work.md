@@ -113,5 +113,8 @@
   summary: Stop `extractDosage` rounding doses to whole numbers (0.5 mg shows as "1 mg"); use the quantity decimals rule.
   evidence: Found while fixing the review findings; it existed before this branch and was not among the section 4 bugs. A wrong dose is a high-impact display error.
 - source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
-  summary: Convert the reference range's high bound from its own unit in `Observation.additionalInfoForRegion`; a 50–100 kg range shows as `110.23 - 100.00 lbs` in the US region.
-  evidence: Pinned as a skipped `BUG:` test in `observation_reference_range_test.dart`; it existed before this branch.
+  summary: Save scanned observations with a UCUM `system` and `code` next to the unit read from the document (`MappingObservation.toFhirResource`), so other FHIR consumers (IPS export, the desktop, providers) can read the unit.
+  evidence: Found on 2026-10-29 while fixing the region conversion. Scans store only the written unit; the app no longer converts them, so this affects interoperability, not what the app shows.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Decide whether the Home vitals card should show a scanned weight, height, temperature or glucose as on the document, like the records screens now do, instead of in the region unit.
+  evidence: 2026-10-29: the records screens show scanned values as recorded; `patient_vitals_factory` still converts every source for the card, which is a summary in the region units. Product decision.

@@ -131,6 +131,13 @@ context:
 
 ## Spec Change Log
 
+- **2026-10-29, region units (after review, from manual testing).** Making the Records list, Home's recent records and related records use the region units like the details (574ea5f3) spread an older bug: in Europe and UK every lab value in mg/dL was converted with the glucose factor (cholesterol 200 mg/dL showed as 11.10 mmol/L, creatinine 1.0 mg/dL as 0.06 mmol/L). Decisions confirmed by the user:
+  - Convert only when the observation's LOINC code says it is a weight, height, temperature or glucose (`regionUnitVital`), and only from one of that measurement's units, recognised by the UCUM `code` first and the written `unit` second. Every other value shows as recorded.
+  - A record from a scanned or imported document (a `wallet-` source) shows exactly what the document says, in every region. No migration is needed: existing scans are already in `wallet-` sources.
+  - Each reference-range bound is converted from its own unit, which fixes the pinned `BUG:` test for 50–100 kg in the US.
+  - Unchanged: the Home vitals card (it converts per vital type, so the glucose factor never reached cholesterol there) and the share feature.
+  - Tests: 2,215 pass and 17 are skipped; analyze clean.
+
 ## Review Triage Log
 
 Review pass 1: three layers (blind, edge case, verification gap). 28 findings: 12 patched, 4 deferred, 11 rejected; one was split, with its docs part patched and its code part rejected.
