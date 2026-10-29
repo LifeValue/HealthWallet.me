@@ -3724,6 +3724,93 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldStatusReason => 'Status Reason';
 
   @override
+  String get fhirStatusActive => 'Active';
+
+  @override
+  String get fhirStatusInactive => 'Inactive';
+
+  @override
+  String get fhirStatusResolved => 'Resolved';
+
+  @override
+  String get fhirStatusRecurrence => 'Recurrence';
+
+  @override
+  String get fhirStatusRelapse => 'Relapse';
+
+  @override
+  String get fhirStatusRemission => 'Remission';
+
+  @override
+  String get fhirStatusUnconfirmed => 'Unconfirmed';
+
+  @override
+  String get fhirStatusProvisional => 'Provisional';
+
+  @override
+  String get fhirStatusDifferential => 'Differential';
+
+  @override
+  String get fhirStatusConfirmed => 'Confirmed';
+
+  @override
+  String get fhirStatusRefuted => 'Refuted';
+
+  @override
+  String get fhirStatusEnteredInError => 'Entered in error';
+
+  @override
+  String get fhirStatusOnHold => 'On hold';
+
+  @override
+  String get fhirStatusCancelled => 'Cancelled';
+
+  @override
+  String get fhirStatusCompleted => 'Completed';
+
+  @override
+  String get fhirStatusStopped => 'Stopped';
+
+  @override
+  String get fhirStatusDraft => 'Draft';
+
+  @override
+  String get fhirStatusUnknown => 'Unknown';
+
+  @override
+  String get fhirStatusIntended => 'Intended';
+
+  @override
+  String get fhirStatusNotTaken => 'Not taken';
+
+  @override
+  String get fhirStatusInProgress => 'In progress';
+
+  @override
+  String get fhirStatusNotDone => 'Not done';
+
+  @override
+  String get fhirStatusPreparation => 'Preparation';
+
+  @override
+  String get fhirStatusDeclined => 'Declined';
+
+  @override
+  String get fhirStatusRegistered => 'Registered';
+
+  @override
+  String get fhirStatusPreliminary => 'Preliminary';
+
+  @override
+  String get fhirStatusFinal => 'Final';
+
+  @override
+  String get fhirStatusAmended => 'Amended';
+
+  @override
+  String get fhirStatusCorrected => 'Corrected';
+
+  @override
   String get fieldStrength => 'Strength';
 
   @override

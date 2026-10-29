@@ -6881,6 +6881,180 @@ abstract class AppLocalizations {
   /// **'Status Reason'**
   String get fieldStatusReason;
 
+  /// FHIR status code 'active' of a record (condition, allergy, medication)
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get fhirStatusActive;
+
+  /// FHIR status code 'inactive'
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get fhirStatusInactive;
+
+  /// FHIR clinical status 'resolved' of a condition or allergy
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get fhirStatusResolved;
+
+  /// FHIR clinical status 'recurrence' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Recurrence'**
+  String get fhirStatusRecurrence;
+
+  /// FHIR clinical status 'relapse' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Relapse'**
+  String get fhirStatusRelapse;
+
+  /// FHIR clinical status 'remission' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Remission'**
+  String get fhirStatusRemission;
+
+  /// FHIR verification status 'unconfirmed'
+  ///
+  /// In en, this message translates to:
+  /// **'Unconfirmed'**
+  String get fhirStatusUnconfirmed;
+
+  /// FHIR verification status 'provisional' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Provisional'**
+  String get fhirStatusProvisional;
+
+  /// FHIR verification status 'differential' of a condition
+  ///
+  /// In en, this message translates to:
+  /// **'Differential'**
+  String get fhirStatusDifferential;
+
+  /// FHIR verification status 'confirmed'
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get fhirStatusConfirmed;
+
+  /// FHIR verification status 'refuted': the condition or allergy was ruled out
+  ///
+  /// In en, this message translates to:
+  /// **'Refuted'**
+  String get fhirStatusRefuted;
+
+  /// FHIR status 'entered-in-error': the record is not valid
+  ///
+  /// In en, this message translates to:
+  /// **'Entered in error'**
+  String get fhirStatusEnteredInError;
+
+  /// FHIR status 'on-hold'
+  ///
+  /// In en, this message translates to:
+  /// **'On hold'**
+  String get fhirStatusOnHold;
+
+  /// FHIR status 'cancelled'
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get fhirStatusCancelled;
+
+  /// FHIR status 'completed'
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get fhirStatusCompleted;
+
+  /// FHIR status 'stopped', e.g. a medication that is no longer taken
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get fhirStatusStopped;
+
+  /// FHIR status 'draft'
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get fhirStatusDraft;
+
+  /// FHIR status 'unknown'
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get fhirStatusUnknown;
+
+  /// FHIR medication statement status 'intended'
+  ///
+  /// In en, this message translates to:
+  /// **'Intended'**
+  String get fhirStatusIntended;
+
+  /// FHIR medication statement status 'not-taken'
+  ///
+  /// In en, this message translates to:
+  /// **'Not taken'**
+  String get fhirStatusNotTaken;
+
+  /// FHIR status 'in-progress'
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get fhirStatusInProgress;
+
+  /// FHIR status 'not-done', e.g. an immunization that was not given
+  ///
+  /// In en, this message translates to:
+  /// **'Not done'**
+  String get fhirStatusNotDone;
+
+  /// FHIR status 'preparation'
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation'**
+  String get fhirStatusPreparation;
+
+  /// FHIR medication dispense status 'declined'
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get fhirStatusDeclined;
+
+  /// FHIR observation status 'registered'
+  ///
+  /// In en, this message translates to:
+  /// **'Registered'**
+  String get fhirStatusRegistered;
+
+  /// FHIR observation status 'preliminary'
+  ///
+  /// In en, this message translates to:
+  /// **'Preliminary'**
+  String get fhirStatusPreliminary;
+
+  /// FHIR observation status 'final'
+  ///
+  /// In en, this message translates to:
+  /// **'Final'**
+  String get fhirStatusFinal;
+
+  /// FHIR observation status 'amended'
+  ///
+  /// In en, this message translates to:
+  /// **'Amended'**
+  String get fhirStatusAmended;
+
+  /// FHIR observation status 'corrected'
+  ///
+  /// In en, this message translates to:
+  /// **'Corrected'**
+  String get fhirStatusCorrected;
+
   /// No description provided for @fieldStrength.
   ///
   /// In en, this message translates to:

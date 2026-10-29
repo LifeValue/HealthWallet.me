@@ -3766,6 +3766,93 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fieldStatusReason => 'Motivo del estado';
 
   @override
+  String get fhirStatusActive => 'Activo';
+
+  @override
+  String get fhirStatusInactive => 'Inactivo';
+
+  @override
+  String get fhirStatusResolved => 'Resuelto';
+
+  @override
+  String get fhirStatusRecurrence => 'Recurrencia';
+
+  @override
+  String get fhirStatusRelapse => 'Recaída';
+
+  @override
+  String get fhirStatusRemission => 'Remisión';
+
+  @override
+  String get fhirStatusUnconfirmed => 'No confirmado';
+
+  @override
+  String get fhirStatusProvisional => 'Provisional';
+
+  @override
+  String get fhirStatusDifferential => 'Diferencial';
+
+  @override
+  String get fhirStatusConfirmed => 'Confirmado';
+
+  @override
+  String get fhirStatusRefuted => 'Descartado';
+
+  @override
+  String get fhirStatusEnteredInError => 'Registrado por error';
+
+  @override
+  String get fhirStatusOnHold => 'En espera';
+
+  @override
+  String get fhirStatusCancelled => 'Cancelado';
+
+  @override
+  String get fhirStatusCompleted => 'Completado';
+
+  @override
+  String get fhirStatusStopped => 'Suspendido';
+
+  @override
+  String get fhirStatusDraft => 'Borrador';
+
+  @override
+  String get fhirStatusUnknown => 'Desconocido';
+
+  @override
+  String get fhirStatusIntended => 'Previsto';
+
+  @override
+  String get fhirStatusNotTaken => 'No tomado';
+
+  @override
+  String get fhirStatusInProgress => 'En curso';
+
+  @override
+  String get fhirStatusNotDone => 'No realizado';
+
+  @override
+  String get fhirStatusPreparation => 'En preparación';
+
+  @override
+  String get fhirStatusDeclined => 'Rechazado';
+
+  @override
+  String get fhirStatusRegistered => 'Registrado';
+
+  @override
+  String get fhirStatusPreliminary => 'Preliminar';
+
+  @override
+  String get fhirStatusFinal => 'Final';
+
+  @override
+  String get fhirStatusAmended => 'Modificado';
+
+  @override
+  String get fhirStatusCorrected => 'Corregido';
+
+  @override
   String get fieldStrength => 'Concentración';
 
   @override

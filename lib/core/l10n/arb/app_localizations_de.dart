@@ -3775,6 +3775,93 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fieldStatusReason => 'Grund für den Status';
 
   @override
+  String get fhirStatusActive => 'Aktiv';
+
+  @override
+  String get fhirStatusInactive => 'Inaktiv';
+
+  @override
+  String get fhirStatusResolved => 'Abgeklungen';
+
+  @override
+  String get fhirStatusRecurrence => 'Wiederauftreten';
+
+  @override
+  String get fhirStatusRelapse => 'Rückfall';
+
+  @override
+  String get fhirStatusRemission => 'Remission';
+
+  @override
+  String get fhirStatusUnconfirmed => 'Unbestätigt';
+
+  @override
+  String get fhirStatusProvisional => 'Vorläufig';
+
+  @override
+  String get fhirStatusDifferential => 'Differenzialdiagnose';
+
+  @override
+  String get fhirStatusConfirmed => 'Bestätigt';
+
+  @override
+  String get fhirStatusRefuted => 'Widerlegt';
+
+  @override
+  String get fhirStatusEnteredInError => 'Irrtümlich erfasst';
+
+  @override
+  String get fhirStatusOnHold => 'Pausiert';
+
+  @override
+  String get fhirStatusCancelled => 'Abgebrochen';
+
+  @override
+  String get fhirStatusCompleted => 'Abgeschlossen';
+
+  @override
+  String get fhirStatusStopped => 'Abgesetzt';
+
+  @override
+  String get fhirStatusDraft => 'Entwurf';
+
+  @override
+  String get fhirStatusUnknown => 'Unbekannt';
+
+  @override
+  String get fhirStatusIntended => 'Geplant';
+
+  @override
+  String get fhirStatusNotTaken => 'Nicht eingenommen';
+
+  @override
+  String get fhirStatusInProgress => 'Laufend';
+
+  @override
+  String get fhirStatusNotDone => 'Nicht durchgeführt';
+
+  @override
+  String get fhirStatusPreparation => 'In Vorbereitung';
+
+  @override
+  String get fhirStatusDeclined => 'Abgelehnt';
+
+  @override
+  String get fhirStatusRegistered => 'Registriert';
+
+  @override
+  String get fhirStatusPreliminary => 'Vorläufig';
+
+  @override
+  String get fhirStatusFinal => 'Endgültig';
+
+  @override
+  String get fhirStatusAmended => 'Geändert';
+
+  @override
+  String get fhirStatusCorrected => 'Korrigiert';
+
+  @override
   String get fieldStrength => 'Wirkstärke';
 
   @override

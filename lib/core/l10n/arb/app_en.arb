@@ -1770,6 +1770,122 @@
   "fieldStatusDate": "Status Date",
   "fieldStatusHistory": "Status History",
   "fieldStatusReason": "Status Reason",
+  "fhirStatusActive": "Active",
+  "@fhirStatusActive": {
+    "description": "FHIR status code 'active' of a record (condition, allergy, medication)"
+  },
+  "fhirStatusInactive": "Inactive",
+  "@fhirStatusInactive": {
+    "description": "FHIR status code 'inactive'"
+  },
+  "fhirStatusResolved": "Resolved",
+  "@fhirStatusResolved": {
+    "description": "FHIR clinical status 'resolved' of a condition or allergy"
+  },
+  "fhirStatusRecurrence": "Recurrence",
+  "@fhirStatusRecurrence": {
+    "description": "FHIR clinical status 'recurrence' of a condition"
+  },
+  "fhirStatusRelapse": "Relapse",
+  "@fhirStatusRelapse": {
+    "description": "FHIR clinical status 'relapse' of a condition"
+  },
+  "fhirStatusRemission": "Remission",
+  "@fhirStatusRemission": {
+    "description": "FHIR clinical status 'remission' of a condition"
+  },
+  "fhirStatusUnconfirmed": "Unconfirmed",
+  "@fhirStatusUnconfirmed": {
+    "description": "FHIR verification status 'unconfirmed'"
+  },
+  "fhirStatusProvisional": "Provisional",
+  "@fhirStatusProvisional": {
+    "description": "FHIR verification status 'provisional' of a condition"
+  },
+  "fhirStatusDifferential": "Differential",
+  "@fhirStatusDifferential": {
+    "description": "FHIR verification status 'differential' of a condition"
+  },
+  "fhirStatusConfirmed": "Confirmed",
+  "@fhirStatusConfirmed": {
+    "description": "FHIR verification status 'confirmed'"
+  },
+  "fhirStatusRefuted": "Refuted",
+  "@fhirStatusRefuted": {
+    "description": "FHIR verification status 'refuted': the condition or allergy was ruled out"
+  },
+  "fhirStatusEnteredInError": "Entered in error",
+  "@fhirStatusEnteredInError": {
+    "description": "FHIR status 'entered-in-error': the record is not valid"
+  },
+  "fhirStatusOnHold": "On hold",
+  "@fhirStatusOnHold": {
+    "description": "FHIR status 'on-hold'"
+  },
+  "fhirStatusCancelled": "Cancelled",
+  "@fhirStatusCancelled": {
+    "description": "FHIR status 'cancelled'"
+  },
+  "fhirStatusCompleted": "Completed",
+  "@fhirStatusCompleted": {
+    "description": "FHIR status 'completed'"
+  },
+  "fhirStatusStopped": "Stopped",
+  "@fhirStatusStopped": {
+    "description": "FHIR status 'stopped', e.g. a medication that is no longer taken"
+  },
+  "fhirStatusDraft": "Draft",
+  "@fhirStatusDraft": {
+    "description": "FHIR status 'draft'"
+  },
+  "fhirStatusUnknown": "Unknown",
+  "@fhirStatusUnknown": {
+    "description": "FHIR status 'unknown'"
+  },
+  "fhirStatusIntended": "Intended",
+  "@fhirStatusIntended": {
+    "description": "FHIR medication statement status 'intended'"
+  },
+  "fhirStatusNotTaken": "Not taken",
+  "@fhirStatusNotTaken": {
+    "description": "FHIR medication statement status 'not-taken'"
+  },
+  "fhirStatusInProgress": "In progress",
+  "@fhirStatusInProgress": {
+    "description": "FHIR status 'in-progress'"
+  },
+  "fhirStatusNotDone": "Not done",
+  "@fhirStatusNotDone": {
+    "description": "FHIR status 'not-done', e.g. an immunization that was not given"
+  },
+  "fhirStatusPreparation": "Preparation",
+  "@fhirStatusPreparation": {
+    "description": "FHIR status 'preparation'"
+  },
+  "fhirStatusDeclined": "Declined",
+  "@fhirStatusDeclined": {
+    "description": "FHIR medication dispense status 'declined'"
+  },
+  "fhirStatusRegistered": "Registered",
+  "@fhirStatusRegistered": {
+    "description": "FHIR observation status 'registered'"
+  },
+  "fhirStatusPreliminary": "Preliminary",
+  "@fhirStatusPreliminary": {
+    "description": "FHIR observation status 'preliminary'"
+  },
+  "fhirStatusFinal": "Final",
+  "@fhirStatusFinal": {
+    "description": "FHIR observation status 'final'"
+  },
+  "fhirStatusAmended": "Amended",
+  "@fhirStatusAmended": {
+    "description": "FHIR observation status 'amended'"
+  },
+  "fhirStatusCorrected": "Corrected",
+  "@fhirStatusCorrected": {
+    "description": "FHIR observation status 'corrected'"
+  },
   "fieldStrength": "Strength",
   "fieldSubpotent": "Subpotent",
   "fieldSubrogation": "Subrogation",

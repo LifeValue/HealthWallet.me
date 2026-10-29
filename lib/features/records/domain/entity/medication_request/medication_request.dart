@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -150,6 +151,17 @@ abstract class MedicationRequest
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldHowToTake));
 
+    // Status first, so a stopped or cancelled medication can't be read as
+    // a current one on the card.
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      FhirCodeLabels.statusLine(
+        status?.valueString,
+        l10n,
+        prefix: l10n.fieldStatus,
+      ),
+    );
+
     // Medication Name
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
       medicationX?.isAs<CodeableConcept>(),
@@ -236,16 +248,6 @@ abstract class MedicationRequest
 
     infoLines.add(
       ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
-    );
-
-    // Status
-    final statusDisplay = status?.display?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusDisplay,
-        prefix: l10n.fieldStatus,
-      ),
     );
 
     // Prescribed Date (Authored On)

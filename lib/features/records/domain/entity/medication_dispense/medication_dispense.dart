@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -33,6 +34,7 @@ abstract class MedicationDispense
     Narrative? text,
     List<Identifier>? identifier,
     List<Reference>? partOf,
+    MedicationDispenseStatusCodes? status,
     StatusReasonXMedicationDispense? statusReason,
     CodeableConcept? category,
     MedicationXMedicationDispense? medicationX,
@@ -78,6 +80,7 @@ abstract class MedicationDispense
       text: fhirMedicationDispense.text,
       identifier: fhirMedicationDispense.identifier,
       partOf: fhirMedicationDispense.partOf,
+      status: fhirMedicationDispense.status,
       statusReason: fhirMedicationDispense.statusReasonX,
       category: fhirMedicationDispense.category,
       medicationX: fhirMedicationDispense.medicationX,
@@ -130,6 +133,17 @@ abstract class MedicationDispense
   @override
   List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
+
+    // Status first, so a stopped or cancelled medication can't be read as
+    // a current one on the card.
+    ResourceFieldMapper.addIfNotNull(
+      infoLines,
+      FhirCodeLabels.statusLine(
+        status?.valueString,
+        l10n,
+        prefix: l10n.fieldStatus,
+      ),
+    );
 
     // Medication
     final medicationDisplay = FhirFieldExtractor.extractCodeableConceptText(
@@ -282,5 +296,5 @@ abstract class MedicationDispense
   }
 
   @override
-  String get statusDisplay => '';
+  String get statusDisplay => status?.valueString ?? '';
 }
