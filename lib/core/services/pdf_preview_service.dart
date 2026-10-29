@@ -6,6 +6,7 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:open_file/open_file.dart';
@@ -230,36 +231,39 @@ class _InAppPdfViewer extends StatelessWidget {
         foregroundColor: Colors.white,
         title: Text(path.basename(filePath)),
       ),
-      body: _isDesktop
-          ? _DesktopPdfBody(filePath: filePath)
-          : PDFView(
-              filePath: filePath,
-              enableSwipe: true,
-              swipeHorizontal: true,
-              autoSpacing: true,
-              pageFling: true,
-              onError: (error) {
-                if (context.mounted) {
-                  AppSnackBar.show(
-                    context,
-                    message: context.l10n.errorLoadingPdf(error.toString()),
-                    type: AppSnackBarType.error,
-                  );
-                }
-              },
-              onPageError: (page, error) {
-                if (context.mounted) {
-                  AppSnackBar.show(
-                    context,
-                    message: context.l10n.errorOnPage(
-                      page.toString(),
-                      error.toString(),
-                    ),
-                    type: AppSnackBarType.error,
-                  );
-                }
-              },
-            ),
+      body: CheckedPdfView(
+        filePath: filePath,
+        builder: (context) => _isDesktop
+            ? _DesktopPdfBody(filePath: filePath)
+            : PDFView(
+                filePath: filePath,
+                enableSwipe: true,
+                swipeHorizontal: true,
+                autoSpacing: true,
+                pageFling: true,
+                onError: (error) {
+                  if (context.mounted) {
+                    AppSnackBar.show(
+                      context,
+                      message: context.l10n.errorLoadingPdf(error.toString()),
+                      type: AppSnackBarType.error,
+                    );
+                  }
+                },
+                onPageError: (page, error) {
+                  if (context.mounted) {
+                    AppSnackBar.show(
+                      context,
+                      message: context.l10n.errorOnPage(
+                        page.toString(),
+                        error.toString(),
+                      ),
+                      type: AppSnackBarType.error,
+                    );
+                  }
+                },
+              ),
+      ),
     );
   }
 }

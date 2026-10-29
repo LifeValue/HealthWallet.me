@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
@@ -88,33 +89,39 @@ class MediaFullscreenViewer extends StatelessWidget {
           if (snapshot.hasData) {
             final isDesktop =
                 Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-            if (isDesktop) {
-              return _DesktopPdfBody(filePath: snapshot.data!.path);
-            }
-            return PDFView(
-              filePath: snapshot.data!.path,
-              enableSwipe: true,
-              swipeHorizontal: true,
-              autoSpacing: true,
-              pageFling: true,
-              onError: (error) {
-                if (context.mounted) {
-                  AppSnackBar.show(
-                    context,
-                    message: context.l10n.errorLoadingPdf('$error'),
-                    type: AppSnackBarType.error,
-                  );
-                }
-              },
-              onPageError: (page, error) {
-                if (context.mounted) {
-                  AppSnackBar.show(
-                    context,
-                    message: context.l10n.errorOnPage('$page', '$error'),
-                    type: AppSnackBarType.error,
-                  );
-                }
-              },
+            final pdfPath = snapshot.data!.path;
+            return CheckedPdfView(
+              filePath: pdfPath,
+              builder: (context) => isDesktop
+                  ? _DesktopPdfBody(filePath: pdfPath)
+                  : PDFView(
+                      filePath: pdfPath,
+                      enableSwipe: true,
+                      swipeHorizontal: true,
+                      autoSpacing: true,
+                      pageFling: true,
+                      onError: (error) {
+                        if (context.mounted) {
+                          AppSnackBar.show(
+                            context,
+                            message: context.l10n.errorLoadingPdf('$error'),
+                            type: AppSnackBarType.error,
+                          );
+                        }
+                      },
+                      onPageError: (page, error) {
+                        if (context.mounted) {
+                          AppSnackBar.show(
+                            context,
+                            message: context.l10n.errorOnPage(
+                              '$page',
+                              '$error',
+                            ),
+                            type: AppSnackBarType.error,
+                          );
+                        }
+                      },
+                    ),
             );
           } else {
             return _buildPlaceholder(
