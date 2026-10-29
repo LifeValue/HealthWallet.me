@@ -191,6 +191,19 @@ void main() {
     await bloc.close();
   }
 
+  /// Waits until the BLoC has connected [times] times or failed; sealing the
+  /// payload generates real keys, which outlasts the event queue.
+  Future<void> connected({int times = 1}) async {
+    for (var i = 0; i < 300; i++) {
+      if (service.calls.where((c) => c == 'selectPeer a').length >= times ||
+          bloc.state.phase == SharePhase.error) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    await settle();
+  }
+
   /// Puts the BLoC in send mode with one record selected and a peer chosen,
   /// so the payload has been written to temp.
   Future<void> selectPeerToSend() async {
@@ -205,15 +218,7 @@ void main() {
         ),
       )
       ..add(const ShareRecordsEvent.peerSelected('a'));
-    // Sealing the payload generates real keys, which outlasts the event queue.
-    for (var i = 0; i < 300; i++) {
-      if (service.calls.contains('selectPeer a') ||
-          bloc.state.phase == SharePhase.error) {
-        break;
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-    }
-    await settle();
+    await connected();
   }
 
   group('sending', () {
@@ -244,7 +249,7 @@ void main() {
       service.preparedPath = '/tmp/share_second.bin';
 
       bloc.add(const ShareRecordsEvent.peerSelected('a'));
-      await settle();
+      await connected(times: 2);
 
       expect(service.cleanedFiles, [_payloadPath]);
     });
@@ -259,7 +264,7 @@ void main() {
         )
         ..add(const ShareRecordsEvent.peerSelected('a'))
         ..add(const ShareRecordsEvent.peerSelected('a'));
-      await settle();
+      await connected(times: 2);
 
       await closeBloc();
 
