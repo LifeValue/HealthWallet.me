@@ -132,6 +132,55 @@ class RecordsRepositoryImpl implements RecordsRepository {
     return IFhirResource.fromLocalDto(localDto);
   }
 
+  @override
+  Future<List<IFhirResource>> getAttachedDocuments(
+    IFhirResource resource,
+  ) async {
+    final id = resource.resourceId;
+    if (id.isEmpty) return [];
+    final isEncounter = resource.fhirType == FhirType.Encounter;
+
+    // Narrowed in SQL to documents that mention the id, then matched exactly.
+    final rows =
+        await (_database.select(_database.fhirResource)
+              ..where(
+                (f) =>
+                    f.resourceType.equals('DocumentReference') &
+                    (f.encounterId.equals(id) | f.resourceRaw.contains(id)),
+              )
+              ..orderBy([(f) => OrderingTerm.desc(f.date)]))
+            .get();
+
+    bool refersTo(Object? references) =>
+        references is List &&
+        references.any(
+          (r) =>
+              r is Map &&
+              FhirReferenceUtils.extractReferenceId(
+                    r['reference']?.toString(),
+                  ) ==
+                  id,
+        );
+
+    final documents = <IFhirResource>[];
+    for (final row in rows) {
+      final IFhirResource doc;
+      try {
+        doc = IFhirResource.fromLocalDto(row);
+      } catch (e) {
+        logger.w('Unreadable DocumentReference ${row.id}', e);
+        continue;
+      }
+      final context = doc.rawResource['context'];
+      final attached = isEncounter
+          ? doc.encounterId == id ||
+                (context is Map && refersTo(context['encounter']))
+          : context is Map && refersTo(context['related']);
+      if (attached) documents.add(doc);
+    }
+    return documents;
+  }
+
   // Record Notes - Can be attached to any FHIR resource
   @override
   Future<int> addRecordNote({

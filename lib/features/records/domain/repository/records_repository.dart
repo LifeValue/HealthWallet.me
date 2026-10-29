@@ -23,6 +23,10 @@ abstract class RecordsRepository {
 
   Future<IFhirResource?> resolveReference(String reference);
 
+  /// The DocumentReferences attached to [resource]: for an encounter, those
+  /// of the encounter; otherwise those whose `context.related` points at it.
+  Future<List<IFhirResource>> getAttachedDocuments(IFhirResource resource);
+
   // Record Notes - Can be attached to any FHIR resource
   Future<int> addRecordNote({
     required String resourceId,

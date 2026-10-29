@@ -77,47 +77,9 @@ class RecordAttachmentsBloc
             .where((r) => r.fhirType == FhirType.DocumentReference)
             .toList();
       } else {
-        final documentReferences = await _recordsRepository.getResources(
-          resourceTypes: [FhirType.DocumentReference],
-          sourceId: null,
-          limit: 100,
+        relatedDocuments = await _recordsRepository.getAttachedDocuments(
+          event.resource,
         );
-
-        relatedDocuments = documentReferences.where((doc) {
-          if (doc.rawResource.isEmpty) return false;
-
-          try {
-            final ctx = doc.rawResource['context'];
-
-            if (isEncounter) {
-              if (doc.encounterId == event.resource.resourceId) return true;
-              if (ctx?['encounter'] != null) {
-                final encounters = ctx['encounter'] as List;
-                return encounters.any((enc) {
-                  final refId = FhirReferenceUtils.extractReferenceId(
-                    enc['reference']?.toString(),
-                  );
-                  return refId == event.resource.resourceId;
-                });
-              }
-              return false;
-            }
-
-            if (ctx?['related'] != null) {
-              final relatedList = ctx['related'] as List;
-              return relatedList.any((related) {
-                final refId = FhirReferenceUtils.extractReferenceId(
-                  related['reference']?.toString(),
-                );
-                return refId == event.resource.resourceId;
-              });
-            }
-
-            return false;
-          } catch (e) {
-            return false;
-          }
-        }).toList();
       }
 
       final List<AttachmentInfo> attachmentInfos;
