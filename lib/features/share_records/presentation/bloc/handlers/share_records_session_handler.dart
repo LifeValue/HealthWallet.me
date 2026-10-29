@@ -68,6 +68,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
 
     await _service.disconnect();
 
+    // The screen can close during the kill's grace period; close() has
+    // cleaned up by then.
+    if (_isClosed) return;
     add(const ShareRecordsEvent.dataDestroyed());
   }
 
