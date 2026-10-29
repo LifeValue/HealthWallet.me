@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -101,8 +103,11 @@ class SettingsSection extends StatelessWidget {
                 child: const SizedBox.shrink(),
               ),
               const SizedBox(height: Insets.normal),
-              const ShareProximityRow(),
-              const SizedBox(height: Insets.normal),
+              // Proximity sharing is not implemented on desktop.
+              if (!getIt<AppPlatform>().isDesktop) ...[
+                const ShareProximityRow(),
+                const SizedBox(height: Insets.normal),
+              ],
               InkWell(
                 onTap: () {
                   RegionDialog.show(context);

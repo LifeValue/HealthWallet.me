@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/services/screen_security_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
@@ -16,6 +17,7 @@ import 'package:health_wallet/features/share_records/core/share_permissions_help
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
+import 'package:health_wallet/features/share_records/presentation/views/code_verification_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/ephemeral_viewer_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/peer_discovery_view.dart';
 import 'package:health_wallet/features/share_records/presentation/views/record_selection_view.dart';
@@ -103,23 +105,51 @@ class _ShareRecordsView extends StatefulWidget {
 
 class _ShareRecordsViewState extends State<_ShareRecordsView> {
   bool _showInfo = false;
+  bool _screenSecured = false;
+  SharePhase? _lastPhase;
   final GlobalKey _appBarInfoIconKey = GlobalKey();
   final GlobalKey _viewingInfoIconKey = GlobalKey();
 
   @override
   void dispose() {
     CustomArrowTooltip.dismiss();
+    // Kept on until the page goes, so records opened on top of it stay
+    // protected while they close after the session ends.
+    if (_screenSecured) ScreenSecurityService.disable();
     super.dispose();
+  }
+
+  void _onPhaseChanged(BuildContext context, ShareRecordsState state) {
+    final previous = _lastPhase;
+    _lastPhase = state.phase;
+    if (state.phase == SharePhase.viewingRecords && !_screenSecured) {
+      _screenSecured = true;
+      ScreenSecurityService.enable();
+    }
+    if (previous == SharePhase.viewingRecords &&
+        state.phase != SharePhase.viewingRecords) {
+      // Close records, documents and dialogs opened from the viewer.
+      final ownRoute = ModalRoute.of(context);
+      Navigator.of(context).popUntil((route) => route == ownRoute);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ShareRecordsBloc, ShareRecordsState>(
-      listenWhen: (prev, curr) =>
-          prev.mode != ShareMode.idle && curr.mode == ShareMode.idle,
-      listener: (context, state) {
-        context.maybePop();
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ShareRecordsBloc, ShareRecordsState>(
+          listenWhen: (prev, curr) =>
+              prev.mode != ShareMode.idle && curr.mode == ShareMode.idle,
+          listener: (context, state) {
+            context.maybePop();
+          },
+        ),
+        BlocListener<ShareRecordsBloc, ShareRecordsState>(
+          listenWhen: (prev, curr) => prev.phase != curr.phase,
+          listener: _onPhaseChanged,
+        ),
+      ],
       child: BlocConsumer<ShareRecordsBloc, ShareRecordsState>(
         listenWhen: (previous, current) =>
             previous.showExitConfirmationDialog !=
@@ -181,7 +211,8 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
                           ))
                   : state.phase == SharePhase.sessionEnded
                   ? null
-                  : state.phase == SharePhase.monitoringSession
+                  : state.phase == SharePhase.monitoringSession ||
+                        state.phase == SharePhase.awaitingViewer
                   ? CustomAppBar(
                       leading: IconButton(
                         icon: const Icon(Icons.close, size: 22),
@@ -487,6 +518,9 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
         return state.isSending
             ? context.l10n.shareSending
             : context.l10n.shareReceiving;
+      case SharePhase.verifyingCode:
+        return context.l10n.shareVerifyTitle;
+      case SharePhase.awaitingViewer:
       case SharePhase.monitoringSession:
         return context.l10n.shareSessionActive;
       case SharePhase.viewingRecords:
@@ -511,6 +545,10 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
         return ConnectingView(state: state);
       case SharePhase.transferring:
         return TransferProgressView(state: state);
+      case SharePhase.verifyingCode:
+        return CodeVerificationView(state: state);
+      case SharePhase.awaitingViewer:
+        return AwaitingViewerView(state: state);
       case SharePhase.monitoringSession:
         return SessionMonitoringView(state: state);
       case SharePhase.viewingRecords:
@@ -525,11 +563,14 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
   void _handleBackPress(BuildContext context, ShareRecordsState state) async {
     final bloc = context.read<ShareRecordsBloc>();
 
-    if (state.phase == SharePhase.monitoringSession) {
+    if (state.phase == SharePhase.monitoringSession ||
+        state.phase == SharePhase.awaitingViewer) {
       final confirmed = await ExitConfirmationDialog.show(context: context);
       if (confirmed == true && context.mounted) {
         bloc.add(const ShareRecordsEvent.killSessionRequested());
       }
+    } else if (state.phase == SharePhase.verifyingCode) {
+      CodeVerificationView.cancel(context, state);
     } else if (state.phase == SharePhase.discoveringPeers) {
       bloc.add(const ShareRecordsEvent.sendModeSelected());
     } else if (state.receivedData != null) {

@@ -13,6 +13,7 @@ import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/data/data_source/fhir_resource_datasource.dart';
+import 'package:health_wallet/features/records/data/data_source/shared_notes_datasource.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -29,9 +30,13 @@ class RecordsRepositoryImpl implements RecordsRepository {
   final FhirResourceDatasource _datasource;
   final SyncLocalDataSource _syncLocalDataSource;
   final AppDatabase _database;
+  final SharedNotesDatasource _sharedNotes;
 
-  RecordsRepositoryImpl(this._database, this._syncLocalDataSource)
-    : _datasource = FhirResourceDatasource(_database);
+  RecordsRepositoryImpl(
+    this._database,
+    this._syncLocalDataSource,
+    this._sharedNotes,
+  ) : _datasource = FhirResourceDatasource(_database);
 
   @override
   Future<List<IFhirResource>> getResources({
@@ -143,6 +148,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<List<RecordNote>> getRecordNotes(String resourceId) async {
+    final shared = _sharedNotes.notesFor(resourceId);
+    if (shared != null) return shared;
+
     final notes =
         await (_database.select(_database.recordNotes)
               ..where((t) => t.resourceId.equals(resourceId))
@@ -151,6 +159,13 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     return notes.map(RecordNote.fromDto).toList();
   }
+
+  @override
+  void showSharedNotes(Map<String, List<RecordNote>> notes) =>
+      _sharedNotes.show(notes);
+
+  @override
+  void clearSharedNotes() => _sharedNotes.clear();
 
   @override
   Future<int> editRecordNote(RecordNote note) async {

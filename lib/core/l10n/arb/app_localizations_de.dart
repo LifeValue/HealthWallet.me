@@ -1005,6 +1005,32 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shareReceivingRecords => 'Aufzeichnungen werden empfangen...';
 
   @override
+  String get shareVerifyTitle => 'Codes vergleichen';
+
+  @override
+  String get shareVerifySenderHint =>
+      'Prüfe, ob das andere Telefon denselben Code anzeigt. Deine Einträge bleiben gesperrt, bis du bestätigst.';
+
+  @override
+  String get shareVerifyReceiverHint =>
+      'Prüfe, ob das andere Telefon denselben Code anzeigt. Die Einträge öffnen sich, sobald der Absender bestätigt.';
+
+  @override
+  String get shareVerifyCodesMatch => 'Codes stimmen überein';
+
+  @override
+  String get shareVerifyWaitingForSender =>
+      'Warte auf die Bestätigung des Absenders...';
+
+  @override
+  String get shareAwaitingViewer =>
+      'Codes bestätigt. Warte darauf, dass das andere Telefon die Einträge öffnet.';
+
+  @override
+  String get shareEndNotDelivered =>
+      'Das andere Telefon war nicht erreichbar. Es behält die Einträge, bis sein Timer abläuft.';
+
+  @override
   String get shareConfirmExit => 'Ausgang Bestätigen';
 
   @override
@@ -2752,6 +2778,30 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get shareErrorParseFile =>
       'Die empfangene Datei konnte nicht gelesen werden';
+
+  @override
+  String get shareStatusCompareWithSender =>
+      'Vergleiche den Code mit dem Absender';
+
+  @override
+  String get shareStatusCompareWithReceiver =>
+      'Vergleiche den Code mit dem Empfänger';
+
+  @override
+  String get shareStatusRecordsSentAwaitingViewer =>
+      'Aufzeichnungen gesendet - warten, bis der Empfänger sie öffnet';
+
+  @override
+  String get shareErrorOlderVersion =>
+      'Diese Freigabe stammt von einer älteren HealthWallet-Version. Aktualisiere die App auf beiden Telefonen und versuche es erneut.';
+
+  @override
+  String get shareErrorSecureConnection =>
+      'Es konnte keine sichere Verbindung mit dem anderen Telefon hergestellt werden. Versuche es erneut.';
+
+  @override
+  String get shareStatusSecureConnectionFailed =>
+      'Sichere Verbindung fehlgeschlagen';
 
   @override
   String get shareIncomingHealthRecords => 'Eingehende Gesundheitsdaten';

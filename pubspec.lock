@@ -13,8 +13,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "dev/desktop"
-      resolved-ref: "2a6a3b941cd653cabebef911c707bb49dbcc04f4"
+      ref: main
+      resolved-ref: adba3ff23d4b57b143f49e65950e36145c6a09ab
       url: "ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git"
     source: git
     version: "1.0.0"

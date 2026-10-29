@@ -31,7 +31,11 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     AppBackgrounded event,
     Emitter<ShareRecordsState> emit,
   ) {
-    if (state.receivedData != null) {
+    // While the codes are compared the records are not open yet; cancelling
+    // keeps them from opening in the background once the key arrives.
+    final verifying =
+        state.isReceiving && state.phase == SharePhase.verifyingCode;
+    if (state.receivedData != null || verifying) {
       add(const ShareRecordsEvent.dataDestructionConfirmed());
     }
   }
@@ -61,9 +65,13 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     }
 
     EphemeralSessionManager.instance.destroySession(reason: 'user_confirmed');
+    await _disposeSecureSession();
 
     await _service.disconnect();
 
+    // The screen can close during the kill's grace period; close() has
+    // cleaned up by then.
+    if (_isClosed) return;
     add(const ShareRecordsEvent.dataDestroyed());
   }
 
@@ -77,6 +85,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       state.copyWith(
         phase: SharePhase.sessionEnded,
         receivedData: null,
+        verificationCode: null,
         viewingTimeRemaining: null,
         isSessionActive: false,
         isDataDestroyed: true,
@@ -93,18 +102,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       // its id (never derived from the attachment paths).
       await _service.cleanupSessionTempDir(receivedData.sessionId);
     }
-
-    for (final noteId in _insertedEphemeralNoteIds) {
-      try {
-        await _recordsRepository.deleteRecordNote(
-          RecordNote(id: noteId, timestamp: DateTime.now()),
-        );
-      } catch (e) {
-        // A note left behind would sync to the desktop: report it in release too.
-        logger.w('A received share note could not be deleted', e);
-      }
-    }
-    _insertedEphemeralNoteIds.clear();
+    _recordsRepository.clearSharedNotes();
   }
 
   void handleTimerTicked(
@@ -129,6 +127,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
             ),
           );
           _viewingTimer?.cancel();
+          // The receiver's own timer should end it too; this covers clocks
+          // that drifted apart or a missed extension.
+          unawaited(_endRemoteSession());
           return;
         }
 
@@ -157,26 +158,37 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       ),
     );
 
-    try {
-      await _service.sendKillSignal();
-      await Future.delayed(const Duration(milliseconds: 500));
-    } catch (e) {
-      debugPrint('[ERROR] Kill signal failed: $e');
-    }
-
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
-
-    await _service.disconnect();
+    await _disposeSecureSession();
+    final delivered = await _endRemoteSession();
 
     emit(
       state.copyWith(
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
+        verificationCode: null,
+        remoteEndUnconfirmed: !delivered,
         sessionEndReason: ShareSessionEndReason.terminated,
         statusMessage: _strings.l10n.shareStatusSessionTerminated,
       ),
     );
+  }
+
+  /// Sends the kill signal and disconnects; returns whether the signal was
+  /// handed to the transport. A sent signal can still be lost on a link that
+  /// drops right after, but a failed send means it certainly was not seen.
+  Future<bool> _endRemoteSession() async {
+    var delivered = false;
+    try {
+      await _service.sendKillSignal();
+      delivered = true;
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (e) {
+      _shareLog('WARNING: Kill signal not delivered: $e');
+    }
+    await _service.disconnect();
+    return delivered;
   }
 
   Future<void> handleRemoteSessionKilled(
@@ -185,6 +197,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
   ) async {
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
 
     await _service.disconnect();
 
@@ -192,6 +205,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       state.copyWith(
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
+        verificationCode: null,
         sessionEndReason: ShareSessionEndReason.remoteTerminated,
         statusMessage: _strings.l10n.shareStatusRemoteSessionTerminated,
       ),
@@ -333,6 +347,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     }
 
     if (state.phase == SharePhase.connecting ||
+        state.phase == SharePhase.awaitingViewer ||
         state.phase == SharePhase.monitoringSession) {
       _monitoringFallbackTimer?.cancel();
       _monitoringFallbackTimer = null;
@@ -373,11 +388,13 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
 
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
 
     emit(
       state.copyWith(
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
+        verificationCode: null,
         sessionEndReason: ShareSessionEndReason.invitationDeclined,
         statusMessage: _strings.l10n.shareStatusReceiverDeclined,
       ),
@@ -394,24 +411,17 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     manager.clearPendingInvitation();
     manager.pauseListening();
 
-    final pendingData = manager.pendingReceivedData;
-    if (pendingData != null) {
-      manager.clearPendingReceivedData();
-      EphemeralSessionManager.instance.startSession(pendingData);
+    final pendingPayload = manager.pendingPayload;
+    if (pendingPayload != null) {
+      manager.clearPendingPayload();
       emit(
         state.copyWith(
           mode: ShareMode.receiving,
-          phase: SharePhase.viewingRecords,
-          receivedData: pendingData,
-          viewingTimeRemaining: pendingData.viewDuration,
-          isSessionActive: true,
-          statusMessage: _strings.l10n.shareStatusViewingRecordsFrom(
-            pendingData.recordCount,
-            pendingData.senderDeviceName,
-          ),
+          phase: SharePhase.transferring,
+          pendingInvitationDeviceName: event.deviceName,
         ),
       );
-      _startViewingTimer();
+      await _receiveSecurePayload(pendingPayload, emit);
       return;
     }
 
@@ -447,12 +457,12 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     Emitter<ShareRecordsState> emit,
   ) async {
     final manager = getIt<ReceiveModeService>();
-    final container = manager.pendingReceivedData;
-    manager.clearPendingReceivedData();
+    final payload = manager.pendingPayload;
+    manager.clearPendingPayload();
     manager.clearPendingInvitation();
     manager.pauseListening();
 
-    if (container == null) {
+    if (payload == null) {
       emit(
         state.copyWith(
           phase: SharePhase.error,
@@ -462,22 +472,12 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       return;
     }
 
-    EphemeralSessionManager.instance.startSession(container);
-
     emit(
       state.copyWith(
         mode: ShareMode.receiving,
-        phase: SharePhase.viewingRecords,
-        receivedData: container,
-        viewingTimeRemaining: container.viewDuration,
-        isSessionActive: true,
-        statusMessage: _strings.l10n.shareStatusViewingRecordsFrom(
-          container.recordCount,
-          container.senderDeviceName,
-        ),
+        phase: SharePhase.transferring,
       ),
     );
-
-    _startViewingTimer();
+    await _receiveSecurePayload(payload, emit);
   }
 }

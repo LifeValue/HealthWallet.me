@@ -987,6 +987,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareReceivingRecords => 'Receiving records...';
 
   @override
+  String get shareVerifyTitle => 'Compare codes';
+
+  @override
+  String get shareVerifySenderHint =>
+      'Check that the other phone shows the same code. Your records stay locked until you confirm.';
+
+  @override
+  String get shareVerifyReceiverHint =>
+      'Check that the other phone shows the same code. The records open once the sender confirms.';
+
+  @override
+  String get shareVerifyCodesMatch => 'Codes match';
+
+  @override
+  String get shareVerifyWaitingForSender =>
+      'Waiting for the sender to confirm...';
+
+  @override
+  String get shareAwaitingViewer =>
+      'Codes confirmed. Waiting for the other phone to open the records.';
+
+  @override
+  String get shareEndNotDelivered =>
+      'The other phone couldn\'t be reached. It keeps the records until its timer runs out.';
+
+  @override
   String get shareConfirmExit => 'Confirm Exit';
 
   @override
@@ -2710,6 +2736,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareErrorParseFile => 'Failed to parse received file';
+
+  @override
+  String get shareStatusCompareWithSender => 'Compare the code with the sender';
+
+  @override
+  String get shareStatusCompareWithReceiver =>
+      'Compare the code with the receiver';
+
+  @override
+  String get shareStatusRecordsSentAwaitingViewer =>
+      'Records sent - waiting for receiver to open them';
+
+  @override
+  String get shareErrorOlderVersion =>
+      'This share came from an older version of HealthWallet. Update the app on both phones and try again.';
+
+  @override
+  String get shareErrorSecureConnection =>
+      'Couldn\'t set up a secure connection with the other phone. Try sharing again.';
+
+  @override
+  String get shareStatusSecureConnectionFailed => 'Secure connection failed';
 
   @override
   String get shareIncomingHealthRecords => 'Incoming Health Records';

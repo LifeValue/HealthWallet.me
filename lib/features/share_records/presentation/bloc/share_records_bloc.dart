@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:airdrop/airdrop.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
@@ -8,12 +9,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/features/share_records/core/share_permissions_helper.dart';
+import 'package:health_wallet/features/share_records/data/crypto/share_crypto.dart';
+import 'package:health_wallet/features/share_records/data/service/secure_share_session.dart';
 import 'package:health_wallet/features/share_records/data/service/share_preferences_service.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
@@ -54,10 +56,10 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
   Timer? _monitoringFallbackTimer;
 
   String? _tempFilePath;
+  SecureShareSession? _secureSession;
   // Sent to the receiver in the payload, which shows it as the sender name;
   // not localized because it is shown on the other device.
   String _deviceName = 'HealthWallet Device';
-  final List<int> _insertedEphemeralNoteIds = [];
 
   bool _isClosed = false;
   bool _pendingViewingStarted = false;
@@ -127,6 +129,12 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     on<RemoteExtendAccepted>(handleRemoteExtendAccepted);
     on<RemoteExtendRejected>(handleRemoteExtendRejected);
     on<ViewingStartedReceived>(handleViewingStartedReceived);
+    on<VerificationCodeReady>(handleVerificationCodeReady);
+    on<VerificationConfirmed>(
+      handleVerificationConfirmed,
+      transformer: droppable(),
+    );
+    on<SecureShareFailed>(handleSecureShareFailed);
     on<RemoteInvitationRejected>(handleRemoteInvitationRejected);
     on<ShareFiltersApplied>(_onFiltersApplied);
     on<WifiToggleRequested>(_onWifiToggleRequested);
@@ -176,6 +184,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     _monitoringFallbackTimer?.cancel();
 
     EphemeralSessionManager.instance.destroySession(reason: 'bloc_disposed');
+    await _disposeSecureSession();
 
     await _service.disconnect();
   }
@@ -195,6 +204,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
 
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
     await _service.disconnect();
   }
 
@@ -239,6 +249,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     ModeCleared event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    await _disposeSecureSession();
     await _service.disconnect();
 
     emit(ShareRecordsState.initial());
@@ -337,10 +348,11 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     emit(state.copyWith(connectionHealthStatus: status));
   }
 
+  // Only leaving the app counts: `inactive` also fires for Control Center,
+  // the notification shade, call banners and system prompts.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
         state == AppLifecycleState.hidden) {
       add(const ShareRecordsEvent.appBackgrounded());
     }
@@ -427,12 +439,23 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     });
     _sessionEndedSub = _service.sessionEndedStream.listen((_) {
       if (_isClosed) return;
+      if (state.isReceiving &&
+          (state.phase == SharePhase.viewingRecords ||
+              state.phase == SharePhase.verifyingCode)) {
+        // The sender can no longer reach this phone to end the session, so
+        // end it here rather than keep the records until the timer runs out.
+        add(const ShareRecordsEvent.dataDestructionConfirmed());
+        return;
+      }
       if (state.isSending &&
           (state.phase == SharePhase.monitoringSession ||
-              state.phase == SharePhase.connecting)) {
+              state.phase == SharePhase.connecting ||
+              state.phase == SharePhase.verifyingCode ||
+              state.phase == SharePhase.awaitingViewer)) {
         _viewingTimer?.cancel();
         _monitoringFallbackTimer?.cancel();
-        if (state.sessionStartedAt == null) {
+        if (state.sessionStartedAt == null &&
+            state.phase != SharePhase.awaitingViewer) {
           debugPrint(
             '[SHARE] Session ended before receiver started viewing - treating as rejection',
           );
@@ -507,7 +530,7 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
       if (_isClosed) return;
       if (state.isSending &&
           (state.phase == SharePhase.monitoringSession ||
-              state.phase == SharePhase.connecting) &&
+              state.phase == SharePhase.awaitingViewer) &&
           state.sessionStartedAt == null) {
         debugPrint(
           '[SHARE] Fallback: no viewingStarted after 60s, starting timer from now',
@@ -517,18 +540,25 @@ class ShareRecordsBloc extends Bloc<ShareRecordsEvent, ShareRecordsState>
     });
   }
 
+  Future<void> _disposeSecureSession() async {
+    final session = _secureSession;
+    _secureSession = null;
+    await session?.dispose();
+  }
+
   @override
   Future<void> close() async {
     _isClosed = true;
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
     await _cancelSubscriptions();
-    WidgetsBinding.instance.removeObserver(this);
+    // Leaving the screen any other way than the normal end must not leave
+    // received records behind.
+    EphemeralSessionManager.instance.destroySession(reason: 'bloc_closed');
+    await _cleanupEphemeralData();
     await _deleteSentPayload();
-    final receivedData = state.receivedData;
-    if (receivedData != null) {
-      await _service.cleanupSessionTempDir(receivedData.sessionId);
-    }
+    WidgetsBinding.instance.removeObserver(this);
     await _service.disconnect();
     final manager = getIt<ReceiveModeService>();
     if (manager.isListening) {

@@ -32,6 +32,12 @@ abstract class RecordsRepository {
 
   Future<List<RecordNote>> getRecordNotes(String resourceId);
 
+  /// Serves [notes] (by resource id) from memory instead of the database,
+  /// for records shared from another phone; see [clearSharedNotes].
+  void showSharedNotes(Map<String, List<RecordNote>> notes);
+
+  void clearSharedNotes();
+
   Future<int> editRecordNote(RecordNote note);
 
   Future<int> deleteRecordNote(RecordNote note);

@@ -100,7 +100,7 @@ dependencies:
   airdrop:
     git:
       url: ssh://git@git.techstackapps.com:2822/mobile/flutter/packages/flutter-airdrop.git
-      ref: dev/desktop
+      ref: main
 
 dev_dependencies:
   flutter_test:

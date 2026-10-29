@@ -8,6 +8,7 @@ import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/share_records/data/mapper/fhir_bundle_mapper.dart';
+import 'package:health_wallet/features/share_records/data/service/secure_share_session.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
@@ -37,22 +38,29 @@ class ShareRecordsService {
     await _airdropService.selectDevice(deviceId: deviceId);
   }
 
-  Future<String?> prepareFilesForSending(SharePayload payload) async {
+  /// A key exchange over this session's message channel; one per transfer.
+  SecureShareSession createSecureSession() =>
+      SecureShareSession(_AirdropMessageTransport(_airdropService));
+
+  /// Encrypts [payload] with [session] and hands the envelope to the plugin.
+  Future<String?> prepareFilesForSending(
+    SharePayload payload,
+    SecureShareSession session,
+  ) async {
     final tempDir = await getTemporaryDirectory();
     final tempFile = File(
       '${tempDir.path}/${TempFileSweeper.sharePayloadName(payload.id)}',
     );
 
     try {
-      final jsonString = jsonEncode(payload.toJson());
-      await tempFile.writeAsString(jsonString);
+      final plaintext = utf8.encode(jsonEncode(payload.toJson()));
+      await tempFile.writeAsBytes(await session.seal(plaintext));
 
       await _airdropService.addFiles(filePaths: [tempFile.path]);
 
       return tempFile.path;
     } catch (e) {
       debugPrint('[TRANSFER:❌] Error preparing files: $e');
-      // The payload is plaintext health data: don't leave it in temp.
       await cleanupTempFile(tempFile.path);
       return null;
     }
@@ -92,7 +100,8 @@ class ShareRecordsService {
     validationMode: ValidationMode.nonStrict,
   );
 
-  Future<EphemeralRecordsContainer?> _parsePayloadBytes(Uint8List bytes) async {
+  /// Parses a decrypted payload into a view-only session container.
+  Future<EphemeralRecordsContainer?> parsePayload(Uint8List bytes) async {
     String? sessionId;
     try {
       final jsonString = utf8.decode(bytes);
@@ -158,21 +167,16 @@ class ShareRecordsService {
     }
   }
 
-  Future<EphemeralRecordsContainer?> parseReceivedData(
-    ReceivedData receivedData,
-  ) {
-    return _parsePayloadBytes(receivedData.data);
-  }
-
-  Future<EphemeralRecordsContainer?> parseReceivedFile(String filePath) async {
+  /// Reads a file the plugin received and deletes it.
+  Future<Uint8List?> readReceivedFile(String filePath) async {
     final file = File(filePath);
     try {
       final bytes = await file.readAsBytes();
       await file.delete();
       debugPrint('[TRANSFER] Deleted temp file: $filePath');
-      return await _parsePayloadBytes(bytes);
+      return bytes;
     } catch (e) {
-      debugPrint('[TRANSFER] Error parsing received file: $e');
+      debugPrint('[TRANSFER] Error reading received file: $e');
       try {
         if (await file.exists()) {
           await file.delete();
@@ -265,4 +269,17 @@ class ShareRecordsService {
 
   Stream<Map<String, dynamic>> get connectionHealthStream =>
       _airdropService.connectionHealthStream;
+}
+
+class _AirdropMessageTransport implements ShareMessageTransport {
+  final AirdropService _airdropService;
+
+  _AirdropMessageTransport(this._airdropService);
+
+  @override
+  Stream<Uint8List> get messages => _airdropService.sessionMessageStream;
+
+  @override
+  Future<void> send(Uint8List message) =>
+      _airdropService.sendSessionMessage(message);
 }

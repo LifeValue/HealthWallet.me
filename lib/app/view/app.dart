@@ -119,7 +119,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     if (getIt<AppPlatform>().isDesktop) return;
 
     final manager = getIt<ReceiveModeService>();
-    if (manager.isListening) {
+    // A share screen owns the transport while receive mode is paused;
+    // stopping now would cut a live share (e.g. the sender's screen locks).
+    if (manager.isListening && !manager.isPaused) {
       await manager.stopListening();
     }
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/presentation/bloc/records_bloc.dart';
@@ -64,9 +66,12 @@ class _RecordsAttachmentsBodyState extends State<RecordsAttachmentsBody> {
               selectedResourceIds: widget.appBarState.selectedResourceIds,
               onSelectionToggle: (id) =>
                   context.read<RecordsBloc>().add(RecordsSelectionToggled(id)),
-              onSelectionModeToggled: () => context.read<RecordsBloc>().add(
-                const RecordsSelectionModeToggled(),
-              ),
+              // Selection only feeds proximity sharing, not implemented on desktop.
+              onSelectionModeToggled: getIt<AppPlatform>().isDesktop
+                  ? null
+                  : () => context.read<RecordsBloc>().add(
+                      const RecordsSelectionModeToggled(),
+                    ),
             ),
           ),
           Positioned(

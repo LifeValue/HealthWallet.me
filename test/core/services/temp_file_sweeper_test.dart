@@ -35,7 +35,8 @@ void main() {
 
   group('sweep', () {
     test('deletes the health-data temp files the app leaves behind', () async {
-      final shareJson = tempFile('share_$_id.json');
+      final sharePayload = tempFile('share_$_id.bin');
+      final oldSharePayload = tempFile('share_$_id.json');
       final sessionFile = tempFile('share_session_$_id/scan.png');
       final ips = tempFile('Jane Doe - IPS Summary - 28-10-2026.pdf');
       final unnamedIps = tempFile(' - IPS Summary - 10-28-2026.pdf');
@@ -43,7 +44,8 @@ void main() {
 
       await sweeper(deleteDebugLogs: false).sweep();
 
-      expect(shareJson.existsSync(), isFalse);
+      expect(sharePayload.existsSync(), isFalse);
+      expect(oldSharePayload.existsSync(), isFalse);
       expect(sessionFile.parent.existsSync(), isFalse);
       expect(ips.existsSync(), isFalse);
       expect(unnamedIps.existsSync(), isFalse);
@@ -57,6 +59,7 @@ void main() {
         tempFile('other_app.json'),
         tempFile('share_not-a-uuid.json'),
         tempFile('share_$_id.json.bak'),
+        tempFile('share_$_id.bin.part'),
         tempFile('IPS Summary.pdf'),
         tempFile('HealthWallet_Emergency.pkpass.tmp'),
         tempFile('nested/share_$_id.json'),
@@ -233,7 +236,7 @@ void main() {
   });
 
   test('producers name their files from the sweep constants', () {
-    expect(TempFileSweeper.sharePayloadName(_id), 'share_$_id.json');
+    expect(TempFileSweeper.sharePayloadName(_id), 'share_$_id.bin');
     expect(TempFileSweeper.shareSessionName(_id), 'share_session_$_id');
     expect(
       TempFileSweeper.ipsSummaryName('Jane', '01-02-2026'),

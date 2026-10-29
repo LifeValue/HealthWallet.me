@@ -1,10 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
-import 'package:health_wallet/core/services/screen_security_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -51,6 +51,7 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ValueNotifier<bool> _isScrolled = ValueNotifier(false);
+  final ValueNotifier<double> _bottomBarHeight = ValueNotifier(0);
   final GlobalKey _infoIconKey = GlobalKey();
 
   static double _hPad(double width) {
@@ -62,7 +63,6 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   @override
   void initState() {
     super.initState();
-    ScreenSecurityService.enable();
     _searchAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
@@ -223,8 +223,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
     _searchAnimController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _bottomBarHeight.dispose();
     _attachmentBrowseBloc?.close();
-    ScreenSecurityService.disable();
     super.dispose();
   }
 
@@ -304,12 +304,15 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
           child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: context.wideDialogWidth),
-              child: SessionBottomBar(
-                state: widget.state,
-                peerRole: 'sender',
-                endSessionEvent:
-                    const ShareRecordsEvent.dataDestructionConfirmed(),
-                isReceiver: true,
+              child: _SizeReporter(
+                onSize: (size) => _bottomBarHeight.value = size.height,
+                child: SessionBottomBar(
+                  state: widget.state,
+                  peerRole: 'sender',
+                  endSessionEvent:
+                      const ShareRecordsEvent.dataDestructionConfirmed(),
+                  isReceiver: true,
+                ),
               ),
             ),
           ),
@@ -757,45 +760,85 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
   }
 
   Widget _buildRecordsList(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.only(
-        top: 8,
-        bottom: Insets.small,
+    // The session bar overlays the list and is hidden while searching.
+    return ValueListenableBuilder<double>(
+      valueListenable: _bottomBarHeight,
+      builder: (context, barHeight, _) => ListView.builder(
+        padding: EdgeInsets.only(
+          top: 8,
+          bottom: Insets.small + (_searchFocusNode.hasFocus ? 0 : barHeight),
+        ),
+        itemCount: _filteredRecords.length,
+        itemBuilder: (context, index) {
+          final resource = _filteredRecords[index];
+          return TimelineEntry(
+            key: ValueKey('viewing-${resource.fhirType}-${resource.id}-$index'),
+            isFirst: index == 0,
+            isLast: index == _filteredRecords.length - 1,
+            onTap: () {
+              context.pushRoute(
+                RecordDetailsRoute(
+                  resource: resource,
+                  ephemeralRecords:
+                      widget.state.receivedData?.records ?? const [],
+                ),
+              );
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RecordTypeHeader(
+                  fhirType: resource.fhirType,
+                  date: resource.date,
+                ),
+                const SizedBox(height: Insets.small),
+                ResourceCard(
+                  resource: resource,
+                  readOnly: true,
+                  ephemeralRecords:
+                      widget.state.receivedData?.records ?? const [],
+                ),
+              ],
+            ),
+          );
+        },
       ),
-      itemCount: _filteredRecords.length,
-      itemBuilder: (context, index) {
-        final resource = _filteredRecords[index];
-        return TimelineEntry(
-          key: ValueKey('viewing-${resource.fhirType}-${resource.id}-$index'),
-          isFirst: index == 0,
-          isLast: index == _filteredRecords.length - 1,
-          onTap: () {
-            context.pushRoute(
-              RecordDetailsRoute(
-                resource: resource,
-                ephemeralRecords:
-                    widget.state.receivedData?.records ?? const [],
-              ),
-            );
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RecordTypeHeader(
-                fhirType: resource.fhirType,
-                date: resource.date,
-              ),
-              const SizedBox(height: Insets.small),
-              ResourceCard(
-                resource: resource,
-                readOnly: true,
-                ephemeralRecords:
-                    widget.state.receivedData?.records ?? const [],
-              ),
-            ],
-          ),
-        );
-      },
     );
+  }
+}
+
+/// Reports its child's size after layout, so content under an overlaid
+/// widget can be padded by the widget's real height.
+class _SizeReporter extends SingleChildRenderObjectWidget {
+  final ValueChanged<Size> onSize;
+
+  const _SizeReporter({required this.onSize, required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderSizeReporter(onSize);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderSizeReporter renderObject,
+  ) {
+    renderObject.onSize = onSize;
+  }
+}
+
+class _RenderSizeReporter extends RenderProxyBox {
+  _RenderSizeReporter(this.onSize);
+
+  ValueChanged<Size> onSize;
+  Size? _lastSize;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    if (size == _lastSize) return;
+    _lastSize = size;
+    final reported = size;
+    WidgetsBinding.instance.addPostFrameCallback((_) => onSize(reported));
   }
 }
