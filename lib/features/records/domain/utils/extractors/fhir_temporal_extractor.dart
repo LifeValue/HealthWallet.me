@@ -16,10 +16,14 @@ class FhirTemporalExtractor {
     separator,
   );
 
+  /// [date] in the phone's time zone. A FHIR time with `Z` or an offset
+  /// parses as UTC and stays UTC in the record; it is shown in local time,
+  /// while a time without an offset is already local.
+  ///
   /// CLDR puts a narrow no-break space before AM/PM; keep the plain space
   /// the app has always shown.
   static String _format(DateFormat format, DateTime date) =>
-      format.format(date).replaceAll('\u202f', ' ');
+      format.format(date.toLocal()).replaceAll('\u202f', ' ');
 
   static String? extractPeriod(
     fhir_r4.Period? period, {
