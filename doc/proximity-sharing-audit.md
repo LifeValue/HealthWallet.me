@@ -52,7 +52,7 @@ Steps 1–3 are implemented (app on `feature/proximity-share-encryption`, plugin
 | A14        | Fixed except the per-session nonce, which needs a protocol change. Wi-Fi Direct still joins the first peer when the select carries no expected name.                                                                     |
 | B1, B6, B8 | Fixed                                                                                                                                                                                                                    |
 
-New tests: share BLoC (receive, cancel during verification, link loss, post-confirm kill, undelivered kill, peer list), service cleanup and sweep, receive-mode pause, shared notes, and Android `ReceivedFileGuard` (JVM).
+New tests: share BLoC (T1: session end, expiry, backgrounding, cancel during verification and during decryption, cleanup on close, for both receiver and sender; peer list), service cleanup and sweep, receive-mode pause, shared notes, and Android `ReceivedFileGuard` (JVM). Writing T1 found that ending a session could add an event to a closed bloc if the screen closed within the kill's 500 ms grace period; fixed.
 
 Found while fixing, not yet triaged:
 
@@ -228,6 +228,6 @@ Found while fixing, not yet triaged:
 
 | ID  | Gap                                                                                                                                                | Decision |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| T1  | No tests for the share bloc and handlers (about 1 200 lines): session end, expiry, backgrounding, cancel during decryption, cleanup. Fix A4 first. |          |
+| T1  | No tests for the share bloc and handlers (about 1 200 lines): session end, expiry, backgrounding, cancel during decryption, cleanup. Fix A4 first. | Done     |
 | T2  | No native tests in the plugin: framing, `TransferSignalHandler` on both platforms, file-name cleaning, size limits.                                |          |
 | T3  | The encrypted flow hasn't been run on devices yet: iPhone↔Android in both directions, Android↔Android, iPhone↔iPhone, and cancel on each side.     |          |

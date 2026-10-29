@@ -3,11 +3,13 @@ import 'dart:convert';
 
 import 'package:airdrop/airdrop.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
+import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/features/share_records/data/service/secure_share_session.dart';
 import 'package:health_wallet/features/share_records/data/service/share_preferences_service.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
@@ -42,7 +44,13 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   final calls = <String>[];
   final receivedData = StreamController<ReceivedData>.broadcast();
   final sessionEnded = StreamController<void>.broadcast();
+  final killSignal = StreamController<void>.broadcast();
+  final viewingStarted = StreamController<void>.broadcast();
   bool killFails = false;
+
+  /// While set, [parsePayload] waits for it: the window in which a cancel
+  /// can land after the key arrived but before the records open.
+  Completer<void>? parseGate;
   Uint8List? sentEnvelope;
   EphemeralRecordsContainer? parsedContainer;
 
@@ -56,6 +64,8 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
     await peerEnd.close();
     await receivedData.close();
     await sessionEnded.close();
+    await killSignal.close();
+    await viewingStarted.close();
   }
 
   @override
@@ -85,8 +95,11 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   }
 
   @override
-  Future<EphemeralRecordsContainer?> parsePayload(Uint8List bytes) async =>
-      parsedContainer;
+  Future<EphemeralRecordsContainer?> parsePayload(Uint8List bytes) async {
+    calls.add('parsePayload');
+    await parseGate?.future;
+    return parsedContainer;
+  }
 
   @override
   Future<void> deleteSessionFiles(String sessionId) async =>
@@ -131,7 +144,7 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   @override
   Stream<List<String>> get receivedFilesStream => const Stream.empty();
   @override
-  Stream<void> get killSignalStream => const Stream.empty();
+  Stream<void> get killSignalStream => killSignal.stream;
   @override
   Stream<int> get sessionExtendRequestStream => const Stream.empty();
   @override
@@ -139,7 +152,7 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   @override
   Stream<void> get sessionExtendRejectedStream => const Stream.empty();
   @override
-  Stream<void> get viewingStartedStream => const Stream.empty();
+  Stream<void> get viewingStartedStream => viewingStarted.stream;
   @override
   Stream<void> get invitationRejectedStream => const Stream.empty();
   @override
@@ -193,6 +206,11 @@ Future<void> _until(bool Function() condition) async {
   expect(condition(), isTrue, reason: 'condition not reached in time');
 }
 
+/// Moves the app through the lifecycle as the platform would, so the bloc
+/// and the session manager both hear it.
+void _lifecycle(AppLifecycleState state) =>
+    TestWidgetsFlutterBinding.instance.handleAppLifecycleStateChanged(state);
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -201,11 +219,13 @@ void main() {
   late ShareRecordsBloc bloc;
 
   final sharedNote = RecordNote(content: 'seen', timestamp: DateTime.utc(2026));
-  EphemeralRecordsContainer container() => EphemeralRecordsContainer(
+  EphemeralRecordsContainer container({
+    Duration viewDuration = const Duration(minutes: 5),
+  }) => EphemeralRecordsContainer(
     sessionId: 'session-1',
     senderDeviceName: 'Pixel 8',
     receivedAt: DateTime.now(),
-    viewDuration: const Duration(minutes: 5),
+    viewDuration: viewDuration,
     records: [record(conditionJson(), id: 'c1')],
     notes: {
       'c1': [sharedNote],
@@ -213,6 +233,7 @@ void main() {
   );
 
   setUp(() {
+    _lifecycle(AppLifecycleState.resumed);
     service = _FakeShareRecordsService()..parsedContainer = container();
     repository = _FakeRecordsRepository();
     getIt.registerSingleton<ReceiveModeService>(_FakeReceiveModeService());
@@ -221,9 +242,10 @@ void main() {
   });
 
   tearDown(() async {
-    await bloc.close();
+    if (!bloc.isClosed) await bloc.close();
     await service.close();
     await getIt.reset();
+    _lifecycle(AppLifecycleState.resumed);
   });
 
   group('receiver', () {
@@ -247,6 +269,24 @@ void main() {
       await _until(() => bloc.state.phase == SharePhase.verifyingCode);
     }
 
+    /// Receives a share and confirms the codes, so the records are open.
+    Future<void> openShare() async {
+      await receiveShare();
+      await senderCode;
+      await sender.confirm();
+      await _until(() => bloc.state.phase == SharePhase.viewingRecords);
+    }
+
+    /// The records, their files and their notes are all gone.
+    void expectDestroyed() {
+      expect(bloc.state.phase, SharePhase.sessionEnded);
+      expect(bloc.state.receivedData, isNull);
+      expect(bloc.state.isDataDestroyed, isTrue);
+      expect(EphemeralSessionManager.instance.hasActiveSession, isFalse);
+      expect(service.calls, contains('deleteSessionFiles:session-1'));
+      expect(repository.calls.last, 'clearSharedNotes');
+    }
+
     test('opens the records after the sender confirms the code', () async {
       await receiveShare();
       expect(await senderCode, bloc.state.verificationCode);
@@ -260,33 +300,145 @@ void main() {
       expect(service.calls, contains('sendViewingStarted'));
     });
 
-    test('a cancel while comparing codes keeps the records closed', () async {
-      await receiveShare();
-      await senderCode;
+    group('session end', () {
+      test('the sender ending the session destroys the records', () async {
+        await openShare();
 
-      bloc.add(const ShareRecordsEvent.dataDestructionConfirmed());
-      await _until(() => bloc.state.phase == SharePhase.sessionEnded);
-      await sender.confirm().catchError((_) {});
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+        service.killSignal.add(null);
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
 
-      expect(bloc.state.phase, SharePhase.sessionEnded);
-      expect(bloc.state.receivedData, isNull);
-      expect(repository.calls, isNot(contains('showSharedNotes')));
-      expect(service.calls, contains('sendKillSignal'));
+        expectDestroyed();
+      });
+
+      test('a dropped link destroys open records and their files', () async {
+        await openShare();
+
+        service.sessionEnded.add(null);
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+
+        expectDestroyed();
+      });
+
+      test('leaving asks first, then tells the sender', () async {
+        await openShare();
+
+        bloc.add(const ShareRecordsEvent.navigationExitDetected());
+        await _until(() => bloc.state.showExitConfirmationDialog);
+        bloc.add(const ShareRecordsEvent.continueViewing());
+        await _until(() => !bloc.state.showExitConfirmationDialog);
+        expect(bloc.state.phase, SharePhase.viewingRecords);
+
+        bloc.add(const ShareRecordsEvent.dataDestructionConfirmed());
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+
+        expectDestroyed();
+        expect(service.calls, contains('sendKillSignal'));
+      });
     });
 
-    test('a dropped link destroys open records and their files', () async {
-      await receiveShare();
-      await senderCode;
-      await sender.confirm();
-      await _until(() => bloc.state.phase == SharePhase.viewingRecords);
+    group('expiry', () {
+      test(
+        'the records are destroyed when the viewing time runs out',
+        () async {
+          service.parsedContainer = container(
+            viewDuration: const Duration(seconds: 1),
+          );
+          await openShare();
 
-      service.sessionEnded.add(null);
-      await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+          await _until(() => bloc.state.phase == SharePhase.sessionEnded);
 
-      expect(bloc.state.receivedData, isNull);
-      expect(service.calls, contains('deleteSessionFiles:session-1'));
-      expect(repository.calls.last, 'clearSharedNotes');
+          expectDestroyed();
+        },
+      );
+    });
+
+    group('backgrounding', () {
+      test('leaving the app destroys open records', () async {
+        await openShare();
+
+        _lifecycle(AppLifecycleState.inactive);
+        _lifecycle(AppLifecycleState.hidden);
+        _lifecycle(AppLifecycleState.paused);
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+
+        expectDestroyed();
+      });
+
+      test('Control Center or a system prompt keeps the records', () async {
+        await openShare();
+
+        _lifecycle(AppLifecycleState.inactive);
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        expect(bloc.state.phase, SharePhase.viewingRecords);
+        expect(EphemeralSessionManager.instance.hasActiveSession, isTrue);
+      });
+
+      test('leaving while comparing codes keeps the records closed', () async {
+        await receiveShare();
+        await senderCode;
+
+        _lifecycle(AppLifecycleState.inactive);
+        _lifecycle(AppLifecycleState.hidden);
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+        await sender.confirm().catchError((_) {});
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        expect(bloc.state.phase, SharePhase.sessionEnded);
+        expect(bloc.state.receivedData, isNull);
+        expect(repository.calls, isNot(contains('showSharedNotes')));
+      });
+    });
+
+    group('cancel', () {
+      test('a cancel while comparing codes keeps the records closed', () async {
+        await receiveShare();
+        await senderCode;
+
+        bloc.add(const ShareRecordsEvent.dataDestructionConfirmed());
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+        await sender.confirm().catchError((_) {});
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        expect(bloc.state.phase, SharePhase.sessionEnded);
+        expect(bloc.state.receivedData, isNull);
+        expect(repository.calls, isNot(contains('showSharedNotes')));
+        expect(service.calls, contains('sendKillSignal'));
+      });
+
+      test('a cancel while decrypting keeps the records closed', () async {
+        service.parseGate = Completer<void>();
+        await receiveShare();
+        await senderCode;
+        await sender.confirm();
+        await _until(() => service.calls.contains('parsePayload'));
+
+        bloc.add(const ShareRecordsEvent.dataDestructionConfirmed());
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+        service.parseGate!.complete();
+        await _until(
+          () => service.calls.contains('deleteSessionFiles:session-1'),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        expect(bloc.state.phase, SharePhase.sessionEnded);
+        expect(bloc.state.receivedData, isNull);
+        expect(EphemeralSessionManager.instance.hasActiveSession, isFalse);
+        expect(repository.calls, isNot(contains('showSharedNotes')));
+      });
+    });
+
+    group('cleanup', () {
+      test('closing the screen destroys open records', () async {
+        await openShare();
+
+        await bloc.close();
+
+        expect(EphemeralSessionManager.instance.hasActiveSession, isFalse);
+        expect(service.calls, contains('deleteSessionFiles:session-1'));
+        expect(repository.calls.last, 'clearSharedNotes');
+        expect(service.calls.last, 'disconnect');
+      });
     });
   });
 
@@ -320,9 +472,10 @@ void main() {
 
   group('sender', () {
     late SecureShareSession receiver;
+    late String code;
 
-    /// Sends one record and plays the receiver up to the confirmed codes.
-    Future<void> shareAndConfirm() async {
+    /// Sends one record and plays the receiver up to showing the code.
+    Future<void> shareUntilCode({Duration? viewingDuration}) async {
       bloc
         ..add(const ShareRecordsEvent.sendModeSelected())
         ..add(
@@ -330,14 +483,22 @@ void main() {
             record(conditionJson(), id: 'c1'),
           ]),
         );
+      if (viewingDuration != null) {
+        bloc.add(ShareRecordsEvent.viewingDurationChanged(viewingDuration));
+      }
       await _until(() => bloc.state.selection.isNotEmpty);
       bloc.add(const ShareRecordsEvent.peerSelected('peer-1'));
       await _until(() => service.sentEnvelope != null);
 
       receiver = SecureShareSession(service.peerEnd);
       addTearDown(receiver.dispose);
-      final code = await receiver.open(service.sentEnvelope!);
+      code = await receiver.open(service.sentEnvelope!);
       await _until(() => bloc.state.phase == SharePhase.verifyingCode);
+    }
+
+    /// Continues to the confirmed codes, with the key delivered.
+    Future<void> shareAndConfirm({Duration? viewingDuration}) async {
+      await shareUntilCode(viewingDuration: viewingDuration);
       expect(bloc.state.verificationCode, code);
 
       bloc.add(const ShareRecordsEvent.verificationConfirmed());
@@ -345,36 +506,102 @@ void main() {
       await receiver.awaitPayload();
     }
 
-    test(
-      'ending the session after the codes match kills it remotely',
-      () async {
+    /// Continues until the receiver reports it opened the records.
+    Future<void> shareUntilViewing({Duration? viewingDuration}) async {
+      await shareAndConfirm(viewingDuration: viewingDuration);
+      service.viewingStarted.add(null);
+      await _until(() => bloc.state.phase == SharePhase.monitoringSession);
+    }
+
+    group('session end', () {
+      test(
+        'ending the session after the codes match kills it remotely',
+        () async {
+          await shareAndConfirm();
+
+          bloc.add(const ShareRecordsEvent.killSessionRequested());
+          await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+
+          expect(service.calls, contains('sendKillSignal'));
+          expect(bloc.state.remoteEndUnconfirmed, isFalse);
+        },
+      );
+
+      test('an undelivered kill is reported to the sender', () async {
         await shareAndConfirm();
+        service.killFails = true;
 
         bloc.add(const ShareRecordsEvent.killSessionRequested());
         await _until(() => bloc.state.phase == SharePhase.sessionEnded);
 
-        expect(service.calls, contains('sendKillSignal'));
-        expect(bloc.state.remoteEndUnconfirmed, isFalse);
-      },
-    );
+        expect(bloc.state.remoteEndUnconfirmed, isTrue);
+      });
 
-    test('an undelivered kill is reported to the sender', () async {
-      await shareAndConfirm();
-      service.killFails = true;
+      test('a dropped link before the codes match is a decline', () async {
+        await shareUntilCode();
 
-      bloc.add(const ShareRecordsEvent.killSessionRequested());
-      await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+        service.sessionEnded.add(null);
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
 
-      expect(bloc.state.remoteEndUnconfirmed, isTrue);
+        expect(bloc.state.statusMessage, 'Receiver declined invitation');
+      });
+
+      test('a dropped link after the codes match is not a decline', () async {
+        await shareAndConfirm();
+
+        service.sessionEnded.add(null);
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+
+        expect(bloc.state.statusMessage, 'Remote session terminated');
+      });
+
+      test('the receiver leaving ends the monitored session', () async {
+        await shareUntilViewing();
+
+        service.sessionEnded.add(null);
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+
+        expect(bloc.state.statusMessage, 'Remote session terminated');
+        expect(bloc.state.isSessionActive, isFalse);
+      });
     });
 
-    test('a dropped link after the codes match is not a decline', () async {
-      await shareAndConfirm();
+    group('expiry', () {
+      test('the countdown running out also ends it remotely', () async {
+        await shareUntilViewing(viewingDuration: const Duration(seconds: 1));
+        expect(bloc.state.sessionStartedAt, isNotNull);
 
-      service.sessionEnded.add(null);
-      await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+        await _until(() => bloc.state.phase == SharePhase.sessionEnded);
+        expect(bloc.state.statusMessage, 'Session expired');
+        await _until(() => service.calls.last == 'disconnect');
 
-      expect(bloc.state.statusMessage, 'Remote session terminated');
+        expect(service.calls, contains('sendKillSignal'));
+      });
+    });
+
+    group('backgrounding', () {
+      test('locking the screen keeps the session', () async {
+        await shareAndConfirm();
+
+        _lifecycle(AppLifecycleState.inactive);
+        _lifecycle(AppLifecycleState.hidden);
+        _lifecycle(AppLifecycleState.paused);
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        expect(bloc.state.phase, SharePhase.awaitingViewer);
+        expect(service.calls, isNot(contains('sendKillSignal')));
+      });
+    });
+
+    group('cleanup', () {
+      test('closing the screen deletes the encrypted file', () async {
+        await shareAndConfirm();
+
+        await bloc.close();
+
+        expect(service.calls, contains('cleanupTempFile'));
+        expect(service.calls.last, 'disconnect');
+      });
     });
   });
 }
