@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -61,6 +62,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     on<CommunicationPendingClientReceived>(_onPendingClient);
     on<CommunicationPendingClientAccepted>(_onPendingAccepted);
     on<CommunicationPendingClientRejected>(_onPendingRejected);
+    on<CommunicationVpnChecked>(_onVpnChecked, transformer: droppable());
 
     _listenToTcp();
     _initMpcIfAvailable();
@@ -381,6 +383,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       debugPrint(
         '[Communication] Client disconnected, restarting MPC advertising',
       );
+      // A full-tunnel VPN lets the phone connect and then drops the link.
+      add(const CommunicationVpnChecked());
       if (_mpcTransport != null) {
         await _mpcTransport!.disconnect();
         await _mpcTransport!.startServer(port: 0);
@@ -459,6 +463,20 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       try {
         getIt<HandoverService>().resendPendingResults();
       } catch (_) {}
+    }
+  }
+
+  Future<void> _onVpnChecked(
+    CommunicationVpnChecked event,
+    Emitter<DesktopSyncState> emit,
+  ) async {
+    if (!_platform.isDesktop) return;
+
+    try {
+      final (ip: _, :vpnDetected) = await _getLocalIp();
+      emit(state.copyWith(vpnDetected: vpnDetected));
+    } on SocketException catch (e) {
+      debugPrint('[Communication] VPN check failed: $e');
     }
   }
 

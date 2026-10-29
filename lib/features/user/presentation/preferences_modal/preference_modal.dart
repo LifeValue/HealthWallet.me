@@ -2,11 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/ai-model/ai_model_section.dart';
 import 'package:health_wallet/features/user/presentation/preferences_modal/sections/patient/bloc/patient_bloc.dart';
@@ -21,6 +23,8 @@ class PreferenceModal extends StatelessWidget {
   const PreferenceModal({super.key});
 
   static void show(BuildContext context) {
+    // The VPN can change while the app runs; refresh it for the Sync section.
+    getIt<CommunicationBloc>().add(const CommunicationVpnChecked());
     showDialog(
       context: context,
       builder: (BuildContext context) {
