@@ -117,6 +117,10 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
     Emitter<LwwSyncState> emit,
   ) async {
     if (state.syncStatus == LwwSyncStatus.syncing) return;
+    // A device that never synced has nothing to keep for later: its first
+    // connection sends every row.
+    final connected = _tcpService.isConnected;
+    if (!connected && state.lastSyncTime == null) return;
 
     emit(
       state.copyWith(
@@ -144,12 +148,17 @@ class LwwSyncBloc extends Bloc<LwwSyncEvent, LwwSyncState> {
           ),
         );
 
-        final delta = await _syncService.computeDelta(table, since);
+        // Queued deltas leave the files out; the peer asks for them.
+        final delta = await _syncService.computeDelta(
+          table,
+          since,
+          embedAttachments: connected,
+        );
         if (delta.rows.isNotEmpty) {
-          if (_tcpService.isConnected) {
+          if (connected) {
             await _tcpService.sendData('sync.delta', delta.toJson());
           } else {
-            await _offlineQueue.enqueue(delta);
+            await _offlineQueue.replace(delta);
           }
           totalSent += delta.rows.length;
           emit(state.copyWith(sentRows: totalSent));

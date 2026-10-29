@@ -37,6 +37,48 @@ void main() {
 
   tearDown(() => tcp.close());
 
+  group('replace', () {
+    List<Map<String, dynamic>> queuedRows(String table) => [
+      for (final d in jsonDecode(prefs.getString(queueKey)!) as List)
+        if ((d as Map)['tableName'] == table)
+          for (final r in d['rows'] as List) r as Map<String, dynamic>,
+    ];
+
+    test('keeps one delta per table, merging rows by id', () async {
+      await queue.replace(delta('fhir_resource', 1, id: 'a'));
+      await queue.replace(delta('sources', 1, id: 's'));
+      await queue.replace(delta('fhir_resource', 2, id: 'b'));
+
+      expect(queue.pendingCount, 2);
+      expect(queuedRows('fhir_resource').map((r) => r['id']), [
+        'a-1',
+        'b-2',
+      ]);
+      expect(queuedRows('sources').map((r) => r['id']), ['s-1']);
+    });
+
+    test('the newer copy of a row wins', () async {
+      await queue.replace(
+        delta('record_notes', 1).copyWith(
+          rows: [
+            {'id': 7, 'content': 'old'},
+          ],
+        ),
+      );
+      await queue.replace(
+        delta('record_notes', 2).copyWith(
+          rows: [
+            {'id': 7, 'content': 'new'},
+          ],
+        ),
+      );
+
+      expect(queuedRows('record_notes'), [
+        {'id': 7, 'content': 'new'},
+      ]);
+    });
+  });
+
   group('enqueue', () {
     test('persists deltas in order under lww_offline_queue', () async {
       await queue.enqueue(delta('fhir_resource', 1));

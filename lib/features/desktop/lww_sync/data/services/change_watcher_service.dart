@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/lww_sync_service.dart';
 import 'package:health_wallet/features/desktop/lww_sync/data/services/offline_queue_service.dart';
@@ -30,29 +32,22 @@ class ChangeWatcherService {
     if (_isWatching) return;
     _isWatching = true;
 
+    // Table update notifications, not queries: a write costs nothing until
+    // the debounce runs.
     _subscriptions.add(
-      _db.select(_db.fhirResource).watch().listen((_) {
-        _onTableChanged('fhir_resource');
-      }),
+      _db
+          .tableUpdates(
+            TableUpdateQuery.onAllTables([
+              _db.fhirResource,
+              _db.sources,
+              _db.recordNotes,
+            ]),
+          )
+          .listen((_) => _onTableChanged()),
     );
 
-    _subscriptions.add(
-      _db.select(_db.sources).watch().listen((_) {
-        _onTableChanged('sources');
-      }),
-    );
-
-    _subscriptions.add(
-      _db.select(_db.recordNotes).watch().listen((_) {
-        _onTableChanged('record_notes');
-      }),
-    );
-
-    _subscriptions.add(
-      _db.select(_db.processingSessions).watch().listen((_) {
-        _onTableChanged('processing_sessions');
-      }),
-    );
+    // Whatever changed while nothing was watching.
+    _onTableChanged();
   }
 
   void stopWatching() {
@@ -64,7 +59,7 @@ class ChangeWatcherService {
     _isWatching = false;
   }
 
-  void _onTableChanged(String tableName) {
+  void _onTableChanged() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(
       const Duration(milliseconds: _debounceMs),
@@ -74,25 +69,39 @@ class ChangeWatcherService {
 
   Future<void> _sendPendingDeltas() async {
     final lastSync = await _syncService.getLastSyncTimestamp();
+    final connected = _tcpService.isConnected;
+    // A device that never synced has nothing to keep for later: its first
+    // connection sends every row.
+    if (!connected && lastSync == null) return;
     final since = lastSync ?? DateTime.fromMillisecondsSinceEpoch(0);
 
-    final deltas = await _syncService.computeAllDeltas(since);
+    final deltas = await _syncService.computeAllDeltas(
+      since,
+      embedAttachments: connected,
+    );
     if (deltas.isEmpty) return;
 
     var sentCount = 0;
     for (final delta in deltas) {
-      final payload = delta.toJson();
-
-      if (_tcpService.isConnected) {
+      if (connected) {
         try {
-          await _tcpService.sendData('sync.delta', payload);
+          await _tcpService.sendData('sync.delta', delta.toJson());
           sentCount++;
-        } catch (_) {
-          await _offlineQueue.enqueue(delta);
+          continue;
+        } catch (e) {
+          logger.w('[LwwSync] sending ${delta.tableName} failed; queued', e);
         }
-      } else {
-        await _offlineQueue.enqueue(delta);
       }
+      // Queued without file bytes, which would otherwise sit in preferences.
+      await _offlineQueue.replace(
+        connected
+            ? await _syncService.computeDelta(
+                delta.tableName,
+                since,
+                embedAttachments: false,
+              )
+            : delta,
+      );
     }
 
     if (sentCount > 0) {

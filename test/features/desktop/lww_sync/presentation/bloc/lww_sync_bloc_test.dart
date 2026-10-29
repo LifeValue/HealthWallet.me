@@ -408,6 +408,23 @@ void main() {
     );
 
     blocTest<LwwSyncBloc, LwwSyncState>(
+      'a device that never synced queues nothing while disconnected',
+      setUp: () async {
+        link.connected = false;
+        await insertFhir(db, id: 'f', updatedAt: ms(at(1)));
+      },
+      build: buildBloc,
+      act: (bloc) => bloc.add(const SyncTriggered()),
+      wait: const Duration(milliseconds: 50),
+      expect: () => <LwwSyncState>[],
+      verify: (bloc) async {
+        expect(queue.pendingCount, 0);
+        expect(prefs.getString('lww_offline_queue'), isNull);
+        expect(await sync.getLastSyncTimestamp(), isNull);
+      },
+    );
+
+    blocTest<LwwSyncBloc, LwwSyncState>(
       'queues deltas while disconnected',
       setUp: () async {
         link.connected = false;
@@ -415,6 +432,7 @@ void main() {
         await insertSource(db, id: 's', updatedAt: ms(at(1)));
       },
       build: buildBloc,
+      seed: () => LwwSyncState(lastSyncTime: at(0)),
       act: (bloc) => bloc.add(const SyncTriggered()),
       wait: const Duration(milliseconds: 50),
       verify: (bloc) {
@@ -887,6 +905,9 @@ void main() {
         await insertFhir(db, id: 'offline-edit', updatedAt: ms(at(1)));
       },
       build: buildBloc,
+      // A device that synced before; one that never did queues nothing and
+      // sends everything on its first connection.
+      seed: () => LwwSyncState(lastSyncTime: at(0)),
       act: (bloc) async {
         bloc.add(const SyncTriggered());
         await Future<void>.delayed(const Duration(milliseconds: 50));

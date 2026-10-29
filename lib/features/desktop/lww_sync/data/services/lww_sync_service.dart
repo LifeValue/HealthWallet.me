@@ -30,7 +30,14 @@ class LwwSyncService {
 
   LwwSyncService(this._db, this._prefs, this._attachmentSync);
 
-  Future<SyncDelta> computeDelta(String tableName, DateTime since) async {
+  /// Rows of [tableName] changed since [since]. With [embedAttachments] the
+  /// files of DocumentReferences travel inside the rows; without it the
+  /// receiver asks for the files it misses once the row counts match.
+  Future<SyncDelta> computeDelta(
+    String tableName,
+    DateTime since, {
+    bool embedAttachments = true,
+  }) async {
     final sinceMs = since.millisecondsSinceEpoch;
     final deviceId = await getLocalDeviceId();
 
@@ -43,7 +50,7 @@ class LwwSyncService {
 
     var rows = results.map((row) => row.data).toList();
 
-    if (tableName == 'fhir_resource' && rows.isNotEmpty) {
+    if (embedAttachments && tableName == 'fhir_resource' && rows.isNotEmpty) {
       rows = await _attachmentSync.embedAttachments(rows);
     }
 
@@ -55,10 +62,17 @@ class LwwSyncService {
     );
   }
 
-  Future<List<SyncDelta>> computeAllDeltas(DateTime since) async {
+  Future<List<SyncDelta>> computeAllDeltas(
+    DateTime since, {
+    bool embedAttachments = true,
+  }) async {
     final deltas = <SyncDelta>[];
     for (final table in syncedTables) {
-      final delta = await computeDelta(table, since);
+      final delta = await computeDelta(
+        table,
+        since,
+        embedAttachments: embedAttachments,
+      );
       if (delta.rows.isNotEmpty) {
         deltas.add(delta);
       }

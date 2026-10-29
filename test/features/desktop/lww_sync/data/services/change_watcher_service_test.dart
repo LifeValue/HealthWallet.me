@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
@@ -27,7 +30,11 @@ void main() {
 
   const quietPeriod = Duration(milliseconds: 900);
 
-  Future<void> setUpWatcher({bool connected = true, int? lastSync}) async {
+  Future<void> setUpWatcher({
+    bool connected = true,
+    int? lastSync,
+    String documentsPath = '/nonexistent',
+  }) async {
     SharedPreferences.setMockInitialValues({
       'lww_local_device_id': 'device-local',
       'lww_last_sync_timestamp': ?lastSync,
@@ -38,7 +45,7 @@ void main() {
     sync = LwwSyncService(
       db,
       prefs,
-      AttachmentSyncService(FakePathResolver('/nonexistent')),
+      AttachmentSyncService(FakePathResolver(documentsPath)),
     );
     queue = OfflineQueueService(prefs, tcp);
     watcher = ChangeWatcherService(db, sync, tcp, queue);
@@ -225,6 +232,89 @@ void main() {
       expect(await sync.getLastSyncTimestamp(), at(0).toLocal());
     },
   );
+
+  test(
+    'a device that never synced queues nothing while disconnected',
+    () async {
+      await setUpWatcher(connected: false);
+      await insertFhir(db, id: 'f', updatedAt: ms(at(1)));
+      await insertNote(db, id: 1, content: 'n', updatedAt: ms(at(1)));
+
+      watcher.startWatching();
+      await Future<void>.delayed(quietPeriod);
+
+      expect(
+        queue.pendingCount,
+        0,
+        reason: 'its first connection sends everything anyway',
+      );
+      expect(prefs.getString('lww_offline_queue'), isNull);
+      expect(await sync.getLastSyncTimestamp(), isNull);
+    },
+  );
+
+  test('a new change replaces the queued delta of its table', () async {
+    await setUpWatcher(connected: false, lastSync: ms(at(0)));
+    await insertFhir(db, id: 'f', updatedAt: ms(at(1)));
+    watcher.startWatching();
+    await waitUntil(() => queue.pendingCount == 1);
+
+    await db
+        .into(db.fhirResource)
+        .insert(FhirResourceCompanion.insert(id: 'g', resourceRaw: '{}'));
+    await Future<void>.delayed(quietPeriod);
+
+    expect(queue.pendingCount, 1);
+    final queued = SyncDelta.fromJson(
+      ((jsonDecode(prefs.getString('lww_offline_queue')!) as List).single)
+          as Map<String, dynamic>,
+    );
+    expect(queued.rows.map((r) => r['id']), unorderedEquals(['f', 'g']));
+  });
+
+  test('queued deltas leave attachment files out', () async {
+    final docs = Directory.systemTemp.createTempSync('watcher_docs');
+    addTearDown(() => docs.deleteSync(recursive: true));
+    File('${docs.path}/scan.pdf').writeAsBytesSync(List.filled(64, 1));
+    await setUpWatcher(
+      connected: false,
+      lastSync: ms(at(0)),
+      documentsPath: docs.path,
+    );
+    await insertFhir(
+      db,
+      id: 'doc',
+      resourceType: 'DocumentReference',
+      updatedAt: ms(at(1)),
+      raw: jsonEncode({
+        'resourceType': 'DocumentReference',
+        'content': [
+          {
+            'attachment': {
+              'contentType': 'application/pdf',
+              'url': 'file://scan.pdf',
+            },
+          },
+        ],
+      }),
+    );
+
+    watcher.startWatching();
+    await waitUntil(() => queue.pendingCount == 1);
+
+    final queued = SyncDelta.fromJson(
+      ((jsonDecode(prefs.getString('lww_offline_queue')!) as List).single)
+          as Map<String, dynamic>,
+    );
+    final raw = jsonDecode(
+      queued.rows.single['resource_raw'] as String,
+    ) as Map<String, dynamic>;
+    expect(
+      (raw['content'] as List).single['attachment'],
+      isNot(contains('data')),
+      reason: 'the receiver asks for missing files once connected',
+    );
+  });
 
   test('queues only the deltas whose send failed', () async {
     await setUpWatcher(lastSync: ms(at(0)));

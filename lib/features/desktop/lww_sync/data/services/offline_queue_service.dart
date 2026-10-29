@@ -20,6 +20,26 @@ class OfflineQueueService {
     await _saveQueue(queue);
   }
 
+  /// Queues [delta] in place of the one already queued for its table. Both
+  /// hold that table's changes since the last sync, so the rows are merged,
+  /// the newer copy of a row winning, instead of storing them twice.
+  Future<void> replace(SyncDelta delta) async {
+    final queue = _loadQueue();
+    final rows = <Object?, Map<String, dynamic>>{};
+    for (final queued in queue.where((d) => d.tableName == delta.tableName)) {
+      for (final row in queued.rows) {
+        rows[row['id']] = row;
+      }
+    }
+    for (final row in delta.rows) {
+      rows[row['id']] = row;
+    }
+    await _saveQueue([
+      ...queue.where((d) => d.tableName != delta.tableName),
+      delta.copyWith(rows: rows.values.toList()),
+    ]);
+  }
+
   Future<int> flush() async {
     final queue = _loadQueue();
     if (queue.isEmpty) return 0;
