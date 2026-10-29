@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_temporal_extractor.dart';
 
 import '../../../../../fixtures/fhir/fhir_fixtures.dart';
+import '../../../../../fixtures/local_time.dart';
 
 fhir.Period _period({String? start, String? end}) => fhir.Period.fromJson({
   'start': ?start,
@@ -85,22 +86,24 @@ void main() {
       (
         'same day collapses the date',
         _period(start: '2024-01-10T09:00:00Z', end: '2024-01-10T09:30:00Z'),
-        'Jan 10, 2024, 9:00 AM - 9:30 AM',
+        '${localDateTime('2024-01-10T09:00:00Z')} - '
+            '${localTime('2024-01-10T09:30:00Z')}',
       ),
       (
         'different days show both dates',
         _period(start: '2024-01-10T09:00:00Z', end: '2024-01-12T17:15:00Z'),
-        'Jan 10, 2024 9:00 AM - Jan 12, 2024 5:15 PM',
+        '${localDateTime('2024-01-10T09:00:00Z', separator: ' ')} - '
+            '${localDateTime('2024-01-12T17:15:00Z', separator: ' ')}',
       ),
       (
         'start only',
         _period(start: '2024-01-10T09:00:00Z'),
-        'From Jan 10, 2024 9:00 AM',
+        'From ${localDateTime('2024-01-10T09:00:00Z', separator: ' ')}',
       ),
       (
         'end only',
         _period(end: '2024-01-12T17:15:00Z'),
-        'Until Jan 12, 2024 5:15 PM',
+        'Until ${localDateTime('2024-01-12T17:15:00Z', separator: ' ')}',
       ),
     ];
     for (final (name, period, expected) in cases) {
@@ -332,12 +335,19 @@ void main() {
 
   group('formatFhirDateTime / formatFhirDate / formatFhirInstant', () {
     final dateTimeCases = <(String, String)>[
-      ('2024-03-15T10:30:00Z', 'Mar 15, 2024, 10:30 AM'),
+      ('2024-03-15T10:30:00Z', localDateTime('2024-03-15T10:30:00Z')),
       ('2024-03-15T22:05:00', 'Mar 15, 2024, 10:05 PM'),
-      // Offsets are normalised to UTC before formatting.
-      ('2024-03-15T10:30:00+02:00', 'Mar 15, 2024, 8:30 AM'),
-      // A date-only value is shown with a synthetic midnight time.
-      ('2024-03-15', 'Mar 15, 2024, 12:00 AM'),
+      // A time with an offset is shown in the device's time zone.
+      (
+        '2024-03-15T10:30:00+02:00',
+        localDateTime('2024-03-15T10:30:00+02:00'),
+      ),
+      (
+        '2023-07-14T21:30:00-04:00',
+        localDateTime('2023-07-14T21:30:00-04:00'),
+      ),
+      // A date-only value is that calendar day, with no time.
+      ('2024-03-15', 'Mar 15, 2024'),
       // Partial dates cannot be parsed and are returned verbatim.
       ('2024-03', '2024-03'),
       ('2024', '2024'),
@@ -367,7 +377,7 @@ void main() {
         FhirTemporalExtractor.formatFhirInstant(
           fhir.FhirInstant.fromString('2024-03-15T12:00:07.000Z'),
         ),
-        'Mar 15, 2024, 12:00:07 PM',
+        localDateTime('2024-03-15T12:00:07.000Z', seconds: true),
       );
     });
 
@@ -396,12 +406,34 @@ void main() {
     });
   });
 
+  group('recordDay / formatRecordDate', () {
+    test('a date stored as midnight UTC is that calendar day in any zone', () {
+      // A date-only "2024-03-05" synced as 2024-03-05T00:00:00Z is the
+      // evening of March 4 west of UTC; it must still read March 5.
+      final stored = DateTime.utc(2024, 3, 5).toLocal();
+      expect(FhirTemporalExtractor.recordDay(stored), DateTime(2024, 3, 5));
+      expect(
+        FhirTemporalExtractor.formatRecordDate(stored, null),
+        'March 5, 2024',
+      );
+    });
+
+    test('any other time is the local day', () {
+      final stored = DateTime.utc(2024, 3, 5, 14, 30);
+      final local = stored.toLocal();
+      expect(
+        FhirTemporalExtractor.recordDay(stored),
+        DateTime(local.year, local.month, local.day),
+      );
+    });
+  });
+
   group('formatDateTimeString', () {
     final cases = <(String?, String?)>[
       (null, null),
       ('', null),
       ('2024-03-15', 'Mar 15, 2024'),
-      ('2024-03-15T10:30:00Z', 'Mar 15, 2024, 10:30 AM'),
+      ('2024-03-15T10:30:00Z', localDateTime('2024-03-15T10:30:00Z')),
       ('2024-03-15 18:45', 'Mar 15, 2024, 6:45 PM'),
       ('2024-03', '2024-03'),
       ('not a date', 'not a date'),
@@ -418,7 +450,7 @@ void main() {
       (
         'dateTime',
         {'DateTime': '2019-02-01T08:00:00Z'},
-        'Feb 1, 2019, 8:00 AM',
+        localDateTime('2019-02-01T08:00:00Z'),
       ),
       ('Age', {'Age': _age45}, '45 a'),
       (
@@ -440,7 +472,7 @@ void main() {
         {
           'Period': {'start': '2019-01-01T00:00:00Z'},
         },
-        'From Jan 1, 2019 12:00 AM',
+        'From ${localDateTime('2019-01-01T00:00:00Z', separator: ' ')}',
       ),
       (
         'Range',
@@ -529,7 +561,7 @@ void main() {
       (
         'dateTime',
         _performed({'performedDateTime': '2022-05-04T08:00:00Z'}),
-        'May 4, 2022, 8:00 AM',
+        localDateTime('2022-05-04T08:00:00Z'),
       ),
       (
         'Period',
@@ -539,7 +571,8 @@ void main() {
             'end': '2022-05-04T09:00:00Z',
           },
         }),
-        'May 4, 2022, 8:00 AM - 9:00 AM',
+        '${localDateTime('2022-05-04T08:00:00Z')} - '
+            '${localTime('2022-05-04T09:00:00Z')}',
       ),
       ('string', _performed({'performedString': 'last summer'}), 'last summer'),
       ('Age', _performed({'performedAge': _age45}), '45 a'),
@@ -587,7 +620,7 @@ void main() {
       (
         'dateTime',
         _effective({'effectiveDateTime': '2024-03-15T10:30:00Z'}),
-        'Mar 15, 2024, 10:30 AM',
+        localDateTime('2024-03-15T10:30:00Z'),
       ),
       (
         'partial dateTime',
@@ -599,12 +632,12 @@ void main() {
         _effective({
           'effectivePeriod': {'start': '2024-03-15T10:30:00Z'},
         }),
-        'From Mar 15, 2024 10:30 AM',
+        'From ${localDateTime('2024-03-15T10:30:00Z', separator: ' ')}',
       ),
       (
         'Instant',
         _effective({'effectiveInstant': '2024-03-15T10:30:15.000Z'}),
-        'Mar 15, 2024, 10:30:15 AM',
+        localDateTime('2024-03-15T10:30:15.000Z', seconds: true),
       ),
       (
         'Timing with code',
@@ -649,14 +682,14 @@ void main() {
       (
         'dateTime',
         fhir.Immunization.fromJson(immunizationJson()).occurrenceX,
-        'Oct 1, 2023, 8:00 AM',
+        localDateTime('2023-10-01T08:00:00Z'),
       ),
       (
         'Period',
         _occurrence({
           'occurrencePeriod': {'end': '2024-05-02T16:00:00Z'},
         }),
-        'Until May 2, 2024 4:00 PM',
+        'Until ${localDateTime('2024-05-02T16:00:00Z', separator: ' ')}',
       ),
       (
         'string',

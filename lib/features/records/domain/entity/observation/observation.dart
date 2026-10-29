@@ -14,7 +14,6 @@ import 'package:health_wallet/features/records/domain/utils/resource_field_mappe
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 import 'package:health_wallet/features/sync/data/dto/fhir_resource_dto.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
-import 'package:intl/intl.dart';
 
 part 'observation.freezed.dart';
 
@@ -408,7 +407,7 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
+          info: FhirFieldExtractor.formatRecordDate(date!, l10n.localeName),
         ),
       );
     }
@@ -739,7 +738,10 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormatUtils.formatDate(date!, region),
+          info: DateFormatUtils.formatDate(
+            FhirFieldExtractor.recordDay(date!),
+            region,
+          ),
         ),
       );
     }

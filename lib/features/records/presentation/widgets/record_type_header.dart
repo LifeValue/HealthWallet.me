@@ -5,7 +5,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
-import 'package:intl/intl.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 
 class RecordTypeHeader extends StatelessWidget {
   final FhirType fhirType;
@@ -27,7 +27,7 @@ class RecordTypeHeader extends StatelessWidget {
         _buildTypeBadge(context),
         if (date != null)
           Text(
-            DateFormat.yMMMMd(context.l10n.localeName).format(date!),
+            FhirFieldExtractor.formatRecordDate(date!, context.l10n.localeName),
             style: AppTextStyle.labelMedium.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.6),
             ),

@@ -288,6 +288,12 @@ class FhirFieldExtractor {
   static String? formatDateTimeString(String? dateTimeString) =>
       FhirTemporalExtractor.formatDateTimeString(dateTimeString);
 
+  static DateTime recordDay(DateTime date) =>
+      FhirTemporalExtractor.recordDay(date);
+
+  static String formatRecordDate(DateTime date, String? locale) =>
+      FhirTemporalExtractor.formatRecordDate(date, locale);
+
   static String? extractOnsetXFormatted(
     dynamic onsetX, {
     AppLocalizations? l10n,

@@ -5,6 +5,7 @@ import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 
 import '../../../../fixtures/fhir/fhir_fixtures.dart';
+import '../../../../fixtures/local_time.dart';
 
 /// [FhirFieldExtractor] is a facade over the specialised extractors; these
 /// tests check that every entry point is wired to the right implementation
@@ -284,7 +285,8 @@ void main() {
     expect(FhirFieldExtractor.extractPeriodEnd(period), '2024-01-10T09:30:00Z');
     expect(
       FhirFieldExtractor.extractPeriodFormatted(period),
-      'Jan 10, 2024, 9:00 AM - 9:30 AM',
+      '${localDateTime('2024-01-10T09:00:00Z')} - '
+      '${localTime('2024-01-10T09:30:00Z')}',
     );
     expect(FhirFieldExtractor.extractOnsetX(condition.onsetX), '2019-02-01');
     expect(
@@ -309,7 +311,7 @@ void main() {
     );
     expect(
       FhirFieldExtractor.formatFhirDateTime(medicationRequest.authoredOn),
-      'Jan 10, 2024, 9:20 AM',
+      localDateTime('2024-01-10T09:20:00Z'),
     );
     expect(
       FhirFieldExtractor.formatFhirDate(fhirPatient.birthDate),
@@ -317,7 +319,7 @@ void main() {
     );
     expect(
       FhirFieldExtractor.formatFhirInstant(heartRate.issued),
-      'Mar 15, 2024, 12:00:00 PM',
+      localDateTime('2024-03-15T12:00:00.000Z', seconds: true),
     );
     expect(
       FhirFieldExtractor.formatDateTimeString('2024-03-15'),
@@ -325,23 +327,24 @@ void main() {
     );
     expect(
       FhirFieldExtractor.extractOnsetXFormatted(condition.onsetX),
-      'Feb 1, 2019, 12:00 AM',
+      'Feb 1, 2019',
     );
     expect(
       FhirFieldExtractor.extractAbatementXFormatted(condition.abatementX),
-      'From Jan 1, 2020 12:00 AM',
+      'From ${localDateTime('2020-01-01T00:00:00Z', separator: ' ')}',
     );
     expect(
       FhirFieldExtractor.extractPerformedXFormatted(procedure.performedX),
-      'May 4, 2022, 8:00 AM - 9:00 AM',
+      '${localDateTime('2022-05-04T08:00:00Z')} - '
+      '${localTime('2022-05-04T09:00:00Z')}',
     );
     expect(
       FhirFieldExtractor.extractEffectiveXFormatted(heartRate.effectiveX),
-      'Mar 15, 2024, 10:30 AM',
+      localDateTime('2024-03-15T10:30:00Z'),
     );
     expect(
       FhirFieldExtractor.extractOccurrenceXFormatted(immunization.occurrenceX),
-      'Oct 1, 2023, 8:00 AM',
+      localDateTime('2023-10-01T08:00:00Z'),
     );
   });
 }
