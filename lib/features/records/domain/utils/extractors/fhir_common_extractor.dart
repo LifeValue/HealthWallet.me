@@ -20,9 +20,10 @@ class FhirCommonExtractor {
     }
 
     try {
-      final coding = codeableConcept.coding;
-      if (coding?.isNotEmpty == true) {
-        final display = coding!.first.display?.toString();
+      // A local coding often comes first without a display; use the first
+      // coding that has one.
+      for (final coding in codeableConcept.coding ?? const []) {
+        final display = coding.display?.toString();
         if (display != null && display.isNotEmpty) return display;
       }
     } catch (_) {
