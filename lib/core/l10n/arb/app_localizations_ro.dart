@@ -3852,6 +3852,63 @@ class AppLocalizationsRo extends AppLocalizations {
   String get fhirStatusCorrected => 'Corectat';
 
   @override
+  String get fieldInterpretation => 'Interpretare';
+
+  @override
+  String get interpretationHigh => 'Crescut';
+
+  @override
+  String get interpretationLow => 'Scăzut';
+
+  @override
+  String get interpretationNormal => 'Normal';
+
+  @override
+  String get interpretationAbnormal => 'Anormal';
+
+  @override
+  String get interpretationCriticallyAbnormal => 'Critic anormal';
+
+  @override
+  String get interpretationCriticallyHigh => 'Critic crescut';
+
+  @override
+  String get interpretationCriticallyLow => 'Critic scăzut';
+
+  @override
+  String get interpretationSignificantlyHigh => 'Semnificativ crescut';
+
+  @override
+  String get interpretationSignificantlyLow => 'Semnificativ scăzut';
+
+  @override
+  String get interpretationIntermediate => 'Intermediar';
+
+  @override
+  String get interpretationResistant => 'Rezistent';
+
+  @override
+  String get interpretationSusceptible => 'Sensibil';
+
+  @override
+  String get interpretationPositive => 'Pozitiv';
+
+  @override
+  String get interpretationNegative => 'Negativ';
+
+  @override
+  String get interpretationDetected => 'Detectat';
+
+  @override
+  String get interpretationNotDetected => 'Nedetectat';
+
+  @override
+  String get interpretationIndeterminate => 'Nedeterminat';
+
+  @override
+  String get interpretationEquivocal => 'Echivoc';
+
+  @override
   String get fieldStrength => 'Concentrație';
 
   @override

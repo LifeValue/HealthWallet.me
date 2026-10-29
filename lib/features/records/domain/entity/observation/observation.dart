@@ -154,9 +154,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (component != null && component!.isNotEmpty) {
       for (final comp in component!) {
-        final componentCode = FhirFieldExtractor.extractCodeableConceptText(
-          comp.code,
-        );
+        final componentCode = FhirCodeLabels.componentLabel(comp.code, l10n);
         final componentValue = FhirFieldExtractor.extractObservationValue(
           comp.valueX,
           l10n: l10n,
@@ -174,14 +172,15 @@ abstract class Observation with _$Observation implements IFhirResource {
       }
     }
 
-    final interpretationDisplay = FhirFieldExtractor.extractInterpretation(
+    final interpretationDisplay = FhirCodeLabels.interpretations(
       interpretation,
+      l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createWarningLine(
         interpretationDisplay,
-        prefix: l10n.fieldStatus,
+        prefix: l10n.fieldInterpretation,
       ),
     );
 
@@ -463,9 +462,7 @@ abstract class Observation with _$Observation implements IFhirResource {
 
     if (component != null && component!.isNotEmpty) {
       for (final comp in component!) {
-        final componentCode = FhirFieldExtractor.extractCodeableConceptText(
-          comp.code,
-        );
+        final componentCode = FhirCodeLabels.componentLabel(comp.code, l10n);
         final componentValue =
             FhirFieldExtractor.extractObservationValueForRegion(
               comp.valueX,
@@ -486,14 +483,15 @@ abstract class Observation with _$Observation implements IFhirResource {
       }
     }
 
-    final interpretationDisplay = FhirFieldExtractor.extractInterpretation(
+    final interpretationDisplay = FhirCodeLabels.interpretations(
       interpretation,
+      l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createWarningLine(
         interpretationDisplay,
-        prefix: l10n.fieldStatus,
+        prefix: l10n.fieldInterpretation,
       ),
     );
 

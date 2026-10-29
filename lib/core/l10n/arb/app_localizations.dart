@@ -7055,6 +7055,120 @@ abstract class AppLocalizations {
   /// **'Corrected'**
   String get fhirStatusCorrected;
 
+  /// Label of an observation's interpretation flag (high, low, critical)
+  ///
+  /// In en, this message translates to:
+  /// **'Interpretation'**
+  String get fieldInterpretation;
+
+  /// Observation interpretation code H
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get interpretationHigh;
+
+  /// Observation interpretation code L
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get interpretationLow;
+
+  /// Observation interpretation code N
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get interpretationNormal;
+
+  /// Observation interpretation code A
+  ///
+  /// In en, this message translates to:
+  /// **'Abnormal'**
+  String get interpretationAbnormal;
+
+  /// Observation interpretation code AA
+  ///
+  /// In en, this message translates to:
+  /// **'Critically abnormal'**
+  String get interpretationCriticallyAbnormal;
+
+  /// Observation interpretation code HH
+  ///
+  /// In en, this message translates to:
+  /// **'Critically high'**
+  String get interpretationCriticallyHigh;
+
+  /// Observation interpretation code LL
+  ///
+  /// In en, this message translates to:
+  /// **'Critically low'**
+  String get interpretationCriticallyLow;
+
+  /// Observation interpretation code HU
+  ///
+  /// In en, this message translates to:
+  /// **'Significantly high'**
+  String get interpretationSignificantlyHigh;
+
+  /// Observation interpretation code LU
+  ///
+  /// In en, this message translates to:
+  /// **'Significantly low'**
+  String get interpretationSignificantlyLow;
+
+  /// Observation interpretation code I (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Intermediate'**
+  String get interpretationIntermediate;
+
+  /// Observation interpretation code R (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Resistant'**
+  String get interpretationResistant;
+
+  /// Observation interpretation code S (antimicrobial susceptibility)
+  ///
+  /// In en, this message translates to:
+  /// **'Susceptible'**
+  String get interpretationSusceptible;
+
+  /// Observation interpretation code POS
+  ///
+  /// In en, this message translates to:
+  /// **'Positive'**
+  String get interpretationPositive;
+
+  /// Observation interpretation code NEG
+  ///
+  /// In en, this message translates to:
+  /// **'Negative'**
+  String get interpretationNegative;
+
+  /// Observation interpretation code DET
+  ///
+  /// In en, this message translates to:
+  /// **'Detected'**
+  String get interpretationDetected;
+
+  /// Observation interpretation code ND
+  ///
+  /// In en, this message translates to:
+  /// **'Not detected'**
+  String get interpretationNotDetected;
+
+  /// Observation interpretation code IND
+  ///
+  /// In en, this message translates to:
+  /// **'Indeterminate'**
+  String get interpretationIndeterminate;
+
+  /// Observation interpretation code E
+  ///
+  /// In en, this message translates to:
+  /// **'Equivocal'**
+  String get interpretationEquivocal;
+
   /// No description provided for @fieldStrength.
   ///
   /// In en, this message translates to:

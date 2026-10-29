@@ -1886,6 +1886,82 @@
   "@fhirStatusCorrected": {
     "description": "FHIR observation status 'corrected'"
   },
+  "fieldInterpretation": "Interpretation",
+  "@fieldInterpretation": {
+    "description": "Label of an observation's interpretation flag (high, low, critical)"
+  },
+  "interpretationHigh": "High",
+  "@interpretationHigh": {
+    "description": "Observation interpretation code H"
+  },
+  "interpretationLow": "Low",
+  "@interpretationLow": {
+    "description": "Observation interpretation code L"
+  },
+  "interpretationNormal": "Normal",
+  "@interpretationNormal": {
+    "description": "Observation interpretation code N"
+  },
+  "interpretationAbnormal": "Abnormal",
+  "@interpretationAbnormal": {
+    "description": "Observation interpretation code A"
+  },
+  "interpretationCriticallyAbnormal": "Critically abnormal",
+  "@interpretationCriticallyAbnormal": {
+    "description": "Observation interpretation code AA"
+  },
+  "interpretationCriticallyHigh": "Critically high",
+  "@interpretationCriticallyHigh": {
+    "description": "Observation interpretation code HH"
+  },
+  "interpretationCriticallyLow": "Critically low",
+  "@interpretationCriticallyLow": {
+    "description": "Observation interpretation code LL"
+  },
+  "interpretationSignificantlyHigh": "Significantly high",
+  "@interpretationSignificantlyHigh": {
+    "description": "Observation interpretation code HU"
+  },
+  "interpretationSignificantlyLow": "Significantly low",
+  "@interpretationSignificantlyLow": {
+    "description": "Observation interpretation code LU"
+  },
+  "interpretationIntermediate": "Intermediate",
+  "@interpretationIntermediate": {
+    "description": "Observation interpretation code I (antimicrobial susceptibility)"
+  },
+  "interpretationResistant": "Resistant",
+  "@interpretationResistant": {
+    "description": "Observation interpretation code R (antimicrobial susceptibility)"
+  },
+  "interpretationSusceptible": "Susceptible",
+  "@interpretationSusceptible": {
+    "description": "Observation interpretation code S (antimicrobial susceptibility)"
+  },
+  "interpretationPositive": "Positive",
+  "@interpretationPositive": {
+    "description": "Observation interpretation code POS"
+  },
+  "interpretationNegative": "Negative",
+  "@interpretationNegative": {
+    "description": "Observation interpretation code NEG"
+  },
+  "interpretationDetected": "Detected",
+  "@interpretationDetected": {
+    "description": "Observation interpretation code DET"
+  },
+  "interpretationNotDetected": "Not detected",
+  "@interpretationNotDetected": {
+    "description": "Observation interpretation code ND"
+  },
+  "interpretationIndeterminate": "Indeterminate",
+  "@interpretationIndeterminate": {
+    "description": "Observation interpretation code IND"
+  },
+  "interpretationEquivocal": "Equivocal",
+  "@interpretationEquivocal": {
+    "description": "Observation interpretation code E"
+  },
   "fieldStrength": "Strength",
   "fieldSubpotent": "Subpotent",
   "fieldSubrogation": "Subrogation",

@@ -2,6 +2,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
+import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
 
 /// Localized labels for the FHIR status codes records carry. A status is
@@ -93,6 +94,91 @@ class FhirCodeLabels {
         prefix: l10n.fieldStatusReason,
       ),
     ];
+  }
+
+  /// The label of an HL7 observation interpretation [code] ("HH" is
+  /// "Critically high"), or null for a code not listed.
+  static String? interpretation(String? code, AppLocalizations l10n) =>
+      switch (code) {
+        'H' => l10n.interpretationHigh,
+        'L' => l10n.interpretationLow,
+        'N' => l10n.interpretationNormal,
+        'A' => l10n.interpretationAbnormal,
+        'AA' => l10n.interpretationCriticallyAbnormal,
+        'HH' => l10n.interpretationCriticallyHigh,
+        'LL' => l10n.interpretationCriticallyLow,
+        'HU' => l10n.interpretationSignificantlyHigh,
+        'LU' => l10n.interpretationSignificantlyLow,
+        'I' => l10n.interpretationIntermediate,
+        'R' => l10n.interpretationResistant,
+        'S' => l10n.interpretationSusceptible,
+        'POS' => l10n.interpretationPositive,
+        'NEG' => l10n.interpretationNegative,
+        'DET' => l10n.interpretationDetected,
+        'ND' => l10n.interpretationNotDetected,
+        'IND' => l10n.interpretationIndeterminate,
+        'E' => l10n.interpretationEquivocal,
+        _ => null,
+      };
+
+  /// The interpretations of an observation joined: each a listed code's
+  /// label, else its text, a coding display or its code. Null when empty.
+  static String? interpretations(
+    List<fhir_r4.CodeableConcept>? concepts,
+    AppLocalizations l10n,
+  ) {
+    final labels = [
+      for (final concept in concepts ?? const <fhir_r4.CodeableConcept>[])
+        ?_conceptLabel(concept, (code) => interpretation(code, l10n)),
+    ];
+    return labels.isEmpty ? null : labels.join(', ');
+  }
+
+  /// The label of an observation component's code: its text or a coding
+  /// display, else the vital it names ("8480-6" is "Systolic Blood
+  /// Pressure"), else the code itself, so its value is never dropped.
+  static String? componentLabel(
+    fhir_r4.CodeableConcept? concept,
+    AppLocalizations l10n,
+  ) {
+    if (concept == null) return null;
+    return FhirCommonExtractor.extractCodeableConceptText(concept) ??
+        _conceptLabel(concept, (code) => _vitalLabel(code, l10n));
+  }
+
+  static String? _vitalLabel(String? code, AppLocalizations l10n) =>
+      switch (code) {
+        kLoincHeartRate => l10n.vitalHeartRate,
+        kLoincBloodPressurePanel ||
+        kLoincBloodPressurePanelAlt => l10n.vitalBloodPressure,
+        kLoincTemperature => l10n.vitalTemperature,
+        kLoincBloodOxygen => l10n.vitalBloodOxygen,
+        kLoincWeight => l10n.vitalWeight,
+        kLoincHeight => l10n.vitalHeight,
+        kLoincBmi => l10n.vitalBmi,
+        kLoincSystolic => l10n.vitalSystolicBloodPressure,
+        kLoincDiastolic => l10n.vitalDiastolicBloodPressure,
+        kLoincRespiratoryRate => l10n.vitalRespiratoryRate,
+        kLoincBloodGlucose => l10n.vitalBloodGlucose,
+        _ => null,
+      };
+
+  /// [concept]'s label: the first coding [labelOf] knows, else its text, a
+  /// coding display, or its first code.
+  static String? _conceptLabel(
+    fhir_r4.CodeableConcept concept,
+    String? Function(String? code) labelOf,
+  ) {
+    final codes = [
+      for (final coding in concept.coding ?? const <fhir_r4.Coding>[])
+        ?coding.code?.valueString,
+    ];
+    for (final code in codes) {
+      final label = labelOf(code);
+      if (label != null) return label;
+    }
+    return FhirCommonExtractor.extractCodeableConceptText(concept) ??
+        codes.firstOrNull;
   }
 
   /// The code of the first coding in [concept] that [status] knows.

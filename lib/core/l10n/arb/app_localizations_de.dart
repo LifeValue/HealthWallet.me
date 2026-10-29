@@ -3862,6 +3862,63 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fhirStatusCorrected => 'Korrigiert';
 
   @override
+  String get fieldInterpretation => 'Bewertung';
+
+  @override
+  String get interpretationHigh => 'Erhöht';
+
+  @override
+  String get interpretationLow => 'Erniedrigt';
+
+  @override
+  String get interpretationNormal => 'Normal';
+
+  @override
+  String get interpretationAbnormal => 'Abnormal';
+
+  @override
+  String get interpretationCriticallyAbnormal => 'Kritisch abnormal';
+
+  @override
+  String get interpretationCriticallyHigh => 'Kritisch erhöht';
+
+  @override
+  String get interpretationCriticallyLow => 'Kritisch erniedrigt';
+
+  @override
+  String get interpretationSignificantlyHigh => 'Deutlich erhöht';
+
+  @override
+  String get interpretationSignificantlyLow => 'Deutlich erniedrigt';
+
+  @override
+  String get interpretationIntermediate => 'Intermediär';
+
+  @override
+  String get interpretationResistant => 'Resistent';
+
+  @override
+  String get interpretationSusceptible => 'Sensibel';
+
+  @override
+  String get interpretationPositive => 'Positiv';
+
+  @override
+  String get interpretationNegative => 'Negativ';
+
+  @override
+  String get interpretationDetected => 'Nachgewiesen';
+
+  @override
+  String get interpretationNotDetected => 'Nicht nachgewiesen';
+
+  @override
+  String get interpretationIndeterminate => 'Unbestimmt';
+
+  @override
+  String get interpretationEquivocal => 'Grenzwertig';
+
+  @override
   String get fieldStrength => 'Wirkstärke';
 
   @override

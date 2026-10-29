@@ -204,6 +204,71 @@ void main() {
       );
     });
 
+    test('a coded interpretation is named and flagged', () {
+      final lines = _cardLines(
+        observationJson(
+          value: {'valueQuantity': quantity(7.1, unit: 'mmol/L')},
+          interpretation: [
+            codeableConcept(
+              codings: [
+                coding(
+                  'http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation',
+                  'HH',
+                ),
+              ],
+            ),
+          ],
+        ),
+        _de,
+      );
+      expect(lines.last.info, 'Bewertung: Kritisch erhöht');
+      expect(lines.last.icon.path, ResourceFieldMapper.warningIcon.path);
+    });
+
+    test('an interpretation given as text keeps its text', () {
+      expect(
+        _cardLines(
+          observationJson(
+            value: {'valueQuantity': quantity(7.1, unit: 'mmol/L')},
+            interpretation: [codeableConcept(text: 'Above range')],
+          ),
+        ).last.info,
+        'Interpretation: Above range',
+      );
+    });
+
+    test('blood pressure components given only as codes are named', () {
+      final json = observationJson(
+        code: '85354-9',
+        components: [
+          {
+            'code': codeableConcept(codings: [loinc('8480-6')]),
+            'valueQuantity': quantity(128, unit: 'mmHg'),
+          },
+          {
+            'code': codeableConcept(codings: [loinc('8462-4')]),
+            'valueQuantity': quantity(82, unit: 'mmHg'),
+          },
+        ],
+      );
+      expect(_cardLines(json).map((l) => l.info), [
+        'Systolic Blood Pressure: 128.00 mmHg',
+        'Diastolic Blood Pressure: 82.00 mmHg',
+      ]);
+    });
+
+    test('a component with an unknown code keeps its value', () {
+      final json = observationJson(
+        components: [
+          {
+            'code': codeableConcept(codings: [loinc('11111-1')]),
+            'valueQuantity': quantity(3, unit: 'mg'),
+          },
+        ],
+      );
+      expect(_cardLines(json).first.info, '11111-1: 3.00 mg');
+    });
+
     test('a cancelled lab report is flagged', () {
       final first = _cardLines({
         ...diagnosticReportJson(),
