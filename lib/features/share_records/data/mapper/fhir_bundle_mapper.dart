@@ -206,52 +206,36 @@ class FhirBundleMapper {
     }
   }
 
+  /// The record's name from its code, or '' when it has none readable; the
+  /// record then names itself ([IFhirResource.displayTitle]), localized.
   static String _extractTitle(Map<String, dynamic> json, String resourceType) {
-    switch (resourceType) {
-      case 'Encounter':
-        final type = json['type'] as List?;
-        if (type != null && type.isNotEmpty) {
-          final coding = type[0]['coding'] as List?;
-          if (coding != null && coding.isNotEmpty) {
-            return coding[0]['display']?.toString() ?? 'Encounter';
-          }
-          final text = type[0]['text']?.toString();
-          if (text != null) return text;
-        }
-        return 'Encounter';
-      case 'Observation':
-        return _extractCodeableConceptTitle(json['code'], 'Observation');
-      case 'Condition':
-        return _extractCodeableConceptTitle(json['code'], 'Condition');
-      case 'Procedure':
-        return _extractCodeableConceptTitle(json['code'], 'Procedure');
-      case 'Immunization':
-        return _extractCodeableConceptTitle(
-          json['vaccineCode'],
-          'Immunization',
-        );
-      case 'MedicationRequest':
-        return _extractCodeableConceptTitle(
-          json['medicationCodeableConcept'],
-          'Medication Request',
-        );
-      case 'DiagnosticReport':
-        return _extractCodeableConceptTitle(json['code'], 'Diagnostic Report');
-      default:
-        return resourceType;
-    }
+    return switch (resourceType) {
+      'Encounter' => _extractCodeableConceptTitle(
+        (json['type'] as List?)?.firstOrNull,
+      ),
+      'Observation' ||
+      'Condition' ||
+      'Procedure' ||
+      'DiagnosticReport' => _extractCodeableConceptTitle(json['code']),
+      'Immunization' => _extractCodeableConceptTitle(json['vaccineCode']),
+      'MedicationRequest' => _extractCodeableConceptTitle(
+        json['medicationCodeableConcept'],
+      ),
+      _ => '',
+    };
   }
 
-  static String _extractCodeableConceptTitle(
-    dynamic codeableConcept,
-    String fallback,
-  ) {
-    if (codeableConcept is! Map<String, dynamic>) return fallback;
-    final coding = codeableConcept['coding'] as List?;
-    if (coding != null && coding.isNotEmpty) {
-      return coding[0]['display']?.toString() ?? fallback;
+  /// The first coding's display that has one, then the text, then ''.
+  static String _extractCodeableConceptTitle(dynamic codeableConcept) {
+    if (codeableConcept is! Map) return '';
+    final coding = codeableConcept['coding'];
+    if (coding is List) {
+      for (final c in coding) {
+        final display = c is Map ? c['display']?.toString() : null;
+        if (display != null && display.isNotEmpty) return display;
+      }
     }
-    return codeableConcept['text']?.toString() ?? fallback;
+    return codeableConcept['text']?.toString() ?? '';
   }
 
   static DateTime? _extractDate(

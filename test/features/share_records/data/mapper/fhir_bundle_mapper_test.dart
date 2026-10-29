@@ -388,7 +388,7 @@ void main() {
               ),
             ],
           },
-          'Encounter',
+          'Telehealth',
         ),
         (
           'Encounter type without text or coding',
@@ -396,12 +396,12 @@ void main() {
             ...encounterJson(),
             'type': [<String, dynamic>{}],
           },
-          'Encounter',
+          '',
         ),
         (
           'Encounter without type',
           encounterJson()..remove('type'),
-          'Encounter',
+          '',
         ),
         ('Observation', observationJson(), 'Hemoglobin [Mass/volume] in Blood'),
         (
@@ -412,7 +412,7 @@ void main() {
         (
           'Observation without readable code',
           {...observationJson(), 'code': <String, dynamic>{}},
-          'Observation',
+          '',
         ),
         ('Condition', conditionJson(), 'Diabetes mellitus type 2'),
         ('Procedure', procedureJson(), 'Colonoscopy'),
@@ -432,14 +432,15 @@ void main() {
             ...medicationRequestJson()..remove('medicationCodeableConcept'),
             'medicationReference': {'reference': 'Medication/med-1'},
           },
-          'Medication Request',
+          '',
         ),
         (
           'DiagnosticReport',
           diagnosticReportJson(),
           'CBC panel - Blood by Automated count',
         ),
-        ('other types', allergyJson(), 'AllergyIntolerance'),
+        // No title of its own: the record names itself (displayTitle).
+        ('other types', allergyJson(), ''),
       ];
       for (final (name, json, expected) in cases) {
         test('$name -> $expected', () async {
@@ -459,10 +460,13 @@ void main() {
           });
           expect(resource.title, 'Glucose');
         },
-        skip:
-            'BUG: a coding without display wins over code.text, so the '
-            'shared record is titled "Observation"',
       );
+
+      test('a received allergy is named by its substance', () async {
+        final resource = await _parseOne(allergyJson());
+        expect(resource.displayTitle, isNot('AllergyIntolerance'));
+        expect(resource.displayTitle, isNotEmpty);
+      });
     });
 
     group('dates', () {
