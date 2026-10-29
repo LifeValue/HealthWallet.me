@@ -547,11 +547,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       final encounterForDoc = finalContainer is Encounter
           ? finalContainer
           : null;
-      await documentReferenceService.deleteDocumentReferences(
-        sourceId: sourceId,
-        encounterId: finalContainer.id,
-      );
-      await documentReferenceService.saveGroupedDocumentsAsFhirRecords(
+      await documentReferenceService.replaceSessionDocuments(
+        sessionId: activeSession.id,
         filePaths: activeSession.filePaths,
         patientId: subjectId,
         encounter: encounterForDoc,
