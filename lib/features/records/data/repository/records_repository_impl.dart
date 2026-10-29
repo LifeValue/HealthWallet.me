@@ -24,6 +24,7 @@ import 'package:health_wallet/features/sync/domain/services/demo_data_extractor.
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 @Injectable(as: RecordsRepository)
 class RecordsRepositoryImpl implements RecordsRepository {
@@ -135,6 +136,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
     required String content,
   }) async {
     final companion = RecordNotesCompanion.insert(
+      uuid: Value(const Uuid().v4()),
       resourceId: resourceId,
       sourceId: Value(await _existingSourceId(sourceId)),
       content: content,

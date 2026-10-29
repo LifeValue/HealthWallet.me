@@ -333,6 +333,31 @@ void main() {
       expect(await resourceIds(db), ['from-backup']);
     });
 
+    test(
+      'restores a backup made before notes had a key of their own',
+      () async {
+        await insertNote(db, 'old note');
+        final entry = await service.createSnapshot();
+        await editBackup(entry, (b) async {
+          await b.customStatement('DROP TRIGGER record_notes_insert_uuid');
+          await b.customStatement(
+            'DROP TRIGGER record_notes_update_updated_at',
+          );
+          await b.customStatement('DROP INDEX record_notes_uuid');
+          await b.customStatement('ALTER TABLE record_notes DROP COLUMN uuid');
+        });
+        await db.customStatement('DELETE FROM record_notes');
+
+        await service.restoreFromFile(entry.filePath);
+
+        final row = await db
+            .customSelect('SELECT id, content, uuid FROM record_notes')
+            .getSingle();
+        expect(row.data['content'], 'old note');
+        expect(row.data['uuid'], 'legacy-${row.data['id']}');
+      },
+    );
+
     test('keeps the backed-up updated_at, so sync sees no new edits', () async {
       await db.customStatement(
         'INSERT INTO fhir_resource (id, resource_raw, updated_at) '

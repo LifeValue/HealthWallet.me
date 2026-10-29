@@ -569,10 +569,10 @@ void main() {
       expect(await countRows(db, 'record_notes'), 1);
     });
 
-    test('KNOWN ISSUE: two different notes that got the same autoincrement '
-        'id on each device overwrite each other', () async {
+    test('two different notes that got the same local id on each device '
+        'both stay', () async {
       // Desktop wrote its own note #1; mobile independently wrote a note #1
-      // on another record. Last write wins treats them as one row.
+      // on another record. Their keys differ, so they are two notes.
       await insertNote(
         db,
         id: 1,
@@ -584,6 +584,7 @@ void main() {
         incoming('record_notes', [
           {
             'id': 1,
+            'uuid': '6f1c2d3e-mobile',
             'resource_id': 'obs-2',
             'content': 'mobile note on obs-2',
             'timestamp': ms(t0) ~/ 1000,
@@ -593,9 +594,49 @@ void main() {
       );
 
       final notes = await db
+          .customSelect(
+            'SELECT resource_id, content FROM record_notes ORDER BY content',
+          )
+          .get();
+      expect(
+        notes.map((r) => '${r.data['resource_id']}: ${r.data['content']}'),
+        [
+          'obs-1: desktop note on obs-1',
+          'obs-2: mobile note on obs-2',
+        ],
+      );
+    });
+
+    test('a later edit of a note reaches it by its key', () async {
+      await service.applyDelta(
+        incoming('record_notes', [
+          {
+            'id': 4,
+            'uuid': 'u-1',
+            'resource_id': 'obs-1',
+            'content': 'first',
+            'timestamp': ms(t0) ~/ 1000,
+            'updated_at': ms(at(1)),
+          },
+        ]),
+      );
+      await service.applyDelta(
+        incoming('record_notes', [
+          {
+            'id': 4,
+            'uuid': 'u-1',
+            'resource_id': 'obs-1',
+            'content': 'edited',
+            'timestamp': ms(t0) ~/ 1000,
+            'updated_at': ms(at(2)),
+          },
+        ]),
+      );
+
+      final notes = await db
           .customSelect('SELECT content FROM record_notes')
           .get();
-      expect(notes.map((r) => r.data['content']), ['mobile note on obs-2']);
+      expect(notes.map((r) => r.data['content']), ['edited']);
     });
   });
 

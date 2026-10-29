@@ -25,7 +25,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -33,6 +33,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await _createOptimizationIndexes();
       await _createSyncTriggers();
+      await _createNoteUuidTriggers();
     },
     onUpgrade: (m, from, to) async {
       final schemaSteps = stepByStep(
@@ -94,6 +95,10 @@ class AppDatabase extends _$AppDatabase {
 
       if (from <= 10 && to >= 11) {
         await _migrateToV11();
+      }
+
+      if (from <= 11 && to >= 12) {
+        await _migrateToV12();
       }
     },
   );
@@ -220,6 +225,48 @@ class AppDatabase extends _$AppDatabase {
         continue;
       }
     }
+  }
+
+  /// Notes get a key that is the same on every device. Existing notes get
+  /// `legacy-<id>`, which is what the phone and the desktop each derive for a
+  /// note they already share.
+  Future<void> _migrateToV12() async {
+    await customStatement('ALTER TABLE record_notes ADD COLUMN uuid TEXT NULL');
+    // Before the backfill, so filling the key doesn't count as an edit.
+    await _createNoteUuidTriggers();
+    await customStatement(
+      "UPDATE record_notes SET uuid = 'legacy-' || id WHERE uuid IS NULL",
+    );
+    await customStatement(
+      'CREATE UNIQUE INDEX IF NOT EXISTS record_notes_uuid '
+      'ON record_notes (uuid)',
+    );
+  }
+
+  /// A note written without a uuid (restored from an older backup, or
+  /// received from an older app version) gets the legacy one. Filling it in
+  /// is not an edit, so it keeps the note's `updated_at`; otherwise the note
+  /// would look newer than the copy on the other device.
+  Future<void> _createNoteUuidTriggers() async {
+    await customStatement(
+      'DROP TRIGGER IF EXISTS record_notes_update_updated_at',
+    );
+    await customStatement(
+      'CREATE TRIGGER record_notes_update_updated_at '
+      'AFTER UPDATE ON record_notes '
+      'WHEN (NEW.updated_at = OLD.updated_at OR NEW.updated_at IS NULL) '
+      'AND NOT (OLD.uuid IS NULL AND NEW.uuid IS NOT NULL) '
+      'BEGIN UPDATE record_notes SET updated_at = '
+      "CAST(strftime('%s', 'now') * 1000 AS INTEGER) "
+      'WHERE rowid = NEW.rowid; END',
+    );
+    await customStatement(
+      'CREATE TRIGGER IF NOT EXISTS record_notes_insert_uuid '
+      'AFTER INSERT ON record_notes '
+      'WHEN NEW.uuid IS NULL '
+      "BEGIN UPDATE record_notes SET uuid = 'legacy-' || NEW.id "
+      'WHERE id = NEW.id; END',
+    );
   }
 
   Future<void> _createOptimizationIndexes() async {

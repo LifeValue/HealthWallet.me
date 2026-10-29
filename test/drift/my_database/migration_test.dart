@@ -292,6 +292,55 @@ void main() {
     });
 
     test(
+      '11 → 12 gives every note the key the other device derives too',
+      () async {
+        final db = await migrateFrom(11, (schema) {
+          schema.rawDatabase.execute(
+            'INSERT INTO record_notes '
+            '(id, resource_id, content, timestamp, updated_at) '
+            "VALUES (7, 'obs-1', 'note', 0, 1000), "
+            "(9, 'obs-2', 'other', 0, 2000)",
+          );
+        });
+
+        expect(
+          (await rows(
+            db,
+            'SELECT id, uuid, updated_at FROM record_notes ORDER BY id',
+          )).map(
+            (r) => '${r.data['id']}:${r.data['uuid']}:${r.data['updated_at']}',
+          ),
+          ['7:legacy-7:1000', '9:legacy-9:2000'],
+          reason: 'the key is filled in without counting as an edit',
+        );
+
+        // A note written without one, as an older backup or app version does.
+        await db.customStatement(
+          'INSERT INTO record_notes (id, resource_id, content, timestamp) '
+          "VALUES (12, 'obs-3', 'old format', 0)",
+        );
+        expect(
+          (await rows(
+            db,
+            'SELECT uuid FROM record_notes WHERE id = 12',
+          )).single.data['uuid'],
+          'legacy-12',
+        );
+
+        await expectLater(
+          db.customStatement(
+            'INSERT INTO record_notes (resource_id, content, timestamp, uuid) '
+            "VALUES ('obs-4', 'clash', 0, 'legacy-7')",
+          ),
+          throwsA(isA<Exception>()),
+          reason: 'one note per key',
+        );
+
+        await db.close();
+      },
+    );
+
+    test(
       '10 → 11 tolerates specialty_override left by an interrupted run',
       () async {
         // A previous attempt added the column but crashed before the schema

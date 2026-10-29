@@ -93,7 +93,11 @@ class LwwSyncService {
       incomingRows = await _attachmentSync.restoreAttachments(incomingRows);
     }
 
-    for (final incomingRow in incomingRows) {
+    for (var incomingRow in incomingRows) {
+      if (tableName == 'record_notes' && incomingRow['uuid'] == null) {
+        // From an app version before notes had a key of their own.
+        incomingRow = {...incomingRow, 'uuid': 'legacy-${incomingRow['id']}'};
+      }
       final id = _extractId(tableName, incomingRow);
       if (id == null) continue;
 
@@ -202,11 +206,17 @@ class LwwSyncService {
     Map<String, dynamic> row,
     String id,
   ) async {
-    final columns = row.keys.toList();
+    // A note's id counts per device: a new note keeps the other device's id
+    // only while no local note has it, and an existing note keeps its own.
+    final isNote = tableName == 'record_notes';
+    final columns = [
+      for (final c in row.keys)
+        if (!(isNote && c == 'id' && await _noteIdTaken(row['id']))) c,
+    ];
     final placeholders = columns.map((_) => '?').join(', ');
     final columnNames = columns.join(', ');
     final updateClauses = columns
-        .where((c) => c != _getIdColumn(tableName))
+        .where((c) => c != _getIdColumn(tableName) && !(isNote && c == 'id'))
         .map((c) => '$c = excluded.$c')
         .join(', ');
 
@@ -228,6 +238,17 @@ class LwwSyncService {
     await _db.customStatement(sql, values);
   }
 
+  Future<bool> _noteIdTaken(Object? id) async {
+    if (id == null) return false;
+    final rows = await _db
+        .customSelect(
+          'SELECT 1 FROM record_notes WHERE id = ?',
+          variables: [Variable(id)],
+        )
+        .get();
+    return rows.isNotEmpty;
+  }
+
   String? _extractId(String tableName, Map<String, dynamic> row) {
     final idColumn = _getIdColumn(tableName);
     final value = row[idColumn];
@@ -235,9 +256,9 @@ class LwwSyncService {
     return value.toString();
   }
 
-  String _getIdColumn(String tableName) {
-    return 'id';
-  }
+  /// The column that identifies a row on every device.
+  String _getIdColumn(String tableName) =>
+      tableName == 'record_notes' ? 'uuid' : 'id';
 
   DateTime? _parseTimestamp(dynamic value) {
     if (value == null) return null;

@@ -49,4 +49,13 @@ void main() {
 
     expect(await storedSourceId(), isNull);
   });
+
+  test('each note gets its own key for the desktop sync', () async {
+    await repository.addRecordNote(resourceId: 'r1', content: 'one');
+    await repository.addRecordNote(resourceId: 'r1', content: 'two');
+
+    final keys = (await db.select(db.recordNotes).get()).map((n) => n.uuid);
+    expect(keys.toSet(), hasLength(2));
+    expect(keys, everyElement(isNot(startsWith('legacy-'))));
+  });
 }
