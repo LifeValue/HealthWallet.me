@@ -3853,11 +3853,6 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String sizeBytes(String size) {
-    return '$size octeți';
-  }
-
-  @override
   String doseNumberOfTotal(String dose, String total) {
     return 'Doza $dose din $total';
   }

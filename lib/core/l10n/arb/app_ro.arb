@@ -1523,7 +1523,6 @@
   "moreCount": "încă {count}",
   "qualificationIssuedBy": "{qualification} (eliberat de {issuer})",
   "qualificationValidPeriod": "{qualification} - Valabil: {period}",
-  "sizeBytes": "{size} octeți",
   "doseNumberOfTotal": "Doza {dose} din {total}",
   "doseNumber": "Doza {dose}",
   "immunizationPrimarySourceYes": "Da (administrat direct)",

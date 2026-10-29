@@ -1528,7 +1528,6 @@
   "moreCount": "{count} más",
   "qualificationIssuedBy": "{qualification} (expedido por {issuer})",
   "qualificationValidPeriod": "{qualification} - Válido: {period}",
-  "sizeBytes": "{size} bytes",
   "doseNumberOfTotal": "Dosis {dose} de {total}",
   "doseNumber": "Dosis {dose}",
   "immunizationPrimarySourceYes": "Sí (administrada directamente)",

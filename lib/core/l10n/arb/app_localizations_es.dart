@@ -3853,11 +3853,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String sizeBytes(String size) {
-    return '$size bytes';
-  }
-
-  @override
   String doseNumberOfTotal(String dose, String total) {
     return 'Dosis $dose de $total';
   }

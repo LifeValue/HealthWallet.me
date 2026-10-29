@@ -1818,14 +1818,6 @@
       }
     }
   },
-  "sizeBytes": "{size} bytes",
-  "@sizeBytes": {
-    "placeholders": {
-      "size": {
-        "type": "String"
-      }
-    }
-  },
   "doseNumberOfTotal": "Dose {dose} of {total}",
   "@doseNumberOfTotal": {
     "placeholders": {

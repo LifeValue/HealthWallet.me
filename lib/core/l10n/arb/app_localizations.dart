@@ -7049,12 +7049,6 @@ abstract class AppLocalizations {
   /// **'{qualification} - Valid: {period}'**
   String qualificationValidPeriod(String qualification, String period);
 
-  /// No description provided for @sizeBytes.
-  ///
-  /// In en, this message translates to:
-  /// **'{size} bytes'**
-  String sizeBytes(String size);
-
   /// No description provided for @doseNumberOfTotal.
   ///
   /// In en, this message translates to:
