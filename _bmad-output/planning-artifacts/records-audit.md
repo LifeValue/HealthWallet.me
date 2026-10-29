@@ -37,6 +37,37 @@ Audit of the records feature, for triage. Written 2026-10-29 against `develop` a
 | 5    | A25–A28, then B and C              | Records screen state, with the first `RecordsBloc` and `AttachmentBrowseBloc` tests; then robustness, UX, leftovers |
 | 6    | T1–T5, alongside each step         | A failing test first for each fix (backlog rule 1); test databases with foreign keys on                          |
 
+## Status
+
+Steps 1–4 are implemented on `feature/records-stabilization` (step 1 on `feature/records-display`, merged in), each fix with a test that failed before it, and not yet run on devices. `scripts/check.sh` passes except the two SSDP tests, which fail on any machine where another app holds UDP port 1900. Records coverage went from 15.2% to 43.8%.
+
+| Issue      | Status                                                                                                                                                                                                                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1–A8      | Fixed, with the nine skipped display tests of backlog section 4 (now running)                                                                                                                                                                                                            |
+| A9         | Fixed: a received record without a coded name names itself. The other four share-mapper skips (D7, versioned reference, shallow copy) stay skipped                                                                                                                                       |
+| A10–A12    | Fixed. One rule (`PatientSourceUtils.recordsScope`) decides whose records Records shows; the page now also follows patient changes and reloads only when the source changes, which removes backlog B4's "reloads on every Home state change"                                             |
+| A13        | Fixed with schema v12: notes sync on a `uuid` (existing notes get `legacy-<id>` on both ends). Phone and desktop both need this version for notes to sync; release them together                                                                                                         |
+| A14        | Fixed without changing existing ids: only a resource whose id is taken by another source or type gets `sourceId/type/id`. Every Fasten sync downloads everything, so a record overwritten before the fix comes back on the next sync                                                     |
+| A15        | Fixed: deleting a source, desktop Reset and notes on records without a source. Test databases now run with foreign keys on                                                                                                                                                              |
+| A16        | Fixed for records and demo data. Removing a source from Home still leaves its attachment files (that path has no file access)                                                                                                                                                            |
+| A17        | Fixed. Documents saved before the fix carry no session tag, so saving such an old session again adds new documents next to the old ones                                                                                                                                                 |
+| A18        | Fixed: a device that never synced queues nothing; queued deltas carry no files and merge per table; the watcher listens to table updates. Still open (pinned as "KNOWN ISSUE"): an offline sync on a device that synced before moves the last sync time, and mobile clears the queue on start |
+| A19–A21    | Fixed. A21 refuses the attachment, but the error isn't shown yet (B13)                                                                                                                                                                                                                   |
+| A22        | Fixed; the race needs a device to confirm. The preview cache is now keyed by the attachments too (part of B27)                                                                                                                                                                           |
+| A23, A24   | Fixed                                                                                                                                                                                                                                                                                    |
+| A25–A28    | Not started (step 5); each is a skipped `BUG:` test in `records_bloc_test.dart`                                                                                                                                                                                                          |
+| B9         | Fixed with A10–A12, including the emergency card                                                                                                                                                                                                                                         |
+| T2–T4      | Done for the notes, attachments and records BLoCs, the entities and cards, and the sync and file paths changed here. T1 still lacks paging and IPS export tests; T5 (devices) is open                                                                                                   |
+
+Also changed because the fixes needed it: desktop backup restore deleted parents before children (the A15 failure again) and could not restore a backup from an older schema; it now empties tables children first and copies only shared columns.
+
+Found while fixing, not yet triaged:
+
+- LOINC 882-1 ("ABO and Rh group"), common in EHR data, is not recognised as a blood type; only 883-9, 10331-7 and 34530-6 are.
+- `records_page` groups and sorts by the local day of a UTC-midnight timestamp; `FhirFieldExtractor.recordDay` (step 1) gives the calendar day.
+- `record_detail_page.dart:87` has an empty `catch`; `FhirObservationExtractor.extractInterpretation` is now unused.
+- Tooling: the `rubocop` pre-commit environment doesn't build on Ruby 3.4.7 here (the `json` gem's native extension), and the `dart-format` hook fails inside a git worktree because `fvm` can't read its cache under pre-commit's `GIT_DIR`.
+
 ---
 
 ## A. Critical and high

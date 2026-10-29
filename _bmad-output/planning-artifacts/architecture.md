@@ -124,9 +124,13 @@ Bench-only candidates (`AiModelVariant` values left out of `availableVariants`, 
 
 ## Database
 
-`lib/core/data/local/app_database.dart`, `schemaVersion` 11. Tables: `FhirResource`, `Sources`, `RecordNotes`, `ProcessingSessions`. v1→8 migrate with drift `stepByStep` (there is no v4; `from3To5` covers it). v8→9 (per-patient wallet sources), v9→10 (sync triggers) and v10→11 are hand-written in `onUpgrade`. Snapshots for v1–3 and v5–11 are in `drift_schemas/my_database/`, generated test schemas in `test/drift/my_database/generated/`, tests in `test/drift/my_database/migration_test.dart`.
+`lib/core/data/local/app_database.dart`, `schemaVersion` 12. Tables: `FhirResource`, `Sources`, `RecordNotes`, `ProcessingSessions`. v1→8 migrate with drift `stepByStep` (there is no v4; `from3To5` covers it). v8→9 (per-patient wallet sources), v9→10 (sync triggers), v10→11 and v11→12 (note keys) are hand-written in `onUpgrade`. Snapshots for v1–3 and v5–12 are in `drift_schemas/my_database/`, generated test schemas in `test/drift/my_database/generated/`, tests in `test/drift/my_database/migration_test.dart`.
 
-Synced tables have triggers that set `updated_at` on insert and on any update that leaves it unchanged.
+Synced tables have triggers that set `updated_at` on insert and on any update that leaves it unchanged; filling in a note's `uuid` (below) doesn't count as an update.
+
+Row ids: a Fasten resource is stored under its FHIR id, unless that id already belongs to a resource of another source or type; then it is `sourceId/type/id` (`SyncLocalDataSourceImpl.cacheFhirResources`). Notes have a local integer `id` and a `uuid` that identifies them on every device: a v4 UUID for new notes, `legacy-<id>` for notes from before v12 or from an app version without the column (a trigger fills it in). `record_notes.source_id` references `sources`, with foreign keys on: delete notes before their source.
+
+Deleting records goes through `RecordsRepositoryImpl._deleteRecords`: it also deletes their notes and the DocumentReferences attached only to them (`context.related`), then each attachment file no remaining record refers to, never a file outside the app's documents.
 
 ## Mobile ↔ desktop communication
 
@@ -179,13 +183,15 @@ The decrypted payload starts with a `MessageType` byte:
 | `sync.file_request` | receiver → sender | Missing attachment paths                                                                                                                                             |
 | `sync.file_data`    | sender → receiver | `path → base64` for those files                                                                                                                                      |
 
+Rows are matched on `id`, except `record_notes`, matched on `uuid`; an incoming note keeps its `id` only while no local note has it. Both apps need v12 for notes to sync: an older app rejects the `uuid` column.
+
 Conflicts: the later `updated_at` wins; on a tie the larger device id wins. Only `fhir_resource` stores a local `device_id`, so on a tie in `sources` or `record_notes` the incoming row nearly always wins. A local `DocumentReference` with a broken attachment loses to the incoming row. The delta query is `WHERE updated_at >= ?`; counts skip rows with `deleted_at` set; `LwwSyncInitialised` hard-deletes rows whose `deleted_at` is older than 30 days.
 
 Deletes: no code in `lib/` sets `deleted_at`, and none ever has; no read outside `lww_sync/` filters on it. Repositories hard-delete synced rows. A hard delete produces no delta, and the row-count mismatch it leaves makes the peer resend its whole table (`_onTableStatusReceived` computes a delta from epoch 0), so the deleted row comes back. The archived PRD (FR35, NFR14) asked for soft-delete propagation with 30-day tombstone cleanup; only the columns and the cleanup were built.
 
-Offline queue: `OfflineQueueService` keeps pending deltas in SharedPreferences (`lww_offline_queue`) and flushes them on reconnect; `lib/main.dart` clears the key on every mobile start.
+Offline queue: `OfflineQueueService` keeps pending deltas in SharedPreferences (`lww_offline_queue`), one per table (a new delta merges into the queued one by row id), without attachment bytes (the peer asks for missing files after `sync.verify`), and flushes them on reconnect; `lib/main.dart` clears the key on every mobile start. A device that has never synced (no last sync time) queues nothing: its first connection sends every row. `ChangeWatcherService` listens to drift table updates, not queries.
 
-**Backup** (`desktop/backup/`): desktop snapshots with `VACUUM INTO` to `~/Documents/HealthWallet/Backups/` (`USERPROFILE` on Windows).
+**Backup** (`desktop/backup/`): desktop snapshots with `VACUUM INTO` to `~/Documents/HealthWallet/Backups/` (`USERPROFILE` on Windows). Restore empties the tables children first and copies only the columns the backup and the current schema share, so backups from an older schema restore.
 
 | Type              | Direction         | Meaning                              |
 | ----------------- | ----------------- | ------------------------------------ |
