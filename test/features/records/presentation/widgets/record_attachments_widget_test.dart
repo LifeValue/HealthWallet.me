@@ -76,7 +76,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: RecordAttachmentsWidget(
-            resource: Condition(id: 'cond'),
+            resource: const Condition(id: 'cond'),
             readOnly: readOnly,
           ),
         ),
