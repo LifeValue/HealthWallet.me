@@ -148,27 +148,28 @@ abstract class MappingEncounter
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'encounterType': TextFieldDescriptor(
-      label: 'Encounter Name',
-      value: encounterType.value,
-      confidenceLevel: encounterType.confidenceLevel,
-      validators: [nonEmptyValidator],
-    ),
-    'periodStart': TextFieldDescriptor(
-      label: 'Start Date',
-      value: periodStart.value,
-      confidenceLevel: periodStart.confidenceLevel,
-      fieldType: FieldType.date,
-      validators: [nonEmptyValidator, dateValidator],
-    ),
-    'specialty': TextFieldDescriptor(
-      label: 'Specialty',
-      value: specialty.value,
-      confidenceLevel: specialty.confidenceLevel,
-      fieldType: FieldType.dropdown,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'encounterType': TextFieldDescriptor(
+          label: l10n.labelEncounterName,
+          value: encounterType.value,
+          confidenceLevel: encounterType.confidenceLevel,
+          validators: [nonEmptyValidator],
+        ),
+        'periodStart': TextFieldDescriptor(
+          label: l10n.labelStartDate,
+          value: periodStart.value,
+          confidenceLevel: periodStart.confidenceLevel,
+          fieldType: FieldType.date,
+          validators: [nonEmptyValidator, dateValidator],
+        ),
+        'specialty': TextFieldDescriptor(
+          label: l10n.labelSpecialty,
+          value: specialty.value,
+          confidenceLevel: specialty.confidenceLevel,
+          fieldType: FieldType.dropdown,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -195,7 +196,7 @@ abstract class MappingEncounter
       );
 
   @override
-  String get label => 'Encounter';
+  String localizedLabel(AppLocalizations l10n) => l10n.encounterLabel;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

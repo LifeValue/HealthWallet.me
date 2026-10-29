@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:airdrop/airdrop.dart';
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/share_records/data/mapper/fhir_bundle_mapper.dart';
@@ -11,6 +12,7 @@ import 'package:health_wallet/features/share_records/data/service/secure_share_s
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 @lazySingleton
 class ShareRecordsService {
@@ -46,7 +48,9 @@ class ShareRecordsService {
     SecureShareSession session,
   ) async {
     final tempDir = await getTemporaryDirectory();
-    final tempFile = File('${tempDir.path}/share_${payload.id}.bin');
+    final tempFile = File(
+      '${tempDir.path}/${TempFileSweeper.sharePayloadName(payload.id)}',
+    );
 
     try {
       final plaintext = utf8.encode(jsonEncode(payload.toJson()));
@@ -89,13 +93,26 @@ class ShareRecordsService {
     );
   }
 
+  /// Whether [id] can name a share session: payload ids are UUIDs, and
+  /// anything else could reach a file path (`share_session_<id>`).
+  static bool isValidSessionId(String id) => Uuid.isValidUUID(
+    fromString: id,
+    validationMode: ValidationMode.nonStrict,
+  );
+
   /// Parses a decrypted payload into a view-only session container.
   Future<EphemeralRecordsContainer?> parsePayload(Uint8List bytes) async {
+    String? sessionId;
     try {
       final jsonString = utf8.decode(bytes);
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       final payload = SharePayload.fromJson(json);
+      if (!isValidSessionId(payload.id)) {
+        debugPrint('[TRANSFER] Rejected a payload whose id is not a UUID');
+        return null;
+      }
 
+      sessionId = payload.id;
       final sessionTempDir = await _createSessionTempDir(payload.id);
       final result = await FhirBundleMapper.parseBundle(
         payload.bundle,
@@ -115,64 +132,39 @@ class ShareRecordsService {
       );
     } catch (e) {
       debugPrint('[TRANSFER] Error parsing payload: $e');
+      // Attachments already restored for the rejected share are health data.
+      if (sessionId != null) await cleanupSessionTempDir(sessionId);
       return null;
     }
   }
 
-  static const _sessionDirPrefix = 'share_session_';
-  static const _payloadFilePrefix = 'share_';
-
-  /// Deletes the decrypted attachments of a receive session.
-  Future<void> deleteSessionFiles(String sessionId) async {
-    try {
-      final tempDir = await getTemporaryDirectory();
-      final sessionDir = Directory(
-        '${tempDir.path}/$_sessionDirPrefix$sessionId',
-      );
-      if (await sessionDir.exists()) {
-        await sessionDir.delete(recursive: true);
-      }
-    } catch (e) {
-      debugPrint('[TRANSFER] Error deleting session files: $e');
-    }
-  }
-
-  /// Removes what a share left in the temp directory when the app was killed
-  /// or crashed mid-session: decrypted attachments and encrypted payloads.
-  /// Run at startup, before any share can be in progress.
-  Future<void> sweepLeftovers() async {
-    try {
-      final tempDir = await getTemporaryDirectory();
-      if (!await tempDir.exists()) return;
-      await for (final entity in tempDir.list(followLinks: false)) {
-        final name = entity.uri.pathSegments.lastWhere(
-          (segment) => segment.isNotEmpty,
-          orElse: () => '',
-        );
-        final isSessionDir =
-            entity is Directory && name.startsWith(_sessionDirPrefix);
-        final isPayload =
-            entity is File &&
-            name.startsWith(_payloadFilePrefix) &&
-            name.endsWith('.bin');
-        if (isSessionDir || isPayload) {
-          await entity.delete(recursive: true);
-        }
-      }
-    } catch (e) {
-      debugPrint('[TRANSFER] Error sweeping share leftovers: $e');
-    }
+  Future<Directory> _sessionTempDir(String sessionId) async {
+    final tempDir = await getTemporaryDirectory();
+    return Directory(
+      '${tempDir.path}/${TempFileSweeper.shareSessionName(sessionId)}',
+    );
   }
 
   Future<String> _createSessionTempDir(String sessionId) async {
-    final tempDir = await getTemporaryDirectory();
-    final sessionDir = Directory(
-      '${tempDir.path}/$_sessionDirPrefix$sessionId',
-    );
+    final sessionDir = await _sessionTempDir(sessionId);
     if (!await sessionDir.exists()) {
       await sessionDir.create(recursive: true);
     }
     return sessionDir.path;
+  }
+
+  /// Deletes the `share_session_<sessionId>` directory holding a received
+  /// share's attachments. Does nothing for an id that isn't a UUID.
+  Future<void> cleanupSessionTempDir(String sessionId) async {
+    if (!isValidSessionId(sessionId)) return;
+    try {
+      final sessionDir = await _sessionTempDir(sessionId);
+      if (await sessionDir.exists()) {
+        await sessionDir.delete(recursive: true);
+      }
+    } catch (e) {
+      debugPrint('[TRANSFER:❌] Error cleaning up session directory: $e');
+    }
   }
 
   /// Reads a file the plugin received and deletes it.
@@ -190,7 +182,7 @@ class ShareRecordsService {
           await file.delete();
         }
       } catch (e) {
-        debugPrint('[TRANSFER] Error deleting received file: $e');
+        debugPrint('[TRANSFER:❌] Error deleting the received file: $e');
       }
       return null;
     }

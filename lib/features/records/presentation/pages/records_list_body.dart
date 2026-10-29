@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -17,6 +18,15 @@ import 'package:health_wallet/features/records/presentation/widgets/timeline_ent
 import 'package:health_wallet/features/sync/presentation/widgets/sync_placeholder_widget.dart';
 
 class RecordsListBody extends StatelessWidget {
+  /// Whether a long press may start selecting records. Selection only feeds
+  /// Share nearby, which the desktop doesn't have: there the selection bar is
+  /// hidden, so a selection could neither be used nor left.
+  @visibleForTesting
+  static bool canStartSelection({
+    required bool isDesktop,
+    required bool isSelectionMode,
+  }) => !isDesktop && !isSelectionMode;
+
   final RecordsState state;
   final List<IFhirResource> resources;
   final ScrollController scrollController;
@@ -86,8 +96,10 @@ class RecordsListBody extends StatelessWidget {
           pageController: pageController,
           recordTypeName: state.activeFilters.isNotEmpty
               ? state.activeFilters.length == 1
-                    ? state.activeFilters.first.display
-                    : state.activeFilters.map((f) => f.display).join(', ')
+                    ? state.activeFilters.first.localizedName(context.l10n)
+                    : state.activeFilters
+                          .map((f) => f.localizedName(context.l10n))
+                          .join(', ')
               : null,
           onImportDocument: onImportDocument,
           onPickImage: onPickImage,
@@ -163,8 +175,11 @@ class RecordsListBody extends StatelessWidget {
               );
             }
           },
-          // Selection only feeds proximity sharing, not implemented on desktop.
-          onLongPress: state.isSelectionMode || getIt<AppPlatform>().isDesktop
+          onLongPress:
+              !canStartSelection(
+                isDesktop: getIt<AppPlatform>().isDesktop,
+                isSelectionMode: state.isSelectionMode,
+              )
               ? null
               : () {
                   final bloc = context.read<RecordsBloc>();

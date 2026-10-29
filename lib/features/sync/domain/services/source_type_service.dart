@@ -25,18 +25,10 @@ class SourceTypeService {
     }
   }
 
-  String getSourceTypeDescription(SourceType type) {
-    switch (type) {
-      case SourceType.wallet:
-        return 'Personal Health Wallet - You can add, edit, and manage data';
-      case SourceType.fasten:
-        return 'Fasten Health System - Read-only data from your healthcare provider';
-      case SourceType.ehr:
-        return 'Electronic Health Record - Read-only data from your medical records';
-      case SourceType.external:
-        return 'External System - Read-only data from external healthcare systems';
-    }
-  }
+  /// Stored as the patient name of a wallet source when the patient has no
+  /// name. It is synced data, so it stays English; screens show
+  /// `l10n.unknownPatient` in its place.
+  static const unknownPatientName = 'Unknown Patient';
 
   bool canEditSource(Source source) {
     if (isSourceWritable(source.platformType)) {

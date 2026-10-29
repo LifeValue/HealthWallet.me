@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -58,7 +59,9 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
       setState(() => _nameError = null);
     }
     if (_selectedSpecialty.isEmpty) {
-      setState(() => _specialtyError = 'Please select a specialty');
+      setState(
+        () => _specialtyError = context.l10n.pleaseSelectSpecialty,
+      );
     } else {
       setState(() => _specialtyError = null);
     }
@@ -230,6 +233,8 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                     value: _selectedSpecialty,
                     items: MedicalSpecialty.values,
                     openAbove: true,
+                    // The English name is the stored value the dropdown
+                    // matches; the builders show it localized.
                     getDisplayText: (s) => s.displayName,
                     onChanged: (s) => setState(() {
                       _selectedSpecialty = s.displayName;
@@ -250,7 +255,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            s.displayName,
+                            s.localizedName(context.l10n),
                             style: AppTextStyle.bodyMedium.copyWith(
                               color: isSelected
                                   ? context.colorScheme.primary
@@ -290,7 +295,7 @@ class _CreateEncounterDialogState extends State<CreateEncounterDialog> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            match.displayName,
+                            match.localizedName(context.l10n),
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyle.labelLarge.copyWith(
                               color: context.colorScheme.onSurface,

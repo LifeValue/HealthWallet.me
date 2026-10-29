@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:health_wallet/core/config/constants/app_constants.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
 import 'package:health_wallet/features/processing/data/model/generation_stats.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 import 'package:image/image.dart' as img;
@@ -91,7 +92,7 @@ mixin AiInferenceHandler {
     final dir = await getTemporaryDirectory();
     final resizedPath = path.join(
       dir.path,
-      'resized_${path.basename(imagePath)}',
+      '${TempFileSweeper.resizedImagePrefix}${path.basename(imagePath)}',
     );
     final quality = (Platform.isMacOS || Platform.isLinux || Platform.isWindows)
         ? 95

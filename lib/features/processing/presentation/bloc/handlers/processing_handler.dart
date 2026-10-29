@@ -4,6 +4,8 @@ import 'package:collection/collection.dart';
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -36,6 +38,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
   PatientDeduplicationService get deduplicationService;
   SourceTypeService get sourceTypeService;
   SharedPreferences get prefs;
+  AppStringsProvider get strings;
 
   void updateSession(
     Emitter<ProcessingState> emit, {
@@ -91,8 +94,8 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         );
         emit(
           state.copyWith(
-            status: const PipelineStatus.failure(
-              error: 'No images were generated from the scan. Please try scanning again.',
+            status: PipelineStatus.failure(
+              error: strings.l10n.processingNoImagesGenerated,
             ),
           ),
         );
@@ -162,7 +165,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           emit(
             state.copyWith(
               notification: Notification(
-                text: "${finalSession?.origin ?? 'Document'} patient matched",
+                text: strings.l10n.processingPatientMatched(
+                  _originName(finalSession),
+                ),
                 route: ProcessingRoute(sessionId: event.sessionId),
                 time: DateTime.now(),
               ),
@@ -218,8 +223,9 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
         emit(
           state.copyWith(
             notification: Notification(
-              text:
-                  "${finalSession?.origin ?? 'Document'} patient info extracted",
+              text: strings.l10n.processingPatientInfoExtracted(
+                _originName(finalSession),
+              ),
               route: ProcessingRoute(sessionId: event.sessionId),
               time: DateTime.now(),
             ),
@@ -246,12 +252,21 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           );
         } else {
           emit(
-            state.copyWith(status: PipelineStatus.failure(error: e.toString())),
+            state.copyWith(
+              status: PipelineStatus.failure(
+                error: e.toString(),
+                reason: PipelineFailureReason.of(e),
+              ),
+            ),
           );
         }
       }
     }
   }
+
+  String _originName(ProcessingSession? session) =>
+      session?.origin.localizedName(strings.l10n) ??
+      strings.l10n.fhirTypeDocumentReference;
 
   Future<Patient?> _tryMatchPatientFromOcr(String ocrText) async {
     if (ocrText.isEmpty) return null;
@@ -277,7 +292,10 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           }
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      // No pre-match: the AI extraction below still finds the patient.
+      logger.w('OCR patient pre-match failed: $e');
+    }
     return null;
   }
 
@@ -409,7 +427,7 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       emit(
         state.copyWith(
           notification: Notification(
-            text: '${session.origin} processing finished',
+            text: strings.l10n.processingFinished(_originName(session)),
             route: ProcessingRoute(sessionId: event.sessionId),
             time: DateTime.now(),
           ),
@@ -438,7 +456,12 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
           );
         } else {
           emit(
-            state.copyWith(status: PipelineStatus.failure(error: e.toString())),
+            state.copyWith(
+              status: PipelineStatus.failure(
+                error: e.toString(),
+                reason: PipelineFailureReason.of(e),
+              ),
+            ),
           );
         }
       }
@@ -538,7 +561,14 @@ mixin ProcessingHandler on Bloc<ProcessingEvent, ProcessingState> {
       emit(state.copyWith(status: const PipelineStatus.success()));
     } catch (e) {
       logger.e('[ProcessingBloc] resource creation failed: $e');
-      emit(state.copyWith(status: PipelineStatus.failure(error: e.toString())));
+      emit(
+        state.copyWith(
+          status: PipelineStatus.failure(
+            error: e.toString(),
+            reason: PipelineFailureReason.of(e),
+          ),
+        ),
+      );
     }
   }
 

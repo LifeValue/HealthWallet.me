@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:health_wallet/core/utils/validator.dart';
 
 enum FieldType {
   text,
@@ -17,23 +18,25 @@ class TextFieldDescriptor {
     this.keyboardType,
   });
 
+  /// The field label in the language the descriptor was built with.
   final String label;
   final String value;
   final double confidenceLevel;
   final FieldType fieldType;
-  final List<String? Function(String?)>? validators;
+  final List<FieldValidationError? Function(String?)>? validators;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
 
-  String? validate(String? value) {
+  /// The first validation error of [value], or null when it is valid.
+  FieldValidationError? validate(String? value) {
     if (validators == null || validators!.isEmpty) {
       return null;
     }
     for (var validator in validators!) {
-      final String? message = validator(value);
+      final error = validator(value);
 
-      if (message != null) {
-        return message;
+      if (error != null) {
+        return error;
       }
     }
 

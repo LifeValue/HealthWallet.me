@@ -67,7 +67,9 @@ class PatientSetupDialog extends StatefulWidget {
 class _PatientSetupDialogState extends State<PatientSetupDialog>
     with IdCardScanMixin {
   DateTime? _selectedBirthDate;
-  String _selectedGender = 'Prefer not to say';
+
+  /// A label of [_getGenderOptions]; set in [didChangeDependencies].
+  late String _selectedGender;
   String _selectedBloodType = 'N/A';
   String _selectedContactPhone = '';
   bool _isLoading = false;
@@ -222,7 +224,10 @@ class _PatientSetupDialogState extends State<PatientSetupDialog>
               given: givenList,
               family: currentFamilyValue.isNotEmpty ? currentFamilyValue : null,
               birthDate: _selectedBirthDate,
-              gender: _selectedGender,
+              gender: GenderMapper.mapLocalizedDisplayToFhirCode(
+                _selectedGender,
+                context.l10n,
+              ),
               bloodType: _selectedBloodType,
               identifierValue: currentIdentifierValue.isNotEmpty
                   ? currentIdentifierValue

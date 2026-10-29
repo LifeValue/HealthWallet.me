@@ -246,7 +246,8 @@ class _EphemeralViewerViewState extends State<EphemeralViewerView>
         final title = r.title.toLowerCase();
         final displayTitle = r.displayTitle.toLowerCase();
         final statusDisplay = r.statusDisplay.toLowerCase();
-        final additionalInfoText = r.additionalInfo
+        final additionalInfoText = r
+            .additionalInfo(context.l10n)
             .map((info) => info.info)
             .join(' ')
             .toLowerCase();

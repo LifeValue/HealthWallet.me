@@ -123,7 +123,10 @@ class SyncSection extends StatelessWidget {
             InfoRow(
               label: context.l10n.lastSynced,
               value: syncState.lastSyncTime != null
-                  ? DateFormatUtils.getSincePretty(syncState.lastSyncTime!)
+                  ? DateFormatUtils.getSincePretty(
+                      syncState.lastSyncTime!,
+                      context.l10n,
+                    )
                   : context.l10n.desktopSyncNotYet,
             ),
             if (syncState.sentRows > 0 || syncState.receivedRows > 0)
@@ -144,7 +147,7 @@ class SyncSection extends StatelessWidget {
             if (syncState.error != null) ...[
               const SizedBox(height: Insets.small),
               Text(
-                syncState.error!,
+                context.l10n.desktopSyncFailed,
                 style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -249,7 +252,7 @@ class _SyncHistoryEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final timeStr = DateFormatUtils.getSincePretty(time);
+    final timeStr = DateFormatUtils.getSincePretty(time, context.l10n);
     final device = deviceName ?? context.l10n.desktopUnknownDevice;
     final hasTransfer = sentRows > 0 || receivedRows > 0;
 

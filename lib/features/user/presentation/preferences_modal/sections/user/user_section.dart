@@ -81,7 +81,7 @@ class _UserSectionState extends State<UserSection> {
                   ? user.name
                   : (syncState.syncQrData?.tokenMeta.fullName.isNotEmpty == true
                         ? syncState.syncQrData!.tokenMeta.fullName
-                        : 'User');
+                        : context.l10n.homeDefaultUserName);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Insets.normal),

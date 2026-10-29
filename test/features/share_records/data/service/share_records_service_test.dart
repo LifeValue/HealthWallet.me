@@ -48,6 +48,15 @@ class _NativeAirdrop {
 Uint8List _bytes(SharePayload payload) =>
     Uint8List.fromList(utf8.encode(jsonEncode(payload.toJson())));
 
+/// [payload] as plain JSON maps, the way it arrives on the wire.
+Map<String, dynamic> _wireJson(SharePayload payload) =>
+    jsonDecode(jsonEncode(payload.toJson())) as Map<String, dynamic>;
+
+Uint8List _jsonBytes(Map<String, dynamic> json) =>
+    Uint8List.fromList(utf8.encode(jsonEncode(json)));
+
+const _sessionId = '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -226,43 +235,142 @@ void main() {
       expect(file.existsSync(), isFalse);
     });
 
-    test('deleteSessionFiles removes only that session\'s folder', () async {
-      final session = Directory('${root.path}/tmp/share_session_s1')
-        ..createSync();
-      File('${session.path}/scan.png').writeAsBytesSync([1]);
-      final other = Directory('${root.path}/tmp/share_session_s2')
-        ..createSync();
-
-      await service.deleteSessionFiles('s1');
-
-      expect(session.existsSync(), isFalse);
-      expect(other.existsSync(), isTrue);
-      await expectLater(service.deleteSessionFiles('missing'), completes);
-    });
-
-    test('sweepLeftovers removes share files and nothing else', () async {
-      final tmp = '${root.path}/tmp';
-      final session = Directory('$tmp/share_session_old')..createSync();
-      File('${session.path}/scan.png').writeAsBytesSync([1]);
-      final payload = File('$tmp/share_p1.bin')..writeAsBytesSync([2]);
-      final unrelated = File('$tmp/scan_upload.pdf')..writeAsBytesSync([3]);
-      final shareNamedJson = File('$tmp/share_notes.json')
-        ..writeAsStringSync('{}');
-
-      await service.sweepLeftovers();
-
-      expect(session.existsSync(), isFalse);
-      expect(payload.existsSync(), isFalse);
-      expect(unrelated.existsSync(), isTrue);
-      expect(shareNamedJson.existsSync(), isTrue);
-    });
-
     test('readReceivedFile returns null for a missing file', () async {
       expect(
         await service.readReceivedFile('${root.path}/tmp/nope.bin'),
         isNull,
       );
     });
+  });
+
+  group('session ids', () {
+    test('isValidSessionId accepts UUIDs and nothing else', () {
+      expect(ShareRecordsService.isValidSessionId(_sessionId), isTrue);
+      expect(
+        ShareRecordsService.isValidSessionId(_sessionId.toUpperCase()),
+        isTrue,
+      );
+      for (final id in [
+        '',
+        '.',
+        '..',
+        '../../x',
+        'abc',
+        '$_sessionId/../x',
+        '../$_sessionId',
+        _sessionId.replaceAll('-', ''),
+      ]) {
+        expect(ShareRecordsService.isValidSessionId(id), isFalse, reason: id);
+      }
+    });
+
+    test('payloads from createPayload carry a valid id', () async {
+      final payload = await payloadWithAttachment();
+      expect(ShareRecordsService.isValidSessionId(payload.id), isTrue);
+    });
+
+    for (final badId in ['../../x', 'not-a-uuid', '']) {
+      test(
+        'a share whose id is "$badId" is rejected and writes nothing',
+        () async {
+          final json = _wireJson(await payloadWithAttachment())..['id'] = badId;
+
+          final container = await service.parsePayload(_jsonBytes(json));
+
+          expect(container, isNull);
+          expect(Directory('${root.path}/tmp').listSync(), isEmpty);
+          expect(
+            root.listSync().map((e) => e.path.split('/').last).toSet(),
+            {'Documents', 'tmp'},
+          );
+        },
+      );
+    }
+
+    test('a share that fails to parse leaves no attachments behind', () async {
+      final json = _wireJson(await payloadWithAttachment())
+        ..['id'] = _sessionId;
+      final bundle = json['bundle'] as Map<String, dynamic>;
+      // An entry whose resource isn't an object fails the whole share after
+      // the attachment of the earlier entry has been restored.
+      bundle['entry'] = [
+        ...bundle['entry'] as List,
+        {'resource': <Object>[]},
+      ];
+
+      final container = await service.parsePayload(_jsonBytes(json));
+
+      expect(container, isNull);
+      expect(
+        Directory('${root.path}/tmp/share_session_$_sessionId').existsSync(),
+        isFalse,
+      );
+    });
+  });
+
+  group('cleanupSessionTempDir', () {
+    late Directory tmp;
+    late File sentinel;
+
+    setUp(() {
+      tmp = Directory('${root.path}/tmp');
+      sentinel = File('${tmp.path}/keep.txt')..writeAsStringSync('keep');
+    });
+
+    test('deletes the session directory with all its attachments', () async {
+      final dir = Directory('${tmp.path}/share_session_$_sessionId')
+        ..createSync();
+      for (final name in ['a.png', 'b.pdf', 'c.bin']) {
+        File('${dir.path}/$name').writeAsBytesSync([1, 2, 3]);
+      }
+
+      await service.cleanupSessionTempDir(_sessionId);
+
+      expect(dir.existsSync(), isFalse);
+      expect(sentinel.existsSync(), isTrue);
+    });
+
+    test('deletes an empty session directory (no attachments)', () async {
+      final dir = Directory('${tmp.path}/share_session_$_sessionId')
+        ..createSync();
+
+      await service.cleanupSessionTempDir(_sessionId);
+
+      expect(dir.existsSync(), isFalse);
+      expect(sentinel.existsSync(), isTrue);
+    });
+
+    // A failed delete is simulated, not made with chmod: the CI container
+    // runs the tests as root, which ignores file permissions.
+    test('completes when the session directory cannot be deleted', () async {
+      final attempts = <String>[];
+
+      await IOOverrides.runZoned(
+        () => expectLater(service.cleanupSessionTempDir(_sessionId), completes),
+        createDirectory: (path) => _UndeletableDirectory(path, attempts),
+      );
+
+      expect(attempts, [endsWith('/share_session_$_sessionId')]);
+    });
+
+    test('completes when the session directory does not exist', () async {
+      await expectLater(service.cleanupSessionTempDir(_sessionId), completes);
+      expect(sentinel.existsSync(), isTrue);
+    });
+
+    for (final badId in ['', '.', '..', '../tmp', '../../x']) {
+      test('ignores the id "$badId" and never deletes anything', () async {
+        final cwdMarker = File('${Directory.current.path}/pubspec.yaml');
+        Directory('${tmp.path}/share_session_').createSync();
+
+        await service.cleanupSessionTempDir(badId);
+
+        expect(tmp.existsSync(), isTrue);
+        expect(sentinel.existsSync(), isTrue);
+        expect(Directory('${tmp.path}/share_session_').existsSync(), isTrue);
+        expect(cwdMarker.existsSync(), isTrue);
+      });
+    }
   });
 
   group('plugin forwarding', () {
@@ -471,4 +579,22 @@ class _PeerTransport implements ShareMessageTransport {
 
   @override
   Future<void> send(Uint8List message) => _send(message);
+}
+
+/// A directory that exists but can't be deleted; records each attempt.
+class _UndeletableDirectory extends Fake implements Directory {
+  _UndeletableDirectory(this.path, this.attempts);
+
+  @override
+  final String path;
+  final List<String> attempts;
+
+  @override
+  Future<bool> exists() async => true;
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) async {
+    attempts.add(path);
+    throw FileSystemException('Directory not empty', path);
+  }
 }

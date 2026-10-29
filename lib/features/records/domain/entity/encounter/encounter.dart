@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -195,9 +196,11 @@ abstract class Encounter with _$Encounter implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Visit Details'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldVisitDetails),
+    );
 
     // Class (Inpatient/Outpatient/Emergency - CRITICAL)
     final classDisplay = FhirFieldExtractor.extractCodingDisplay(class_);
@@ -205,7 +208,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         classDisplay,
-        prefix: 'Visit Type',
+        prefix: l10n.fieldVisitType,
       ),
     );
 
@@ -217,17 +220,20 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         typeDisplay,
-        prefix: 'Encounter Type',
+        prefix: l10n.fieldEncounterType,
       ),
     );
 
     // Period (Start and End times - CRITICAL)
-    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      period,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createTimelineLine(
         periodDisplay,
-        prefix: 'Time Period',
+        prefix: l10n.fieldTimePeriod,
       ),
     );
 
@@ -240,7 +246,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createTimeLine(
             '$lengthValue $lengthUnit',
-            prefix: 'Duration',
+            prefix: l10n.fieldDuration,
           ),
         );
       }
@@ -254,7 +260,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createUserLine(
         participantsDisplay,
-        prefix: 'Care Team',
+        prefix: l10n.fieldCareTeam,
       ),
     );
 
@@ -264,7 +270,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createNotesLine(
         reasonCodeDisplay,
-        prefix: 'Reason for Visit',
+        prefix: l10n.fieldReasonForVisit,
       ),
     );
 
@@ -274,12 +280,12 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createNotesLine(
         diagnosisDisplay,
-        prefix: 'Diagnoses',
+        prefix: l10n.fieldDiagnoses,
       ),
     );
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Location & Provider'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldLocationProvider),
     );
 
     // Service Provider (Hospital/Clinic)
@@ -290,7 +296,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createOrganizationLine(
         serviceProviderDisplay,
-        prefix: 'Healthcare Facility',
+        prefix: l10n.fieldHealthcareFacility,
       ),
     );
 
@@ -300,7 +306,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createLocationLine(
         locationDisplay,
-        prefix: 'Location',
+        prefix: l10n.fieldLocation,
       ),
     );
 
@@ -312,19 +318,22 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createActivityLine(
         serviceTypeDisplay,
-        prefix: 'Service Type',
+        prefix: l10n.fieldServiceType,
       ),
     );
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Priority
@@ -335,7 +344,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createWarningLine(
         priorityDisplay,
-        prefix: 'Priority',
+        prefix: l10n.fieldPriority,
       ),
     );
 
@@ -349,7 +358,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createStatusLine(
           admitSourceDisplay,
-          prefix: 'Admission Source',
+          prefix: l10n.fieldAdmissionSource,
         ),
       );
 
@@ -361,7 +370,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createStatusLine(
           reAdmission,
-          prefix: 'Re-admission',
+          prefix: l10n.fieldReAdmission,
         ),
       );
 
@@ -376,7 +385,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createNotesLine(
             dietDisplay.isNotEmpty ? dietDisplay : null,
-            prefix: 'Diet Preference',
+            prefix: l10n.fieldDietPreference,
           ),
         );
       }
@@ -392,7 +401,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createNotesLine(
             arrangementsDisplay.isNotEmpty ? arrangementsDisplay : null,
-            prefix: 'Special Arrangements',
+            prefix: l10n.fieldSpecialArrangements,
           ),
         );
       }
@@ -406,7 +415,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createStatusLine(
           dischargeDisposition,
-          prefix: 'Discharge Disposition',
+          prefix: l10n.fieldDischargeDisposition,
         ),
       );
 
@@ -418,7 +427,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createLocationLine(
           dischargeDestination,
-          prefix: 'Discharge To',
+          prefix: l10n.fieldDischargeTo,
         ),
       );
     }
@@ -433,7 +442,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createTimelineLine(
           appointmentDisplay.isNotEmpty ? appointmentDisplay : null,
-          prefix: 'Related Appointment',
+          prefix: l10n.fieldRelatedAppointment,
         ),
       );
     }
@@ -448,7 +457,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createTimelineLine(
           episodeDisplay.isNotEmpty ? episodeDisplay : null,
-          prefix: 'Episode of Care',
+          prefix: l10n.fieldEpisodeOfCare,
         ),
       );
     }
@@ -457,7 +466,10 @@ abstract class Encounter with _$Encounter implements IFhirResource {
     final partOfDisplay = FhirFieldExtractor.extractReferenceDisplay(partOf);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(partOfDisplay, prefix: 'Part Of'),
+      ResourceFieldMapper.createStatusLine(
+        partOfDisplay,
+        prefix: l10n.fieldPartOf,
+      ),
     );
 
     // Status History (show if status changed during encounter)
@@ -467,7 +479,10 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       final statusChanges = statusHistory!
           .map((h) {
             final status = h.status.valueString;
-            final period = FhirFieldExtractor.extractPeriodFormatted(h.period);
+            final period = FhirFieldExtractor.extractPeriodFormatted(
+              h.period,
+              l10n: l10n,
+            );
             return status != null && period != null
                 ? '$status: $period'
                 : status ?? period;
@@ -479,7 +494,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createTimelineLine(
           statusChanges.isNotEmpty ? statusChanges : null,
-          prefix: 'Status History',
+          prefix: l10n.fieldStatusHistory,
         ),
       );
     }
@@ -489,7 +504,7 @@ abstract class Encounter with _$Encounter implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }

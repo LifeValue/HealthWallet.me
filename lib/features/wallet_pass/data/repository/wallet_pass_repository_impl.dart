@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart'
-    show ApplePassBuilder, ApplePassLabels;
+import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/google_pass_builder.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:health_wallet/features/wallet_pass/domain/repository/wallet_pass_repository.dart';
 import 'package:injectable/injectable.dart';
 
@@ -18,7 +18,7 @@ class WalletPassRepositoryImpl implements WalletPassRepository {
   Future<Uint8List> generateApplePass({
     required EmergencyCardData cardData,
     required String patientId,
-    required ApplePassLabels labels,
+    required WalletPassLabels labels,
   }) async {
     return _applePassBuilder.build(
       cardData,
@@ -31,7 +31,12 @@ class WalletPassRepositoryImpl implements WalletPassRepository {
   Future<String> generateGooglePassJson({
     required EmergencyCardData cardData,
     required String patientId,
+    required WalletPassLabels labels,
   }) async {
-    return _googlePassBuilder.build(cardData, patientId: patientId);
+    return _googlePassBuilder.build(
+      cardData,
+      patientId: patientId,
+      labels: labels,
+    );
   }
 }

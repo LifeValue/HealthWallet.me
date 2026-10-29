@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_dialog.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
@@ -19,7 +20,7 @@ class HomeDialogController {
     final items = orderedRecords.map((category) {
       return DialogItem(
         id: category.name,
-        label: category.display,
+        label: category.localizedName(context.l10n),
       );
     }).toList();
 
@@ -29,7 +30,7 @@ class HomeDialogController {
         items.add(
           DialogItem(
             id: category.name,
-            label: category.display,
+            label: category.localizedName(context.l10n),
           ),
         );
       }
@@ -44,13 +45,13 @@ class HomeDialogController {
       context: context,
       builder: (context) => AppDialog(
         title: context.l10n.records,
-        description: 'Choose the records you want to see on your dashboard.',
+        description: context.l10n.chooseRecordsForDashboard,
         items: items,
         mode: AppDialogMode.multiSelect,
         initiallySelected: initiallySelected,
         cancelText: context.l10n.cancel,
         confirmText: context.l10n.save,
-        validationMessage: 'Select at least one record type to continue.',
+        validationMessage: context.l10n.selectAtLeastOneRecordType,
         onConfirm: (selectedIds) {
           final result = <HomeRecordsCategory, bool>{};
           for (final category in allRecords) {
@@ -79,7 +80,7 @@ class HomeDialogController {
     final items = orderedVitals.map((type) {
       return DialogItem(
         id: type.name,
-        label: type.title,
+        label: type.localizedName(context.l10n),
       );
     }).toList();
 
@@ -92,13 +93,13 @@ class HomeDialogController {
       context: context,
       builder: (context) => AppDialog(
         title: context.l10n.vitals,
-        description: 'Choose the vitals you want to see on your dashboard.',
+        description: context.l10n.chooseVitalsForDashboard,
         items: items,
         mode: AppDialogMode.multiSelect,
         initiallySelected: initiallySelected,
         cancelText: context.l10n.cancel,
         confirmText: context.l10n.save,
-        validationMessage: 'Select at least one vital sign to continue.',
+        validationMessage: context.l10n.selectAtLeastOneVital,
         onConfirm: (selectedIds) {
           final result = <PatientVitalType, bool>{};
           for (final type in PatientVitalType.values) {
@@ -122,7 +123,7 @@ class HomeDialogController {
     final items = orderedSpecialties.map((specialty) {
       return DialogItem(
         id: specialty.name,
-        label: specialty.displayName,
+        label: specialty.localizedName(context.l10n),
       );
     }).toList();
 
@@ -131,7 +132,7 @@ class HomeDialogController {
         items.add(
           DialogItem(
             id: specialty.name,
-            label: specialty.displayName,
+            label: specialty.localizedName(context.l10n),
           ),
         );
       }
@@ -146,14 +147,13 @@ class HomeDialogController {
       context: context,
       builder: (context) => AppDialog(
         title: context.l10n.specialty,
-        description:
-            'Choose the specialities you want to see on your dashboard.',
+        description: context.l10n.chooseSpecialtiesForDashboard,
         items: items,
         mode: AppDialogMode.multiSelect,
         initiallySelected: initiallySelected,
         cancelText: context.l10n.cancel,
         confirmText: context.l10n.save,
-        validationMessage: 'Select at least one specialty to continue.',
+        validationMessage: context.l10n.selectAtLeastOneSpecialty,
         onConfirm: (selectedIds) {
           final result = <MedicalSpecialty, bool>{};
           for (final specialty in allSpecialties) {

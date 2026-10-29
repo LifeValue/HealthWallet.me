@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
@@ -247,7 +248,7 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
       sourceLabel = null;
     } else if (attachmentInfo.sourceRecordTitle != null) {
       sourceLabel =
-          '${attachmentInfo.sourceRecordTitle} · ${attachmentInfo.sourceRecordType}';
+          '${attachmentInfo.sourceRecordTitle} · ${attachmentInfo.sourceRecordType?.localizedName(context.l10n) ?? ''}';
     } else {
       sourceLabel = context.l10n.currentRecord;
     }

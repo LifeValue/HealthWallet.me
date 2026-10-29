@@ -166,6 +166,14 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
     );
   }
 
+  /// The stored `identifierLabel` for an identifier with no national name
+  /// (a value of the phase-1 schema enum, not display text).
+  static const genericIdentifierLabel = 'Identifier';
+
+  /// The stored `identifierLabel` of a passport number (from
+  /// `FhirFieldExtractor.extractPatientIdentifierLabel` without l10n).
+  static const passportIdentifierLabel = 'Passport';
+
   static Map<String, String> localizedLabels(AppLocalizations l10n) => {
     'givenName': l10n.labelFirstName,
     'familyName': l10n.labelFamilyName,
@@ -174,35 +182,42 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'givenName': TextFieldDescriptor(
-      label: 'First name',
-      value: givenName.value,
-      confidenceLevel: givenName.confidenceLevel,
-    ),
-    'familyName': TextFieldDescriptor(
-      label: 'Family name',
-      value: familyName.value,
-      confidenceLevel: familyName.confidenceLevel,
-    ),
-    'dateOfBirth': TextFieldDescriptor(
-      label: 'Date of birth',
-      value: dateOfBirth.value,
-      confidenceLevel: dateOfBirth.confidenceLevel,
-      fieldType: FieldType.date,
-    ),
-    'gender': TextFieldDescriptor(
-      label: 'Gender',
-      value: gender.value,
-      confidenceLevel: gender.confidenceLevel,
-      fieldType: FieldType.dropdown,
-    ),
-    'patientIdentifier': TextFieldDescriptor(
-      label: identifierLabel,
-      value: patientIdentifier.value,
-      confidenceLevel: patientIdentifier.confidenceLevel,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'givenName': TextFieldDescriptor(
+          label: l10n.labelFirstName,
+          value: givenName.value,
+          confidenceLevel: givenName.confidenceLevel,
+        ),
+        'familyName': TextFieldDescriptor(
+          label: l10n.labelFamilyName,
+          value: familyName.value,
+          confidenceLevel: familyName.confidenceLevel,
+        ),
+        'dateOfBirth': TextFieldDescriptor(
+          label: l10n.labelDateOfBirth,
+          value: dateOfBirth.value,
+          confidenceLevel: dateOfBirth.confidenceLevel,
+          fieldType: FieldType.date,
+        ),
+        'gender': TextFieldDescriptor(
+          label: l10n.labelGender,
+          value: gender.value,
+          confidenceLevel: gender.confidenceLevel,
+          fieldType: FieldType.dropdown,
+        ),
+        'patientIdentifier': TextFieldDescriptor(
+          // National ID names (CNP, KVNR…) are shown as they are; only the
+          // generic stored values are translated.
+          label: switch (identifierLabel) {
+            genericIdentifierLabel => l10n.labelIdentifier,
+            passportIdentifierLabel => l10n.identifierPassport,
+            _ => identifierLabel,
+          },
+          value: patientIdentifier.value,
+          confidenceLevel: patientIdentifier.confidenceLevel,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) => MappingPatient(
@@ -239,7 +254,7 @@ abstract class MappingPatient with _$MappingPatient implements MappingResource {
   );
 
   @override
-  String get label => 'Patient';
+  String localizedLabel(AppLocalizations l10n) => l10n.patient;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

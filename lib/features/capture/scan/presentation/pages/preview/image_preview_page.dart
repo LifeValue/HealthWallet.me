@@ -12,7 +12,9 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class ImagePreviewPage extends StatefulWidget {
   final String imagePath;
-  final String title;
+
+  /// Defaults to the localized "Document Preview".
+  final String? title;
   final List<String>? allImages;
   final int? currentIndex;
   final bool isEditable;
@@ -20,7 +22,7 @@ class ImagePreviewPage extends StatefulWidget {
   const ImagePreviewPage({
     super.key,
     required this.imagePath,
-    this.title = 'Document Preview',
+    this.title,
     this.allImages,
     this.currentIndex,
     this.isEditable = false,
@@ -121,7 +123,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
                         '${currentIndex + 1}',
                         '${images.length}',
                       )
-                    : widget.title,
+                    : widget.title ?? context.l10n.documentPreview,
               ),
               actions: [
                 if (state.isReordering)
@@ -251,7 +253,7 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Path: $path',
+            context.l10n.filePathLabel(path),
             style: const TextStyle(color: Colors.white54, fontSize: 12),
             textAlign: TextAlign.center,
           ),

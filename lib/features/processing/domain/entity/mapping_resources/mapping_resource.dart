@@ -1,4 +1,5 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_allergy_intolerance.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_condition.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
@@ -80,11 +81,13 @@ abstract class MappingResource {
     fhir_r4.FhirMeta? meta,
   });
 
-  Map<String, TextFieldDescriptor> getFieldDescriptors();
+  /// The editable fields, labelled in the language of [l10n].
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n);
 
   MappingResource copyWithMap(Map<String, dynamic> newValues);
 
-  String get label;
+  /// The resource type name shown above its fields.
+  String localizedLabel(AppLocalizations l10n);
 
   MappingResource populateConfidence(String inputText);
 

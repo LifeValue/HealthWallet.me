@@ -8,7 +8,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     emit(
       state.copyWith(
         showExitConfirmationDialog: true,
-        statusMessage: 'Are you sure you want to exit? Data will be deleted.',
+        statusMessage: _strings.l10n.shareStatusConfirmExit,
       ),
     );
   }
@@ -20,8 +20,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     emit(
       state.copyWith(
         showExitConfirmationDialog: false,
-        statusMessage:
-            'Viewing ${state.receivedData?.recordCount ?? 0} records',
+        statusMessage: _strings.l10n.shareStatusViewingRecords(
+          state.receivedData?.recordCount ?? 0,
+        ),
       ),
     );
   }
@@ -88,7 +89,8 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
         viewingTimeRemaining: null,
         isSessionActive: false,
         isDataDestroyed: true,
-        statusMessage: 'Data has been securely deleted',
+        sessionEndReason: ShareSessionEndReason.dataDeleted,
+        statusMessage: _strings.l10n.shareStatusDataDeleted,
       ),
     );
   }
@@ -96,7 +98,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
   Future<void> _cleanupEphemeralData() async {
     final receivedData = state.receivedData;
     if (receivedData != null) {
-      await _service.deleteSessionFiles(receivedData.sessionId);
+      // The attachments all live in the session's own directory, found by
+      // its id (never derived from the attachment paths).
+      await _service.cleanupSessionTempDir(receivedData.sessionId);
     }
     _recordsRepository.clearSharedNotes();
   }
@@ -118,7 +122,8 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
               phase: SharePhase.sessionEnded,
               isSessionActive: false,
               viewingTimeRemaining: Duration.zero,
-              statusMessage: 'Session expired',
+              sessionEndReason: ShareSessionEndReason.expired,
+              statusMessage: _strings.l10n.shareStatusSessionExpired,
             ),
           );
           _viewingTimer?.cancel();
@@ -147,7 +152,11 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     KillSessionRequested event,
     Emitter<ShareRecordsState> emit,
   ) async {
-    emit(state.copyWith(statusMessage: 'Terminating remote session...'));
+    emit(
+      state.copyWith(
+        statusMessage: _strings.l10n.shareStatusTerminatingSession,
+      ),
+    );
 
     _viewingTimer?.cancel();
     _monitoringFallbackTimer?.cancel();
@@ -160,7 +169,8 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
         isSessionActive: false,
         verificationCode: null,
         remoteEndUnconfirmed: !delivered,
-        statusMessage: 'Session terminated',
+        sessionEndReason: ShareSessionEndReason.terminated,
+        statusMessage: _strings.l10n.shareStatusSessionTerminated,
       ),
     );
   }
@@ -196,7 +206,8 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
         verificationCode: null,
-        statusMessage: 'Remote session terminated',
+        sessionEndReason: ShareSessionEndReason.remoteTerminated,
+        statusMessage: _strings.l10n.shareStatusRemoteSessionTerminated,
       ),
     );
   }
@@ -317,7 +328,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
     emit(
       state.copyWith(
         extensionRequestPending: false,
-        statusMessage: 'Extension request was declined',
+        statusMessage: _strings.l10n.shareStatusExtensionDeclined,
       ),
     );
   }
@@ -349,7 +360,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
           phase: SharePhase.monitoringSession,
           sessionStartedAt: DateTime.now(),
           viewingTimeRemaining: state.selectedViewingDuration,
-          statusMessage: 'Receiver is viewing records - monitoring session',
+          statusMessage: _strings.l10n.shareStatusReceiverViewing,
         ),
       );
       _startViewingTimer();
@@ -384,7 +395,8 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
         phase: SharePhase.sessionEnded,
         isSessionActive: false,
         verificationCode: null,
-        statusMessage: 'Receiver declined invitation',
+        sessionEndReason: ShareSessionEndReason.invitationDeclined,
+        statusMessage: _strings.l10n.shareStatusReceiverDeclined,
       ),
     );
 
@@ -418,7 +430,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
         state.copyWith(
           mode: ShareMode.receiving,
           phase: SharePhase.connecting,
-          statusMessage: 'Receiving records from ${event.deviceName}...',
+          statusMessage: _strings.l10n.shareStatusReceivingFrom(
+            event.deviceName,
+          ),
         ),
       );
       await _service.acceptInvitation(event.invitationId);
@@ -431,7 +445,9 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
         phase: SharePhase.discoveringPeers,
         pendingInvitationId: event.invitationId,
         pendingInvitationDeviceName: event.deviceName,
-        statusMessage: '${event.deviceName} wants to share records',
+        statusMessage: _strings.l10n.shareStatusDeviceWantsToShare(
+          event.deviceName,
+        ),
       ),
     );
   }
@@ -450,7 +466,7 @@ extension ShareRecordsSessionHandler on ShareRecordsBloc {
       emit(
         state.copyWith(
           phase: SharePhase.error,
-          errorMessage: 'No data available',
+          errorMessage: _strings.l10n.shareNoDataAvailable,
         ),
       );
       return;

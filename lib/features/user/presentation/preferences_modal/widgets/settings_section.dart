@@ -150,8 +150,8 @@ class SettingsSection extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Send us your feedback',
+                      Text(
+                        context.l10n.settingsSendFeedback,
                         style: AppTextStyle.bodySmall,
                       ),
                       Assets.icons.externalLink.svg(

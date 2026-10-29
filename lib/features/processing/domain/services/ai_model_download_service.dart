@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/ai_model_config.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/features/processing/domain/repository/processing_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,11 +35,12 @@ abstract class AiModelDownloadState with _$AiModelDownloadState {
 class AiModelDownloadService with WidgetsBindingObserver {
   final ProcessingRepository _repository;
   final SharedPreferences _prefs;
+  final AppStringsProvider _strings;
 
   static const String _downloadInterruptedKey = 'ai_model_download_interrupted';
   static const String _downloadInProgressKey = 'ai_model_download_in_progress';
 
-  AiModelDownloadService(this._repository, this._prefs) {
+  AiModelDownloadService(this._repository, this._prefs, this._strings) {
     WidgetsBinding.instance.addObserver(this);
     _checkForInterruptedDownload();
   }
@@ -68,7 +70,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _updateState(
         _state.copyWith(
           status: AiModelDownloadStatus.cancelled,
-          errorMessage: 'AI model download was cancelled',
+          errorMessage: _strings.l10n.aiModelDownloadWasCancelled,
         ),
       );
     }
@@ -97,7 +99,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _updateState(
         _state.copyWith(
           status: AiModelDownloadStatus.error,
-          errorMessage: 'Failed to check model existence',
+          errorMessage: _strings.l10n.aiModelExistenceCheckFailed,
         ),
       );
       return false;
@@ -162,7 +164,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
           _updateState(
             _state.copyWith(
               status: AiModelDownloadStatus.error,
-              errorMessage: 'AI model download failed. Please check your connection and try again.',
+              errorMessage: _strings.l10n.aiModelDownloadFailedMessage,
             ),
           );
         },
@@ -175,7 +177,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _updateState(
         _state.copyWith(
           status: AiModelDownloadStatus.error,
-          errorMessage: 'AI model download failed. Please check your connection and try again.',
+          errorMessage: _strings.l10n.aiModelDownloadFailedMessage,
         ),
       );
     }
@@ -257,7 +259,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
           _updateState(
             AiModelDownloadState(
               status: AiModelDownloadStatus.error,
-              errorMessage: 'AI model download failed. Please check your connection and try again.',
+              errorMessage: _strings.l10n.aiModelDownloadFailedMessage,
               variant: variant,
             ),
           );
@@ -273,7 +275,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _updateState(
         AiModelDownloadState(
           status: AiModelDownloadStatus.error,
-          errorMessage: 'AI model download failed. Please check your connection and try again.',
+          errorMessage: _strings.l10n.aiModelDownloadFailedMessage,
           variant: variant,
         ),
       );
@@ -293,7 +295,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
     _updateState(
       _state.copyWith(
         status: AiModelDownloadStatus.cancelled,
-        errorMessage: 'Download cancelled',
+        errorMessage: _strings.l10n.aiModelDownloadCancelled,
       ),
     );
   }
@@ -307,7 +309,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
     _updateState(
       AiModelDownloadState(
         status: AiModelDownloadStatus.cancelled,
-        errorMessage: 'Download cancelled',
+        errorMessage: _strings.l10n.aiModelDownloadCancelled,
         variant: variant,
       ),
     );
@@ -386,7 +388,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
             AiModelDownloadState(
               status: AiModelDownloadStatus.error,
               isMmprojDownload: true,
-              errorMessage: 'AI model download failed. Please check your connection and try again.',
+              errorMessage: _strings.l10n.aiModelDownloadFailedMessage,
               variant: variant,
             ),
           );
@@ -400,7 +402,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
         AiModelDownloadState(
           status: AiModelDownloadStatus.error,
           isMmprojDownload: true,
-          errorMessage: 'AI model download failed. Please check your connection and try again.',
+          errorMessage: _strings.l10n.aiModelDownloadFailedMessage,
           variant: variant,
         ),
       );
@@ -414,7 +416,7 @@ class AiModelDownloadService with WidgetsBindingObserver {
       _state.copyWith(
         status: AiModelDownloadStatus.cancelled,
         isMmprojDownload: true,
-        errorMessage: 'Download cancelled',
+        errorMessage: _strings.l10n.aiModelDownloadCancelled,
       ),
     );
   }

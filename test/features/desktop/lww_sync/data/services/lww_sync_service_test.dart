@@ -1033,6 +1033,222 @@ void main() {
       expect(d2['updated_at'], ms(at(1)));
     });
 
+    test('saveReceivedFiles never overwrites the database', () async {
+      final dbFile = dirs.docFile('db.sqlite')..writeAsStringSync('real db');
+      final wal = dirs.docFile('db.sqlite-wal')..writeAsStringSync('real wal');
+
+      final saved = await service.saveReceivedFiles({
+        'db.sqlite': base64Encode(pdfBytes),
+        '../DB.SQLITE-wal': base64Encode(pdfBytes),
+      });
+
+      expect(saved, 2);
+      expect(dbFile.readAsStringSync(), 'real db');
+      expect(wal.readAsStringSync(), 'real wal');
+      final names = dirs.docNames();
+      expect(names, hasLength(4));
+      expect(
+        names.where((n) => RegExp(r'^db_[0-9a-f]{8}\.sqlite$').hasMatch(n)),
+        hasLength(1),
+      );
+      expect(
+        names.where(
+          (n) => RegExp(r'^DB_[0-9a-f]{8}\.SQLITE-wal$').hasMatch(n),
+        ),
+        hasLength(1),
+      );
+    });
+
+    test('saveReceivedFiles gives a taken name a unique suffix', () async {
+      await insertDoc('d1', [
+        {'url': 'file://scans/report.pdf'},
+      ]);
+      final existing = await dirs.writeDoc('report.pdf', utf8.encode('mine'));
+
+      final saved = await service.saveReceivedFiles({
+        'scans/report.pdf': base64Encode(pdfBytes),
+      });
+
+      expect(saved, 1);
+      expect(existing.readAsStringSync(), 'mine');
+      final written = dirs.docNames().singleWhere((n) => n != 'report.pdf');
+      expect(written, matches(RegExp(r'^report_[0-9a-f]{8}\.pdf$')));
+      expect(await dirs.docFile(written).readAsBytes(), pdfBytes);
+      final d1 = jsonDecode(
+        (await fetchRow(db, 'fhir_resource', 'd1'))!['resource_raw'] as String,
+      );
+      expect(
+        ((d1['content'] as List).single as Map)['attachment']['url'],
+        'file://$written',
+      );
+    });
+
+    test(
+      'saveReceivedFiles keeps empty and dot names inside documents',
+      () async {
+        final saved = await service.saveReceivedFiles({
+          '..': base64Encode(pdfBytes),
+          'dir/': base64Encode(pdfBytes),
+          r'..\..\evil.pdf': base64Encode(pdfBytes),
+        });
+
+        expect(saved, 3);
+        expect(dirs.docNames(), hasLength(3));
+        expect(dirs.docNames(), contains('evil.pdf'));
+        expect(File('${dirs.root.path}/evil.pdf').existsSync(), isFalse);
+        expect(File('${dirs.container.path}/evil.pdf').existsSync(), isFalse);
+      },
+    );
+
+    test('resolveFileRequests never sends a file outside documents', () async {
+      File('${dirs.container.path}/secret.db').writeAsStringSync('db');
+      final outside = File('${dirs.root.path}/private.txt')
+        ..writeAsStringSync('secret');
+
+      final resolved = await service.resolveFileRequests([
+        '/etc/passwd',
+        '../secret.db',
+        '${dirs.docs.path}/../secret.db',
+        outside.path,
+        '..',
+        '',
+      ]);
+
+      expect(resolved, isEmpty);
+    });
+
+    test('saveReceivedFiles keeps traversal and absolute names inside '
+        'documents', () async {
+      final saved = await service.saveReceivedFiles({
+        '../../evil.pdf': base64Encode(pdfBytes),
+        '/etc/evil.pdf': base64Encode(pdfBytes),
+      });
+
+      expect(saved, 2);
+      final names = dirs.docNames();
+      expect(names, hasLength(2));
+      expect(names, contains('evil.pdf'));
+      expect(
+        names.where((n) => RegExp(r'^evil_[0-9a-f]{8}\.pdf$').hasMatch(n)),
+        hasLength(1),
+      );
+      expect(File('${dirs.root.path}/evil.pdf').existsSync(), isFalse);
+      expect(File('${dirs.container.path}/evil.pdf').existsSync(), isFalse);
+    });
+
+    test('saveReceivedFiles renames every db.sqlite* name', () async {
+      final saved = await service.saveReceivedFiles({
+        'db.sqlite-shm': base64Encode(pdfBytes),
+        'db.sqlite-journal': base64Encode(pdfBytes),
+        'sub/Db.Sqlite': base64Encode(pdfBytes),
+      });
+
+      expect(saved, 3);
+      expect(
+        dirs.docNames().where((n) => n.toLowerCase().startsWith('db.sqlite')),
+        isEmpty,
+      );
+      expect(dirs.docNames(), hasLength(3));
+    });
+
+    test(
+      'saveReceivedFiles gives a taken name without extension a suffix',
+      () async {
+        await dirs.writeDoc('notes', utf8.encode('mine'));
+
+        await service.saveReceivedFiles({'notes': base64Encode(pdfBytes)});
+
+        expect(dirs.docFile('notes').readAsStringSync(), 'mine');
+        expect(
+          dirs.docNames().singleWhere((n) => n != 'notes'),
+          matches(RegExp(r'^notes_[0-9a-f]{8}$')),
+        );
+      },
+    );
+
+    test('saveReceivedFiles does not write through a link with the same '
+        'name', () async {
+      final target = File('${dirs.root.path}/target.pdf')
+        ..writeAsStringSync('outside');
+      Link('${dirs.docs.path}/linked.pdf').createSync(target.path);
+
+      await service.saveReceivedFiles({'linked.pdf': base64Encode(pdfBytes)});
+
+      expect(target.readAsStringSync(), 'outside');
+    });
+
+    test('a file_request round trip moves the file and repoints the '
+        'receiver\'s record', () async {
+      final sender = LwwSyncService(
+        db,
+        prefs,
+        AttachmentSyncService(FakePathResolver(dirs.temp.path)),
+      );
+      File('${dirs.temp.path}/scans/xray.jpg')
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(pdfBytes);
+      await insertDoc('d1', [
+        {'url': 'file://scans/xray.jpg'},
+      ]);
+
+      final missing = await service.getMissingAttachmentPaths();
+      final fileData = await sender.resolveFileRequests(missing);
+      final saved = await service.saveReceivedFiles(fileData);
+
+      expect(missing, ['scans/xray.jpg']);
+      expect(saved, 1);
+      expect(await dirs.docFile('xray.jpg').readAsBytes(), pdfBytes);
+      expect(await service.getMissingAttachmentPaths(), isEmpty);
+    });
+
+    test(
+      'saveReceivedFiles repoints a percent-encoded attachment url',
+      () async {
+        await insertDoc('d1', [
+          {'url': 'file://scans/lab%20result.pdf'},
+        ]);
+
+        // getMissingAttachmentPaths decodes the url, so this is the key the
+        // peer sends back.
+        expect(await service.getMissingAttachmentPaths(), [
+          'scans/lab result.pdf',
+        ]);
+        await service.saveReceivedFiles({
+          'scans/lab result.pdf': base64Encode(pdfBytes),
+        });
+
+        expect(await service.getMissingAttachmentPaths(), isEmpty);
+      },
+      skip:
+          'BUG: _updateAttachmentUrls first filters rows with '
+          'raw.contains(oldPath) on the undecoded JSON, so a url stored '
+          'percent-encoded (file://scans/lab%20result.pdf) never matches the '
+          'decoded path the peer sends back and stays broken '
+          '(lww_sync_service.dart _updateAttachmentUrls).',
+    );
+
+    test(
+      'saveReceivedFiles leaves another record with the same file name alone',
+      () async {
+        await dirs.writeDoc('a/report.pdf', utf8.encode('record A'));
+        await insertDoc('a', [
+          {'url': 'file://a/report.pdf'},
+        ]);
+        await insertDoc('b', [
+          {'url': 'file://b/report.pdf'},
+        ]);
+
+        await service.saveReceivedFiles({
+          'b/report.pdf': base64Encode(pdfBytes),
+        });
+
+        expect(
+          (await fetchRow(db, 'fhir_resource', 'a'))!['resource_raw'],
+          contains('file://a/report.pdf'),
+        );
+      },
+    );
+
     test(
       'fixBrokenAttachmentUrls repoints urls to files found by name',
       () async {

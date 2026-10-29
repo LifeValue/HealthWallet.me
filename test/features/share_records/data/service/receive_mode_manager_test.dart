@@ -7,6 +7,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/features/share_records/data/crypto/share_crypto.dart';
 import 'package:health_wallet/features/share_records/data/service/receive_mode_manager.dart';
@@ -113,7 +114,7 @@ void main() {
     service = _FakeShareRecordsService();
     router = _FakeAppRouter(GlobalKey<NavigatorState>());
     getIt.registerSingleton<AppRouter>(router);
-    manager = ReceiveModeManager(service);
+    manager = ReceiveModeManager(service, AppStringsProvider());
   });
 
   tearDown(() async {
@@ -436,6 +437,51 @@ void main() {
 
       await tester.pump(const Duration(seconds: 4));
       expect(service.calls.last, 'disconnect');
+    });
+  });
+
+  group('invitation dialog in German', () {
+    testWidgets('shows the invitation in the app language', (tester) async {
+      manager = ReceiveModeManager(
+        service,
+        AppStringsProvider.forLocale(const Locale('de')),
+      );
+      await tester.pumpWidget(
+        MaterialApp(navigatorKey: router.navigatorKey, home: const Scaffold()),
+      );
+      await manager.startListening();
+      service.invitations.add({
+        'invitationId': 'inv-1',
+        'senderDeviceName': 'Pixel 8',
+      });
+      await tester.pumpAndSettle();
+
+      expect(find.text('Eingehende Gesundheitsdaten'), findsOneWidget);
+      expect(
+        find.text('Pixel 8 möchte Gesundheitsdaten mit dir teilen'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Aufzeichnungen sind schreibgeschützt und werden beim Verlassen '
+          'automatisch gelöscht',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Ablehnen'), findsOneWidget);
+      expect(find.text('Akzeptieren'), findsOneWidget);
+    });
+
+    test('an unnamed sender is an unknown device in German', () async {
+      manager = ReceiveModeManager(
+        service,
+        AppStringsProvider.forLocale(const Locale('de')),
+      );
+      await manager.startListening();
+      service.invitations.add(<String, dynamic>{});
+      await pumpEventQueue();
+
+      expect(manager.pendingInvitationDeviceName, 'Unbekanntes Gerät');
     });
   });
 }

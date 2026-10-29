@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class SharePermissionsHelper {
@@ -108,17 +109,9 @@ class SharePermissionsHelper {
     return openAppSettings();
   }
 
-  static String getPermissionExplanation() {
-    if (Platform.isIOS) {
-      return 'To share records with nearby devices, HealthWallet needs access to:\n\n'
-          '• Bluetooth - to discover and connect to nearby devices\n\n'
-          'This allows you to securely share health records with other devices nearby.';
-    }
-
-    return 'To share records with nearby devices, HealthWallet needs access to:\n\n'
-        '• Bluetooth - to discover and connect to nearby devices\n'
-        '• Location/Nearby Devices - required by Android to scan for Bluetooth and WiFi Direct devices\n\n'
-        'Your location is never stored or transmitted.';
+  static String getPermissionExplanation(AppLocalizations l10n) {
+    if (Platform.isIOS) return l10n.sharePermissionExplanationIos;
+    return l10n.sharePermissionExplanationAndroid;
   }
 }
 
@@ -134,16 +127,13 @@ class PermissionDenied extends PermissionResult {
   final List<Permission> permissions;
   const PermissionDenied(this.permissions);
 
-  String get message {
-    return 'Please grant all permissions to share records with nearby devices.';
-  }
+  String message(AppLocalizations l10n) => l10n.sharePermissionsDeniedMessage;
 }
 
 class PermissionPermanentlyDenied extends PermissionResult {
   final List<Permission> permissions;
   const PermissionPermanentlyDenied(this.permissions);
 
-  String get message {
-    return 'Some permissions were denied. Please enable them in Settings to use this feature.';
-  }
+  String message(AppLocalizations l10n) =>
+      l10n.sharePermissionsPermanentlyDeniedMessage;
 }

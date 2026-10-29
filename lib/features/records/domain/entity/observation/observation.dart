@@ -5,6 +5,8 @@ import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
@@ -128,14 +130,20 @@ abstract class Observation with _$Observation implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Result'));
+    infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
 
-    final valueDisplay = FhirFieldExtractor.extractObservationValue(valueX);
+    final valueDisplay = FhirFieldExtractor.extractObservationValue(
+      valueX,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createValueLine(valueDisplay, prefix: 'Value'),
+      ResourceFieldMapper.createValueLine(
+        valueDisplay,
+        prefix: l10n.fieldValue,
+      ),
     );
 
     if (component != null && component!.isNotEmpty) {
@@ -145,6 +153,7 @@ abstract class Observation with _$Observation implements IFhirResource {
         );
         final componentValue = FhirFieldExtractor.extractObservationValue(
           comp.valueX,
+          l10n: l10n,
         );
 
         if (componentCode != null && componentValue != null) {
@@ -166,7 +175,7 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createWarningLine(
         interpretationDisplay,
-        prefix: 'Status',
+        prefix: l10n.fieldStatus,
       ),
     );
 
@@ -174,7 +183,10 @@ abstract class Observation with _$Observation implements IFhirResource {
       final range = referenceRange!.first;
       final lowValue = range.low?.value?.valueDouble?.toStringAsFixed(2);
       final highValue = range.high?.value?.valueDouble?.toStringAsFixed(2);
-      final unit = range.low?.unit ?? range.high?.unit ?? '';
+      final unit = localizedUnit(
+        (range.low?.unit ?? range.high?.unit ?? '').toString(),
+        l10n,
+      );
 
       String? rangeDisplay;
       if (lowValue != null && highValue != null) {
@@ -194,7 +206,7 @@ abstract class Observation with _$Observation implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createLabLine(
           rangeDisplay,
-          prefix: 'Reference Range',
+          prefix: l10n.fieldReferenceRange,
         ),
       );
     }
@@ -207,12 +219,14 @@ abstract class Observation with _$Observation implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createWarningLine(
           absentReason,
-          prefix: 'Data Absent Reason',
+          prefix: l10n.fieldDataAbsentReason,
         ),
       );
     }
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
+    );
 
     final categoryDisplay =
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
@@ -220,22 +234,29 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
     final effectiveDisplay = FhirFieldExtractor.extractEffectiveXFormatted(
       effectiveX,
+      l10n: l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(effectiveDisplay, prefix: 'Test Date'),
+      ResourceFieldMapper.createDateLine(
+        effectiveDisplay,
+        prefix: l10n.fieldTestDate,
+      ),
     );
 
     final issuedDisplay = FhirFieldExtractor.formatFhirInstant(issued);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(issuedDisplay, prefix: 'Result Date'),
+      ResourceFieldMapper.createDateLine(
+        issuedDisplay,
+        prefix: l10n.fieldResultDate,
+      ),
     );
 
     final performerDisplay = FhirFieldExtractor.extractPerformers(performer);
@@ -243,24 +264,30 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createUserLine(
         performerDisplay,
-        prefix: 'Performed By',
+        prefix: l10n.fieldPerformedBy,
       ),
     );
 
     final methodDisplay = FhirFieldExtractor.extractCodeableConceptText(method);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createProcedureLine(methodDisplay, prefix: 'Method'),
+      ResourceFieldMapper.createProcedureLine(
+        methodDisplay,
+        prefix: l10n.fieldMethod,
+      ),
     );
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     final specimenDisplay = FhirFieldExtractor.extractReferenceDisplay(
@@ -270,7 +297,7 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createLabLine(
         specimenDisplay,
-        prefix: 'Specimen Type',
+        prefix: l10n.fieldSpecimenType,
       ),
     );
 
@@ -281,14 +308,17 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createBodySiteLine(
         bodySiteDisplay,
-        prefix: 'Body Site',
+        prefix: l10n.fieldBodySite,
       ),
     );
 
     final deviceDisplay = FhirFieldExtractor.extractReferenceDisplay(device);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createProcedureLine(deviceDisplay, prefix: 'Device'),
+      ResourceFieldMapper.createProcedureLine(
+        deviceDisplay,
+        prefix: l10n.fieldDevice,
+      ),
     );
 
     if (hasMember != null && hasMember!.isNotEmpty) {
@@ -300,13 +330,13 @@ abstract class Observation with _$Observation implements IFhirResource {
 
       if (memberDisplay.isNotEmpty) {
         final suffix = hasMember!.length > 3
-            ? ' (${hasMember!.length - 3} more)'
+            ? ' (${l10n.moreCount(hasMember!.length - 3)})'
             : '';
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createLabLine(
             memberDisplay + suffix,
-            prefix: 'Panel Components',
+            prefix: l10n.fieldPanelComponents,
           ),
         );
       }
@@ -321,7 +351,7 @@ abstract class Observation with _$Observation implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createLabLine(
           derivedDisplay.isNotEmpty ? derivedDisplay : null,
-          prefix: 'Derived From',
+          prefix: l10n.fieldDerivedFrom,
         ),
       );
     }
@@ -335,7 +365,7 @@ abstract class Observation with _$Observation implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createDocumentLine(
           basedOnDisplay.isNotEmpty ? basedOnDisplay : null,
-          prefix: 'Ordered By',
+          prefix: l10n.fieldOrderedBy,
         ),
       );
     }
@@ -346,7 +376,10 @@ abstract class Observation with _$Observation implements IFhirResource {
       if (rangeText != null && rangeText.isNotEmpty) {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createNotesLine(rangeText, prefix: 'Range Notes'),
+          ResourceFieldMapper.createNotesLine(
+            rangeText,
+            prefix: l10n.fieldRangeNotes,
+          ),
         );
       }
 
@@ -359,7 +392,7 @@ abstract class Observation with _$Observation implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createNotesLine(
             appliesDisplay.isNotEmpty ? appliesDisplay : null,
-            prefix: 'Range Applies To',
+            prefix: l10n.fieldRangeAppliesTo,
           ),
         );
       }
@@ -369,7 +402,7 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }
@@ -379,24 +412,31 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createNotesLine(
         notesDisplay,
-        prefix: 'Clinical Notes',
+        prefix: l10n.fieldClinicalNotes,
       ),
     );
 
     return infoLines;
   }
 
-  List<RecordInfoLine> additionalInfoForRegion(RegionPreset region) {
+  List<RecordInfoLine> additionalInfoForRegion(
+    RegionPreset region,
+    AppLocalizations l10n,
+  ) {
     final List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Result'));
+    infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
 
     final valueDisplay = FhirFieldExtractor.extractObservationValueForRegion(
       valueX,
       region,
+      l10n: l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createValueLine(valueDisplay, prefix: 'Value'),
+      ResourceFieldMapper.createValueLine(
+        valueDisplay,
+        prefix: l10n.fieldValue,
+      ),
     );
 
     if (component != null && component!.isNotEmpty) {
@@ -408,6 +448,7 @@ abstract class Observation with _$Observation implements IFhirResource {
             FhirFieldExtractor.extractObservationValueForRegion(
               comp.valueX,
               region,
+              l10n: l10n,
             );
 
         if (componentCode != null && componentValue != null) {
@@ -429,7 +470,7 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createWarningLine(
         interpretationDisplay,
-        prefix: 'Status',
+        prefix: l10n.fieldStatus,
       ),
     );
 
@@ -462,6 +503,8 @@ abstract class Observation with _$Observation implements IFhirResource {
         displayUnit = converted.unit;
       }
 
+      displayUnit = localizedUnit(displayUnit, l10n);
+
       String? rangeDisplay;
       if (displayLow != null && displayHigh != null) {
         rangeDisplay =
@@ -481,7 +524,7 @@ abstract class Observation with _$Observation implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createLabLine(
           rangeDisplay,
-          prefix: 'Reference Range',
+          prefix: l10n.fieldReferenceRange,
         ),
       );
     }
@@ -494,12 +537,14 @@ abstract class Observation with _$Observation implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createWarningLine(
           absentReason,
-          prefix: 'Data Absent Reason',
+          prefix: l10n.fieldDataAbsentReason,
         ),
       );
     }
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
+    );
 
     final categoryDisplay =
         FhirFieldExtractor.extractFirstCodeableConceptFromArray(category);
@@ -507,22 +552,29 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
     final effectiveDisplay = FhirFieldExtractor.extractEffectiveXFormatted(
       effectiveX,
+      l10n: l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(effectiveDisplay, prefix: 'Test Date'),
+      ResourceFieldMapper.createDateLine(
+        effectiveDisplay,
+        prefix: l10n.fieldTestDate,
+      ),
     );
 
     final issuedDisplay = FhirFieldExtractor.formatFhirInstant(issued);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(issuedDisplay, prefix: 'Result Date'),
+      ResourceFieldMapper.createDateLine(
+        issuedDisplay,
+        prefix: l10n.fieldResultDate,
+      ),
     );
 
     final performerDisplay = FhirFieldExtractor.extractPerformers(performer);
@@ -530,24 +582,30 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createUserLine(
         performerDisplay,
-        prefix: 'Performed By',
+        prefix: l10n.fieldPerformedBy,
       ),
     );
 
     final methodDisplay = FhirFieldExtractor.extractCodeableConceptText(method);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createProcedureLine(methodDisplay, prefix: 'Method'),
+      ResourceFieldMapper.createProcedureLine(
+        methodDisplay,
+        prefix: l10n.fieldMethod,
+      ),
     );
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     final specimenDisplay = FhirFieldExtractor.extractReferenceDisplay(
@@ -557,7 +615,7 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createLabLine(
         specimenDisplay,
-        prefix: 'Specimen Type',
+        prefix: l10n.fieldSpecimenType,
       ),
     );
 
@@ -568,14 +626,17 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createBodySiteLine(
         bodySiteDisplay,
-        prefix: 'Body Site',
+        prefix: l10n.fieldBodySite,
       ),
     );
 
     final deviceDisplay = FhirFieldExtractor.extractReferenceDisplay(device);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createProcedureLine(deviceDisplay, prefix: 'Device'),
+      ResourceFieldMapper.createProcedureLine(
+        deviceDisplay,
+        prefix: l10n.fieldDevice,
+      ),
     );
 
     if (hasMember != null && hasMember!.isNotEmpty) {
@@ -587,13 +648,13 @@ abstract class Observation with _$Observation implements IFhirResource {
 
       if (memberDisplay.isNotEmpty) {
         final suffix = hasMember!.length > 3
-            ? ' (${hasMember!.length - 3} more)'
+            ? ' (${l10n.moreCount(hasMember!.length - 3)})'
             : '';
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createLabLine(
             memberDisplay + suffix,
-            prefix: 'Panel Components',
+            prefix: l10n.fieldPanelComponents,
           ),
         );
       }
@@ -608,7 +669,7 @@ abstract class Observation with _$Observation implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createLabLine(
           derivedDisplay.isNotEmpty ? derivedDisplay : null,
-          prefix: 'Derived From',
+          prefix: l10n.fieldDerivedFrom,
         ),
       );
     }
@@ -622,7 +683,7 @@ abstract class Observation with _$Observation implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createDocumentLine(
           basedOnDisplay.isNotEmpty ? basedOnDisplay : null,
-          prefix: 'Ordered By',
+          prefix: l10n.fieldOrderedBy,
         ),
       );
     }
@@ -633,7 +694,10 @@ abstract class Observation with _$Observation implements IFhirResource {
       if (rangeText != null && rangeText.isNotEmpty) {
         ResourceFieldMapper.addIfNotNull(
           infoLines,
-          ResourceFieldMapper.createNotesLine(rangeText, prefix: 'Range Notes'),
+          ResourceFieldMapper.createNotesLine(
+            rangeText,
+            prefix: l10n.fieldRangeNotes,
+          ),
         );
       }
 
@@ -646,7 +710,7 @@ abstract class Observation with _$Observation implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createNotesLine(
             appliesDisplay.isNotEmpty ? appliesDisplay : null,
-            prefix: 'Range Applies To',
+            prefix: l10n.fieldRangeAppliesTo,
           ),
         );
       }
@@ -666,7 +730,7 @@ abstract class Observation with _$Observation implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createNotesLine(
         notesDisplay,
-        prefix: 'Clinical Notes',
+        prefix: l10n.fieldClinicalNotes,
       ),
     );
 

@@ -1,9 +1,13 @@
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class BiometricAuthService {
+  BiometricAuthService(this._strings);
+
+  final AppStringsProvider _strings;
   final LocalAuthentication _auth = LocalAuthentication();
 
   bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
@@ -35,7 +39,7 @@ class BiometricAuthService {
   Future<bool> authenticate() async {
     try {
       final didAuthenticate = await _auth.authenticate(
-        localizedReason: 'Please authenticate to access your HealthWallet.me',
+        localizedReason: _strings.l10n.biometricAuthReason,
         options: const AuthenticationOptions(
           biometricOnly: false,
         ),

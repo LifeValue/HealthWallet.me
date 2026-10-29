@@ -89,7 +89,9 @@ class _SessionBottomBarState extends State<SessionBottomBar> {
           timeRemaining: state.viewingTimeRemaining,
           isExpanded: _isExpanded,
           statusText: state.extensionRequestPending
-              ? '${_formatDuration(context, _lastRequestedSeconds)} requested'
+              ? context.l10n.shareDurationRequested(
+                  _formatDuration(context, _lastRequestedSeconds),
+                )
               : null,
           onToggleExpanded:
               state.canRequestExtension && !state.extensionRequestPending

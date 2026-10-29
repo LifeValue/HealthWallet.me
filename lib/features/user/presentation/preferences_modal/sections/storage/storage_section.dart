@@ -3,12 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_wallet/features/user/data/service/app_data_reset_service.dart';
+import 'package:health_wallet/gen/assets.gen.dart';
+
+/// The word the user types to confirm a reset. It is the same in every
+/// language, and the prompt shows this exact word, so the check below always
+/// compares against what the user was asked to type.
+const resetConfirmationWord = 'RESET';
 
 class StorageSection extends StatelessWidget {
   const StorageSection({super.key});
@@ -28,12 +34,12 @@ class StorageSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Storage',
+                Text(
+                  context.l10n.settingsStorage,
                   style: AppTextStyle.bodySmall,
                 ),
                 Text(
-                  'Clear all records, preferences and cached data',
+                  context.l10n.settingsStorageDescription,
                   style: AppTextStyle.labelSmall.copyWith(
                     color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -56,7 +62,7 @@ class StorageSection extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'Reset',
+                context.l10n.settingsReset,
                 style: AppTextStyle.buttonSmall.copyWith(
                   color: AppColors.error,
                 ),
@@ -71,20 +77,24 @@ class StorageSection extends StatelessWidget {
   void _showResetDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => const _ResetConfirmationDialog(),
+      builder: (_) => const ResetConfirmationDialog(),
     );
   }
 }
 
-class _ResetConfirmationDialog extends StatefulWidget {
-  const _ResetConfirmationDialog();
+class ResetConfirmationDialog extends StatefulWidget {
+  const ResetConfirmationDialog({super.key, this.onReset});
+
+  /// Deletes the data once confirmed; by default [AppDataResetService.reset]
+  /// followed by quitting the app.
+  final Future<void> Function()? onReset;
 
   @override
-  State<_ResetConfirmationDialog> createState() =>
+  State<ResetConfirmationDialog> createState() =>
       _ResetConfirmationDialogState();
 }
 
-class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
+class _ResetConfirmationDialogState extends State<ResetConfirmationDialog> {
   final _controller = TextEditingController();
   bool _isConfirmed = false;
   bool _isProcessing = false;
@@ -93,7 +103,7 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
   void initState() {
     super.initState();
     _controller.addListener(() {
-      final confirmed = _controller.text.trim() == 'RESET';
+      final confirmed = _controller.text.trim() == resetConfirmationWord;
       if (confirmed != _isConfirmed) {
         setState(() => _isConfirmed = confirmed);
       }
@@ -126,6 +136,30 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      context.l10n.settingsReset,
+                      style: AppTextStyle.titleSmall,
+                    ),
+                  ),
+                  IconButton(
+                    key: const Key('reset_dialog_close'),
+                    tooltip: context.l10n.close,
+                    onPressed: _isProcessing
+                        ? null
+                        : () => Navigator.pop(context),
+                    icon: Assets.icons.close.svg(
+                      colorFilter: ColorFilter.mode(
+                        context.colorScheme.onSurface,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Insets.small),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(Insets.smallNormal),
@@ -147,7 +181,7 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
                     const SizedBox(width: Insets.small),
                     Expanded(
                       child: Text(
-                        'This will permanently delete all your data including synced records, notes, attachments, and preferences.',
+                        context.l10n.resetDataWarning,
                         style: AppTextStyle.labelMedium.copyWith(
                           color: AppColors.error,
                         ),
@@ -158,7 +192,7 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
               ),
               const SizedBox(height: Insets.normal),
               Text(
-                'Type RESET to confirm:',
+                context.l10n.resetTypeToConfirm(resetConfirmationWord),
                 style: AppTextStyle.labelMedium.copyWith(
                   color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
@@ -169,7 +203,7 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
                 enabled: !_isProcessing,
                 style: AppTextStyle.labelLarge,
                 decoration: InputDecoration(
-                  hintText: 'RESET',
+                  hintText: resetConfirmationWord,
                   hintStyle: AppTextStyle.labelLarge.copyWith(
                     color: context.colorScheme.onSurface.withValues(alpha: 0.3),
                   ),
@@ -200,7 +234,7 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
                           ? null
                           : () => Navigator.pop(context),
                       child: Text(
-                        'Cancel',
+                        context.l10n.cancel,
                         style: AppTextStyle.buttonMedium.copyWith(
                           color: context.colorScheme.primary,
                         ),
@@ -230,7 +264,11 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
                         ),
                         elevation: 0,
                       ),
-                      child: Text(_isProcessing ? 'Deleting...' : 'Delete'),
+                      child: Text(
+                        _isProcessing
+                            ? context.l10n.deleting
+                            : context.l10n.delete,
+                      ),
                     ),
                   ),
                 ],
@@ -245,32 +283,12 @@ class _ResetConfirmationDialogState extends State<_ResetConfirmationDialog> {
   Future<void> _performReset() async {
     setState(() => _isProcessing = true);
 
-    try {
-      final db = getIt<AppDatabase>();
-      await db.delete(db.fhirResource).go();
-      await db.delete(db.sources).go();
-      await db.delete(db.recordNotes).go();
-      await db.delete(db.processingSessions).go();
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-
-      try {
-        final cacheDir = await getTemporaryDirectory();
-        if (cacheDir.existsSync()) {
-          await cacheDir.delete(recursive: true);
-        }
-      } catch (_) {}
-
-      try {
-        final supportDir = await getApplicationSupportDirectory();
-        final shareDir = Directory('${supportDir.path}/share_sessions');
-        if (shareDir.existsSync()) {
-          await shareDir.delete(recursive: true);
-        }
-      } catch (_) {}
-    } catch (_) {}
-
+    final onReset = widget.onReset;
+    if (onReset != null) {
+      await onReset();
+      return;
+    }
+    await AppDataResetService(getIt<AppDatabase>()).reset();
     exit(0);
   }
 }

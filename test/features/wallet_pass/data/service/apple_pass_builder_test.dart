@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/config/env/env.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:passkit/passkit.dart';
 
@@ -18,7 +22,11 @@ const _certPath = 'assets/certs/pass_certificate.pem';
 const _keyPath = 'assets/certs/private_key.pem';
 const _iconPath = 'assets/icons/app-icon-transparent.png';
 
-const _labels = ApplePassLabels(
+String _age(int years) => 'L-age $years';
+
+const _labels = WalletPassLabels(
+  localeName: 'en',
+  cardTitle: 'L-title',
   patient: 'L-patient',
   bloodType: 'L-blood',
   allergies: 'L-allergies',
@@ -26,7 +34,13 @@ const _labels = ApplePassLabels(
   dateOfBirth: 'L-dob',
   emergencyPhone: 'L-ephone',
   conditions: 'L-conditions',
+  medicalConditions: 'L-medical-conditions',
   medications: 'L-meds',
+  male: 'L-male',
+  female: 'L-female',
+  otherGender: 'L-other',
+  unknownGender: 'L-unknown',
+  age: _age,
 );
 
 void main() {
@@ -37,11 +51,13 @@ void main() {
   late String originalPassTypeId;
   late String originalTeamId;
 
-  setUpAll(() {
+  setUpAll(() async {
     signing = SigningTestMaterial.generate();
     iconBytes = File(_iconPath).readAsBytesSync();
     originalPassTypeId = Env.applePassTypeId;
     originalTeamId = Env.appleTeamId;
+    // The app loads every locale's date symbols through its localizations.
+    await initializeDateFormatting();
   });
 
   setUp(() {
@@ -62,11 +78,15 @@ void main() {
     Env.appleTeamId = originalTeamId;
   });
 
-  Future<PkPass> buildPass(EmergencyCardData card, {String id = 'p-1'}) async {
+  Future<PkPass> buildPass(
+    EmergencyCardData card, {
+    String id = 'p-1',
+    WalletPassLabels labels = _labels,
+  }) async {
     final bytes = await ApplePassBuilder().build(
       card,
       patientId: id,
-      labels: _labels,
+      labels: labels,
     );
     return PkPass.fromBytes(bytes, skipSignatureVerification: true);
   }
@@ -90,7 +110,7 @@ void main() {
       expect(pass.teamIdentifier, _teamId);
       expect(pass.serialNumber, 'emergency_patient-42');
       expect(pass.organizationName, 'HealthWallet.me');
-      expect(pass.description, 'Emergency Medical ID');
+      expect(pass.description, 'L-title');
       expect(pass.logoText, 'HealthWallet.me');
 
       final barcode = pass.barcodes!.single;
@@ -128,10 +148,10 @@ void main() {
       expect(fieldsOf(structure.headerFields), {'blood-type': 'A+'});
       expect(fieldsOf(structure.secondaryFields), {
         'allergies': 'Penicillin, Latex',
-        'gender': 'female',
+        'gender': 'L-female',
       });
       expect(fieldsOf(structure.auxiliaryFields), {
-        'dob': '${DateFormat('MMM d, yyyy').format(dob)} (Age $age)',
+        'dob': '${DateFormat('MMM d, yyyy').format(dob)} (L-age $age)',
         'emergency-contact': PhoneDisplayFormatter.format('+40712345678'),
       });
       expect(age, 30);
@@ -161,6 +181,24 @@ void main() {
       );
     });
 
+    test('keeps the English texts when built from English strings', () async {
+      final dob = DateTime.now().subtract(const Duration(days: 30 * 365 + 180));
+      final pass = (await buildPass(
+        EmergencyCardData(patientName: 'A', dateOfBirth: dob, gender: 'male'),
+        labels: WalletPassLabels.fromL10n(
+          lookupAppLocalizations(const Locale('en')),
+        ),
+      )).pass;
+      expect(pass.description, 'Emergency Medical ID');
+      expect(fieldsOf(pass.generic!.secondaryFields), {'gender': 'Male'});
+      expect(fieldsOf(pass.generic!.auxiliaryFields), {
+        'dob': '${DateFormat('MMM d, yyyy').format(dob)} (Age 30)',
+      });
+      expect(labelsOf(pass.generic!.primaryFields), {
+        'patient-name': 'Patient',
+      });
+    });
+
     test('omits empty sections for a name-only card', () async {
       final structure = (await buildPass(
         const EmergencyCardData(patientName: 'A'),
@@ -181,7 +219,7 @@ void main() {
           medications: ['Aspirin'],
         ),
       )).pass.generic!;
-      expect(fieldsOf(structure.secondaryFields), {'gender': 'other'});
+      expect(fieldsOf(structure.secondaryFields), {'gender': 'L-other'});
       expect(fieldsOf(structure.auxiliaryFields), {
         'emergency-contact': 'not a phone',
       });

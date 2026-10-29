@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -112,7 +113,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
     final coverageDetailsStartIndex = infoLines.length;
 
@@ -122,7 +123,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createIdentificationLine(
         subscriberIdText,
-        prefix: 'Member ID',
+        prefix: l10n.fieldMemberId,
       ),
     );
 
@@ -139,7 +140,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
             infoLines,
             ResourceFieldMapper.createIdentificationLine(
               classValue,
-              prefix: 'Group Number',
+              prefix: l10n.fieldGroupNumber,
             ),
           );
         }
@@ -150,22 +151,28 @@ abstract class Coverage with _$Coverage implements IFhirResource {
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createCategoryLine(typeDisplay, prefix: 'Plan Type'),
+      ResourceFieldMapper.createCategoryLine(
+        typeDisplay,
+        prefix: l10n.fieldPlanType,
+      ),
     );
 
     // Status
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(status, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(status, prefix: l10n.fieldStatus),
     );
 
     // Effective Dates / Period
-    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(period);
+    final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
+      period,
+      l10n: l10n,
+    );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createTimelineLine(
         periodDisplay,
-        prefix: 'Effective Dates',
+        prefix: l10n.fieldEffectiveDates,
       ),
     );
 
@@ -173,7 +180,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
     if (infoLines.length > coverageDetailsStartIndex) {
       infoLines.insert(
         coverageDetailsStartIndex,
-        ResourceFieldMapper.createSectionHeader('Coverage Details'),
+        ResourceFieldMapper.createSectionHeader(l10n.fieldCoverageDetails),
       );
     }
 
@@ -189,7 +196,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createOrganizationLine(
           payorDisplay.isNotEmpty ? payorDisplay : null,
-          prefix: 'Insurance Company',
+          prefix: l10n.fieldInsuranceCompany,
         ),
       );
     }
@@ -208,7 +215,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
             infoLines,
             ResourceFieldMapper.createStatusLine(
               className,
-              prefix: 'Plan Name',
+              prefix: l10n.fieldPlanName,
             ),
           );
         }
@@ -223,7 +230,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createUserLine(
         subscriberDisplay,
-        prefix: 'Subscriber',
+        prefix: l10n.fieldSubscriber,
       ),
     );
 
@@ -235,7 +242,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         relationshipDisplay,
-        prefix: 'Relationship to Subscriber',
+        prefix: l10n.fieldRelationshipToSubscriber,
       ),
     );
 
@@ -247,7 +254,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createUserLine(
         beneficiaryDisplay,
-        prefix: 'Beneficiary',
+        prefix: l10n.fieldBeneficiary,
       ),
     );
 
@@ -255,14 +262,17 @@ abstract class Coverage with _$Coverage implements IFhirResource {
     final networkText = network?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(networkText, prefix: 'Network'),
+      ResourceFieldMapper.createStatusLine(
+        networkText,
+        prefix: l10n.fieldNetwork,
+      ),
     );
 
     // Add section header only if we added content
     if (infoLines.length > basicInfoStartIndex) {
       infoLines.insert(
         basicInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Basic Information'),
+        ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
       );
     }
 
@@ -276,7 +286,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createUserLine(
         policyHolderDisplay,
-        prefix: 'Policy Holder',
+        prefix: l10n.fieldPolicyHolder,
       ),
     );
 
@@ -284,7 +294,10 @@ abstract class Coverage with _$Coverage implements IFhirResource {
     final dependentText = dependent?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(dependentText, prefix: 'Dependent'),
+      ResourceFieldMapper.createStatusLine(
+        dependentText,
+        prefix: l10n.fieldDependent,
+      ),
     );
 
     // Order (Primary, Secondary, etc.)
@@ -294,21 +307,24 @@ abstract class Coverage with _$Coverage implements IFhirResource {
       if (orderValue != null) {
         switch (orderValue) {
           case 1:
-            orderDisplay = 'Primary (1)';
+            orderDisplay = l10n.coverageOrderPrimary;
             break;
           case 2:
-            orderDisplay = 'Secondary (2)';
+            orderDisplay = l10n.coverageOrderSecondary;
             break;
           case 3:
-            orderDisplay = 'Tertiary (3)';
+            orderDisplay = l10n.coverageOrderTertiary;
             break;
           default:
-            orderDisplay = 'Order $orderValue';
+            orderDisplay = l10n.coverageOrderNumber(orderValue);
         }
       }
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(orderDisplay, prefix: 'Order'),
+        ResourceFieldMapper.createStatusLine(
+          orderDisplay,
+          prefix: l10n.fieldOrder,
+        ),
       );
     }
 
@@ -343,7 +359,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createStatusLine(
             costDisplay,
-            prefix: 'Cost Sharing',
+            prefix: l10n.fieldCostSharing,
           ),
         );
       }
@@ -370,7 +386,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createStatusLine(
             classDisplay,
-            prefix: 'Coverage Class',
+            prefix: l10n.fieldCoverageClass,
           ),
         );
       }
@@ -382,8 +398,8 @@ abstract class Coverage with _$Coverage implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-          subrogationValue ? 'Yes' : 'No',
-          prefix: 'Subrogation',
+          subrogationValue ? l10n.yes : l10n.no,
+          prefix: l10n.fieldSubrogation,
         ),
       );
     }
@@ -398,13 +414,13 @@ abstract class Coverage with _$Coverage implements IFhirResource {
 
       if (contractDisplay.isNotEmpty) {
         final suffix = contract!.length > 3
-            ? ' (${contract!.length - 3} more)'
+            ? ' (${l10n.moreCount(contract!.length - 3)})'
             : '';
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createDocumentLine(
             contractDisplay + suffix,
-            prefix: 'Contract',
+            prefix: l10n.fieldContract,
           ),
         );
       }
@@ -414,7 +430,9 @@ abstract class Coverage with _$Coverage implements IFhirResource {
     if (infoLines.length > additionalInfoStartIndex) {
       infoLines.insert(
         additionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Additional Information'),
+        ResourceFieldMapper.createSectionHeader(
+          l10n.fieldAdditionalInformation,
+        ),
       );
     }
 
@@ -423,7 +441,7 @@ abstract class Coverage with _$Coverage implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }

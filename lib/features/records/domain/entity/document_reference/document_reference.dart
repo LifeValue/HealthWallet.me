@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -114,7 +115,7 @@ abstract class DocumentReference
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
     final documentDetailsStartIndex = infoLines.length;
 
@@ -122,7 +123,10 @@ abstract class DocumentReference
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDocumentLine(typeDisplay, prefix: 'Type'),
+      ResourceFieldMapper.createDocumentLine(
+        typeDisplay,
+        prefix: l10n.fieldType,
+      ),
     );
 
     // Category
@@ -135,7 +139,7 @@ abstract class DocumentReference
         infoLines,
         ResourceFieldMapper.createCategoryLine(
           categoryDisplay.isNotEmpty ? categoryDisplay : null,
-          prefix: 'Category',
+          prefix: l10n.fieldCategory,
         ),
       );
     }
@@ -144,7 +148,10 @@ abstract class DocumentReference
     final fhirDateDisplay = FhirFieldExtractor.formatFhirInstant(fhirDate);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createDateLine(fhirDateDisplay, prefix: 'Created'),
+      ResourceFieldMapper.createDateLine(
+        fhirDateDisplay,
+        prefix: l10n.fieldCreated,
+      ),
     );
 
     // Author
@@ -157,7 +164,7 @@ abstract class DocumentReference
         infoLines,
         ResourceFieldMapper.createUserLine(
           authorDisplay.isNotEmpty ? authorDisplay : null,
-          prefix: 'Author',
+          prefix: l10n.fieldAuthor,
         ),
       );
     }
@@ -166,14 +173,17 @@ abstract class DocumentReference
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Add section header only if we added content
     if (infoLines.length > documentDetailsStartIndex) {
       infoLines.insert(
         documentDetailsStartIndex,
-        ResourceFieldMapper.createSectionHeader('Document Details'),
+        ResourceFieldMapper.createSectionHeader(l10n.fieldDocumentDetails),
       );
     }
 
@@ -185,7 +195,7 @@ abstract class DocumentReference
       infoLines,
       ResourceFieldMapper.createNotesLine(
         descriptionText,
-        prefix: 'Description',
+        prefix: l10n.fieldDescription,
       ),
     );
 
@@ -195,7 +205,7 @@ abstract class DocumentReference
       infoLines,
       ResourceFieldMapper.createStatusLine(
         docStatusText,
-        prefix: 'Document Status',
+        prefix: l10n.fieldDocumentStatus,
       ),
     );
 
@@ -207,7 +217,7 @@ abstract class DocumentReference
       infoLines,
       ResourceFieldMapper.createUserLine(
         authenticatorDisplay,
-        prefix: 'Authenticated By',
+        prefix: l10n.fieldAuthenticatedBy,
       ),
     );
 
@@ -221,7 +231,7 @@ abstract class DocumentReference
           infoLines,
           ResourceFieldMapper.createLocationLine(
             facilityType,
-            prefix: 'Facility Type',
+            prefix: l10n.fieldFacilityType,
           ),
         );
       }
@@ -235,7 +245,7 @@ abstract class DocumentReference
           infoLines,
           ResourceFieldMapper.createLocationLine(
             practiceSetting,
-            prefix: 'Practice Setting',
+            prefix: l10n.fieldPracticeSetting,
           ),
         );
       }
@@ -244,12 +254,13 @@ abstract class DocumentReference
       if (context!.period != null) {
         final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
           context!.period,
+          l10n: l10n,
         );
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createTimelineLine(
             periodDisplay,
-            prefix: 'Service Period',
+            prefix: l10n.fieldServicePeriod,
           ),
         );
       }
@@ -259,7 +270,7 @@ abstract class DocumentReference
     if (infoLines.length > basicInfoStartIndex) {
       infoLines.insert(
         basicInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Basic Information'),
+        ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
       );
     }
 
@@ -277,7 +288,7 @@ abstract class DocumentReference
         infoLines,
         ResourceFieldMapper.createNotesLine(
           eventDisplay.isNotEmpty ? eventDisplay : null,
-          prefix: 'Context',
+          prefix: l10n.fieldContext,
         ),
       );
     }
@@ -298,7 +309,7 @@ abstract class DocumentReference
           infoLines,
           ResourceFieldMapper.createDocumentLine(
             relationDisplay,
-            prefix: 'Related Document',
+            prefix: l10n.fieldRelatedDocument,
           ),
         );
       }
@@ -314,7 +325,7 @@ abstract class DocumentReference
         infoLines,
         ResourceFieldMapper.createWarningLine(
           securityDisplay.isNotEmpty ? securityDisplay : null,
-          prefix: 'Security Classification',
+          prefix: l10n.fieldSecurityClassification,
         ),
       );
     }
@@ -329,7 +340,10 @@ abstract class DocumentReference
       );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createDocumentLine(formatDisplay, prefix: 'Format'),
+        ResourceFieldMapper.createDocumentLine(
+          formatDisplay,
+          prefix: l10n.fieldFormat,
+        ),
       );
 
       // Content Type (MIME type)
@@ -338,7 +352,7 @@ abstract class DocumentReference
         infoLines,
         ResourceFieldMapper.createAttachmentLine(
           contentType,
-          prefix: 'Content Type',
+          prefix: l10n.fieldContentType,
         ),
       );
 
@@ -348,8 +362,8 @@ abstract class DocumentReference
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createAttachmentLine(
-            sizeValue != null ? '$sizeValue bytes' : null,
-            prefix: 'Size',
+            sizeValue != null ? l10n.sizeBytes(sizeValue) : null,
+            prefix: l10n.fieldSize,
           ),
         );
       }
@@ -358,7 +372,10 @@ abstract class DocumentReference
       final language = firstContent.attachment.language?.toString();
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(language, prefix: 'Language'),
+        ResourceFieldMapper.createStatusLine(
+          language,
+          prefix: l10n.fieldLanguage,
+        ),
       );
 
       // Title
@@ -367,7 +384,7 @@ abstract class DocumentReference
         infoLines,
         ResourceFieldMapper.createDocumentLine(
           attachmentTitle,
-          prefix: 'Attachment Title',
+          prefix: l10n.fieldAttachmentTitle,
         ),
       );
     }
@@ -380,7 +397,7 @@ abstract class DocumentReference
       infoLines,
       ResourceFieldMapper.createOrganizationLine(
         custodianDisplay,
-        prefix: 'Custodian',
+        prefix: l10n.fieldCustodian,
       ),
     );
 
@@ -390,7 +407,7 @@ abstract class DocumentReference
       infoLines,
       ResourceFieldMapper.createIdentificationLine(
         masterIdDisplay,
-        prefix: 'Document ID',
+        prefix: l10n.fieldDocumentId,
       ),
     );
 
@@ -398,7 +415,9 @@ abstract class DocumentReference
     if (infoLines.length > additionalInfoStartIndex) {
       infoLines.insert(
         additionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Additional Information'),
+        ResourceFieldMapper.createSectionHeader(
+          l10n.fieldAdditionalInformation,
+        ),
       );
     }
 
@@ -407,7 +426,7 @@ abstract class DocumentReference
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }

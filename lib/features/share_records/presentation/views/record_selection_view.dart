@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
@@ -81,7 +82,8 @@ class _RecordSelectionViewState extends State<RecordSelectionView> {
         final title = r.title.toLowerCase();
         final displayTitle = r.displayTitle.toLowerCase();
         final statusDisplay = r.statusDisplay.toLowerCase();
-        final additionalInfoText = r.additionalInfo
+        final additionalInfoText = r
+            .additionalInfo(context.l10n)
             .map((info) => info.info)
             .join(' ')
             .toLowerCase();

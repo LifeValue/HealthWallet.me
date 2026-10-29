@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -230,18 +231,18 @@ class _PreviewButton extends StatelessWidget {
             color: const Color(0xFF1E1E1E).withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(222),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.remove_red_eye,
                 color: Colors.white,
                 size: 16,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
-                'Preview document',
-                style: TextStyle(
+                context.l10n.previewDocument,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

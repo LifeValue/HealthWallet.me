@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
@@ -82,10 +83,10 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     if (resource is Observation) {
       try {
         final region = context.read<UserBloc>().state.regionPreset;
-        return resource.additionalInfoForRegion(region);
+        return resource.additionalInfoForRegion(region, context.l10n);
       } catch (_) {}
     }
-    return resource.additionalInfo;
+    return resource.additionalInfo(context.l10n);
   }
 
   void _onViewDocument(IFhirResource resource) {
@@ -200,7 +201,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  widget.resource.fhirType.display,
+                  widget.resource.fhirType.localizedName(context.l10n),
                   style: AppTextStyle.labelSmall,
                 ),
               ],
@@ -349,7 +350,8 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     BuildContext context,
     IFhirResource resource,
   ) {
-    final infoLines = resource.additionalInfo
+    final infoLines = resource
+        .additionalInfo(context.l10n)
         .where((line) => !line.isSection)
         .take(2)
         .toList();
@@ -428,7 +430,7 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        specialty.displayName,
+                        specialty.localizedName(outerContext.l10n),
                         style: AppTextStyle.bodyLarge.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Theme.of(sheetContext).colorScheme.onSurface,
@@ -540,7 +542,9 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                         elevation: 0,
                       ),
                       child: Text(
-                        '${widget.resource.fhirType.name} ${context.l10n.deletePage.toLowerCase()}',
+                        context.l10n.deleteRecordOfType(
+                          widget.resource.fhirType.localizedName(context.l10n),
+                        ),
                       ),
                     ),
                     if (relatedResources.isNotEmpty) ...[
@@ -641,7 +645,9 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                             Text(
-                                              resource.fhirType.display,
+                                              resource.fhirType.localizedName(
+                                                context.l10n,
+                                              ),
                                               style: AppTextStyle.labelSmall
                                                   .copyWith(
                                                     color: context

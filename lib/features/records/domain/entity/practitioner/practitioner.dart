@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -99,7 +100,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
     final professionalInfoStartIndex = infoLines.length;
 
@@ -109,8 +110,8 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createStatusLine(
-          activeStatus ? 'Active' : 'Inactive',
-          prefix: 'Status',
+          activeStatus ? l10n.active : l10n.inactive,
+          prefix: l10n.fieldStatus,
         ),
       );
     }
@@ -122,21 +123,24 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
           qual.code,
         );
         final issuer = FhirFieldExtractor.extractReferenceDisplay(qual.issuer);
-        final period = FhirFieldExtractor.extractPeriodFormatted(qual.period);
+        final period = FhirFieldExtractor.extractPeriodFormatted(
+          qual.period,
+          l10n: l10n,
+        );
 
         String? qualDisplay = qualCode;
         if (issuer != null && qualCode != null) {
-          qualDisplay = '$qualCode (issued by $issuer)';
+          qualDisplay = l10n.qualificationIssuedBy(qualCode, issuer);
         }
         if (period != null && qualDisplay != null) {
-          qualDisplay = '$qualDisplay - Valid: $period';
+          qualDisplay = l10n.qualificationValidPeriod(qualDisplay, period);
         }
 
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createStatusLine(
             qualDisplay,
-            prefix: 'Qualification',
+            prefix: l10n.fieldQualification,
           ),
         );
       }
@@ -146,7 +150,10 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
     final genderDisplay = gender?.display?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(genderDisplay, prefix: 'Gender'),
+      ResourceFieldMapper.createStatusLine(
+        genderDisplay,
+        prefix: l10n.fieldGender,
+      ),
     );
 
     // Communication/Languages
@@ -159,7 +166,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createStatusLine(
           languages.isNotEmpty ? languages : null,
-          prefix: 'Languages',
+          prefix: l10n.fieldLanguages,
         ),
       );
     }
@@ -168,7 +175,9 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
     if (infoLines.length > professionalInfoStartIndex) {
       infoLines.insert(
         professionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Professional Information'),
+        ResourceFieldMapper.createSectionHeader(
+          l10n.fieldProfessionalInformation,
+        ),
       );
     }
 
@@ -180,7 +189,10 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLocationLine(addressDisplay, prefix: 'Address'),
+      ResourceFieldMapper.createLocationLine(
+        addressDisplay,
+        prefix: l10n.fieldAddress,
+      ),
     );
 
     // Telecom (phone/email)
@@ -193,7 +205,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
           ?.toString();
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(phone, prefix: 'Phone'),
+        ResourceFieldMapper.createStatusLine(phone, prefix: l10n.fieldPhone),
       );
 
       // Email
@@ -204,7 +216,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
           ?.toString();
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(email, prefix: 'Email'),
+        ResourceFieldMapper.createStatusLine(email, prefix: l10n.fieldEmail),
       );
 
       // Fax
@@ -215,7 +227,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
           ?.toString();
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine(fax, prefix: 'Fax'),
+        ResourceFieldMapper.createStatusLine(fax, prefix: l10n.fieldFax),
       );
     }
 
@@ -223,7 +235,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
     if (infoLines.length > contactInfoStartIndex) {
       infoLines.insert(
         contactInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Contact Information'),
+        ResourceFieldMapper.createSectionHeader(l10n.fieldContactInformation),
       );
     }
 
@@ -235,7 +247,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createDateLine(
         birthDateDisplay,
-        prefix: 'Birth Date',
+        prefix: l10n.fieldBirthDate,
       ),
     );
 
@@ -244,7 +256,7 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }
@@ -253,7 +265,9 @@ abstract class Practitioner with _$Practitioner implements IFhirResource {
     if (infoLines.length > additionalInfoStartIndex) {
       infoLines.insert(
         additionalInfoStartIndex,
-        ResourceFieldMapper.createSectionHeader('Additional Information'),
+        ResourceFieldMapper.createSectionHeader(
+          l10n.fieldAdditionalInformation,
+        ),
       );
     }
 

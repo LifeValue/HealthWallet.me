@@ -75,7 +75,7 @@ class SyncSection extends StatelessWidget {
                                   children: [
                                     _StatusRow(
                                       icon: Icons.check_circle_outline,
-                                      label: 'EHR Sync',
+                                      label: context.l10n.settingsEhrSync,
                                       status: context.l10n.syncSuccessful,
                                       statusColor: AppColors.success,
                                     ),
@@ -494,7 +494,7 @@ class SyncSection extends StatelessWidget {
       return l10n.syncStatusPending(lww.pendingChangeCount);
     }
     if (lww.lastSyncTime != null) {
-      return DateFormatUtils.getSincePretty(lww.lastSyncTime!);
+      return DateFormatUtils.getSincePretty(lww.lastSyncTime!, l10n);
     }
     return l10n.connectionStatusNotPaired;
   }
@@ -519,10 +519,11 @@ class SyncSection extends StatelessWidget {
     if (state.backupHistory.isNotEmpty) {
       return DateFormatUtils.getSincePretty(
         state.backupHistory.first.timestamp,
+        l10n,
       );
     }
     if (state.desktopLastBackupTime != null) {
-      return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!);
+      return DateFormatUtils.getSincePretty(state.desktopLastBackupTime!, l10n);
     }
     if (comm.connectionStatus == ConnectionStatus.connected) {
       return l10n.backupStatusWaiting;
@@ -668,6 +669,7 @@ class _BackupLocationRow extends StatelessWidget {
   }
 
   Future<void> _pickDirectory(BuildContext context) async {
+    final title = context.l10n.desktopChooseBackupLocation;
     final initialPath = path != null && await Directory(path!).exists()
         ? path!
         : null;
@@ -676,11 +678,11 @@ class _BackupLocationRow extends StatelessWidget {
     if (Platform.isMacOS) {
       result = await _fsChannel.invokeMethod<String>('pickDirectory', {
         'initialDirectory': ?initialPath,
-        'title': 'Choose Backup Location',
+        'title': title,
       });
     } else {
       result = await FilePicker.getDirectoryPath(
-        dialogTitle: 'Choose Backup Location',
+        dialogTitle: title,
         initialDirectory: initialPath,
       );
     }

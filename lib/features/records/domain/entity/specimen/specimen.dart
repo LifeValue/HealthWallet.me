@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -104,22 +105,30 @@ abstract class Specimen with _$Specimen implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Specimen Details'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldSpecimenDetails),
+    );
 
     // Type (What kind of specimen - CRITICAL)
     final typeDisplay = FhirFieldExtractor.extractCodeableConceptText(type);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createLabLine(typeDisplay, prefix: 'Specimen Type'),
+      ResourceFieldMapper.createLabLine(
+        typeDisplay,
+        prefix: l10n.fieldSpecimenType,
+      ),
     );
 
     // Status (available, unavailable, unsatisfactory)
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Accession Identifier (Lab tracking number)
@@ -128,7 +137,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createIdentificationLine(
         accessionId,
-        prefix: 'Accession Number',
+        prefix: l10n.fieldAccessionNumber,
       ),
     );
 
@@ -142,13 +151,13 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createWarningLine(
           conditionDisplay.isNotEmpty ? conditionDisplay : null,
-          prefix: 'Condition',
+          prefix: l10n.fieldCondition,
         ),
       );
     }
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Collection Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldCollectionInformation),
     );
 
     // Collection details
@@ -163,18 +172,19 @@ abstract class Specimen with _$Specimen implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createDateLine(
             collectedDateTime.valueString,
-            prefix: 'Collection Date',
+            prefix: l10n.fieldCollectionDate,
           ),
         );
       } else if (collectedPeriod != null) {
         final periodDisplay = FhirFieldExtractor.extractPeriodFormatted(
           collectedPeriod,
+          l10n: l10n,
         );
         ResourceFieldMapper.addIfNotNull(
           infoLines,
           ResourceFieldMapper.createTimelineLine(
             periodDisplay,
-            prefix: 'Collection Period',
+            prefix: l10n.fieldCollectionPeriod,
           ),
         );
       }
@@ -185,7 +195,10 @@ abstract class Specimen with _$Specimen implements IFhirResource {
       );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createUserLine(collector, prefix: 'Collected By'),
+        ResourceFieldMapper.createUserLine(
+          collector,
+          prefix: l10n.fieldCollectedBy,
+        ),
       );
 
       // Body Site (Where sample was taken from)
@@ -194,7 +207,10 @@ abstract class Specimen with _$Specimen implements IFhirResource {
       );
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createBodySiteLine(bodySite, prefix: 'Body Site'),
+        ResourceFieldMapper.createBodySiteLine(
+          bodySite,
+          prefix: l10n.fieldBodySite,
+        ),
       );
 
       // Method (How it was collected)
@@ -205,7 +221,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createProcedureLine(
           method,
-          prefix: 'Collection Method',
+          prefix: l10n.fieldCollectionMethod,
         ),
       );
 
@@ -220,7 +236,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
             infoLines,
             ResourceFieldMapper.createValueLine(
               '$quantityValue $quantityUnit',
-              prefix: 'Quantity Collected',
+              prefix: l10n.fieldQuantityCollected,
             ),
           );
         }
@@ -236,7 +252,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
             infoLines,
             ResourceFieldMapper.createTimeLine(
               '$durationValue $durationUnit',
-              prefix: 'Collection Duration',
+              prefix: l10n.fieldCollectionDuration,
             ),
           );
         }
@@ -251,7 +267,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createStatusLine(
             fastingDisplay,
-            prefix: 'Fasting Status',
+            prefix: l10n.fieldFastingStatus,
           ),
         );
       } else if (collection!.fastingStatusDuration != null) {
@@ -265,8 +281,8 @@ abstract class Specimen with _$Specimen implements IFhirResource {
           ResourceFieldMapper.addIfNotNull(
             infoLines,
             ResourceFieldMapper.createStatusLine(
-              'Fasted for $fastingDuration $fastingUnit',
-              prefix: 'Fasting Status',
+              l10n.fastedFor('$fastingDuration $fastingUnit'),
+              prefix: l10n.fieldFastingStatus,
             ),
           );
         }
@@ -279,14 +295,14 @@ abstract class Specimen with _$Specimen implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createDateLine(
         receivedTimeDisplay,
-        prefix: 'Received at Lab',
+        prefix: l10n.fieldReceivedAtLab,
       ),
     );
 
     if ((processing != null && processing!.isNotEmpty) ||
         (container != null && container!.isNotEmpty)) {
       infoLines.add(
-        ResourceFieldMapper.createSectionHeader('Processing & Storage'),
+        ResourceFieldMapper.createSectionHeader(l10n.fieldProcessingStorage),
       );
     }
 
@@ -310,14 +326,15 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         final processingTime =
             FhirFieldExtractor.extractPeriodFormatted(
               proc.timeX?.isAs<fhir_r4.Period>(),
+              l10n: l10n,
             ) ??
             proc.timeX?.isAs<fhir_r4.FhirDateTime>()?.valueString;
 
         final processingDisplay = [
           procedure,
           description,
-          if (additive != null) 'Additive: $additive',
-          if (processingTime != null) 'Time: $processingTime',
+          if (additive != null) '${l10n.fieldAdditive}: $additive',
+          if (processingTime != null) '${l10n.fieldTime}: $processingTime',
         ].where((s) => s != null && s.isNotEmpty).join(' - ');
 
         if (processingDisplay.isNotEmpty) {
@@ -325,7 +342,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
             infoLines,
             ResourceFieldMapper.createProcedureLine(
               processingDisplay,
-              prefix: 'Processing ${i + 1}',
+              prefix: l10n.fieldProcessingNumber(i + 1),
             ),
           );
         }
@@ -338,8 +355,8 @@ abstract class Specimen with _$Specimen implements IFhirResource {
       ResourceFieldMapper.addIfNotNull(
         infoLines,
         ResourceFieldMapper.createLabLine(
-          '${container!.length} container(s)',
-          prefix: 'Containers',
+          l10n.containerCount(container!.length),
+          prefix: l10n.fieldContainers,
         ),
       );
 
@@ -352,7 +369,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createLabLine(
           containerType,
-          prefix: 'Container Type',
+          prefix: l10n.fieldContainerType,
         ),
       );
 
@@ -363,7 +380,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createValueLine(
           containerCapacity,
-          prefix: 'Container Capacity',
+          prefix: l10n.fieldContainerCapacity,
         ),
       );
 
@@ -374,7 +391,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createValueLine(
           specimenQuantity,
-          prefix: 'Specimen Quantity',
+          prefix: l10n.fieldSpecimenQuantity,
         ),
       );
 
@@ -387,7 +404,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createLabLine(
             additiveDisplay,
-            prefix: 'Container Additive',
+            prefix: l10n.fieldContainerAdditive,
           ),
         );
       } else if (firstContainer.additiveReference != null) {
@@ -398,14 +415,14 @@ abstract class Specimen with _$Specimen implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createLabLine(
             additiveDisplay,
-            prefix: 'Container Additive',
+            prefix: l10n.fieldContainerAdditive,
           ),
         );
       }
     }
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     // Parent Specimen (if derived from another specimen)
@@ -418,7 +435,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createLabLine(
           parentDisplay.isNotEmpty ? parentDisplay : null,
-          prefix: 'Parent Specimen',
+          prefix: l10n.fieldParentSpecimen,
         ),
       );
     }
@@ -433,7 +450,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createDocumentLine(
           requestDisplay.isNotEmpty ? requestDisplay : null,
-          prefix: 'Requested By',
+          prefix: l10n.fieldRequestedBy,
         ),
       );
     }
@@ -443,7 +460,7 @@ abstract class Specimen with _$Specimen implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }
@@ -452,7 +469,10 @@ abstract class Specimen with _$Specimen implements IFhirResource {
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

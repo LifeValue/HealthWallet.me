@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 import 'package:health_wallet/features/processing/data/services/native_text_recognition_service.dart';
 import 'package:health_wallet/features/processing/domain/services/text_recognition_service.dart';
@@ -22,7 +23,8 @@ abstract class RegisterModule {
   UserRemoteDataSource get userRemoteDataSource => MockUserRemoteDataSource();
 
   @lazySingleton
-  BiometricAuthService get biometricAuthService => BiometricAuthService();
+  BiometricAuthService biometricAuthService(AppStringsProvider strings) =>
+      BiometricAuthService(strings);
 
   @lazySingleton
   TextRecognitionService get textRecognitionService =>

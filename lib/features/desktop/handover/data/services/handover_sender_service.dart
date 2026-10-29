@@ -7,6 +7,7 @@ import 'package:health_wallet/features/desktop/communication/data/services/messa
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
+import 'package:health_wallet/features/processing/domain/entity/model_not_found_exception.dart';
 import 'package:health_wallet/features/processing/domain/entity/processing_session.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -90,6 +91,7 @@ class HandoverSenderService {
         sessionId,
         HandoverStatus.error,
         error: 'Desktop did not accept',
+        failure: HandoverFailure.notAccepted,
       );
       return;
     }
@@ -105,6 +107,7 @@ class HandoverSenderService {
           sessionId,
           HandoverStatus.error,
           error: 'File not found: ${p.basename(filePaths[i])}',
+          failure: HandoverFailure.fileNotFound,
         );
         return;
       }
@@ -133,7 +136,12 @@ class HandoverSenderService {
 
   void cancelHandover(String sessionId) {
     _cancelled[sessionId] = true;
-    _updateSession(sessionId, HandoverStatus.error, error: 'Cancelled');
+    _updateSession(
+      sessionId,
+      HandoverStatus.error,
+      error: 'Cancelled',
+      failure: HandoverFailure.cancelled,
+    );
   }
 
   void _handleProgress(Map<String, dynamic> payload) {
@@ -154,6 +162,7 @@ class HandoverSenderService {
         HandoverStatus.error,
         progress: progress,
         error: error,
+        failure: _remoteFailure(payload['reason'] as String?, error),
       );
       return;
     }
@@ -222,6 +231,7 @@ class HandoverSenderService {
     HandoverStatus status, {
     double? progress,
     String? error,
+    HandoverFailure? failure,
   }) {
     final session = _activeSessions[sessionId];
     if (session == null) return;
@@ -230,10 +240,19 @@ class HandoverSenderService {
       status: status,
       progress: progress ?? session.progress,
       error: error,
+      failure: failure,
     );
     _activeSessions[sessionId] = updated;
     _sessionUpdateController.add(updated);
   }
+
+  /// Desktops from before the `reason` field send only the error text, which
+  /// contains [ModelNotFoundException.message] when the model is missing.
+  static HandoverFailure _remoteFailure(String? reason, String error) =>
+      reason == HandoverFailure.modelNotFoundReason ||
+          error.contains(ModelNotFoundException.message)
+      ? HandoverFailure.modelNotFound
+      : HandoverFailure.failed;
 
   void dispose() {
     _acceptSub?.cancel();

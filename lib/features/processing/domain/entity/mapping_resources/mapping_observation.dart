@@ -443,28 +443,29 @@ abstract class MappingObservation
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'observationName': TextFieldDescriptor(
-      label: 'Observation name',
-      value: observationName.value,
-      confidenceLevel: observationName.confidenceLevel,
-    ),
-    'value': TextFieldDescriptor(
-      label: 'Value',
-      value: value.value,
-      confidenceLevel: value.confidenceLevel,
-    ),
-    'unit': TextFieldDescriptor(
-      label: 'Unit',
-      value: unit.value,
-      confidenceLevel: unit.confidenceLevel,
-    ),
-    'referenceRange': TextFieldDescriptor(
-      label: 'Reference Range',
-      value: referenceRange.value,
-      confidenceLevel: referenceRange.confidenceLevel,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'observationName': TextFieldDescriptor(
+          label: l10n.labelObservationName,
+          value: observationName.value,
+          confidenceLevel: observationName.confidenceLevel,
+        ),
+        'value': TextFieldDescriptor(
+          label: l10n.labelValue,
+          value: value.value,
+          confidenceLevel: value.confidenceLevel,
+        ),
+        'unit': TextFieldDescriptor(
+          label: l10n.labelUnit,
+          value: unit.value,
+          confidenceLevel: unit.confidenceLevel,
+        ),
+        'referenceRange': TextFieldDescriptor(
+          label: l10n.labelReferenceRange,
+          value: referenceRange.value,
+          confidenceLevel: referenceRange.confidenceLevel,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -495,7 +496,7 @@ abstract class MappingObservation
       );
 
   @override
-  String get label => 'Observation';
+  String localizedLabel(AppLocalizations l10n) => l10n.observation;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

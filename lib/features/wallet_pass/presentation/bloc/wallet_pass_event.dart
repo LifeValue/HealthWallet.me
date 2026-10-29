@@ -12,6 +12,8 @@ abstract class WalletPassRequested extends WalletPassEvent
   const factory WalletPassRequested({
     required WalletPassType type,
     required String patientId,
-    ApplePassLabels? applePassLabels,
+
+    /// The pass texts; the active app language when null.
+    WalletPassLabels? labels,
   }) = _WalletPassRequested;
 }

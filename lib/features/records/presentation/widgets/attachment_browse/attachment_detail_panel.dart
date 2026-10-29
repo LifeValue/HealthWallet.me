@@ -7,6 +7,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
@@ -550,7 +552,10 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
                       ),
                     ),
                     child: Text(
-                      '${_pages[_currentPage].pageInDoc} of ${_pages[_currentPage].totalPagesInDoc}',
+                      context.l10n.pageOfTotal(
+                        '${_pages[_currentPage].pageInDoc}',
+                        '${_pages[_currentPage].totalPagesInDoc}',
+                      ),
                       style: AppTextStyle.labelSmall.copyWith(
                         color: Colors.white,
                         fontSize: 12,
@@ -608,7 +613,7 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
     if (readOnly) {
       return Center(
         child: Text(
-          'No attachments',
+          context.l10n.noAttachments,
           style: AppTextStyle.titleSmall.copyWith(
             color: context.colorScheme.onSurface,
             fontSize: 20,
@@ -628,7 +633,7 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
             ),
             const SizedBox(height: Insets.normal),
             Text(
-              'Attaching files...',
+              context.l10n.attachingFiles,
               style: AppTextStyle.labelLarge.copyWith(
                 color: context.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
@@ -647,7 +652,7 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'No attachments',
+                context.l10n.noAttachments,
                 style: AppTextStyle.titleSmall.copyWith(
                   color: context.colorScheme.onSurface,
                   fontSize: 20,
@@ -721,7 +726,7 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Add Attachment',
+                    context.l10n.addAttachment,
                     style: AppTextStyle.buttonMedium.copyWith(
                       color: Colors.white,
                     ),
@@ -763,7 +768,7 @@ class _FileInfoRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                hasFile ? currentFileName : 'No file name',
+                hasFile ? currentFileName : context.l10n.noFileName,
                 style: AppTextStyle.labelLarge.copyWith(
                   color: hasFile ? context.colorScheme.onSurface : subtleColor,
                 ),
@@ -771,7 +776,10 @@ class _FileInfoRow extends StatelessWidget {
               ),
               if (totalFiles > 1)
                 Text(
-                  '( ${currentFileIndex + 1} of $totalFiles files )',
+                  context.l10n.attachmentFileOfTotal(
+                    currentFileIndex + 1,
+                    totalFiles,
+                  ),
                   style: AppTextStyle.labelSmall.copyWith(
                     color: subtleColor,
                     fontSize: 10,
@@ -869,7 +877,7 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
       rows.add(
         _DetailRow(
           icon: Assets.icons.user,
-          label: 'Patient',
+          label: context.l10n.patient,
           value: detail.patientName!,
         ),
       );
@@ -879,7 +887,7 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
       rows.add(
         _DetailRow(
           icon: Assets.icons.hospital,
-          label: 'Organisation',
+          label: context.l10n.organization,
           value: detail.organizationName!,
         ),
       );
@@ -889,7 +897,7 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
       rows.add(
         _DetailRow(
           icon: Assets.icons.stethoscope,
-          label: 'Practitioner',
+          label: context.l10n.practitioner,
           value: detail.practitionerName!,
         ),
       );
@@ -932,7 +940,7 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Specialty',
+                        context.l10n.specialty,
                         style: AppTextStyle.labelSmall.copyWith(
                           color: subtleColor,
                           fontSize: 10,
@@ -940,7 +948,12 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        detail.specialtyName ?? 'General Care',
+                        detail.specialtyName != null
+                            ? localizedSpecialtyName(
+                                detail.specialtyName!,
+                                context.l10n,
+                              )
+                            : context.l10n.specialtyGeneralCare,
                         style: AppTextStyle.labelSmall.copyWith(
                           color: context.colorScheme.onSurface,
                           fontSize: 12,
@@ -977,7 +990,7 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Record Type',
+                        context.l10n.recordType,
                         style: AppTextStyle.labelSmall.copyWith(
                           color: subtleColor,
                           fontSize: 10,
@@ -985,7 +998,7 @@ class _AttachmentBrowseDetailsCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        detail.record.fhirType.display,
+                        detail.record.fhirType.localizedName(context.l10n),
                         style: AppTextStyle.labelSmall.copyWith(
                           color: context.colorScheme.onSurface,
                           fontSize: 12,
@@ -1121,7 +1134,7 @@ class _ShowDetailsButton extends StatelessWidget {
           ),
         ),
         child: Text(
-          'Show Details',
+          context.l10n.showDetails,
           style: AppTextStyle.buttonMedium.copyWith(
             color: context.colorScheme.onSurface,
           ),

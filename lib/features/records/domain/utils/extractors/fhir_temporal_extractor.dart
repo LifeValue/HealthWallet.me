@@ -1,9 +1,30 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
 import 'package:intl/intl.dart';
 
 class FhirTemporalExtractor {
-  static String? extractPeriod(fhir_r4.Period? period) {
+  /// Medium date plus time in the locale's own order and clock (en:
+  /// "Oct 5, 2024 3:00 PM", de: "5. Okt. 2024 15:00"). A null [locale] uses
+  /// `Intl.defaultLocale`, which the app keeps on the active language.
+  static DateFormat _dateTimeFormat(
+    String? locale, {
+    String separator = ' ',
+    bool withSeconds = false,
+  }) => DateFormat.yMMMd(locale).addPattern(
+    (withSeconds ? DateFormat.jms(locale) : DateFormat.jm(locale)).pattern,
+    separator,
+  );
+
+  /// CLDR puts a narrow no-break space before AM/PM; keep the plain space
+  /// the app has always shown.
+  static String _format(DateFormat format, DateTime date) =>
+      format.format(date).replaceAll('\u202f', ' ');
+
+  static String? extractPeriod(
+    fhir_r4.Period? period, {
+    AppLocalizations? l10n,
+  }) {
     if (period == null) return null;
 
     final start = period.start?.toString();
@@ -12,9 +33,9 @@ class FhirTemporalExtractor {
     if (start != null && end != null) {
       return '$start - $end';
     } else if (start != null) {
-      return 'From $start';
+      return l10n?.fromDate(start) ?? 'From $start';
     } else if (end != null) {
-      return 'Until $end';
+      return l10n?.untilDate(end) ?? 'Until $end';
     }
     return null;
   }
@@ -27,9 +48,13 @@ class FhirTemporalExtractor {
     return period?.end?.toString();
   }
 
-  static String? extractPeriodFormatted(fhir_r4.Period? period) {
+  static String? extractPeriodFormatted(
+    fhir_r4.Period? period, {
+    AppLocalizations? l10n,
+  }) {
     if (period == null) return null;
 
+    final locale = l10n?.localeName;
     try {
       final start = period.start?.toString();
       final end = period.end?.toString();
@@ -45,34 +70,34 @@ class FhirTemporalExtractor {
       }
 
       if (startDate != null && endDate != null) {
-        final formatter = DateFormat('MMM d, yyyy h:mm a');
-        final startFormatted = formatter.format(startDate);
-        final endFormatted = formatter.format(endDate);
+        final formatter = _dateTimeFormat(locale);
+        final startFormatted = _format(formatter, startDate);
+        final endFormatted = _format(formatter, endDate);
 
         if (startDate.year == endDate.year &&
             startDate.month == endDate.month &&
             startDate.day == endDate.day) {
-          final dateFormatter = DateFormat('MMM d, yyyy');
-          final timeFormatter = DateFormat('h:mm a');
-          return '${dateFormatter.format(startDate)}, ${timeFormatter.format(startDate)} - ${timeFormatter.format(endDate)}';
+          final dateFormatter = DateFormat.yMMMd(locale);
+          final timeFormatter = DateFormat.jm(locale);
+          return '${_format(dateFormatter, startDate)}, ${_format(timeFormatter, startDate)} - ${_format(timeFormatter, endDate)}';
         }
 
         return '$startFormatted - $endFormatted';
       } else if (startDate != null) {
-        final formatter = DateFormat('MMM d, yyyy h:mm a');
-        return 'From ${formatter.format(startDate)}';
+        final formatted = _format(_dateTimeFormat(locale), startDate);
+        return l10n?.fromDate(formatted) ?? 'From $formatted';
       } else if (endDate != null) {
-        final formatter = DateFormat('MMM d, yyyy h:mm a');
-        return 'Until ${formatter.format(endDate)}';
+        final formatted = _format(_dateTimeFormat(locale), endDate);
+        return l10n?.untilDate(formatted) ?? 'Until $formatted';
       }
     } catch (e) {
-      return extractPeriod(period);
+      return extractPeriod(period, l10n: l10n);
     }
 
     return null;
   }
 
-  static String? extractOnsetX(dynamic onsetX) {
+  static String? extractOnsetX(dynamic onsetX, {AppLocalizations? l10n}) {
     if (onsetX == null) return null;
 
     final onsetDateTime = onsetX.isAs<fhir_r4.FhirDateTime>();
@@ -80,11 +105,11 @@ class FhirTemporalExtractor {
 
     final onsetAge = onsetX.isAs<fhir_r4.Age>();
     if (onsetAge != null) {
-      return '${onsetAge.value} ${onsetAge.unit ?? 'years'}';
+      return '${onsetAge.value} ${onsetAge.unit ?? l10n?.years ?? 'years'}';
     }
 
     final onsetPeriod = onsetX.isAs<fhir_r4.Period>();
-    if (onsetPeriod != null) return extractPeriod(onsetPeriod);
+    if (onsetPeriod != null) return extractPeriod(onsetPeriod, l10n: l10n);
 
     final onsetRange = onsetX.isAs<fhir_r4.Range>();
     if (onsetRange != null) {
@@ -97,7 +122,10 @@ class FhirTemporalExtractor {
     return null;
   }
 
-  static String? extractAbatementX(dynamic abatementX) {
+  static String? extractAbatementX(
+    dynamic abatementX, {
+    AppLocalizations? l10n,
+  }) {
     if (abatementX == null) return null;
 
     final abatementDateTime = abatementX.isAs<fhir_r4.FhirDateTime>();
@@ -105,11 +133,13 @@ class FhirTemporalExtractor {
 
     final abatementAge = abatementX.isAs<fhir_r4.Age>();
     if (abatementAge != null) {
-      return '${abatementAge.value} ${abatementAge.unit ?? 'years'}';
+      return '${abatementAge.value} ${abatementAge.unit ?? l10n?.years ?? 'years'}';
     }
 
     final abatementPeriod = abatementX.isAs<fhir_r4.Period>();
-    if (abatementPeriod != null) return extractPeriod(abatementPeriod);
+    if (abatementPeriod != null) {
+      return extractPeriod(abatementPeriod, l10n: l10n);
+    }
 
     final abatementRange = abatementX.isAs<fhir_r4.Range>();
     if (abatementRange != null) {
@@ -122,26 +152,36 @@ class FhirTemporalExtractor {
     return null;
   }
 
-  static String? extractPerformedX(dynamic performedX) {
+  static String? extractPerformedX(
+    dynamic performedX, {
+    AppLocalizations? l10n,
+  }) {
     if (performedX == null) return null;
 
     final performedDateTime = performedX.isAs<fhir_r4.FhirDateTime>();
     if (performedDateTime != null) return performedDateTime.valueString;
 
     final performedPeriod = performedX.isAs<fhir_r4.Period>();
-    if (performedPeriod != null) return extractPeriod(performedPeriod);
+    if (performedPeriod != null) {
+      return extractPeriod(performedPeriod, l10n: l10n);
+    }
 
     return null;
   }
 
-  static String? extractEffectiveX(dynamic effectiveX) {
+  static String? extractEffectiveX(
+    dynamic effectiveX, {
+    AppLocalizations? l10n,
+  }) {
     if (effectiveX == null) return null;
 
     final effectiveDateTime = effectiveX.isAs<fhir_r4.FhirDateTime>();
     if (effectiveDateTime != null) return effectiveDateTime.valueString;
 
     final effectivePeriod = effectiveX.isAs<fhir_r4.Period>();
-    if (effectivePeriod != null) return extractPeriod(effectivePeriod);
+    if (effectivePeriod != null) {
+      return extractPeriod(effectivePeriod, l10n: l10n);
+    }
 
     final effectiveInstant = effectiveX.isAs<fhir_r4.FhirInstant>();
     if (effectiveInstant != null) return effectiveInstant.valueString;
@@ -149,14 +189,19 @@ class FhirTemporalExtractor {
     return null;
   }
 
-  static String? extractOccurrenceX(dynamic occurrenceX) {
+  static String? extractOccurrenceX(
+    dynamic occurrenceX, {
+    AppLocalizations? l10n,
+  }) {
     if (occurrenceX == null) return null;
 
     final occurrenceDateTime = occurrenceX.isAs<fhir_r4.FhirDateTime>();
     if (occurrenceDateTime != null) return occurrenceDateTime.valueString;
 
     final occurrencePeriod = occurrenceX.isAs<fhir_r4.Period>();
-    if (occurrencePeriod != null) return extractPeriod(occurrencePeriod);
+    if (occurrencePeriod != null) {
+      return extractPeriod(occurrencePeriod, l10n: l10n);
+    }
 
     final occurrenceString = occurrenceX.isAs<fhir_r4.FhirString>();
     if (occurrenceString != null) return occurrenceString.valueString;
@@ -164,7 +209,7 @@ class FhirTemporalExtractor {
     return null;
   }
 
-  static String? extractDateTime(dynamic dateX) {
+  static String? extractDateTime(dynamic dateX, {AppLocalizations? l10n}) {
     if (dateX == null) return null;
 
     final dateTime = dateX.isAs<fhir_r4.FhirDateTime>();
@@ -177,7 +222,7 @@ class FhirTemporalExtractor {
     if (instant != null) return instant.valueString;
 
     final period = dateX.isAs<fhir_r4.Period>();
-    if (period != null) return extractPeriod(period);
+    if (period != null) return extractPeriod(period, l10n: l10n);
 
     return dateX.toString();
   }
@@ -190,8 +235,7 @@ class FhirTemporalExtractor {
 
     try {
       final dateTime = DateTime.parse(dateTimeString);
-      final formatter = DateFormat('MMM d, yyyy, h:mm a');
-      return formatter.format(dateTime);
+      return _format(_dateTimeFormat(null, separator: ', '), dateTime);
     } catch (e) {
       return dateTimeString;
     }
@@ -205,8 +249,7 @@ class FhirTemporalExtractor {
 
     try {
       final date = DateTime.parse(dateString);
-      final formatter = DateFormat('MMM d, yyyy');
-      return formatter.format(date);
+      return _format(DateFormat.yMMMd(), date);
     } catch (e) {
       return dateString;
     }
@@ -220,8 +263,10 @@ class FhirTemporalExtractor {
 
     try {
       final dateTime = DateTime.parse(instantString);
-      final formatter = DateFormat('MMM d, yyyy, h:mm:ss a');
-      return formatter.format(dateTime);
+      return _format(
+        _dateTimeFormat(null, separator: ', ', withSeconds: true),
+        dateTime,
+      );
     } catch (e) {
       return instantString;
     }
@@ -237,18 +282,19 @@ class FhirTemporalExtractor {
           dateTimeString.contains('T') || dateTimeString.contains(':');
 
       if (hasTime) {
-        final formatter = DateFormat('MMM d, yyyy, h:mm a');
-        return formatter.format(dateTime);
+        return _format(_dateTimeFormat(null, separator: ', '), dateTime);
       } else {
-        final formatter = DateFormat('MMM d, yyyy');
-        return formatter.format(dateTime);
+        return _format(DateFormat.yMMMd(), dateTime);
       }
     } catch (e) {
       return dateTimeString;
     }
   }
 
-  static String? extractOnsetXFormatted(dynamic onsetX) {
+  static String? extractOnsetXFormatted(
+    dynamic onsetX, {
+    AppLocalizations? l10n,
+  }) {
     if (onsetX == null) return null;
 
     final onsetDateTime = onsetX.isAs<fhir_r4.FhirDateTime>();
@@ -259,13 +305,13 @@ class FhirTemporalExtractor {
     final onsetAge = onsetX.isAs<fhir_r4.Age>();
     if (onsetAge != null) {
       final value = onsetAge.value?.valueString;
-      final unit = onsetAge.unit ?? 'years';
+      final unit = onsetAge.unit ?? l10n?.years ?? 'years';
       return value != null ? '$value $unit' : null;
     }
 
     final onsetPeriod = onsetX.isAs<fhir_r4.Period>();
     if (onsetPeriod != null) {
-      return extractPeriodFormatted(onsetPeriod);
+      return extractPeriodFormatted(onsetPeriod, l10n: l10n);
     }
 
     final onsetRange = onsetX.isAs<fhir_r4.Range>();
@@ -284,7 +330,10 @@ class FhirTemporalExtractor {
     return null;
   }
 
-  static String? extractAbatementXFormatted(dynamic abatementX) {
+  static String? extractAbatementXFormatted(
+    dynamic abatementX, {
+    AppLocalizations? l10n,
+  }) {
     if (abatementX == null) return null;
 
     final abatementDateTime = abatementX.isAs<fhir_r4.FhirDateTime>();
@@ -295,13 +344,13 @@ class FhirTemporalExtractor {
     final abatementAge = abatementX.isAs<fhir_r4.Age>();
     if (abatementAge != null) {
       final value = abatementAge.value?.valueString;
-      final unit = abatementAge.unit ?? 'years';
+      final unit = abatementAge.unit ?? l10n?.years ?? 'years';
       return value != null ? '$value $unit' : null;
     }
 
     final abatementPeriod = abatementX.isAs<fhir_r4.Period>();
     if (abatementPeriod != null) {
-      return extractPeriodFormatted(abatementPeriod);
+      return extractPeriodFormatted(abatementPeriod, l10n: l10n);
     }
 
     final abatementRange = abatementX.isAs<fhir_r4.Range>();
@@ -319,13 +368,18 @@ class FhirTemporalExtractor {
 
     final abatementBoolean = abatementX.isAs<fhir_r4.FhirBoolean>();
     if (abatementBoolean != null) {
-      return abatementBoolean.valueBoolean == true ? 'Yes' : 'No';
+      return abatementBoolean.valueBoolean == true
+          ? (l10n?.yes ?? 'Yes')
+          : (l10n?.no ?? 'No');
     }
 
     return null;
   }
 
-  static String? extractPerformedXFormatted(dynamic performedX) {
+  static String? extractPerformedXFormatted(
+    dynamic performedX, {
+    AppLocalizations? l10n,
+  }) {
     if (performedX == null) return null;
 
     final performedDateTime = performedX.isAs<fhir_r4.FhirDateTime>();
@@ -335,7 +389,7 @@ class FhirTemporalExtractor {
 
     final performedPeriod = performedX.isAs<fhir_r4.Period>();
     if (performedPeriod != null) {
-      return extractPeriodFormatted(performedPeriod);
+      return extractPeriodFormatted(performedPeriod, l10n: l10n);
     }
 
     final performedString = performedX.isAs<fhir_r4.FhirString>();
@@ -344,7 +398,7 @@ class FhirTemporalExtractor {
     final performedAge = performedX.isAs<fhir_r4.Age>();
     if (performedAge != null) {
       final value = performedAge.value?.valueString;
-      final unit = performedAge.unit ?? 'years';
+      final unit = performedAge.unit ?? l10n?.years ?? 'years';
       return value != null ? '$value $unit' : null;
     }
 
@@ -361,7 +415,10 @@ class FhirTemporalExtractor {
     return null;
   }
 
-  static String? extractEffectiveXFormatted(dynamic effectiveX) {
+  static String? extractEffectiveXFormatted(
+    dynamic effectiveX, {
+    AppLocalizations? l10n,
+  }) {
     if (effectiveX == null) return null;
 
     final effectiveDateTime = effectiveX.isAs<fhir_r4.FhirDateTime>();
@@ -371,7 +428,7 @@ class FhirTemporalExtractor {
 
     final effectivePeriod = effectiveX.isAs<fhir_r4.Period>();
     if (effectivePeriod != null) {
-      return extractPeriodFormatted(effectivePeriod);
+      return extractPeriodFormatted(effectivePeriod, l10n: l10n);
     }
 
     final effectiveInstant = effectiveX.isAs<fhir_r4.FhirInstant>();
@@ -389,7 +446,10 @@ class FhirTemporalExtractor {
     return null;
   }
 
-  static String? extractOccurrenceXFormatted(dynamic occurrenceX) {
+  static String? extractOccurrenceXFormatted(
+    dynamic occurrenceX, {
+    AppLocalizations? l10n,
+  }) {
     if (occurrenceX == null) return null;
 
     final occurrenceDateTime = occurrenceX.isAs<fhir_r4.FhirDateTime>();
@@ -399,7 +459,7 @@ class FhirTemporalExtractor {
 
     final occurrencePeriod = occurrenceX.isAs<fhir_r4.Period>();
     if (occurrencePeriod != null) {
-      return extractPeriodFormatted(occurrencePeriod);
+      return extractPeriodFormatted(occurrencePeriod, l10n: l10n);
     }
 
     final occurrenceString = occurrenceX.isAs<fhir_r4.FhirString>();

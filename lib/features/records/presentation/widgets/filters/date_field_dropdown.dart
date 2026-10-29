@@ -5,6 +5,7 @@ import 'date_wide_dropdown.dart';
 
 class DateFieldDropdown extends StatelessWidget {
   final String label;
+  final DateField field;
   final int? value;
   final List<DateDropdownItem> items;
   final ValueChanged<int?>? onChanged;
@@ -17,6 +18,7 @@ class DateFieldDropdown extends StatelessWidget {
   const DateFieldDropdown({
     super.key,
     required this.label,
+    required this.field,
     required this.value,
     required this.items,
     required this.onChanged,
@@ -31,6 +33,7 @@ class DateFieldDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return DateWideDropdown(
       label: label,
+      field: field,
       value: value,
       items: items,
       onChanged: enabled && onChanged != null ? onChanged : null,

@@ -4,6 +4,7 @@ import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:fhir_r4/fhir_r4.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
@@ -134,19 +135,22 @@ abstract class Procedure with _$Procedure implements IFhirResource {
   }
 
   @override
-  List<RecordInfoLine> get additionalInfo {
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Procedure Details'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldProcedureDetails),
+    );
 
     // Performed Date/Period (CRITICAL - When it happened)
     final performedDisplay = FhirFieldExtractor.extractPerformedXFormatted(
       performedX,
+      l10n: l10n,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createDateLine(
         performedDisplay,
-        prefix: 'Date Performed',
+        prefix: l10n.fieldDatePerformed,
       ),
     );
 
@@ -169,7 +173,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createUserLine(
             performerDisplay,
-            prefix: 'Performed By',
+            prefix: l10n.fieldPerformedBy,
           ),
         );
       }
@@ -181,7 +185,10 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(outcomeDisplay, prefix: 'Outcome'),
+      ResourceFieldMapper.createStatusLine(
+        outcomeDisplay,
+        prefix: l10n.fieldOutcome,
+      ),
     );
 
     // Body Site (Where on body - IMPORTANT)
@@ -194,18 +201,23 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createBodySiteLine(
           bodySiteDisplay.isNotEmpty ? bodySiteDisplay : null,
-          prefix: 'Body Site',
+          prefix: l10n.fieldBodySite,
         ),
       );
     }
 
-    infoLines.add(ResourceFieldMapper.createSectionHeader('Basic Information'));
+    infoLines.add(
+      ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
+    );
 
     // Status
     final statusText = status?.valueString;
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createStatusLine(statusText, prefix: 'Status'),
+      ResourceFieldMapper.createStatusLine(
+        statusText,
+        prefix: l10n.fieldStatus,
+      ),
     );
 
     // Status Reason (if not completed)
@@ -216,7 +228,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createStatusLine(
         statusReasonDisplay,
-        prefix: 'Status Reason',
+        prefix: l10n.fieldStatusReason,
       ),
     );
 
@@ -228,7 +240,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createCategoryLine(
         categoryDisplay,
-        prefix: 'Category',
+        prefix: l10n.fieldCategory,
       ),
     );
 
@@ -238,7 +250,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createProcedureLine(
         codeDisplay,
-        prefix: 'Procedure Code',
+        prefix: l10n.fieldProcedureCode,
       ),
     );
 
@@ -250,7 +262,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createLocationLine(
         locationDisplay,
-        prefix: 'Location',
+        prefix: l10n.fieldLocation,
       ),
     );
 
@@ -258,7 +270,10 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     final reasonCodeDisplay = FhirFieldExtractor.extractReasonCodes(reasonCode);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(reasonCodeDisplay, prefix: 'Reason'),
+      ResourceFieldMapper.createNotesLine(
+        reasonCodeDisplay,
+        prefix: l10n.fieldReason,
+      ),
     );
 
     // Reason Reference (Link to condition/observation)
@@ -271,13 +286,13 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createNotesLine(
           reasonRefDisplay.isNotEmpty ? reasonRefDisplay : null,
-          prefix: 'Related Condition',
+          prefix: l10n.fieldRelatedCondition,
         ),
       );
     }
 
     infoLines.add(
-      ResourceFieldMapper.createSectionHeader('Additional Information'),
+      ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
     // Recorder (Who documented the procedure)
@@ -286,7 +301,10 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createUserLine(recorderDisplay, prefix: 'Recorder'),
+      ResourceFieldMapper.createUserLine(
+        recorderDisplay,
+        prefix: l10n.fieldRecorder,
+      ),
     );
 
     // Asserter (Who verified/confirmed)
@@ -297,7 +315,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
       infoLines,
       ResourceFieldMapper.createUserLine(
         asserterDisplay,
-        prefix: 'Verified By',
+        prefix: l10n.fieldVerifiedBy,
       ),
     );
 
@@ -311,14 +329,17 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createWarningLine(
           complicationDisplay.isNotEmpty ? complicationDisplay : null,
-          prefix: 'Complications',
+          prefix: l10n.fieldComplications,
         ),
       );
     } else {
       // Explicitly show "None" if no complications
       ResourceFieldMapper.addIfNotNull(
         infoLines,
-        ResourceFieldMapper.createStatusLine('None', prefix: 'Complications'),
+        ResourceFieldMapper.createStatusLine(
+          l10n.complicationsNone,
+          prefix: l10n.fieldComplications,
+        ),
       );
     }
 
@@ -334,7 +355,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
           complicationDetailDisplay.isNotEmpty
               ? complicationDetailDisplay
               : null,
-          prefix: 'Complication Details',
+          prefix: l10n.fieldComplicationDetails,
         ),
       );
     }
@@ -349,7 +370,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createTimelineLine(
           followUpDisplay.isNotEmpty ? followUpDisplay : null,
-          prefix: 'Follow-up',
+          prefix: l10n.fieldFollowUp,
         ),
       );
     }
@@ -373,7 +394,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
           infoLines,
           ResourceFieldMapper.createProcedureLine(
             focalDeviceDisplay,
-            prefix: 'Focal Device',
+            prefix: l10n.fieldFocalDevice,
           ),
         );
       }
@@ -389,7 +410,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createProcedureLine(
           usedDisplay.isNotEmpty ? usedDisplay : null,
-          prefix: 'Items Used',
+          prefix: l10n.fieldItemsUsed,
         ),
       );
     }
@@ -404,7 +425,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createProcedureLine(
           usedCodeDisplay.isNotEmpty ? usedCodeDisplay : null,
-          prefix: 'Supplies',
+          prefix: l10n.fieldSupplies,
         ),
       );
     }
@@ -420,7 +441,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createDocumentLine(
           reportDisplay.isNotEmpty ? reportDisplay : null,
-          prefix: 'Report',
+          prefix: l10n.fieldReport,
         ),
       );
     }
@@ -435,7 +456,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createProcedureLine(
           partOfDisplay.isNotEmpty ? partOfDisplay : null,
-          prefix: 'Part Of',
+          prefix: l10n.fieldPartOf,
         ),
       );
     }
@@ -450,7 +471,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
         infoLines,
         ResourceFieldMapper.createDocumentLine(
           basedOnDisplay.isNotEmpty ? basedOnDisplay : null,
-          prefix: 'Based On',
+          prefix: l10n.fieldBasedOn,
         ),
       );
     }
@@ -460,7 +481,7 @@ abstract class Procedure with _$Procedure implements IFhirResource {
       infoLines.add(
         RecordInfoLine(
           icon: Assets.icons.calendar,
-          info: DateFormat.yMMMMd().format(date!),
+          info: DateFormat.yMMMMd(l10n.localeName).format(date!),
         ),
       );
     }
@@ -469,7 +490,10 @@ abstract class Procedure with _$Procedure implements IFhirResource {
     final notesDisplay = FhirFieldExtractor.extractAnnotations(note);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
-      ResourceFieldMapper.createNotesLine(notesDisplay, prefix: 'Notes'),
+      ResourceFieldMapper.createNotesLine(
+        notesDisplay,
+        prefix: l10n.fieldNotes,
+      ),
     );
 
     return infoLines;

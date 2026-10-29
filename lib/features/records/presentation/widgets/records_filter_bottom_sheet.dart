@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -229,8 +230,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                               )
                             : null;
 
-                        final validationError = dateFilter?.validate();
-                        if (validationError != null) {
+                        if (dateFilter?.hasInvalidRange ?? false) {
                           return;
                         }
 
@@ -363,7 +363,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        filter.display,
+                        filter.localizedName(context.l10n),
                         style: AppTextStyle.labelSmall.copyWith(
                           color: isSelected
                               ? context.colorScheme.primary
@@ -424,7 +424,7 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    specialty.displayName,
+                    specialty.localizedName(context.l10n),
                     style: AppTextStyle.labelSmall.copyWith(
                       color: isSelected
                           ? context.colorScheme.primary
@@ -451,7 +451,9 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
             toDay: _dateRangeModel.toDay,
           )
         : null;
-    final validationError = currentFilter?.validate();
+    final validationError = (currentFilter?.hasInvalidRange ?? false)
+        ? context.l10n.dateFilterEndBeforeStart
+        : null;
     final rangePreview = _buildDateRangePreview();
 
     return SingleChildScrollView(
@@ -649,31 +651,14 @@ class _RecordsFilterBottomSheetState extends State<RecordsFilterBottomSheet>
     final toMonth = _dateRangeModel.toMonth;
     final toDay = _dateRangeModel.toDay;
 
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    String formatDate(int? year, int? month, int? day) {
-      final parts = <String>[];
-      if (day != null) parts.add('$day');
-      if (month != null) parts.add(months[month - 1]);
-      if (year != null) parts.add('$year');
-      return parts.join(' ');
-    }
-
-    final start = formatDate(fromYear, fromMonth, fromDay);
-    final end = formatDate(toYear, toMonth, toDay);
+    final locale = context.l10n.localeName;
+    final start = DateFilter.formatDateParts(
+      fromYear,
+      fromMonth,
+      fromDay,
+      locale,
+    );
+    final end = DateFilter.formatDateParts(toYear, toMonth, toDay, locale);
 
     if (start.isNotEmpty && end.isNotEmpty) {
       return '$start - $end';

@@ -114,23 +114,24 @@ abstract class MappingAllergyIntolerance
   };
 
   @override
-  Map<String, TextFieldDescriptor> getFieldDescriptors() => {
-    'substance': TextFieldDescriptor(
-      label: 'Substance',
-      value: substance.value,
-      confidenceLevel: substance.confidenceLevel,
-    ),
-    'manifestation': TextFieldDescriptor(
-      label: 'Manifestation',
-      value: manifestation.value,
-      confidenceLevel: manifestation.confidenceLevel,
-    ),
-    'category': TextFieldDescriptor(
-      label: 'Category',
-      value: category.value,
-      confidenceLevel: category.confidenceLevel,
-    ),
-  };
+  Map<String, TextFieldDescriptor> getFieldDescriptors(AppLocalizations l10n) =>
+      {
+        'substance': TextFieldDescriptor(
+          label: l10n.labelSubstance,
+          value: substance.value,
+          confidenceLevel: substance.confidenceLevel,
+        ),
+        'manifestation': TextFieldDescriptor(
+          label: l10n.labelManifestation,
+          value: manifestation.value,
+          confidenceLevel: manifestation.confidenceLevel,
+        ),
+        'category': TextFieldDescriptor(
+          label: l10n.labelCategory,
+          value: category.value,
+          confidenceLevel: category.confidenceLevel,
+        ),
+      };
 
   @override
   MappingResource copyWithMap(Map<String, dynamic> newValues) =>
@@ -157,7 +158,7 @@ abstract class MappingAllergyIntolerance
       );
 
   @override
-  String get label => 'Allergy Intolerance';
+  String localizedLabel(AppLocalizations l10n) => l10n.allergyIntolerance;
 
   @override
   MappingResource populateConfidence(String inputText) => copyWith(

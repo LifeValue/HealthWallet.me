@@ -4,6 +4,7 @@
 import 'dart:convert';
 
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -98,7 +99,7 @@ abstract class IFhirResource {
   FhirResourceDto toDto();
 
   String get displayTitle;
-  List<RecordInfoLine> get additionalInfo;
+  List<RecordInfoLine> additionalInfo(AppLocalizations l10n);
   List<String?> get resourceReferences;
   String get statusDisplay;
 }

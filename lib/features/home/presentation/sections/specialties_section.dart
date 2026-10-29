@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -130,7 +132,7 @@ class SpecialtiesSection extends StatelessWidget {
               Expanded(
                 child: isTabletLayout
                     ? Text(
-                        card.specialty.displayName,
+                        card.specialty.localizedName(context.l10n),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: nameStyle,
@@ -140,7 +142,7 @@ class SpecialtiesSection extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            card.specialty.displayName,
+                            card.specialty.localizedName(context.l10n),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: nameStyle,

@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:health_wallet/core/config/env/env.dart';
 import 'package:health_wallet/core/utils/phone_formatter.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/emergency_qr_encoder.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 import 'package:injectable/injectable.dart';
 import 'package:intl/intl.dart';
 import 'package:pointycastle/asn1.dart';
@@ -16,16 +18,24 @@ class GooglePassBuilder {
   static const _serviceAccountPath =
       'assets/certs/android/service-account.json';
 
+  /// Public URL Google Wallet downloads the pass logo from. It must stay
+  /// reachable for as long as passes exist, so it points at `master`, never
+  /// at a feature branch (the old branch link returned 404).
+  @visibleForTesting
+  static const logoUrl =
+      'https://raw.githubusercontent.com/LifeValue/HealthWallet.me/master/assets/icons/app-icon.png';
+
   String get _issuerId => Env.googleWalletIssuerId;
 
   Future<String> build(
     EmergencyCardData cardData, {
     required String patientId,
+    required WalletPassLabels labels,
   }) async {
     final serviceAccount = await _loadServiceAccount();
     final objectSuffix = 'emergency_${patientId}_v2';
 
-    final genericObject = _buildGenericObject(cardData, objectSuffix);
+    final genericObject = _buildGenericObject(cardData, objectSuffix, labels);
 
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final claims = {
@@ -46,52 +56,57 @@ class GooglePassBuilder {
   Map<String, dynamic> _buildGenericObject(
     EmergencyCardData cardData,
     String objectSuffix,
+    WalletPassLabels labels,
   ) {
     final gender = cardData.gender != null
-        ? cardData.gender![0].toUpperCase() + cardData.gender!.substring(1)
+        ? labels.genderName(cardData.gender!)
         : null;
+    // English keeps the region the pass was first published with.
+    final language = labels.localeName == 'en' ? 'en-US' : labels.localeName;
 
     final textModules = <Map<String, String>>[];
 
     if (cardData.dateOfBirth != null) {
       textModules.add({
         'id': 'dob',
-        'header': 'Date of Birth',
-        'body': DateFormat('MMM d, yyyy').format(cardData.dateOfBirth!),
+        'header': labels.dateOfBirth,
+        'body': DateFormat.yMMMd(
+          labels.localeName,
+        ).format(cardData.dateOfBirth!),
       });
     }
     if (gender != null) {
       textModules.add({
         'id': 'gender',
-        'header': 'Gender',
+        'header': labels.gender,
         'body': gender,
       });
     }
     if (cardData.allergies.isNotEmpty) {
       textModules.add({
         'id': 'allergies',
-        'header': 'Allergies',
+        'header': labels.allergies,
         'body': cardData.allergies.join(', '),
       });
     }
     if (cardData.emergencyContactPhone != null) {
       textModules.add({
         'id': 'emergency_contact',
-        'header': 'Emergency Phone',
+        'header': labels.emergencyPhone,
         'body': PhoneDisplayFormatter.format(cardData.emergencyContactPhone!),
       });
     }
     if (cardData.conditions.isNotEmpty) {
       textModules.add({
         'id': 'conditions',
-        'header': 'Medical Conditions',
+        'header': labels.medicalConditions,
         'body': cardData.conditions.join(', '),
       });
     }
     if (cardData.medications.isNotEmpty) {
       textModules.add({
         'id': 'medications',
-        'header': 'Medications',
+        'header': labels.medications,
         'body': cardData.medications.join(', '),
       });
     }
@@ -102,10 +117,12 @@ class GooglePassBuilder {
     if (cardData.dateOfBirth != null) {
       final age =
           DateTime.now().difference(cardData.dateOfBirth!).inDays ~/ 365;
-      subheaderParts.add('Age $age');
+      subheaderParts.add(labels.age(age));
     }
     if (cardData.allergies.isNotEmpty) {
-      subheaderParts.add('Allergies: ${cardData.allergies.join(', ')}');
+      subheaderParts.add(
+        '${labels.allergies}: ${cardData.allergies.join(', ')}',
+      );
     }
 
     final qrDeepLink = EmergencyQrEncoder.encode(cardData);
@@ -116,19 +133,19 @@ class GooglePassBuilder {
       'state': 'ACTIVE',
       'cardTitle': {
         'defaultValue': {
-          'language': 'en-US',
-          'value': 'Emergency Medical ID',
+          'language': language,
+          'value': labels.cardTitle,
         },
       },
       'header': {
         'defaultValue': {
-          'language': 'en-US',
+          'language': language,
           'value': cardData.patientName,
         },
       },
       'subheader': {
         'defaultValue': {
-          'language': 'en-US',
+          'language': language,
           'value': subheaderParts.isNotEmpty
               ? subheaderParts.join('  •  ')
               : 'HealthWallet',
@@ -137,11 +154,11 @@ class GooglePassBuilder {
       'hexBackgroundColor': '#5767FF',
       'logo': {
         'sourceUri': {
-          'uri': 'https://raw.githubusercontent.com/LifeValue/HealthWallet.me/dev/HM-180-llamadart/assets/icons/app-icon.png',
+          'uri': logoUrl,
         },
         'contentDescription': {
           'defaultValue': {
-            'language': 'en-US',
+            'language': language,
             'value': 'HealthWallet',
           },
         },

@@ -68,7 +68,8 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
     if (!mounted || _hasShownTutorial) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    final hasSeenOnboarding =
+        prefs.getBool(SharedPrefsConstants.hasSeenOnboarding) ?? false;
     final tutorialShown = prefs.getBool(_tutorialShownKey) ?? false;
 
     if (hasSeenOnboarding && !tutorialShown && mounted) {
@@ -344,7 +345,7 @@ class SyncPlaceholderWidgetState extends State<SyncPlaceholderWidget> {
 
   String _getSubtitle(BuildContext context, bool hasAnyMeaningfulData) {
     if (hasAnyMeaningfulData && widget.recordTypeName != null) {
-      return 'Sync or update your data to view ${widget.recordTypeName} records';
+      return context.l10n.syncPlaceholderSubtitle(widget.recordTypeName!);
     }
     return context.l10n.loadDemoDataMessage;
   }
@@ -719,7 +720,7 @@ class _DemoDataFlowDialogState extends State<_DemoDataFlowDialog> {
           elevation: 0,
         ),
         child: Text(
-          'OK',
+          context.l10n.ok,
           style: AppTextStyle.buttonSmall.copyWith(color: Colors.white),
         ),
       ),

@@ -49,7 +49,7 @@ class _GreetingLabel extends StatelessWidget {
                 ? userState.user.name
                 : (syncState.syncQrData?.tokenMeta.fullName.isNotEmpty == true
                       ? syncState.syncQrData!.tokenMeta.fullName
-                      : 'User');
+                      : context.l10n.homeDefaultUserName);
             return RichText(
               text: TextSpan(
                 style: AppTextStyle.titleMedium.copyWith(
@@ -118,7 +118,7 @@ class _PatientLabelState extends State<_PatientLabel> {
         FhirFieldExtractor.extractHumanNameFamilyFirst(
           widget.homeState.patient?.name?.first,
         ) ??
-        'Loading...';
+        context.l10n.loading;
 
     return GestureDetector(
       key: _tapKey,
@@ -128,7 +128,7 @@ class _PatientLabelState extends State<_PatientLabel> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Patient: ',
+            '${context.l10n.patient}: ',
             style: AppTextStyle.titleSmall.copyWith(
               color: context.colorScheme.onSurface.withValues(alpha: 0.5),
             ),

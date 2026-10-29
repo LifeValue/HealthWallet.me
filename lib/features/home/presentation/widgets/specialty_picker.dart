@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
+import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -48,7 +50,7 @@ class SpecialtyPicker extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Select Specialty',
+                  context.l10n.selectSpecialty,
                   style: AppTextStyle.bodyMedium.copyWith(
                     fontWeight: FontWeight.w600,
                     color: context.primaryTextColor,
@@ -94,7 +96,7 @@ class SpecialtyPicker extends StatelessWidget {
                     foregroundColor: context.colorScheme.error,
                   ),
                   child: Text(
-                    'Remove Specialty',
+                    context.l10n.removeSpecialty,
                     style: AppTextStyle.labelLarge.copyWith(
                       color: context.colorScheme.error,
                     ),
@@ -168,7 +170,7 @@ class _SpecialtyItem extends StatelessWidget {
             const SizedBox(width: Insets.small),
             Expanded(
               child: Text(
-                specialty.displayName,
+                specialty.localizedName(context.l10n),
                 style: AppTextStyle.labelLarge.copyWith(
                   color: isSelected
                       ? context.colorScheme.primary

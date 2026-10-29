@@ -1,23 +1,26 @@
 import 'dart:typed_data';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/wallet_pass/data/repository/wallet_pass_repository_impl.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/apple_pass_builder.dart';
 import 'package:health_wallet/features/wallet_pass/data/service/google_pass_builder.dart';
 import 'package:health_wallet/features/wallet_pass/domain/entity/emergency_card_data.dart';
+import 'package:health_wallet/features/wallet_pass/domain/entity/wallet_pass_labels.dart';
 
 class FakeApplePassBuilder extends Fake implements ApplePassBuilder {
   FakeApplePassBuilder(this.result);
 
   final Uint8List result;
-  final calls = <(EmergencyCardData, String, ApplePassLabels)>[];
+  final calls = <(EmergencyCardData, String, WalletPassLabels)>[];
   Object? error;
 
   @override
   Future<Uint8List> build(
     EmergencyCardData cardData, {
     required String patientId,
-    required ApplePassLabels labels,
+    required WalletPassLabels labels,
   }) async {
     calls.add((cardData, patientId, labels));
     if (error != null) Error.throwWithStackTrace(error!, StackTrace.current);
@@ -29,30 +32,24 @@ class FakeGooglePassBuilder extends Fake implements GooglePassBuilder {
   FakeGooglePassBuilder(this.result);
 
   final String result;
-  final calls = <(EmergencyCardData, String)>[];
+  final calls = <(EmergencyCardData, String, WalletPassLabels)>[];
   Object? error;
 
   @override
   Future<String> build(
     EmergencyCardData cardData, {
     required String patientId,
+    required WalletPassLabels labels,
   }) async {
-    calls.add((cardData, patientId));
+    calls.add((cardData, patientId, labels));
     if (error != null) Error.throwWithStackTrace(error!, StackTrace.current);
     return result;
   }
 }
 
 const _card = EmergencyCardData(patientName: 'Jane', bloodType: 'A+');
-const _labels = ApplePassLabels(
-  patient: 'Patient',
-  bloodType: 'Blood Type',
-  allergies: 'Allergies',
-  gender: 'Gender',
-  dateOfBirth: 'Date of Birth',
-  emergencyPhone: 'Emergency Phone',
-  conditions: 'Conditions',
-  medications: 'Medications',
+final _labels = WalletPassLabels.fromL10n(
+  lookupAppLocalizations(const Locale('en')),
 );
 
 void main() {
@@ -84,9 +81,10 @@ void main() {
         final jwt = await repository.generateGooglePassJson(
           cardData: _card,
           patientId: 'p-2',
+          labels: _labels,
         );
         expect(jwt, 'header.claims.signature');
-        expect(google.calls, [(_card, 'p-2')]);
+        expect(google.calls, [(_card, 'p-2', _labels)]);
         expect(apple.calls, isEmpty);
       },
     );
@@ -103,7 +101,11 @@ void main() {
         throwsA(isA<Exception>()),
       );
       await expectLater(
-        repository.generateGooglePassJson(cardData: _card, patientId: 'p'),
+        repository.generateGooglePassJson(
+          cardData: _card,
+          patientId: 'p',
+          labels: _labels,
+        ),
         throwsStateError,
       );
     });

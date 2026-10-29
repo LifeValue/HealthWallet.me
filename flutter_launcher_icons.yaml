@@ -1,0 +1,27 @@
+# App icons for every platform, generated from the masters in branding/.
+# Don't edit the generated icons; replace the master and run
+#   tool/generate_brand_assets.sh
+flutter_launcher_icons:
+  # iOS and Android draw their own rounded mask, so they take the full-bleed
+  # square master. iOS icons must not have an alpha channel.
+  image_path: "branding/app_icon_square.png"
+  ios: true
+  remove_alpha_ios: true
+  android: "health_wallet"
+  adaptive_icon_foreground: "branding/android_adaptive_foreground.png"
+  adaptive_icon_background: "#6876FF"
+  # The foreground already has its safe-zone padding; no extra inset.
+  adaptive_icon_foreground_inset: 0
+  min_sdk_android: 21
+
+  # macOS shows the icon as it is, so it takes the rounded master. The
+  # Windows .ico is built by tool/generate_brand_assets.sh instead: this tool
+  # writes a single 256 px image, which Windows scales down blurrily.
+  macos:
+    generate: true
+    image_path: "branding/app_icon_rounded.png"
+  windows:
+    generate: false
+
+  web:
+    generate: false

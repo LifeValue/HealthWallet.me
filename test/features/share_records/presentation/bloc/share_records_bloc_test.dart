@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:airdrop/airdrop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/entity/record_note/record_note.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -15,6 +17,7 @@ import 'package:health_wallet/features/share_records/data/service/share_preferen
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
 import 'package:health_wallet/features/share_records/domain/services/receive_mode_service.dart';
+import 'package:health_wallet/features/share_records/domain/services/share_log_buffer.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_bloc.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_event.dart';
 import 'package:health_wallet/features/share_records/presentation/bloc/share_records_state.dart';
@@ -102,8 +105,8 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   }
 
   @override
-  Future<void> deleteSessionFiles(String sessionId) async =>
-      calls.add('deleteSessionFiles:$sessionId');
+  Future<void> cleanupSessionTempDir(String sessionId) async =>
+      calls.add('cleanupSessionTempDir:$sessionId');
 
   @override
   Future<void> cleanupTempFile(String filePath) async =>
@@ -217,6 +220,7 @@ void main() {
   late _FakeShareRecordsService service;
   late _FakeRecordsRepository repository;
   late ShareRecordsBloc bloc;
+  late Directory logs;
 
   final sharedNote = RecordNote(content: 'seen', timestamp: DateTime.utc(2026));
   EphemeralRecordsContainer container({
@@ -234,17 +238,27 @@ void main() {
 
   setUp(() {
     _lifecycle(AppLifecycleState.resumed);
+    logs = Directory.systemTemp.createTempSync('hw_share_bloc_');
+    ShareLogBuffer.debugOverrideInstance(
+      ShareLogBuffer.forTesting(enabled: false, directory: logs),
+    );
     service = _FakeShareRecordsService()..parsedContainer = container();
     repository = _FakeRecordsRepository();
     getIt.registerSingleton<ReceiveModeService>(_FakeReceiveModeService());
-    bloc = ShareRecordsBloc(service, repository, _FakePreferences())
-      ..add(const ShareRecordsEvent.initialized());
+    bloc = ShareRecordsBloc(
+      service,
+      repository,
+      _FakePreferences(),
+      AppStringsProvider.forLocale(const Locale('en')),
+    )..add(const ShareRecordsEvent.initialized());
   });
 
   tearDown(() async {
     if (!bloc.isClosed) await bloc.close();
     await service.close();
     await getIt.reset();
+    ShareLogBuffer.debugOverrideInstance(null);
+    logs.deleteSync(recursive: true);
     _lifecycle(AppLifecycleState.resumed);
   });
 
@@ -283,7 +297,7 @@ void main() {
       expect(bloc.state.receivedData, isNull);
       expect(bloc.state.isDataDestroyed, isTrue);
       expect(EphemeralSessionManager.instance.hasActiveSession, isFalse);
-      expect(service.calls, contains('deleteSessionFiles:session-1'));
+      expect(service.calls, contains('cleanupSessionTempDir:session-1'));
       expect(repository.calls.last, 'clearSharedNotes');
     }
 
@@ -321,6 +335,11 @@ void main() {
 
       test('leaving asks first, then tells the sender', () async {
         await openShare();
+
+        bloc.add(const ShareRecordsEvent.sessionEndRequested());
+        await _until(() => bloc.state.showExitConfirmationDialog);
+        bloc.add(const ShareRecordsEvent.continueViewing());
+        await _until(() => !bloc.state.showExitConfirmationDialog);
 
         bloc.add(const ShareRecordsEvent.navigationExitDetected());
         await _until(() => bloc.state.showExitConfirmationDialog);
@@ -417,7 +436,7 @@ void main() {
         await _until(() => bloc.state.phase == SharePhase.sessionEnded);
         service.parseGate!.complete();
         await _until(
-          () => service.calls.contains('deleteSessionFiles:session-1'),
+          () => service.calls.contains('cleanupSessionTempDir:session-1'),
         );
         await Future<void>.delayed(const Duration(milliseconds: 100));
 
@@ -435,7 +454,7 @@ void main() {
         await bloc.close();
 
         expect(EphemeralSessionManager.instance.hasActiveSession, isFalse);
-        expect(service.calls, contains('deleteSessionFiles:session-1'));
+        expect(service.calls, contains('cleanupSessionTempDir:session-1'));
         expect(repository.calls.last, 'clearSharedNotes');
         expect(service.calls.last, 'disconnect');
       });
@@ -543,7 +562,10 @@ void main() {
         service.sessionEnded.add(null);
         await _until(() => bloc.state.phase == SharePhase.sessionEnded);
 
-        expect(bloc.state.statusMessage, 'Receiver declined invitation');
+        expect(
+          bloc.state.sessionEndReason,
+          ShareSessionEndReason.invitationDeclined,
+        );
       });
 
       test('a dropped link after the codes match is not a decline', () async {
@@ -552,7 +574,10 @@ void main() {
         service.sessionEnded.add(null);
         await _until(() => bloc.state.phase == SharePhase.sessionEnded);
 
-        expect(bloc.state.statusMessage, 'Remote session terminated');
+        expect(
+          bloc.state.sessionEndReason,
+          ShareSessionEndReason.remoteTerminated,
+        );
       });
 
       test('the receiver leaving ends the monitored session', () async {
@@ -561,7 +586,10 @@ void main() {
         service.sessionEnded.add(null);
         await _until(() => bloc.state.phase == SharePhase.sessionEnded);
 
-        expect(bloc.state.statusMessage, 'Remote session terminated');
+        expect(
+          bloc.state.sessionEndReason,
+          ShareSessionEndReason.remoteTerminated,
+        );
         expect(bloc.state.isSessionActive, isFalse);
       });
     });
@@ -572,7 +600,7 @@ void main() {
         expect(bloc.state.sessionStartedAt, isNotNull);
 
         await _until(() => bloc.state.phase == SharePhase.sessionEnded);
-        expect(bloc.state.statusMessage, 'Session expired');
+        expect(bloc.state.sessionEndReason, ShareSessionEndReason.expired);
         await _until(() => service.calls.last == 'disconnect');
 
         expect(service.calls, contains('sendKillSignal'));

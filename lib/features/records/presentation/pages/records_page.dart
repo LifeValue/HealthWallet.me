@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -571,13 +572,13 @@ class _RecordsViewState extends State<RecordsView> {
           userBloc.add(const UserReceiveModeToggled(true));
         }
         break;
-      case PermissionDenied(:final message):
+      case PermissionDenied():
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
+          SnackBar(content: Text(result.message(context.l10n))),
         );
         return;
-      case PermissionPermanentlyDenied(:final message):
-        _showPermissionsSettingsDialog(context, message);
+      case PermissionPermanentlyDenied():
+        _showPermissionsSettingsDialog(context, result.message(context.l10n));
         return;
     }
 
@@ -1001,7 +1002,7 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      record.fhirType.display,
+                      record.fhirType.localizedName(context.l10n),
                       style: AppTextStyle.labelSmall,
                     ),
                   ],
@@ -1012,7 +1013,7 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                 record.displayTitle,
                 style: AppTextStyle.bodyMedium.copyWith(color: onSurface),
               ),
-              ...record.additionalInfo.map((info) {
+              ...record.additionalInfo(context.l10n).map((info) {
                 if (info.isSection) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 20, bottom: 8),
@@ -1097,7 +1098,8 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
   }
 
   Widget _buildResourceInfo(IFhirResource resource, Color dimColor) {
-    final lines = resource.additionalInfo
+    final lines = resource
+        .additionalInfo(context.l10n)
         .where((l) => !l.isSection)
         .take(2)
         .toList();

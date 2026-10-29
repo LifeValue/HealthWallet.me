@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
+import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
@@ -81,7 +82,9 @@ class SessionList extends StatelessWidget {
                                         Text(
                                           isThisSessionDeleting
                                               ? context.l10n.canceling
-                                              : session.status.toString(),
+                                              : session.status.localizedName(
+                                                  context.l10n,
+                                                ),
                                           style: TextStyle(
                                             color: isThisSessionDeleting
                                                 ? context.colorScheme.error
@@ -91,7 +94,15 @@ class SessionList extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 6),
                                         Text(
-                                          DateFormat('MMMM d, HH:mm:ss')
+                                          DateFormat.MMMMd(
+                                                context.l10n.localeName,
+                                              )
+                                              .addPattern(
+                                                DateFormat.Hms(
+                                                  context.l10n.localeName,
+                                                ).pattern,
+                                                ', ',
+                                              )
                                               .format(session.createdAt!),
                                         ),
                                         if (isThisSessionDeleting) ...[

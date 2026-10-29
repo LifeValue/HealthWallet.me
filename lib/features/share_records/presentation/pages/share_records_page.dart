@@ -587,7 +587,9 @@ class _ShareRecordsViewState extends State<_ShareRecordsView> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(context.l10n.sharePermissionsRequired),
-        content: Text(SharePermissionsHelper.getPermissionExplanation()),
+        content: Text(
+          SharePermissionsHelper.getPermissionExplanation(context.l10n),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),

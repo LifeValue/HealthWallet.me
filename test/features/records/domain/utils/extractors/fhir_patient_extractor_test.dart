@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:fhir_r4/fhir_r4.dart' as fhir;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_patient_extractor.dart';
 
@@ -141,6 +142,28 @@ void main() {
           _patient(patientJson(gender: null)),
         ),
         'Unknown',
+      );
+    });
+
+    test('fallbacks are localized when l10n is given', () {
+      final ro = lookupAppLocalizations(const Locale('ro'));
+      final noGender = _patient(patientJson(gender: null));
+      expect(
+        FhirPatientExtractor.extractPatientGender(noGender, l10n: ro),
+        ro.genderUnknown,
+      );
+      expect(ro.genderUnknown, isNot('Unknown'));
+      final noBirthDate = _patient(patientJson(birthDate: null));
+      expect(FhirPatientExtractor.extractPatientAge(noBirthDate), 'N/A');
+      expect(
+        FhirPatientExtractor.extractPatientAge(noBirthDate, l10n: ro),
+        ro.homeNA,
+      );
+      final noIds = _withIds(const []);
+      expect(FhirPatientExtractor.extractPatientIdentifierLabel(noIds), 'ID');
+      expect(
+        FhirPatientExtractor.extractPatientIdentifierLabel(noIds, l10n: ro),
+        ro.id,
       );
     });
 
