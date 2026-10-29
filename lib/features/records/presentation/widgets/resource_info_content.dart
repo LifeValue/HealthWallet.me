@@ -1,11 +1,13 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/widgets/media_fullscreen_viewer.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 
 class ResourceInfoContent extends StatelessWidget {
   final IFhirResource resource;
@@ -36,7 +38,10 @@ class ResourceInfoContent extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           ...resource
-              .additionalInfo(context.l10n)
+              .additionalInfoIn(
+                context.read<UserBloc>().state.regionPreset,
+                context.l10n,
+              )
               .where((infoLine) => !infoLine.isSection)
               .take(maxInfoLines)
               .map(

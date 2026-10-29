@@ -9,7 +9,6 @@ import 'package:health_wallet/core/services/pdf_preview_service.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
-import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
@@ -79,18 +78,11 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     );
   }
 
-  List<RecordInfoLine> _getAdditionalInfo(BuildContext context) {
-    final resource = widget.resource;
-    if (resource is Observation) {
-      try {
-        final region = context.read<UserBloc>().state.regionPreset;
-        return resource.additionalInfoForRegion(region, context.l10n);
-      } catch (e) {
-        logger.w('Could not apply the region units to ${resource.id}', e);
-      }
-    }
-    return resource.additionalInfo(context.l10n);
-  }
+  List<RecordInfoLine> _getAdditionalInfo(BuildContext context) =>
+      widget.resource.additionalInfoIn(
+        context.read<UserBloc>().state.regionPreset,
+        context.l10n,
+      );
 
   void _onViewDocument(IFhirResource resource) {
     if (_isEphemeral) {
@@ -354,7 +346,10 @@ class _RecordDetailsPageState extends State<RecordDetailsPage> {
     IFhirResource resource,
   ) {
     final infoLines = resource
-        .additionalInfo(context.l10n)
+        .additionalInfoIn(
+          context.read<UserBloc>().state.regionPreset,
+          context.l10n,
+        )
         .where((line) => !line.isSection)
         .take(2)
         .toList();

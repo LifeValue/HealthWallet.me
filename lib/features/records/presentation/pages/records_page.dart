@@ -1031,47 +1031,52 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                 record.displayTitle,
                 style: AppTextStyle.bodyMedium.copyWith(color: onSurface),
               ),
-              ...record.additionalInfo(context.l10n).map((info) {
-                if (info.isSection) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 20, bottom: 8),
-                    child: Text(
-                      info.info,
-                      style: AppTextStyle.labelLarge.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: onSurface,
-                      ),
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: info.icon.svg(
-                          width: 16,
-                          colorFilter: ColorFilter.mode(
-                            dimColor,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
+              ...record
+                  .additionalInfoIn(
+                    context.read<UserBloc>().state.regionPreset,
+                    context.l10n,
+                  )
+                  .map((info) {
+                    if (info.isSection) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 20, bottom: 8),
                         child: Text(
                           info.info,
                           style: AppTextStyle.labelLarge.copyWith(
+                            fontWeight: FontWeight.bold,
                             color: onSurface,
                           ),
                         ),
+                      );
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: info.icon.svg(
+                              width: 16,
+                              colorFilter: ColorFilter.mode(
+                                dimColor,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              info.info,
+                              style: AppTextStyle.labelLarge.copyWith(
+                                color: onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              }),
+                    );
+                  }),
             ],
           ),
         ),
@@ -1117,7 +1122,10 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
 
   Widget _buildResourceInfo(IFhirResource resource, Color dimColor) {
     final lines = resource
-        .additionalInfo(context.l10n)
+        .additionalInfoIn(
+          context.read<UserBloc>().state.regionPreset,
+          context.l10n,
+        )
         .where((l) => !l.isSection)
         .take(2)
         .toList();

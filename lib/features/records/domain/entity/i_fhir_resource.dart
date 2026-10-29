@@ -3,6 +3,7 @@
 
 import 'dart:convert';
 
+import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/home/domain/entities/overview_card.dart';
@@ -102,6 +103,22 @@ abstract class IFhirResource {
   List<RecordInfoLine> additionalInfo(AppLocalizations l10n);
   List<String?> get resourceReferences;
   String get statusDisplay;
+}
+
+extension RegionalInfo on IFhirResource {
+  /// [additionalInfo] in the units of [region]: observations convert their
+  /// values (kg and lbs, cm and in, °C and °F), other records are unchanged.
+  /// Every screen that lists a record's values uses this, so the list and the
+  /// record details show the same numbers.
+  List<RecordInfoLine> additionalInfoIn(
+    RegionPreset region,
+    AppLocalizations l10n,
+  ) {
+    final resource = this;
+    return resource is Observation
+        ? resource.additionalInfoForRegion(region, l10n)
+        : additionalInfo(l10n);
+  }
 }
 
 enum FhirType {
