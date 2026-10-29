@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/services/temp_file_sweeper.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:open_file/open_file.dart';
@@ -42,17 +44,17 @@ class PdfPreviewService {
     return resolved;
   }
 
-  Future<String?> _extractMediaPath(
-    Map<String, dynamic> rawResource,
-    String displayTitle,
-  ) async {
+  Future<String?> _extractMediaPath(Map<String, dynamic> rawResource) async {
     final content = rawResource['content'];
     if (content == null) return null;
 
     if (content['url'] != null) return content['url'] as String;
 
     if (content['data'] != null) {
-      return _saveBase64ToTempFile(content['data'] as String, displayTitle);
+      return _saveBase64ToTempFile(
+        content['data'] as String,
+        content['contentType'] as String?,
+      );
     }
 
     return null;
@@ -78,24 +80,39 @@ class PdfPreviewService {
     }
   }
 
+  /// Writes inline attachment data to a temp file named for the startup
+  /// sweep, with the extension of its [contentType].
   Future<String> _saveBase64ToTempFile(
     String base64Data,
-    String fileName,
+    String? contentType,
   ) async {
     try {
+      final extension = switch (contentType?.toLowerCase()) {
+        'image/png' => 'png',
+        'image/jpeg' || 'image/jpg' => 'jpg',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp',
+        'image/bmp' => 'bmp',
+        _ => 'pdf',
+      };
       final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final cleanFileName = fileName.replaceAll(RegExp(r'[^\w\s-.]'), '_');
-      final tempFileName = '${cleanFileName}_$timestamp.pdf';
-      final tempFilePath = path.join(tempDir.path, tempFileName);
-
-      final bytes = base64Decode(base64Data);
-      final file = File(tempFilePath);
-      await file.writeAsBytes(bytes);
-
-      return tempFilePath;
+      final file = File(
+        path.join(tempDir.path, TempFileSweeper.recordPreviewName(extension)),
+      );
+      await file.writeAsBytes(base64Decode(base64Data));
+      return file.path;
     } catch (e) {
       throw Exception('Failed to save base64 data to temp file: $e');
+    }
+  }
+
+  Future<void> _deleteTemp(String filePath) async {
+    try {
+      final file = File(filePath);
+      if (await file.exists()) await file.delete();
+    } catch (e, s) {
+      // The startup sweep deletes it next time.
+      logger.w('Deleting a record preview failed', e, s);
     }
   }
 
@@ -124,8 +141,14 @@ class PdfPreviewService {
       if (resource.fhirType == FhirType.DocumentReference) {
         filePath = await _extractDocumentReferencePath(rawResource);
       } else {
-        filePath = await _extractMediaPath(rawResource, resource.displayTitle);
+        filePath = await _extractMediaPath(rawResource);
       }
+      // Decoded health data: it goes when the viewer closes.
+      final isTemp =
+          filePath != null &&
+          path
+              .basename(filePath)
+              .startsWith(TempFileSweeper.recordPreviewPrefix);
 
       if (!context.mounted) return;
       if (filePath == null) {
@@ -150,19 +173,15 @@ class PdfPreviewService {
         '.webp',
       }.contains(extension);
 
-      if (isImage) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => _InAppImageViewer(filePath: filePath!),
-          ),
-        );
-      } else {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => _InAppPdfViewer(filePath: filePath!),
-          ),
-        );
-      }
+      final viewerPath = filePath;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => isImage
+              ? _InAppImageViewer(filePath: viewerPath)
+              : _InAppPdfViewer(filePath: viewerPath),
+        ),
+      );
+      if (isTemp) await _deleteTemp(viewerPath);
     } catch (e) {
       if (!context.mounted) return;
       _showErrorSnackBar(context, context.l10n.errorOpeningFile(e.toString()));

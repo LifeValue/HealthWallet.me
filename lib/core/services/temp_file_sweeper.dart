@@ -51,6 +51,11 @@ class TempFileSweeper {
   /// Prefix of an image downscaled for AI; unique for the same reason.
   static const resizedImagePrefix = 'healthwallet_resized_';
 
+  /// Prefix of a record's attachment decoded to view it:
+  /// `healthwallet_record_preview_<uuid>.<ext>`. The viewer deletes it when
+  /// it closes; the sweep catches what a crash left.
+  static const recordPreviewPrefix = 'healthwallet_record_preview_';
+
   /// Directory in the documents directory holding the OCR cache metadata
   /// (`<sha256 cache key>.json`, listing the `pdf_page_*` images).
   static const ocrCacheDirName = 'pdf_preview_cache';
@@ -64,6 +69,10 @@ class TempFileSweeper {
 
   /// `share_session_<id>` for the payload [id].
   static String shareSessionName(String id) => '$shareSessionPrefix$id';
+
+  /// `healthwallet_record_preview_<id>.<extension>` for a new random [id].
+  static String recordPreviewName(String extension) =>
+      '$recordPreviewPrefix${const Uuid().v4()}.$extension';
 
   /// The IPS export's file name without extension.
   static String ipsSummaryName(String patient, String date) =>
@@ -96,6 +105,9 @@ class TempFileSweeper {
     '^.*${RegExp.escape(ipsSummaryInfix)}.*\\.pdf\$',
   );
   static final _ocrCacheMetadata = RegExp(r'^[0-9a-f]{64}\.json$');
+  static final _recordPreview = RegExp(
+    '^${RegExp.escape(recordPreviewPrefix)}(.+)\\.[a-z0-9]+\$',
+  );
 
   /// Deletes the known temp files and, when set, the old debug logs and the
   /// processing cache. Never throws: each failure is logged and the sweep
@@ -135,6 +147,8 @@ class TempFileSweeper {
 
   static bool _isHealthDataFile(String name) {
     if (name == walletPassFileName || _ipsSummary.hasMatch(name)) return true;
+    final preview = _recordPreview.firstMatch(name);
+    if (preview != null && _isUuid(preview.group(1)!)) return true;
     final match = _sharePayload.firstMatch(name);
     return match != null && _isUuid(match.group(1)!);
   }
