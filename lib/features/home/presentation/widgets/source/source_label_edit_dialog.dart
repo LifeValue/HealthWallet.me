@@ -7,6 +7,7 @@ import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/sync/domain/entities/source.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
@@ -77,11 +78,10 @@ class _SourceLabelEditDialogState extends State<SourceLabelEditDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${context.l10n.errorUpdatingSourceLabel}: $e'),
-            backgroundColor: Colors.red,
-          ),
+        AppSnackBar.show(
+          context,
+          message: '${context.l10n.errorUpdatingSourceLabel}: $e',
+          type: AppSnackBarType.error,
         );
       }
     } finally {

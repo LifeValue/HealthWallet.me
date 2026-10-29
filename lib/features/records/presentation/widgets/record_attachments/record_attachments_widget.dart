@@ -11,6 +11,7 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
@@ -58,9 +59,11 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
       child: BlocListener<RecordAttachmentsBloc, RecordAttachmentsState>(
         listenWhen: (previous, current) =>
             previous.status != current.status && _errorMessage(current) != null,
-        listener: (context, state) => ScaffoldMessenger.of(
+        listener: (context, state) => AppSnackBar.show(
           context,
-        ).showSnackBar(SnackBar(content: Text(_errorMessage(state)!))),
+          message: _errorMessage(state)!,
+          type: AppSnackBarType.error,
+        ),
         child: BlocBuilder<RecordAttachmentsBloc, RecordAttachmentsState>(
           builder: (context, state) {
             return ConstrainedBox(
@@ -197,8 +200,10 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   ) async {
     if (!await File(filePath).exists()) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.fileNotAvailable)),
+        AppSnackBar.show(
+          context,
+          message: context.l10n.fileNotAvailable,
+          type: AppSnackBarType.error,
         );
       }
       return;
@@ -228,20 +233,18 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     try {
       final result = await OpenFile.open(filePath);
       if (result.type != ResultType.done && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.couldNotOpenFile(result.message)),
-            backgroundColor: Colors.orange,
-          ),
+        AppSnackBar.show(
+          context,
+          message: context.l10n.couldNotOpenFile(result.message),
+          type: AppSnackBarType.warning,
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.errorOpeningFile('$e')),
-            backgroundColor: Colors.red,
-          ),
+        AppSnackBar.show(
+          context,
+          message: context.l10n.errorOpeningFile('$e'),
+          type: AppSnackBarType.error,
         );
       }
     }
@@ -442,21 +445,19 @@ class _PdfViewer extends StatelessWidget {
               pageFling: true,
               onError: (error) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(context.l10n.errorLoadingPdf('$error')),
-                    ),
+                  AppSnackBar.show(
+                    context,
+                    message: context.l10n.errorLoadingPdf('$error'),
+                    type: AppSnackBarType.error,
                   );
                 }
               },
               onPageError: (page, error) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        context.l10n.errorOnPage('$page', '$error'),
-                      ),
-                    ),
+                  AppSnackBar.show(
+                    context,
+                    message: context.l10n.errorOnPage('$page', '$error'),
+                    type: AppSnackBarType.error,
                   );
                 }
               },

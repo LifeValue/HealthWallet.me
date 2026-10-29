@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:injectable/injectable.dart';
 import 'package:open_file/open_file.dart';
@@ -100,12 +101,7 @@ class PdfPreviewService {
   }
 
   void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
+    AppSnackBar.show(context, message: message, type: AppSnackBarType.error);
   }
 
   Future<void> previewInApp(
@@ -170,11 +166,10 @@ class PdfPreviewService {
   }
 
   void _showWarningSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.orange,
-      ),
+    AppSnackBar.show(
+      context,
+      message: message,
+      type: AppSnackBarType.warning,
     );
   }
 }
@@ -245,26 +240,22 @@ class _InAppPdfViewer extends StatelessWidget {
               pageFling: true,
               onError: (error) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        context.l10n.errorLoadingPdf(error.toString()),
-                      ),
-                    ),
+                  AppSnackBar.show(
+                    context,
+                    message: context.l10n.errorLoadingPdf(error.toString()),
+                    type: AppSnackBarType.error,
                   );
                 }
               },
               onPageError: (page, error) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        context.l10n.errorOnPage(
-                          page.toString(),
-                          error.toString(),
-                        ),
-                      ),
+                  AppSnackBar.show(
+                    context,
+                    message: context.l10n.errorOnPage(
+                      page.toString(),
+                      error.toString(),
                     ),
+                    type: AppSnackBarType.error,
                   );
                 }
               },

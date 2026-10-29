@@ -6,6 +6,7 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:get_it/get_it.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
@@ -98,21 +99,19 @@ class MediaFullscreenViewer extends StatelessWidget {
               pageFling: true,
               onError: (error) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(context.l10n.errorLoadingPdf('$error')),
-                    ),
+                  AppSnackBar.show(
+                    context,
+                    message: context.l10n.errorLoadingPdf('$error'),
+                    type: AppSnackBarType.error,
                   );
                 }
               },
               onPageError: (page, error) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        context.l10n.errorOnPage('$page', '$error'),
-                      ),
-                    ),
+                  AppSnackBar.show(
+                    context,
+                    message: context.l10n.errorOnPage('$page', '$error'),
+                    type: AppSnackBarType.error,
                   );
                 }
               },
@@ -301,20 +300,18 @@ class MediaFullscreenViewer extends StatelessWidget {
 
                   if (context.mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(context.l10n.mediaLinkedSuccess),
-                        backgroundColor: Colors.green,
-                      ),
+                    AppSnackBar.show(
+                      context,
+                      message: context.l10n.mediaLinkedSuccess,
+                      type: AppSnackBarType.success,
                     );
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(context.l10n.failedToLinkMedia('$e')),
-                        backgroundColor: Colors.red,
-                      ),
+                    AppSnackBar.show(
+                      context,
+                      message: context.l10n.failedToLinkMedia('$e'),
+                      type: AppSnackBarType.error,
                     );
                   }
                 }

@@ -5,6 +5,7 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
@@ -187,11 +188,11 @@ class OnboardingScreen extends StatelessWidget {
       return BlocListener<OnboardingBloc, OnboardingState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                duration: const Duration(seconds: 2),
-              ),
+            AppSnackBar.show(
+              context,
+              message: state.errorMessage!,
+              type: AppSnackBarType.error,
+              duration: const Duration(seconds: 2),
             );
           }
         },
@@ -279,11 +280,11 @@ class OnboardingScreen extends StatelessWidget {
       return BlocListener<OnboardingBloc, OnboardingState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                duration: const Duration(seconds: 2),
-              ),
+            AppSnackBar.show(
+              context,
+              message: state.errorMessage!,
+              type: AppSnackBarType.error,
+              duration: const Duration(seconds: 2),
             );
           }
         },
@@ -421,11 +422,11 @@ class OnboardingScreen extends StatelessWidget {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage!),
-              duration: const Duration(seconds: 2),
-            ),
+          AppSnackBar.show(
+            context,
+            message: state.errorMessage!,
+            type: AppSnackBarType.error,
+            duration: const Duration(seconds: 2),
           );
         }
       },

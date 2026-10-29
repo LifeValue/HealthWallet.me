@@ -8,6 +8,7 @@ import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
@@ -157,10 +158,10 @@ class _SyncPageState extends State<SyncPage> {
     if (context.mounted) {
       context.read<SyncBloc>().add(const SyncCancel());
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.pairedWithDevice(pairing.deviceName)),
-        ),
+      AppSnackBar.show(
+        context,
+        message: context.l10n.pairedWithDevice(pairing.deviceName),
+        type: AppSnackBarType.success,
       );
     }
 

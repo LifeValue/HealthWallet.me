@@ -13,6 +13,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/handover/presentation/widgets/handover_send_dialog.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/device_sync_dialog.dart';
@@ -395,8 +396,10 @@ class _LoadModelPageState extends State<LoadModelPage> {
     } catch (e) {
       logger.e('Could not send the pending document to the desktop', e);
       if (!context.mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(context.l10n.handoverSendFailed)),
+      AppSnackBar.show(
+        context,
+        message: context.l10n.handoverSendFailed,
+        type: AppSnackBarType.error,
       );
     }
   }

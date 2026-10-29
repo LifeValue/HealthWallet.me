@@ -14,6 +14,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/custom_app_bar.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -444,8 +445,10 @@ class _ImportViewState extends State<ImportView> with DocumentHandler {
   }
 
   void _showImportFailed(BuildContext context) {
-    ScaffoldMessenger.of(
+    AppSnackBar.show(
       context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.importFilesFailed)));
+      message: context.l10n.importFilesFailed,
+      type: AppSnackBarType.error,
+    );
   }
 }

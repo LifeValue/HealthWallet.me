@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/processing/domain/services/processing_log_buffer.dart';
 
 class DebugLogSheet extends StatefulWidget {
@@ -147,11 +148,11 @@ class _DebugLogSheetState extends State<DebugLogSheet> {
                           ? _persistedLogs
                           : logs.join('\n');
                       Clipboard.setData(ClipboardData(text: text));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(context.l10n.logsCopied),
-                          duration: const Duration(seconds: 1),
-                        ),
+                      AppSnackBar.show(
+                        context,
+                        message: context.l10n.logsCopied,
+                        type: AppSnackBarType.success,
+                        duration: const Duration(seconds: 1),
                       );
                     },
                     child: const Text(

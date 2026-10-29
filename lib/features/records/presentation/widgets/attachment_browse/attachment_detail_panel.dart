@@ -17,6 +17,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/home/domain/entities/medical_specialty.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/bloc/attachment_browse_bloc.dart';
@@ -375,9 +376,11 @@ class _AttachmentPreviewState extends State<_AttachmentPreview> {
     }
 
     if (mounted && failedPdfs > 0) {
-      ScaffoldMessenger.maybeOf(
+      AppSnackBar.show(
         context,
-      )?.showSnackBar(SnackBar(content: Text(context.l10n.failedToLoadPdf)));
+        message: context.l10n.failedToLoadPdf,
+        type: AppSnackBarType.error,
+      );
     }
 
     if (mounted) {
@@ -719,9 +722,11 @@ class _EmptyAttachmentContentState extends State<_EmptyAttachmentContent> {
                       error: (e) => e is String ? e : null,
                     );
                     if (attachError != null && context.mounted) {
-                      ScaffoldMessenger.maybeOf(
+                      AppSnackBar.show(
                         context,
-                      )?.showSnackBar(SnackBar(content: Text(attachError)));
+                        message: attachError,
+                        type: AppSnackBarType.error,
+                      );
                     }
 
                     debugPrint('[ATTACH] File saved, refreshing browse list');

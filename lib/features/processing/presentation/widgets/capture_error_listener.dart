@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/processing/presentation/bloc/processing_bloc.dart';
 
 /// Shows a translated snackbar when a scan or an import fails before it
@@ -26,10 +27,10 @@ class CaptureErrorListener extends StatelessWidget {
           _captureReasons.contains((current.status as Failure).reason),
       listener: (context, state) {
         final failure = state.status as Failure;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.reason.localizedMessage(context.l10n)),
-          ),
+        AppSnackBar.show(
+          context,
+          message: failure.reason.localizedMessage(context.l10n),
+          type: AppSnackBarType.error,
         );
       },
       child: child,

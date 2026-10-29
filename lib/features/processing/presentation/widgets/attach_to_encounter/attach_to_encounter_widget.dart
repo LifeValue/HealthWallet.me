@@ -6,6 +6,7 @@ import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/processing/domain/entity/staged_resource.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/bloc/attach_to_encounter_bloc.dart';
 import 'package:health_wallet/features/processing/presentation/widgets/attach_to_encounter/encounter_selector.dart';
@@ -76,8 +77,10 @@ class _AttachToEncounterViewState extends State<_AttachToEncounterView> {
         listener: (context, state) {
           if (state.status == AttachToEncounterStatus.failure &&
               state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
+            AppSnackBar.show(
+              context,
+              message: state.errorMessage!,
+              type: AppSnackBarType.error,
             );
           }
         },

@@ -12,6 +12,7 @@ import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
@@ -51,12 +52,10 @@ class ConnectionDialog extends StatefulWidget {
                 final pairingStorage = getIt<PairingStorageService>();
                 pairingStorage.savePairing(pairing).then((_) {
                   rootNavigator.pop();
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        l10n.desktopPairedWith(pairing.deviceName),
-                      ),
-                    ),
+                  AppSnackBar.showOn(
+                    scaffoldMessenger,
+                    message: l10n.desktopPairedWith(pairing.deviceName),
+                    type: AppSnackBarType.success,
                   );
                   getIt<CommunicationBloc>().add(
                     CommunicationPairingCompleted(pairing: pairing),

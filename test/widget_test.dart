@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart' show MockBloc, whenListen;
@@ -14,6 +13,8 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/navigation/observers/order_route_observer.dart';
 import 'package:health_wallet/core/services/biometric_auth_service.dart';
 import 'package:health_wallet/core/services/bluetooth_state_service.dart';
+import 'package:health_wallet/core/theme/app_color.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/home/data/services/specialty_classifier_impl.dart';
@@ -679,6 +680,14 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 750));
         expect(find.widgetWithText(SnackBar, text), findsOne, reason: text);
+        // The app-styled error card, not the default snackbar.
+        final card = tester.widget<Container>(find.byKey(AppSnackBar.cardKey));
+        final border = (card.decoration! as BoxDecoration).border! as Border;
+        expect(
+          border.top.color.withValues(alpha: 1),
+          AppColors.error,
+          reason: text,
+        );
         ScaffoldMessenger.of(
           tester.element(find.byType(SnackBar)),
         ).removeCurrentSnackBar();

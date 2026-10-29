@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/features/wallet_pass/presentation/bloc/wallet_pass_bloc.dart';
 
 /// Shows a translated snackbar when adding a wallet pass fails. Success shows
@@ -17,12 +18,10 @@ class WalletPassErrorListener extends StatelessWidget {
           previous.status != current.status &&
           current.status == WalletPassStatus.failure,
       listener: (context, state) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              state.errorMessage ?? context.l10n.walletPassFailed,
-            ),
-          ),
+        AppSnackBar.show(
+          context,
+          message: state.errorMessage ?? context.l10n.walletPassFailed,
+          type: AppSnackBarType.error,
         );
       },
       child: child,

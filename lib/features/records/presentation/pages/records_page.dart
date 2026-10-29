@@ -17,6 +17,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
@@ -329,9 +330,11 @@ class _RecordsViewState extends State<RecordsView> {
 
   void _showImportFailed() {
     if (!mounted) return;
-    ScaffoldMessenger.of(
+    AppSnackBar.show(
       context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.importFilesFailed)));
+      message: context.l10n.importFilesFailed,
+      type: AppSnackBarType.error,
+    );
   }
 
   void _handleScanDocument() {
@@ -589,8 +592,10 @@ class _RecordsViewState extends State<RecordsView> {
         }
         break;
       case PermissionDenied():
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message(context.l10n))),
+        AppSnackBar.show(
+          context,
+          message: result.message(context.l10n),
+          type: AppSnackBarType.warning,
         );
         return;
       case PermissionPermanentlyDenied():
