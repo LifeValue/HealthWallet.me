@@ -78,7 +78,7 @@ void main() {
       );
 
       expect(_sections(lines).first, 'Rezultat');
-      expect(_infos(lines), contains('Stare: final'));
+      expect(_infos(lines), contains('Stare: Final'));
     });
 
     test('keeps the English labels', () {

@@ -156,4 +156,61 @@ void main() {
       );
     });
   });
+
+  group('records not done or entered in error', () {
+    test('an immunization not given shows why, and no date given', () {
+      final json = {
+        ...immunizationJson(),
+        'status': 'not-done',
+        'statusReason': codeableConcept(text: 'Patient refused'),
+      };
+      final lines = _cardLines(json);
+      expect(lines.map((l) => l.info), [
+        'Status: Not done',
+        'Status Reason: Patient refused',
+      ]);
+      expect(lines.first.icon.path, ResourceFieldMapper.warningIcon.path);
+      expect(
+        entityFromJson(json).additionalInfo(_en).map((l) => l.info),
+        isNot(contains(startsWith('Date Given'))),
+      );
+    });
+
+    test('a procedure entered in error is flagged first', () {
+      final first = _cardLines({
+        ...procedureJson(),
+        'status': 'entered-in-error',
+      }).first;
+      expect(first.info, 'Status: Entered in error');
+      expect(first.icon.path, ResourceFieldMapper.warningIcon.path);
+    });
+
+    test('an observation entered in error is flagged before its value', () {
+      final lines = _cardLines({
+        ...observationJson(value: {'valueQuantity': quantity(13.5)}),
+        'status': 'entered-in-error',
+      });
+      expect(lines.first.info, 'Status: Entered in error');
+      expect(lines.first.icon.path, ResourceFieldMapper.warningIcon.path);
+      expect(lines.last.info, 'Value: 13.50');
+    });
+
+    test('a final observation shows its value first', () {
+      final json = observationJson(value: {'valueQuantity': quantity(13.5)});
+      expect(_cardLines(json).first.info, 'Value: 13.50');
+      expect(
+        entityFromJson(json).additionalInfo(_en).map((l) => l.info),
+        contains('Status: Final'),
+      );
+    });
+
+    test('a cancelled lab report is flagged', () {
+      final first = _cardLines({
+        ...diagnosticReportJson(),
+        'status': 'cancelled',
+      }).first;
+      expect(first.info, 'Status: Cancelled');
+      expect(first.icon.path, ResourceFieldMapper.warningIcon.path);
+    });
+  });
 }

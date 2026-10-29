@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -140,6 +141,16 @@ abstract class Procedure with _$Procedure implements IFhirResource {
       ResourceFieldMapper.createSectionHeader(l10n.fieldProcedureDetails),
     );
 
+    // A record not done or entered in error says so first.
+    final isFlagged = FhirCodeLabels.isFlagged(status?.valueString);
+    infoLines.addAll(
+      FhirCodeLabels.flaggedStatusLines(
+        status?.valueString,
+        FhirFieldExtractor.extractCodeableConceptText(statusReason),
+        l10n,
+      ),
+    );
+
     // Performed Date/Period (CRITICAL - When it happened)
     final performedDisplay = FhirFieldExtractor.extractPerformedXFormatted(
       performedX,
@@ -209,20 +220,22 @@ abstract class Procedure with _$Procedure implements IFhirResource {
       ResourceFieldMapper.createSectionHeader(l10n.fieldBasicInformation),
     );
 
-    // Status
-    final statusText = status?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusText,
-        prefix: l10n.fieldStatus,
-      ),
-    );
+    // Status (shown first instead when flagged)
+    if (!isFlagged) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        FhirCodeLabels.statusLine(
+          status?.valueString,
+          l10n,
+          prefix: l10n.fieldStatus,
+        ),
+      );
+    }
 
-    // Status Reason (if not completed)
-    final statusReasonDisplay = FhirFieldExtractor.extractCodeableConceptText(
-      statusReason,
-    );
+    // Status Reason (shown first instead when flagged)
+    final statusReasonDisplay = isFlagged
+        ? null
+        : FhirFieldExtractor.extractCodeableConceptText(statusReason);
     ResourceFieldMapper.addIfNotNull(
       infoLines,
       ResourceFieldMapper.createStatusLine(

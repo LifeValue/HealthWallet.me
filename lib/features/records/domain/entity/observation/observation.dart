@@ -9,6 +9,7 @@ import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
+import 'package:health_wallet/features/records/domain/utils/fhir_code_labels.dart';
 import 'package:health_wallet/features/records/domain/utils/fhir_field_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/resource_field_mapper.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
@@ -132,6 +133,12 @@ abstract class Observation with _$Observation implements IFhirResource {
   List<RecordInfoLine> additionalInfo(AppLocalizations l10n) {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
+
+    // A result entered in error or cancelled says so before its value.
+    final isFlagged = FhirCodeLabels.isFlagged(status?.valueString);
+    infoLines.addAll(
+      FhirCodeLabels.flaggedStatusLines(status?.valueString, null, l10n),
+    );
 
     final valueDisplay = FhirFieldExtractor.extractObservationValue(
       valueX,
@@ -286,14 +293,16 @@ abstract class Observation with _$Observation implements IFhirResource {
       ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
-    final statusText = status?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusText,
-        prefix: l10n.fieldStatus,
-      ),
-    );
+    if (!isFlagged) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        FhirCodeLabels.statusLine(
+          status?.valueString,
+          l10n,
+          prefix: l10n.fieldStatus,
+        ),
+      );
+    }
 
     final specimenDisplay = FhirFieldExtractor.extractReferenceDisplay(
       specimen,
@@ -430,6 +439,12 @@ abstract class Observation with _$Observation implements IFhirResource {
   ) {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
+
+    // A result entered in error or cancelled says so before its value.
+    final isFlagged = FhirCodeLabels.isFlagged(status?.valueString);
+    infoLines.addAll(
+      FhirCodeLabels.flaggedStatusLines(status?.valueString, null, l10n),
+    );
 
     final codes = FhirFieldExtractor.codesOf(code);
     final valueDisplay = FhirFieldExtractor.extractObservationValueForRegion(
@@ -617,14 +632,16 @@ abstract class Observation with _$Observation implements IFhirResource {
       ResourceFieldMapper.createSectionHeader(l10n.fieldAdditionalInformation),
     );
 
-    final statusText = status?.valueString;
-    ResourceFieldMapper.addIfNotNull(
-      infoLines,
-      ResourceFieldMapper.createStatusLine(
-        statusText,
-        prefix: l10n.fieldStatus,
-      ),
-    );
+    if (!isFlagged) {
+      ResourceFieldMapper.addIfNotNull(
+        infoLines,
+        FhirCodeLabels.statusLine(
+          status?.valueString,
+          l10n,
+          prefix: l10n.fieldStatus,
+        ),
+      );
+    }
 
     final specimenDisplay = FhirFieldExtractor.extractReferenceDisplay(
       specimen,

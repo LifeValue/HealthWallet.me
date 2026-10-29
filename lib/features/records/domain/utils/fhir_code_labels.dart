@@ -76,6 +76,25 @@ class FhirCodeLabels {
         : ResourceFieldMapper.createStatusLine(label, prefix: prefix);
   }
 
+  /// The lines a record with a flagged status [code] starts with: the status
+  /// and its [reason], so a vaccine not given or a result entered in error
+  /// can't be read as a normal record on the card. Empty for other statuses,
+  /// which stay where the record lists them.
+  static List<RecordInfoLine> flaggedStatusLines(
+    String? code,
+    String? reason,
+    AppLocalizations l10n,
+  ) {
+    if (!isFlagged(code)) return const [];
+    return [
+      ?statusLine(code, l10n, prefix: l10n.fieldStatus),
+      ?ResourceFieldMapper.createStatusLine(
+        reason,
+        prefix: l10n.fieldStatusReason,
+      ),
+    ];
+  }
+
   /// The code of the first coding in [concept] that [status] knows.
   static String? statusCodeOf(fhir_r4.CodeableConcept? concept) => concept
       ?.coding
