@@ -31,11 +31,57 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
 
   SyncLocalDataSourceImpl(this._appDatabase, this._sharedPreferences);
 
+  /// The row id of each resource: its FHIR id, unless that id already
+  /// belongs to a resource of another source or type, which would otherwise
+  /// be replaced. Then it is `sourceId/type/id`. Rows keep the id they have,
+  /// so a later sync updates them.
+  Future<List<String>> _rowIds(List<FhirResourceDto> resources) async {
+    String composite(FhirResourceDto e) =>
+        '${e.sourceId}/${e.resourceType}/${e.resourceId}';
+
+    final candidates = {
+      for (final e in resources) ...[e.resourceId!, composite(e)],
+    };
+    final owners = <String, (String?, String?)>{
+      for (final row in await (_appDatabase.select(
+        _appDatabase.fhirResource,
+      )..where((r) => r.id.isIn(candidates))).get())
+        row.id: (row.sourceId, row.resourceType),
+    };
+
+    return [
+      for (final e in resources)
+        () {
+          final owner = (e.sourceId, e.resourceType);
+          final bare = e.resourceId!;
+          final id =
+              !owners.containsKey(composite(e)) &&
+                  (owners[bare] == null || owners[bare] == owner)
+              ? bare
+              : composite(e);
+          owners[id] = owner;
+          return id;
+        }(),
+    ];
+  }
+
   @override
   Future<void> cacheFhirResources(List<FhirResourceDto> fhirResources) async {
-    final resources = fhirResources.map((e) {
+    final withId = fhirResources
+        .where((e) => e.resourceId?.isNotEmpty ?? false)
+        .toList();
+    if (withId.length < fhirResources.length) {
+      logger.w(
+        'Skipped ${fhirResources.length - withId.length} resources without '
+        'an id',
+      );
+    }
+    final rowIds = await _rowIds(withId);
+
+    final resources = withId.indexed.map((entry) {
+      final (i, e) = entry;
       return db.FhirResourceCompanion.insert(
-        id: e.resourceId ?? '',
+        id: rowIds[i],
         sourceId: Value(e.sourceId),
         resourceType: Value(e.resourceType),
         resourceId: Value(e.resourceId),
