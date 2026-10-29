@@ -27,3 +27,28 @@ const Set<String> kVitalLoincCodes = {
 };
 
 bool isVitalLoinc(String code) => kVitalLoincCodes.contains(code);
+
+/// Glucose observations, in mass (mg/dL) or molar (mmol/L) units. Only these
+/// convert between mg/dL and mmol/L: the factor is glucose's molar mass and
+/// is wrong for every other analyte.
+const Set<String> kGlucoseLoincCodes = {
+  kLoincBloodGlucose, // Glucose [Mass/volume] in Blood
+  '2345-7', // Glucose [Mass/volume] in Serum or Plasma
+  '2340-8', // Glucose [Mass/volume] in Blood by Automated test strip
+  '2341-6', // Glucose [Mass/volume] in Blood by Test strip manual
+  '41653-7', // Glucose [Mass/volume] in Capillary blood by Glucometer
+  '1558-6', // Fasting glucose [Mass/volume] in Serum or Plasma
+  '41604-0', // Fasting glucose [Mass/volume] in Capillary blood by Glucometer
+  '14749-6', // Glucose [Moles/volume] in Serum or Plasma
+  '15074-8', // Glucose [Moles/volume] in Blood
+  '14743-9', // Glucose [Moles/volume] in Capillary blood by Glucometer
+  '14771-0', // Fasting glucose [Moles/volume] in Serum or Plasma
+};
+
+/// Body height observations, the only lengths shown in feet and inches.
+const Set<String> kBodyHeightLoincCodes = {
+  kLoincHeight, // Body height
+  '8306-3', // Body height --lying
+  '8308-9', // Body height --standing
+  '3137-7', // Body height Measured
+};

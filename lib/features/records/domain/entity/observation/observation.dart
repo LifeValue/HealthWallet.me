@@ -426,10 +426,12 @@ abstract class Observation with _$Observation implements IFhirResource {
     final List<RecordInfoLine> infoLines = [];
     infoLines.add(ResourceFieldMapper.createSectionHeader(l10n.fieldResult));
 
+    final codes = FhirFieldExtractor.codesOf(code);
     final valueDisplay = FhirFieldExtractor.extractObservationValueForRegion(
       valueX,
       region,
       l10n: l10n,
+      codes: codes,
     );
     ResourceFieldMapper.addIfNotNull(
       infoLines,
@@ -449,6 +451,7 @@ abstract class Observation with _$Observation implements IFhirResource {
               comp.valueX,
               region,
               l10n: l10n,
+              codes: FhirFieldExtractor.codesOf(comp.code),
             );
 
         if (componentCode != null && componentValue != null) {
@@ -478,17 +481,18 @@ abstract class Observation with _$Observation implements IFhirResource {
       final range = referenceRange!.first;
       final rawLow = range.low?.value?.valueDouble;
       final rawHigh = range.high?.value?.valueDouble;
-      final rawUnit = range.low?.unit ?? range.high?.unit ?? '';
+      final rawUnit = (range.low?.unit ?? range.high?.unit ?? '').toString();
 
       double? displayLow = rawLow;
       double? displayHigh = rawHigh;
-      String displayUnit = rawUnit.toString();
+      String displayUnit = rawUnit;
 
       if (rawLow != null) {
         final converted = FhirFieldExtractor.convertQuantityForRegion(
           rawLow,
-          displayUnit,
+          rawUnit,
           region,
+          codes: codes,
         );
         displayLow = converted.value;
         displayUnit = converted.unit;
@@ -496,8 +500,9 @@ abstract class Observation with _$Observation implements IFhirResource {
       if (rawHigh != null) {
         final converted = FhirFieldExtractor.convertQuantityForRegion(
           rawHigh,
-          displayUnit,
+          rawUnit,
           region,
+          codes: codes,
         );
         displayHigh = converted.value;
         displayUnit = converted.unit;

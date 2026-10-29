@@ -70,22 +70,29 @@ class FhirObservationExtractor {
     return null;
   }
 
+  /// Like [extractObservationValue], with the value converted to the
+  /// [region]'s units. [codes] are the codes of the observation (or
+  /// component) the value belongs to; see [convertQuantityForRegion].
   static String? extractObservationValueForRegion(
     dynamic valueX,
     RegionPreset region, {
     AppLocalizations? l10n,
+    Set<String> codes = const {},
   }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
       final rawValue = valueQuantity.value?.valueDouble;
       final rawUnit = valueQuantity.unit?.toString() ?? '';
       if (rawValue != null) {
-        if (UnitConverter.heightInCm(rawValue, rawUnit) != null &&
-            region.heightUnit == 'ft/in') {
-          final converted = convertQuantityForRegion(rawValue, rawUnit, region);
+        final converted = convertQuantityForRegion(
+          rawValue,
+          rawUnit,
+          region,
+          codes: codes,
+        );
+        if (_isBodyHeight(codes) && region.heightUnit == 'ft/in') {
           return converted.unit;
         }
-        final converted = convertQuantityForRegion(rawValue, rawUnit, region);
         return '${converted.value.toStringAsFixed(2)} ${_unit(converted.unit, l10n)}';
       }
       return '${rawValue?.toStringAsFixed(2)} ${_unit(rawUnit, l10n)}';
@@ -94,14 +101,29 @@ class FhirObservationExtractor {
     return extractObservationValue(valueX, l10n: l10n);
   }
 
+  /// The codes of every coding in [concept], used to decide which unit
+  /// conversions apply to a value.
+  static Set<String> codesOf(fhir_r4.CodeableConcept? concept) => {
+    for (final coding in concept?.coding ?? const <fhir_r4.Coding>[])
+      ?coding.code?.valueString,
+  };
+
+  static bool _isBodyHeight(Set<String> codes) =>
+      codes.any(kBodyHeightLoincCodes.contains);
+
   static String _unit(String unit, AppLocalizations? l10n) =>
       l10n == null ? unit : localizedUnit(unit, l10n);
 
+  /// Converts [value] to the [region]'s unit. Weight and temperature follow
+  /// the unit alone. mg/dL and mmol/L convert only when [codes] name a
+  /// glucose observation, and lengths only for a body height: any other lab
+  /// in mg/dL, or a lesion in cm, is shown as reported.
   static ({double value, String unit}) convertQuantityForRegion(
     double value,
     String unit,
-    RegionPreset region,
-  ) {
+    RegionPreset region, {
+    Set<String> codes = const {},
+  }) {
     final u = unit.trim().toLowerCase();
 
     if ((u == 'kg' || u == 'kilograms') && region.weightUnit == 'lbs') {
@@ -120,12 +142,15 @@ class FhirObservationExtractor {
       return (value: (value - 32) * 5 / 9, unit: region.temperatureUnit);
     }
 
-    if (u == 'mg/dl' && region.glucoseUnit == 'mmol/L') {
+    final isGlucose = codes.any(kGlucoseLoincCodes.contains);
+    if (isGlucose && u == 'mg/dl' && region.glucoseUnit == 'mmol/L') {
       return (value: value / 18.0182, unit: region.glucoseUnit);
     }
-    if (u == 'mmol/l' && region.glucoseUnit == 'mg/dL') {
+    if (isGlucose && u == 'mmol/l' && region.glucoseUnit == 'mg/dL') {
       return (value: value * 18.0182, unit: region.glucoseUnit);
     }
+
+    if (!_isBodyHeight(codes)) return (value: value, unit: unit);
 
     final heightCm = UnitConverter.heightInCm(value, unit);
     if (heightCm != null && region.heightUnit == 'ft/in') {

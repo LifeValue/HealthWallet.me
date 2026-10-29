@@ -88,17 +88,28 @@ class FhirFieldExtractor {
     dynamic valueX,
     RegionPreset region, {
     AppLocalizations? l10n,
+    Set<String> codes = const {},
   }) => FhirObservationExtractor.extractObservationValueForRegion(
     valueX,
     region,
     l10n: l10n,
+    codes: codes,
   );
+
+  static Set<String> codesOf(fhir_r4.CodeableConcept? concept) =>
+      FhirObservationExtractor.codesOf(concept);
 
   static ({double value, String unit}) convertQuantityForRegion(
     double value,
     String unit,
-    RegionPreset region,
-  ) => FhirObservationExtractor.convertQuantityForRegion(value, unit, region);
+    RegionPreset region, {
+    Set<String> codes = const {},
+  }) => FhirObservationExtractor.convertQuantityForRegion(
+    value,
+    unit,
+    region,
+    codes: codes,
+  );
 
   static bool isVitalSign(Observation observation) =>
       FhirObservationExtractor.isVitalSign(observation);
