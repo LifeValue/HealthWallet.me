@@ -52,7 +52,12 @@ void main() {
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('backup_service_test');
     SharedPreferences.setMockInitialValues({'backupDirectory': dir.path});
-    db = AppDatabase(NativeDatabase.memory());
+    // Foreign keys on, as the app opens its database.
+    db = AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) => raw.execute('PRAGMA foreign_keys = ON'),
+      ),
+    );
     folderAccess = _FakeFolderAccess();
     service = BackupService(db, folderAccess);
   });
@@ -197,12 +202,13 @@ void main() {
         final entry = await service.createSnapshot();
         File('${entry.filePath}.meta.json').deleteSync();
 
-        // A backup from an older schema: one column fewer.
-        final old = AppDatabase(NativeDatabase(File(entry.filePath)));
-        await old.customStatement(
-          'ALTER TABLE fhir_resource DROP COLUMN specialty_override',
+        // A damaged backup: a note whose source isn't in it.
+        final damaged = AppDatabase(NativeDatabase(File(entry.filePath)));
+        await damaged.customStatement(
+          'INSERT INTO record_notes (resource_id, source_id, content, timestamp) '
+          "VALUES ('r1', 'ghost', 'note', 0)",
         );
-        await old.close();
+        await damaged.close();
 
         await expectLater(
           service.restoreFromFile(entry.filePath),
@@ -294,6 +300,37 @@ void main() {
       final sources = await db.customSelect('SELECT id FROM sources').get();
       expect(sources.map((r) => r.data['id']), ['s1']);
       expect(await attachedSchemas(), isNot(contains('backup_db')));
+    });
+
+    test('restores notes that refer to their source', () async {
+      await db.customStatement(
+        "INSERT INTO sources (id, platform_name) VALUES ('s1', 'Clinic')",
+      );
+      await db.customStatement(
+        'INSERT INTO record_notes (resource_id, source_id, content, timestamp) '
+        "VALUES ('r1', 's1', 'note', 0)",
+      );
+      final entry = await service.createSnapshot();
+
+      await service.restoreFromFile(entry.filePath);
+
+      expect(await notes(db), ['note']);
+    });
+
+    test('restores a backup from an older schema, one column fewer', () async {
+      await insertResource(db, 'from-backup');
+      final entry = await service.createSnapshot();
+      await editBackup(
+        entry,
+        (b) => b.customStatement(
+          'ALTER TABLE fhir_resource DROP COLUMN specialty_override',
+        ),
+      );
+      await db.customStatement('DELETE FROM fhir_resource');
+
+      await service.restoreFromFile(entry.filePath);
+
+      expect(await resourceIds(db), ['from-backup']);
     });
 
     test('keeps the backed-up updated_at, so sync sees no new edits', () async {
