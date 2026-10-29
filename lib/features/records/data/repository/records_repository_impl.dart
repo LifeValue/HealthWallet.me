@@ -687,12 +687,14 @@ class RecordsRepositoryImpl implements RecordsRepository {
     required String query,
     List<FhirType> resourceTypes = const [],
     String? sourceId,
+    List<String>? sourceIds,
     int limit = 50,
   }) async {
     final localDtos = await _datasource.searchResources(
       query: query,
       resourceTypes: resourceTypes.map((fhirType) => fhirType.name).toList(),
       sourceId: sourceId,
+      sourceIds: sourceIds,
       limit: limit,
     );
 

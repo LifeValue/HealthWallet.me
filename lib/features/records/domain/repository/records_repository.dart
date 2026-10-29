@@ -71,6 +71,7 @@ abstract class RecordsRepository {
     required String query,
     List<FhirType> resourceTypes = const [],
     String? sourceId,
+    List<String>? sourceIds,
     int limit = 50,
   });
 

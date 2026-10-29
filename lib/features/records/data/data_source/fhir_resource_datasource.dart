@@ -7,6 +7,9 @@ class FhirResourceDatasource {
 
   FhirResourceDatasource(this.db);
 
+  /// Records of one source ([sourceId]) or of several ([sourceIds], usually
+  /// one patient's); neither means every source. An empty [sourceIds] means a
+  /// patient with no sources and matches nothing, never every patient.
   Future<List<FhirResourceLocalDto>> getResources({
     required List<String> resourceTypes,
     String? sourceId,
@@ -14,14 +17,12 @@ class FhirResourceDatasource {
     int? limit,
     int? offset,
   }) async {
+    if (sourceId == null && sourceIds != null && sourceIds.isEmpty) return [];
+
     final SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query =
         db.select(db.fhirResource)..orderBy([(f) => OrderingTerm.desc(f.date)]);
 
-    if (sourceId != null) {
-      query.where((f) => f.sourceId.equals(sourceId));
-    } else if (sourceIds != null && sourceIds.isNotEmpty) {
-      query.where((f) => f.sourceId.isIn(sourceIds));
-    }
+    _whereScope(query, sourceId: sourceId, sourceIds: sourceIds);
 
     if (resourceTypes.isNotEmpty) {
       query.where((f) => f.resourceType.isIn(resourceTypes));
@@ -140,12 +141,16 @@ class FhirResourceDatasource {
         .toList();
   }
 
+  /// Searches within the same scope as [getResources].
   Future<List<FhirResourceLocalDto>> searchResources({
     required String query,
     required List<String> resourceTypes,
     String? sourceId,
+    List<String>? sourceIds,
     int? limit,
   }) async {
+    if (sourceId == null && sourceIds != null && sourceIds.isEmpty) return [];
+
     final searchTerms = query
         .toLowerCase()
         .split(' ')
@@ -160,9 +165,7 @@ class FhirResourceDatasource {
     selectQuery = db.select(db.fhirResource)
       ..orderBy([(f) => OrderingTerm.desc(f.date)]);
 
-    if (sourceId != null) {
-      selectQuery.where((f) => f.sourceId.equals(sourceId));
-    }
+    _whereScope(selectQuery, sourceId: sourceId, sourceIds: sourceIds);
 
     if (resourceTypes.isNotEmpty) {
       selectQuery.where((f) => f.resourceType.isIn(resourceTypes));
@@ -218,5 +221,17 @@ class FhirResourceDatasource {
     });
 
     return results;
+  }
+
+  void _whereScope(
+    SimpleSelectStatement<FhirResource, FhirResourceLocalDto> query, {
+    String? sourceId,
+    List<String>? sourceIds,
+  }) {
+    if (sourceId != null) {
+      query.where((f) => f.sourceId.equals(sourceId));
+    } else if (sourceIds != null) {
+      query.where((f) => f.sourceId.isIn(sourceIds));
+    }
   }
 }

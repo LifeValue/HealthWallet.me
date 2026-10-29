@@ -63,7 +63,7 @@ class EmergencyCardBuilder {
 
     final allergyResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.AllergyIntolerance],
-      sourceIds: patientSourceIds.isNotEmpty ? patientSourceIds : null,
+      sourceIds: patientSourceIds,
       limit: 100,
     );
     final allergies = allergyResources
@@ -74,7 +74,7 @@ class EmergencyCardBuilder {
 
     final conditionResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.Condition],
-      sourceIds: patientSourceIds.isNotEmpty ? patientSourceIds : null,
+      sourceIds: patientSourceIds,
       limit: 100,
     );
     final conditions = conditionResources
@@ -85,7 +85,7 @@ class EmergencyCardBuilder {
 
     final medicationResources = await _recordsRepository.getResources(
       resourceTypes: [FhirType.MedicationStatement],
-      sourceIds: patientSourceIds.isNotEmpty ? patientSourceIds : null,
+      sourceIds: patientSourceIds,
       limit: 100,
     );
     final medications = medicationResources
