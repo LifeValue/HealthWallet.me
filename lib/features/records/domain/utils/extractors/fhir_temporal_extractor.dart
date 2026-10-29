@@ -83,12 +83,22 @@ class FhirTemporalExtractor {
         }
 
         return '$startFormatted - $endFormatted';
-      } else if (startDate != null) {
-        final formatted = _format(_dateTimeFormat(locale), startDate);
-        return l10n?.fromDate(formatted) ?? 'From $formatted';
-      } else if (endDate != null) {
-        final formatted = _format(_dateTimeFormat(locale), endDate);
-        return l10n?.untilDate(formatted) ?? 'Until $formatted';
+      }
+
+      // A partial FHIR date ("2024-03", "2024") doesn't parse; show it as
+      // written rather than dropping it.
+      final startFormatted = startDate != null
+          ? _format(_dateTimeFormat(locale), startDate)
+          : start;
+      final endFormatted = endDate != null
+          ? _format(_dateTimeFormat(locale), endDate)
+          : end;
+      if (startFormatted != null && endFormatted != null) {
+        return '$startFormatted - $endFormatted';
+      } else if (startFormatted != null) {
+        return l10n?.fromDate(startFormatted) ?? 'From $startFormatted';
+      } else if (endFormatted != null) {
+        return l10n?.untilDate(endFormatted) ?? 'Until $endFormatted';
       }
     } catch (e) {
       return extractPeriod(period, l10n: l10n);

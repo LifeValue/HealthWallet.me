@@ -118,10 +118,13 @@ void main() {
           ),
           'From 2024-03',
         );
+        expect(
+          FhirTemporalExtractor.extractPeriodFormatted(
+            _period(start: '2024', end: '2024-01-12T17:15:00Z'),
+          ),
+          startsWith('2024 - '),
+        );
       },
-      skip:
-          'BUG: DateTime.tryParse fails on partial FHIR dates, so a period '
-          'starting "2024-03" is formatted as null instead of falling back',
     );
   });
 
