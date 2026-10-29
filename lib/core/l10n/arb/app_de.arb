@@ -573,6 +573,7 @@
   "desktopDisconnect": "Trennen",
   "desktopReconnect": "Erneut verbinden",
   "desktopVpnDetected": "VPN erkannt. Trenne das VPN, um mit dem Desktop zu synchronisieren.",
+  "desktopVpnBlocksPhone": "Auf diesem Computer ist ein VPN aktiv. Es kann verhindern, dass sich dein Telefon verbindet: Schalte es aus oder erlaube in den VPN-Einstellungen den Zugriff auf das lokale Netzwerk.",
   "desktopPairing": "Kopplung",
   "desktopLabel": "Desktop",
   "desktopScanFromPhoneToPair": "Scanne mit deinem Handy, um zu koppeln",

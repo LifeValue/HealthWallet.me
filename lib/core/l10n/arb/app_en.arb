@@ -607,6 +607,7 @@
   "desktopDisconnect": "Disconnect",
   "desktopReconnect": "Reconnect",
   "desktopVpnDetected": "VPN detected. Disconnect VPN to sync with desktop.",
+  "desktopVpnBlocksPhone": "A VPN is on for this computer. It can stop your phone from connecting: turn it off or allow local network access in the VPN settings.",
   "desktopPairing": "Pairing",
   "desktopLabel": "Desktop",
   "desktopScanFromPhoneToPair": "Scan from your phone to pair",

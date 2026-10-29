@@ -577,6 +577,7 @@
   "desktopDisconnect": "Desconectar",
   "desktopReconnect": "Reconectar",
   "desktopVpnDetected": "VPN detectado. Desconecta la VPN para sincronizar con el escritorio.",
+  "desktopVpnBlocksPhone": "Hay una VPN activa en esta computadora. Puede impedir que tu teléfono se conecte: desactívala o permite el acceso a la red local en la configuración de la VPN.",
   "desktopPairing": "Vinculación",
   "desktopLabel": "Escritorio",
   "desktopScanFromPhoneToPair": "Escanea con tu teléfono para vincular",

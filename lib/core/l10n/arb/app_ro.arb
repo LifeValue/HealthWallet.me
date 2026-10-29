@@ -576,6 +576,7 @@
   "desktopDisconnect": "Deconectează",
   "desktopReconnect": "Reconectează",
   "desktopVpnDetected": "VPN detectat. Deconectează VPN-ul pentru a sincroniza cu desktopul.",
+  "desktopVpnBlocksPhone": "Pe acest computer este activ un VPN. Poate împiedica telefonul tău să se conecteze: oprește-l sau permite accesul la rețeaua locală din setările VPN-ului.",
   "desktopPairing": "Asociere",
   "desktopLabel": "Desktop",
   "desktopScanFromPhoneToPair": "Scanează cu telefonul pentru a asocia",

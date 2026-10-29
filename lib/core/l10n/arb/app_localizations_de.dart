@@ -1316,6 +1316,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'VPN erkannt. Trenne das VPN, um mit dem Desktop zu synchronisieren.';
 
   @override
+  String get desktopVpnBlocksPhone =>
+      'Auf diesem Computer ist ein VPN aktiv. Es kann verhindern, dass sich dein Telefon verbindet: Schalte es aus oder erlaube in den VPN-Einstellungen den Zugriff auf das lokale Netzwerk.';
+
+  @override
   String get desktopPairing => 'Kopplung';
 
   @override

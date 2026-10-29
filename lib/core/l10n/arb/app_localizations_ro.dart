@@ -1313,6 +1313,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'VPN detectat. Deconectează VPN-ul pentru a sincroniza cu desktopul.';
 
   @override
+  String get desktopVpnBlocksPhone =>
+      'Pe acest computer este activ un VPN. Poate împiedica telefonul tău să se conecteze: oprește-l sau permite accesul la rețeaua locală din setările VPN-ului.';
+
+  @override
   String get desktopPairing => 'Asociere';
 
   @override

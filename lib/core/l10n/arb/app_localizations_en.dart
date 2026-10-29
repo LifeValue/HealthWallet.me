@@ -1297,6 +1297,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'VPN detected. Disconnect VPN to sync with desktop.';
 
   @override
+  String get desktopVpnBlocksPhone =>
+      'A VPN is on for this computer. It can stop your phone from connecting: turn it off or allow local network access in the VPN settings.';
+
+  @override
   String get desktopPairing => 'Pairing';
 
   @override

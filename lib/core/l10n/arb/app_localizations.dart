@@ -2406,6 +2406,12 @@ abstract class AppLocalizations {
   /// **'VPN detected. Disconnect VPN to sync with desktop.'**
   String get desktopVpnDetected;
 
+  /// No description provided for @desktopVpnBlocksPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'A VPN is on for this computer. It can stop your phone from connecting: turn it off or allow local network access in the VPN settings.'**
+  String get desktopVpnBlocksPhone;
+
   /// No description provided for @desktopPairing.
   ///
   /// In en, this message translates to:

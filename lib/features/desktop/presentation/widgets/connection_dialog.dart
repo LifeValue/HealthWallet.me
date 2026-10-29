@@ -16,6 +16,7 @@ import 'package:health_wallet/features/desktop/communication/data/models/device_
 import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/vpn_notice.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:health_wallet/features/sync/presentation/widgets/qr_scanner_widget.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -300,20 +301,10 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
         ),
         if (commState.vpnDetected && !isConnected) ...[
           const SizedBox(height: Insets.small),
-          Row(
-            children: [
-              const Icon(Icons.vpn_lock, size: 14, color: AppColors.warning),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  context.l10n.desktopVpnDetected,
-                  style: AppTextStyle.labelSmall.copyWith(
-                    color: AppColors.warning,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
+          VpnNotice(
+            message: isDesktop
+                ? context.l10n.desktopVpnBlocksPhone
+                : context.l10n.desktopVpnDetected,
           ),
         ],
       ],
