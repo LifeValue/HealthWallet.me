@@ -125,7 +125,7 @@ context:
   - attaching to a record without a subject, which writes `Patient/`;
   - the out-of-memory scan message, which tells the user to raise the context size.
 - **Tests:** 2,133 pass and 17 are skipped (baseline 1,707 / 23; 10 un-skipped, 4 new pins). Total coverage went from 30.0% to 37.0%.
-- **Touched files left at low coverage:** `records_page`, `attachment_detail_panel`, `record_detail_page`, `dashboard_page`, `image_preview_page`, `processing_page`, `sync_page`, `ai_settings_dialog`, `source_selector_widget` and `ai_inference_data_source`. Most are large widgets that read several BLoCs from getIt; their changed lines are logs, comments or a snackbar. Listed in `deferred-work.md`.
+- **Touched files left at low coverage (at review time):** `records_page`, `attachment_detail_panel`, `record_detail_page`, `dashboard_page`, `image_preview_page`, `processing_page`, `sync_page`, `ai_settings_dialog`, `source_selector_widget` and `ai_inference_data_source`. Covered in the final validation (see the Spec Change Log); 5 changed lines remain unreachable from tests, in `deferred-work.md`.
 - **Flaky test:** `ssdp_service_test` "stopAdvertising releases the socket" failed once during the parallel runs (port 1900 shared by the agents) and passed on every rerun.
 - **After review pass 1:** 12 findings patched in 14 commits, including sync errors moved to the app shell (the sync page is never opened), open ranges shown as `≥`/`≤` (the `…Formatted` variants too), reference ranges with source decimals, and `droppable()` on the export and wallet handlers. Final: 2,154 pass and 18 skipped (one new `BUG:` pin for the region conversion of reference ranges); analyze clean; total coverage 37.1% (baseline 30.0%).
 
@@ -137,6 +137,35 @@ context:
   - Each reference-range bound is converted from its own unit, which fixes the pinned `BUG:` test for 50–100 kg in the US.
   - Unchanged: the Home vitals card (it converts per vital type, so the glucose factor never reached cholesterol there) and the share feature.
   - Tests: 2,215 pass and 17 are skipped; analyze clean.
+- **2026-10-29, found while testing on the phone and the desktop.**
+  - **Launch logo after an update** (8fb3f3c4): iOS kept showing the old logo after an update because it caches the launch screen by asset name. The launch image is now named after its content (`LaunchImage-<hash>`), and `tool/generate_brand_assets.sh` renames it whenever the logo changes.
+  - **VPN notice** (54282008, 22be2204, 41d060b9, 077ae065): a full-tunnel VPN on the computer lets the phone connect and then drops it. The desktop now says so in the connection dialog and in Preferences → Sync. It rechecks every 5 s while the app runs, when a phone drops and when Preferences open. The reconnect logic is unchanged.
+  - **Document sizes** (6ce83903): shown in KB, MB or GB (`FileSizeFormatter`, 1024-based, one decimal) instead of bytes; the `sizeBytes` string was removed.
+  - **App messages** (84908ad9, 519aedab, 4078aae3): the user asked for messages styled like the app instead of the default snackbar. This reverses triage finding 22, which had rejected a shared helper. Every message outside `share_records` now goes through `AppSnackBar`: a card tinted with the status colour, with an icon and a ✕, floating above the bottom navigation (480 px wide on a wide desktop). The card itself is `AppMessageCard`, also used inline in the desktop Backup dialog.
+  - **Attachment names** (ff895462): the list showed the stored name (`report_1a2b3c4d.pdf`) since the unique names were added. It now shows the title the user picked, falling back to the file name.
+  - **Local times** (085666bc): times stay stored as recorded (UTC in the FHIR data) and are shown in the phone's time zone (`FhirTemporalExtractor` converts with `toLocal()` before formatting). Tests compute their expected text from the same instant in local time, so they pass in any time zone.
+  - **Unreadable PDF** (d2eec3ad): the iOS PDF view drew a blank page for a file it could not read and reported nothing. `CheckedPdfView` opens the file with pdfx first and shows "Failed to load PDF" when it has no pages; used by every full-screen PDF viewer.
+- **2026-10-30, found while testing on the phone and the desktop.**
+  - **Delete dialog** (b6bfa17c): the dialog for a record with related resources had no ✕, put Delete above the choice it depends on, and showed a second Delete button only after something was ticked. It is now `DeleteRecordDialog`: a "Delete <record>" header with ✕, a line saying related resources are kept unless ticked, the related resources as a checklist with Select all / Deselect all, and Cancel and Delete at the bottom. Delete reads "Delete + N related" when items are ticked. The user chose to keep the "Are you sure?" confirmation after it. New strings: `relatedResourcesKeptHint`, `relatedResourcesCount`, and `deselectAll`, because the German and Romanian "Clear all" read as "delete all".
+  - **Backup dialog in long languages** (5ddb582a): the three backup buttons had fixed widths and cut off longer translations ("Creează copie de siguranță"). They now have a minimum width and grow with the label, and the "Sync with phone first (not connected)" line wraps.
+  - **Restore failed when notes had a source** (003b9a9b; the bug was already on `develop`): restore replaces the tables one by one, so midway a note pointed at a source that was already gone, and SQLite refused it. Foreign keys are now checked once, at commit (`PRAGMA defer_foreign_keys`). A backup with broken references still fails as a whole and changes nothing. The service tests had missed it because their in-memory database had foreign keys off, unlike the app.
+  - **Backup messages** (68fe0f7a, c399233a, a781916a): errors showed as plain red text, a finished backup said nothing, and the "Backup restored" dialog was missed when a restore started and finished between two frames. The card now listens to the bloc's states (a BlocListener sees every state, a rebuild only the last). An error shows as a red `AppMessageCard` and a finished backup as a green one ("\"<name>\" has been saved. It holds N records."). Both hide after 6 s or with ✕, and the next backup or restore clears them. "← All backups" moved to the top of the dialog.
+  - **Tests added for checks that cannot be run by hand** (47cda212, d67efe19): two attachments with the same title reach the other device as two files; after the 30-day purge nothing reappears, whichever device purges first.
+- **2026-10-30, final validation (an independent review of the branch against this spec and the user's requests, plus line coverage of every change).**
+  - **30-day purge failed after deleting a source with notes** (f9c24593; new on this branch, since nothing was purged before): the purge deleted `sources` before `record_notes`, and a note's `source_id` references its source. With the foreign keys the app turns on, the purge threw on every start and left those tombstones forever. It now purges notes first, then records, and keeps a deleted source while a newer note still points at it. The LWW test database now turns foreign keys on like the app, which also exposed a repository test saving a note for a source it never created.
+  - **One day in local time** (df73fb04): a period was collapsed to one date by comparing its UTC dates; it now compares the dates as the user sees them (23:30Z–00:30Z is one day in Romania).
+  - **Viewer titles and exception text** (1c6f4f02):
+    - The viewer opened from a record page or the attachment panel titled itself with the stored file name; it now shows the attachment's title, then the record's.
+    - The PDF and file viewers showed exception text ("Error loading PDF: …", "Error on page …", "Error opening file: …", and the source label error). They now log it and show `failedToLoadPdf`, the new `fileOpenFailed` or `errorUpdatingSourceLabel`. Six strings that existed only to carry exception text were removed, as was the unused `PdfPreviewService.previewPdfFromFile`.
+    - The three PDF viewers now pick desktop or mobile with `AppPlatform`, as AGENTS.md asks, instead of `dart:io` `Platform`, so tests can reach the mobile branch.
+    - `CheckedPdfView` gained two test seams, `defaultCanOpen` and the `open` parameter of `canOpenPdf`: pdfx refuses to open files on Linux, where CI runs.
+  - **pdfx on Linux** (70534e7b, 0088c77c, 25a6d75b): the suite was also run on Linux in Docker, as CI runs it (`buildpack-deps:bookworm`, Flutter 3.47.7, empty `.env`), and six tests that passed on macOS failed there.
+    - pdfx checks its platform support without awaiting the check, so on Linux the failure escaped as an uncaught error. Every PDF now opens through `openPdfDocument`, which awaits the check first and fails in a way callers handle.
+    - The attachment panel tests counted pdfx channel calls, which differ by host; they now check what the user sees.
+    - The viewer tests waited a fixed 100 ms for real file I/O; they now poll until the work is done.
+    - The same pass replaced the media viewer's "Failed to link media: <exception>" with the translated `linkMediaFailed`, and dropped the viewer title's file-name fallback, which no record can reach.
+  - **Static helpers** (c423dd43): `AppSnackBar` and `FileSizeFormatter` are `abstract final`, so they need no private constructor that no test can reach.
+  - **Tests for the screens left at low coverage:** record page (delete flow through `DeleteRecordDialog` and the confirmation), records page, attachment panel, attachment and media viewers, PDF preview, source label dialog, record cards in the region units, the desktop backup and connection dialogs, and the remaining logged error paths.
 
 ## Review Triage Log
 
@@ -192,3 +221,43 @@ Review pass 1: three layers (blind, edge case, verification gap). 28 findings: 1
 
 **Manual checks:**
 - On a phone paired with the desktop: delete a record on each side, then reconnect; both stay gone.
+
+**Final validation (2026-10-30, HEAD 07bd6ca6, 98 commits on `develop`):**
+- **CI jobs run locally as CI runs them:**
+  - `checks`: format of every tracked Dart file, analyze with 0 issues, and 2,411 tests passing with 17 skipped on macOS. The suite also passed on Linux in Docker (`buildpack-deps:bookworm`, Flutter 3.47.7, empty `.env`, fresh build_runner): 2,410 tests at 25a6d75b, one commit before the last test was added.
+  - `lint`: pre-commit on the files changed since `develop`.
+  - `lint:commits`: commitlint.
+  - `scan:secrets`: gitleaks, no leaks.
+  - `scan:dependencies`: osv-scanner, no issues.
+- **Coverage:** 1,183 of the 1,189 executable lines this branch adds or changes are covered on macOS (99.5%; 82.7% before the validation). Whole app: 44.3% (baseline 30.0%).
+  - Not covered: 5 lines no test can reach (see `deferred-work.md`), and the unsupported-platform throw in `pdf_open.dart`, which runs only on Linux, so CI covers it.
+- **End to end:** `integration_test/app_l10n_test.dart` passes on the iOS simulator. `extraction_bench_test.dart` is a benchmark that needs the AI model and a dataset; it was not run, and this branch changes only error messages in that pipeline.
+- **Builds:** iOS release, macOS desktop release (`lib/main_desktop.dart`) and Android debug APK (JDK 17) all succeed. Windows cannot be built on a Mac and is built only by its manual CI job.
+
+**Manual check results (2026-10-28 to 2026-10-30, iPhone 13 Pro, iOS simulator, macOS desktop):** 79 of 86 checks passed. The checklist was kept outside the repository and removed when testing ended.
+- **Record values:** missing units, values and bounds, open ranges, decimals, blood type, partial dates and the region units, on the phone and the desktop.
+- **Errors:** IPS export failure (forced with a test build), scan, import, demo data and the wallet pass show translated messages; an attachment that is missing or not a readable PDF shows a message.
+- **Attachments:** two files named `report.pdf` are kept apart and each opens its own content; deleting one keeps the other; two files picked at once are both saved.
+- **Delete sync:** done with a paired phone, and with the simulator paired with the desktop through a copy of the desktop's pairing. Records, notes, attachments, sources, encounter-with-related deletes and re-processed documents stay deleted on both sides after reconnecting and restarting both apps, also when deleted offline and after a phone restart that clears the offline queue. An edit after a delete brings the record back. Lists, search, Home counts, IPS export, backups, restore and reset hide deleted records.
+- **Desktop backup:** create, restore (including with notes), the failed-restore card, the success card and dialog, auto-hide, and the Romanian and German layout.
+- **Update over an existing install:** a `develop` build carrying production's old launch image, updated to this branch on the simulator. Only the new logo shows on cold launches; records, notes, attachments and the pairing are kept; attachments saved by the old build still open after the app container moved. Production itself cannot run on this Mac's only simulator runtime (iOS 27; its ML Kit pods are Intel-only), and `develop` has the same schema, so the 9 → 11 migration is covered only by `migration_test.dart`.
+- **Covered by automated tests instead:** the 30-day tombstone purge; same-named attachments arriving on the desktop as two files.
+- **Not checked by hand (7):**
+  - the delete dialog's six checks, covered by `delete_record_dialog_test.dart` but not looked at in dark mode or in Romanian or German;
+  - deleting a note on the desktop and seeing it go on the phone (phone → desktop passes).
+
+**Known limitations (not bugs of this branch):**
+- Not checkable on a local build or device:
+  - a signed Apple Wallet pass (signing files live in CI variables);
+  - Android: Google Wallet, its unavailable case, install;
+  - Fasten sync (out of scope; only its error text changed).
+- With a full-tunnel VPN on the computer, the phone keeps reconnecting and never syncs. The app warns about it; the reconnect logic is unchanged.
+- A desktop build without this change keeps showing records deleted on the phone; ship both together.
+- A delete and a re-create or edit on the other device within the same second can leave the record deleted (whole-second stamps).
+- A record brought back by a later edit on the other device returns without its notes.
+- A deleted Fasten record or source comes back with the next Fasten sync.
+- Deleted records keep their content on the device and in desktop backups for 30 days, until the purge (open product decision).
+- Attachment files of deleted documents stay on disk. Only the single-attachment delete on the phone removes its file.
+- Notes created on both devices can share an id and overwrite or delete each other (pinned `BUG:` test).
+- A dose of 0.5 mg shows as "1 mg", and a lab value with a comparator (`< 0.5`) shows without it. Both existed before and are deferred.
+- The Home vitals card still shows a scanned weight or temperature in the region unit (open product decision).

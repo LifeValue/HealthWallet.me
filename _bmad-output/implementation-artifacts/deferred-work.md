@@ -89,8 +89,11 @@
   summary: Write `updated_at` in milliseconds in `updateSourceLabel` and `cacheSources`, and stamp edits at millisecond precision so an edit made in the same second as a delete on the other device does not lose to the tombstone.
   evidence: Both write a drift `DateTime` (seconds), already pinned as a KNOWN ISSUE in `lww_sync_service_test.dart`; the triggers stamp whole seconds, documented in the delete contract in `architecture.md`.
 - source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
-  summary: Add widget tests for the touched screens left at low coverage: `records_page`, `attachment_detail_panel`, `record_detail_page`, `dashboard_page`, `image_preview_page`, `processing_page`, `sync_page`, `ai_settings_dialog` and `source_selector_widget`.
-  evidence: Their changes are logs, comments or a snackbar, but each reads several BLoCs from getIt, so a test needs a harness that registers fakes for them.
+  summary: Cover the last five changed lines no test can reach: `records_page.dart:595-597` (the share-permission-denied message) and the RAM-read fallbacks in `device_capability_service.dart:55`, `ai_inference_data_source.dart:147` and `ai_settings_dialog.dart:148`.
+  evidence: The screens listed here before are now tested (99% of the branch's changed lines are covered). `SharePermissionsHelper` (in `share_records`, not ours to change) grants every request on macOS, Windows and Linux, which every test host is. The RAM fallbacks run only on iOS and Android, or after a failed `/proc/meminfo` read on Linux; both need the platform behind `AppPlatform` or an injectable reader.
+- source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
+  summary: Run the `checks` job's tests with a non-UTC `TZ` (for example `Europe/Bucharest`), so the local-time tests fail when the conversion to local time is removed.
+  evidence: The record-time tests compute their expected text from the same instant in local time. In UTC that equals the recorded time, so CI cannot tell the conversion apart from no conversion; locally (EET) the tests do catch it. The full suite passes in EET.
 - source_spec: `_bmad-output/implementation-artifacts/spec-record-values-errors-and-deletes.md`
   summary: Check that attachments land in the right documents directory on Windows. `RecordAttachmentsBloc` copies into the platform documents directory, while `PathResolver` uses `HealthWallet/Documents`, so the stored path may stay absolute. Also guard `image_preview_page`, where `lastModifiedSync()` runs after a failed `statSync`.
   evidence: Found while fixing attachments and empty catches; neither is reproduced on a device.
