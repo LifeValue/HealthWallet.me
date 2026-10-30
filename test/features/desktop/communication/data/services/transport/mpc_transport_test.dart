@@ -49,38 +49,56 @@ void main() {
     expect(transport.currentState, CommunicationState.disconnected);
   });
 
-  test('startServer advertises and goes to connecting', () async {
-    final states = <CommunicationState>[];
-    final sub = transport.stateStream.listen(states.add);
+  test(
+    'startServer advertises the pairing token and goes to connecting',
+    () async {
+      final states = <CommunicationState>[];
+      final sub = transport.stateStream.listen(states.add);
 
+      await transport.startServer(port: 49152, token: 'tok');
+      await flushEvents();
+      await sub.cancel();
+
+      expect(calls.single.method, 'startDesktopAdvertising');
+      expect(calls.single.arguments, {'token': 'tok'});
+      expect(states, [CommunicationState.connecting]);
+    },
+  );
+
+  test('without a token nothing is advertised or browsed', () async {
     await transport.startServer(port: 49152);
-    await flushEvents();
-    await sub.cancel();
-
-    expect(calls.map((c) => c.method), ['startDesktopAdvertising']);
-    expect(states, [CommunicationState.connecting]);
+    await transport.connect(address: '', port: 0);
+    expect(calls, isEmpty);
   });
 
   test('a failed advertise falls back to disconnected', () async {
     failing.add('startDesktopAdvertising');
 
-    await transport.startServer(port: 49152);
+    await transport.startServer(port: 49152, token: 'tok');
 
     expect(transport.currentState, CommunicationState.disconnected);
   });
 
   test(
-    'connect browses and a failed browse falls back to disconnected',
+    'connect browses for the token and a failed browse falls back to '
+    'disconnected',
     () async {
-      await transport.connect(address: '', port: 0);
-      expect(calls.map((c) => c.method), ['startDesktopBrowsing']);
+      await transport.connect(address: '', port: 0, token: 'tok');
+      expect(calls.single.method, 'startDesktopBrowsing');
+      expect(calls.single.arguments, {'token': 'tok'});
       expect(transport.currentState, CommunicationState.connecting);
 
       failing.add('startDesktopBrowsing');
-      await transport.connect(address: '', port: 0);
+      await transport.connect(address: '', port: 0, token: 'tok');
       expect(transport.currentState, CommunicationState.disconnected);
     },
   );
+
+  test('a native advertise or browse failure ends the attempt', () async {
+    await transport.connect(address: '', port: 0, token: 'tok');
+    await fromNative('onSyncError', {'message': 'Browsing failed'});
+    expect(transport.currentState, CommunicationState.disconnected);
+  });
 
   test('follows native connect and disconnect events', () async {
     await fromNative('onSyncConnected', {'deviceName': 'Mac'});
@@ -100,7 +118,7 @@ void main() {
     expect(await data, [0, 1, 2, 255]);
   });
 
-  test('sends bytes to the native side; a failed send is swallowed', () async {
+  test('sends bytes to the native side; a failed send throws', () async {
     await transport.send(Uint8List.fromList([9, 8, 7]));
     expect(calls.single.method, 'sendSyncData');
     expect(calls.single.arguments, {
@@ -108,7 +126,10 @@ void main() {
     });
 
     failing.add('sendSyncData');
-    await expectLater(transport.send(Uint8List(1)), completes);
+    await expectLater(
+      transport.send(Uint8List(1)),
+      throwsA(isA<PlatformException>()),
+    );
   });
 
   test('disconnect tells the native side even when it fails', () async {

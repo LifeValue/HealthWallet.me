@@ -1230,7 +1230,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String desktopSyncPendingValue(int count) {
-    return '$count cambios';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cambios',
+      one: '1 cambio',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1980,7 +1986,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String syncStatusPending(int count) {
-    return '$count pendientes';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cambios pendientes',
+      one: '1 cambio pendiente',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -4519,4 +4531,55 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get sharedFileNotPreviewable =>
       'Este tipo de archivo no se puede mostrar en los registros compartidos.';
+
+  @override
+  String get desktopWaitingForApproval =>
+      'Esperando a que el escritorio acepte este teléfono…';
+
+  @override
+  String get desktopPairingRejected =>
+      'El escritorio ya no reconoce este teléfono. Vuelve a escanear su código QR.';
+
+  @override
+  String get desktopPairingDeclined => 'El escritorio rechazó este teléfono.';
+
+  @override
+  String get desktopUpdateDesktopApp =>
+      'Actualiza HealthWallet en el escritorio y vuelve a intentarlo.';
+
+  @override
+  String get desktopUpdatePhoneApp =>
+      'Un teléfono con una versión anterior de HealthWallet intentó conectarse. Actualiza la aplicación en el teléfono.';
+
+  @override
+  String get desktopQrOutdated =>
+      'Este código QR es de una versión anterior de HealthWallet. Actualiza la aplicación en el escritorio y escanea su nuevo código.';
+
+  @override
+  String get desktopQrInvalid =>
+      'Este código QR no sirve para emparejar. Muestra uno nuevo en el escritorio.';
+
+  @override
+  String get desktopNoNetwork =>
+      'Este escritorio no está conectado a ninguna red. Conéctalo a una red Wi-Fi para emparejar un teléfono.';
+
+  @override
+  String get desktopFirewallHint =>
+      'Si tu teléfono no encuentra este escritorio, permite HealthWallet en el Firewall de Windows para redes privadas.';
+
+  @override
+  String desktopApprovePhoneMessage(String phone, String current) {
+    return '\"$phone\" quiere conectarse a este escritorio.\n\nSustituirá a \"$current\" y recibirá los historiales médicos guardados aquí.\n\n¿Lo permites?';
+  }
+
+  @override
+  String get desktopPairedPhone => 'Teléfono emparejado';
+
+  @override
+  String get desktopNewQrUnpairsHint =>
+      'Un nuevo código QR desempareja este teléfono; úsalo para emparejar otro.';
+
+  @override
+  String get desktopNotFound =>
+      'No se encontró el escritorio. Comprueba que HealthWallet está abierto en él y que ambos dispositivos están en la misma red.';
 }

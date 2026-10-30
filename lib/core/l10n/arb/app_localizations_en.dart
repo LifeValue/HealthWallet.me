@@ -1216,7 +1216,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String desktopSyncPendingValue(int count) {
-    return '$count changes';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes',
+      one: '1 change',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1960,7 +1966,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String syncStatusPending(int count) {
-    return '$count pending';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes waiting',
+      one: '1 change waiting',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -4462,4 +4474,55 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharedFileNotPreviewable =>
       'This type of file can\'t be shown in shared records.';
+
+  @override
+  String get desktopWaitingForApproval =>
+      'Waiting for the desktop to accept this phone…';
+
+  @override
+  String get desktopPairingRejected =>
+      'The desktop no longer recognises this phone. Scan its QR code again.';
+
+  @override
+  String get desktopPairingDeclined => 'The desktop declined this phone.';
+
+  @override
+  String get desktopUpdateDesktopApp =>
+      'Update HealthWallet on the desktop, then try again.';
+
+  @override
+  String get desktopUpdatePhoneApp =>
+      'A phone with an older version of HealthWallet tried to connect. Update the app on the phone.';
+
+  @override
+  String get desktopQrOutdated =>
+      'This QR code is from an older version of HealthWallet. Update the app on the desktop and scan its new code.';
+
+  @override
+  String get desktopQrInvalid =>
+      'This QR code can\'t be used for pairing. Show a new one on the desktop.';
+
+  @override
+  String get desktopNoNetwork =>
+      'This desktop isn\'t connected to a network. Connect it to Wi-Fi to pair a phone.';
+
+  @override
+  String get desktopFirewallHint =>
+      'If your phone can\'t find this desktop, allow HealthWallet through Windows Firewall on private networks.';
+
+  @override
+  String desktopApprovePhoneMessage(String phone, String current) {
+    return '\"$phone\" wants to connect to this desktop.\n\nIt will replace \"$current\" and receive the health records stored here.\n\nAllow it?';
+  }
+
+  @override
+  String get desktopPairedPhone => 'Paired phone';
+
+  @override
+  String get desktopNewQrUnpairsHint =>
+      'A new QR code unpairs this phone; use it to pair a different one.';
+
+  @override
+  String get desktopNotFound =>
+      'Desktop not found. Make sure HealthWallet is open on it and both devices are on the same network.';
 }

@@ -11,8 +11,14 @@ abstract class CommunicationService {
   Stream<CommunicationState> get stateStream;
   Stream<Uint8List> get dataStream;
 
-  Future<void> startServer({required int port});
-  Future<void> connect({required String address, required int port});
+  /// [token] limits who connects: only peers that know it (derived from the
+  /// pairing key) are accepted or invited.
+  Future<void> startServer({required int port, String? token});
+  Future<void> connect({
+    required String address,
+    required int port,
+    String? token,
+  });
   Future<void> send(Uint8List data);
   Future<void> disconnect();
   Future<void> dispose();

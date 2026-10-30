@@ -87,7 +87,8 @@ class TrayService with TrayListener {
       ConnectionStatus.connected => l10n.desktopConnectedTo(
         _deviceName ?? l10n.desktopDevice,
       ),
-      ConnectionStatus.discovering => l10n.desktopDiscovering,
+      ConnectionStatus.discovering ||
+      ConnectionStatus.awaitingApproval => l10n.desktopDiscovering,
       ConnectionStatus.disconnected => l10n.trayNoDeviceConnected,
     };
 

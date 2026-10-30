@@ -1232,7 +1232,14 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String desktopSyncPendingValue(int count) {
-    return '$count modificări';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de modificări',
+      few: '$count modificări',
+      one: '1 modificare',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1983,7 +1990,14 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String syncStatusPending(int count) {
-    return '$count în așteptare';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de modificări în așteptare',
+      few: '$count modificări în așteptare',
+      one: '1 modificare în așteptare',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -4530,4 +4544,55 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get sharedFileNotPreviewable =>
       'Acest tip de fișier nu poate fi afișat în înregistrările partajate.';
+
+  @override
+  String get desktopWaitingForApproval =>
+      'Se așteaptă ca desktopul să accepte acest telefon…';
+
+  @override
+  String get desktopPairingRejected =>
+      'Desktopul nu mai recunoaște acest telefon. Scanează din nou codul său QR.';
+
+  @override
+  String get desktopPairingDeclined => 'Desktopul a refuzat acest telefon.';
+
+  @override
+  String get desktopUpdateDesktopApp =>
+      'Actualizează HealthWallet pe desktop, apoi încearcă din nou.';
+
+  @override
+  String get desktopUpdatePhoneApp =>
+      'Un telefon cu o versiune mai veche de HealthWallet a încercat să se conecteze. Actualizează aplicația pe telefon.';
+
+  @override
+  String get desktopQrOutdated =>
+      'Acest cod QR provine dintr-o versiune mai veche de HealthWallet. Actualizează aplicația pe desktop și scanează noul cod.';
+
+  @override
+  String get desktopQrInvalid =>
+      'Acest cod QR nu poate fi folosit pentru asociere. Afișează unul nou pe desktop.';
+
+  @override
+  String get desktopNoNetwork =>
+      'Acest desktop nu este conectat la o rețea. Conectează-l la Wi-Fi pentru a asocia un telefon.';
+
+  @override
+  String get desktopFirewallHint =>
+      'Dacă telefonul nu găsește acest desktop, permite HealthWallet în Windows Firewall pentru rețelele private.';
+
+  @override
+  String desktopApprovePhoneMessage(String phone, String current) {
+    return '„$phone” vrea să se conecteze la acest desktop.\n\nVa înlocui „$current” și va primi fișele medicale stocate aici.\n\nPermiți?';
+  }
+
+  @override
+  String get desktopPairedPhone => 'Telefon asociat';
+
+  @override
+  String get desktopNewQrUnpairsHint =>
+      'Un cod QR nou dezasociază acest telefon; folosește-l pentru a asocia altul.';
+
+  @override
+  String get desktopNotFound =>
+      'Desktopul nu a fost găsit. Verifică dacă HealthWallet este deschis pe el și dacă ambele dispozitive sunt în aceeași rețea.';
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/message_router.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/tcp_service.dart';
 import 'package:health_wallet/features/desktop/handover/domain/entity/handover_session.dart';
@@ -70,7 +71,7 @@ class HandoverService {
     _receivedFiles[sessionId] = [];
     _phase1Data[sessionId] = payload['phase1_data'] as Map<String, dynamic>?;
 
-    _tcpService.sendData('handover.accept', {
+    _sendQuietly('handover.accept', {
       'session_id': sessionId,
     });
 
@@ -227,7 +228,7 @@ class HandoverService {
       _sessions[sessionId] = updated;
       _sessionUpdateController.add(updated);
 
-      _tcpService.sendData('handover.progress', {
+      _sendQuietly('handover.progress', {
         'session_id': sessionId,
         'progress': progress,
         'status': 'processing',
@@ -250,7 +251,7 @@ class HandoverService {
         type: 'handover.step1_complete',
         payload: step1Payload,
       );
-      _tcpService.sendData('handover.step1_complete', step1Payload);
+      _sendQuietly('handover.step1_complete', step1Payload);
 
       _processingBlocSub?.cancel();
       _processingBlocSub = null;
@@ -342,7 +343,7 @@ class HandoverService {
     _sessions[sessionId] = errorSession;
     _sessionUpdateController.add(errorSession);
 
-    _tcpService.sendData('handover.progress', {
+    _sendQuietly('handover.progress', {
       'session_id': sessionId,
       'progress': session.progress,
       'status': 'error',
@@ -381,5 +382,12 @@ class HandoverService {
   void dispose() {
     stopListening();
     _sessionUpdateController.close();
+  }
+
+  /// Sends a message nobody waits for; a dropped link is logged, not thrown.
+  void _sendQuietly(String type, Map<String, dynamic> payload) {
+    _tcpService.sendData(type, payload).catchError((Object e) {
+      logger.w('[$runtimeType] $type not sent', e);
+    });
   }
 }

@@ -513,7 +513,7 @@
     }
   },
   "desktopSyncPending": "Ausstehend",
-  "desktopSyncPendingValue": "{count} Änderungen",
+  "desktopSyncPendingValue": "{count, plural, =1{1 Änderung} other{{count} Änderungen}}",
   "@desktopSyncPendingValue": {
     "placeholders": {
       "count": {
@@ -922,7 +922,7 @@
   "syncStatusSyncing": "Synchronisiere...",
   "syncStatusNotSynced": "Nicht synchronisiert",
   "syncStatusInSync": "Synchron",
-  "syncStatusPending": "{count} ausstehend",
+  "syncStatusPending": "{count, plural, =1{1 Änderung ausstehend} other{{count} Änderungen ausstehend}}",
   "@syncStatusPending": {
     "placeholders": {
       "count": {
@@ -1681,5 +1681,18 @@
   "appLockUnlock": "Entsperren",
   "desktopRestoreSucceededTitle": "Backup wiederhergestellt",
   "desktopRestoreSucceededMessage": "\"{name}\" wurde wiederhergestellt. Auf diesem Gerät sind jetzt {count} Aufzeichnungen.",
-  "sharedFileNotPreviewable": "Dieser Dateityp kann in geteilten Unterlagen nicht angezeigt werden."
+  "sharedFileNotPreviewable": "Dieser Dateityp kann in geteilten Unterlagen nicht angezeigt werden.",
+  "desktopWaitingForApproval": "Warte, bis der Desktop dieses Telefon annimmt …",
+  "desktopPairingRejected": "Der Desktop erkennt dieses Telefon nicht mehr. Scanne seinen QR-Code erneut.",
+  "desktopPairingDeclined": "Der Desktop hat dieses Telefon abgelehnt.",
+  "desktopUpdateDesktopApp": "Aktualisiere HealthWallet auf dem Desktop und versuche es erneut.",
+  "desktopUpdatePhoneApp": "Ein Telefon mit einer älteren HealthWallet-Version wollte sich verbinden. Aktualisiere die App auf dem Telefon.",
+  "desktopQrOutdated": "Dieser QR-Code stammt von einer älteren HealthWallet-Version. Aktualisiere die App auf dem Desktop und scanne den neuen Code.",
+  "desktopQrInvalid": "Dieser QR-Code kann nicht zum Koppeln verwendet werden. Zeige auf dem Desktop einen neuen an.",
+  "desktopNoNetwork": "Dieser Desktop ist mit keinem Netzwerk verbunden. Verbinde ihn mit einem WLAN, um ein Telefon zu koppeln.",
+  "desktopFirewallHint": "Wenn dein Telefon diesen Desktop nicht findet, erlaube HealthWallet in der Windows-Firewall für private Netzwerke.",
+  "desktopApprovePhoneMessage": "„{phone}“ möchte sich mit diesem Desktop verbinden.\n\nEs ersetzt „{current}“ und erhält die hier gespeicherten Gesundheitsdaten.\n\nZulassen?",
+  "desktopPairedPhone": "Gekoppeltes Telefon",
+  "desktopNewQrUnpairsHint": "Ein neuer QR-Code entkoppelt dieses Telefon; damit koppelst du ein anderes.",
+  "desktopNotFound": "Desktop nicht gefunden. Prüfe, ob HealthWallet dort geöffnet ist und beide Geräte im selben Netzwerk sind."
 }

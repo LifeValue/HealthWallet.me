@@ -16,6 +16,7 @@ import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:health_wallet/features/app_lock/presentation/widgets/app_lock_overlay.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
+import 'package:health_wallet/features/desktop/presentation/widgets/phone_approval_listener.dart';
 import 'package:health_wallet/features/desktop/tray/presentation/bloc/tray_bloc.dart';
 import 'package:health_wallet/features/home/presentation/bloc/home_bloc.dart';
 import 'package:health_wallet/features/notifications/bloc/notification_bloc.dart';
@@ -214,7 +215,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               builder: (context, child) {
                 getIt<AppStringsProvider>().update(context.l10n);
                 Intl.defaultLocale = context.l10n.localeName;
-                return AppLockOverlay(child: child!);
+                return PhoneApprovalListener(
+                  child: AppLockOverlay(child: child!),
+                );
               },
             );
           },

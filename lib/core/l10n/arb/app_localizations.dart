@@ -2259,7 +2259,7 @@ abstract class AppLocalizations {
   /// No description provided for @desktopSyncPendingValue.
   ///
   /// In en, this message translates to:
-  /// **'{count} changes'**
+  /// **'{count, plural, =1{1 change} other{{count} changes}}'**
   String desktopSyncPendingValue(int count);
 
   /// No description provided for @desktopSyncingTable.
@@ -3626,7 +3626,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncStatusPending.
   ///
   /// In en, this message translates to:
-  /// **'{count} pending'**
+  /// **'{count, plural, =1{1 change waiting} other{{count} changes waiting}}'**
   String syncStatusPending(int count);
 
   /// No description provided for @backupLabel.
@@ -7996,6 +7996,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This type of file can\'t be shown in shared records.'**
   String get sharedFileNotPreviewable;
+
+  /// No description provided for @desktopWaitingForApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the desktop to accept this phone…'**
+  String get desktopWaitingForApproval;
+
+  /// No description provided for @desktopPairingRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop no longer recognises this phone. Scan its QR code again.'**
+  String get desktopPairingRejected;
+
+  /// No description provided for @desktopPairingDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'The desktop declined this phone.'**
+  String get desktopPairingDeclined;
+
+  /// No description provided for @desktopUpdateDesktopApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Update HealthWallet on the desktop, then try again.'**
+  String get desktopUpdateDesktopApp;
+
+  /// No description provided for @desktopUpdatePhoneApp.
+  ///
+  /// In en, this message translates to:
+  /// **'A phone with an older version of HealthWallet tried to connect. Update the app on the phone.'**
+  String get desktopUpdatePhoneApp;
+
+  /// No description provided for @desktopQrOutdated.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code is from an older version of HealthWallet. Update the app on the desktop and scan its new code.'**
+  String get desktopQrOutdated;
+
+  /// No description provided for @desktopQrInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code can\'t be used for pairing. Show a new one on the desktop.'**
+  String get desktopQrInvalid;
+
+  /// No description provided for @desktopNoNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'This desktop isn\'t connected to a network. Connect it to Wi-Fi to pair a phone.'**
+  String get desktopNoNetwork;
+
+  /// No description provided for @desktopFirewallHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If your phone can\'t find this desktop, allow HealthWallet through Windows Firewall on private networks.'**
+  String get desktopFirewallHint;
+
+  /// No description provided for @desktopApprovePhoneMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{phone}\" wants to connect to this desktop.\n\nIt will replace \"{current}\" and receive the health records stored here.\n\nAllow it?'**
+  String desktopApprovePhoneMessage(String phone, String current);
+
+  /// No description provided for @desktopPairedPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired phone'**
+  String get desktopPairedPhone;
+
+  /// No description provided for @desktopNewQrUnpairsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A new QR code unpairs this phone; use it to pair a different one.'**
+  String get desktopNewQrUnpairsHint;
+
+  /// No description provided for @desktopNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Desktop not found. Make sure HealthWallet is open on it and both devices are on the same network.'**
+  String get desktopNotFound;
 }
 
 class _AppLocalizationsDelegate

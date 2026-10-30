@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -13,7 +13,6 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/app_button.dart';
 import 'package:health_wallet/features/desktop/communication/data/models/device_pairing.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/presentation/bloc/communication_bloc.dart';
 import 'package:health_wallet/features/desktop/presentation/widgets/info_row.dart';
 import 'package:health_wallet/features/sync/presentation/bloc/sync_bloc.dart';
@@ -30,50 +29,56 @@ class ConnectionDialog extends StatefulWidget {
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (_) => _FullScreenQRScanner(
-          onQRCodeDetected: (qrData) {
-            debugPrint('[QR_SCAN] QR detected from direct scanner');
-            try {
-              final json = jsonDecode(qrData) as Map<String, dynamic>;
-              if (json.containsKey('pairing_key') &&
-                  json.containsKey('device_id')) {
-                debugPrint('[QR_SCAN] Detected: Desktop pairing QR');
-                final pairing = DevicePairing(
-                  deviceId: json['device_id'] as String,
-                  deviceName: json['device_name'] as String,
-                  pairingKey: json['pairing_key'] as String,
-                  lastIp: json['ip'] as String,
-                  lastPort: json['port'] as int,
-                  pairedAt: DateTime.now(),
-                  os: json['os'] as String?,
-                );
-
-                final pairingStorage = getIt<PairingStorageService>();
-                pairingStorage.savePairing(pairing).then((_) {
-                  rootNavigator.pop();
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        l10n.desktopPairedWith(pairing.deviceName),
-                      ),
-                    ),
-                  );
-                  getIt<CommunicationBloc>().add(
-                    CommunicationPairingCompleted(pairing: pairing),
-                  );
-                });
-                return;
-              }
-            } catch (_) {}
-
-            debugPrint(
-              '[QR_SCAN] Forwarding to SyncBloc for Fasten Health sync',
-            );
-            rootNavigator.pop();
-            getIt<SyncBloc>().add(SyncData(qrData: qrData));
-          },
+          onQRCodeDetected: (qrData) => handleScannedCode(
+            navigator: rootNavigator,
+            messenger: scaffoldMessenger,
+            l10n: l10n,
+            qrData: qrData,
+          ),
         ),
       ),
     );
+  }
+
+  /// A code from the scanner: a desktop's pairing code is checked and handed
+  /// to the [CommunicationBloc]; anything else goes to the Fasten sync.
+  static void handleScannedCode({
+    required NavigatorState navigator,
+    required ScaffoldMessengerState messenger,
+    required AppLocalizations l10n,
+    required String qrData,
+  }) {
+    void tell(String message) =>
+        messenger.showSnackBar(SnackBar(content: Text(message)));
+
+    switch (DevicePairing.parseQr(qrData)) {
+      case ValidPairingQr(:final pairing):
+        navigator.pop();
+        tell(l10n.desktopPairedWith(pairing.deviceName));
+        getIt<CommunicationBloc>().add(
+          CommunicationPairingCompleted(pairing: pairing),
+        );
+      case OutdatedPairingQr():
+        navigator.pop();
+        tell(l10n.desktopQrOutdated);
+      case InvalidPairingQr():
+        navigator.pop();
+        tell(l10n.desktopQrInvalid);
+      case NotPairingQr():
+        navigator.pop();
+        getIt<SyncBloc>().add(SyncData(qrData: qrData));
+    }
+  }
+
+  /// The message for why the phone isn't connected, if there is one.
+  static String? issueMessage(AppLocalizations l10n, DesktopSyncState state) {
+    return switch (state.issue) {
+      LinkIssue.notFound => l10n.desktopNotFound,
+      LinkIssue.keyRejected => l10n.desktopPairingRejected,
+      LinkIssue.declined => l10n.desktopPairingDeclined,
+      LinkIssue.desktopOutdated => l10n.desktopUpdateDesktopApp,
+      null => null,
+    };
   }
 
   static void show(BuildContext context) {
@@ -194,6 +199,8 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
         commState.connectionStatus == ConnectionStatus.connected;
     final isDiscovering =
         commState.connectionStatus == ConnectionStatus.discovering;
+    final isAwaitingApproval =
+        commState.connectionStatus == ConnectionStatus.awaitingApproval;
     final isDesktop = getIt<AppPlatform>().isDesktop;
     final remoteName =
         commState.connectedDeviceName ??
@@ -207,6 +214,9 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
       statusLabel = remoteName != null
           ? context.l10n.desktopConnectedTo(remoteName)
           : context.l10n.desktopConnected;
+    } else if (isAwaitingApproval) {
+      dotColor = AppColors.warning;
+      statusLabel = context.l10n.desktopWaitingForApproval;
     } else if (isDiscovering) {
       dotColor = AppColors.warning;
       statusLabel = remoteName != null
@@ -256,9 +266,12 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                   ),
                 ),
               ),
-            if (!isConnected &&
+            // The desktop listens all the time; only the phone reconnects.
+            if (!isDesktop &&
+                !isConnected &&
                 commState.pairedDevice != null &&
-                !isDiscovering)
+                !isDiscovering &&
+                !isAwaitingApproval)
               GestureDetector(
                 onTap: () {
                   getIt<CommunicationBloc>().add(
@@ -298,6 +311,21 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
               ),
           ],
         ),
+        if (!isDesktop &&
+            ConnectionDialog.issueMessage(context.l10n, commState) != null) ...[
+          const SizedBox(height: Insets.small),
+          Text(
+            ConnectionDialog.issueMessage(context.l10n, commState)!,
+            style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
+          ),
+        ],
+        if (isDesktop && commState.outdatedPhoneSeen && !isConnected) ...[
+          const SizedBox(height: Insets.small),
+          Text(
+            context.l10n.desktopUpdatePhoneApp,
+            style: AppTextStyle.labelSmall.copyWith(color: AppColors.warning),
+          ),
+        ],
         if (commState.vpnDetected && !isConnected) ...[
           const SizedBox(height: Insets.small),
           Row(
@@ -343,7 +371,34 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
             value: commState.pairedDevice!.deviceName,
           ),
         ],
-        if (hasPairing && getIt<AppPlatform>().isDesktop) ...[
+        if (hasPairing &&
+            getIt<AppPlatform>().isDesktop &&
+            commState.pairedDevice!.peerDeviceId != null) ...[
+          // Paired: the QR code is not shown again, so nobody can pair from
+          // a glance at the screen or a screenshot.
+          const SizedBox(height: Insets.small),
+          InfoRow(
+            label: context.l10n.desktopPairedPhone,
+            value:
+                commState.pairedDevice!.peerDeviceName ??
+                context.l10n.desktopMobileDevice,
+          ),
+          const SizedBox(height: Insets.small),
+          Text(
+            context.l10n.desktopNewQrUnpairsHint,
+            style: AppTextStyle.labelSmall.copyWith(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+        ] else if (hasPairing &&
+            getIt<AppPlatform>().isDesktop &&
+            commState.networkUnavailable) ...[
+          const SizedBox(height: Insets.small),
+          Text(
+            context.l10n.desktopNoNetwork,
+            style: AppTextStyle.labelSmall.copyWith(color: AppColors.warning),
+          ),
+        ] else if (hasPairing && getIt<AppPlatform>().isDesktop) ...[
           const SizedBox(height: Insets.normal),
           Center(
             child: GestureDetector(
@@ -355,7 +410,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: QrImageView(
-                  data: _qrData(commState.pairedDevice!),
+                  data: commState.pairedDevice!.toQrPayload(),
                   version: QrVersions.auto,
                   size: 200,
                 ),
@@ -372,6 +427,16 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
               ),
             ),
           ),
+          if (Platform.isWindows) ...[
+            const SizedBox(height: Insets.small),
+            Text(
+              context.l10n.desktopFirewallHint,
+              textAlign: TextAlign.center,
+              style: AppTextStyle.labelSmall.copyWith(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
         ],
         const SizedBox(height: Insets.normal),
         if (getIt<AppPlatform>().isDesktop)
@@ -397,17 +462,6 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     );
   }
 
-  String _qrData(DevicePairing pairing) {
-    return jsonEncode({
-      'device_id': pairing.deviceId,
-      'ip': pairing.lastIp,
-      'port': pairing.lastPort,
-      'pairing_key': pairing.pairingKey,
-      'device_name': pairing.deviceName,
-      'os': pairing.os,
-    });
-  }
-
   void _showFullScreenQr(BuildContext context, DevicePairing pairing) {
     showDialog(
       context: context,
@@ -426,7 +480,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   QrImageView(
-                    data: _qrData(pairing),
+                    data: pairing.toQrPayload(),
                     version: QrVersions.auto,
                     size: 400,
                   ),
@@ -449,6 +503,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
   void _openMobileQRScanner(BuildContext context) {
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
 
     rootNavigator.pop();
 
@@ -456,58 +511,14 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (_) => _FullScreenQRScanner(
-          onQRCodeDetected: (qrData) => _handleQRCodeDetected(
-            rootNavigator,
-            scaffoldMessenger,
-            qrData,
+          onQRCodeDetected: (qrData) => ConnectionDialog.handleScannedCode(
+            navigator: rootNavigator,
+            messenger: scaffoldMessenger,
+            l10n: l10n,
+            qrData: qrData,
           ),
         ),
       ),
-    );
-  }
-
-  void _handleQRCodeDetected(
-    NavigatorState navigator,
-    ScaffoldMessengerState messenger,
-    String qrData,
-  ) {
-    try {
-      final json = jsonDecode(qrData) as Map<String, dynamic>;
-      if (json.containsKey('pairing_key') && json.containsKey('device_id')) {
-        final pairing = DevicePairing(
-          deviceId: json['device_id'] as String,
-          deviceName: json['device_name'] as String,
-          pairingKey: json['pairing_key'] as String,
-          lastIp: json['ip'] as String,
-          lastPort: json['port'] as int,
-          pairedAt: DateTime.now(),
-          os: json['os'] as String?,
-        );
-
-        _handlePairing(navigator, messenger, pairing);
-        return;
-      }
-    } catch (_) {}
-
-    debugPrint(
-      '[QR_SCAN] Not a pairing QR, forwarding to SyncBloc for Fasten Health sync',
-    );
-    navigator.pop();
-    getIt<SyncBloc>().add(SyncData(qrData: qrData));
-  }
-
-  Future<void> _handlePairing(
-    NavigatorState navigator,
-    ScaffoldMessengerState messenger,
-    DevicePairing pairing,
-  ) async {
-    final pairingStorage = getIt<PairingStorageService>();
-    await pairingStorage.savePairing(pairing);
-
-    navigator.pop();
-
-    getIt<CommunicationBloc>().add(
-      CommunicationPairingCompleted(pairing: pairing),
     );
   }
 }

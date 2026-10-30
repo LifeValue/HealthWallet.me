@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:injectable/injectable.dart';
 
 import 'tcp_service.dart';
@@ -31,7 +32,9 @@ class MessageRouter {
       if (controller != null && !controller.isClosed) {
         controller.add(payload);
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('[MessageRouter] unreadable message dropped', e);
+    }
   }
 
   Stream<Map<String, dynamic>> on(String type) {

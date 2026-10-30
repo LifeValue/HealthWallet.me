@@ -517,7 +517,7 @@
     }
   },
   "desktopSyncPending": "Pendiente",
-  "desktopSyncPendingValue": "{count} cambios",
+  "desktopSyncPendingValue": "{count, plural, =1{1 cambio} other{{count} cambios}}",
   "@desktopSyncPendingValue": {
     "placeholders": {
       "count": {
@@ -926,7 +926,7 @@
   "syncStatusSyncing": "Sincronizando...",
   "syncStatusNotSynced": "No sincronizado",
   "syncStatusInSync": "Sincronizado",
-  "syncStatusPending": "{count} pendientes",
+  "syncStatusPending": "{count, plural, =1{1 cambio pendiente} other{{count} cambios pendientes}}",
   "@syncStatusPending": {
     "placeholders": {
       "count": {
@@ -1685,5 +1685,18 @@
   "appLockUnlock": "Desbloquear",
   "desktopRestoreSucceededTitle": "Respaldo restaurado",
   "desktopRestoreSucceededMessage": "Se restauró \"{name}\". Ahora hay {count} registros en este dispositivo.",
-  "sharedFileNotPreviewable": "Este tipo de archivo no se puede mostrar en los registros compartidos."
+  "sharedFileNotPreviewable": "Este tipo de archivo no se puede mostrar en los registros compartidos.",
+  "desktopWaitingForApproval": "Esperando a que el escritorio acepte este teléfono…",
+  "desktopPairingRejected": "El escritorio ya no reconoce este teléfono. Vuelve a escanear su código QR.",
+  "desktopPairingDeclined": "El escritorio rechazó este teléfono.",
+  "desktopUpdateDesktopApp": "Actualiza HealthWallet en el escritorio y vuelve a intentarlo.",
+  "desktopUpdatePhoneApp": "Un teléfono con una versión anterior de HealthWallet intentó conectarse. Actualiza la aplicación en el teléfono.",
+  "desktopQrOutdated": "Este código QR es de una versión anterior de HealthWallet. Actualiza la aplicación en el escritorio y escanea su nuevo código.",
+  "desktopQrInvalid": "Este código QR no sirve para emparejar. Muestra uno nuevo en el escritorio.",
+  "desktopNoNetwork": "Este escritorio no está conectado a ninguna red. Conéctalo a una red Wi-Fi para emparejar un teléfono.",
+  "desktopFirewallHint": "Si tu teléfono no encuentra este escritorio, permite HealthWallet en el Firewall de Windows para redes privadas.",
+  "desktopApprovePhoneMessage": "\"{phone}\" quiere conectarse a este escritorio.\n\nSustituirá a \"{current}\" y recibirá los historiales médicos guardados aquí.\n\n¿Lo permites?",
+  "desktopPairedPhone": "Teléfono emparejado",
+  "desktopNewQrUnpairsHint": "Un nuevo código QR desempareja este teléfono; úsalo para emparejar otro.",
+  "desktopNotFound": "No se encontró el escritorio. Comprueba que HealthWallet está abierto en él y que ambos dispositivos están en la misma red."
 }

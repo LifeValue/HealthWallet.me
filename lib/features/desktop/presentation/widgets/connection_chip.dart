@@ -23,6 +23,11 @@ class ConnectionChip extends StatelessWidget {
         context.l10n.desktopDiscovering,
         Icons.search,
       ),
+      ConnectionStatus.awaitingApproval => (
+        AppColors.warning,
+        context.l10n.desktopWaitingForApproval,
+        Icons.hourglass_top,
+      ),
       ConnectionStatus.disconnected => (
         AppColors.error,
         context.l10n.desktopDisconnected,

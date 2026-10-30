@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/mdns_service.dart';
-import 'package:health_wallet/features/desktop/communication/data/services/pairing_storage_service.dart';
 import 'package:health_wallet/features/desktop/communication/data/services/ssdp_service.dart';
 import 'package:injectable/injectable.dart';
 
@@ -22,110 +23,81 @@ class DiscoveryResult {
 class DiscoveryService {
   final SsdpService _ssdpService;
   final MdnsService _mdnsService;
-  final PairingStorageService _pairingStorage;
 
-  DiscoveryService(
-    this._ssdpService,
-    this._mdnsService,
-    this._pairingStorage,
-  );
+  DiscoveryService(this._ssdpService, this._mdnsService);
 
-  Future<DiscoveryResult?> discover() async {
-    final savedResult = await _trySavedIp();
-    if (savedResult != null) return savedResult;
+  /// SSDP multicast needs an entitlement Apple grants on request; iPhones
+  /// find the desktop through Bonjour (and MPC) instead.
+  static bool get _ssdpAvailable => !Platform.isIOS;
 
-    final networkResult = await _tryNetworkDiscovery();
-    if (networkResult != null) return networkResult;
+  /// Addresses where the paired desktop may be listening, Bonjour first. They
+  /// are only candidates: the handshake proves which one is the desktop, and
+  /// only an address that passed it is saved.
+  Future<List<DiscoveryResult>> discoverViaNetwork({
+    required String deviceId,
+    required String token,
+  }) async {
+    debugPrint('[Discovery] mDNS + SSDP search');
 
-    debugPrint('[Discovery] All methods failed');
-    return null;
-  }
-
-  Future<DiscoveryResult?> discoverViaNetwork() async {
-    return _tryNetworkDiscovery();
-  }
-
-  Future<DiscoveryResult?> _trySavedIp() async {
-    final pairing = _pairingStorage.loadPairing();
-    if (pairing == null) return null;
-
-    debugPrint(
-      '[Discovery] Using saved IP ${pairing.lastIp}:${pairing.lastPort}',
-    );
-    return DiscoveryResult(
-      ip: pairing.lastIp,
-      port: pairing.lastPort,
-      method: 'saved-ip',
-    );
-  }
-
-  Future<DiscoveryResult?> _tryNetworkDiscovery() async {
-    debugPrint('[Discovery] Starting mDNS + SSDP parallel search');
-
-    final pairing = _pairingStorage.loadPairing();
-    final expectedDeviceId = pairing?.deviceId;
-
-    Future<DiscoveryResult?> safeMdns() async {
+    Future<DiscoveryResult?> mdns() async {
       try {
-        final r = await _mdnsService.search(
-          timeout: const Duration(seconds: 3),
-        );
-        return r != null
-            ? DiscoveryResult(ip: r.ip, port: r.port, method: 'mdns')
-            : null;
-      } catch (_) {
+        final r = await _mdnsService.search(token: token);
+        return r == null
+            ? null
+            : DiscoveryResult(ip: r.ip, port: r.port, method: 'mdns');
+      } catch (e) {
+        logger.w('[Discovery] mDNS search failed', e);
         return null;
       }
     }
 
-    Future<DiscoveryResult?> safeSsdp() async {
+    Future<DiscoveryResult?> ssdp() async {
+      if (!_ssdpAvailable) return null;
       try {
         final r = await _ssdpService.search(
           timeout: const Duration(seconds: 3),
-          expectedDeviceId: expectedDeviceId,
+          expectedDeviceId: deviceId,
         );
-        return r != null
-            ? DiscoveryResult(ip: r.ip, port: r.port, method: 'ssdp')
-            : null;
-      } catch (_) {
+        return r == null
+            ? null
+            : DiscoveryResult(ip: r.ip, port: r.port, method: 'ssdp');
+      } catch (e) {
+        logger.w('[Discovery] SSDP search failed', e);
         return null;
       }
     }
 
-    final results = await Future.wait([safeMdns(), safeSsdp()]);
-
-    for (final result in results) {
-      if (result != null) {
-        debugPrint(
-          '[Discovery] Found via ${result.method}: ${result.ip}:${result.port}',
-        );
-        await _pairingStorage.updateLastConnection(
-          ip: result.ip,
-          port: result.port,
-        );
-        return result;
-      }
-    }
-
-    return null;
+    final results = await Future.wait([mdns(), ssdp()]);
+    final seen = <String>{};
+    return [
+      for (final r in results)
+        if (r != null && seen.add('${r.ip}:${r.port}')) r,
+    ];
   }
 
   Future<void> startDesktopAdvertising({
-    required String ip,
+    required String? ip,
     required int port,
     required String deviceId,
+    required String token,
   }) async {
-    try {
-      await _ssdpService.startAdvertising(
-        ip: ip,
-        port: port,
-        deviceId: deviceId,
-      );
-    } catch (e) {
-      debugPrint('[Discovery] SSDP advertising failed (non-fatal): $e');
+    if (ip != null) {
+      try {
+        await _ssdpService.startAdvertising(
+          ip: ip,
+          port: port,
+          deviceId: deviceId,
+        );
+      } catch (e) {
+        logger.w('[Discovery] SSDP advertising failed', e);
+      }
     }
-    await _mdnsService.startAdvertising(port: port);
-    debugPrint('[Discovery] Desktop advertising started on $ip:$port');
+    try {
+      await _mdnsService.startAdvertising(port: port, token: token);
+    } catch (e) {
+      logger.w('[Discovery] mDNS advertising failed', e);
+    }
+    debugPrint('[Discovery] Desktop advertising on port $port');
   }
 
   Future<void> stopDesktopAdvertising() async {

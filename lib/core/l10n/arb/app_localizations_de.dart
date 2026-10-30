@@ -1235,7 +1235,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String desktopSyncPendingValue(int count) {
-    return '$count Änderungen';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Änderungen',
+      one: '1 Änderung',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1984,7 +1990,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String syncStatusPending(int count) {
-    return '$count ausstehend';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Änderungen ausstehend',
+      one: '1 Änderung ausstehend',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -4531,4 +4543,56 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get sharedFileNotPreviewable =>
       'Dieser Dateityp kann in geteilten Unterlagen nicht angezeigt werden.';
+
+  @override
+  String get desktopWaitingForApproval =>
+      'Warte, bis der Desktop dieses Telefon annimmt …';
+
+  @override
+  String get desktopPairingRejected =>
+      'Der Desktop erkennt dieses Telefon nicht mehr. Scanne seinen QR-Code erneut.';
+
+  @override
+  String get desktopPairingDeclined =>
+      'Der Desktop hat dieses Telefon abgelehnt.';
+
+  @override
+  String get desktopUpdateDesktopApp =>
+      'Aktualisiere HealthWallet auf dem Desktop und versuche es erneut.';
+
+  @override
+  String get desktopUpdatePhoneApp =>
+      'Ein Telefon mit einer älteren HealthWallet-Version wollte sich verbinden. Aktualisiere die App auf dem Telefon.';
+
+  @override
+  String get desktopQrOutdated =>
+      'Dieser QR-Code stammt von einer älteren HealthWallet-Version. Aktualisiere die App auf dem Desktop und scanne den neuen Code.';
+
+  @override
+  String get desktopQrInvalid =>
+      'Dieser QR-Code kann nicht zum Koppeln verwendet werden. Zeige auf dem Desktop einen neuen an.';
+
+  @override
+  String get desktopNoNetwork =>
+      'Dieser Desktop ist mit keinem Netzwerk verbunden. Verbinde ihn mit einem WLAN, um ein Telefon zu koppeln.';
+
+  @override
+  String get desktopFirewallHint =>
+      'Wenn dein Telefon diesen Desktop nicht findet, erlaube HealthWallet in der Windows-Firewall für private Netzwerke.';
+
+  @override
+  String desktopApprovePhoneMessage(String phone, String current) {
+    return '„$phone“ möchte sich mit diesem Desktop verbinden.\n\nEs ersetzt „$current“ und erhält die hier gespeicherten Gesundheitsdaten.\n\nZulassen?';
+  }
+
+  @override
+  String get desktopPairedPhone => 'Gekoppeltes Telefon';
+
+  @override
+  String get desktopNewQrUnpairsHint =>
+      'Ein neuer QR-Code entkoppelt dieses Telefon; damit koppelst du ein anderes.';
+
+  @override
+  String get desktopNotFound =>
+      'Desktop nicht gefunden. Prüfe, ob HealthWallet dort geöffnet ist und beide Geräte im selben Netzwerk sind.';
 }
