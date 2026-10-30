@@ -1009,6 +1009,32 @@ class AppLocalizationsRo extends AppLocalizations {
   String get shareReceivingRecords => 'Se primesc înregistrările...';
 
   @override
+  String get shareVerifyTitle => 'Compară codurile';
+
+  @override
+  String get shareVerifySenderHint =>
+      'Verifică dacă celălalt telefon afișează același cod. Înregistrările tale rămân blocate până confirmi.';
+
+  @override
+  String get shareVerifyReceiverHint =>
+      'Verifică dacă celălalt telefon afișează același cod. Înregistrările se deschid după ce expeditorul confirmă.';
+
+  @override
+  String get shareVerifyCodesMatch => 'Codurile coincid';
+
+  @override
+  String get shareVerifyWaitingForSender =>
+      'Se așteaptă confirmarea expeditorului...';
+
+  @override
+  String get shareAwaitingViewer =>
+      'Coduri confirmate. Se așteaptă ca celălalt telefon să deschidă înregistrările.';
+
+  @override
+  String get shareEndNotDelivered =>
+      'Celălalt telefon nu a putut fi contactat. Păstrează înregistrările până la expirarea temporizatorului său.';
+
+  @override
   String get shareConfirmExit => 'Confirmă Ieșirea';
 
   @override
@@ -2746,6 +2772,28 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get shareErrorParseFile => 'Fișierul primit nu a putut fi citit';
+
+  @override
+  String get shareStatusCompareWithSender => 'Compară codul cu expeditorul';
+
+  @override
+  String get shareStatusCompareWithReceiver => 'Compară codul cu destinatarul';
+
+  @override
+  String get shareStatusRecordsSentAwaitingViewer =>
+      'Înregistrări trimise - se așteaptă ca destinatarul să le deschidă';
+
+  @override
+  String get shareErrorOlderVersion =>
+      'Această partajare vine de la o versiune mai veche de HealthWallet. Actualizează aplicația pe ambele telefoane și încearcă din nou.';
+
+  @override
+  String get shareErrorSecureConnection =>
+      'Nu s-a putut stabili o conexiune securizată cu celălalt telefon. Încearcă din nou să partajezi.';
+
+  @override
+  String get shareStatusSecureConnectionFailed =>
+      'Conexiunea securizată a eșuat';
 
   @override
   String get shareIncomingHealthRecords => 'Înregistrări medicale primite';

@@ -133,6 +133,15 @@ sealed class ShareRecordsEvent with _$ShareRecordsEvent {
   const factory ShareRecordsEvent.remoteInvitationRejected() =
       RemoteInvitationRejected;
 
+  const factory ShareRecordsEvent.verificationCodeReady(String code) =
+      VerificationCodeReady;
+
+  const factory ShareRecordsEvent.verificationConfirmed() =
+      VerificationConfirmed;
+
+  const factory ShareRecordsEvent.secureShareFailed(String reason) =
+      SecureShareFailed;
+
   const factory ShareRecordsEvent.filtersApplied(List<FhirType> filters) =
       ShareFiltersApplied;
 

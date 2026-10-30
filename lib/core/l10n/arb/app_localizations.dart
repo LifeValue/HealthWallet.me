@@ -1908,6 +1908,48 @@ abstract class AppLocalizations {
   /// **'Receiving records...'**
   String get shareReceivingRecords;
 
+  /// No description provided for @shareVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare codes'**
+  String get shareVerifyTitle;
+
+  /// No description provided for @shareVerifySenderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the other phone shows the same code. Your records stay locked until you confirm.'**
+  String get shareVerifySenderHint;
+
+  /// No description provided for @shareVerifyReceiverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the other phone shows the same code. The records open once the sender confirms.'**
+  String get shareVerifyReceiverHint;
+
+  /// No description provided for @shareVerifyCodesMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes match'**
+  String get shareVerifyCodesMatch;
+
+  /// No description provided for @shareVerifyWaitingForSender.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the sender to confirm...'**
+  String get shareVerifyWaitingForSender;
+
+  /// No description provided for @shareAwaitingViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes confirmed. Waiting for the other phone to open the records.'**
+  String get shareAwaitingViewer;
+
+  /// No description provided for @shareEndNotDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'The other phone couldn\'t be reached. It keeps the records until its timer runs out.'**
+  String get shareEndNotDelivered;
+
   /// No description provided for @shareConfirmExit.
   ///
   /// In en, this message translates to:
@@ -4996,6 +5038,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to parse received file'**
   String get shareErrorParseFile;
+
+  /// No description provided for @shareStatusCompareWithSender.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare the code with the sender'**
+  String get shareStatusCompareWithSender;
+
+  /// No description provided for @shareStatusCompareWithReceiver.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare the code with the receiver'**
+  String get shareStatusCompareWithReceiver;
+
+  /// No description provided for @shareStatusRecordsSentAwaitingViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Records sent - waiting for receiver to open them'**
+  String get shareStatusRecordsSentAwaitingViewer;
+
+  /// No description provided for @shareErrorOlderVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'This share came from an older version of HealthWallet. Update the app on both phones and try again.'**
+  String get shareErrorOlderVersion;
+
+  /// No description provided for @shareErrorSecureConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t set up a secure connection with the other phone. Try sharing again.'**
+  String get shareErrorSecureConnection;
+
+  /// No description provided for @shareStatusSecureConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure connection failed'**
+  String get shareStatusSecureConnectionFailed;
 
   /// No description provided for @shareIncomingHealthRecords.
   ///

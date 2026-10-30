@@ -32,7 +32,10 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   Future<void> sendKillSignal() async {}
 }
 
-class _FakeRecordsRepository extends Fake implements RecordsRepository {}
+class _FakeRecordsRepository extends Fake implements RecordsRepository {
+  @override
+  void clearSharedNotes() {}
+}
 
 class _FakeSharePreferencesService extends Fake
     implements SharePreferencesService {}

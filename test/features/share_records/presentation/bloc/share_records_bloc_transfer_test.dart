@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:airdrop/airdrop.dart';
@@ -11,6 +12,7 @@ import 'package:health_wallet/features/records/domain/entity/record_note/record_
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
 import 'package:health_wallet/features/share_records/core/ephemeral_session_manager.dart';
 import 'package:health_wallet/features/share_records/data/mapper/fhir_bundle_mapper.dart';
+import 'package:health_wallet/features/share_records/data/service/secure_share_session.dart';
 import 'package:health_wallet/features/share_records/data/service/share_preferences_service.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
 import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
@@ -23,15 +25,23 @@ import 'package:health_wallet/features/share_records/presentation/bloc/share_rec
 import '../../../../fixtures/fhir/fhir_fixtures.dart';
 import '../../share_test_helpers.dart';
 
-const _sessionId = '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b';
-const _payloadPath = '/tmp/share_payload.json';
+const _payloadPath = '/tmp/share_payload.bin';
+
+/// A peer that never answers: the key exchange waits until it is disposed.
+class _SilentTransport implements ShareMessageTransport {
+  @override
+  Stream<Uint8List> get messages => const Stream.empty();
+
+  @override
+  Future<void> send(Uint8List message) async {}
+}
 
 /// Records the calls the BLoC makes; [preparedPath] is what
 /// `prepareFilesForSending` returns (null for a failure).
 class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   String? preparedPath = _payloadPath;
   String? Function()? preparedPathFor;
-  EphemeralRecordsContainer? parsed;
+  Uint8List? receivedFileBytes;
   final calls = <String>[];
   final cleanedFiles = <String>[];
   final cleanedSessions = <String>[];
@@ -79,8 +89,17 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   );
 
   @override
-  Future<String?> prepareFilesForSending(SharePayload payload) async {
+  SecureShareSession createSecureSession() =>
+      SecureShareSession(_SilentTransport());
+
+  @override
+  Future<String?> prepareFilesForSending(
+    SharePayload payload,
+    SecureShareSession session,
+  ) async {
     calls.add('prepareFilesForSending');
+    // Seals like the real service, which starts the session's key exchange.
+    await session.seal(utf8.encode('{}'));
     // Yields like the real file write, so concurrent handlers interleave.
     await Future<void>.delayed(Duration.zero);
     return preparedPathFor?.call() ?? preparedPath;
@@ -95,21 +114,12 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
       cleanedSessions.add(sessionId);
 
   @override
-  Future<EphemeralRecordsContainer?> parseReceivedData(
-    ReceivedData receivedData,
-  ) async => parsed;
-
-  @override
-  Future<EphemeralRecordsContainer?> parseReceivedFile(String filePath) async =>
-      parsed;
+  Future<Uint8List?> readReceivedFile(String filePath) async =>
+      receivedFileBytes;
 }
 
-/// Related-resource and note lookups find nothing; note writes are recorded.
+/// Related-resource and note lookups find nothing.
 class _FakeRecordsRepository extends Fake implements RecordsRepository {
-  final addedNotes = <String>[];
-  final deletedNotes = <int>[];
-  bool failNoteWrites = false;
-
   @override
   Future<List<IFhirResource>> getRelatedResources({
     required IFhirResource resource,
@@ -119,22 +129,7 @@ class _FakeRecordsRepository extends Fake implements RecordsRepository {
   Future<List<RecordNote>> getRecordNotes(String resourceId) async => [];
 
   @override
-  Future<int> addRecordNote({
-    required String resourceId,
-    String? sourceId,
-    required String content,
-  }) async {
-    if (failNoteWrites) throw StateError('db closed');
-    addedNotes.add(content);
-    return addedNotes.length;
-  }
-
-  @override
-  Future<int> deleteRecordNote(RecordNote note) async {
-    if (failNoteWrites) throw StateError('db closed');
-    deletedNotes.add(note.id);
-    return 1;
-  }
+  void clearSharedNotes() {}
 }
 
 class _FakeSharePreferencesService extends Fake
@@ -144,19 +139,6 @@ class _FakeReceiveModeService extends Fake implements ReceiveModeService {
   @override
   bool get isListening => false;
 }
-
-EphemeralRecordsContainer _container({
-  Map<String, List<RecordNote>> notes = const {},
-  List<IFhirResource>? records,
-}) => EphemeralRecordsContainer(
-  sessionId: _sessionId,
-  senderDeviceName: 'Pixel',
-  receivedAt: DateTime.now(),
-  viewDuration: const Duration(minutes: 5),
-  records: records ?? [record(observationJson(), id: 'o1')],
-  notes: notes,
-  tempAttachmentPaths: const [],
-);
 
 ReceivedData _data() => ReceivedData(
   fileName: 'share.json',
@@ -223,6 +205,14 @@ void main() {
         ),
       )
       ..add(const ShareRecordsEvent.peerSelected('a'));
+    // Sealing the payload generates real keys, which outlasts the event queue.
+    for (var i = 0; i < 300; i++) {
+      if (service.calls.contains('selectPeer a') ||
+          bloc.state.phase == SharePhase.error) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
     await settle();
   }
 
@@ -251,7 +241,7 @@ void main() {
 
     test('selecting a peer again deletes the previous payload', () async {
       await selectPeerToSend();
-      service.preparedPath = '/tmp/share_second.json';
+      service.preparedPath = '/tmp/share_second.bin';
 
       bloc.add(const ShareRecordsEvent.peerSelected('a'));
       await settle();
@@ -261,7 +251,7 @@ void main() {
 
     test('two quick peer selections run one after the other', () async {
       var prepared = 0;
-      service.preparedPathFor = () => '/tmp/share_${++prepared}.json';
+      service.preparedPathFor = () => '/tmp/share_${++prepared}.bin';
       bloc
         ..add(const ShareRecordsEvent.sendModeSelected())
         ..add(
@@ -275,7 +265,7 @@ void main() {
 
       // Concurrent handlers would both write before either deletes, leaking
       // the first payload.
-      expect(service.cleanedFiles, ['/tmp/share_1.json', '/tmp/share_2.json']);
+      expect(service.cleanedFiles, ['/tmp/share_1.bin', '/tmp/share_2.bin']);
     });
 
     test('transfer started moves to transferring', () async {
@@ -390,40 +380,27 @@ void main() {
   });
 
   group('receiving', () {
-    test('received data starts a viewing session', () async {
-      service.parsed = _container(
-        notes: {
-          'o1': [RecordNote(content: 'seen', timestamp: DateTime.utc(2024))],
-        },
-      );
-
+    test('an unencrypted share from an older version shows an error', () async {
       bloc.add(ShareRecordsEvent.dataReceived(_data()));
       final state = await settle();
 
-      expect(state.phase, SharePhase.viewingRecords);
-      expect(state.receivedData?.sessionId, _sessionId);
-      expect(state.isSessionActive, isTrue);
-      expect(repository.addedNotes, ['seen']);
-      expect(service.calls, contains('sendViewingStarted'));
+      expect(state.phase, SharePhase.error);
+      expect(state.receivedData, isNull);
+      expect(service.calls, isNot(contains('sendViewingStarted')));
     });
 
-    test('data that cannot be parsed shows an error', () async {
-      bloc.add(ShareRecordsEvent.dataReceived(_data()));
+    test('an unencrypted received file shows an error', () async {
+      service.receivedFileBytes = Uint8List.fromList(utf8.encode('{}'));
+
+      bloc.add(const ShareRecordsEvent.filesReceived(['/tmp/a.bin']));
       final state = await settle();
 
       expect(state.phase, SharePhase.error);
       expect(state.receivedData, isNull);
     });
 
-    test('received files are parsed into a session', () async {
-      service.parsed = _container();
-
-      bloc.add(const ShareRecordsEvent.filesReceived(['/tmp/a.json']));
-      expect((await settle()).phase, SharePhase.viewingRecords);
-    });
-
-    test('a received file that cannot be parsed shows an error', () async {
-      bloc.add(const ShareRecordsEvent.filesReceived(['/tmp/a.json']));
+    test('a received file that cannot be read shows an error', () async {
+      bloc.add(const ShareRecordsEvent.filesReceived(['/tmp/a.bin']));
       expect((await settle()).phase, SharePhase.error);
     });
 
@@ -436,88 +413,6 @@ void main() {
       expect(state.connectionRetryCount, 1);
       expect(service.calls, contains('startReceivingInMemory'));
     });
-  });
-
-  group('ending a received session', () {
-    Future<void> startViewing() async {
-      service.parsed = _container(
-        notes: {
-          'o1': [RecordNote(content: 'seen', timestamp: DateTime.utc(2024))],
-        },
-      );
-      bloc.add(ShareRecordsEvent.dataReceived(_data()));
-      await settle();
-    }
-
-    test('asking to leave shows the confirmation, continue hides it', () async {
-      await startViewing();
-
-      bloc.add(const ShareRecordsEvent.sessionEndRequested());
-      expect((await settle()).showExitConfirmationDialog, isTrue);
-
-      bloc.add(const ShareRecordsEvent.continueViewing());
-      expect((await settle()).showExitConfirmationDialog, isFalse);
-    });
-
-    test('leaving by navigation asks for confirmation', () async {
-      await startViewing();
-
-      bloc.add(const ShareRecordsEvent.navigationExitDetected());
-      expect((await settle()).showExitConfirmationDialog, isTrue);
-    });
-
-    test(
-      'destroying the data deletes the session directory by id and the notes',
-      () async {
-        await startViewing();
-
-        bloc.add(const ShareRecordsEvent.dataDestroyed());
-        final state = await settle();
-
-        expect(service.cleanedSessions, [_sessionId]);
-        expect(repository.deletedNotes, [1]);
-        expect(state.phase, SharePhase.sessionEnded);
-        expect(state.receivedData, isNull);
-        expect(state.isDataDestroyed, isTrue);
-        expect(state.sessionEndReason, ShareSessionEndReason.dataDeleted);
-      },
-    );
-
-    test(
-      'confirming destruction tells the sender and deletes the data',
-      () async {
-        await startViewing();
-
-        bloc.add(const ShareRecordsEvent.dataDestructionConfirmed());
-        await Future<void>.delayed(const Duration(milliseconds: 600));
-        final state = await settle();
-
-        expect(service.calls, contains('sendKillSignal'));
-        expect(service.cleanedSessions, [_sessionId]);
-        expect(state.phase, SharePhase.sessionEnded);
-      },
-    );
-
-    test('backgrounding the app destroys the received data', () async {
-      await startViewing();
-
-      bloc.add(const ShareRecordsEvent.appBackgrounded());
-      await Future<void>.delayed(const Duration(milliseconds: 600));
-      await settle();
-
-      expect(service.cleanedSessions, [_sessionId]);
-    });
-
-    test('a note that cannot be deleted does not stop the cleanup', () async {
-      await startViewing();
-      repository.failNoteWrites = true;
-
-      bloc.add(const ShareRecordsEvent.dataDestroyed());
-      final state = await settle();
-
-      expect(service.cleanedSessions, [_sessionId]);
-      expect(state.phase, SharePhase.sessionEnded);
-    });
 
     test('destroying without received data deletes no directory', () async {
       bloc.add(const ShareRecordsEvent.dataDestroyed());
@@ -525,16 +420,5 @@ void main() {
 
       expect(service.cleanedSessions, isEmpty);
     });
-
-    test(
-      'closing the BLoC while viewing deletes the session directory',
-      () async {
-        await startViewing();
-
-        await closeBloc();
-
-        expect(service.cleanedSessions, [_sessionId]);
-      },
-    );
   });
 }

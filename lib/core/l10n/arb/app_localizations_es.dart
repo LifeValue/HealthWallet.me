@@ -1007,6 +1007,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shareReceivingRecords => 'Recibiendo registros...';
 
   @override
+  String get shareVerifyTitle => 'Compara los códigos';
+
+  @override
+  String get shareVerifySenderHint =>
+      'Comprueba que el otro teléfono muestra el mismo código. Tus registros siguen bloqueados hasta que confirmes.';
+
+  @override
+  String get shareVerifyReceiverHint =>
+      'Comprueba que el otro teléfono muestra el mismo código. Los registros se abrirán cuando el remitente confirme.';
+
+  @override
+  String get shareVerifyCodesMatch => 'Los códigos coinciden';
+
+  @override
+  String get shareVerifyWaitingForSender =>
+      'Esperando a que el remitente confirme...';
+
+  @override
+  String get shareAwaitingViewer =>
+      'Códigos confirmados. Esperando a que el otro teléfono abra los registros.';
+
+  @override
+  String get shareEndNotDelivered =>
+      'No se pudo contactar con el otro teléfono. Conservará los registros hasta que termine su temporizador.';
+
+  @override
   String get shareConfirmExit => 'Confirmar salida';
 
   @override
@@ -2745,6 +2771,29 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shareErrorParseFile => 'No se pudo leer el archivo recibido';
+
+  @override
+  String get shareStatusCompareWithSender =>
+      'Compara el código con el remitente';
+
+  @override
+  String get shareStatusCompareWithReceiver =>
+      'Compara el código con el receptor';
+
+  @override
+  String get shareStatusRecordsSentAwaitingViewer =>
+      'Registros enviados - esperando a que el receptor los abra';
+
+  @override
+  String get shareErrorOlderVersion =>
+      'Este envío viene de una versión anterior de HealthWallet. Actualiza la app en ambos teléfonos e inténtalo de nuevo.';
+
+  @override
+  String get shareErrorSecureConnection =>
+      'No se pudo establecer una conexión segura con el otro teléfono. Intenta compartir de nuevo.';
+
+  @override
+  String get shareStatusSecureConnectionFailed => 'Falló la conexión segura';
 
   @override
   String get shareIncomingHealthRecords => 'Registros de salud entrantes';

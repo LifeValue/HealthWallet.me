@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:airdrop/airdrop.dart';
@@ -8,12 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
 import 'package:health_wallet/core/navigation/app_router.dart';
+import 'package:health_wallet/features/share_records/data/crypto/share_crypto.dart';
 import 'package:health_wallet/features/share_records/data/service/receive_mode_manager.dart';
 import 'package:health_wallet/features/share_records/data/service/share_records_service.dart';
-import 'package:health_wallet/features/share_records/domain/entity/entity.dart';
-
-import '../../../../fixtures/fhir/fhir_fixtures.dart';
-import '../../share_test_helpers.dart';
 
 class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   final invitations = StreamController<Map<String, dynamic>>.broadcast();
@@ -21,11 +19,10 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   final receivedFiles = StreamController<List<String>>.broadcast();
 
   final calls = <String>[];
-  final parsedFiles = <String>[];
+  final readFiles = <String>[];
   Error? disconnectError;
   int discoveryFailures = 0;
-  EphemeralRecordsContainer? dataResult;
-  Map<String, EphemeralRecordsContainer?> fileResults = {};
+  Map<String, Uint8List?> fileContents = {};
 
   Future<void> close() async {
     await invitations.close();
@@ -63,14 +60,9 @@ class _FakeShareRecordsService extends Fake implements ShareRecordsService {
   }
 
   @override
-  Future<EphemeralRecordsContainer?> parseReceivedData(
-    ReceivedData receivedData,
-  ) async => dataResult;
-
-  @override
-  Future<EphemeralRecordsContainer?> parseReceivedFile(String filePath) async {
-    parsedFiles.add(filePath);
-    return fileResults[filePath];
+  Future<Uint8List?> readReceivedFile(String filePath) async {
+    readFiles.add(filePath);
+    return fileContents[filePath];
   }
 }
 
@@ -97,18 +89,16 @@ ShareRecordsRouteArgs _args(PageRouteInfo route) {
   return route.args! as ShareRecordsRouteArgs;
 }
 
-EphemeralRecordsContainer _container(String sessionId) =>
-    EphemeralRecordsContainer(
-      sessionId: sessionId,
-      senderDeviceName: 'Pixel 8',
-      receivedAt: DateTime.now(),
-      viewDuration: const Duration(minutes: 5),
-      records: [record(conditionJson())],
-    );
+/// An encrypted share as the sender transfers it.
+Uint8List _envelope([int marker = 0]) => ShareEnvelope(
+  commitment: Uint8List(32)..[0] = marker,
+  nonce: Uint8List(12),
+  ciphertext: Uint8List(16),
+).encode();
 
-ReceivedData _data() => ReceivedData(
-  fileName: 'share.json',
-  data: Uint8List(0),
+ReceivedData _data([Uint8List? bytes]) => ReceivedData(
+  fileName: 'share.bin',
+  data: bytes ?? _envelope(),
   totalFiles: 1,
   currentFile: 1,
 );
@@ -163,19 +153,18 @@ void main() {
 
     test('stopListening disconnects and clears pending state', () async {
       await manager.startListening();
-      service.dataResult = _container('s1');
       service.invitations.add({'invitationId': 'inv-1'});
       service.received.add(_data());
       await pumpEventQueue();
       expect(manager.pendingInvitationId, 'inv-1');
-      expect(manager.pendingReceivedData, isNotNull);
+      expect(manager.pendingPayload, isNotNull);
 
       await manager.stopListening();
 
       expect(manager.isListening, isFalse);
       expect(manager.pendingInvitationId, isNull);
       expect(manager.pendingInvitationDeviceName, isNull);
-      expect(manager.pendingReceivedData, isNull);
+      expect(manager.pendingPayload, isNull);
       expect(service.calls.last, 'disconnect');
 
       service.invitations.add({'invitationId': 'inv-2'});
@@ -234,6 +223,21 @@ void main() {
       expect(manager.pendingInvitationId, 'inv-3');
     });
 
+    test('isPaused follows pause, resume and stop', () async {
+      await manager.startListening();
+      expect(manager.isPaused, isFalse);
+
+      manager.pauseListening();
+      expect(manager.isPaused, isTrue);
+
+      await manager.resumeListening();
+      expect(manager.isPaused, isFalse);
+
+      manager.pauseListening();
+      await manager.stopListening();
+      expect(manager.isPaused, isFalse);
+    });
+
     test('resume does nothing when not listening', () async {
       await manager.resumeListening();
       expect(service.calls, isEmpty);
@@ -281,7 +285,6 @@ void main() {
     });
 
     test('skip the dialog when data already arrived', () async {
-      service.dataResult = _container('s1');
       service.received.add(_data());
       await pumpEventQueue();
       router.pushed.clear();
@@ -297,57 +300,62 @@ void main() {
   group('received data', () {
     setUp(() => manager.startListening());
 
-    test('opens the viewer when no invitation is pending', () async {
-      final container = _container('s1');
-      service.dataResult = container;
+    test('opens the share screen when no invitation is pending', () async {
+      final envelope = _envelope();
 
-      service.received.add(_data());
+      service.received.add(_data(envelope));
       await pumpEventQueue();
 
-      expect(manager.pendingReceivedData, container);
+      expect(manager.pendingPayload, envelope);
       expect(_args(router.pushed.single).hasReceivedData, isTrue);
 
-      manager.clearPendingReceivedData();
-      expect(manager.pendingReceivedData, isNull);
+      manager.clearPendingPayload();
+      expect(manager.pendingPayload, isNull);
     });
 
     test('is stored for the BLoC while an invitation is pending', () async {
       service.invitations.add({'invitationId': 'inv-1'});
       await pumpEventQueue();
       router.pushed.clear();
-      service.dataResult = _container('s1');
 
       service.received.add(_data());
       await pumpEventQueue();
 
-      expect(manager.pendingReceivedData?.sessionId, 's1');
+      expect(manager.pendingPayload, isNotNull);
       expect(router.pushed, isEmpty);
     });
 
-    test('ignores payloads that fail to parse', () async {
-      service.received.add(_data());
+    test('ignores data that is not an encrypted share', () async {
+      service.received.add(
+        _data(Uint8List.fromList(utf8.encode('{"id":"plain"}'))),
+      );
       await pumpEventQueue();
 
-      expect(manager.pendingReceivedData, isNull);
+      expect(manager.pendingPayload, isNull);
       expect(router.pushed, isEmpty);
     });
 
-    test('uses the first received file that parses', () async {
-      service.fileResults = {'/b.json': _container('from-b')};
+    test('uses the first received file that is an encrypted share', () async {
+      final fromB = _envelope(2);
+      service.fileContents = {
+        '/a.bin': Uint8List.fromList(utf8.encode('{}')),
+        '/b.bin': fromB,
+        '/c.bin': _envelope(3),
+      };
 
-      service.receivedFiles.add(['/a.json', '/b.json', '/c.json']);
+      service.receivedFiles.add(['/a.bin', '/b.bin', '/c.bin']);
       await pumpEventQueue();
 
-      expect(service.parsedFiles, ['/a.json', '/b.json']);
-      expect(manager.pendingReceivedData?.sessionId, 'from-b');
+      expect(service.readFiles, ['/a.bin', '/b.bin']);
+      expect(manager.pendingPayload, fromB);
       expect(router.pushed, hasLength(1));
     });
 
-    test('ignores received files that fail to parse', () async {
-      service.receivedFiles.add(['/a.json']);
+    test('ignores received files that cannot be read', () async {
+      service.receivedFiles.add(['/a.bin']);
       await pumpEventQueue();
 
-      expect(manager.pendingReceivedData, isNull);
+      expect(manager.pendingPayload, isNull);
       expect(router.pushed, isEmpty);
     });
   });

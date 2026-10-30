@@ -112,6 +112,12 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     return a == b || a.startsWith(b) || b.startsWith(a);
   }
 
+  // iPhones found through MultipeerConnectivity carry a per-launch id. Two such
+  // ids are always two phones, even when both are called "iPhone" (iOS 16+).
+  static const _mpcIdPrefix = 'mpc_';
+
+  bool _isMpcId(String deviceId) => deviceId.startsWith(_mpcIdPrefix);
+
   void handlePeerDiscovered(
     PeerDiscovered event,
     Emitter<ShareRecordsState> emit,
@@ -134,7 +140,8 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         final nameMatchIndex = peers.indexWhere(
           (p) =>
               !_isUnknownName(p.deviceName) &&
-              _namesMatch(p.deviceName!, newName!),
+              _namesMatch(p.deviceName!, newName!) &&
+              !(_isMpcId(p.deviceId) && _isMpcId(event.peer.deviceId)),
         );
         if (nameMatchIndex >= 0) {
           final existing = peers[nameMatchIndex];
@@ -142,8 +149,13 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
               newName!.length >= (existing.deviceName?.length ?? 0)
               ? newName
               : existing.deviceName;
+          // Keep the MPC id when merging the same phone's BLE entry: the
+          // plugin can invite it exactly.
           peers[nameMatchIndex] = existing.copyWith(
-            deviceId: event.peer.deviceId,
+            deviceId:
+                _isMpcId(existing.deviceId) && !_isMpcId(event.peer.deviceId)
+                ? existing.deviceId
+                : event.peer.deviceId,
             deviceName: longerName,
             osType: event.peer.osType ?? existing.osType,
             status: event.peer.status,
@@ -185,9 +197,12 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     );
 
     _shareLog('Connecting to ${peer.deviceName}...');
+    _pendingViewingStarted = false;
     emit(
       state.copyWith(
         selectedPeer: peer,
+        sessionStartedAt: null,
+        remoteEndUnconfirmed: false,
         phase: SharePhase.connecting,
         statusMessage: _strings.l10n.shareStatusConnectingTo(
           peer.displayName(_strings.l10n),
@@ -235,10 +250,13 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         notesMap: notesMap,
         activeFilters: state.appliedFilters.map((f) => f.name).toList(),
       );
-      _shareLog('Preparing files for sending...');
+      _shareLog('Encrypting and preparing files for sending...');
       // A retry selects a peer again with a new payload: drop the old one.
       await _deleteSentPayload();
-      _tempFilePath = await _service.prepareFilesForSending(payload);
+      await _disposeSecureSession();
+      final session = _service.createSecureSession();
+      _secureSession = session;
+      _tempFilePath = await _service.prepareFilesForSending(payload, session);
       if (_tempFilePath == null) {
         _shareLog('ERROR: Failed to prepare files for sending');
         emit(
@@ -249,12 +267,29 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
         );
         return;
       }
+      unawaited(_awaitReceiverKey(session));
     }
 
     await _service.selectPeer(event.deviceId);
   }
 
-  /// Deletes the temp JSON of the payload being sent, if there is one.
+  /// Runs in the background until the receiver answers with its key, which
+  /// happens only after it has the encrypted records.
+  Future<void> _awaitReceiverKey(SecureShareSession session) async {
+    try {
+      final code = await session.awaitReceiver();
+      if (_isClosed || !identical(session, _secureSession)) return;
+      add(ShareRecordsEvent.verificationCodeReady(code));
+    } on SecureShareCancelled {
+      return;
+    } on SecureShareException catch (e) {
+      _shareLog('ERROR: Key exchange failed: ${e.message}');
+      if (_isClosed || !identical(session, _secureSession)) return;
+      add(ShareRecordsEvent.secureShareFailed(e.message));
+    }
+  }
+
+  /// Deletes the encrypted payload being sent, if there is one.
   Future<void> _deleteSentPayload() async {
     final path = _tempFilePath;
     if (path == null) return;
@@ -347,7 +382,10 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
           ),
         );
         _startViewingTimer();
-      } else {
+      } else if (state.phase != SharePhase.verifyingCode &&
+          state.phase != SharePhase.awaitingViewer) {
+        // The monitoring fallback starts only once the codes are confirmed:
+        // until then the receiver cannot open the records.
         debugPrint(
           '[SHARE] Files sent - staying on connecting until receiver accepts',
         );
@@ -358,9 +396,8 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
             statusMessage: _strings.l10n.shareStatusRecordsSentWaiting,
           ),
         );
-        _startMonitoringFallbackTimer();
       }
-      // The payload has been sent; its plaintext copy in temp isn't needed.
+      // The payload has been sent; its encrypted copy in temp isn't needed.
       // Deleted after the state changes so no other event sees a stale phase.
       await _deleteSentPayload();
     } else {
@@ -400,6 +437,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     }
 
     await _deleteSentPayload();
+    await _disposeSecureSession();
 
     emit(
       state.copyWith(
@@ -431,6 +469,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     Emitter<ShareRecordsState> emit,
   ) async {
     _shareLog('Connection retry attempt ${state.connectionRetryCount}');
+    await _disposeSecureSession();
     await _service.disconnect();
     emit(
       state.copyWith(
@@ -504,21 +543,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     _shareLog(
       'Data received: ${event.data.fileName} (${event.data.size} bytes)',
     );
-    final container = await _service.parseReceivedData(event.data);
-    if (container != null) {
-      _shareLog(
-        'Parsed ${container.recordCount} records from ${container.senderDeviceName}',
-      );
-      add(ShareRecordsEvent.ephemeralDataParsed(container));
-    } else {
-      _shareLog('ERROR: parseReceivedData returned null');
-      emit(
-        state.copyWith(
-          phase: SharePhase.error,
-          errorMessage: _strings.l10n.shareErrorParseData,
-        ),
-      );
-    }
+    await _receiveSecurePayload(event.data.data, emit);
   }
 
   Future<void> handleFilesReceived(
@@ -533,29 +558,178 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
     );
 
     for (final filePath in event.filePaths) {
-      _shareLog('Parsing file: $filePath');
-      final container = await _service.parseReceivedFile(filePath);
-      if (container != null) {
-        _shareLog(
-          'Parsed ${container.recordCount} records, ${container.tempAttachmentPaths.length} attachments',
-        );
-        add(ShareRecordsEvent.ephemeralDataParsed(container));
-      } else {
-        _shareLog('ERROR: Failed to parse file: $filePath');
+      _shareLog('Reading file: $filePath');
+      final bytes = await _service.readReceivedFile(filePath);
+      if (bytes == null) {
+        _shareLog('ERROR: Failed to read file: $filePath');
         emit(
           state.copyWith(
             phase: SharePhase.error,
             errorMessage: _strings.l10n.shareErrorParseFile,
           ),
         );
+        return;
       }
+      await _receiveSecurePayload(bytes, emit);
     }
+  }
+
+  /// Receiver: runs the key exchange for an encrypted share, shows the code,
+  /// and opens the records once the sender confirms it.
+  Future<void> _receiveSecurePayload(
+    Uint8List bytes,
+    Emitter<ShareRecordsState> emit,
+  ) async {
+    if (!ShareEnvelope.looksLikeEnvelope(bytes)) {
+      _shareLog('ERROR: Received an unencrypted share');
+      emit(
+        state.copyWith(
+          phase: SharePhase.error,
+          errorMessage: _strings.l10n.shareErrorOlderVersion,
+        ),
+      );
+      return;
+    }
+
+    await _disposeSecureSession();
+    final session = _service.createSecureSession();
+    _secureSession = session;
+
+    try {
+      final code = await session.open(bytes);
+      if (emit.isDone || !identical(session, _secureSession)) return;
+      _shareLog('Key exchange done, waiting for the sender to confirm');
+      emit(
+        state.copyWith(
+          mode: ShareMode.receiving,
+          phase: SharePhase.verifyingCode,
+          verificationCode: code,
+          statusMessage: _strings.l10n.shareStatusCompareWithSender,
+        ),
+      );
+
+      final plaintext = await session.awaitPayload();
+      if (emit.isDone || !identical(session, _secureSession)) return;
+      final container = await _service.parsePayload(plaintext);
+      // Cancelled, backgrounded or closed while decrypting: the session was
+      // ended already, so the records must not open.
+      if (emit.isDone || !identical(session, _secureSession)) {
+        if (container != null) {
+          await _service.cleanupSessionTempDir(container.sessionId);
+        }
+        return;
+      }
+      await _disposeSecureSession();
+      if (container == null) {
+        _shareLog('ERROR: Failed to parse the decrypted payload');
+        emit(
+          state.copyWith(
+            phase: SharePhase.error,
+            verificationCode: null,
+            errorMessage: _strings.l10n.shareErrorParseData,
+          ),
+        );
+        return;
+      }
+      _shareLog(
+        'Parsed ${container.recordCount} records from ${container.senderDeviceName}',
+      );
+      add(ShareRecordsEvent.ephemeralDataParsed(container));
+    } on SecureShareCancelled {
+      return;
+    } on SecureShareException catch (e) {
+      _shareLog('ERROR: Key exchange failed: ${e.message}');
+      if (emit.isDone || !identical(session, _secureSession)) return;
+      add(ShareRecordsEvent.secureShareFailed(e.message));
+    }
+  }
+
+  void handleVerificationCodeReady(
+    VerificationCodeReady event,
+    Emitter<ShareRecordsState> emit,
+  ) {
+    if (!state.isSending || _secureSession == null) return;
+    _shareLog('Receiver key received, showing verification code');
+    emit(
+      state.copyWith(
+        phase: SharePhase.verifyingCode,
+        verificationCode: event.code,
+        statusMessage: _strings.l10n.shareStatusCompareWithReceiver,
+      ),
+    );
+  }
+
+  Future<void> handleVerificationConfirmed(
+    VerificationConfirmed event,
+    Emitter<ShareRecordsState> emit,
+  ) async {
+    final session = _secureSession;
+    if (!state.isSending || session == null) return;
+
+    // Leave the verification phase before the key goes out, so a fast
+    // viewingStarted from the receiver is not buffered and lost.
+    final viewing = state.sessionStartedAt != null;
+    emit(
+      state.copyWith(
+        phase: viewing
+            ? SharePhase.monitoringSession
+            : SharePhase.awaitingViewer,
+        verificationCode: null,
+        statusMessage: viewing
+            ? _strings.l10n.shareStatusReceiverViewing
+            : _strings.l10n.shareStatusRecordsSentAwaitingViewer,
+      ),
+    );
+
+    try {
+      await session.confirm();
+      _shareLog('Codes confirmed, payload key sent');
+    } on SecureShareException catch (e) {
+      _shareLog('ERROR: Could not send the payload key: ${e.message}');
+      add(ShareRecordsEvent.secureShareFailed(e.message));
+      return;
+    } on SecureShareCancelled {
+      return;
+    }
+    await _disposeSecureSession();
+    if (!viewing) _startMonitoringFallbackTimer();
+  }
+
+  Future<void> handleSecureShareFailed(
+    SecureShareFailed event,
+    Emitter<ShareRecordsState> emit,
+  ) async {
+    _viewingTimer?.cancel();
+    _monitoringFallbackTimer?.cancel();
+    await _disposeSecureSession();
+    await _deleteSentPayload();
+    try {
+      await _service.sendKillSignal();
+    } catch (e) {
+      debugPrint('[SHARE] Failed to send kill signal: $e');
+    }
+    await _service.disconnect();
+
+    emit(
+      state.copyWith(
+        phase: SharePhase.error,
+        isSessionActive: false,
+        verificationCode: null,
+        errorMessage: _strings.l10n.shareErrorSecureConnection,
+        statusMessage: _strings.l10n.shareStatusSecureConnectionFailed,
+      ),
+    );
   }
 
   Future<void> handleEphemeralDataParsed(
     EphemeralDataParsed event,
     Emitter<ShareRecordsState> emit,
   ) async {
+    // A cancel can land between parsing and this event.
+    if (state.phase != SharePhase.verifyingCode) {
+      await _service.cleanupSessionTempDir(event.container.sessionId);
+      return;
+    }
     _shareLog('=== Session started: ${event.container.sessionId} ===');
     _shareLog(
       'Records: ${event.container.recordCount}, Duration: ${event.container.viewDuration.inMinutes}min',
@@ -567,6 +741,7 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       state.copyWith(
         phase: SharePhase.viewingRecords,
         receivedData: event.container,
+        verificationCode: null,
         viewingTimeRemaining: event.container.viewDuration,
         isSessionActive: true,
         statusMessage: _strings.l10n.shareStatusViewingRecordsFrom(
@@ -576,35 +751,14 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       ),
     );
 
+    _recordsRepository.showSharedNotes(event.container.notes);
     _startViewingTimer();
-
-    await _insertEphemeralNotes(event.container);
 
     try {
       await _service.sendViewingStarted();
       _shareLog('Sent viewing started signal to sender');
     } catch (e) {
       _shareLog('WARNING: Failed to send viewing started signal: $e');
-    }
-  }
-
-  Future<void> _insertEphemeralNotes(
-    EphemeralRecordsContainer container,
-  ) async {
-    for (final resource in container.records) {
-      final notes = container.notes[resource.id];
-      if (notes == null) continue;
-      for (final note in notes) {
-        try {
-          final noteId = await _recordsRepository.addRecordNote(
-            resourceId: resource.id,
-            content: note.content,
-          );
-          _insertedEphemeralNoteIds.add(noteId);
-        } catch (e) {
-          debugPrint('[SHARE] Error inserting ephemeral note: $e');
-        }
-      }
     }
   }
 }

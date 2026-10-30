@@ -28,7 +28,9 @@ class TempFileSweeper {
   }) : deleteDebugLogs =
            deleteDebugLogs ?? deleteDebugLogsFor(releaseMode: kReleaseMode);
 
-  /// Prefix of a share payload being sent: `share_<payload id>.json`.
+  /// Prefix of an encrypted share payload being sent:
+  /// `share_<payload id>.bin`. Older builds wrote it as plaintext `.json`,
+  /// which the sweep still deletes.
   static const sharePayloadPrefix = 'share_';
 
   /// Prefix of a received share's attachment directory:
@@ -57,8 +59,8 @@ class TempFileSweeper {
   static const shareDebugLogName = 'share_debug.log';
   static const scanDebugLogName = 'scan_debug.log';
 
-  /// `share_<id>.json` for the payload [id].
-  static String sharePayloadName(String id) => '$sharePayloadPrefix$id.json';
+  /// `share_<id>.bin` for the payload [id].
+  static String sharePayloadName(String id) => '$sharePayloadPrefix$id.bin';
 
   /// `share_session_<id>` for the payload [id].
   static String shareSessionName(String id) => '$shareSessionPrefix$id';
@@ -85,7 +87,7 @@ class TempFileSweeper {
   static const _debugLogs = [shareDebugLogName, scanDebugLogName];
 
   static final _sharePayload = RegExp(
-    '^${RegExp.escape(sharePayloadPrefix)}(.+)\\.json\$',
+    '^${RegExp.escape(sharePayloadPrefix)}(.+)\\.(?:bin|json)\$',
   );
   static final _shareSession = RegExp(
     '^${RegExp.escape(shareSessionPrefix)}(.+)\$',

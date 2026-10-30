@@ -56,6 +56,14 @@ class SessionEndedView extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
+          if (state.remoteEndUnconfirmed) ...[
+            const SizedBox(height: Insets.normal),
+            Text(
+              context.l10n.shareEndNotDelivered,
+              style: AppTextStyle.bodyMedium.copyWith(color: AppColors.warning),
+              textAlign: TextAlign.center,
+            ),
+          ],
           const SizedBox(height: Insets.large),
           AppButton(
             label: context.l10n.shareBackHome,
