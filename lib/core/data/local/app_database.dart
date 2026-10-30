@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:health_wallet/core/data/local/app_database.steps.dart';
+import 'package:health_wallet/features/desktop/lww_sync/data/tables/sync_outbox.dart';
 import 'package:health_wallet/features/processing/data/data_source/local/tables/processing_sessions.dart';
 import 'package:health_wallet/features/records/data/data_source/tables/record_notes.dart';
 import 'package:health_wallet/features/sync/data/data_source/local/tables/fhir_resource_table.dart';
@@ -19,13 +20,14 @@ part 'app_database.g.dart';
     Sources,
     RecordNotes,
     ProcessingSessions,
+    SyncOutbox,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -33,7 +35,6 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await _createOptimizationIndexes();
       await _createSyncTriggers();
-      await _createNoteUuidTriggers();
     },
     onUpgrade: (m, from, to) async {
       final schemaSteps = stepByStep(
@@ -90,7 +91,7 @@ class AppDatabase extends _$AppDatabase {
 
       if (from <= 9 && to >= 10) {
         await _migrateToV10();
-        await _createSyncTriggers();
+        await _createSyncTriggersV10();
       }
 
       if (from <= 10 && to >= 11) {
@@ -99,6 +100,10 @@ class AppDatabase extends _$AppDatabase {
 
       if (from <= 11 && to >= 12) {
         await _migrateToV12();
+      }
+
+      if (from <= 12 && to >= 13) {
+        await _migrateToV13();
       }
     },
   );
@@ -269,6 +274,19 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// The desktop sync's outbox, and triggers that stamp milliseconds and
+  /// log every write. Rows from before stay out of the outbox: the first
+  /// connection after the upgrade reconciles both devices' tables.
+  Future<void> _migrateToV13() async {
+    await customStatement(
+      'CREATE TABLE IF NOT EXISTS sync_outbox ('
+      'seq INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'synced_table TEXT NOT NULL, '
+      'row_key TEXT NOT NULL)',
+    );
+    await _createSyncTriggers();
+  }
+
   Future<void> _createOptimizationIndexes() async {
     await customStatement('PRAGMA journal_mode=WAL');
     await customStatement('PRAGMA synchronous=NORMAL');
@@ -276,7 +294,80 @@ class AppDatabase extends _$AppDatabase {
     await customStatement('PRAGMA temp_store=MEMORY');
   }
 
+  /// Unix time in milliseconds inside SQLite.
+  static const _nowMs =
+      "CAST((julianday('now') - 2440587.5) * 86400000.0 AS INTEGER)";
+
+  static const _syncKeys = {
+    'fhir_resource': 'NEW.id',
+    'sources': 'NEW.id',
+    // A note written without a uuid gets the legacy one (below).
+    'record_notes': "COALESCE(NEW.uuid, 'legacy-' || NEW.id)",
+  };
+
+  /// `updated_at` stamps for every table that has one, and the outbox log
+  /// for the synced tables. An edit is stamped later than the row's previous
+  /// stamp even when the clock is behind it (a row received from a device
+  /// whose clock runs ahead), so it still wins on the other device.
   Future<void> _createSyncTriggers() async {
+    for (final table in const [
+      'fhir_resource',
+      'sources',
+      'record_notes',
+      'processing_sessions',
+    ]) {
+      await customStatement(
+        'DROP TRIGGER IF EXISTS ${table}_insert_updated_at',
+      );
+      await customStatement(
+        'DROP TRIGGER IF EXISTS ${table}_update_updated_at',
+      );
+      await customStatement(
+        'CREATE TRIGGER ${table}_insert_updated_at '
+        'AFTER INSERT ON $table '
+        'WHEN NEW.updated_at IS NULL '
+        'BEGIN UPDATE $table SET updated_at = $_nowMs '
+        'WHERE rowid = NEW.rowid; END',
+      );
+      // Filling in a note's uuid is not an edit (see _migrateToV12).
+      final notAnEdit = table == 'record_notes'
+          ? 'AND NOT (OLD.uuid IS NULL AND NEW.uuid IS NOT NULL) '
+          : '';
+      await customStatement(
+        'CREATE TRIGGER ${table}_update_updated_at '
+        'AFTER UPDATE ON $table '
+        'WHEN (NEW.updated_at = OLD.updated_at OR NEW.updated_at IS NULL) '
+        '$notAnEdit'
+        'BEGIN UPDATE $table SET updated_at = '
+        'MAX($_nowMs, COALESCE(OLD.updated_at, 0) + 1) '
+        'WHERE rowid = NEW.rowid; END',
+      );
+    }
+
+    for (final MapEntry(key: table, value: key) in _syncKeys.entries) {
+      for (final op in const ['insert', 'update']) {
+        await customStatement('DROP TRIGGER IF EXISTS ${table}_${op}_outbox');
+        await customStatement(
+          'CREATE TRIGGER ${table}_${op}_outbox '
+          'AFTER ${op.toUpperCase()} ON $table '
+          'BEGIN INSERT INTO sync_outbox (synced_table, row_key) '
+          "VALUES ('$table', $key); END",
+        );
+      }
+    }
+
+    await customStatement(
+      'CREATE TRIGGER IF NOT EXISTS record_notes_insert_uuid '
+      'AFTER INSERT ON record_notes '
+      'WHEN NEW.uuid IS NULL '
+      "BEGIN UPDATE record_notes SET uuid = 'legacy-' || NEW.id "
+      'WHERE id = NEW.id; END',
+    );
+  }
+
+  /// The v10 triggers, kept for the steps from v10 to v12. They stamp
+  /// whole seconds; [_createSyncTriggers] replaces them in v13.
+  Future<void> _createSyncTriggersV10() async {
     final tables = [
       'fhir_resource',
       'sources',
