@@ -4,8 +4,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:get_it/get_it.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
+import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/pdf_open.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/features/processing/domain/services/document_reference_service.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart'
     as entities;
@@ -85,37 +91,26 @@ class MediaFullscreenViewer extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasData) {
-            final isDesktop =
-                Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-            if (isDesktop) {
-              return _DesktopPdfBody(filePath: snapshot.data!.path);
-            }
-            return PDFView(
-              filePath: snapshot.data!.path,
-              enableSwipe: true,
-              swipeHorizontal: true,
-              autoSpacing: true,
-              pageFling: true,
-              onError: (error) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(context.l10n.errorLoadingPdf('$error')),
+            final isDesktop = getIt<AppPlatform>().isDesktop;
+            final pdfPath = snapshot.data!.path;
+            return CheckedPdfView(
+              filePath: pdfPath,
+              builder: (context) => isDesktop
+                  ? _DesktopPdfBody(filePath: pdfPath)
+                  : PDFView(
+                      filePath: pdfPath,
+                      enableSwipe: true,
+                      swipeHorizontal: true,
+                      autoSpacing: true,
+                      pageFling: true,
+                      onError: (error) =>
+                          CheckedPdfView.reportViewerError(context, error),
+                      onPageError: (page, error) =>
+                          CheckedPdfView.reportViewerError(
+                            context,
+                            'page $page: $error',
+                          ),
                     ),
-                  );
-                }
-              },
-              onPageError: (page, error) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        context.l10n.errorOnPage('$page', '$error'),
-                      ),
-                    ),
-                  );
-                }
-              },
             );
           } else {
             return _buildPlaceholder(
@@ -301,20 +296,19 @@ class MediaFullscreenViewer extends StatelessWidget {
 
                   if (context.mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(context.l10n.mediaLinkedSuccess),
-                        backgroundColor: Colors.green,
-                      ),
+                    AppSnackBar.show(
+                      context,
+                      message: context.l10n.mediaLinkedSuccess,
+                      type: AppSnackBarType.success,
                     );
                   }
-                } catch (e) {
+                } catch (e, s) {
+                  logger.w('Could not link media ${media.id}', e, s);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(context.l10n.failedToLinkMedia('$e')),
-                        backgroundColor: Colors.red,
-                      ),
+                    AppSnackBar.show(
+                      context,
+                      message: context.l10n.linkMediaFailed,
+                      type: AppSnackBarType.error,
                     );
                   }
                 }
@@ -343,7 +337,7 @@ class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
   void initState() {
     super.initState();
     _controller = pdfx.PdfController(
-      document: pdfx.PdfDocument.openFile(widget.filePath),
+      document: openPdfDocument(widget.filePath),
     );
   }
 

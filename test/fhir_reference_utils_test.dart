@@ -25,6 +25,19 @@ void main() {
       );
     });
 
+    test('ignores the version of a versioned reference', () {
+      expect(
+        FhirReferenceUtils.extractReferenceId('Patient/pat-7/_history/3'),
+        'pat-7',
+      );
+      expect(
+        FhirReferenceUtils.extractReferenceId(
+          'https://fhir.example.org/r4/Patient/pat-7/_history/12',
+        ),
+        'pat-7',
+      );
+    });
+
     test('returns id for plain id', () {
       expect(FhirReferenceUtils.extractReferenceId('plain-id'), 'plain-id');
     });

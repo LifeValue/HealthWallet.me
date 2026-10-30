@@ -93,7 +93,11 @@ class LwwSyncService {
         incomingDeviceId: delta.deviceId,
       );
 
-      if (!shouldApply && tableName == 'fhir_resource') {
+      // A missing file only overrides LWW between two live rows; a
+      // tombstone on either side is decided by updated_at alone.
+      if (!shouldApply &&
+          tableName == 'fhir_resource' &&
+          incomingRow['deleted_at'] == null) {
         shouldApply = await _localHasBrokenAttachment(id);
       }
 
@@ -142,7 +146,8 @@ class LwwSyncService {
   Future<bool> _localHasBrokenAttachment(String id) async {
     final rows = await _db
         .customSelect(
-          'SELECT resource_raw, resource_type FROM fhir_resource WHERE id = ?',
+          'SELECT resource_raw, resource_type FROM fhir_resource '
+          'WHERE id = ? AND deleted_at IS NULL',
           variables: [Variable.withString(id)],
         )
         .get();
@@ -505,10 +510,25 @@ class LwwSyncService {
 
     var totalDeleted = 0;
 
-    for (final table in syncedTables) {
+    // Notes point at their source (a foreign key the app enforces), so they
+    // go first, and a source stays while a newer note still points at it.
+    const purges = {
+      'record_notes': '',
+      'fhir_resource': '',
+      'sources':
+          ' AND id NOT IN '
+          '(SELECT source_id FROM record_notes WHERE source_id IS NOT NULL)',
+    };
+    assert(
+      purges.keys.toSet().containsAll(syncedTables),
+      'every synced table is purged',
+    );
+
+    for (final MapEntry(key: table, value: guard) in purges.entries) {
+      final where = 'deleted_at IS NOT NULL AND deleted_at < ?$guard';
       final result = await _db
           .customSelect(
-            'SELECT COUNT(*) as count FROM $table WHERE deleted_at IS NOT NULL AND deleted_at < ?',
+            'SELECT COUNT(*) as count FROM $table WHERE $where',
             variables: [Variable(cutoff)],
           )
           .getSingle();
@@ -516,10 +536,7 @@ class LwwSyncService {
       final count = result.data['count'] as int? ?? 0;
 
       if (count > 0) {
-        await _db.customStatement(
-          'DELETE FROM $table WHERE deleted_at IS NOT NULL AND deleted_at < ?',
-          [cutoff],
-        );
+        await _db.customStatement('DELETE FROM $table WHERE $where', [cutoff]);
         totalDeleted += count;
       }
     }

@@ -1,8 +1,11 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_temporal_extractor.dart';
 
 import '../../../../../fixtures/fhir/fhir_fixtures.dart';
+import '../../../../../fixtures/local_time.dart';
 
 fhir.Period _period({String? start, String? end}) => fhir.Period.fromJson({
   'start': ?start,
@@ -79,28 +82,52 @@ void main() {
   });
 
   group('extractPeriodFormatted', () {
+    // Whether a period is on one day depends on the user's time zone, not on
+    // the UTC dates it is recorded in: 23:30Z-00:30Z is one day in Romania,
+    // 21:30Z-22:30Z spans two there. Off UTC, both cases differ from the
+    // UTC answer.
+    for (final (start, end) in [
+      ('2024-01-10T23:30:00Z', '2024-01-11T00:30:00Z'),
+      ('2024-01-10T21:30:00Z', '2024-01-10T22:30:00Z'),
+    ]) {
+      test('$start - $end collapses only when it is one local day', () {
+        final sameLocalDay = localDate(start) == localDate(end);
+        expect(
+          FhirTemporalExtractor.extractPeriodFormatted(
+            _period(start: start, end: end),
+          ),
+          sameLocalDay
+              ? '${localDateTime(start)} - ${localTime(end)}'
+              : '${localDateTime(start, separator: ' ')} - '
+                    '${localDateTime(end, separator: ' ')}',
+        );
+      });
+    }
+
     final cases = <(String, fhir.Period?, String?)>[
       ('null period', null, null),
       ('empty period', _period(), null),
       (
         'same day collapses the date',
         _period(start: '2024-01-10T09:00:00Z', end: '2024-01-10T09:30:00Z'),
-        'Jan 10, 2024, 9:00 AM - 9:30 AM',
+        '${localDateTime('2024-01-10T09:00:00Z')} - '
+            '${localTime('2024-01-10T09:30:00Z')}',
       ),
       (
         'different days show both dates',
         _period(start: '2024-01-10T09:00:00Z', end: '2024-01-12T17:15:00Z'),
-        'Jan 10, 2024 9:00 AM - Jan 12, 2024 5:15 PM',
+        '${localDateTime('2024-01-10T09:00:00Z', separator: ' ')} - '
+            '${localDateTime('2024-01-12T17:15:00Z', separator: ' ')}',
       ),
       (
         'start only',
         _period(start: '2024-01-10T09:00:00Z'),
-        'From Jan 10, 2024 9:00 AM',
+        'From ${localDateTime('2024-01-10T09:00:00Z', separator: ' ')}',
       ),
       (
         'end only',
         _period(end: '2024-01-12T17:15:00Z'),
-        'Until Jan 12, 2024 5:15 PM',
+        'Until ${localDateTime('2024-01-12T17:15:00Z', separator: ' ')}',
       ),
     ];
     for (final (name, period, expected) in cases) {
@@ -119,10 +146,103 @@ void main() {
           'From 2024-03',
         );
       },
-      skip:
-          'BUG: DateTime.tryParse fails on partial FHIR dates, so a period '
-          'starting "2024-03" is formatted as null instead of falling back',
     );
+  });
+
+  group('extractPeriodFormatted partial dates', () {
+    test('an end-only partial date is shown as recorded', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(_period(end: '2024')),
+        'Until 2024',
+      );
+    });
+
+    test('a mixed full and partial period falls back to both raw bounds', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-03', end: '2024-04-02T10:00:00Z'),
+        ),
+        '2024-03 - 2024-04-02T10:00:00Z',
+      );
+    });
+
+    test('a partial date keeps the translated From and Until', () {
+      final de = lookupAppLocalizations(const Locale('de'));
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-03'),
+          l10n: de,
+        ),
+        'Ab 2024-03',
+      );
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(end: '2024'),
+          l10n: de,
+        ),
+        de.untilDate('2024'),
+      );
+    });
+
+    test('a full start with a partial end falls back to both raw bounds', () {
+      expect(
+        FhirTemporalExtractor.extractPeriodFormatted(
+          _period(start: '2024-04-02T10:00:00Z', end: '2025'),
+        ),
+        '2024-04-02T10:00:00Z - 2025',
+      );
+    });
+  });
+
+  group('open ranges on onset and abatement', () {
+    test('an onset Range without a high bound keeps its direction', () {
+      expect(
+        FhirTemporalExtractor.extractOnsetX(
+          _onset({
+            'onsetRange': {
+              'low': {'value': 40, 'unit': 'a'},
+            },
+          }),
+        ),
+        '≥ 40',
+      );
+    });
+
+    test('an abatement Range without a low bound keeps its direction', () {
+      expect(
+        FhirTemporalExtractor.extractAbatementX(
+          _abatement({
+            'abatementRange': {
+              'high': {'value': 50, 'unit': 'a'},
+            },
+          }),
+        ),
+        '≤ 50',
+      );
+    });
+
+    test('an empty Range is null', () {
+      expect(
+        FhirTemporalExtractor.extractAbatementX(
+          _abatement({
+            'abatementRange': {
+              'low': {'unit': 'a'},
+            },
+          }),
+        ),
+        isNull,
+      );
+      expect(
+        FhirTemporalExtractor.extractOnsetX(
+          _onset({
+            'onsetRange': {
+              'high': {'unit': 'a'},
+            },
+          }),
+        ),
+        isNull,
+      );
+    });
   });
 
   group('extractOnsetX / extractAbatementX', () {
@@ -134,6 +254,20 @@ void main() {
         'Age without unit',
         {
           'Age': {'value': 3},
+        },
+        '3 years',
+      ),
+      (
+        'Age without value',
+        {
+          'Age': {'unit': 'a'},
+        },
+        null,
+      ),
+      (
+        'Age with an empty unit',
+        {
+          'Age': {'value': 3, 'unit': ' '},
         },
         '3 years',
       ),
@@ -202,7 +336,6 @@ void main() {
           isNot(contains('null')),
         );
       },
-      skip: 'BUG: an open Range onset renders as "null - 50"',
     );
   });
 
@@ -330,10 +463,11 @@ void main() {
 
   group('formatFhirDateTime / formatFhirDate / formatFhirInstant', () {
     final dateTimeCases = <(String, String)>[
-      ('2024-03-15T10:30:00Z', 'Mar 15, 2024, 10:30 AM'),
+      // A time in UTC or with an offset is shown in the phone's time zone.
+      ('2024-03-15T10:30:00Z', localDateTime('2024-03-15T10:30:00Z')),
+      ('2024-03-15T10:30:00+02:00', localDateTime('2024-03-15T10:30:00+02:00')),
+      // A time without an offset is already local.
       ('2024-03-15T22:05:00', 'Mar 15, 2024, 10:05 PM'),
-      // Offsets are normalised to UTC before formatting.
-      ('2024-03-15T10:30:00+02:00', 'Mar 15, 2024, 8:30 AM'),
       // A date-only value is shown with a synthetic midnight time.
       ('2024-03-15', 'Mar 15, 2024, 12:00 AM'),
       // Partial dates cannot be parsed and are returned verbatim.
@@ -360,12 +494,24 @@ void main() {
       });
     }
 
-    test('formatFhirInstant keeps seconds', () {
+    test('formatFhirInstant keeps seconds, in local time', () {
       expect(
         FhirTemporalExtractor.formatFhirInstant(
           fhir.FhirInstant.fromString('2024-03-15T12:00:07.000Z'),
         ),
-        'Mar 15, 2024, 12:00:07 PM',
+        localDateTime('2024-03-15T12:00:07.000Z', withSeconds: true),
+      );
+    });
+
+    test('an instant saved in UTC is shown at the local hour it happened', () {
+      // An attachment saved at 17:17 in Bucharest is stored as 15:17 UTC
+      // and must show 5:17 PM there, not 3:17 PM.
+      final savedAt = DateTime(2026, 10, 29, 17, 17, 3);
+      expect(
+        FhirTemporalExtractor.formatFhirInstant(
+          fhir.FhirInstant.fromDateTime(savedAt.toUtc()),
+        ),
+        'Oct 29, 2026, 5:17:03 PM',
       );
     });
 
@@ -399,7 +545,7 @@ void main() {
       (null, null),
       ('', null),
       ('2024-03-15', 'Mar 15, 2024'),
-      ('2024-03-15T10:30:00Z', 'Mar 15, 2024, 10:30 AM'),
+      ('2024-03-15T10:30:00Z', localDateTime('2024-03-15T10:30:00Z')),
       ('2024-03-15 18:45', 'Mar 15, 2024, 6:45 PM'),
       ('2024-03', '2024-03'),
       ('not a date', 'not a date'),
@@ -416,7 +562,7 @@ void main() {
       (
         'dateTime',
         {'DateTime': '2019-02-01T08:00:00Z'},
-        'Feb 1, 2019, 8:00 AM',
+        localDateTime('2019-02-01T08:00:00Z'),
       ),
       ('Age', {'Age': _age45}, '45 a'),
       (
@@ -438,7 +584,7 @@ void main() {
         {
           'Period': {'start': '2019-01-01T00:00:00Z'},
         },
-        'From Jan 1, 2019 12:00 AM',
+        'From ${localDateTime('2019-01-01T00:00:00Z', separator: ' ')}',
       ),
       (
         'Range',
@@ -457,7 +603,7 @@ void main() {
             'high': {'value': 50, 'unit': 'a'},
           },
         },
-        '50.00 a',
+        '≤ 50.00 a',
       ),
       (
         'Range with only a low bound',
@@ -466,7 +612,7 @@ void main() {
             'low': {'value': 40, 'unit': 'a'},
           },
         },
-        '40.00 a',
+        '≥ 40.00 a',
       ),
       ('string', {'String': 'adolescence'}, 'adolescence'),
     ];
@@ -527,7 +673,7 @@ void main() {
       (
         'dateTime',
         _performed({'performedDateTime': '2022-05-04T08:00:00Z'}),
-        'May 4, 2022, 8:00 AM',
+        localDateTime('2022-05-04T08:00:00Z'),
       ),
       (
         'Period',
@@ -537,7 +683,8 @@ void main() {
             'end': '2022-05-04T09:00:00Z',
           },
         }),
-        'May 4, 2022, 8:00 AM - 9:00 AM',
+        '${localDateTime('2022-05-04T08:00:00Z')} - '
+            '${localTime('2022-05-04T09:00:00Z')}',
       ),
       ('string', _performed({'performedString': 'last summer'}), 'last summer'),
       ('Age', _performed({'performedAge': _age45}), '45 a'),
@@ -565,7 +712,25 @@ void main() {
             'low': {'value': 1, 'unit': 'a'},
           },
         }),
-        '1.00 a',
+        '≥ 1.00 a',
+      ),
+      (
+        'Range with only a high bound',
+        _performed({
+          'performedRange': {
+            'high': {'value': 2, 'unit': 'a'},
+          },
+        }),
+        '≤ 2.00 a',
+      ),
+      (
+        'empty Range',
+        _performed({
+          'performedRange': {
+            'low': {'unit': 'a'},
+          },
+        }),
+        null,
       ),
       ('unsupported', fhir.FhirBoolean(true), null),
     ];
@@ -585,7 +750,7 @@ void main() {
       (
         'dateTime',
         _effective({'effectiveDateTime': '2024-03-15T10:30:00Z'}),
-        'Mar 15, 2024, 10:30 AM',
+        localDateTime('2024-03-15T10:30:00Z'),
       ),
       (
         'partial dateTime',
@@ -597,12 +762,12 @@ void main() {
         _effective({
           'effectivePeriod': {'start': '2024-03-15T10:30:00Z'},
         }),
-        'From Mar 15, 2024 10:30 AM',
+        'From ${localDateTime('2024-03-15T10:30:00Z', separator: ' ')}',
       ),
       (
         'Instant',
         _effective({'effectiveInstant': '2024-03-15T10:30:15.000Z'}),
-        'Mar 15, 2024, 10:30:15 AM',
+        localDateTime('2024-03-15T10:30:15.000Z', withSeconds: true),
       ),
       (
         'Timing with code',
@@ -647,14 +812,14 @@ void main() {
       (
         'dateTime',
         fhir.Immunization.fromJson(immunizationJson()).occurrenceX,
-        'Oct 1, 2023, 8:00 AM',
+        localDateTime('2023-10-01T08:00:00Z'),
       ),
       (
         'Period',
         _occurrence({
           'occurrencePeriod': {'end': '2024-05-02T16:00:00Z'},
         }),
-        'Until May 2, 2024 4:00 PM',
+        'Until ${localDateTime('2024-05-02T16:00:00Z', separator: ' ')}',
       ),
       (
         'string',

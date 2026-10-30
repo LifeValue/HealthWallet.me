@@ -108,6 +108,7 @@
   "vitals": "Semne Vitale",
   "selectAll": "Selectează tot",
   "clearAll": "Șterge tot",
+  "deselectAll": "Deselectează tot",
   "save": "Salvează",
   "noRecordsFound": "Nu s-au găsit înregistrări",
   "noRecords": "Fără înregistrări",
@@ -175,6 +176,7 @@
   "processingFailed": "Procesare eșuată",
   "modelNotFoundError": "Fișierul modelului nu a fost găsit. Descarcă modelul AI mai întâi.",
   "modelCorruptedError": "Fișierul modelului este corupt. Re-descarcă modelul AI.",
+  "processingFailedGeneric": "A apărut o eroare la procesarea documentului. Încearcă din nou.",
   "processingCancelled": "Procesarea a fost anulată",
   "processingBasicDetails": "Se procesează detaliile de bază...",
   "processingPages": "Se procesează paginile...",
@@ -582,6 +584,7 @@
   "desktopDisconnect": "Deconectează",
   "desktopReconnect": "Reconectează",
   "desktopVpnDetected": "VPN detectat. Deconectează VPN-ul pentru a sincroniza cu desktopul.",
+  "desktopVpnBlocksPhone": "Pe acest computer este activ un VPN. Poate împiedica telefonul tău să se conecteze: oprește-l sau permite accesul la rețeaua locală din setările VPN-ului.",
   "desktopPairing": "Asociere",
   "desktopLabel": "Desktop",
   "desktopScanFromPhoneToPair": "Scanează cu telefonul pentru a asocia",
@@ -817,43 +820,10 @@
       }
     }
   },
+  "relatedResourcesKeptHint": "Resursele asociate rămân, dacă nu le selectezi mai jos.",
+  "relatedResourcesCount": "Resurse asociate ({count})",
   "fileNotAvailable": "Fișier indisponibil pe acest dispozitiv",
-  "couldNotOpenFile": "Fișierul nu a putut fi deschis: {message}",
-  "@couldNotOpenFile": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOpeningFile": "Eroare la deschiderea fișierului: {error}",
-  "@errorOpeningFile": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "failedToLoadImage": "Imaginea nu a putut fi încărcată",
-  "errorLoadingPdf": "Eroare la încărcarea PDF: {error}",
-  "@errorLoadingPdf": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOnPage": "Eroare pe pagina {page}: {error}",
-  "@errorOnPage": {
-    "placeholders": {
-      "page": {
-        "type": "String"
-      },
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "notes": "Notițe",
   "noNotesAttached": "Această înregistrare nu are notițe atașate",
   "addNote": "Adaugă notiță",
@@ -892,6 +862,7 @@
   "linkToEncounter": "Leagă de consultație",
   "noPdfDataAvailable": "Nu sunt date PDF disponibile",
   "failedToLoadPdf": "Documentul PDF nu a putut fi încărcat",
+  "fileOpenFailed": "Fișierul nu a putut fi deschis. Încearcă din nou.",
   "mediaInformation": "Informații media",
   "mediaInfoTitle": "Titlu:",
   "mediaInfoType": "Tip:",
@@ -907,14 +878,7 @@
   "encounterId": "ID consultație",
   "encounterIdHint": "ex., consultatie-123",
   "mediaLinkedSuccess": "Resursă media legată cu succes de consultație",
-  "failedToLinkMedia": "Legarea a eșuat: {error}",
-  "@failedToLinkMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "linkMediaFailed": "Resursa media nu a putut fi legată de consultație. Încearcă din nou.",
   "link": "Leagă",
   "connectionLabel": "Conexiune",
   "connectionStatusConnected": "Conectat",
@@ -943,6 +907,8 @@
   "exportIpsPdf": "Exportă IPS (PDF)",
   "addIpsToAppleWallet": "Adaugă IPS în Apple Wallet",
   "addIpsToGoogleWallet": "Adaugă IPS în Google Wallet",
+  "ipsExportFailed": "Rezumatul medical nu a putut fi exportat. Încearcă din nou.",
+  "walletPassFailed": "Cardul nu a putut fi adăugat în portofel. Încearcă din nou.",
   "sourcesTitle": "Surse",
   "emergencyMedicalId": "Card medical de urgență",
   "phoneLabel": "Telefon",
@@ -1151,8 +1117,6 @@
   "desktopFinishedProcessing": "Desktopul a terminat procesarea",
   "biometricAuthReason": "Autentifică-te pentru a accesa HealthWallet.me",
   "sourceUploadedOn": "Încărcat {date}",
-  "couldNotOpenPdf": "PDF-ul nu a putut fi deschis: {message}",
-  "errorOpeningPdf": "Eroare la deschiderea PDF-ului: {error}",
   "shareStatusReadyToShare": "Gata de partajare",
   "shareStatusWaitingForSender": "Se așteaptă expeditorul...",
   "shareStatusPermissionsRequired": "Sunt necesare permisiuni",
@@ -1211,6 +1175,8 @@
   "loadingRelatedResources": "Se încarcă resursele asociate...",
   "noRelatedResourcesForEncounter": "Nu s-au găsit resurse asociate acestei consultații",
   "cannotAttachToDocumentReference": "Nu se pot atașa fișiere la un document",
+  "attachFileFailed": "Fișierul nu a putut fi atașat. Încearcă din nou.",
+  "attachmentDeleteFailed": "Atașamentul nu a putut fi șters. Încearcă din nou.",
   "deleteRecordOfType": "Șterge {type}",
   "dateFilterEndBeforeStart": "Data de sfârșit trebuie să fie după data de început",
   "dateFilterChip": "Dată: {range}",
@@ -1233,11 +1199,13 @@
   "processingPatientMatched": "{origin}: pacientul a fost asociat",
   "processingPatientInfoExtracted": "{origin}: datele pacientului au fost extrase",
   "processingFinished": "{origin}: procesarea s-a încheiat",
-  "scanFailedWithError": "Scanarea a eșuat: {error}",
+  "scanFailed": "Scanarea a eșuat. Încearcă din nou.",
   "noValidFilesFound": "Nu s-au găsit fișiere valide",
-  "failedToImportDocument": "Importul documentului a eșuat: {error}",
+  "importDocumentFailed": "Importul documentului a eșuat. Încearcă din nou.",
   "couldNotOpenLink": "Linkul nu a putut fi deschis. Încearcă din nou.",
+  "importFilesFailed": "Fișierele selectate nu au putut fi deschise. Încearcă din nou.",
   "continueProcessingOnDesktop": "Continuă procesarea pe desktop",
+  "handoverSendFailed": "Documentul nu a putut fi trimis pe desktop. Încearcă din nou.",
   "deleteResourcesTitle": "Șterge resursele",
   "switchToDiagnosticReport": "Comută la raport de diagnostic",
   "switchToEncounter": "Comută la consultație",
@@ -1528,7 +1496,6 @@
   "moreCount": "încă {count}",
   "qualificationIssuedBy": "{qualification} (eliberat de {issuer})",
   "qualificationValidPeriod": "{qualification} - Valabil: {period}",
-  "sizeBytes": "{size} octeți",
   "doseNumberOfTotal": "Doza {dose} din {total}",
   "doseNumber": "Doza {dose}",
   "immunizationPrimarySourceYes": "Da (administrat direct)",
@@ -1625,11 +1592,12 @@
   "syncErrorEndpointNotFound": "Punctul de sincronizare nu a fost găsit. Verifică configurația serverului.",
   "syncErrorAuthentication": "Autentificarea a eșuat. Verifică tokenul.",
   "syncErrorInvalidFormat": "Format nevalid al datelor de sincronizare",
-  "syncErrorGeneric": "Sincronizarea datelor a eșuat: {error}",
+  "syncErrorGeneric": "Sincronizarea datelor a eșuat. Încearcă din nou.",
   "syncPlaceholderSubtitle": "Sincronizează sau actualizează datele pentru a vedea înregistrările de tip {recordType}",
   "appLockTitle": "HealthWallet este blocat",
   "appLockMessage": "Deblochează pentru a-ți vedea înregistrările medicale",
   "appLockUnlock": "Deblochează",
   "desktopRestoreSucceededTitle": "Copie de siguranță restaurată",
-  "desktopRestoreSucceededMessage": "\"{name}\" a fost restaurată. Acum sunt {count} înregistrări pe acest dispozitiv."
+  "desktopRestoreSucceededMessage": "\"{name}\" a fost restaurată. Acum sunt {count} înregistrări pe acest dispozitiv.",
+  "desktopBackupSucceededMessage": "\"{name}\" a fost salvată. Conține {count} înregistrări."
 }

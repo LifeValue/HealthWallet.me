@@ -259,7 +259,9 @@ class FhirPatientExtractor {
               false,
         );
         if (match.value != null) return match.value!.toString();
-      } catch (_) {}
+      } catch (_) {
+        // No identifier matches (firstWhere throws StateError); try the next rule.
+      }
     }
 
     try {
@@ -274,7 +276,9 @@ class FhirPatientExtractor {
       if (mrnIdentifier.value != null) {
         return mrnIdentifier.value!.toString();
       }
-    } catch (_) {}
+    } catch (_) {
+      // No identifier matches (firstWhere throws StateError); try the next rule.
+    }
 
     try {
       final textMatch = patient.identifier!.firstWhere(
@@ -284,7 +288,9 @@ class FhirPatientExtractor {
             (id.type?.text?.toString().toUpperCase().contains('MRN') ?? false),
       );
       return textMatch.value!.toString();
-    } catch (_) {}
+    } catch (_) {
+      // No identifier matches (firstWhere throws StateError); try the next rule.
+    }
 
     final first = patient.identifier!
         .where((id) => id.value != null && id.value!.toString().isNotEmpty)

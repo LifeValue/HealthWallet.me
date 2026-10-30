@@ -29,4 +29,7 @@ sealed class CommunicationEvent with _$CommunicationEvent {
       CommunicationPendingClientAccepted;
   const factory CommunicationEvent.pendingClientRejected() =
       CommunicationPendingClientRejected;
+
+  /// Re-checks the desktop's network interfaces for a VPN.
+  const factory CommunicationEvent.vpnChecked() = CommunicationVpnChecked;
 }

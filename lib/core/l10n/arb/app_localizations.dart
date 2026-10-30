@@ -774,6 +774,12 @@ abstract class AppLocalizations {
   /// **'Clear all'**
   String get clearAll;
 
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect all'**
+  String get deselectAll;
+
   /// No description provided for @save.
   ///
   /// In en, this message translates to:
@@ -1175,6 +1181,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Model file is corrupted. Please re-download the AI model.'**
   String get modelCorruptedError;
+
+  /// No description provided for @processingFailedGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong while processing the document. Please try again.'**
+  String get processingFailedGeneric;
 
   /// No description provided for @processingCancelled.
   ///
@@ -2442,6 +2454,12 @@ abstract class AppLocalizations {
   /// **'VPN detected. Disconnect VPN to sync with desktop.'**
   String get desktopVpnDetected;
 
+  /// No description provided for @desktopVpnBlocksPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'A VPN is on for this computer. It can stop your phone from connecting: turn it off or allow local network access in the VPN settings.'**
+  String get desktopVpnBlocksPhone;
+
   /// No description provided for @desktopPairing.
   ///
   /// In en, this message translates to:
@@ -3287,41 +3305,29 @@ abstract class AppLocalizations {
   /// **'Delete + {count} related'**
   String deletePlusRelated(int count);
 
+  /// No description provided for @relatedResourcesKeptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Related resources are kept unless you select them below.'**
+  String get relatedResourcesKeptHint;
+
+  /// No description provided for @relatedResourcesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Related resources ({count})'**
+  String relatedResourcesCount(int count);
+
   /// No description provided for @fileNotAvailable.
   ///
   /// In en, this message translates to:
   /// **'File not available on this device'**
   String get fileNotAvailable;
 
-  /// No description provided for @couldNotOpenFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open file: {message}'**
-  String couldNotOpenFile(String message);
-
-  /// No description provided for @errorOpeningFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Error opening file: {error}'**
-  String errorOpeningFile(String error);
-
   /// No description provided for @failedToLoadImage.
   ///
   /// In en, this message translates to:
   /// **'Failed to load image'**
   String get failedToLoadImage;
-
-  /// No description provided for @errorLoadingPdf.
-  ///
-  /// In en, this message translates to:
-  /// **'Error loading PDF: {error}'**
-  String errorLoadingPdf(String error);
-
-  /// No description provided for @errorOnPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Error on page {page}: {error}'**
-  String errorOnPage(String page, String error);
 
   /// No description provided for @notes.
   ///
@@ -3467,6 +3473,12 @@ abstract class AppLocalizations {
   /// **'Failed to load PDF document'**
   String get failedToLoadPdf;
 
+  /// No description provided for @fileOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this file. Please try again.'**
+  String get fileOpenFailed;
+
   /// No description provided for @mediaInformation.
   ///
   /// In en, this message translates to:
@@ -3557,11 +3569,11 @@ abstract class AppLocalizations {
   /// **'Media linked to encounter successfully'**
   String get mediaLinkedSuccess;
 
-  /// No description provided for @failedToLinkMedia.
+  /// No description provided for @linkMediaFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to link media: {error}'**
-  String failedToLinkMedia(String error);
+  /// **'Could not link the media to the encounter. Please try again.'**
+  String get linkMediaFailed;
 
   /// No description provided for @link.
   ///
@@ -3688,6 +3700,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add IPS to Google Wallet'**
   String get addIpsToGoogleWallet;
+
+  /// No description provided for @ipsExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t export your health summary. Please try again.'**
+  String get ipsExportFailed;
+
+  /// No description provided for @walletPassFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add the pass to your wallet. Please try again.'**
+  String get walletPassFailed;
 
   /// No description provided for @sourcesTitle.
   ///
@@ -4817,18 +4841,6 @@ abstract class AppLocalizations {
   /// **'Uploaded {date}'**
   String sourceUploadedOn(String date);
 
-  /// No description provided for @couldNotOpenPdf.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open PDF: {message}'**
-  String couldNotOpenPdf(String message);
-
-  /// No description provided for @errorOpeningPdf.
-  ///
-  /// In en, this message translates to:
-  /// **'Error opening PDF: {error}'**
-  String errorOpeningPdf(String error);
-
   /// No description provided for @shareStatusReadyToShare.
   ///
   /// In en, this message translates to:
@@ -5177,6 +5189,18 @@ abstract class AppLocalizations {
   /// **'Cannot attach files to DocumentReference resources'**
   String get cannotAttachToDocumentReference;
 
+  /// No description provided for @attachFileFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be attached. Please try again.'**
+  String get attachFileFailed;
+
+  /// No description provided for @attachmentDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The attachment could not be deleted. Please try again.'**
+  String get attachmentDeleteFailed;
+
   /// No description provided for @deleteRecordOfType.
   ///
   /// In en, this message translates to:
@@ -5309,11 +5333,11 @@ abstract class AppLocalizations {
   /// **'{origin} processing finished'**
   String processingFinished(String origin);
 
-  /// No description provided for @scanFailedWithError.
+  /// No description provided for @scanFailed.
   ///
   /// In en, this message translates to:
-  /// **'Scan failed: {error}'**
-  String scanFailedWithError(String error);
+  /// **'The scan failed. Please try again.'**
+  String get scanFailed;
 
   /// No description provided for @noValidFilesFound.
   ///
@@ -5321,11 +5345,11 @@ abstract class AppLocalizations {
   /// **'No valid files found'**
   String get noValidFilesFound;
 
-  /// No description provided for @failedToImportDocument.
+  /// No description provided for @importDocumentFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to import document: {error}'**
-  String failedToImportDocument(String error);
+  /// **'Couldn\'t import the document. Please try again.'**
+  String get importDocumentFailed;
 
   /// No description provided for @couldNotOpenLink.
   ///
@@ -5333,11 +5357,23 @@ abstract class AppLocalizations {
   /// **'Could not open link. Please try again.'**
   String get couldNotOpenLink;
 
+  /// No description provided for @importFilesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the selected files. Please try again.'**
+  String get importFilesFailed;
+
   /// No description provided for @continueProcessingOnDesktop.
   ///
   /// In en, this message translates to:
   /// **'Continue processing on Desktop'**
   String get continueProcessingOnDesktop;
+
+  /// No description provided for @handoverSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send the document to the desktop. Please try again.'**
+  String get handoverSendFailed;
 
   /// No description provided for @deleteResourcesTitle.
   ///
@@ -7079,12 +7115,6 @@ abstract class AppLocalizations {
   /// **'{qualification} - Valid: {period}'**
   String qualificationValidPeriod(String qualification, String period);
 
-  /// No description provided for @sizeBytes.
-  ///
-  /// In en, this message translates to:
-  /// **'{size} bytes'**
-  String sizeBytes(String size);
-
   /// No description provided for @doseNumberOfTotal.
   ///
   /// In en, this message translates to:
@@ -7664,8 +7694,8 @@ abstract class AppLocalizations {
   /// No description provided for @syncErrorGeneric.
   ///
   /// In en, this message translates to:
-  /// **'Data sync failed: {error}'**
-  String syncErrorGeneric(String error);
+  /// **'Data sync failed. Please try again.'**
+  String get syncErrorGeneric;
 
   /// No description provided for @syncPlaceholderSubtitle.
   ///
@@ -7702,6 +7732,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{name}\" has been restored. {count} records are now on this device.'**
   String desktopRestoreSucceededMessage(String name, int count);
+
+  /// No description provided for @desktopBackupSucceededMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" has been saved. It holds {count} records.'**
+  String desktopBackupSucceededMessage(String name, int count);
 }
 
 class _AppLocalizationsDelegate

@@ -49,6 +49,26 @@ class UnitConverter {
     }
   }
 
+  /// The units the region changes, as [knownUnit] names them.
+  static const Set<String> _regionUnits = {
+    'kg',
+    'lbs',
+    'cm',
+    'in',
+    '°c',
+    '°f',
+    'mg/dl',
+    'mmol/l',
+  };
+
+  /// [unit], a UCUM code or a written unit, as one of 'kg', 'lbs', 'cm',
+  /// 'in', '°c', '°f', 'mg/dl' and 'mmol/l', or null when it is none of them.
+  static String? knownUnit(String? unit) {
+    if (unit == null) return null;
+    final normalized = _normalizeUnit(unit);
+    return _regionUnits.contains(normalized) ? normalized : null;
+  }
+
   static String _normalizeUnit(String unit) {
     final u = unit.trim().toLowerCase();
     if (u == 'kg' || u == 'kilograms') return 'kg';

@@ -20,8 +20,13 @@ abstract class RecordsState with _$RecordsState {
     @Default(false) bool isSelectionMode,
     DateFilter? dateFilter,
     @Default([]) List<MedicalSpecialty> activeSpecialties,
+    @Default(IpsExportStatus.idle) IpsExportStatus ipsExportStatus,
   }) = _RecordsState;
 }
+
+/// Progress of an IPS export. Each export passes through [exporting], so a
+/// second failure in a row is still a new [failed] state for listeners.
+enum IpsExportStatus { idle, exporting, failed }
 
 @freezed
 sealed class RecordsStatus with _$RecordsStatus {

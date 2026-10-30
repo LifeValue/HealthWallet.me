@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/notifications/domain/entities/notification.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapped_property.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
@@ -191,7 +193,8 @@ class ProcessingBloc extends Bloc<ProcessingEvent, ProcessingState>
           useVision: useVision,
         ),
       );
-    } on Exception catch (e) {
+    } on Exception catch (e, s) {
+      logger.e('Loading the processing sessions failed', e, s);
       emit(
         state.copyWith(
           status: PipelineStatus.failure(

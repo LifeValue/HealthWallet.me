@@ -1,6 +1,7 @@
 import 'package:fhir_r4/fhir_r4.dart' as fhir_r4;
 import 'package:health_wallet/core/config/constants/region_preset.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
+import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/entity/patient/patient.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
@@ -88,17 +89,31 @@ class FhirFieldExtractor {
     dynamic valueX,
     RegionPreset region, {
     AppLocalizations? l10n,
+    required PatientVitalType? measured,
   }) => FhirObservationExtractor.extractObservationValueForRegion(
     valueX,
     region,
     l10n: l10n,
+    measured: measured,
   );
 
   static ({double value, String unit}) convertQuantityForRegion(
     double value,
     String unit,
-    RegionPreset region,
-  ) => FhirObservationExtractor.convertQuantityForRegion(value, unit, region);
+    RegionPreset region, {
+    required PatientVitalType? measured,
+    String? ucumCode,
+  }) => FhirObservationExtractor.convertQuantityForRegion(
+    value,
+    unit,
+    region,
+    measured: measured,
+    ucumCode: ucumCode,
+  );
+
+  static PatientVitalType? regionUnitVitalOf(
+    fhir_r4.CodeableConcept? code,
+  ) => FhirObservationExtractor.regionUnitVitalOf(code);
 
   static bool isVitalSign(Observation observation) =>
       FhirObservationExtractor.isVitalSign(observation);

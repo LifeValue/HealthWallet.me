@@ -4,8 +4,10 @@ import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/l10n/arb/app_localizations.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/utils/unit_converter.dart';
+import 'package:health_wallet/features/home/domain/entities/patient_vitals.dart';
 import 'package:health_wallet/features/records/domain/entity/observation/observation.dart';
 import 'package:health_wallet/features/records/domain/utils/extractors/fhir_common_extractor.dart';
+import 'package:health_wallet/features/records/domain/utils/extractors/fhir_temporal_extractor.dart';
 import 'package:health_wallet/features/records/domain/utils/vital_codes.dart';
 
 class FhirObservationExtractor {
@@ -17,7 +19,13 @@ class FhirObservationExtractor {
   }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
-      return '${valueQuantity.value?.valueDouble?.toStringAsFixed(2)} ${_unit(valueQuantity.unit.toString(), l10n)}';
+      final value = FhirCommonExtractor.quantityValue(valueQuantity);
+      if (value == null) return null;
+      return _withUnit(
+        value,
+        FhirCommonExtractor.quantityUnit(valueQuantity),
+        l10n,
+      );
     }
 
     final valueCodeableConcept = valueX?.isAs<fhir_r4.CodeableConcept>();
@@ -44,12 +52,21 @@ class FhirObservationExtractor {
 
     final valueRange = valueX?.isAs<fhir_r4.Range>();
     if (valueRange != null) {
-      return '${valueRange.low?.value?.valueDouble?.toStringAsFixed(2)} - ${valueRange.high?.value?.valueDouble?.toStringAsFixed(2)}';
+      return FhirCommonExtractor.formatRange(
+        FhirCommonExtractor.quantityValue(valueRange.low),
+        FhirCommonExtractor.quantityValue(valueRange.high),
+      );
     }
 
     final valueRatio = valueX?.isAs<fhir_r4.Ratio>();
     if (valueRatio != null) {
-      return '${valueRatio.numerator?.value?.valueDouble?.toStringAsFixed(2)} / ${valueRatio.denominator?.value?.valueDouble?.toStringAsFixed(2)}';
+      // One term alone is not a ratio; show nothing rather than a bare number.
+      final numerator = FhirCommonExtractor.quantityValue(valueRatio.numerator);
+      final denominator = FhirCommonExtractor.quantityValue(
+        valueRatio.denominator,
+      );
+      if (numerator == null || denominator == null) return null;
+      return '$numerator / $denominator';
     }
 
     final valueTime = valueX?.isAs<fhir_r4.FhirTime>();
@@ -64,80 +81,150 @@ class FhirObservationExtractor {
 
     final valuePeriod = valueX?.isAs<fhir_r4.Period>();
     if (valuePeriod != null) {
-      return '${valuePeriod.start} - ${valuePeriod.end}';
+      return FhirTemporalExtractor.extractPeriod(valuePeriod, l10n: l10n);
     }
 
     return null;
   }
 
+  /// [valueX] in the units of [region] when it is the [measured] value of a
+  /// weight, height, temperature or glucose observation (see
+  /// [regionUnitVitalOf]); any other value is shown as recorded.
   static String? extractObservationValueForRegion(
     dynamic valueX,
     RegionPreset region, {
     AppLocalizations? l10n,
+    required PatientVitalType? measured,
   }) {
     final valueQuantity = valueX?.isAs<fhir_r4.Quantity>();
     if (valueQuantity != null) {
       final rawValue = valueQuantity.value?.valueDouble;
-      final rawUnit = valueQuantity.unit?.toString() ?? '';
-      if (rawValue != null) {
-        if (UnitConverter.heightInCm(rawValue, rawUnit) != null &&
-            region.heightUnit == 'ft/in') {
-          final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-          return converted.unit;
-        }
-        final converted = convertQuantityForRegion(rawValue, rawUnit, region);
-        return '${converted.value.toStringAsFixed(2)} ${_unit(converted.unit, l10n)}';
+      if (rawValue == null) return null;
+      final rawUnit = FhirCommonExtractor.quantityUnit(valueQuantity) ?? '';
+      final ucumCode = valueQuantity.code?.valueString;
+      final converted = convertQuantityForRegion(
+        rawValue,
+        rawUnit,
+        region,
+        measured: measured,
+        ucumCode: ucumCode,
+      );
+      if (_inFeetAndInches(rawUnit, ucumCode, region, measured)) {
+        return converted.unit;
       }
-      return '${rawValue?.toStringAsFixed(2)} ${_unit(rawUnit, l10n)}';
+      return _withUnit(
+        FhirCommonExtractor.formatQuantityValue(
+          converted.value,
+          source: rawValue,
+        ),
+        converted.unit,
+        l10n,
+      );
     }
 
     return extractObservationValue(valueX, l10n: l10n);
   }
 
+  /// What [code] measures when its unit follows the region: the first LOINC
+  /// coding (or coding without a system) that [regionUnitVital] knows.
+  static PatientVitalType? regionUnitVitalOf(fhir_r4.CodeableConcept? code) {
+    for (final coding in code?.coding ?? const <fhir_r4.Coding>[]) {
+      final system = coding.system?.valueString;
+      final value = coding.code?.valueString;
+      if (value == null) continue;
+      if (system != null && system != 'http://loinc.org') continue;
+      final vital = regionUnitVital(value);
+      if (vital != null) return vital;
+    }
+    return null;
+  }
+
+  /// The unit of a quantity: its UCUM [ucumCode] when it is one the region
+  /// changes, otherwise the written [unit].
+  static String? _knownUnit(String unit, String? ucumCode) =>
+      UnitConverter.knownUnit(ucumCode) ?? UnitConverter.knownUnit(unit);
+
+  static bool _inFeetAndInches(
+    String unit,
+    String? ucumCode,
+    RegionPreset region,
+    PatientVitalType? measured,
+  ) =>
+      measured == PatientVitalType.height &&
+      region.heightUnit == 'ft/in' &&
+      const {'cm', 'in'}.contains(_knownUnit(unit, ucumCode));
+
   static String _unit(String unit, AppLocalizations? l10n) =>
       l10n == null ? unit : localizedUnit(unit, l10n);
 
+  /// "[value] [unit]", or the bare value when there is no unit.
+  static String _withUnit(String value, String? unit, AppLocalizations? l10n) {
+    if (unit == null || unit.trim().isEmpty) return value;
+    return '$value ${_unit(unit, l10n)}';
+  }
+
+  /// [value] in [unit] converted to the unit of [region], when [measured]
+  /// says it is a weight, height, temperature or glucose and the unit is one
+  /// of its units, recognised by its [ucumCode] first. Anything else, a
+  /// cholesterol in mg/dL for example, comes back unchanged with its written
+  /// unit. A height in the US comes back with its feet and inches in `unit`.
   static ({double value, String unit}) convertQuantityForRegion(
     double value,
     String unit,
-    RegionPreset region,
-  ) {
-    final u = unit.trim().toLowerCase();
-
-    if ((u == 'kg' || u == 'kilograms') && region.weightUnit == 'lbs') {
-      return (value: value * 2.20462, unit: region.weightUnit);
+    RegionPreset region, {
+    required PatientVitalType? measured,
+    String? ucumCode,
+  }) {
+    final from = _knownUnit(unit, ucumCode);
+    switch (measured) {
+      case PatientVitalType.weight:
+        if (from == 'kg' && region.weightUnit == 'lbs') {
+          return (value: UnitConverter.kgToLbs(value), unit: region.weightUnit);
+        }
+        if (from == 'lbs' && region.weightUnit == 'kg') {
+          return (value: UnitConverter.lbsToKg(value), unit: region.weightUnit);
+        }
+      case PatientVitalType.temperature:
+        if (from == '°c' && region.temperatureUnit == '°F') {
+          return (
+            value: UnitConverter.celsiusToFahrenheit(value),
+            unit: region.temperatureUnit,
+          );
+        }
+        if (from == '°f' && region.temperatureUnit == '°C') {
+          return (
+            value: UnitConverter.fahrenheitToCelsius(value),
+            unit: region.temperatureUnit,
+          );
+        }
+      case PatientVitalType.bloodGlucose:
+        if (from == 'mg/dl' && region.glucoseUnit == 'mmol/L') {
+          return (
+            value: UnitConverter.mgDlToMmolL(value),
+            unit: region.glucoseUnit,
+          );
+        }
+        if (from == 'mmol/l' && region.glucoseUnit == 'mg/dL') {
+          return (
+            value: UnitConverter.mmolLToMgDl(value),
+            unit: region.glucoseUnit,
+          );
+        }
+      case PatientVitalType.height:
+        final cm = switch (from) {
+          'cm' => value,
+          'in' => UnitConverter.inchesToCm(value),
+          _ => null,
+        };
+        if (cm != null && region.heightUnit == 'ft/in') {
+          return (value: value, unit: UnitConverter.cmToFeetInchesString(cm));
+        }
+        if (cm != null && region.heightUnit == 'cm') {
+          return (value: cm, unit: region.heightUnit);
+        }
+      default:
+        break;
     }
-    if ((u == 'lbs' || u == 'lb' || u == 'pounds' || u == '[lb_av]') &&
-        region.weightUnit == 'kg') {
-      return (value: value / 2.20462, unit: region.weightUnit);
-    }
-
-    if ((u == '°c' || u == 'cel') && region.temperatureUnit == '°F') {
-      return (value: value * 9 / 5 + 32, unit: region.temperatureUnit);
-    }
-    if ((u == '°f' || u == 'degf' || u == '[degf]') &&
-        region.temperatureUnit == '°C') {
-      return (value: (value - 32) * 5 / 9, unit: region.temperatureUnit);
-    }
-
-    if (u == 'mg/dl' && region.glucoseUnit == 'mmol/L') {
-      return (value: value / 18.0182, unit: region.glucoseUnit);
-    }
-    if (u == 'mmol/l' && region.glucoseUnit == 'mg/dL') {
-      return (value: value * 18.0182, unit: region.glucoseUnit);
-    }
-
-    final heightCm = UnitConverter.heightInCm(value, unit);
-    if (heightCm != null && region.heightUnit == 'ft/in') {
-      return (
-        value: value,
-        unit: UnitConverter.cmToFeetInchesString(heightCm),
-      );
-    }
-    if (heightCm != null && region.heightUnit == 'cm') {
-      return (value: heightCm, unit: region.heightUnit);
-    }
-
     return (value: value, unit: unit);
   }
 
@@ -280,12 +367,11 @@ class FhirObservationExtractor {
           final value = observation.valueX;
 
           if (value is fhir_r4.CodeableConcept) {
-            if (value.text != null && value.text.toString().isNotEmpty) {
-              final directText = value.text.toString();
-              if (_isValidBloodType(directText)) {
-                return directText;
-              }
-            }
+            final fromText = _normalizeBloodType(value.text?.toString());
+            if (fromText != null) return fromText;
+
+            final fromCoding = _bloodTypeFromCodings(value.coding);
+            if (fromCoding != null) return fromCoding;
 
             final display = code.display?.toString();
             if (display != null && _isValidBloodType(display)) {
@@ -437,5 +523,33 @@ class FhirObservationExtractor {
 
   static bool _isValidBloodType(String bloodType) {
     return BloodTypes.isValidBloodType(bloodType);
+  }
+
+  /// [text] as a short blood type ("A+"), accepting the standard SNOMED
+  /// displays ("Blood group A Rh(D) positive"); null when it is neither.
+  static String? _normalizeBloodType(String? text) {
+    final trimmed = text?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    if (_isValidBloodType(trimmed)) return trimmed;
+    return BloodTypes.fhirDisplayMapping[trimmed];
+  }
+
+  /// The blood type coded in a value's codings: a known SNOMED code first
+  /// (only in SNOMED codings or codings without a system), then a
+  /// recognisable display.
+  static String? _bloodTypeFromCodings(List<fhir_r4.Coding>? codings) {
+    if (codings == null) return null;
+    for (final coding in codings) {
+      final system = coding.system?.toString();
+      if (system == null || system.contains('snomed.info/sct')) {
+        final code = coding.code?.toString();
+        for (final entry in BloodTypes.snomedCodes.entries) {
+          if (entry.value == code) return entry.key;
+        }
+      }
+      final display = _normalizeBloodType(coding.display?.toString());
+      if (display != null) return display;
+    }
+    return null;
   }
 }

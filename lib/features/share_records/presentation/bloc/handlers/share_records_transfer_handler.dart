@@ -257,6 +257,13 @@ extension ShareRecordsTransferHandler on ShareRecordsBloc {
       final session = _service.createSecureSession();
       _secureSession = session;
       _tempFilePath = await _service.prepareFilesForSending(payload, session);
+      // Writing the payload takes a while (sealing generates keys). If the
+      // share screen closed meanwhile, its cleanup has already run: delete
+      // this payload here and start no key exchange on the closed session.
+      if (_isClosed || !identical(session, _secureSession)) {
+        await _deleteSentPayload();
+        return;
+      }
       if (_tempFilePath == null) {
         _shareLog('ERROR: Failed to prepare files for sending');
         emit(

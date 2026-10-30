@@ -111,6 +111,7 @@
   "vitals": "Signos vitales",
   "selectAll": "Seleccionar todo",
   "clearAll": "Limpiar todo",
+  "deselectAll": "Deseleccionar todo",
   "save": "Guardar",
   "noRecordsFound": "No se encontraron registros",
   "tryDifferentKeywords": "Intenta buscar con palabras clave diferentes",
@@ -176,6 +177,7 @@
   "processingFailed": "Procesamiento fallido",
   "modelNotFoundError": "Archivo de modelo no encontrado. Descarga el modelo de IA primero.",
   "modelCorruptedError": "El archivo del modelo está dañado. Vuelve a descargar el modelo de IA.",
+  "processingFailedGeneric": "Algo salió mal al procesar el documento. Inténtalo de nuevo.",
   "processingCancelled": "El procesamiento fue cancelado",
   "processingBasicDetails": "Procesando detalles básicos...",
   "processingPages": "Procesando páginas...",
@@ -583,6 +585,7 @@
   "desktopDisconnect": "Desconectar",
   "desktopReconnect": "Reconectar",
   "desktopVpnDetected": "VPN detectado. Desconecta la VPN para sincronizar con el escritorio.",
+  "desktopVpnBlocksPhone": "Hay una VPN activa en esta computadora. Puede impedir que tu teléfono se conecte: desactívala o permite el acceso a la red local en la configuración de la VPN.",
   "desktopPairing": "Vinculación",
   "desktopLabel": "Escritorio",
   "desktopScanFromPhoneToPair": "Escanea con tu teléfono para vincular",
@@ -818,43 +821,10 @@
       }
     }
   },
+  "relatedResourcesKeptHint": "Los recursos relacionados se conservan a menos que los selecciones abajo.",
+  "relatedResourcesCount": "Recursos relacionados ({count})",
   "fileNotAvailable": "Archivo no disponible en este dispositivo",
-  "couldNotOpenFile": "No se pudo abrir el archivo: {message}",
-  "@couldNotOpenFile": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOpeningFile": "Error al abrir el archivo: {error}",
-  "@errorOpeningFile": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "failedToLoadImage": "No se pudo cargar la imagen",
-  "errorLoadingPdf": "Error al cargar el PDF: {error}",
-  "@errorLoadingPdf": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "errorOnPage": "Error en la página {page}: {error}",
-  "@errorOnPage": {
-    "placeholders": {
-      "page": {
-        "type": "String"
-      },
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "notes": "Notas",
   "noNotesAttached": "Este registro no tiene notas",
   "addNote": "Agregar nota",
@@ -893,6 +863,7 @@
   "linkToEncounter": "Vincular a encuentro",
   "noPdfDataAvailable": "No hay datos PDF disponibles",
   "failedToLoadPdf": "No se pudo cargar el documento PDF",
+  "fileOpenFailed": "No se pudo abrir el archivo. Inténtalo de nuevo.",
   "mediaInformation": "Información de medios",
   "mediaInfoTitle": "Título:",
   "mediaInfoType": "Tipo:",
@@ -908,14 +879,7 @@
   "encounterId": "ID del encuentro",
   "encounterIdHint": "ej., encuentro-123",
   "mediaLinkedSuccess": "Recurso multimedia vinculado exitosamente al encuentro",
-  "failedToLinkMedia": "Error al vincular: {error}",
-  "@failedToLinkMedia": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
+  "linkMediaFailed": "No se pudo vincular el recurso multimedia al encuentro. Inténtalo de nuevo.",
   "link": "Vincular",
   "connectionLabel": "Conexión",
   "connectionStatusConnected": "Conectado",
@@ -944,6 +908,8 @@
   "exportIpsPdf": "Exportar IPS (PDF)",
   "addIpsToAppleWallet": "Agregar IPS a Apple Wallet",
   "addIpsToGoogleWallet": "Agregar IPS a Google Wallet",
+  "ipsExportFailed": "No se pudo exportar tu resumen de salud. Inténtalo de nuevo.",
+  "walletPassFailed": "No se pudo agregar el pase a tu billetera. Inténtalo de nuevo.",
   "sourcesTitle": "Fuentes",
   "emergencyMedicalId": "Identificación médica de emergencia",
   "phoneLabel": "Teléfono",
@@ -1156,8 +1122,6 @@
   "desktopFinishedProcessing": "El escritorio terminó el procesamiento",
   "biometricAuthReason": "Autentícate para acceder a tu HealthWallet.me",
   "sourceUploadedOn": "Subido {date}",
-  "couldNotOpenPdf": "No se pudo abrir el PDF: {message}",
-  "errorOpeningPdf": "Error al abrir el PDF: {error}",
   "shareStatusReadyToShare": "Listo para compartir",
   "shareStatusWaitingForSender": "Esperando al remitente...",
   "shareStatusPermissionsRequired": "Se requieren permisos",
@@ -1216,6 +1180,8 @@
   "loadingRelatedResources": "Cargando recursos relacionados...",
   "noRelatedResourcesForEncounter": "No se encontraron recursos relacionados con este encuentro",
   "cannotAttachToDocumentReference": "No se pueden adjuntar archivos a un documento",
+  "attachFileFailed": "No se pudo adjuntar el archivo. Inténtalo de nuevo.",
+  "attachmentDeleteFailed": "No se pudo eliminar el archivo adjunto. Inténtalo de nuevo.",
   "deleteRecordOfType": "Eliminar {type}",
   "dateFilterEndBeforeStart": "La fecha de fin debe ser posterior a la fecha de inicio",
   "dateFilterChip": "Fecha: {range}",
@@ -1238,11 +1204,13 @@
   "processingPatientMatched": "{origin}: paciente asociado",
   "processingPatientInfoExtracted": "{origin}: datos del paciente extraídos",
   "processingFinished": "{origin}: procesamiento finalizado",
-  "scanFailedWithError": "Error al escanear: {error}",
+  "scanFailed": "Error al escanear. Inténtalo de nuevo.",
   "noValidFilesFound": "No se encontraron archivos válidos",
-  "failedToImportDocument": "No se pudo importar el documento: {error}",
+  "importDocumentFailed": "No se pudo importar el documento. Inténtalo de nuevo.",
   "couldNotOpenLink": "No se pudo abrir el enlace. Inténtalo de nuevo.",
+  "importFilesFailed": "No se pudieron abrir los archivos seleccionados. Inténtalo de nuevo.",
   "continueProcessingOnDesktop": "Continuar el procesamiento en el escritorio",
+  "handoverSendFailed": "No se pudo enviar el documento al escritorio. Inténtalo de nuevo.",
   "deleteResourcesTitle": "Eliminar recursos",
   "switchToDiagnosticReport": "Cambiar a informe diagnóstico",
   "switchToEncounter": "Cambiar a encuentro",
@@ -1533,7 +1501,6 @@
   "moreCount": "{count} más",
   "qualificationIssuedBy": "{qualification} (expedido por {issuer})",
   "qualificationValidPeriod": "{qualification} - Válido: {period}",
-  "sizeBytes": "{size} bytes",
   "doseNumberOfTotal": "Dosis {dose} de {total}",
   "doseNumber": "Dosis {dose}",
   "immunizationPrimarySourceYes": "Sí (administrada directamente)",
@@ -1630,11 +1597,12 @@
   "syncErrorEndpointNotFound": "No se encontró el punto de sincronización. Comprueba la configuración del servidor.",
   "syncErrorAuthentication": "Error de autenticación. Comprueba tu token.",
   "syncErrorInvalidFormat": "Formato de datos de sincronización no válido",
-  "syncErrorGeneric": "Error al sincronizar los datos: {error}",
+  "syncErrorGeneric": "Error al sincronizar los datos. Inténtalo de nuevo.",
   "syncPlaceholderSubtitle": "Sincroniza o actualiza tus datos para ver los registros de {recordType}",
   "appLockTitle": "HealthWallet está bloqueado",
   "appLockMessage": "Desbloquea para ver tus registros de salud",
   "appLockUnlock": "Desbloquear",
   "desktopRestoreSucceededTitle": "Respaldo restaurado",
-  "desktopRestoreSucceededMessage": "Se restauró \"{name}\". Ahora hay {count} registros en este dispositivo."
+  "desktopRestoreSucceededMessage": "Se restauró \"{name}\". Ahora hay {count} registros en este dispositivo.",
+  "desktopBackupSucceededMessage": "Se guardó \"{name}\". Contiene {count} registros."
 }

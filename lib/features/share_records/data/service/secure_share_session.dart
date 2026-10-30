@@ -75,6 +75,8 @@ class SecureShareSession {
       plaintext,
       ShareEnvelope.associatedData(commitment),
     );
+    // Disposed while encrypting (the share screen closed): keep no keys.
+    if (_disposed) throw const SecureShareCancelled();
     _keyPair = keyPair;
     _payloadKeyBytes = payloadKey;
     return ShareEnvelope(
@@ -86,6 +88,9 @@ class SecureShareSession {
 
   /// Waits for the receiver's key, reveals ours and returns the code to show.
   Future<String> awaitReceiver() async {
+    // A disposed session has dropped its keys; that is a cancellation, not a
+    // call out of order.
+    if (_disposed) throw const SecureShareCancelled();
     final keyPair = _keyPair;
     if (keyPair == null) throw StateError('seal() must run first');
 

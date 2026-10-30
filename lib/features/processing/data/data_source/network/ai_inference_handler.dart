@@ -35,7 +35,9 @@ mixin AiInferenceHandler {
     BackendPerfContextData? perf;
     try {
       perf = await engine?.getPerformanceContext();
-    } catch (_) {}
+    } catch (_) {
+      // Performance counters are optional; the stats are built without them.
+    }
     return GenerationStats(
       mode: mode,
       promptTokens: usage?.promptTokens,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:health_wallet/core/l10n/app_strings_provider.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_diagnostic_report.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_encounter.dart';
 import 'package:health_wallet/features/processing/domain/entity/mapping_resources/mapping_patient.dart';
@@ -86,11 +87,13 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         filePaths: sessionPaths,
         origin: ProcessingOrigin.scan,
       );
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('[ProcessingBloc] scan failed', e, s);
       emit(
         state.copyWith(
           status: PipelineStatus.failure(
-            error: strings.l10n.scanFailedWithError('$e'),
+            error: 'Scan failed: $e',
+            reason: PipelineFailureReason.scanFailed,
           ),
         ),
       );
@@ -116,8 +119,9 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
       if (persistedPaths.isEmpty) {
         emit(
           state.copyWith(
-            status: PipelineStatus.failure(
-              error: strings.l10n.noValidFilesFound,
+            status: const PipelineStatus.failure(
+              error: 'No valid files found',
+              reason: PipelineFailureReason.noValidFiles,
             ),
           ),
         );
@@ -142,11 +146,13 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
           updateDb: true,
         );
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('[ProcessingBloc] import failed', e, s);
       emit(
         state.copyWith(
           status: PipelineStatus.failure(
-            error: strings.l10n.failedToImportDocument('$e'),
+            error: 'Failed to import document: $e',
+            reason: PipelineFailureReason.importFailed,
           ),
         ),
       );
@@ -232,7 +238,8 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
         await Future.delayed(const Duration(milliseconds: 100));
         startNextPendingSession();
       }
-    } on Exception catch (e) {
+    } on Exception catch (e, s) {
+      logger.e('[ProcessingBloc] deleting the session failed', e, s);
       emit(
         state.copyWith(
           status: PipelineStatus.failure(
@@ -314,11 +321,14 @@ mixin SessionHandler on Bloc<ProcessingEvent, ProcessingState> {
               ),
             );
           }
-        } catch (e) {
+        } catch (e, s) {
+          // The session stays pending and is shown as queued.
+          logger.w('[ProcessingBloc] checking for the AI model failed', e, s);
           emit(state.copyWith(status: const PipelineStatus.initial()));
         }
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.e('[ProcessingBloc] opening the session failed', e, s);
       emit(
         state.copyWith(
           status: PipelineStatus.failure(

@@ -5,12 +5,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:health_wallet/core/config/app_platform.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_color.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
+import 'package:health_wallet/core/utils/pdf_open.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
+import 'package:health_wallet/core/widgets/checked_pdf_view.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/records/domain/entity/i_fhir_resource.dart';
 import 'package:health_wallet/features/records/presentation/widgets/record_attachments/bloc/record_attachments_bloc.dart';
@@ -55,137 +60,155 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => _bloc,
-      child: BlocBuilder<RecordAttachmentsBloc, RecordAttachmentsState>(
-        builder: (context, state) {
-          return ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height / 1.5,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (state.status == const RecordAttachmentsStatus.loading())
-                  const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                else ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: context.theme.dividerColor,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          context.l10n.attachments,
-                          style:
-                              context.textTheme.bodyMedium ??
-                              AppTextStyle.bodyMedium,
-                        ),
-                        IconButton(
-                          iconSize: 20,
-                          visualDensity: const VisualDensity(
-                            horizontal: -4,
-                            vertical: -4,
-                          ),
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (state.attachments.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Center(
-                        child: Text(
-                          context.l10n.noFilesAttached,
-                          style: AppTextStyle.labelLarge,
-                        ),
-                      ),
+      child: BlocListener<RecordAttachmentsBloc, RecordAttachmentsState>(
+        listenWhen: (previous, current) =>
+            previous.status != current.status && _errorMessage(current) != null,
+        listener: (context, state) => AppSnackBar.show(
+          context,
+          message: _errorMessage(state)!,
+          type: AppSnackBarType.error,
+        ),
+        child: BlocBuilder<RecordAttachmentsBloc, RecordAttachmentsState>(
+          builder: (context, state) {
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height / 1.5,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (state.status == const RecordAttachmentsStatus.loading())
+                    const Center(
+                      child: CircularProgressIndicator(),
                     )
-                  else
-                    Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: [
-                            ...state.attachments.map(
-                              (attachment) =>
-                                  _buildAttachmentRow(context, attachment),
-                            ),
-                          ],
-                        ),
+                  else ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
                       ),
-                    ),
-                  if (!widget.readOnly)
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadiusGeometry.circular(6),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: context.theme.dividerColor,
+                            width: 1,
                           ),
                         ),
-                        onPressed: () async {
-                          final picked = await FilePicker.pickFiles();
-
-                          final files = picked
-                              .where((f) => f.path != null)
-                              .map((f) => File(f.path!))
-                              .toList();
-                          if (files.isNotEmpty) {
-                            _bloc.add(RecordAttachmentsFileAttached(files));
-                          }
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Assets.icons.attachment.svg(
-                              width: 16,
-                              color: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            context.l10n.attachments,
+                            style:
+                                context.textTheme.bodyMedium ??
+                                AppTextStyle.bodyMedium,
+                          ),
+                          IconButton(
+                            iconSize: 20,
+                            visualDensity: const VisualDensity(
+                              horizontal: -4,
+                              vertical: -4,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              context.l10n.attachFile,
-                              style: AppTextStyle.buttonSmall,
-                            ),
-                          ],
-                        ),
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
                       ),
                     ),
+                    if (state.attachments.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                          child: Text(
+                            context.l10n.noFilesAttached,
+                            style: AppTextStyle.labelLarge,
+                          ),
+                        ),
+                      )
+                    else
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          child: ListView(
+                            shrinkWrap: true,
+                            children: [
+                              ...state.attachments.map(
+                                (attachment) =>
+                                    _buildAttachmentRow(context, attachment),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (!widget.readOnly)
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.all(10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadiusGeometry.circular(6),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final picked = await FilePicker.pickFiles();
+
+                            final files = picked
+                                .where((f) => f.path != null)
+                                .map((f) => File(f.path!))
+                                .toList();
+                            if (files.isNotEmpty) {
+                              _bloc.add(RecordAttachmentsFileAttached(files));
+                            }
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Assets.icons.attachment.svg(
+                                width: 16,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                context.l10n.attachFile,
+                                style: AppTextStyle.buttonSmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 ],
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
+
+  /// The translated message of a failed attach or delete. The bloc puts
+  /// only translated text in an error as a `String`; other errors are not
+  /// shown.
+  static String? _errorMessage(RecordAttachmentsState state) =>
+      state.status.whenOrNull(error: (e) => e is String ? e : null);
 
   void _viewFile(
     BuildContext context,
     String filePath,
     String? contentType,
+    String title,
   ) async {
     if (!await File(filePath).exists()) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.fileNotAvailable)),
+        AppSnackBar.show(
+          context,
+          message: context.l10n.fileNotAvailable,
+          type: AppSnackBarType.error,
         );
       }
       return;
@@ -200,11 +223,15 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
     if (isImage) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => _ImageViewer(filePath: filePath)),
+        MaterialPageRoute(
+          builder: (_) => _ImageViewer(filePath: filePath, title: title),
+        ),
       );
     } else if (isPdf) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => _PdfViewer(filePath: filePath)),
+        MaterialPageRoute(
+          builder: (_) => _PdfViewer(filePath: filePath, title: title),
+        ),
       );
     } else {
       unawaited(_openFileExternal(context, filePath));
@@ -214,21 +241,23 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
   Future<void> _openFileExternal(BuildContext context, String filePath) async {
     try {
       final result = await OpenFile.open(filePath);
-      if (result.type != ResultType.done && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.couldNotOpenFile(result.message)),
-            backgroundColor: Colors.orange,
-          ),
-        );
+      if (result.type != ResultType.done) {
+        logger.w('Could not open $filePath: ${result.message}');
+        if (context.mounted) {
+          AppSnackBar.show(
+            context,
+            message: context.l10n.fileOpenFailed,
+            type: AppSnackBarType.warning,
+          );
+        }
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.w('Could not open $filePath', e, s);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.errorOpeningFile('$e')),
-            backgroundColor: Colors.red,
-          ),
+        AppSnackBar.show(
+          context,
+          message: context.l10n.fileOpenFailed,
+          type: AppSnackBarType.error,
         );
       }
     }
@@ -239,7 +268,11 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
     AttachmentInfo attachmentInfo,
   ) {
     final filePath = attachmentInfo.filePath;
-    final title = attachmentInfo.title;
+    // Files are stored under a unique name (`report_1a2b3c4d.pdf`); the
+    // title keeps the name the user picked.
+    final title = attachmentInfo.title.isNotEmpty || filePath == null
+        ? attachmentInfo.title
+        : basename(filePath);
     final contentType = attachmentInfo.contentType;
 
     final isEncounterView = widget.resource.fhirType == FhirType.Encounter;
@@ -272,12 +305,14 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                     Expanded(
                       child: GestureDetector(
                         onTap: filePath != null
-                            ? () => _viewFile(context, filePath, contentType)
+                            ? () => _viewFile(
+                                context,
+                                filePath,
+                                contentType,
+                                title,
+                              )
                             : null,
-                        child: Text(
-                          filePath != null ? basename(filePath) : title,
-                          style: AppTextStyle.labelLarge,
-                        ),
+                        child: Text(title, style: AppTextStyle.labelLarge),
                       ),
                     ),
                   ],
@@ -289,7 +324,8 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
                     Padding(
                       padding: const EdgeInsets.all(6),
                       child: GestureDetector(
-                        onTap: () => _viewFile(context, filePath, contentType),
+                        onTap: () =>
+                            _viewFile(context, filePath, contentType, title),
                         child: const Icon(Icons.remove_red_eye_outlined),
                       ),
                     ),
@@ -365,8 +401,9 @@ class _RecordAttachmentsWidgetState extends State<RecordAttachmentsWidget> {
 
 class _ImageViewer extends StatelessWidget {
   final String filePath;
+  final String title;
 
-  const _ImageViewer({required this.filePath});
+  const _ImageViewer({required this.filePath, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -375,7 +412,7 @@ class _ImageViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(basename(filePath)),
+        title: Text(title),
       ),
       body: Center(
         child: InteractiveViewer(
@@ -404,11 +441,11 @@ class _ImageViewer extends StatelessWidget {
 
 class _PdfViewer extends StatelessWidget {
   final String filePath;
+  final String title;
 
-  const _PdfViewer({required this.filePath});
+  const _PdfViewer({required this.filePath, required this.title});
 
-  static bool get _isDesktop =>
-      Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+  static bool get _isDesktop => getIt<AppPlatform>().isDesktop;
 
   @override
   Widget build(BuildContext context) {
@@ -417,37 +454,26 @@ class _PdfViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(basename(filePath)),
+        title: Text(title),
       ),
-      body: _isDesktop
-          ? _DesktopPdfBody(filePath: filePath)
-          : PDFView(
-              filePath: filePath,
-              enableSwipe: true,
-              swipeHorizontal: true,
-              autoSpacing: true,
-              pageFling: true,
-              onError: (error) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(context.l10n.errorLoadingPdf('$error')),
-                    ),
-                  );
-                }
-              },
-              onPageError: (page, error) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        context.l10n.errorOnPage('$page', '$error'),
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
+      body: CheckedPdfView(
+        filePath: filePath,
+        builder: (context) => _isDesktop
+            ? _DesktopPdfBody(filePath: filePath)
+            : PDFView(
+                filePath: filePath,
+                enableSwipe: true,
+                swipeHorizontal: true,
+                autoSpacing: true,
+                pageFling: true,
+                onError: (error) =>
+                    CheckedPdfView.reportViewerError(context, error),
+                onPageError: (page, error) => CheckedPdfView.reportViewerError(
+                  context,
+                  'page $page: $error',
+                ),
+              ),
+      ),
     );
   }
 }
@@ -467,7 +493,7 @@ class _DesktopPdfBodyState extends State<_DesktopPdfBody> {
   void initState() {
     super.initState();
     _controller = pdfx.PdfController(
-      document: pdfx.PdfDocument.openFile(widget.filePath),
+      document: openPdfDocument(widget.filePath),
     );
   }
 

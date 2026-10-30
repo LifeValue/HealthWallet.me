@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/home/domain/services/specialty_classifier.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/domain/repository/records_repository.dart';
@@ -127,7 +128,12 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
                 if (await File(resolved).exists()) {
                   thumbnailPath = resolved;
                 }
-              } catch (_) {}
+              } catch (e) {
+                logger.w(
+                  'Could not resolve the attachment thumbnail $rawPath',
+                  e,
+                );
+              }
             }
           }
           if (thumbnailPath != null) break;
@@ -162,7 +168,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
           encounterId: encId,
         );
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not load the resources related to ${record.id}', e);
+    }
 
     String? patientName;
     String? organizationName;
@@ -196,7 +204,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
           default:
             break;
         }
-      } catch (_) {}
+      } catch (e) {
+        logger.w('Could not read the related resource ${resource.id}', e);
+      }
     }
 
     try {
@@ -211,7 +221,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
         final docAttachments = await _resolveDocumentAttachments(doc);
         attachments.addAll(docAttachments);
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not load the documents linked to ${record.id}', e);
+    }
 
     if (patientName == null &&
         organizationName == null &&
@@ -231,7 +243,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
             if (resolved != null) {
               patientName = _extractPersonName(resolved.rawResource);
             }
-          } catch (_) {}
+          } catch (e) {
+            logger.w('Could not resolve the patient $subjectRef', e);
+          }
         }
       }
     }
@@ -302,7 +316,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
           return tag['display'] as String?;
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      // Malformed meta tags carry no specialty; the caller classifies instead.
+    }
     return null;
   }
 
@@ -325,7 +341,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
       if (given != null && family != null) return '$given $family';
       if (given != null) return given.toString();
       if (family != null) return family;
-    } catch (_) {}
+    } catch (_) {
+      // A malformed name has no display text; the name stays unknown.
+    }
     return null;
   }
 
@@ -368,7 +386,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
       }
 
       callback(patient, org, practitioner);
-    } catch (_) {}
+    } catch (_) {
+      // Malformed context fields leave the names unknown, as when absent.
+    }
   }
 
   Future<List<AttachmentBrowseFile>> _resolveDocumentAttachments(
@@ -395,7 +415,9 @@ class RepositoryAttachmentBrowseService implements AttachmentBrowseService {
           if (await File(absolute).exists()) {
             resolvedPath = absolute;
           }
-        } catch (_) {}
+        } catch (e) {
+          logger.w('Could not resolve the attachment file $rawPath', e);
+        }
       }
 
       result.add(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -37,18 +38,25 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   StreamSubscription? _mpcStateSub;
   MpcTransport? _mpcTransport;
   Timer? _reconnectTimer;
+  Timer? _vpnRecheckTimer;
+  final Future<List<NetworkInterface>> Function() _listInterfaces;
 
   static const _mpcTimeout = Duration(seconds: 10);
   static const _initialReconnectDelay = Duration(seconds: 3);
   static const _maxReconnectAttempts = 5;
   int _reconnectAttempts = 0;
 
+  /// On the desktop the VPN check runs every [vpnRecheckInterval], so the
+  /// notice follows a VPN turned on or off within seconds, connected or not.
   CommunicationBloc(
     this._platform,
     this._pairingStorage,
     this._tcpService,
-    this._discoveryService,
-  ) : super(DesktopSyncState.initial()) {
+    this._discoveryService, {
+    Duration vpnRecheckInterval = const Duration(seconds: 5),
+    Future<List<NetworkInterface>> Function()? listInterfaces,
+  }) : _listInterfaces = listInterfaces ?? _ipv4Interfaces,
+       super(DesktopSyncState.initial()) {
     on<CommunicationInitialised>(_onInitialised);
     on<CommunicationPairingRequested>(_onPairingRequested);
     on<CommunicationPairingCompleted>(_onPairingCompleted);
@@ -61,10 +69,23 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     on<CommunicationPendingClientReceived>(_onPendingClient);
     on<CommunicationPendingClientAccepted>(_onPendingAccepted);
     on<CommunicationPendingClientRejected>(_onPendingRejected);
+    on<CommunicationVpnChecked>(_onVpnChecked, transformer: droppable());
 
     _listenToTcp();
     _initMpcIfAvailable();
+    if (_platform.isDesktop) {
+      _vpnRecheckTimer = Timer.periodic(
+        vpnRecheckInterval,
+        (_) => add(const CommunicationVpnChecked()),
+      );
+    }
   }
+
+  static Future<List<NetworkInterface>> _ipv4Interfaces() =>
+      NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLoopback: false,
+      );
 
   void _listenToTcp() {
     _connectionSub = _tcpService.connectionState.listen((tcpState) {
@@ -381,6 +402,8 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
       debugPrint(
         '[Communication] Client disconnected, restarting MPC advertising',
       );
+      // A full-tunnel VPN lets the phone connect and then drops the link.
+      add(const CommunicationVpnChecked());
       if (_mpcTransport != null) {
         await _mpcTransport!.disconnect();
         await _mpcTransport!.startServer(port: 0);
@@ -462,11 +485,22 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
     }
   }
 
+  Future<void> _onVpnChecked(
+    CommunicationVpnChecked event,
+    Emitter<DesktopSyncState> emit,
+  ) async {
+    if (!_platform.isDesktop) return;
+
+    try {
+      final (ip: _, :vpnDetected) = await _getLocalIp();
+      emit(state.copyWith(vpnDetected: vpnDetected));
+    } on SocketException catch (e) {
+      debugPrint('[Communication] VPN check failed: $e');
+    }
+  }
+
   Future<({String ip, bool vpnDetected})> _getLocalIp() async {
-    final interfaces = await NetworkInterface.list(
-      type: InternetAddressType.IPv4,
-      includeLoopback: false,
-    );
+    final interfaces = await _listInterfaces();
     if (interfaces.isEmpty) return (ip: '127.0.0.1', vpnDetected: false);
 
     final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
@@ -556,6 +590,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   @override
   Future<void> close() {
     _reconnectTimer?.cancel();
+    _vpnRecheckTimer?.cancel();
     _connectionSub?.cancel();
     _pendingClientSub?.cancel();
     _messageSub?.cancel();

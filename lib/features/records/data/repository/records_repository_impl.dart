@@ -10,6 +10,7 @@ import 'package:health_wallet/core/config/constants/country_identifier.dart';
 import 'package:health_wallet/core/config/constants/shared_prefs_constants.dart';
 import 'package:health_wallet/core/constants/blood_types.dart';
 import 'package:health_wallet/core/data/local/app_database.dart';
+import 'package:health_wallet/core/data/local/soft_delete.dart';
 import 'package:health_wallet/core/utils/fhir_reference_utils.dart';
 import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/features/records/data/data_source/fhir_resource_datasource.dart';
@@ -153,7 +154,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final notes =
         await (_database.select(_database.recordNotes)
-              ..where((t) => t.resourceId.equals(resourceId))
+              ..where(
+                (t) => t.resourceId.equals(resourceId) & t.deletedAt.isNull(),
+              )
               ..orderBy([(t) => OrderingTerm.desc(t.timestamp)]))
             .get();
 
@@ -181,13 +184,13 @@ class RecordsRepositoryImpl implements RecordsRepository {
     );
   }
 
+  /// Soft-deletes the note so the delete reaches the paired device.
   @override
-  Future<int> deleteRecordNote(RecordNote note) async {
-    return await (_database.delete(
-      _database.recordNotes,
-    )..where((t) => t.id.equals(note.id))).go();
-  }
+  Future<int> deleteRecordNote(RecordNote note) =>
+      _database.softDeleteNote(note.id);
 
+  /// Soft-deletes the record and its notes so the delete reaches the paired
+  /// device; the other delete methods below do the same.
   @override
   Future<void> deleteResource(String resourceId) async {
     await _datasource.deleteResourceById(resourceId);
@@ -200,9 +203,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
   @override
   Future<void> deleteResourceWithRelated(String resourceId) async {
-    final targetResource = (await (_database.select(
-      _database.fhirResource,
-    )..where((f) => f.id.equals(resourceId))).get()).firstOrNull;
+    final targetResource = await _liveResource(resourceId);
 
     if (targetResource == null) return;
 
@@ -218,9 +219,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final encId = targetResource.encounterId;
     if (encId != null && encId.isNotEmpty) {
-      final encounterRows = await (_database.select(
-        _database.fhirResource,
-      )..where((f) => f.resourceId.equals(encId))).get();
+      final encounterRows = await _liveResourcesWithResourceId(encId);
       idsToDelete.addAll(encounterRows.map((r) => r.id));
 
       final siblings = await _datasource.getResourcesByEncounterId(
@@ -232,11 +231,21 @@ class RecordsRepositoryImpl implements RecordsRepository {
     await _datasource.deleteResourcesByIds(idsToDelete.toList());
   }
 
+  Future<FhirResourceLocalDto?> _liveResource(String id) => (_database.select(
+    _database.fhirResource,
+  )..where((f) => f.id.equals(id) & f.deletedAt.isNull())).getSingleOrNull();
+
+  Future<List<FhirResourceLocalDto>> _liveResourcesWithResourceId(
+    String resourceId,
+  ) =>
+      (_database.select(_database.fhirResource)..where(
+            (f) => f.resourceId.equals(resourceId) & f.deletedAt.isNull(),
+          ))
+          .get();
+
   @override
   Future<int> getRelatedResourceCount(String resourceId) async {
-    final targetResource = (await (_database.select(
-      _database.fhirResource,
-    )..where((f) => f.id.equals(resourceId))).get()).firstOrNull;
+    final targetResource = await _liveResource(resourceId);
 
     if (targetResource == null) return 0;
 
@@ -260,9 +269,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
   Future<List<IFhirResource>> getRelatedResourcesForDeletion(
     String resourceId,
   ) async {
-    final targetResource = (await (_database.select(
-      _database.fhirResource,
-    )..where((f) => f.id.equals(resourceId))).get()).firstOrNull;
+    final targetResource = await _liveResource(resourceId);
 
     if (targetResource == null) return [];
 
@@ -280,9 +287,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     final encId = targetResource.encounterId;
     if (encId != null && encId.isNotEmpty) {
-      final encounterRows = await (_database.select(
-        _database.fhirResource,
-      )..where((f) => f.resourceId.equals(encId))).get();
+      final encounterRows = await _liveResourcesWithResourceId(encId);
       for (final r in encounterRows) {
         if (r.id != resourceId) relatedIds.add(r.id);
       }
@@ -297,9 +302,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
 
     if (relatedIds.isEmpty) return [];
 
-    final relatedRows = await (_database.select(
-      _database.fhirResource,
-    )..where((f) => f.id.isIn(relatedIds.toList()))).get();
+    final relatedRows =
+        await (_database.select(_database.fhirResource)..where(
+              (f) => f.id.isIn(relatedIds.toList()) & f.deletedAt.isNull(),
+            ))
+            .get();
 
     return relatedRows.map(IFhirResource.fromLocalDto).toList();
   }
@@ -504,12 +511,10 @@ class RecordsRepositoryImpl implements RecordsRepository {
   }
 
   @override
-  Future<void> clearDemoData() async {
-    await _datasource.deleteResourcesBySourceId('demo_data');
-
-    // Delete the demo_data source itself
-    await _syncLocalDataSource.deleteSource('demo_data');
-  }
+  Future<void> clearDemoData() =>
+      // Tombstones the source, its records and their notes in one
+      // transaction.
+      _syncLocalDataSource.deleteSource('demo_data');
 
   @override
   Future<bool> hasDemoData() async {
@@ -599,14 +604,8 @@ class RecordsRepositoryImpl implements RecordsRepository {
         return false;
       }
 
-      String subjectPatientId;
-      if (subject.contains('/')) {
-        subjectPatientId = subject.split('/').last;
-      } else if (subject.startsWith('urn:uuid:')) {
-        subjectPatientId = subject.replaceFirst('urn:uuid:', '');
-      } else {
-        subjectPatientId = subject;
-      }
+      final subjectPatientId =
+          FhirReferenceUtils.extractReferenceId(subject) ?? subject;
 
       final matches =
           subjectPatientId == targetPatient.resourceId ||

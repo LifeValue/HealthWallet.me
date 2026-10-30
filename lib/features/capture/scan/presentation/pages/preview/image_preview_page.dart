@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/di/injection.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/services/path_resolver.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/widgets/dialogs/app_simple_dialog.dart';
 import 'package:health_wallet/features/capture/scan/presentation/pages/preview/bloc/preview_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
@@ -282,7 +283,9 @@ class _ImagePreviewPageState extends State<ImagePreviewPage> {
           ),
         );
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not read the size of the preview image', e);
+    }
 
     return Center(
       child: InteractiveViewer(

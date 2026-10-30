@@ -113,9 +113,77 @@ void main() {
 
       expect(result, rows);
     });
+
+    test(
+      'passes a tombstoned DocumentReference through without its file',
+      () async {
+        await dirs.writeDoc('report.pdf', pdfBytes);
+        final row = {
+          ...docRow([
+            {'url': 'file://report.pdf'},
+          ]),
+          'deleted_at': ms(t0),
+        };
+
+        final result = await service.embedAttachments([row]);
+
+        expect(identical(result.single, row), isTrue);
+      },
+    );
   });
 
   group('restoreAttachments', () {
+    test('drops inline data of a tombstoned DocumentReference without '
+        'writing a file', () async {
+      final row = {
+        ...docRow([
+          {'data': base64Encode(pdfBytes), 'title': 'scan.pdf'},
+          {'url': 'https://example.org/remote.pdf'},
+        ]),
+        'deleted_at': ms(t0),
+      };
+
+      final result = await service.restoreAttachments([row]);
+
+      expect(dirs.docNames(), isEmpty);
+      expect(attachmentsOf(result.single), [
+        {'title': 'scan.pdf'},
+        {'url': 'https://example.org/remote.pdf'},
+      ]);
+      expect(result.single['deleted_at'], ms(t0));
+      expect(attachmentsOf(row).first['data'], isNotNull);
+    });
+
+    test('passes a tombstone without inline data through as-is', () async {
+      final row = {
+        ...docRow([
+          {'url': 'file://report.pdf'},
+        ]),
+        'deleted_at': ms(t0),
+      };
+      Map<String, dynamic> tombstone(String? raw) => {
+        'id': 'bad',
+        'resource_type': 'DocumentReference',
+        'resource_raw': raw,
+        'deleted_at': ms(t0),
+      };
+      final odd = [
+        tombstone(null),
+        tombstone('{not json "data"'),
+        tombstone('["data"]'),
+        tombstone('{"content": "data"}'),
+        tombstone('{"content": ["data", {"attachment": "data"}]}'),
+        tombstone('{"content": [{"attachment": {"title": "data"}}]}'),
+      ];
+
+      final result = await service.restoreAttachments([row, ...odd]);
+
+      expect(identical(result.first, row), isTrue);
+      for (var i = 0; i < odd.length; i++) {
+        expect(identical(result[i + 1], odd[i]), isTrue, reason: '$i');
+      }
+    });
+
     test('writes inline data to a uniquely named file and points the url at '
         'it', () async {
       final row = docRow([
@@ -259,6 +327,53 @@ void main() {
       final url = attachmentsOf(restored.single).single['url'] as String;
       final file = File('${otherDocs.path}/${url.substring(7)}');
       expect(await file.readAsBytes(), pdfBytes);
+    });
+
+    test('two attachments titled alike reach the peer as two files, each '
+        'with its own bytes', () async {
+      final firstBytes = utf8.encode('%PDF-1.7 first report');
+      final secondBytes = utf8.encode('%PDF-1.7 second report');
+      // The phone stores each pick under a unique name but keeps the title
+      // the user picked.
+      await dirs.writeDoc('report_aaaa1111.pdf', firstBytes);
+      await dirs.writeDoc('report_bbbb2222.pdf', secondBytes);
+      final sources = [
+        docRow(id: 'doc-a', [
+          {
+            'url': 'file://report_aaaa1111.pdf',
+            'title': 'report.pdf',
+            'contentType': 'application/pdf',
+          },
+        ]),
+        docRow(id: 'doc-b', [
+          {
+            'url': 'file://report_bbbb2222.pdf',
+            'title': 'report.pdf',
+            'contentType': 'application/pdf',
+          },
+        ]),
+      ];
+      final otherDocs = Directory('${dirs.root.path}/peer/Documents')
+        ..createSync(recursive: true);
+      final peer = AttachmentSyncService(FakePathResolver(otherDocs.path));
+
+      final wire = jsonDecode(
+        jsonEncode(await service.embedAttachments(sources)),
+      ) as List;
+      final restored = await peer.restoreAttachments([
+        for (final r in wire) Map<String, dynamic>.from(r as Map),
+      ]);
+
+      final a = attachmentsOf(restored[0]).single;
+      final b = attachmentsOf(restored[1]).single;
+      expect(a['title'], 'report.pdf');
+      expect(b['title'], 'report.pdf');
+      expect(a['url'], isNot(b['url']));
+      Future<List<int>> bytesOf(Map<String, dynamic> attachment) => File(
+        '${otherDocs.path}/${(attachment['url'] as String).substring(7)}',
+      ).readAsBytes();
+      expect(await bytesOf(a), firstBytes);
+      expect(await bytesOf(b), secondBytes);
     });
   });
 

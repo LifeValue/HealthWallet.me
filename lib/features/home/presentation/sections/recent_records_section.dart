@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health_wallet/core/l10n/display_names.dart';
 import 'package:health_wallet/core/l10n/l10n.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
@@ -7,6 +8,7 @@ import 'package:health_wallet/core/utils/build_context_extension.dart';
 import 'package:health_wallet/core/utils/date_format_utils.dart';
 import 'package:health_wallet/features/records/domain/entity/entity.dart';
 import 'package:health_wallet/features/records/presentation/models/record_info_line.dart';
+import 'package:health_wallet/features/user/presentation/bloc/user_bloc.dart';
 import 'package:health_wallet/gen/assets.gen.dart';
 
 class RecentRecordsSection extends StatelessWidget {
@@ -36,7 +38,10 @@ class RecentRecordsSection extends StatelessWidget {
   Widget _buildRecentRecordCard(BuildContext context, IFhirResource record) {
     final tag = record.fhirType.localizedName(context.l10n);
     final RecordInfoLine? infoLine = record
-        .additionalInfo(context.l10n)
+        .additionalInfoIn(
+          context.read<UserBloc>().state.regionPreset,
+          context.l10n,
+        )
         .firstOrNull;
 
     // Get icon based on resource type

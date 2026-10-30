@@ -14,8 +14,10 @@ import 'package:health_wallet/core/navigation/app_router.dart';
 import 'package:health_wallet/core/theme/app_insets.dart';
 import 'package:health_wallet/core/theme/app_text_style.dart';
 import 'package:health_wallet/core/utils/build_context_extension.dart';
+import 'package:health_wallet/core/utils/logger.dart';
 import 'package:health_wallet/core/utils/responsive.dart';
 import 'package:health_wallet/core/widgets/animated_sticky_header.dart';
+import 'package:health_wallet/core/widgets/app_snack_bar.dart';
 import 'package:health_wallet/core/widgets/custom_arrow_tooltip.dart';
 import 'package:health_wallet/features/dashboard/presentation/helpers/page_view_navigation_controller.dart';
 import 'package:health_wallet/features/desktop/lww_sync/presentation/bloc/lww_sync_bloc.dart';
@@ -187,7 +189,9 @@ class _RecordsViewState extends State<RecordsView> {
           return patientGroup.sourceIds;
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not read the selected patient sources', e);
+    }
     return null;
   }
 
@@ -294,7 +298,10 @@ class _RecordsViewState extends State<RecordsView> {
           unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.e('Could not import the picked documents', e);
+      _showImportFailed();
+    }
   }
 
   Future<void> _handlePickImage() async {
@@ -315,7 +322,19 @@ class _RecordsViewState extends State<RecordsView> {
         );
         unawaited(getIt<PageViewNavigationController>().navigateToPage(3));
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.e('Could not import the picked images', e);
+      _showImportFailed();
+    }
+  }
+
+  void _showImportFailed() {
+    if (!mounted) return;
+    AppSnackBar.show(
+      context,
+      message: context.l10n.importFilesFailed,
+      type: AppSnackBarType.error,
+    );
   }
 
   void _handleScanDocument() {
@@ -573,8 +592,10 @@ class _RecordsViewState extends State<RecordsView> {
         }
         break;
       case PermissionDenied():
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message(context.l10n))),
+        AppSnackBar.show(
+          context,
+          message: result.message(context.l10n),
+          type: AppSnackBarType.warning,
         );
         return;
       case PermissionPermanentlyDenied():
@@ -770,7 +791,9 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
           setState(() => _relatedResources = related);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      logger.w('Could not load the resources related to ${record.id}', e);
+    }
   }
 
   @override
@@ -1013,47 +1036,52 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
                 record.displayTitle,
                 style: AppTextStyle.bodyMedium.copyWith(color: onSurface),
               ),
-              ...record.additionalInfo(context.l10n).map((info) {
-                if (info.isSection) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 20, bottom: 8),
-                    child: Text(
-                      info.info,
-                      style: AppTextStyle.labelLarge.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: onSurface,
-                      ),
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: info.icon.svg(
-                          width: 16,
-                          colorFilter: ColorFilter.mode(
-                            dimColor,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
+              ...record
+                  .additionalInfoIn(
+                    context.read<UserBloc>().state.regionPreset,
+                    context.l10n,
+                  )
+                  .map((info) {
+                    if (info.isSection) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 20, bottom: 8),
                         child: Text(
                           info.info,
                           style: AppTextStyle.labelLarge.copyWith(
+                            fontWeight: FontWeight.bold,
                             color: onSurface,
                           ),
                         ),
+                      );
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: info.icon.svg(
+                              width: 16,
+                              colorFilter: ColorFilter.mode(
+                                dimColor,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              info.info,
+                              style: AppTextStyle.labelLarge.copyWith(
+                                color: onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              }),
+                    );
+                  }),
             ],
           ),
         ),
@@ -1099,7 +1127,10 @@ class _DesktopDetailsPanelState extends State<_DesktopDetailsPanel> {
 
   Widget _buildResourceInfo(IFhirResource resource, Color dimColor) {
     final lines = resource
-        .additionalInfo(context.l10n)
+        .additionalInfoIn(
+          context.read<UserBloc>().state.regionPreset,
+          context.l10n,
+        )
         .where((l) => !l.isSection)
         .take(2)
         .toList();

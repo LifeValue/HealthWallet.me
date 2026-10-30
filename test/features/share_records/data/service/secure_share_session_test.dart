@@ -188,6 +188,32 @@ void main() {
     await expectLater(payload, throwsA(isA<SecureShareCancelled>()));
   });
 
+  test('a session disposed after sealing cancels the key exchange instead '
+      'of throwing', () async {
+    final (sender, _) = _link();
+    final session = SecureShareSession(sender);
+    await session.seal(utf8.encode('{}'));
+    await session.dispose();
+
+    await expectLater(
+      session.awaitReceiver(),
+      throwsA(isA<SecureShareCancelled>()),
+    );
+  });
+
+  test('a session disposed while sealing keeps no keys', () async {
+    final (sender, _) = _link();
+    final session = SecureShareSession(sender);
+    final sealing = session.seal(utf8.encode('{}'));
+    await session.dispose();
+
+    await expectLater(sealing, throwsA(isA<SecureShareCancelled>()));
+    await expectLater(
+      session.awaitReceiver(),
+      throwsA(isA<SecureShareCancelled>()),
+    );
+  });
+
   test('confirm needs a completed exchange', () async {
     await sender.seal(_records);
     expect(sender.confirm, throwsStateError);

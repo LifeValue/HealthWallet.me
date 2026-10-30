@@ -71,8 +71,26 @@ echo "==> Windows icon (windows/runner/resources/app_icon.ico)"
 magick "$rounded" -define icon:auto-resize=256,128,64,48,32,24,16 \
   windows/runner/resources/app_icon.ico
 
+# iOS keeps a snapshot of the launch screen, and after an app update it can
+# keep showing the old one while the image keeps the same name. The iOS launch
+# image is therefore named after its pixels (LaunchImage-<hash>), so a new
+# image gets a new name and updated apps show it without a reinstall or a
+# restart of the phone. flutter_native_splash only knows "LaunchImage", so the
+# plain name goes back before it runs and the content name after.
+assets=ios/Runner/Assets.xcassets
+storyboard=ios/Runner/Base.lproj/LaunchScreen.storyboard
+for dir in "$assets"/LaunchImage-*.imageset; do
+  if [ -d "$dir" ]; then mv "$dir" "$assets/LaunchImage.imageset"; fi
+done
+sed -i '' -E 's/"LaunchImage-[0-9a-f]{8}"/"LaunchImage"/g' "$storyboard"
+
 echo "==> native launch screens (branding/splash.yaml)"
 fvm dart run flutter_native_splash:create --path=branding/splash.yaml
+
+echo "==> iOS launch image named after its content"
+launch_image="LaunchImage-$(cat "$assets"/LaunchImage.imageset/*.png | shasum | cut -c1-8)"
+mv "$assets/LaunchImage.imageset" "$assets/$launch_image.imageset"
+sed -i '' "s/\"LaunchImage\"/\"$launch_image\"/g" "$storyboard"
 
 # The generators rewrite some files they don't change (indentation only).
 echo "==> dropping whitespace-only rewrites"

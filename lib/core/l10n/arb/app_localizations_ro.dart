@@ -376,6 +376,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get clearAll => 'Șterge tot';
 
   @override
+  String get deselectAll => 'Deselectează tot';
+
+  @override
   String get save => 'Salvează';
 
   @override
@@ -596,6 +599,10 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get modelCorruptedError =>
       'Fișierul modelului este corupt. Re-descarcă modelul AI.';
+
+  @override
+  String get processingFailedGeneric =>
+      'A apărut o eroare la procesarea documentului. Încearcă din nou.';
 
   @override
   String get processingCancelled => 'Procesarea a fost anulată';
@@ -1335,6 +1342,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'VPN detectat. Deconectează VPN-ul pentru a sincroniza cu desktopul.';
 
   @override
+  String get desktopVpnBlocksPhone =>
+      'Pe acest computer este activ un VPN. Poate împiedica telefonul tău să se conecteze: oprește-l sau permite accesul la rețeaua locală din setările VPN-ului.';
+
+  @override
   String get desktopPairing => 'Asociere';
 
   @override
@@ -1798,30 +1809,19 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
+  String get relatedResourcesKeptHint =>
+      'Resursele asociate rămân, dacă nu le selectezi mai jos.';
+
+  @override
+  String relatedResourcesCount(int count) {
+    return 'Resurse asociate ($count)';
+  }
+
+  @override
   String get fileNotAvailable => 'Fișier indisponibil pe acest dispozitiv';
 
   @override
-  String couldNotOpenFile(String message) {
-    return 'Fișierul nu a putut fi deschis: $message';
-  }
-
-  @override
-  String errorOpeningFile(String error) {
-    return 'Eroare la deschiderea fișierului: $error';
-  }
-
-  @override
   String get failedToLoadImage => 'Imaginea nu a putut fi încărcată';
-
-  @override
-  String errorLoadingPdf(String error) {
-    return 'Eroare la încărcarea PDF: $error';
-  }
-
-  @override
-  String errorOnPage(String page, String error) {
-    return 'Eroare pe pagina $page: $error';
-  }
 
   @override
   String get notes => 'Notițe';
@@ -1900,6 +1900,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get failedToLoadPdf => 'Documentul PDF nu a putut fi încărcat';
 
   @override
+  String get fileOpenFailed =>
+      'Fișierul nu a putut fi deschis. Încearcă din nou.';
+
+  @override
   String get mediaInformation => 'Informații media';
 
   @override
@@ -1947,9 +1951,8 @@ class AppLocalizationsRo extends AppLocalizations {
       'Resursă media legată cu succes de consultație';
 
   @override
-  String failedToLinkMedia(String error) {
-    return 'Legarea a eșuat: $error';
-  }
+  String get linkMediaFailed =>
+      'Resursa media nu a putut fi legată de consultație. Încearcă din nou.';
 
   @override
   String get link => 'Leagă';
@@ -2015,6 +2018,14 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get addIpsToGoogleWallet => 'Adaugă IPS în Google Wallet';
+
+  @override
+  String get ipsExportFailed =>
+      'Rezumatul medical nu a putut fi exportat. Încearcă din nou.';
+
+  @override
+  String get walletPassFailed =>
+      'Cardul nu a putut fi adăugat în portofel. Încearcă din nou.';
 
   @override
   String get sourcesTitle => 'Surse';
@@ -2618,16 +2629,6 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String couldNotOpenPdf(String message) {
-    return 'PDF-ul nu a putut fi deschis: $message';
-  }
-
-  @override
-  String errorOpeningPdf(String error) {
-    return 'Eroare la deschiderea PDF-ului: $error';
-  }
-
-  @override
   String get shareStatusReadyToShare => 'Gata de partajare';
 
   @override
@@ -2864,6 +2865,14 @@ class AppLocalizationsRo extends AppLocalizations {
       'Nu se pot atașa fișiere la un document';
 
   @override
+  String get attachFileFailed =>
+      'Fișierul nu a putut fi atașat. Încearcă din nou.';
+
+  @override
+  String get attachmentDeleteFailed =>
+      'Atașamentul nu a putut fi șters. Încearcă din nou.';
+
+  @override
   String deleteRecordOfType(String type) {
     return 'Șterge $type';
   }
@@ -2956,24 +2965,29 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String scanFailedWithError(String error) {
-    return 'Scanarea a eșuat: $error';
-  }
+  String get scanFailed => 'Scanarea a eșuat. Încearcă din nou.';
 
   @override
   String get noValidFilesFound => 'Nu s-au găsit fișiere valide';
 
   @override
-  String failedToImportDocument(String error) {
-    return 'Importul documentului a eșuat: $error';
-  }
+  String get importDocumentFailed =>
+      'Importul documentului a eșuat. Încearcă din nou.';
 
   @override
   String get couldNotOpenLink =>
       'Linkul nu a putut fi deschis. Încearcă din nou.';
 
   @override
+  String get importFilesFailed =>
+      'Fișierele selectate nu au putut fi deschise. Încearcă din nou.';
+
+  @override
   String get continueProcessingOnDesktop => 'Continuă procesarea pe desktop';
+
+  @override
+  String get handoverSendFailed =>
+      'Documentul nu a putut fi trimis pe desktop. Încearcă din nou.';
 
   @override
   String get deleteResourcesTitle => 'Șterge resursele';
@@ -3872,11 +3886,6 @@ class AppLocalizationsRo extends AppLocalizations {
   }
 
   @override
-  String sizeBytes(String size) {
-    return '$size octeți';
-  }
-
-  @override
   String doseNumberOfTotal(String dose, String total) {
     return 'Doza $dose din $total';
   }
@@ -4356,9 +4365,8 @@ class AppLocalizationsRo extends AppLocalizations {
       'Format nevalid al datelor de sincronizare';
 
   @override
-  String syncErrorGeneric(String error) {
-    return 'Sincronizarea datelor a eșuat: $error';
-  }
+  String get syncErrorGeneric =>
+      'Sincronizarea datelor a eșuat. Încearcă din nou.';
 
   @override
   String syncPlaceholderSubtitle(String recordType) {
@@ -4381,5 +4389,10 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String desktopRestoreSucceededMessage(String name, int count) {
     return '\"$name\" a fost restaurată. Acum sunt $count înregistrări pe acest dispozitiv.';
+  }
+
+  @override
+  String desktopBackupSucceededMessage(String name, int count) {
+    return '\"$name\" a fost salvată. Conține $count înregistrări.';
   }
 }

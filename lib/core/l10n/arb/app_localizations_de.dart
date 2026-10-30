@@ -379,6 +379,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get clearAll => 'Alle löschen';
 
   @override
+  String get deselectAll => 'Alle abwählen';
+
+  @override
   String get save => 'Speichern';
 
   @override
@@ -597,6 +600,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get modelCorruptedError =>
       'Modelldatei ist beschädigt. Bitte laden Sie das KI-Modell erneut herunter.';
+
+  @override
+  String get processingFailedGeneric =>
+      'Beim Verarbeiten des Dokuments ist ein Fehler aufgetreten. Bitte versuche es erneut.';
 
   @override
   String get processingCancelled => 'Die Verarbeitung wurde abgebrochen';
@@ -1338,6 +1345,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'VPN erkannt. Trenne das VPN, um mit dem Desktop zu synchronisieren.';
 
   @override
+  String get desktopVpnBlocksPhone =>
+      'Auf diesem Computer ist ein VPN aktiv. Es kann verhindern, dass sich dein Telefon verbindet: Schalte es aus oder erlaube in den VPN-Einstellungen den Zugriff auf das lokale Netzwerk.';
+
+  @override
   String get desktopPairing => 'Kopplung';
 
   @override
@@ -1799,30 +1810,19 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get relatedResourcesKeptHint =>
+      'Zugehörige Einträge bleiben erhalten, außer du wählst sie unten aus.';
+
+  @override
+  String relatedResourcesCount(int count) {
+    return 'Zugehörige Einträge ($count)';
+  }
+
+  @override
   String get fileNotAvailable => 'Datei auf diesem Gerät nicht verfügbar';
 
   @override
-  String couldNotOpenFile(String message) {
-    return 'Datei konnte nicht geöffnet werden: $message';
-  }
-
-  @override
-  String errorOpeningFile(String error) {
-    return 'Fehler beim Öffnen der Datei: $error';
-  }
-
-  @override
   String get failedToLoadImage => 'Bild konnte nicht geladen werden';
-
-  @override
-  String errorLoadingPdf(String error) {
-    return 'Fehler beim Laden der PDF: $error';
-  }
-
-  @override
-  String errorOnPage(String page, String error) {
-    return 'Fehler auf Seite $page: $error';
-  }
 
   @override
   String get notes => 'Notizen';
@@ -1901,6 +1901,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get failedToLoadPdf => 'PDF konnte nicht geladen werden';
 
   @override
+  String get fileOpenFailed =>
+      'Die Datei konnte nicht geöffnet werden. Bitte versuche es erneut.';
+
+  @override
   String get mediaInformation => 'Medieninformationen';
 
   @override
@@ -1948,9 +1952,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Mediendatei erfolgreich mit Termin verknüpft';
 
   @override
-  String failedToLinkMedia(String error) {
-    return 'Verknüpfung fehlgeschlagen: $error';
-  }
+  String get linkMediaFailed =>
+      'Die Mediendatei konnte nicht mit dem Termin verknüpft werden. Bitte versuche es erneut.';
 
   @override
   String get link => 'Verknüpfen';
@@ -2016,6 +2019,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get addIpsToGoogleWallet => 'IPS zu Google Wallet hinzufügen';
+
+  @override
+  String get ipsExportFailed =>
+      'Deine Gesundheitsübersicht konnte nicht exportiert werden. Bitte versuche es erneut.';
+
+  @override
+  String get walletPassFailed =>
+      'Der Pass konnte nicht zu deinem Wallet hinzugefügt werden. Bitte versuche es erneut.';
 
   @override
   String get sourcesTitle => 'Quellen';
@@ -2624,16 +2635,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String couldNotOpenPdf(String message) {
-    return 'PDF konnte nicht geöffnet werden: $message';
-  }
-
-  @override
-  String errorOpeningPdf(String error) {
-    return 'Fehler beim Öffnen des PDFs: $error';
-  }
-
-  @override
   String get shareStatusReadyToShare => 'Bereit zum Teilen';
 
   @override
@@ -2873,6 +2874,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'An ein Dokument können keine Dateien angehängt werden';
 
   @override
+  String get attachFileFailed =>
+      'Die Datei konnte nicht angehängt werden. Bitte versuche es erneut.';
+
+  @override
+  String get attachmentDeleteFailed =>
+      'Der Anhang konnte nicht gelöscht werden. Bitte versuche es erneut.';
+
+  @override
   String deleteRecordOfType(String type) {
     return '$type löschen';
   }
@@ -2965,25 +2974,31 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String scanFailedWithError(String error) {
-    return 'Scannen fehlgeschlagen: $error';
-  }
+  String get scanFailed =>
+      'Der Scan ist fehlgeschlagen. Bitte versuche es erneut.';
 
   @override
   String get noValidFilesFound => 'Keine gültigen Dateien gefunden';
 
   @override
-  String failedToImportDocument(String error) {
-    return 'Dokument konnte nicht importiert werden: $error';
-  }
+  String get importDocumentFailed =>
+      'Das Dokument konnte nicht importiert werden. Bitte versuche es erneut.';
 
   @override
   String get couldNotOpenLink =>
       'Der Link konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.';
 
   @override
+  String get importFilesFailed =>
+      'Die ausgewählten Dateien konnten nicht geöffnet werden. Bitte versuche es erneut.';
+
+  @override
   String get continueProcessingOnDesktop =>
       'Verarbeitung auf dem Desktop fortsetzen';
+
+  @override
+  String get handoverSendFailed =>
+      'Das Dokument konnte nicht an den Desktop gesendet werden. Bitte versuche es erneut.';
 
   @override
   String get deleteResourcesTitle => 'Ressourcen löschen';
@@ -3882,11 +3897,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String sizeBytes(String size) {
-    return '$size Byte';
-  }
-
-  @override
   String doseNumberOfTotal(String dose, String total) {
     return 'Dosis $dose von $total';
   }
@@ -4357,9 +4367,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ungültiges Format der Synchronisierungsdaten';
 
   @override
-  String syncErrorGeneric(String error) {
-    return 'Datensynchronisierung fehlgeschlagen: $error';
-  }
+  String get syncErrorGeneric =>
+      'Datensynchronisierung fehlgeschlagen. Bitte versuche es erneut.';
 
   @override
   String syncPlaceholderSubtitle(String recordType) {
@@ -4382,5 +4391,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String desktopRestoreSucceededMessage(String name, int count) {
     return '\"$name\" wurde wiederhergestellt. Auf diesem Gerät sind jetzt $count Aufzeichnungen.';
+  }
+
+  @override
+  String desktopBackupSucceededMessage(String name, int count) {
+    return '\"$name\" wurde gespeichert. Sie enthält $count Aufzeichnungen.';
   }
 }

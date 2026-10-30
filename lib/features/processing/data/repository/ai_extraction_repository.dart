@@ -230,7 +230,9 @@ mixin AiExtractionRepository {
     try {
       jsonDecode(trimmed);
       return trimmed;
-    } catch (_) {}
+    } catch (_) {
+      // Not valid JSON yet: the array was cut off, so repair it below.
+    }
 
     int depth = 0;
     int lastCompleteObjectEnd = -1;
@@ -386,7 +388,9 @@ mixin AiExtractionRepository {
       if (preprocessed[i] != imagePaths[i]) {
         try {
           await File(preprocessed[i]).delete();
-        } catch (_) {}
+        } catch (_) {
+          // Best-effort cleanup; a leftover preprocessed copy is harmless.
+        }
       }
     }
     return results;
