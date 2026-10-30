@@ -38,18 +38,25 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   StreamSubscription? _mpcStateSub;
   MpcTransport? _mpcTransport;
   Timer? _reconnectTimer;
+  Timer? _vpnRecheckTimer;
+  final Future<List<NetworkInterface>> Function() _listInterfaces;
 
   static const _mpcTimeout = Duration(seconds: 10);
   static const _initialReconnectDelay = Duration(seconds: 3);
   static const _maxReconnectAttempts = 5;
   int _reconnectAttempts = 0;
 
+  /// On the desktop the VPN check runs every [vpnRecheckInterval], so the
+  /// notice follows a VPN turned on or off within seconds, connected or not.
   CommunicationBloc(
     this._platform,
     this._pairingStorage,
     this._tcpService,
-    this._discoveryService,
-  ) : super(DesktopSyncState.initial()) {
+    this._discoveryService, {
+    Duration vpnRecheckInterval = const Duration(seconds: 5),
+    Future<List<NetworkInterface>> Function()? listInterfaces,
+  }) : _listInterfaces = listInterfaces ?? _ipv4Interfaces,
+       super(DesktopSyncState.initial()) {
     on<CommunicationInitialised>(_onInitialised);
     on<CommunicationPairingRequested>(_onPairingRequested);
     on<CommunicationPairingCompleted>(_onPairingCompleted);
@@ -66,7 +73,19 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
 
     _listenToTcp();
     _initMpcIfAvailable();
+    if (_platform.isDesktop) {
+      _vpnRecheckTimer = Timer.periodic(
+        vpnRecheckInterval,
+        (_) => add(const CommunicationVpnChecked()),
+      );
+    }
   }
+
+  static Future<List<NetworkInterface>> _ipv4Interfaces() =>
+      NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLoopback: false,
+      );
 
   void _listenToTcp() {
     _connectionSub = _tcpService.connectionState.listen((tcpState) {
@@ -481,10 +500,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   }
 
   Future<({String ip, bool vpnDetected})> _getLocalIp() async {
-    final interfaces = await NetworkInterface.list(
-      type: InternetAddressType.IPv4,
-      includeLoopback: false,
-    );
+    final interfaces = await _listInterfaces();
     if (interfaces.isEmpty) return (ip: '127.0.0.1', vpnDetected: false);
 
     final vpnPrefixes = ['utun', 'tun', 'tap', 'ppp', 'ipsec', 'wg'];
@@ -574,6 +590,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, DesktopSyncState> {
   @override
   Future<void> close() {
     _reconnectTimer?.cancel();
+    _vpnRecheckTimer?.cancel();
     _connectionSub?.cancel();
     _pendingClientSub?.cancel();
     _messageSub?.cancel();
